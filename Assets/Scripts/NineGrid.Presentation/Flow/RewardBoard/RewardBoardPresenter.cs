@@ -9,7 +9,6 @@ using NineGrid.Core.Content;
 using NineGrid.Core.Systems;
 using NineGrid.Flow.BoardBriefTip;
 using NineGrid.Flow.RoomIcons;
-using NineGrid.Presentation;
 using NineGrid.Presentation.Systems;
 using QFramework;
 using UnityEngine;
@@ -120,8 +119,12 @@ namespace NineGrid.Flow.RewardBoard
             var content = arch.GetSystem<IContentSystem>();
             SpawnShelves(pending, geometry, content);
             SpawnLeave(geometry);
-            StartAvatarWatch();
             mActive = RoomIconOccupancy.Current.HasAny || mShelfCards.Count > 0;
+            if (mActive)
+            {
+                StartAvatarWatch();
+            }
+
             return mActive;
         }
 
@@ -178,7 +181,7 @@ namespace NineGrid.Flow.RewardBoard
                 var managed = cards.SpawnPresentationOnly(
                     entry.DefId,
                     parent,
-                    CardDisplayMode.RemovedMode,
+                    CardDisplayMode.GroundCardMode,
                     CardPresentationKind.HelpCard);
                 if (managed?.View == null)
                 {
@@ -192,6 +195,7 @@ namespace NineGrid.Flow.RewardBoard
                 }
 
                 CoreCardPresentationMapper.ApplyVisualsByDefId(managed, CardPresentationKind.HelpCard);
+                FitRoomIcon(managed.View.gameObject, geometry);
                 var tip = BuildShelfTip(entry.DefId, content);
                 AttachClickProxy(managed.View.gameObject, i, tip);
                 mShelfCards.Add(managed);
@@ -302,61 +306,45 @@ namespace NineGrid.Flow.RewardBoard
                 return;
             }
 
-            PresentationInputGates.SetChoiceOverlay(true);
-            try
+            RewardChoiceCoreHook.RequestWire();
+            if (RewardChoiceCoreHook.SelectReward == null)
             {
-                RewardChoiceCoreHook.RequestWire();
-                if (RewardChoiceCoreHook.SelectReward == null)
+                ShowNotice("奖励房输入未接线");
+                return;
+            }
+
+            var result = RewardChoiceCoreHook.SelectReward(shelfIndex);
+            if (result == null || !result.Accepted)
+            {
+                if (!string.IsNullOrEmpty(result?.Reason))
                 {
-                    ShowNotice("奖励房输入未接线");
-                    return;
+                    ShowNotice(result.Reason);
                 }
 
-                var result = RewardChoiceCoreHook.SelectReward(shelfIndex);
-                if (result == null || !result.Accepted)
-                {
-                    if (!string.IsNullOrEmpty(result?.Reason))
-                    {
-                        ShowNotice(result.Reason);
-                    }
-
-                    return;
-                }
-
-                ShatterShelfVisual(shelfIndex);
-                ResyncFromPending(arch);
+                return;
             }
-            finally
-            {
-                PresentationInputGates.SetChoiceOverlay(false);
-            }
+
+            ShatterShelfVisual(shelfIndex);
+            ResyncFromPending(arch);
         }
 
         private bool TryLeave()
         {
-            PresentationInputGates.SetChoiceOverlay(true);
-            try
+            RewardChoiceCoreHook.RequestWire();
+            if (RewardChoiceCoreHook.SkipHelpChoice == null)
             {
-                RewardChoiceCoreHook.RequestWire();
-                if (RewardChoiceCoreHook.SkipHelpChoice == null)
-                {
-                    Debug.LogWarning("[RewardBoard] SkipHelpChoice hook not wired; abort leave.");
-                    return false;
-                }
-
-                var result = RewardChoiceCoreHook.SkipHelpChoice();
-                if (result != null && result.Accepted)
-                {
-                    DespawnAll();
-                    return true;
-                }
-
+                Debug.LogWarning("[RewardBoard] SkipHelpChoice hook not wired; abort leave.");
                 return false;
             }
-            finally
+
+            var result = RewardChoiceCoreHook.SkipHelpChoice();
+            if (result != null && result.Accepted)
             {
-                PresentationInputGates.SetChoiceOverlay(false);
+                DespawnAll();
+                return true;
             }
+
+            return false;
         }
 
         private void ShatterShelfVisual(int shelfIndex)
@@ -398,7 +386,7 @@ namespace NineGrid.Flow.RewardBoard
         {
             CancelWatch();
             mWatching = true;
-            mLastAvatarSlot = 0;
+            mLastAvatarSlot = -1;
             WatchAvatarLoopAsync().Forget();
         }
 
@@ -486,6 +474,7 @@ namespace NineGrid.Flow.RewardBoard
             else
             {
                 mLeaveDwell.Begin(slot, 0);
+                RunLeaveDwellAsync(slot, parentCt).Forget();
             }
         }
 

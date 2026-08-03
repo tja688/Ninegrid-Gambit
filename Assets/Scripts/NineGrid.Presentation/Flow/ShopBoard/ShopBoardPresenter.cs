@@ -8,8 +8,8 @@ using NineGrid.Core;
 using NineGrid.Core.Content;
 using NineGrid.Core.Systems;
 using NineGrid.Flow.BoardBriefTip;
+using NineGrid.Flow.InRoomBoard;
 using NineGrid.Flow.RoomIcons;
-using NineGrid.Presentation;
 using NineGrid.Presentation.Systems;
 using QFramework;
 using UnityEngine;
@@ -121,8 +121,13 @@ namespace NineGrid.Flow.ShopBoard
             SpawnShelves(pending, geometry, content);
             SpawnRefresh(geometry, pending.ShopRefreshPriceGold.Value);
             SpawnLeave(geometry);
-            StartAvatarWatch();
+            // 须先置 Active：Watch 循环在首个 await 前检查 mActive，否则会立刻退出，离开驻留永不明火。
             mActive = RoomIconOccupancy.Current.HasAny || mShelfCards.Count > 0;
+            if (mActive)
+            {
+                StartAvatarWatch();
+            }
+
             return mActive;
         }
 
@@ -177,10 +182,11 @@ namespace NineGrid.Flow.ShopBoard
                     parent = geometry.GetGroundAnchor(slot);
                 }
 
+                // GroundCardMode：与场地真卡同尺度；RemovedMode(1.08) 会显得过大。
                 var managed = cards.SpawnPresentationOnly(
                     entry.DefId,
                     parent,
-                    CardDisplayMode.RemovedMode,
+                    CardDisplayMode.GroundCardMode,
                     CardPresentationKind.HelpCard);
                 if (managed?.View == null)
                 {
@@ -194,6 +200,7 @@ namespace NineGrid.Flow.ShopBoard
                 }
 
                 CoreCardPresentationMapper.ApplyVisualsByDefId(managed, CardPresentationKind.HelpCard);
+                FitRoomIcon(managed.View.gameObject, geometry);
                 var tip = BuildShelfTip(entry.DefId, content);
                 AttachClickProxy(managed.View.gameObject, ShopBoardHitKind.BuyShelf, i, tip);
                 mShelfCards.Add(managed);
@@ -215,6 +222,7 @@ namespace NineGrid.Flow.ShopBoard
                 return;
             }
 
+            FitRoomIcon(go, geometry);
             var tip = BoardBriefTipCopy.ForOptionOrShelf("刷新货架", refreshPrice);
             AttachClickProxy(go, ShopBoardHitKind.Refresh, -1, tip);
             mExtras.Add(go);
@@ -345,40 +353,35 @@ namespace NineGrid.Flow.ShopBoard
                 return;
             }
 
-            PresentationInputGates.SetChoiceOverlay(true);
-            try
+            // ChoiceOverlay 由 GameFlowOrchestrator 会话持有；此处勿嵌套 Set/清，否则会拆掉跳格门禁语义。
+            RewardChoiceCoreHook.RequestWire();
+            if (RewardChoiceCoreHook.SelectReward == null)
             {
-                RewardChoiceCoreHook.RequestWire();
-                if (RewardChoiceCoreHook.SelectReward == null)
+                ShowNotice("商店输入未接线");
+                return;
+            }
+
+            var logStart = InRoomGoldPresentation.CaptureEventLogCount(arch);
+            var result = RewardChoiceCoreHook.SelectReward(shelfIndex);
+            if (result == null || !result.Accepted)
+            {
+                var reason = result?.Reason ?? string.Empty;
+                if (string.Equals(reason, "Not enough gold", StringComparison.Ordinal))
                 {
-                    ShowNotice("商店输入未接线");
-                    return;
+                    ShowNotice("金币不足");
+                }
+                else if (!string.IsNullOrEmpty(reason))
+                {
+                    ShowNotice(reason);
                 }
 
-                var result = RewardChoiceCoreHook.SelectReward(shelfIndex);
-                if (result == null || !result.Accepted)
-                {
-                    var reason = result?.Reason ?? string.Empty;
-                    if (string.Equals(reason, "Not enough gold", StringComparison.Ordinal))
-                    {
-                        ShowNotice("金币不足");
-                    }
-                    else if (!string.IsNullOrEmpty(reason))
-                    {
-                        ShowNotice(reason);
-                    }
-
-                    return;
-                }
-
-                // 碎裂：释放该格表现卡后重建。
-                ShatterShelfVisual(shelfIndex);
-                ResyncFromPending(arch);
+                return;
             }
-            finally
-            {
-                PresentationInputGates.SetChoiceOverlay(false);
-            }
+
+            InRoomGoldPresentation.PresentGoldChangesSince(arch, logStart);
+            // 碎裂：释放该格表现卡后重建。
+            ShatterShelfVisual(shelfIndex);
+            ResyncFromPending(arch);
         }
 
         private void TryRefresh()
@@ -389,60 +392,46 @@ namespace NineGrid.Flow.ShopBoard
                 return;
             }
 
-            PresentationInputGates.SetChoiceOverlay(true);
-            try
+            RewardChoiceCoreHook.RequestWire();
+            if (RewardChoiceCoreHook.RefreshShop == null)
             {
-                RewardChoiceCoreHook.RequestWire();
-                if (RewardChoiceCoreHook.RefreshShop == null)
+                Debug.LogWarning("[ShopBoard] RefreshShop hook not wired; abort.");
+                return;
+            }
+
+            var logStart = InRoomGoldPresentation.CaptureEventLogCount(arch);
+            var result = RewardChoiceCoreHook.RefreshShop();
+            if (result == null || !result.Accepted)
+            {
+                if (string.Equals(result?.Reason, "Not enough gold", StringComparison.Ordinal))
                 {
-                    Debug.LogWarning("[ShopBoard] RefreshShop hook not wired; abort.");
-                    return;
+                    ShowNotice("金币不足");
                 }
 
-                var result = RewardChoiceCoreHook.RefreshShop();
-                if (result == null || !result.Accepted)
-                {
-                    if (string.Equals(result?.Reason, "Not enough gold", StringComparison.Ordinal))
-                    {
-                        ShowNotice("金币不足");
-                    }
-
-                    return;
-                }
-
-                ResyncFromPending(arch);
+                return;
             }
-            finally
-            {
-                PresentationInputGates.SetChoiceOverlay(false);
-            }
+
+            InRoomGoldPresentation.PresentGoldChangesSince(arch, logStart);
+            ResyncFromPending(arch);
         }
 
         private bool TryLeave()
         {
-            PresentationInputGates.SetChoiceOverlay(true);
-            try
+            RewardChoiceCoreHook.RequestWire();
+            if (RewardChoiceCoreHook.SkipHelpChoice == null)
             {
-                RewardChoiceCoreHook.RequestWire();
-                if (RewardChoiceCoreHook.SkipHelpChoice == null)
-                {
-                    Debug.LogWarning("[ShopBoard] SkipHelpChoice hook not wired; abort leave.");
-                    return false;
-                }
-
-                var result = RewardChoiceCoreHook.SkipHelpChoice();
-                if (result != null && result.Accepted)
-                {
-                    DespawnAll();
-                    return true;
-                }
-
+                Debug.LogWarning("[ShopBoard] SkipHelpChoice hook not wired; abort leave.");
                 return false;
             }
-            finally
+
+            var result = RewardChoiceCoreHook.SkipHelpChoice();
+            if (result != null && result.Accepted)
             {
-                PresentationInputGates.SetChoiceOverlay(false);
+                DespawnAll();
+                return true;
             }
+
+            return false;
         }
 
         private void ShatterShelfVisual(int shelfIndex)
@@ -485,7 +474,8 @@ namespace NineGrid.Flow.ShopBoard
         {
             CancelWatch();
             mWatching = true;
-            mLastAvatarSlot = 0;
+            // -1：首帧强制走 HandleAvatarSlot（含已踩在离开格的情况）。
+            mLastAvatarSlot = -1;
             WatchAvatarLoopAsync().Forget();
         }
 
@@ -572,7 +562,9 @@ namespace NineGrid.Flow.ShopBoard
             }
             else
             {
+                // 失败须重开计时；仅 Begin 不跑 RunLeaveDwellAsync 会永久卡在离开格。
                 mLeaveDwell.Begin(slot, 0);
+                RunLeaveDwellAsync(slot, parentCt).Forget();
             }
         }
 

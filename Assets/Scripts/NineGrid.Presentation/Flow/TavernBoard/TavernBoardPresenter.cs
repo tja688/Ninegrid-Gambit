@@ -8,8 +8,8 @@ using NineGrid.Core;
 using NineGrid.Core.Content;
 using NineGrid.Core.Systems;
 using NineGrid.Flow.BoardBriefTip;
+using NineGrid.Flow.InRoomBoard;
 using NineGrid.Flow.RoomIcons;
-using NineGrid.Presentation;
 using NineGrid.Presentation.Systems;
 using QFramework;
 using UnityEngine;
@@ -136,10 +136,15 @@ namespace NineGrid.Flow.TavernBoard
                 return false;
             }
 
-            StartAvatarWatch();
+            // 须先置 Active：Watch 循环在首个 await 前检查 mActive，否则离开驻留永不明火。
             mActive = RoomIconOccupancy.Current.HasAny
                       || mExtras.Count > 0
                       || mCandidateCards.Count > 0;
+            if (mActive)
+            {
+                StartAvatarWatch();
+            }
+
             return mActive;
         }
 
@@ -191,6 +196,7 @@ namespace NineGrid.Flow.TavernBoard
                     continue;
                 }
 
+                FitRoomIcon(go, geometry);
                 var tip = BuildServiceTip(entry.DefId, content);
                 AttachClickProxy(go, TavernBoardHitKind.SelectService, i, tip);
                 mExtras.Add(go);
@@ -230,7 +236,7 @@ namespace NineGrid.Flow.TavernBoard
                 var managed = cards.SpawnPresentationOnly(
                     entry.DefId,
                     parent,
-                    CardDisplayMode.RemovedMode,
+                    CardDisplayMode.GroundCardMode,
                     CardPresentationKind.HelpCard);
                 if (managed?.View == null)
                 {
@@ -244,6 +250,7 @@ namespace NineGrid.Flow.TavernBoard
                 }
 
                 CoreCardPresentationMapper.ApplyVisualsByDefId(managed, CardPresentationKind.HelpCard);
+                FitRoomIcon(managed.View.gameObject, geometry);
                 var tip = BuildCandidateTip(entry.DefId, content);
                 AttachClickProxy(managed.View.gameObject, TavernBoardHitKind.SelectFixCandidate, i, tip);
                 mCandidateCards.Add(managed);
@@ -268,6 +275,7 @@ namespace NineGrid.Flow.TavernBoard
                 return;
             }
 
+            FitRoomIcon(go, geometry);
             var tip = BoardBriefTipCopy.ForOptionOrShelf("刷新货架", refreshPrice);
             AttachClickProxy(go, TavernBoardHitKind.Refresh, -1, tip);
             mExtras.Add(go);
@@ -435,42 +443,36 @@ namespace NineGrid.Flow.TavernBoard
                 return;
             }
 
-            PresentationInputGates.SetChoiceOverlay(true);
-            try
+            RewardChoiceCoreHook.RequestWire();
+            if (RewardChoiceCoreHook.SelectReward == null)
             {
-                RewardChoiceCoreHook.RequestWire();
-                if (RewardChoiceCoreHook.SelectReward == null)
+                ShowNotice("卡店输入未接线");
+                return;
+            }
+
+            var logStart = InRoomGoldPresentation.CaptureEventLogCount(arch);
+            var result = RewardChoiceCoreHook.SelectReward(optionIndex);
+            if (result == null || !result.Accepted)
+            {
+                var reason = result?.Reason ?? string.Empty;
+                if (string.Equals(reason, "Not enough gold", StringComparison.Ordinal))
                 {
-                    ShowNotice("卡店输入未接线");
-                    return;
+                    ShowNotice("金币不足");
+                }
+                else if (string.Equals(reason, "No item source pool", StringComparison.Ordinal))
+                {
+                    ShowNotice("暂无可固定的道具卡");
+                }
+                else if (!string.IsNullOrEmpty(reason))
+                {
+                    ShowNotice(reason);
                 }
 
-                var result = RewardChoiceCoreHook.SelectReward(optionIndex);
-                if (result == null || !result.Accepted)
-                {
-                    var reason = result?.Reason ?? string.Empty;
-                    if (string.Equals(reason, "Not enough gold", StringComparison.Ordinal))
-                    {
-                        ShowNotice("金币不足");
-                    }
-                    else if (string.Equals(reason, "No item source pool", StringComparison.Ordinal))
-                    {
-                        ShowNotice("暂无可固定的道具卡");
-                    }
-                    else if (!string.IsNullOrEmpty(reason))
-                    {
-                        ShowNotice(reason);
-                    }
-
-                    return;
-                }
-
-                ResyncFromPending(arch);
+                return;
             }
-            finally
-            {
-                PresentationInputGates.SetChoiceOverlay(false);
-            }
+
+            InRoomGoldPresentation.PresentGoldChangesSince(arch, logStart);
+            ResyncFromPending(arch);
         }
 
         private void TryRefresh()
@@ -481,75 +483,62 @@ namespace NineGrid.Flow.TavernBoard
                 return;
             }
 
-            PresentationInputGates.SetChoiceOverlay(true);
-            try
+            RewardChoiceCoreHook.RequestWire();
+            if (RewardChoiceCoreHook.RefreshShop == null)
             {
-                RewardChoiceCoreHook.RequestWire();
-                if (RewardChoiceCoreHook.RefreshShop == null)
+                Debug.LogWarning("[TavernBoard] RefreshShop hook not wired; abort.");
+                return;
+            }
+
+            var logStart = InRoomGoldPresentation.CaptureEventLogCount(arch);
+            var result = RewardChoiceCoreHook.RefreshShop();
+            if (result == null || !result.Accepted)
+            {
+                if (string.Equals(result?.Reason, "Not enough gold", StringComparison.Ordinal))
                 {
-                    Debug.LogWarning("[TavernBoard] RefreshShop hook not wired; abort.");
-                    return;
+                    ShowNotice("金币不足");
                 }
 
-                var result = RewardChoiceCoreHook.RefreshShop();
-                if (result == null || !result.Accepted)
-                {
-                    if (string.Equals(result?.Reason, "Not enough gold", StringComparison.Ordinal))
-                    {
-                        ShowNotice("金币不足");
-                    }
-
-                    return;
-                }
-
-                ResyncFromPending(arch);
+                return;
             }
-            finally
-            {
-                PresentationInputGates.SetChoiceOverlay(false);
-            }
+
+            InRoomGoldPresentation.PresentGoldChangesSince(arch, logStart);
+            ResyncFromPending(arch);
         }
 
         private bool TryLeaveOrCancel(out bool leftShop)
         {
             leftShop = false;
-            PresentationInputGates.SetChoiceOverlay(true);
-            try
+            RewardChoiceCoreHook.RequestWire();
+            if (RewardChoiceCoreHook.SkipHelpChoice == null)
             {
-                RewardChoiceCoreHook.RequestWire();
-                if (RewardChoiceCoreHook.SkipHelpChoice == null)
-                {
-                    Debug.LogWarning("[TavernBoard] SkipHelpChoice hook not wired; abort leave.");
-                    return false;
-                }
+                Debug.LogWarning("[TavernBoard] SkipHelpChoice hook not wired; abort leave.");
+                return false;
+            }
 
-                var arch = mArch ?? NineGridArchitecture.Current;
-                var pending = arch?.GetModel<PendingChoiceModel>();
-                var wasNested = pending != null
-                                && PendingChoiceModel.IsTavernFixItemPool(pending.PoolId.Value);
+            var arch = mArch ?? NineGridArchitecture.Current;
+            var pending = arch?.GetModel<PendingChoiceModel>();
+            var wasNested = pending != null
+                            && PendingChoiceModel.IsTavernFixItemPool(pending.PoolId.Value);
 
-                var result = RewardChoiceCoreHook.SkipHelpChoice();
-                if (result == null || !result.Accepted)
-                {
-                    return false;
-                }
+            var result = RewardChoiceCoreHook.SkipHelpChoice();
+            if (result == null || !result.Accepted)
+            {
+                return false;
+            }
 
-                if (wasNested)
-                {
-                    // 取消二级选择：消耗本次驻留，须先跳走再踩离开才能出店。
-                    ResyncFromPending(arch);
-                    mLastAvatarSlot = 0;
-                    return true;
-                }
-
-                DespawnAll();
-                leftShop = true;
+            if (wasNested)
+            {
+                // 取消二级选择：消耗本次驻留，须先跳走再踩离开才能出店。
+                ResyncFromPending(arch);
+                mLeaveDwell.Cancel();
+                mLastAvatarSlot = TavernBoardSlotResolver.LeaveSlot;
                 return true;
             }
-            finally
-            {
-                PresentationInputGates.SetChoiceOverlay(false);
-            }
+
+            DespawnAll();
+            leftShop = true;
+            return true;
         }
 
         private void ShowNotice(string message)
@@ -568,7 +557,7 @@ namespace NineGrid.Flow.TavernBoard
         {
             CancelWatch();
             mWatching = true;
-            mLastAvatarSlot = 0;
+            mLastAvatarSlot = -1;
             WatchAvatarLoopAsync().Forget();
         }
 
@@ -659,6 +648,7 @@ namespace NineGrid.Flow.TavernBoard
             else
             {
                 mLeaveDwell.Begin(slot, 0);
+                RunLeaveDwellAsync(slot, parentCt).Forget();
             }
         }
 

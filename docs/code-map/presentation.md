@@ -32,6 +32,7 @@
 | `ShopBoard/` | 商店货架 + 刷新 + 离开（#92）：任意距离点击购买、驻留离开 |
 | `TavernBoard/` | 卡店三项服务 + 刷新 + 离开（#93）：就地选项；「道具卡固定」二级选择铺空格候选 |
 | `RewardBoard/` | 特殊奖励房真卡 + 离开（#94）：任意距离点击拿走、踩离开放弃 |
+| `InRoomBoard/` | 房内共用：`InRoomGoldPresentation`（非战斗扣金→HUD） |
 | `BoardBriefTip/` | 简要解释文字框 + 楼层提示（#89）：文案纯逻辑、悬停命中代理、胜负 Notice 出口 |
 | `Diagnostics/` | Battle/Flow/Perf/Registry Trace Recorder 与 Sink |
 | （根下） | `BattleSessionController`、`GameFlowController`、若干 `*ManagerSingleton`（Presenter 壳名）；**指针缝** `WorldPointerUtility`、**命中路由** `PointerHitRouter` / `IPointerHitTarget` / `PointerHitRegistry`（替代 OnMouse*，ADR-0006）；**QuickTest 通道** `QuickTestDeckCatalog` / `QuickTestRunOptions`（主菜单 `\0`=流程测试 Sequential 空技能；`\1`–`\9`：`skillIds` 一怪一技挂载 + **`trapContentIds` 经 `AddEnemyCard` 注入敌池**；正式开局不挂怪技能/不注机关；挂载经 `BattleSessionCheat.TryAttachSkillsToBoardMonsters`：**一怪一技**按格号升序，不够则 Spawn 白板宿主 + 至少一只无技能同伴）。**批1** `CardKind.Trap` / 双桶 / 五套卡面（ADR-0017）；**批2** 滚石/捕熊/烈焰迁 Trap + QT `\1`/`\6`/`\8`/`\9` 机关注入；**批3** 倒刺/三图腾/治疗泉 + QT `\1`–`\9` 九机关齐全（`help.healing_spring` 已删） |
@@ -162,6 +163,9 @@
 - Core：进 `Shop` → `OfferShopSession` 固定 4 货架（宝箱 / 随机属性道具 / 恢复药水 / 食品）+ 本次进店刷新价初值 10；`SelectReward` 扣 `Price`、进携带卡包、**留店**；`RefreshShop` 扣刷新价并翻倍；`SkipHelpChoice` 出店（不加 skip 金）
 - 刷新价作用域：**本次进店**（离开清零；再进店重新从 10 起）
 - 表现：`ShopBoardPresenter` 落格 1/3/7/9 货架、2 刷新、8 离开；Avatar 硬切格 5；货架/刷新任意距离点击；离开驻留 1s；金币不足写简要解释 Notice
+- 货架真卡用 `GroundCardMode` + `RoomIconVisualFit` 压进格；刷新就地选项同 Fit（与场地图标一致）
+- 扣金后经 `InRoomGoldPresentation` 推 EventLog→HUD（非战斗无 GoldGainBeat）；ChoiceOverlay 由 Orchestrator 会话持有，Presenter 内勿嵌套清门
+- 离开监视：先 `mActive=true` 再 `StartAvatarWatch`；失败驻留须重开计时
 - `GameFlowOrchestrator.PlayRoomIconChoiceAsync`：图标驻留 Select+Enter 后，若进消费/特殊房会话则 `PresentInRoomSessionAfterEnterAsync` 刷商店场地板（不再壳层二次 EnterRoom）
 
 ### 卡店房就地服务（#93 · ADR-0020 / ADR-0022）
@@ -169,12 +173,14 @@
 - Core：进 `Tavern` → `OfferTavernSession` 三项服务（`UpgradeItemStats` / `FixItem` / `ExpandItemCapacity`，各 50 金）+ 本次进店刷新价初值 10；扩容写 `ItemDeckCapacity+1`；强化写 `ItemStatBonus+3`（跨节点应用属 #97）；`RefreshShop` 同商店规则；`SkipHelpChoice` 出店
 - **唯一嵌套选择**：「道具卡固定」→ 池切 `tavern.fixItem`，候选来自 `ItemSourcePoolDefIds`；确认后 `AddFixedItemCard` + 扣费回主面；`SkipHelpChoice` 在子池取消回主面（不扣费、不离店）
 - 表现：`TavernBoardPresenter` 落格 1/3/7 服务选项（`房间选项标准模板`）、2 刷新、8 离开；二级选择时服务/刷新退场，候选真卡铺格 1/3/4/6/7/9；离开 tip 改「取消选择」
+- 服务/刷新选项与候选真卡均 `RoomIconVisualFit`；扣金同商店走 `InRoomGoldPresentation`；离开监视与 ChoiceOverlay 约定同商店
 - `GameFlowOrchestrator.PresentInRoomSessionAfterEnterAsync`：`IsTavernPool` / `IsTavernFixItemPool` 走卡店场地板
 
 ### 特殊奖励房（#94 · ADR-0020 / ADR-0022）
 
 - Core：进 `TreasureReward` → 1 宝箱 + 3 随机道具（`ItemSourcePoolDefIds`）；进 `ItemReward` → 2 属性道具（40/40/20）+ 3 随机道具；pool=`reward.treasure` / `reward.item`；`SelectReward` **免费**进携带卡包并留房；`SkipHelpChoice` 离开放弃剩余（不加 skip 金）
 - 表现：`RewardBoardPresenter` 落格 1/2/3/7/9 真卡、8 离开；Avatar 硬切格 5；任意距离点击拿走；离开驻留 1s；悬停 tip=卡名+效果（无价格）
+- 真卡 `GroundCardMode` + Fit；离开监视约定同商店（免费拿无需推金）
 - `GameFlowOrchestrator.PresentInRoomSessionAfterEnterAsync`：`IsSpecialRewardPool` 走特殊房场地板；道具奖励房选房图标仍缺（见 #83）
 
 ### Avatar 跳格（已落地 · ADR-0019 / #88 放宽）
