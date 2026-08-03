@@ -336,6 +336,7 @@ namespace NineGrid.Flow
             public string[] ItemSourcePoolDefIds;
             public string[] FixedItemCardDefIds;
             public string[] CarryPackDefIds;
+            public string[] ItemSlotDefIds;
             public int Coins;
             public int InteractionCount;
             public string ProfessionId;
@@ -353,10 +354,22 @@ namespace NineGrid.Flow
 
             var player = arch.GetModel<PlayerModel>();
             var run = arch.GetModel<RunModel>();
+            var deck = arch.GetModel<DeckModel>();
+            var registry = arch.GetModel<CardRegistry>();
             var relics = player.RelicDefIds;
             var sourcePool = player.ItemSourcePoolDefIds;
             var fixedCards = player.FixedItemCardDefIds;
             var carry = player.CarryPackDefIds;
+            var itemSlots = deck.ItemSlotUids;
+            var itemSlotDefIds = new string[itemSlots.Count];
+            for (var i = 0; i < itemSlots.Count; i++)
+            {
+                CardInstance card;
+                itemSlotDefIds[i] = registry.TryGet(itemSlots[i], out card) && card != null
+                    ? card.DefId
+                    : string.Empty;
+            }
+
             var snapshot = new RunInventorySnapshot
             {
                 RelicDefIds = new string[relics.Count],
@@ -364,6 +377,7 @@ namespace NineGrid.Flow
                 ItemSourcePoolDefIds = new string[sourcePool.Count],
                 FixedItemCardDefIds = new string[fixedCards.Count],
                 CarryPackDefIds = new string[carry.Count],
+                ItemSlotDefIds = itemSlotDefIds,
                 Coins = player.Coins.Value,
                 InteractionCount = player.InteractionCount.Value,
                 ProfessionId = player.ProfessionId.Value ?? string.Empty,
@@ -404,6 +418,8 @@ namespace NineGrid.Flow
             var player = arch.GetModel<PlayerModel>();
             var run = arch.GetModel<RunModel>();
             var content = arch.GetSystem<IContentSystem>();
+            var registry = arch.GetModel<CardRegistry>();
+            var deck = arch.GetModel<DeckModel>();
 
             if (!string.IsNullOrEmpty(inventory.ProfessionId))
             {
@@ -439,6 +455,26 @@ namespace NineGrid.Flow
                     {
                         content?.ActivateRelic(defId);
                     }
+                }
+            }
+
+            if (inventory.ItemSlotDefIds != null && content != null)
+            {
+                for (var i = 0; i < inventory.ItemSlotDefIds.Length; i++)
+                {
+                    var defId = inventory.ItemSlotDefIds[i];
+                    if (string.IsNullOrEmpty(defId))
+                    {
+                        continue;
+                    }
+
+                    var draft = content.CreateDraft(defId);
+                    if (draft == null)
+                    {
+                        continue;
+                    }
+
+                    deck.AddToItemSlots(draft.Create(registry));
                 }
             }
 

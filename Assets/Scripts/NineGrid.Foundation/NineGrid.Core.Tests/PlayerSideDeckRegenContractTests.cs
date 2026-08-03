@@ -99,7 +99,7 @@ namespace NineGrid.Core.Tests
         }
 
         [Test]
-        public void SettleUnusedHelpCards_ClearsBattleHelp_DoesNotRefillStacks()
+        public void SettleUnusedHelpCards_PreservesItemSlots_DoesNotRefillStacks()
         {
             Assert.IsTrue(mPhase.StartNode(CreateSingleMonsterNode(hp: 1, attack: 0)).Accepted);
             PlaceSoleBoardCardAt(SlotId.Board(2));
@@ -112,8 +112,8 @@ namespace NineGrid.Core.Tests
 
             Assert.IsTrue(mPhase.Attack(SlotId.Board(2)).Accepted);
 
-            Assert.AreEqual(coinsBefore + 10, player.Coins.Value);
-            Assert.AreEqual(0, CountItemSlotHelpCards());
+            Assert.AreEqual(coinsBefore, player.Coins.Value, "道具卡格不应因清关兑金");
+            Assert.AreEqual(1, CountItemSlotHelpCards(), "清关后道具卡格应保留");
             Assert.AreEqual(capacity, player.ItemDeckCapacity, "清关不改容量");
             Assert.AreEqual(poolCount, player.ItemSourcePoolDefIds.Count, "清关不改来源池");
             Assert.AreEqual(0, player.CarryPackDefIds.Count);

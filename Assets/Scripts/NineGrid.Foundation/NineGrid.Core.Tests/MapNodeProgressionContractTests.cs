@@ -131,7 +131,7 @@ namespace NineGrid.Core.Tests
         }
 
         [Test]
-        public void SettleUnusedHelpCards_IncludesItemSlots_AndClearsTraps()
+        public void SettleUnusedHelpCards_SkipsItemSlots_PreservesAcrossClear_AndClearsTraps()
         {
             Assert.IsTrue(mPhase.StartNode(CreateSingleMonsterNode(hp: 1, attack: 0)).Accepted);
             PlaceSoleBoardCardAt(sAdjacentSlot);
@@ -142,9 +142,9 @@ namespace NineGrid.Core.Tests
             var coinsBefore = player.Coins.Value;
             Assert.IsTrue(mPhase.Attack(sAdjacentSlot).Accepted);
 
-            Assert.AreEqual(coinsBefore + 10, player.Coins.Value, "道具卡格内帮助卡应计入清关结算");
+            Assert.AreEqual(coinsBefore, player.Coins.Value, "道具卡格不应因清关兑金");
             Assert.AreEqual(0, CountBoardTraps(), "残留机关应同拍清场");
-            Assert.AreEqual(0, CountItemSlotHelpCards(), "道具卡格不应跨节点留存");
+            Assert.AreEqual(1, CountItemSlotHelpCards(), "清关后道具卡格应保留");
         }
 
         [Test]

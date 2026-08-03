@@ -201,7 +201,7 @@ namespace NineGrid.Core.Systems
 
             CollectHelpCardUids(registry, deck.DrawPileUids, seen, targets);
             CollectHelpCardUids(registry, deck.PlayerCardPoolUids, seen, targets);
-            CollectHelpCardUids(registry, deck.ItemSlotUids, seen, targets);
+            // ADR-0025 / #107：道具卡格跑图内持续持有，清关不兑不清。
             foreach (var uid in board.BoardCardUids())
             {
                 CollectHelpCardUid(registry, uid, seen, targets);
@@ -257,7 +257,7 @@ namespace NineGrid.Core.Systems
 
             AddHelpCardsFromList(registry, deck.DrawPileUids, seen);
             AddHelpCardsFromList(registry, deck.PlayerCardPoolUids, seen);
-            AddHelpCardsFromList(registry, deck.ItemSlotUids, seen);
+            // ADR-0025 / #107：道具卡格不计入清关未用帮助卡兑金。
             foreach (var uid in board.BoardCardUids())
             {
                 AddHelpCard(registry, uid, seen);

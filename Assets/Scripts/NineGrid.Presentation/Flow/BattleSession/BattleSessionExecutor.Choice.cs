@@ -363,7 +363,7 @@ namespace NineGrid.Flow
                 }
             }
 
-            // 快照本拍应结算的帮助卡（内核区域 + 表现侧手牌/场牌/牌堆/拖拽视图）。
+            // 快照本拍应结算的帮助卡（内核区域 + 表现侧场牌/牌堆/拖拽视图；不含道具卡格手牌）。
             var settledUids = CollectUnusedHelpCardUidsFromCore();
             AppendPresentationHelpCardUids(settledUids);
             var sweepSet = new HashSet<int>(settledUids);
@@ -373,7 +373,8 @@ namespace NineGrid.Flow
                 {
                     if (card != null
                         && IsPresentationHelpCard(card)
-                        && card.DisplayMode != CardDisplayMode.RemovedMode)
+                        && card.DisplayMode != CardDisplayMode.RemovedMode
+                        && card.DisplayMode != CardDisplayMode.HandCardMode)
                     {
                         sweepSet.Add(card.Uid);
                     }
@@ -396,7 +397,7 @@ namespace NineGrid.Flow
                     "ModifyGold");
             }
 
-            // 兜底清掉快照集合中仍存活的帮助卡视图（含手牌），避免下一关前幽灵牌。
+            // 兜底清掉快照集合中仍存活的帮助卡视图（不含道具卡格），避免下一关前幽灵牌。
             await SweepRemainingHelpCardViewsAsync(sweepSet, cancellationToken);
         }
 
@@ -428,8 +429,7 @@ namespace NineGrid.Flow
                 }
             }
 
-            // 先卸占位（手牌整清，保证手牌中的也退场），再并行退场飞币。
-            Hand?.ClearHand();
+            // 卸占位后并行退场飞币；道具卡格（手牌）按 ADR-0025 保留，不 ClearHand。
             for (var i = 0; i < snapshots.Count; i++)
             {
                 var card = snapshots[i].card;
@@ -497,7 +497,7 @@ namespace NineGrid.Flow
             HashSet<int> restrictToUids,
             CancellationToken cancellationToken)
         {
-            Hand?.ClearHand();
+            // 道具卡格（手牌）跨清关保留；只清结算快照内的场牌/牌堆等视图。
             if (Cards == null)
             {
                 return;
@@ -511,7 +511,9 @@ namespace NineGrid.Flow
                     continue;
                 }
 
-                if (card.DisplayMode == CardDisplayMode.RemovedMode || card.Transform == null)
+                if (card.DisplayMode == CardDisplayMode.RemovedMode
+                    || card.DisplayMode == CardDisplayMode.HandCardMode
+                    || card.Transform == null)
                 {
                     continue;
                 }
@@ -613,7 +615,7 @@ namespace NineGrid.Flow
 
             AddHelpCardUids(registry, deck.DrawPileUids, seen, result);
             AddHelpCardUids(registry, deck.PlayerCardPoolUids, seen, result);
-            AddHelpCardUids(registry, deck.ItemSlotUids, seen, result);
+            // ADR-0025 / #107：道具卡格不参与清关兑金演出。
             foreach (var uid in board.BoardCardUids())
             {
                 AddHelpCardUid(registry, uid, seen, result);
@@ -637,8 +639,8 @@ namespace NineGrid.Flow
                     continue;
                 }
 
-                if (card.DisplayMode == CardDisplayMode.HandCardMode
-                    || card.DisplayMode == CardDisplayMode.GroundCardMode
+                // 手牌即道具卡格视图，清关保留。
+                if (card.DisplayMode == CardDisplayMode.GroundCardMode
                     || card.DisplayMode == CardDisplayMode.CardDeckMode
                     || card.DisplayMode == CardDisplayMode.DragCardMode)
                 {
