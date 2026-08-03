@@ -30,9 +30,6 @@ namespace NineGrid.Cards
         [Tooltip("Avatar（格5）入场缩放出现时长（秒）。与开局外圈发牌并行时建议与牌组 moveDuration 同量级。")]
         public float avatarRevealDuration = 0.28f;
 
-        [Tooltip("空槽点击 BoxCollider2D 尺寸（世界单位）。")]
-        public Vector2 slotHitBoxSize = new(1.6f, 2.2f);
-
         [Header("Deal Flight (Bezier)")]
         [Tooltip("二阶贝塞尔可变缓动追踪发牌参数（Drain 补牌 + 空位 Explore 统一）。")]
         public DealFlightLayoutSettings dealFlight = new();

@@ -21,10 +21,14 @@ namespace NineGrid.Cards
         private Sequence _feedbackSequence;
         private CardVisualTarget _currentTarget = CardVisualTarget.Base;
         private Vector3 _handHoverBaseWorldPosition;
+        private Vector3 _authoredBaseScale = Vector3.one;
 
         public CardVisualTarget CurrentTarget => _currentTarget;
 
         public ManagedCard BoundCard => _card;
+
+        /// <summary>进入时预制体根缩放基准（ADR-0024）；mode/hover/hop 倍率相对此值。</summary>
+        public Vector3 AuthoredBaseScale => _authoredBaseScale;
 
         public bool IsGroundHoverEligible =>
             _card != null && _card.DisplayMode == CardDisplayMode.GroundCardMode;
@@ -42,9 +46,30 @@ namespace NineGrid.Cards
             _card = card;
         }
 
+        /// <summary>
+        /// 在 Instantiate 后、首次 ApplyDisplayMode 前捕获预制体根缩放。
+        /// </summary>
+        public void CaptureAuthoredBaseScale(Vector3 scale)
+        {
+            if (scale.sqrMagnitude <= 0.0001f)
+            {
+                scale = Vector3.one;
+            }
+
+            _authoredBaseScale = scale;
+        }
+
         public void InterruptFeedbackMotion()
         {
             KillFeedbackMotion();
+            if (_transform == null)
+            {
+                _transform = transform;
+            }
+
+            // 中断 hover/selected 时精确回到 mode 基准，避免 hop 等后续以残值当基准（ADR-0024）。
+            _transform.localScale = GetBaseScale();
+            _transform.localRotation = Quaternion.identity;
         }
 
         public void SetTarget(CardVisualTarget target)
@@ -96,7 +121,7 @@ namespace NineGrid.Cards
             KillFeedbackMotion();
 
             var mode = _card?.DisplayMode ?? CardDisplayMode.HandCardMode;
-            _transform.localScale = CardDisplayModeVisuals.GetBaseLocalScale(mode);
+            _transform.localScale = CardDisplayModeVisuals.GetBaseLocalScale(mode, AuthoredBaseScale);
             _transform.localRotation = Quaternion.identity;
 
             if (mode == CardDisplayMode.HandCardMode && TryResolveHandLayoutPosition(out var layoutPosition))
@@ -298,7 +323,7 @@ namespace NineGrid.Cards
         private Vector3 GetBaseScale()
         {
             var mode = _card?.DisplayMode ?? CardDisplayMode.GroundCardMode;
-            return CardDisplayModeVisuals.GetBaseLocalScale(mode);
+            return CardDisplayModeVisuals.GetBaseLocalScale(mode, AuthoredBaseScale);
         }
 
         private static GroundFieldLayoutSettings ResolveGroundLayoutSettings()
@@ -314,21 +339,35 @@ namespace NineGrid.Cards
         }
     }
 
-    internal static class CardDisplayModeVisuals
+    /// <summary>
+    /// ADR-0024：显示模式缩放倍率相对「进入时预制体基准」，不得写死绝对尺寸。
+    /// </summary>
+    public static class CardDisplayModeVisuals
     {
-        private const float DragCardScale = 1.06f;
+        public const float DragCardScaleMultiplier = 1.06f;
+        public const float RemovedModeScaleMultiplier = 1.08f;
 
-        public static Vector3 GetBaseLocalScale(CardDisplayMode mode)
+        public static float GetModeScaleMultiplier(CardDisplayMode mode)
         {
             return mode switch
             {
-                CardDisplayMode.CardDeckMode => Vector3.one,
-                CardDisplayMode.HandCardMode => Vector3.one,
-                CardDisplayMode.GroundCardMode => Vector3.one,
-                CardDisplayMode.RemovedMode => Vector3.one * 1.08f,
-                CardDisplayMode.DragCardMode => Vector3.one * DragCardScale,
-                _ => Vector3.one,
+                CardDisplayMode.RemovedMode => RemovedModeScaleMultiplier,
+                CardDisplayMode.DragCardMode => DragCardScaleMultiplier,
+                _ => 1f,
             };
+        }
+
+        public static Vector3 GetBaseLocalScale(CardDisplayMode mode) =>
+            GetBaseLocalScale(mode, Vector3.one);
+
+        public static Vector3 GetBaseLocalScale(CardDisplayMode mode, Vector3 authoredBaseScale)
+        {
+            if (authoredBaseScale.sqrMagnitude <= 0.0001f)
+            {
+                authoredBaseScale = Vector3.one;
+            }
+
+            return authoredBaseScale * GetModeScaleMultiplier(mode);
         }
 
         /// <summary>场地普通卡默认 order。</summary>

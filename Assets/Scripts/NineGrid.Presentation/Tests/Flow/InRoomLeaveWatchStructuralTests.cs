@@ -91,49 +91,6 @@ namespace NineGrid.Presentation.Tests.Flow
         }
 
         [Test]
-        public void OptionPrefabs_CallFitRoomIcon()
-        {
-            var root = Path.GetFullPath(Path.Combine(
-                Application.dataPath,
-                "Scripts",
-                "NineGrid.Presentation",
-                "Flow"));
-            var shop = File.ReadAllText(Path.Combine(root, "ShopBoard", "ShopBoardPresenter.cs"));
-            var tavern = File.ReadAllText(Path.Combine(root, "TavernBoard", "TavernBoardPresenter.cs"));
-            var reward = File.ReadAllText(Path.Combine(root, "RewardBoard", "RewardBoardPresenter.cs"));
-
-            // SpawnRefresh / SpawnServices 体内须 Fit；真卡 Spawn 不得 Fit。
-            Assert.IsTrue(
-                Regex.IsMatch(
-                    shop,
-                    @"SpawnRefresh[\s\S]*?FitRoomIcon\(go",
-                    RegexOptions.CultureInvariant),
-                "商店刷新选项须 FitRoomIcon");
-            Assert.IsTrue(
-                Regex.IsMatch(
-                    tavern,
-                    @"SpawnServices[\s\S]*?FitRoomIcon\(go",
-                    RegexOptions.CultureInvariant),
-                "卡店服务选项须 FitRoomIcon");
-            Assert.IsTrue(
-                Regex.IsMatch(
-                    tavern,
-                    @"SpawnRefresh[\s\S]*?FitRoomIcon\(go",
-                    RegexOptions.CultureInvariant),
-                "卡店刷新选项须 FitRoomIcon");
-            // 真卡 Spawn 不得再 Fit（方法名 FitRoomIcon(managed…）——与选项 FitRoomIcon(go 区分。
-            Assert.IsFalse(
-                shop.Contains("FitRoomIcon(managed", StringComparison.Ordinal),
-                "商店货架真卡不得 RoomIconVisualFit");
-            Assert.IsFalse(
-                tavern.Contains("FitRoomIcon(managed", StringComparison.Ordinal),
-                "卡店候选真卡不得 RoomIconVisualFit");
-            Assert.IsFalse(
-                reward.Contains("FitRoomIcon(managed", StringComparison.Ordinal),
-                "奖励房真卡不得 RoomIconVisualFit");
-        }
-
-        [Test]
         public void SoftBlockOnly_RegisteredForShelvesAndOptions()
         {
             var root = Path.GetFullPath(Path.Combine(

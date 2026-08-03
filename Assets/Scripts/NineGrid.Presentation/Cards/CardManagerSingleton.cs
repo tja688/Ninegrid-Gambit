@@ -294,6 +294,7 @@ namespace NineGrid.Cards
             }
 
             driver.Bind(card);
+            driver.CaptureAuthoredBaseScale(instance.transform.localScale);
 
             if (instance.GetComponent<CardEffectManager>() == null)
             {
@@ -938,8 +939,10 @@ namespace NineGrid.Cards
 
             var cardTransform = card.View.transform;
             var sortingGroup = card.View.GetComponent<SortingGroup>();
+            var driver = card.View.GetComponent<CardVisualDriver>();
+            var authored = driver != null ? driver.AuthoredBaseScale : Vector3.one;
 
-            cardTransform.localScale = CardDisplayModeVisuals.GetBaseLocalScale(mode);
+            cardTransform.localScale = CardDisplayModeVisuals.GetBaseLocalScale(mode, authored);
             cardTransform.localRotation = Quaternion.identity;
             if (mode == CardDisplayMode.HandCardMode)
             {
@@ -954,7 +957,6 @@ namespace NineGrid.Cards
                 SetSortingOrder(sortingGroup, CardDisplayModeVisuals.GetSortingOrder(mode, card.CoreKind));
             }
 
-            var driver = card.View.GetComponent<CardVisualDriver>();
             driver?.SnapToDisplayMode();
 
             if (modeChanged)

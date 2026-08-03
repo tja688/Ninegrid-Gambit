@@ -7,6 +7,7 @@ using NineGrid.Content.CardPresentation;
 using NineGrid.Core;
 using NineGrid.Core.Content;
 using NineGrid.Core.Systems;
+using NineGrid.Flow;
 using NineGrid.Flow.BoardBriefTip;
 using NineGrid.Flow.InRoomBoard;
 using NineGrid.Flow.RoomIcons;
@@ -200,7 +201,6 @@ namespace NineGrid.Flow.TavernBoard
                     continue;
                 }
 
-                FitRoomIcon(go, geometry);
                 var tip = BuildServiceTip(entry.DefId, content);
                 AttachClickProxy(go, TavernBoardHitKind.SelectService, i, tip, slot);
                 mExtras.Add(go);
@@ -232,16 +232,10 @@ namespace NineGrid.Flow.TavernBoard
                     continue;
                 }
 
-                Transform parent = null;
-                if (geometry != null)
-                {
-                    parent = geometry.GetGroundAnchor(slot);
-                }
-
-                // GroundCardMode：与场地真卡同尺度；勿再 RoomIconVisualFit。
+                // GroundCardMode：预制体原生尺寸；不 SetParent 到 ×2 格位锚点（ADR-0024）。
                 var managed = cards.SpawnPresentationOnly(
                     entry.DefId,
-                    parent,
+                    parent: null,
                     CardDisplayMode.GroundCardMode,
                     CardPresentationKind.HelpCard);
                 if (managed?.View == null)
@@ -249,11 +243,8 @@ namespace NineGrid.Flow.TavernBoard
                     continue;
                 }
 
-                if (parent != null)
-                {
-                    managed.View.transform.localPosition = Vector3.zero;
-                    managed.View.transform.localRotation = Quaternion.identity;
-                }
+                BoardSlotWorldPlacement.TryAlignToSlot(managed.View.transform, geometry, slot);
+                managed.View.transform.rotation = Quaternion.identity;
 
                 CoreCardPresentationMapper.ApplyVisualsByDefId(managed, CardPresentationKind.HelpCard);
                 var tip = BuildCandidateTip(entry.DefId, content);
@@ -286,7 +277,6 @@ namespace NineGrid.Flow.TavernBoard
                 return;
             }
 
-            FitRoomIcon(go, geometry);
             var tip = BoardBriefTipCopy.ForOptionOrShelf("刷新货架", refreshPrice);
             AttachClickProxy(go, TavernBoardHitKind.Refresh, -1, tip, TavernBoardSlotResolver.RefreshSlot);
             mExtras.Add(go);
@@ -309,7 +299,6 @@ namespace NineGrid.Flow.TavernBoard
             }
 
             var tip = nested ? CancelNestedTip : BoardBriefTipCopy.LeaveTip;
-            FitRoomIcon(go, geometry);
             AttachBriefTipOnly(go, tip, slot, geometry);
             mExtras.Add(go);
         }
@@ -431,14 +420,6 @@ namespace NineGrid.Flow.TavernBoard
             }
 
             proxy.Configure(tip, walkBoardSlot);
-        }
-
-        private static void FitRoomIcon(GameObject go, IGroundFieldGeometrySystem geometry)
-        {
-            var hitBox = geometry?.LayoutSettings != null
-                ? geometry.LayoutSettings.slotHitBoxSize
-                : new Vector2(1.6f, 2.2f);
-            RoomIconVisualFit.FitToTarget(go, RoomIconVisualFit.ResolveTargetSize(hitBox));
         }
 
         private void HandleHit(TavernBoardHitKind kind, int optionIndex)
@@ -701,18 +682,9 @@ namespace NineGrid.Flow.TavernBoard
                 return null;
             }
 
-            Transform parent = null;
-            if (geometry != null)
-            {
-                parent = geometry.GetGroundAnchor(slot);
-            }
-
-            var go = UnityEngine.Object.Instantiate(prefab, parent);
+            var go = UnityEngine.Object.Instantiate(prefab);
             go.name = "TavernBoard_" + contentId + "_@" + slot;
-            if (parent != null)
-            {
-                go.transform.localPosition = Vector3.zero;
-            }
+            BoardSlotWorldPlacement.TryAlignToSlot(go.transform, geometry, slot);
 
             var sorting = go.GetComponent<SortingGroup>();
             if (sorting != null)

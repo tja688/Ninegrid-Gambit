@@ -7,6 +7,7 @@ using NineGrid.Content.CardPresentation;
 using NineGrid.Core;
 using NineGrid.Core.Content;
 using NineGrid.Core.Systems;
+using NineGrid.Flow;
 using NineGrid.Flow.BoardBriefTip;
 using NineGrid.Flow.RoomIcons;
 using NineGrid.Presentation;
@@ -176,16 +177,10 @@ namespace NineGrid.Flow.RewardBoard
                     continue;
                 }
 
-                Transform parent = null;
-                if (geometry != null)
-                {
-                    parent = geometry.GetGroundAnchor(slot);
-                }
-
-                // GroundCardMode：与场地真卡同尺度；勿再 RoomIconVisualFit。
+                // GroundCardMode：预制体原生尺寸；不 SetParent 到 ×2 格位锚点（ADR-0024）。
                 var managed = cards.SpawnPresentationOnly(
                     entry.DefId,
-                    parent,
+                    parent: null,
                     CardDisplayMode.GroundCardMode,
                     CardPresentationKind.HelpCard);
                 if (managed?.View == null)
@@ -193,11 +188,8 @@ namespace NineGrid.Flow.RewardBoard
                     continue;
                 }
 
-                if (parent != null)
-                {
-                    managed.View.transform.localPosition = Vector3.zero;
-                    managed.View.transform.localRotation = Quaternion.identity;
-                }
+                BoardSlotWorldPlacement.TryAlignToSlot(managed.View.transform, geometry, slot);
+                managed.View.transform.rotation = Quaternion.identity;
 
                 CoreCardPresentationMapper.ApplyVisualsByDefId(managed, CardPresentationKind.HelpCard);
                 var tip = BuildShelfTip(entry.DefId, content);
@@ -222,7 +214,6 @@ namespace NineGrid.Flow.RewardBoard
                 return;
             }
 
-            FitRoomIcon(go, geometry);
             AttachBriefTipOnly(go, BoardBriefTipCopy.LeaveTip, slot, geometry);
             mExtras.Add(go);
         }
@@ -300,14 +291,6 @@ namespace NineGrid.Flow.RewardBoard
             }
 
             proxy.Configure(tip, walkBoardSlot);
-        }
-
-        private static void FitRoomIcon(GameObject go, IGroundFieldGeometrySystem geometry)
-        {
-            var hitBox = geometry?.LayoutSettings != null
-                ? geometry.LayoutSettings.slotHitBoxSize
-                : new Vector2(1.6f, 2.2f);
-            RoomIconVisualFit.FitToTarget(go, RoomIconVisualFit.ResolveTargetSize(hitBox));
         }
 
         private void HandleTake(int shelfIndex)
@@ -523,18 +506,9 @@ namespace NineGrid.Flow.RewardBoard
                 return null;
             }
 
-            Transform parent = null;
-            if (geometry != null)
-            {
-                parent = geometry.GetGroundAnchor(slot);
-            }
-
-            var go = UnityEngine.Object.Instantiate(prefab, parent);
+            var go = UnityEngine.Object.Instantiate(prefab);
             go.name = "RewardBoard_" + contentId + "_@" + slot;
-            if (parent != null)
-            {
-                go.transform.localPosition = Vector3.zero;
-            }
+            BoardSlotWorldPlacement.TryAlignToSlot(go.transform, geometry, slot);
 
             var sorting = go.GetComponent<SortingGroup>();
             if (sorting != null)

@@ -165,8 +165,8 @@
 - Core：进 `Shop` → `OfferShopSession` 固定 4 货架（宝箱 / 随机属性道具 / 恢复药水 / 食品）+ 本次进店刷新价初值 10；`SelectReward` 扣 `Price`、进携带卡包、**留店**；`RefreshShop` 扣刷新价并翻倍；`SkipHelpChoice` 出店（不加 skip 金）
 - 刷新价作用域：**本次进店**（离开清零；再进店重新从 10 起）
 - 表现：`ShopBoardPresenter` 落格 1/3/7/9 货架、2 刷新、8 离开；Avatar 硬切格 5；货架/刷新任意距离点击；离开驻留 1s；金币不足写简要解释 Notice
-- 货架真卡 `GroundCardMode`（意图是「战斗同尺度」，**不** `RoomIconVisualFit`）；刷新就地选项 / 离开图标仍 Fit；货架·刷新登记 `SoftBlockOnly`，离开 `WalkDestination`
-  - ⚠ 实测**未达成同尺度**：货架真卡 `Instantiate(prefab, anchor)` 成为 `GroundAnchors/slotN`（`localScale (2,2,2)`）的子物体，`GroundCardMode` 的 `localScale = 1` 于是渲染为战斗卡的两倍；战斗侧 `SlotFrameConvergence.SnapHome` 只写世界位置、不 SetParent，才是那个「同尺度」的来源。修复方向见 [ADR-0024](../adr/0024-board-placement-and-prefab-authored-size.md)
+- 货架真卡 `GroundCardMode`（预制体原生尺寸，与战斗卡同尺度）；刷新就地选项 / 离开图标同按预制体根缩放（#104 / ADR-0024，已删 `RoomIconVisualFit`）；货架·刷新登记 `SoftBlockOnly`，离开 `WalkDestination`
+  - 落格只写世界位置、不 SetParent 到 `GroundAnchors/slotN`（`BoardSlotWorldPlacement`）；避免继承锚点 ×2 缩放
 - 扣金后经 `InRoomGoldPresentation` 推 EventLog→HUD（非战斗无 GoldGainBeat）；**房内会话不持 ChoiceOverlay**（场地=ProtectedField，否则 BoardWalk ownerMismatch 全点不动）；Presenter 内勿嵌套 Set/清门；局内宝箱 Bounce 仍短暂持 overlay
 - 离开监视：先 `mActive=true` 再 `StartAvatarWatch`；失败驻留须重开计时
 - 货架挂 `ShopBoardHitProxy` 时禁用同 GO `GroundCardHitProxy`，避免误入 Pickup
@@ -177,14 +177,14 @@
 - Core：进 `Tavern` → `OfferTavernSession` 三项服务（`UpgradeItemStats` / `FixItem` / `ExpandItemCapacity`，各 50 金）+ 本次进店刷新价初值 10；扩容写 `ItemDeckCapacity+1`；强化写 `ItemStatBonus+3`（跨节点应用属 #97）；`RefreshShop` 同商店规则；`SkipHelpChoice` 出店
 - **唯一嵌套选择**：「道具卡固定」→ 池切 `tavern.fixItem`，候选来自 `ItemSourcePoolDefIds`；确认后 `AddFixedItemCard` + 扣费回主面；`SkipHelpChoice` 在子池取消回主面（不扣费、不离店）
 - 表现：`TavernBoardPresenter` 落格 1/3/7 服务选项（`房间选项标准模板`）、2 刷新、8 离开；二级选择时服务/刷新退场，候选真卡铺格 1/3/4/6/7/9；离开 tip 改「取消选择」
-- 服务/刷新选项 Fit；候选真卡 `GroundCardMode` **不** Fit；服务·刷新·候选 `SoftBlockOnly`，离开 `WalkDestination`；扣金同商店走 `InRoomGoldPresentation`；离开监视与 **不持 ChoiceOverlay** 约定同商店；候选真卡禁用 `GroundCardHitProxy`
+- 服务/刷新选项与候选真卡均按预制体原生尺寸（#104，不 Fit）；服务·刷新·候选 `SoftBlockOnly`，离开 `WalkDestination`；扣金同商店走 `InRoomGoldPresentation`；离开监视与 **不持 ChoiceOverlay** 约定同商店；候选真卡禁用 `GroundCardHitProxy`
 - `GameFlowOrchestrator.PresentInRoomSessionAfterEnterAsync`：`IsTavernPool` / `IsTavernFixItemPool` 走卡店场地板
 
 ### 特殊奖励房（#94 · ADR-0020 / ADR-0022）
 
 - Core：进 `TreasureReward` → 1 宝箱 + 3 随机道具（`ItemSourcePoolDefIds`）；进 `ItemReward` → 2 属性道具（40/40/20）+ 3 随机道具；pool=`reward.treasure` / `reward.item`；`SelectReward` **免费**进携带卡包并留房；`SkipHelpChoice` 离开放弃剩余（不加 skip 金）
 - 表现：`RewardBoardPresenter` 落格 1/2/3/7/9 真卡、8 离开；Avatar 硬切格 5；任意距离点击拿走；离开驻留 1s；悬停 tip=卡名+效果（无价格）
-- 真卡 `GroundCardMode`（**不** Fit）；货架 `SoftBlockOnly`，离开 `WalkDestination`；离开监视约定同商店（免费拿无需推金；**不持 ChoiceOverlay**；禁用 `GroundCardHitProxy`）
+- 真卡 `GroundCardMode`（预制体原生尺寸，#104）；货架 `SoftBlockOnly`，离开 `WalkDestination`；离开监视约定同商店（免费拿无需推金；**不持 ChoiceOverlay**；禁用 `GroundCardHitProxy`）
 - `GameFlowOrchestrator.PresentInRoomSessionAfterEnterAsync`：`IsSpecialRewardPool` 走特殊房场地板；道具奖励房选房图标仍缺（见 #83）
 
 ### Avatar 跳格（已落地 · ADR-0019 / #88 放宽）
@@ -234,7 +234,7 @@
 
 特殊选项卡种子（`ChoiceOption`）：卡店服务 `UpgradeItemStats`/`FixItem`/`ExpandItemCapacity`/`RefreshShop`；`Attack`/`Armor`/`Hp` 内容条目仍在（UI 入口 #90 已退役，去留交 M2）。
 
-局内选房走场地图标 + 驻留提交；`RoomChoicePresenter` 与 `RoomChoisePanel` 接线已删（#90）。`SelectorManagerSingleton` 只剩 Bounce；扇形 `BounceFanChoicePresenter` 仅服务宝箱开遗物。通关三选一已退役（ADR-0021）：清关进 `RoomChoice` 后由 `NodeSettlementReadiness` 唤醒主循环刷图标；`TryForceNodeVictory` 同路走 `TryCompleteClearedNode`。图标落格经 `RoomIconVisualFit` 压进格内（归一后压到 `0.85 × slotHitBoxSize` 的绝对世界值 `1.36 × 1.87`，与格位无关；该 Fit 将按 [ADR-0024](../adr/0024-board-placement-and-prefab-authored-size.md) 整体退役；#100 已把 `Assets/Prefabs/*图标.prefab` 根缩放校准进目标盒约 `2.55 × 3.7`，`房间选项标准模板` 根缩放保持 1）；`BoardBriefTipHitProxy` 配置 Walk 槽后单击转发 BoardWalk。房内货架/就地选项卡点选属 M2。
+局内选房走场地图标 + 驻留提交；`RoomChoicePresenter` 与 `RoomChoisePanel` 接线已删（#90）。`SelectorManagerSingleton` 只剩 Bounce；扇形 `BounceFanChoicePresenter` 仅服务宝箱开遗物。通关三选一已退役（ADR-0021）：清关进 `RoomChoice` 后由 `NodeSettlementReadiness` 唤醒主循环刷图标；`TryForceNodeVictory` 同路走 `TryCompleteClearedNode`。图标落格只对齐世界位置、保留预制体根缩放（#100 校准进目标盒约 `2.55 × 3.7`；#104 已删 `RoomIconVisualFit` / `slotHitBoxSize`）；`BoardBriefTipHitProxy` 配置 Walk 槽后单击转发 BoardWalk。房内货架/就地选项卡点选属 M2。
 
 ## ADR 不变量（摘要）
 
@@ -247,7 +247,7 @@
 - **触发可见因果** / **基础触发表现**：无命中帧、靠运动落地才成立的触发，Impact 须在条件可见之后；Triggered 卡牌触发须 `EffectTriggered` + 在场持有者 v1 缩放（ADR-0018）  
 - Windows Player 高回报率鼠标：`RIDEV_NOLEGACY` + 轮询注入 Input System；命中走 `PointerHitRouter`，禁 `OnMouse*`（ADR-0006）
 - 格位命中框为九宫格唯一命中权威、一格一认领者、命中恒成功、禁用启停 collider 表达规则（ADR-0023 / #101+#102）
-- **（待落地）** 落格对象不 SetParent 到格位锚点、尺寸权威在预制体、运行时不写 `localScale`（ADR-0024）
+- 落格对象不 SetParent 到格位锚点、尺寸权威在预制体、运行时不写 `localScale` 绝对值修正；mode/hover/hop 倍率为相对预制体基准且可还原（ADR-0024 / #104）
 
 ## 指针与命中（ADR-0006 / ADR-0023）
 
@@ -277,9 +277,9 @@
 
 ### 收敛方向（ADR-0023 / ADR-0024）
 
-**已落地（#101+#102+#103）**：格位命中框场景权威 + 场地面单一注册 + 表面优先级互异/同分告警 + 一格一认领（`SlotClaimRegistry`）+ 落格对象去 collider/Router + 退役 `BoardWalkSlotHitPolicy` / 软占关框 / Avatar 穿透 + 运行时停写格位 size/offset + 手牌拖拽落点交棒场地面 + 悬停简要解释与点击同源（认领者）+ 退役野生拾取（`TryPickCollider` / legacy `OnMouse*` / HUD 私有 z=0 换算）。
+**已落地（#101+#102+#103+#104）**：格位命中框场景权威 + 场地面单一注册 + 表面优先级互异/同分告警 + 一格一认领（`SlotClaimRegistry`）+ 落格对象去 collider/Router + 退役 `BoardWalkSlotHitPolicy` / 软占关框 / Avatar 穿透 + 运行时停写格位 size/offset + 手牌拖拽落点交棒场地面 + 悬停简要解释与点击同源（认领者）+ 退役野生拾取（`TryPickCollider` / legacy `OnMouse*` / HUD 私有 z=0 换算）+ 落格不 SetParent / 删 Fit / 删 `slotHitBoxSize` / 动效相对预制体基准。
 
-**尚未落地（#104–#105）**：删 Fit / `slotHitBoxSize`；结构护栏全集。实施拆票见 issue #99。
+**尚未落地（#105）**：结构护栏全集（落格父级 / 运行时缩放回流）。实施拆票见 issue #99。
 ## Core 表演契约与统一表现管线（#54–#62）
 
 - `NineGrid.Core.PresentationBeat`：`Impact` / `Settled` / `None`（**表演消费归属**，非仅卡面；升级路径注释在枚举旁）

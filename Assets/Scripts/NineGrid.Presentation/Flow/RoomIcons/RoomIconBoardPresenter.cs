@@ -125,7 +125,6 @@ namespace NineGrid.Flow.RoomIcons
                 var go = TryInstantiateIcon(path, geometry, slot, contentId);
                 if (go != null)
                 {
-                    FitSpawnedIcon(go, geometry);
                     AttachBriefTip(go, contentId, arch, slot, geometry);
                     mSpawned.Add(go);
                 }
@@ -137,14 +136,6 @@ namespace NineGrid.Flow.RoomIcons
             StartAvatarWatch();
             RoomIconOccupancySlotHits.Refresh(arch);
             return RoomIconOccupancy.Current.HasAny;
-        }
-
-        private static void FitSpawnedIcon(GameObject go, IGroundFieldGeometrySystem geometry)
-        {
-            var hitBox = geometry?.LayoutSettings != null
-                ? geometry.LayoutSettings.slotHitBoxSize
-                : new Vector2(1.6f, 2.2f);
-            RoomIconVisualFit.FitToTarget(go, RoomIconVisualFit.ResolveTargetSize(hitBox));
         }
 
         /// <summary>进房后：清图标 + Avatar 硬切格 5（无走回）。</summary>
@@ -354,28 +345,9 @@ namespace NineGrid.Flow.RoomIcons
                 return null;
             }
 
-            Transform parent = null;
-            Vector3 pos = Vector3.zero;
-            if (geometry != null)
-            {
-                var anchor = geometry.GetGroundAnchor(slot);
-                if (anchor != null)
-                {
-                    parent = anchor;
-                    pos = anchor.position;
-                }
-            }
-
-            var go = UnityEngine.Object.Instantiate(prefab, parent);
+            var go = UnityEngine.Object.Instantiate(prefab);
             go.name = "RoomIcon_" + contentId + "_@" + slot;
-            if (parent == null)
-            {
-                go.transform.position = pos;
-            }
-            else
-            {
-                go.transform.localPosition = Vector3.zero;
-            }
+            BoardSlotWorldPlacement.TryAlignToSlot(go.transform, geometry, slot);
 
             return go;
         }

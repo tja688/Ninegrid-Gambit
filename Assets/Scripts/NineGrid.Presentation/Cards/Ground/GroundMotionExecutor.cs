@@ -564,7 +564,11 @@ namespace NineGrid.Cards
             SlotFrameConvergence.SnapHome(avatar, anchor.position, "Ground.AvatarReveal", avatar.Uid);
             RefreshSlotHitCollider(slot);
 
-            var finalScale = CardDisplayModeVisuals.GetBaseLocalScale(CardDisplayMode.GroundCardMode);
+            var finalScale = CardDisplayModeVisuals.GetBaseLocalScale(
+                CardDisplayMode.GroundCardMode,
+                avatar.View != null
+                    ? (avatar.View.GetComponent<CardVisualDriver>()?.AuthoredBaseScale ?? Vector3.one)
+                    : Vector3.one);
             avatar.Transform.localScale = Vector3.zero;
 
             var duration = LayoutSettings != null ? LayoutSettings.avatarRevealDuration : 0.28f;

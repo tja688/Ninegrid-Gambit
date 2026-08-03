@@ -47,9 +47,9 @@ namespace NineGrid.Cards
                 return;
             }
 
-            var field = GroundFieldGeometryHook.FieldOrNull();
-            var size = field != null
-                ? field.LayoutSettings.slotHitBoxSize
+            var hand = CardEntityLifecycleHook.HandOrNull();
+            var size = hand != null
+                ? hand.LayoutSettings.handHitBoxSize
                 : new Vector2(1.6f, 2.2f);
 
             _collider.size = size;
