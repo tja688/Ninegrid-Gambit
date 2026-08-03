@@ -68,7 +68,8 @@ public static class RoomIconPrefabScaleCalibrator
                     }
 
                     var prefabScale = root.transform.localScale;
-                    // 临时单位根缩放，读「单位缩放世界包围盒」（与 RoomIconVisualFit 同语义）。
+                    // 临时单位根缩放，读 Sprite 合并世界包围盒后压进目标盒。
+                    // （运行时 RoomIconVisualFit 仍只取首个 SpriteRenderer；本校准器面向删 Fit 后的所见即所得。）
                     root.transform.localScale = Vector3.one;
                     var unitSize = MeasureCombinedSpriteSize(renderers);
                 var fit = ComputeUniformScale(unitSize, target);
