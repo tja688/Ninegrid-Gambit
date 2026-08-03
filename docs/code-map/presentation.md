@@ -233,7 +233,7 @@
 
 特殊选项卡种子（`ChoiceOption`）：卡店服务 `UpgradeItemStats`/`FixItem`/`ExpandItemCapacity`/`RefreshShop`；`Attack`/`Armor`/`Hp` 内容条目仍在（UI 入口 #90 已退役，去留交 M2）。
 
-局内选房走场地图标 + 驻留提交；`RoomChoicePresenter` 与 `RoomChoisePanel` 接线已删（#90）。`SelectorManagerSingleton` 只剩 Bounce；扇形 `BounceFanChoicePresenter` 仅服务宝箱开遗物。通关三选一已退役（ADR-0021）：清关进 `RoomChoice` 后由 `NodeSettlementReadiness` 唤醒主循环刷图标；`TryForceNodeVictory` 同路走 `TryCompleteClearedNode`。图标落格经 `RoomIconVisualFit` 压进格内（归一后压到 `0.85 × slotHitBoxSize` 的绝对世界值 `1.36 × 1.87`，与格位无关；该 Fit 将按 [ADR-0024](../adr/0024-board-placement-and-prefab-authored-size.md) 整体退役，前置作业是人工校准那批根 `localScale` 0.2–6 的图标预制体）；`BoardBriefTipHitProxy` 配置 Walk 槽后单击转发 BoardWalk。房内货架/就地选项卡点选属 M2。
+局内选房走场地图标 + 驻留提交；`RoomChoicePresenter` 与 `RoomChoisePanel` 接线已删（#90）。`SelectorManagerSingleton` 只剩 Bounce；扇形 `BounceFanChoicePresenter` 仅服务宝箱开遗物。通关三选一已退役（ADR-0021）：清关进 `RoomChoice` 后由 `NodeSettlementReadiness` 唤醒主循环刷图标；`TryForceNodeVictory` 同路走 `TryCompleteClearedNode`。图标落格经 `RoomIconVisualFit` 压进格内（归一后压到 `0.85 × slotHitBoxSize` 的绝对世界值 `1.36 × 1.87`，与格位无关；该 Fit 将按 [ADR-0024](../adr/0024-board-placement-and-prefab-authored-size.md) 整体退役；#100 已把 `Assets/Prefabs/*图标.prefab` 根缩放校准进目标盒约 `2.55 × 3.7`，`房间选项标准模板` 根缩放保持 1）；`BoardBriefTipHitProxy` 配置 Walk 槽后单击转发 BoardWalk。房内货架/就地选项卡点选属 M2。
 
 ## ADR 不变量（摘要）
 
