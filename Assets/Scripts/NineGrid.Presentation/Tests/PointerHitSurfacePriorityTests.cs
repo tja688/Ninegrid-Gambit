@@ -1,11 +1,16 @@
+using System.Text.RegularExpressions;
 using NineGrid.Flow;
 using NineGrid.Presentation.Platform;
 using NUnit.Framework;
 using UnityEngine;
+using UnityEngine.TestTools;
 
 namespace NineGrid.Presentation.Tests
 {
-    public sealed class PointerHitRouterTests
+    /// <summary>
+    /// #101 / ADR-0023：表面优先级显式互异；Router 同分报装配错误；覆层不再靠 TypePriority=100 抢。
+    /// </summary>
+    public sealed class PointerHitSurfacePriorityTests
     {
         private GameObject _routerGo;
         private GameObject _camGo;
@@ -60,103 +65,70 @@ namespace NineGrid.Presentation.Tests
         }
 
         [Test]
-        public void Tick_SynthesizesEnterExitAndDownEdges()
+        public void DeclaredSurfacePriorities_AreDistinct()
         {
-            var a = CreateTarget("A", new Vector2(0f, 0f), sortOrder: 1, typePriority: 1);
-            var b = CreateTarget("B", new Vector2(2f, 0f), sortOrder: 1, typePriority: 1);
-
-            _pointer.Screen = WorldToScreen(new Vector3(0f, 0f, 0f));
-            _router.Tick();
-            Assert.AreEqual(1, a.EnterCount);
-            Assert.AreEqual(0, a.ExitCount);
-            Assert.AreEqual(0, a.DownCount);
-
-            _pointer.Screen = WorldToScreen(new Vector3(2f, 0f, 0f));
-            _router.Tick();
-            Assert.AreEqual(1, a.ExitCount);
-            Assert.AreEqual(1, b.EnterCount);
-
-            _pointer.PressPrimaryThisFrame = true;
-            _router.Tick();
-            Assert.AreEqual(1, b.DownCount);
-            Assert.AreEqual(0, a.DownCount);
+            Assert.IsTrue(PointerHitSurfacePriorityValidator.AreDeclaredSurfacePrioritiesDistinct());
+            Assert.AreNotEqual(PointerHitSurfacePriorities.Field, PointerHitSurfacePriorities.Hand);
+            Assert.AreNotEqual(PointerHitSurfacePriorities.Field, PointerHitSurfacePriorities.Overlay);
+            Assert.AreNotEqual(PointerHitSurfacePriorities.Hand, PointerHitSurfacePriorities.Overlay);
         }
 
         [Test]
-        public void Tick_PrefersHigherSortThenTypePriority()
+        public void OverlayPriority_IsBelowFieldAndHand()
         {
-            CreateTarget("LowSort", new Vector2(0f, 0f), sortOrder: 1, typePriority: 99);
-            var highSort = CreateTarget("HighSort", new Vector2(0f, 0f), sortOrder: 5, typePriority: 1);
-
-            _pointer.Screen = WorldToScreen(new Vector3(0f, 0f, 0f));
-            _router.Tick();
-            Assert.AreEqual(1, highSort.EnterCount);
-
-            PointerHitRegistry.ClearForTests();
-            _router.ResetHoverStateForTests();
-
-            var lowType = CreateTarget("LowType", new Vector2(0f, 0f), sortOrder: 3, typePriority: 1);
-            var highType = CreateTarget("HighType", new Vector2(0f, 0f), sortOrder: 3, typePriority: 50);
-            _router.Tick();
-            Assert.AreEqual(1, highType.EnterCount);
-            Assert.AreEqual(0, lowType.EnterCount);
+            Assert.Less(PointerHitSurfacePriorities.Overlay, PointerHitSurfacePriorities.Field);
+            Assert.Less(PointerHitSurfacePriorities.Overlay, PointerHitSurfacePriorities.Hand);
         }
 
         [Test]
-        public void Tick_SecondaryOnRelicSlot_DiscardsEvenUnderHigherSortOverlay()
+        public void FindDuplicateScorePairs_ReportsSameSortAndType()
         {
-            var discarded = new System.Collections.Generic.List<string>();
-            RelicHudHook.TryDiscardRelic = defId =>
-            {
-                discarded.Add(defId);
-                return true;
-            };
-
-            try
-            {
-                var relicGo = new GameObject("RelicSlot");
-                relicGo.SetActive(false);
-                relicGo.transform.position = Vector3.zero;
-                var box = relicGo.AddComponent<BoxCollider2D>();
-                box.size = new Vector2(1.5f, 1.5f);
-                var proxy = relicGo.AddComponent<ContentIconSlotHitProxy>();
-                proxy.DefId = "relic.wood_shield";
-                relicGo.SetActive(true);
-                PointerHitRegistry.Register(proxy);
-                _targets.Add(relicGo);
-
-                CreateTarget("Dimmer", Vector2.zero, sortOrder: BattleUiDimmerOverlay.HitSort, typePriority: PointerHitSurfacePriorities.Overlay);
-
-                var registered = false;
-                for (var i = 0; i < PointerHitRegistry.All.Count; i++)
-                {
-                    if (ReferenceEquals(PointerHitRegistry.All[i], proxy))
-                    {
-                        registered = true;
-                        break;
-                    }
-                }
-
-                Assert.IsTrue(registered, "Relic proxy must be registered before secondary tick.");
-
-                _pointer.Screen = WorldToScreen(Vector3.zero);
-                _pointer.PressSecondaryThisFrame = true;
-                _router.Tick();
-
-                Assert.AreEqual(1, discarded.Count, "Expected discard under dimmer; registryCount=" + PointerHitRegistry.All.Count);
-                Assert.AreEqual("relic.wood_shield", discarded[0]);
-            }
-            finally
-            {
-                RelicHudHook.TryDiscardRelic = null;
-            }
+            var a = CreateTarget("A", Vector2.zero, sortOrder: 0, typePriority: 10);
+            var b = CreateTarget("B", Vector2.zero, sortOrder: 0, typePriority: 10);
+            var hits = PointerHitSurfacePriorityValidator.FindDuplicateScorePairs(
+                new IPointerHitTarget[] { a, b });
+            Assert.AreEqual(1, hits.Count);
+            Assert.AreEqual(0, hits[0].HitSortOrder);
+            Assert.AreEqual(10, hits[0].HitTypePriority);
         }
 
         [Test]
-        public void MitigationInfo_AndAdrMarker_Exist()
+        public void Tick_SameSortAndType_LogsAssemblyError()
         {
-            Assert.AreEqual("0006", WindowsHighPollingMouseMitigationInfo.AdrId);
-            Assert.AreEqual("UUM-142550", WindowsHighPollingMouseMitigationInfo.UnityIssueId);
+            CreateTarget("First", Vector2.zero, sortOrder: 3, typePriority: 7);
+            CreateTarget("Second", Vector2.zero, sortOrder: 3, typePriority: 7);
+
+            LogAssert.Expect(LogType.Error, new Regex("装配错误"));
+            _pointer.Screen = WorldToScreen(Vector3.zero);
+            _router.Tick();
+        }
+
+        [Test]
+        public void Tick_FieldBeatsOverlay_WhenBothOverlap()
+        {
+            var field = CreateTarget(
+                "Field",
+                Vector2.zero,
+                sortOrder: 0,
+                typePriority: PointerHitSurfacePriorities.Field);
+            var overlay = CreateTarget(
+                "Overlay",
+                Vector2.zero,
+                sortOrder: BattleUiDimmerOverlay.HitSort,
+                typePriority: PointerHitSurfacePriorities.Overlay);
+
+            _pointer.Screen = WorldToScreen(Vector3.zero);
+            _router.Tick();
+            Assert.AreEqual(1, field.EnterCount);
+            Assert.AreEqual(0, overlay.EnterCount);
+        }
+
+        [Test]
+        public void Overlay_DoesNotUseLegacyTypePriority100()
+        {
+            Assert.AreNotEqual(100, PointerHitSurfacePriorities.Overlay);
+            Assert.AreEqual(0, BattleUiDimmerOverlay.HitSort);
+            Assert.Less(BattleUiDimmerOverlay.HitSort, BattleUiDimmerOverlay.CloseHitSort);
         }
 
         private FakeHitTarget CreateTarget(string name, Vector2 pos, int sortOrder, int typePriority)

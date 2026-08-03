@@ -22,7 +22,7 @@
 | `InRoomBoardWiringStructuralTests.cs` | 结构护栏：`PlayRoomIconChoiceAsync` 进消费/特殊房后须调用 `PresentInRoomSessionAfterEnterAsync`；无独立 `PlayRoomEventAsync` 二次 Enter |
 | `WalkSandboxRetirementStructuralTests.cs` | 结构护栏（#91）：无 `WalkSandbox`/`StartWalkSandboxNode`；`\0` 流程测试通道（空技能/Sequential） |
 | `IntentIntakeStructuralTests.cs` | 结构护栏（#52）：输入路径须经 IntentIntake（含 RevealFace）；门禁/收口决策禁用壁钟；ADR-0004 accepted |
-| `PointerInputStructuralTests.cs` / `PointerHitRouterTests.cs` | ADR-0006：禁 HitProxy `OnMouse*`；指针缝 / HitRouter 行为；mitigation 标记 |
+| `PointerInputStructuralTests.cs` / `PointerHitRouterTests.cs` / `GroundFieldHitSurfaceTests.cs` / `PointerHitSurfacePriorityTests.cs` | ADR-0006 / #101：禁 HitProxy `OnMouse*`；场地面解格号；停写格位 size/offset；表面优先级互异与同分装配错误；mitigation 标记 |
 | `CardFaceBeatStructuralTests.cs` | 结构护栏（#55–#62）：禁石头爱好者卡面提前同步；攻击/反击命中帧须报 Impact 且不得 Sync/SpawnDamagePopups；PresentStep 通道前 FlushUpdateFaceUp、Idle 门控、ack 前 FlushBeats；战斗 Present `flushFaceUpBeforeBegin: false`；Handler 禁 Forget PlayFlipAsync、须 Enqueue Coordinator；用道具 Present 禁 CommitAllSpawnedCards、须 Vacate 前报 Impact；探索/用道具批次投影禁写卡面数值；禁 JSON stats 盖写；首次 ApplyToManagedCard 禁 TryRead；Handler 消费 Spawn/Deal/Avatar/OfferReward；Bounce 禁 `clearCombatStats` 数值旁路；CommitPresentation 生产调用方白名单（含 `CardFaceFlipBeatHandler`）；MarkFieldDead 禁直置零；ApplyKill 取 RemainingHp；底盘数值 Setter 非公开；禁 `PresentEffectTriggersFromEventLog` / `SpawnDamagePopups` / `PresentGoldGainsFromEventLog`；组合根注册飘字/FX/金币/Avatar HUD/翻牌朝向处理器并接线 FlushUpdateFaceUp；排期器禁 SyncFromCore；ADR-0005/0007 交叉引用；排期器多 `IBattleBeatHandler` |
 | `FlipPlaybackCoordinatorTests.cs` | ADR-0016：串行入队不丢翻；PresentStep FaceUp 未 Idle 前不 Begin；战斗延后 FaceUp 不前置 Flush；FlushUpdateFaceUp 只消费 FaceUp |
 
@@ -32,10 +32,10 @@
 
 | 计划护栏 | 保护什么 |
 |----------|----------|
-| 落格 collider 护栏 | 落格对象不得自建 `Collider2D`；运行时不得写格位命中框 `size` / `offset`（ADR-0023） |
-| 认领唯一性 | 一格一认领者；重复认领断言失败；Avatar 与运动中对象不认领（ADR-0023） |
-| 表面优先级 | 注册表面优先级显式且互不相同，同分即失败（ADR-0023） |
-| 命中恒成功 | 无「按规则禁用命中框」的代码路径；`BoardWalkSlotHitPolicy` / 软占关 collider / `int.MinValue` 穿透不得回流（ADR-0023） |
+| 落格 collider 护栏 | 落格对象不得自建 `Collider2D`（ADR-0023 / #102）；**已部分落地**：运行时不得写格位命中框 `size` / `offset`（#101 结构测） |
+| 认领唯一性 | 一格一认领者；重复认领断言失败；Avatar 与运动中对象不认领（ADR-0023 / #102） |
+| 表面优先级 | **已落地（#101）**：`PointerHitSurfacePriorities` 互异；Router 同分 Error；`PointerHitSurfacePriorityTests` |
+| 命中恒成功 | 无「按规则禁用命中框」的代码路径；`BoardWalkSlotHitPolicy` / 软占关 collider / `int.MinValue` 穿透不得回流（ADR-0023 / #102） |
 | 落格父级 | 无任何代码把对象 parent 到 `GroundAnchors` 之下（ADR-0024） |
 | 运行时缩放 | 落格路径不得写 `localScale` 绝对值；无 `RoomIconVisualFit` 回流（ADR-0024） |
 | 野生拾取路径 | 无 `WorldPointerUtility.TryPickCollider` z=0 拾取、无 legacy `OnMouse*`、HUD 不自算 `ScreenToWorldPoint`（ADR-0023 / ADR-0006） |

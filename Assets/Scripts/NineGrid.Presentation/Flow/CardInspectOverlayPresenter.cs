@@ -621,7 +621,10 @@ namespace NineGrid.Flow
                 proxy = close.gameObject.AddComponent<UiOverlayHitProxy>();
             }
 
-            proxy.Configure(UiOverlayHitAction.CloseCardInspect, BattleUiDimmerOverlay.CloseHitSort, 110);
+            proxy.Configure(
+                UiOverlayHitAction.CloseCardInspect,
+                BattleUiDimmerOverlay.CloseHitSort,
+                PointerHitSurfacePriorities.Overlay);
         }
 
         /// <summary>
@@ -663,11 +666,11 @@ namespace NineGrid.Flow
                 proxy = panel.AddComponent<UiOverlayHitProxy>();
             }
 
-            // 低于关闭钮 CloseHitSort，高于半黑屏 HitSort，这样点在 BG 图上关面板，点关闭钮仍优先。
+            // 覆层内：低于关闭钮 CloseHitSort，高于半黑屏 HitSort；表面优先级相同（Overlay）。
             proxy.Configure(
                 UiOverlayHitAction.CloseCardInspect,
                 BattleUiDimmerOverlay.HitSort + 1,
-                105);
+                PointerHitSurfacePriorities.Overlay);
         }
 
         private static TMP_Text FindTmp(Transform root, string name)

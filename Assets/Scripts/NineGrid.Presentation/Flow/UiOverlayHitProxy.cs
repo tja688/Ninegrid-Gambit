@@ -17,7 +17,7 @@ namespace NineGrid.Flow
     {
         [SerializeField] private UiOverlayHitAction action = UiOverlayHitAction.Swallow;
         [SerializeField] private int hitSortOrder = BattleUiDimmerOverlay.HitSort;
-        [SerializeField] private int hitTypePriority = 100;
+        [SerializeField] private int hitTypePriority = PointerHitSurfacePriorities.Overlay;
 
         private BoxCollider2D _collider;
 

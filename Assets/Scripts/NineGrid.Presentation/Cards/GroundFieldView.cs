@@ -30,7 +30,8 @@ namespace NineGrid.Cards
         [SerializeField] private SkeletonDeckPresentationManager skeletonDeckPresentation;
 
         private readonly List<Transform> _groundAnchors = new();
-        private readonly GroundSlotHitProxy[] _slotHitProxies = new GroundSlotHitProxy[GroundSlotTopology.MaxSlot + 1];
+        private readonly BoxCollider2D[] _slotHitColliders = new BoxCollider2D[GroundSlotTopology.MaxSlot + 1];
+        private GroundFieldHitSurface _fieldHitSurface;
         private GroundFieldGeometrySystem _owner;
 
         public event Action<int> EmptySlotClicked;
@@ -126,32 +127,58 @@ namespace NineGrid.Cards
                     continue;
                 }
 
-                var proxy = anchor.GetComponent<GroundSlotHitProxy>();
-                if (proxy == null)
+                var collider = anchor.GetComponent<BoxCollider2D>();
+                if (collider == null)
                 {
-                    var collider = anchor.GetComponent<BoxCollider2D>();
-                    if (collider == null)
-                    {
-                        collider = anchor.gameObject.AddComponent<BoxCollider2D>();
-                    }
-
-                    proxy = anchor.gameObject.AddComponent<GroundSlotHitProxy>();
+                    collider = anchor.gameObject.AddComponent<BoxCollider2D>();
                 }
 
-                proxy.Configure(slot, layoutSettings.slotHitBoxSize);
-                _slotHitProxies[slot] = proxy;
+                // 场景是尺寸权威（ADR-0023）：只挂接 / enable，永不写 size / offset。
+                collider.isTrigger = false;
+                _slotHitColliders[slot] = collider;
+
+                // 清掉遗留逐格 Router 注册壳，避免与场地面双注册。
+                var legacy = anchor.GetComponent<GroundSlotHitProxy>();
+                if (legacy != null)
+                {
+                    if (Application.isPlaying)
+                    {
+                        Destroy(legacy);
+                    }
+                    else
+                    {
+                        DestroyImmediate(legacy);
+                    }
+                }
             }
+
+            _fieldHitSurface = GetComponent<GroundFieldHitSurface>();
+            if (_fieldHitSurface == null)
+            {
+                _fieldHitSurface = gameObject.AddComponent<GroundFieldHitSurface>();
+            }
+
+            _fieldHitSurface.BindSlotColliders(_slotHitColliders);
         }
 
         public void RefreshSlotHit(int slot, bool hitEnabled)
         {
-            var proxy = _slotHitProxies[slot];
-            if (proxy == null)
+            if (!GroundSlotTopology.IsValidSlot(slot))
             {
                 return;
             }
 
-            proxy.SetHitEnabled(hitEnabled);
+            var collider = _slotHitColliders[slot];
+            if (collider == null && TryGetAnchor(slot, out var anchor))
+            {
+                collider = anchor.GetComponent<BoxCollider2D>();
+                _slotHitColliders[slot] = collider;
+            }
+
+            if (collider != null)
+            {
+                collider.enabled = hitEnabled;
+            }
         }
 
         public void RefreshAllSlotHits(Func<int, bool> hitEnabledForSlot)

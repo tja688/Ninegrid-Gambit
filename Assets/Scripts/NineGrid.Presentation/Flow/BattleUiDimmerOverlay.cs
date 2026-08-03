@@ -10,9 +10,13 @@ namespace NineGrid.Flow
     [DisallowMultipleComponent]
     public sealed class BattleUiDimmerOverlay : MonoBehaviour
     {
-        public const int HitSort = 100000;
-        public const int CloseHitSort = 100001;
-        private const int TypePriority = 100;
+        /// <summary>覆层内排序：半黑屏底。表面优先级见 <see cref="PointerHitSurfacePriorities.Overlay"/>。</summary>
+        public const int HitSort = 0;
+
+        /// <summary>覆层内排序：关闭钮高于半黑屏 / 面板底。</summary>
+        public const int CloseHitSort = 2;
+
+        private const int TypePriority = PointerHitSurfacePriorities.Overlay;
 
         private static BattleUiDimmerOverlay s_instance;
         private static int s_refCount;

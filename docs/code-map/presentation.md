@@ -146,7 +146,7 @@
 - 编辑器：Room 条目「格位」字段；JSON `boardSlot`
 - 选房：`RoomIconBoardPresenter` + 驻留提交（#88）；旧浮层 `RoomChoicePresenter` / `RoomChoisePanel` 接线已退役（#90）
 - 悬停：Spawn 时挂 `BoardBriefTipHitProxy`（#89）；战斗真卡不挂
-- 软占变更后 `RoomIconOccupancySlotHits.Refresh` 同步空槽 Hit（软占格禁 `GroundSlotHitProxy`）
+- 软占变更后 `RoomIconOccupancySlotHits.Refresh` 同步空槽 Hit（软占格禁用格位 `BoxCollider2D`，场地面解格时 miss；#102 退役规则型关框）
 
 ### 简要解释文字框与楼层提示（#89 · ADR-0020）
 
@@ -254,35 +254,33 @@
 - **键盘**：`Flow/KeyboardUtility` —— New Input only 下替代 `Input.GetKey*`（DevTest 热键 / UITestBootstrap / Escape Esc 跳过）
 - **命中**：`Flow/PointerHitRouter`（`RuntimeInitializeOnLoad` 自举；`-40`）轮询 `PointerHitRegistry`；**手牌按下优先** `CardHandManagerSingleton.TryBeginDragFromHoveredCard`（Hand `-50` 先刷 hover 槽位带）；**右键**开 `CardInspectOverlayPresenter`（再右键或关闭钮关）
 - **局内 UI 叠层**：`BattleUiDimmerOverlay` + `UiOverlayHitProxy`（半黑屏吞点 / 关闭钮）；`PresentationInputGates.BattleUiOverlayActive` 只读投影
-- **代理**：`GroundCardHitProxy` / `GroundSlotHitProxy` / `HandCardHitProxy` / `BoardSelectParkedCardHitProxy` 实现 `IPointerHitTarget`，**无** `OnMouse*`；命中按目标平面 Z 做 Overlap，避免与手牌深度不一致漏检
+- **代理**：`GroundFieldHitSurface`（场地面单一注册，按九格命中框解格号）/ `GroundCardHitProxy` / `HandCardHitProxy` / `BoardSelectParkedCardHitProxy` 实现 `IPointerHitTarget`，**无** `OnMouse*`；`GroundSlotHitProxy` 已降为遗留壳（不注册 Router）；命中按目标平面 Z 做 Overlap，场地面走 `IMultiColliderPointerHitTarget`
 - **Win Player mitigation**：`Platform/WindowsHighPollingMouseMitigation`（`#if UNITY_STANDALONE_WIN && !UNITY_EDITOR`）
 - **工程设置**：`activeInputHandler = 1`（New Input System only）
 - **专项回归**：125 / 1000 / 4000+ Hz × 窗口/无边框/全屏；hover、空槽、点怪、手牌拖放、BoardSelect、BounceFan、右键详述
 
-### 命中权威盘点（现状 8 套）
+### 命中权威盘点（现状）
 
 | 权威 | 机制 | 服务 |
 |------|------|------|
-| `PointerHitRouter` + `PointerHitRegistry` | 按各目标 collider 所在平面 `ScreenToWorld` + `Collider2D.OverlapPoint`，取 `HitSortOrder` → `HitTypePriority` 最大者；**同分保留先注册者** | 棋盘 / 手牌 / 覆层主路径 |
+| `PointerHitRouter` + `PointerHitRegistry` | 按目标平面 `ScreenToWorld` + Overlap（场地面为九框）；`HitSortOrder` → `HitTypePriority`；**同分报装配错误** | 棋盘 / 手牌 / 覆层主路径 |
+| `PointerHitSurfacePriorities` | 场地面=28 / 手牌带=20 / 覆层=10，显式互异；覆层不再用 TypePriority=100 + HitSort=100000 抢几何 | 表面仲裁 |
+| `GroundFieldHitSurface` | 单一场地面；场景格位 `BoxCollider2D`（本地 1.625×2.0625，锚点×2 → 世界 3.25×4.125）为命中权威；运行时**不写** size/offset | 空槽 / 格号解析 |
 | `CardHandManagerSingleton` 布局带 | `handHitBoxSize` AABB 数学，不用 collider；`DefaultExecutionOrder(-50)` | 手牌 hover + 起拖 |
-| `CardHandManagerSingleton` 拖拽 | `Physics2D.OverlapPointAll` | 拖拽落点（是否压着地面卡 / 解析目标格） |
-| `WorldPointerUtility.TryPickCollider` | 自算 `ScreenToWorld` 并**强制 z = 0** + OverlapPoint | 主菜单 StartRun / Quit |
+| `CardHandManagerSingleton` 拖拽 | `Physics2D.OverlapPointAll`（#103 交棒场地面） | 拖拽落点 |
+| `WorldPointerUtility.TryPickCollider` | 强制 z=0 OverlapPoint（#103 退役） | 主菜单 StartRun / Quit |
 | `BounceFanChoicePresenter` | 自算 OverlapPoint，倒序遍历 entries | 战斗内扇形三选一 |
-| `PlayerInfoHudPresenter` | 私有 `ScreenToWorldPoint(depth = 0)` + OverlapPoint | 血条上限揭示 |
-| legacy `OnMouseEnter` / `OnMouseExit` | Unity 消息 | `StartRunHoverScale`；**NOLEGACY 下 Player 内不触发**（假实现） |
-| `Physics2D.GetRayIntersection` | — | `Arts/` 下 demo，不属表现层 |
+| `PlayerInfoHudPresenter` | 私有 ScreenToWorldPoint（#103 退役） | 血条上限揭示 |
+| legacy `OnMouseEnter` / `OnMouseExit` | Unity 消息 | `StartRunHoverScale`；NOLEGACY 下 Player 内不触发 |
+| `Physics2D.GetRayIntersection` | — | `Arts/` demo，不属表现层 |
 
-其中第 4、6 套与 Router 的屏幕→世界换算不一致（前者锁 z = 0，后者按各 collider 平面），同一屏幕点可落在不同世界坐标。
+板面参照：底板 Sliced `1.9 × 2.45` × 2 = 世界 `3.8 × 4.9`；格距 `5 × 5.5`；`GroundAnchors/slotN` 自带 `BoxCollider2D` 本地 `1.625 × 2.0625`（已启用）。
 
-collider 尺寸现状：`GroundSlotHitProxy` / `GroundCardHitProxy` / `HandCardHitProxy` / 各 `Board*HitProxy` 都把 `slotHitBoxSize (1.6, 2.2)` 写进 `BoxCollider2D.size`（**本地**单位）。卡与手牌父级缩放为 1（世界 `1.6 × 2.2`），格位锚点父级缩放为 2（世界 `3.2 × 4.4`）——同一字段在两处相差一倍。
+### 收敛方向（ADR-0023 / ADR-0024，#101 已落地部分）
 
-房间图标再叠 `RoomIconVisualFit` 的 fitScale：世界 collider = `(3.2S, 4.4S)`，`S = min(1.36/Bx, 1.87/By)` 由源图世界包围盒反推。实测跨度 —— 温泉 / 常规战斗 `3.87 × 5.32`、属性提升 `1.39 × 1.92`、牌店 `0.32 × 0.44`、宝箱 `0.18 × 0.25`，**相差 21 倍**，而 Fit 后视觉一律约 1.36 宽。软占格又禁用大号空槽 collider，只剩这个小框可打。左右差异只与该格图标的源图像素尺寸相关（`boardSlot` 把温泉钉格 1、宝箱 / 牌店钉格 3），**与注册顺序平局无关**——两格 AABB 相距 6.14 世界单位，实测不重叠。
+**已落地（#101）**：格位命中框场景权威 + 场地面单一注册 + 表面优先级互异/同分告警 + 覆层不靠 TypePriority=100 抢 + 运行时停写格位 size/offset。
 
-板面参照：底板 Sliced `1.9 × 2.45` × 2 = 世界 `3.8 × 4.9`；格距 `5 × 5.5`；slot 自带 `BoxCollider2D` 本地 `1.625 × 2.0625`（世界 `3.25 × 4.125`，磁盘上仍 `enabled: 0`）。卡牌底盘预制体无 SpriteRenderer，卡面运行时挂 `FacePivot`。
-
-### 收敛方向（ADR-0023 / ADR-0024，**尚未落地**）
-
-决策已定、代码未改，勿把下表当作既成事实：格位命中框（场景权威、常开、落格对象不自带 collider）+ 一格一认领者；棋盘塌成单一「场地面」表面；表面优先级只管几何、权限归 ADR-0004 所有权轴；手牌拖拽落点交棒场地面；退役第 4 / 6 / 7 套野生拾取路径。实施拆票见 issue #99。
+**尚未落地（#102–#105）**：一格一认领者；落格对象去 collider；退役软占关 collider / Avatar 穿透；手牌拖拽落点交棒；野生拾取路径退役；删 Fit / `slotHitBoxSize`；结构护栏全集。实施拆票见 issue #99。
 ## Core 表演契约与统一表现管线（#54–#62）
 
 - `NineGrid.Core.PresentationBeat`：`Impact` / `Settled` / `None`（**表演消费归属**，非仅卡面；升级路径注释在枚举旁）

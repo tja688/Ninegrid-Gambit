@@ -14,6 +14,7 @@ namespace NineGrid.Presentation.Tests
         private static readonly string[] HitProxyFiles =
         {
             "Cards/GroundCardHitProxy.cs",
+            "Cards/GroundFieldHitSurface.cs",
             "Cards/GroundSlotHitProxy.cs",
             "Cards/HandCardHitProxy.cs",
             "Cards/BoardSelectParkedCardHitProxy.cs",
@@ -47,11 +48,40 @@ namespace NineGrid.Presentation.Tests
         }
 
         [Test]
+        public void EnsureHitProxies_Source_DoesNotWriteSlotColliderSizeOrOffset()
+        {
+            var root = Path.GetFullPath(Path.Combine(Application.dataPath, "Scripts", "NineGrid.Presentation"));
+            var view = File.ReadAllText(Path.Combine(root, "Cards", "GroundFieldView.cs"));
+            var ensure = Regex.Match(
+                view,
+                @"public void EnsureHitProxies\(\)\s*\{[\s\S]*?\n        public void RefreshSlotHit");
+            Assert.IsTrue(ensure.Success, "找不到 EnsureHitProxies");
+            Assert.IsFalse(
+                Regex.IsMatch(ensure.Value, @"\.size\s*="),
+                "EnsureHitProxies 不得写格位命中框 size");
+            Assert.IsFalse(
+                Regex.IsMatch(ensure.Value, @"\.offset\s*="),
+                "EnsureHitProxies 不得写格位命中框 offset");
+            Assert.IsFalse(
+                ensure.Value.Contains("slotHitBoxSize"),
+                "EnsureHitProxies 不得再用 slotHitBoxSize 覆盖场景权威");
+
+            var surface = File.ReadAllText(Path.Combine(root, "Cards", "GroundFieldHitSurface.cs"));
+            Assert.IsFalse(
+                Regex.IsMatch(surface, @"\.size\s*="),
+                "GroundFieldHitSurface 不得写 collider size");
+            Assert.IsFalse(
+                Regex.IsMatch(surface, @"\.offset\s*="),
+                "GroundFieldHitSurface 不得写 collider offset");
+        }
+
+        [Test]
         public void PointerSeam_AndMitigationMarker_Exist()
         {
             Assert.IsNotNull(typeof(NineGrid.Flow.WorldPointerUtility));
             Assert.IsNotNull(typeof(NineGrid.Flow.PointerHitRouter));
             Assert.IsNotNull(typeof(NineGrid.Flow.IPointerHitTarget));
+            Assert.IsNotNull(typeof(NineGrid.Cards.GroundFieldHitSurface));
             Assert.AreEqual("0006", WindowsHighPollingMouseMitigationInfo.AdrId);
         }
     }

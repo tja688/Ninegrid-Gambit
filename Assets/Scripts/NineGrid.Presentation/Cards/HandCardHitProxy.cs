@@ -13,8 +13,6 @@ namespace NineGrid.Cards
     [RequireComponent(typeof(CardVisualDriver))]
     public sealed class HandCardHitProxy : MonoBehaviour, IPointerHitTarget
     {
-        private const int TypePriority = 20;
-
         private BoxCollider2D _collider;
         private CardVisualDriver _driver;
 
@@ -22,7 +20,7 @@ namespace NineGrid.Cards
 
         public int HitSortOrder => ResolveHitSortOrder();
 
-        public int HitTypePriority => TypePriority;
+        public int HitTypePriority => PointerHitSurfacePriorities.Hand;
 
         private void Awake()
         {

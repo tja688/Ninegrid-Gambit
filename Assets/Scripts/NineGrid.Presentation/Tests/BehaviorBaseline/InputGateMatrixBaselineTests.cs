@@ -195,6 +195,7 @@ namespace NineGrid.Presentation.Tests.BehaviorBaseline
             {
                 Path.Combine(root, "Systems", "IntentIntakeSystem.cs"),
                 Path.Combine(root, "Systems", "PresentationInputStateSystem.cs"),
+                Path.Combine(root, "Cards", "GroundFieldHitSurface.cs"),
                 Path.Combine(root, "Cards", "GroundSlotHitProxy.cs"),
             };
 

@@ -74,10 +74,19 @@ namespace NineGrid.Flow
                 return;
             }
 
-            // 局内 UI 叠层（半黑屏）期间不拖手牌、不向场面透传。
+            // 局内 UI 叠层（半黑屏）期间不拖手牌。
+            // 覆层不再靠 HitSort/TypePriority 抢几何（ADR-0023）；场地可胜出后由门禁拒。
+            // 详述关闭：若胜出者不是覆层表面，显式关面板（旧 Swallow 抢点职责）。
             if (BattleUiDimmerOverlay.IsActive || CardInspectOverlayPresenter.IsOpen)
             {
                 best?.HandlePointerDown();
+                if (CardInspectOverlayPresenter.IsOpen
+                    && (best == null
+                        || best.HitTypePriority != PointerHitSurfacePriorities.Overlay))
+                {
+                    CardInspectOverlayPresenter.CloseIfOpen();
+                }
+
                 return;
             }
 
@@ -220,29 +229,12 @@ namespace NineGrid.Flow
             IPointerHitTarget best = null;
             var bestSort = int.MinValue;
             var bestType = int.MinValue;
+            var tieWarned = false;
             var targets = PointerHitRegistry.All;
             for (var i = 0; i < targets.Count; i++)
             {
                 var target = targets[i];
-                if (target == null)
-                {
-                    continue;
-                }
-
-                var collider = target.HitCollider;
-                if (collider == null || !collider.enabled || !collider.gameObject.activeInHierarchy)
-                {
-                    continue;
-                }
-
-                // 按目标所在平面还原世界坐标，避免与手牌/场地 Z 不一致导致 Overlap 漏检。
-                var planeZ = collider.transform.position.z;
-                if (!TryScreenToWorldOnPlane(camera, screen, planeZ, out var world))
-                {
-                    continue;
-                }
-
-                if (!collider.OverlapPoint(world))
+                if (target == null || !TryOverlapTarget(target, camera, screen))
                 {
                     continue;
                 }
@@ -256,10 +248,59 @@ namespace NineGrid.Flow
                     best = target;
                     bestSort = sort;
                     bestType = type;
+                    continue;
+                }
+
+                // ADR-0023：同分属装配错误，不得静默按注册顺序决胜。
+                if (!tieWarned && sort == bestSort && type == bestType)
+                {
+                    tieWarned = true;
+                    Debug.LogError(
+                        "[PointerHitRouter] 表面优先级同分（装配错误）：sort="
+                        + sort
+                        + " type="
+                        + type
+                        + " — "
+                        + DescribeTarget(best)
+                        + " ↔ "
+                        + DescribeTarget(target));
                 }
             }
 
             return best;
+        }
+
+        private static bool TryOverlapTarget(IPointerHitTarget target, Camera camera, Vector2 screen)
+        {
+            if (target is IMultiColliderPointerHitTarget multi)
+            {
+                return multi.TryOverlapScreenPoint(camera, screen, out _);
+            }
+
+            var collider = target.HitCollider;
+            if (collider == null || !collider.enabled || !collider.gameObject.activeInHierarchy)
+            {
+                return false;
+            }
+
+            // 按目标所在平面还原世界坐标，避免与手牌/场地 Z 不一致导致 Overlap 漏检。
+            var planeZ = collider.transform.position.z;
+            if (!TryScreenToWorldOnPlane(camera, screen, planeZ, out var world))
+            {
+                return false;
+            }
+
+            return collider.OverlapPoint(world);
+        }
+
+        private static string DescribeTarget(IPointerHitTarget target)
+        {
+            if (target is Object obj && obj != null)
+            {
+                return obj.name;
+            }
+
+            return target != null ? target.GetType().Name : "null";
         }
 
         private static bool TryScreenToWorldOnPlane(
