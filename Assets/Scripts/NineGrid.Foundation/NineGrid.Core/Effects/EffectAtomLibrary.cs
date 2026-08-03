@@ -3644,6 +3644,19 @@ namespace NineGrid.Core.Effects
         }
     }
 
+    [EffectAtom("MarkLeaveTrapBroken", EffectAtomKind.Action)]
+    public sealed class MarkLeaveTrapBrokenEffectAction : IAction
+    {
+        public void Configure(EffectDslNode config)
+        {
+        }
+
+        public IReadOnlyList<GameAction> BuildActions(EffectRuntimeContext context, IReadOnlyList<int> targets)
+        {
+            return new GameAction[] { new MarkLeaveTrapBrokenAction() };
+        }
+    }
+
     [EffectAtom("DeactivateSelfEffect", EffectAtomKind.Action)]
     public sealed class DeactivateSelfEffectActionAtom : IAction
     {

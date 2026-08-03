@@ -1422,5 +1422,21 @@
   "requires_json": "[\"HasOwnerEntity\", \"ActivatedByUse\", \"CardZoneTriggerable\"]",
   "conditions_json": "[]",
   "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnSelfUsed\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"ModifyBaseStat\",\"stat\":\"Attack\",\"delta\":\"{{delta}}\",\"reason\":\"{{reason}}\"}}"
+ },
+ {
+  "id": "tpl.trap.door",
+  "state": "Implemented",
+  "design_text": "[场上]门：只承受交战中玩家出手伤害；其它伤害与直接移除无效",
+  "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"RuleModifier\",\"ruleModifier\":{\"rule\":\"DoorProtection\",\"target\":\"Self\",\"op\":\"Override\",\"value\":1,\"layer\":\"Persistent\",\"scope\":\"Permanent\"}}"
+ },
+ {
+  "id": "tpl.trap.leave",
+  "state": "Implemented",
+  "design_text": "[场上]离开：击破本卡时置清关向标志",
+  "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnFatalDamage\",\"target\":\"Self\"},\"target\":{\"atom\":\"Self\"},\"action\":{\"atom\":\"MarkLeaveTrapBroken\"}}"
  }
 ]

@@ -1430,4 +1430,16 @@ namespace NineGrid.Core
             return result;
         }
     }
+
+    /// <summary>#111 / ADR-0026：离开技能 — 置清关向标志（全局 IsNodeCleared 改写见 #113）。</summary>
+    public sealed class MarkLeaveTrapBrokenAction : GameAction
+    {
+        public override string ActionName { get { return "MarkLeaveTrapBroken"; } }
+
+        public override GameActionResult Apply(GameActionContext context)
+        {
+            context.GetModel<BattleContextModel>().MarkLeaveTrapBroken();
+            return GameActionResult.Empty;
+        }
+    }
 }

@@ -64,6 +64,14 @@ namespace NineGrid.Core
             var statContext = statSystem.CreateContext(target)
                 .WithActionSource(ActionName, SourceDefId, Cause)
                 .WithActor(ActorUid);
+
+            // ADR-0026 / #111：门 — 仅交战中玩家出手可伤。
+            if (statSystem.EvaluateRule(RuleId.DoorProtection, 0f, statContext) > 0f
+                && !IsEngagementPlayerHit(context, ActorUid))
+            {
+                return GameActionResult.Empty;
+            }
+
             var baseDamage = Math.Max(0, Amount);
             var multipliedDamage = Math.Max(0, (int)Math.Round(statSystem.EvaluateRule(RuleId.DamageMultiplier, baseDamage, statContext)));
             var flatDamage = baseDamage > 0 ? (int)Math.Round(statSystem.EvaluateRule(RuleId.DamageFlatDelta, 0f, statContext)) : 0;
@@ -188,6 +196,18 @@ namespace NineGrid.Core
             return scope != null && scope.IsEngagementActive
                 ? sPostTriggersInEngagement
                 : sPostTriggersOutsideEngagement;
+        }
+
+        private static bool IsEngagementPlayerHit(GameActionContext context, int actorUid)
+        {
+            var scope = context.GetSystem<IBattleScopeSystem>();
+            if (scope == null || !scope.IsEngagementActive || actorUid == 0)
+            {
+                return false;
+            }
+
+            var board = context.GetModel<BoardModel>();
+            return board != null && actorUid == board.AvatarUid.Value;
         }
     }
 
@@ -452,6 +472,14 @@ namespace NineGrid.Core
             var board = context.GetModel<BoardModel>();
             var deck = context.GetModel<DeckModel>();
             var card = registry.Get(CardUid);
+
+            // ADR-0026 / #111：门 — 直接移除/放逐无效（Kill 不经此 Action）。
+            var statSystem = context.GetSystem<IStatSystem>();
+            if (statSystem.EvaluateRule(RuleId.DoorProtection, 0f, statSystem.CreateContext(card)) > 0f)
+            {
+                return GameActionResult.Empty;
+            }
+
             var fromSlot = card.Slot.Value;
             var removedAttack = (int)Math.Round(card.Stats.GetBase(StatId.Attack));
             var removedArmor = StatArmorUtility.GetCurrentArmor(card);

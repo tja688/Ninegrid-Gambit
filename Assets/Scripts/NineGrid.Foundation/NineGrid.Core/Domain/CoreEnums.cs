@@ -77,7 +77,12 @@ namespace NineGrid.Core
         /// <summary>神圣决斗：&gt;0 标记本卡为决斗持有者（玩家交战记忆挂玩家侧状态）。</summary>
         HolyDuel,
         /// <summary>天涯若比邻：&gt;0 时场上怪物彼此视为正交相邻（仅技能邻接；不影响攻击距离/齐射）。</summary>
-        GlobalMonsterAdjacency
+        GlobalMonsterAdjacency,
+        /// <summary>
+        /// 门（ADR-0026）：&gt;0 时仅交战中玩家出手可造成伤害；且直接 <c>RemoveCard</c> 无效。
+        /// 不挡洗回卡组 / 翻面；Kill 路径仍可经致命伤害走击破。
+        /// </summary>
+        DoorProtection
     }
 
     public enum BoardMarkId

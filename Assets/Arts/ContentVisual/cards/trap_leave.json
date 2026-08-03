@@ -1,0 +1,110 @@
+{
+    "schemaVersion": 2,
+    "contentId": "trap.leave",
+    "kind": "Trap",
+    "deckId": "deck.trap",
+    "role": "",
+    "displayName": "离开机关",
+    "designSlotName": "",
+    "description": "[场上]门：只承受交战中玩家出手伤害；其它伤害与直接移除无效。[场上]离开：击破本卡时清关",
+    "faceIntro": "",
+    "attackPattern": "无",
+    "gold": 0,
+    "stats": {
+        "hp": 6,
+        "armor": 0,
+        "attack": 0,
+        "action": 0,
+        "recovery": 0
+    },
+    "sprites": {
+        "mainIcon": "Assets/Resources/ContentArt/Multiple/icons_full_32.png#icons_full_32_397",
+        "faceBackground": "",
+        "cardFrame": "",
+        "banner": "",
+        "backBorder": "",
+        "backShirt": "",
+        "backLogo": ""
+    },
+    "mainVisual": {
+        "offsetX": 0.0,
+        "offsetY": 0.0,
+        "uniformScale": 1.0
+    },
+    "animations": {
+        "defaultFps": 8.0,
+        "slots": [
+            {
+                "id": "idle",
+                "sourceType": "none",
+                "path": "",
+                "offsetX": 0.0,
+                "offsetY": 0.0
+            },
+            {
+                "id": "attack",
+                "sourceType": "none",
+                "path": "",
+                "offsetX": 0.0,
+                "offsetY": 0.0
+            },
+            {
+                "id": "hurt",
+                "sourceType": "none",
+                "path": "",
+                "offsetX": 0.0,
+                "offsetY": 0.0
+            },
+            {
+                "id": "death",
+                "sourceType": "none",
+                "path": "",
+                "offsetX": 0.0,
+                "offsetY": 0.0
+            },
+            {
+                "id": "lunch",
+                "sourceType": "none",
+                "path": "",
+                "offsetX": 0.0,
+                "offsetY": 0.0
+            }
+        ]
+    },
+    "extraSlots": [],
+    "rarity": "None",
+    "tags": [],
+    "effectAssemblies": [
+        {
+            "id": "trap.leave.door",
+            "templateId": "tpl.trap.door",
+            "containerType": "Trap",
+            "argsJson": "{}"
+        },
+        {
+            "id": "trap.leave.leave",
+            "templateId": "tpl.trap.leave",
+            "containerType": "Trap",
+            "argsJson": "{}"
+        }
+    ],
+    "effectIds": [
+        "trap.leave.door",
+        "trap.leave.leave"
+    ],
+    "skillIds": [],
+    "level": "1",
+    "sequence": 0,
+    "isElite": false,
+    "isBoss": false,
+    "isReserve": false,
+    "containerType": "",
+    "deckKind": "",
+    "monsterDefIds": [],
+    "weight": 0,
+    "rewardPoolId": "",
+    "shopOfferCount": 0,
+    "openingInjects": [],
+    "iconPrefab": "",
+    "boardSlot": 0
+}
