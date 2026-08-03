@@ -7,6 +7,8 @@ namespace NineGrid.Flow.Presentation
         public const string Attack = "attack";
         public const string UseItem = "useItem";
         public const string Pickup = "pickup";
+        /// <summary>#110：道具卡格拖入回收区兑金离手。</summary>
+        public const string RecycleItem = "recycleItem";
         /// <summary>主动翻开场上邻接背面卡（消耗一次互动）。</summary>
         public const string RevealFace = "revealFace";
         /// <summary>非战斗 Avatar 跳格走向目标空格。</summary>
@@ -33,6 +35,7 @@ namespace NineGrid.Flow.Presentation
                 || string.Equals(kind, Attack, System.StringComparison.Ordinal)
                 || string.Equals(kind, UseItem, System.StringComparison.Ordinal)
                 || string.Equals(kind, Pickup, System.StringComparison.Ordinal)
+                || string.Equals(kind, RecycleItem, System.StringComparison.Ordinal)
                 || string.Equals(kind, RevealFace, System.StringComparison.Ordinal)
                 || string.Equals(kind, BoardWalk, System.StringComparison.Ordinal);
         }

@@ -9,6 +9,7 @@ namespace NineGrid.Core.Systems
         int AwardSkipHelpChoice();
         int AwardSkipRelicChoice();
         int AwardDiscardRelic();
+        int AwardRecycleItemSlot();
         int SettleUnusedHelpCards();
         int ClearResidualTraps();
         int DeleteHelpCard(int cardUid);
@@ -73,6 +74,17 @@ namespace NineGrid.Core.Systems
             }
 
             return ExecuteGold(catalog.Economy.DiscardRelicGold, "discardRelic");
+        }
+
+        public int AwardRecycleItemSlot()
+        {
+            var catalog = CatalogOrNull();
+            if (catalog == null)
+            {
+                return 0;
+            }
+
+            return ExecuteGold(catalog.Economy.RecycleItemSlotGold, "recycleItemSlot");
         }
 
         public int SettleUnusedHelpCards()

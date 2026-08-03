@@ -60,6 +60,7 @@
 | `SpecialRewardSessionContractTests` | #94 / #108：宝箱奖励 4 卡 / 道具奖励 5 卡、免费拿直写道具卡格留房、满格拒领、离开放弃不加 skip 金 |
 | `RoomOpeningInjectContractTests` | #95 / ADR-0022：五种战斗房开局注入（固定/权重可重复/不可重复）、困难房怪物侧序列 3+4、注入顺序（固定→房间）、RandomBattle 开局分房 |
 | `ItemSlotsDirectGrantContractTests` | #108 / ADR-0025：商店/特殊房直写道具卡格、无携带开局注入、满格拒拾、默认容量 3 |
+| `ItemSlotsRecycleContractTests` | #110 / ADR-0025：道具卡格回收 +10 金并移除；商店相位合法；Apply 跳过表演锁门禁 |
 | `RelicInventoryEconomyContractTests` | #98：遗物栏上限 12、满栏 SelectReward 拒收保留 Pending、DiscardRelic +20、宝箱 SkipRelicChoiceGold +20 |
 | `CarryPackPreserveBootstrapContractTests`（Presentation `BattleSession/`） | #107 / #108：`BootstrapRun(preserveRunInventory)` 道具卡格与容量存活；无 preserve 则清空 |
 | `ContentCatalogValidationTests` | 小型夹具 `ValidateCatalog` 绿；生产 Bootstrap（模板表 + 装配引用解析 + schema≥2 JSON 投影 + 奖池查询展开 + 节点序列规则）校验绿；跨容器共享模板不同实参（#70 / ADR-0009） |

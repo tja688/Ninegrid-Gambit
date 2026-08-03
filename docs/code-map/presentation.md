@@ -12,8 +12,8 @@
 |------|----------|----------------|--------|
 | `Setup/` | 3 | `NineGrid.Presentation.Setup` | `PresentationSceneRoot`、`PresentationCompositionRoot`、`PresentationSceneBindings` |
 | `Platform/` | 1 | `NineGrid.Presentation.Platform` | Windows Player 高回报率鼠标 mitigation（ADR-0006；仅 Standalone Win 非 Editor 生效） |
-| `Controllers/` | 18 | `NineGrid.Presentation.Controllers` | QF `PresentationController` 场景入口 |
-| `Commands/` | 24 | `NineGrid.Presentation.Commands` | 写意图 |
+| `Controllers/` | ~21 | `NineGrid.Presentation.Controllers` | QF `PresentationController` 场景入口 |
+| `Commands/` | 25 | `NineGrid.Presentation.Commands` | 写意图 |
 | `Queries/` | 11 | `NineGrid.Presentation.Queries` | 读裁决（合法性等） |
 | `Systems/` | 18 | `NineGrid.Presentation.Systems` | QF System / 窄能力接口 |
 | `Flow/` | ~118 | `NineGrid.Flow*` | 导演/时间线/Channel/Scheduler、局内会话、流程壳、诊断、部分 Presenter |
@@ -58,11 +58,18 @@
 
 主线 busy 真相：`PresentationDirector.IsMainlineBusy`（经 `IPresentationRuntimeSystem` / InputState 只读投影）。`BattleBusy` / `FieldBusy` 不作独立输入门禁；`OccupancyDesyncLatched` 仅为诊断断言。
 
-## Controllers（19）
+## Controllers（20）
 
-`PresentationController` · `ExploreInputController` · `BoardWalkInputController` · `AttackInputController` · `PickupInputController` · `UseItemInputController` · `GroundFieldGeometryController` · `FieldBattlePresentationController` · `CardEntityLifecycleController` · `ZoneOwnershipQueryController` · `DescriptionOutputController`（**已退役**：动态 HUD 描述 TMP 不再接线） · `DamageNumberOutputController` · `RelicHudController` · `RoomChoiceInputController` · `RewardChoiceInputController` · `GameFlowShellController` · `TriggerPulseOutputController` · `DiagnosticOutputController` · `BattleSessionPresentationController`
+`PresentationController` · `ExploreInputController` · `BoardWalkInputController` · `AttackInputController` · `PickupInputController` · `UseItemInputController` · `RecycleItemInputController` · `GroundFieldGeometryController` · `FieldBattlePresentationController` · `CardEntityLifecycleController` · `ZoneOwnershipQueryController` · `DescriptionOutputController`（**已退役**：动态 HUD 描述 TMP 不再接线） · `DamageNumberOutputController` · `RelicHudController` · `RoomChoiceInputController` · `RewardChoiceInputController` · `GameFlowShellController` · `TriggerPulseOutputController` · `DiagnosticOutputController` · `BattleSessionPresentationController`
 
 典型路径：场景 Host / Hook → Controller → `IntentIntake.Submit`（所有权 × MainlineBusy）→ Director / Core Command。
+
+### 道具卡格回收（#110 / ADR-0025）
+
+- **Core**：`RecycleItemSlot` / `ApplyRecycleItemSlot` ⇒ 移除 ItemSlots 卡 + `RecycleItemSlotGold`（默认 10）
+- **意图**：`InputIntentKinds.RecycleItem` 为 board action；主线 busy → `BufferToDirector`（不拒收）
+- **装配**：`RecycleItemIntentScriptFactory`（`ApplyRecycleItemSlotCommand`）经 `PresentationCompositionRoot` 路由
+- **拖放**：`CardHandManagerSingleton` 拖起激活 `CardRecycleNotice` + `HandcardRecycleZone`；落入回收区优先于 ApplyZone；提交 `SubmitRecycleItemIntentCommand`
 
 ## Systems
 
@@ -81,13 +88,13 @@
 | `ChoicePresentationSystem` | 房间/奖励选择表现 |
 | `GroundPresentation` | 场地表现辅助 |
 
-## 静态 Hook（17）——装配缝，不是业务 Sink
+## 静态 Hook（18）——装配缝，不是业务 Sink
 
 `CombatHitSink` 已删除。现存 `*Hook` 是 **Cards/Flow 目录代码 ↔ Presentation Controllers** 的窄接线（避免历史环依赖），由 Controller 在 `RuntimeInitializeOnLoad` / `OnBind` 注册委托；卡面锚点报点桥由组合根注入。
 
 | 位置 | 示例 |
 |------|------|
-| `Cards/` | `AttackInputHook`、`ExploreInputHook`、`BoardWalkInputHook`、`PickupInputHook`、`UseItemInputHook`、`FieldBattlePresentationHook`、`GroundFieldGeometryHook`、`CardEntityLifecycleHook`、`CardZoneOwnershipHook`、输出类 Hook… |
+| `Cards/` | `AttackInputHook`、`ExploreInputHook`、`BoardWalkInputHook`、`PickupInputHook`、`UseItemInputHook`、`RecycleItemInputHook`、`FieldBattlePresentationHook`、`GroundFieldGeometryHook`、`CardEntityLifecycleHook`、`CardZoneOwnershipHook`、输出类 Hook… |
 | `Flow/` | `GameFlowShellHook`、`RelicHudHook`、`RoomChoiceCoreHook`、`RewardChoiceCoreHook`、`BattleBeatHook`（排期器报点） |
 
 **禁止**新增业务静态 Sink（跨层读写规则状态）。新交互优先走 Command / Query / Event / System。

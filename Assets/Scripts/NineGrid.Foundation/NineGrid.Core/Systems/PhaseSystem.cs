@@ -88,6 +88,10 @@ namespace NineGrid.Core.Systems
             CoreCommandResult SkipHelpChoice();
             /// <summary>右键丢弃已装备遗物：移除 + 反激活效果 + DiscardRelicGold。</summary>
             CoreCommandResult DiscardRelic(string relicDefId);
+            /// <summary>#110 / ADR-0025：从道具卡格回收一张 ⇒ +RecycleItemSlotGold 并移除。</summary>
+            CoreCommandResult RecycleItemSlot(int itemUid);
+            /// <summary>表现层可信回收：无相位门禁（仍校验 ItemSlots）。</summary>
+            CoreCommandResult ApplyRecycleItemSlot(int itemUid);
             /// <summary>商店刷新货架：扣本次进店刷新价并翻倍。</summary>
             CoreCommandResult RefreshShop();
             CoreCommandResult SelectRoom(int optionIndex);
@@ -1212,6 +1216,60 @@ namespace NineGrid.Core.Systems
             return CoreCommandResult.Accept(resolved);
         }
 
+        public CoreCommandResult RecycleItemSlot(int itemUid)
+        {
+            if (!CanExecute(GameCommandKind.RecycleItemSlot))
+            {
+                return Reject(
+                    GameCommandKind.RecycleItemSlot,
+                    "Command is not legal in phase " + CurrentPhase,
+                    SlotId.None,
+                    itemUid);
+            }
+
+            return ExecuteRecycleItemSlot(itemUid);
+        }
+
+        public CoreCommandResult ApplyRecycleItemSlot(int itemUid)
+        {
+            return ExecuteRecycleItemSlot(itemUid);
+        }
+
+        private CoreCommandResult ExecuteRecycleItemSlot(int itemUid)
+        {
+            if (itemUid <= 0)
+            {
+                return Reject(GameCommandKind.RecycleItemSlot, "Item uid is invalid.", SlotId.None, itemUid);
+            }
+
+            var registry = this.GetModel<CardRegistry>();
+            CardInstance card;
+            if (!registry.TryGet(itemUid, out card))
+            {
+                return Reject(GameCommandKind.RecycleItemSlot, "Item card uid does not exist.", SlotId.None, itemUid);
+            }
+
+            if (card.Zone.Value != ZoneId.ItemSlots)
+            {
+                return Reject(GameCommandKind.RecycleItemSlot, "Item is not in item slots.", SlotId.None, itemUid);
+            }
+
+            if (!IsRegisteredInItemSlots(this.GetModel<DeckModel>(), itemUid))
+            {
+                return Reject(
+                    GameCommandKind.RecycleItemSlot,
+                    "Item is not registered in item slots.",
+                    SlotId.None,
+                    itemUid);
+            }
+
+            var pipeline = this.GetSystem<IActionPipelineSystem>();
+            pipeline.Enqueue(new RemoveCardAction(itemUid, ZoneId.Removed, "recycleItemSlot", card.DefId));
+            var resolved = pipeline.RunToCompletion();
+            resolved += this.GetSystem<IEconomySystem>().AwardRecycleItemSlot();
+            return CoreCommandResult.Accept(resolved);
+        }
+
         private static bool ContainsRelic(PlayerModel player, string defId)
         {
             var relics = player.RelicDefIds;
@@ -1853,8 +1911,9 @@ namespace NineGrid.Core.Systems
                         // 局内宝箱等：覆盖层待选，锁死战场交互。
                         mLegalCommands.Add(GameCommandKind.SelectReward);
                         mLegalCommands.Add(GameCommandKind.SkipHelpChoice);
-                        // 满栏时须能右键丢弃腾空（#98）。
+                        // 满栏时须能右键丢弃腾空（#98）；回收腾道具卡格（#110）。
                         mLegalCommands.Add(GameCommandKind.DiscardRelic);
+                        mLegalCommands.Add(GameCommandKind.RecycleItemSlot);
                     }
                     else
                     {
@@ -1864,6 +1923,7 @@ namespace NineGrid.Core.Systems
                         mLegalCommands.Add(GameCommandKind.UseItem);
                         mLegalCommands.Add(GameCommandKind.RevealFace);
                         mLegalCommands.Add(GameCommandKind.DiscardRelic);
+                        mLegalCommands.Add(GameCommandKind.RecycleItemSlot);
                     }
 
                     break;
@@ -1871,6 +1931,7 @@ namespace NineGrid.Core.Systems
                     mLegalCommands.Add(GameCommandKind.SelectReward);
                     mLegalCommands.Add(GameCommandKind.SkipHelpChoice);
                     mLegalCommands.Add(GameCommandKind.DiscardRelic);
+                    mLegalCommands.Add(GameCommandKind.RecycleItemSlot);
                     AppendShopRefreshIfActive();
                     // 商店离开图标需 BoardWalk；其它奖励覆盖层不走格。
                     if (PendingChoiceModel.IsConsumerBoardPool(this.GetModel<PendingChoiceModel>().PoolId.Value))
@@ -1885,11 +1946,13 @@ namespace NineGrid.Core.Systems
                     mLegalCommands.Add(GameCommandKind.UseItem);
                     mLegalCommands.Add(GameCommandKind.MoveAvatar);
                     mLegalCommands.Add(GameCommandKind.DiscardRelic);
+                    mLegalCommands.Add(GameCommandKind.RecycleItemSlot);
                     break;
                 case GamePhase.RoomEvent:
                     mLegalCommands.Add(GameCommandKind.EnterRoom);
                     mLegalCommands.Add(GameCommandKind.MoveAvatar);
                     mLegalCommands.Add(GameCommandKind.DiscardRelic);
+                    mLegalCommands.Add(GameCommandKind.RecycleItemSlot);
                     break;
             }
         }
@@ -1902,6 +1965,7 @@ namespace NineGrid.Core.Systems
                 mLegalCommands.Add(GameCommandKind.SelectReward);
                 mLegalCommands.Add(GameCommandKind.SkipHelpChoice);
                 mLegalCommands.Add(GameCommandKind.DiscardRelic);
+                mLegalCommands.Add(GameCommandKind.RecycleItemSlot);
                 AppendShopRefreshIfActive();
             }
             else if (pending.Kind.Value == PendingChoiceKind.Room

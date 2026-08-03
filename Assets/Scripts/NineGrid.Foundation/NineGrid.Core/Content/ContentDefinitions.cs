@@ -808,6 +808,7 @@ namespace NineGrid.Core.Content
             SkipRelicChoiceGold = 20;
             DiscardRelicGold = 20;
             ShopDeleteHelpCardGold = 10;
+            RecycleItemSlotGold = 10;
         }
 
         public int MonsterRemovedGold { get; set; }
@@ -816,6 +817,8 @@ namespace NineGrid.Core.Content
         public int SkipRelicChoiceGold { get; set; }
         public int DiscardRelicGold { get; set; }
         public int ShopDeleteHelpCardGold { get; set; }
+        /// <summary>#110 / ADR-0025：道具卡格主动回收兑金（每张固定）。</summary>
+        public int RecycleItemSlotGold { get; set; }
     }
 
     public sealed class RewardConfig

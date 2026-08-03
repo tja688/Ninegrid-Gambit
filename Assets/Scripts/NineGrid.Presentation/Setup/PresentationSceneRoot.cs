@@ -143,6 +143,7 @@ namespace NineGrid.Presentation.Setup
             {
                 UseItemInputHook.RequestWire(cardHand);
                 PickupInputHook.RequestWire(cardHand);
+                RecycleItemInputHook.RequestWire(cardHand);
             }
 
             GameFlowShellHook.RequestWire();

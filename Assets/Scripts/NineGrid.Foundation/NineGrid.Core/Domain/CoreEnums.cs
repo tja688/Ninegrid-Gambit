@@ -289,6 +289,8 @@ namespace NineGrid.Core
         SelectReward,
         SkipHelpChoice,
         DiscardRelic,
+        RecycleItemSlot,
+        ApplyRecycleItemSlot,
         RefreshShop,
         SelectRoom,
         EnterRoom,

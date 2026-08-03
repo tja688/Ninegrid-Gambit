@@ -256,6 +256,11 @@ namespace NineGrid.Presentation.Systems
                 return BoardIntentLegality.TryExplainPickup(arch, intent.TargetId, out rejectReason);
             }
 
+            if (string.Equals(intent.Kind, InputIntentKinds.RecycleItem, StringComparison.Ordinal))
+            {
+                return BoardIntentLegality.TryExplainRecycleItem(arch, intent.TargetId, out rejectReason);
+            }
+
             if (string.Equals(intent.Kind, InputIntentKinds.RevealFace, StringComparison.Ordinal))
             {
                 return BoardIntentLegality.TryExplainRevealFace(arch, intent.TargetId, out rejectReason);

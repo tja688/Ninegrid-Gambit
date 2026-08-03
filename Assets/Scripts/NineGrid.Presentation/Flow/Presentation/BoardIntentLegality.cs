@@ -310,6 +310,48 @@ namespace NineGrid.Flow.Presentation
             return true;
         }
 
+        public static bool TryExplainRecycleItem(IArchitecture arch, int itemUid, out string rejectReason)
+        {
+            rejectReason = null;
+            if (arch == null)
+            {
+                rejectReason = "noArchitecture";
+                return false;
+            }
+
+            if (!TryExplainPhaseAllowsBoardCommand(arch, GameCommandKind.RecycleItemSlot, out rejectReason))
+            {
+                return false;
+            }
+
+            if (itemUid <= 0)
+            {
+                rejectReason = "invalidItemUid";
+                return false;
+            }
+
+            var registry = arch.GetModel<CardRegistry>();
+            if (!registry.TryGet(itemUid, out var card))
+            {
+                rejectReason = "itemMissing uid=" + itemUid;
+                return false;
+            }
+
+            if (card.Zone.Value != ZoneId.ItemSlots)
+            {
+                rejectReason = "notInItemSlots zone=" + card.Zone.Value;
+                return false;
+            }
+
+            if (!IsRegisteredInItemSlots(arch.GetModel<DeckModel>(), itemUid))
+            {
+                rejectReason = "notRegisteredInItemSlots";
+                return false;
+            }
+
+            return true;
+        }
+
         public static bool TryExplainPickup(IArchitecture arch, int groundSlot, out string rejectReason)
         {
             rejectReason = null;
@@ -403,16 +445,20 @@ namespace NineGrid.Flow.Presentation
                            || command == GameCommandKind.ClickEmpty
                            || command == GameCommandKind.UseItem
                            || command == GameCommandKind.PickupItem
-                           || command == GameCommandKind.RevealFace;
+                           || command == GameCommandKind.RevealFace
+                           || command == GameCommandKind.RecycleItemSlot;
                 case GamePhase.RoomChoice:
                     return command == GameCommandKind.UseItem
                            || command == GameCommandKind.PickupItem
-                           || command == GameCommandKind.MoveAvatar;
+                           || command == GameCommandKind.MoveAvatar
+                           || command == GameCommandKind.RecycleItemSlot;
                 case GamePhase.RoomEvent:
                     return command == GameCommandKind.MoveAvatar
-                           || command == GameCommandKind.EnterRoom;
+                           || command == GameCommandKind.EnterRoom
+                           || command == GameCommandKind.RecycleItemSlot;
                 case GamePhase.RewardItemChoice:
-                    return command == GameCommandKind.MoveAvatar;
+                    return command == GameCommandKind.MoveAvatar
+                           || command == GameCommandKind.RecycleItemSlot;
                 default:
                     return false;
             }

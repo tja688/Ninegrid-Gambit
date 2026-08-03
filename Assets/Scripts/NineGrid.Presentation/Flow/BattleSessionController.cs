@@ -258,6 +258,7 @@ namespace NineGrid.Flow
             hand.DragApplyValidator -= ValidateHandDragApplyAsync;
             hand.DragApplyValidator += ValidateHandDragApplyAsync;
             UseItemInputHook.RequestWire(hand);
+            RecycleItemInputHook.RequestWire(hand);
             PickupInputHook.RequestWire(hand);
 
             CardEntityLifecycleHook.RequestWire(cardManager, hand, deckManager);

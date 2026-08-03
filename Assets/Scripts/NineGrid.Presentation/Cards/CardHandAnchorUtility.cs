@@ -17,6 +17,8 @@ namespace NineGrid.Cards
         private static readonly HashSet<string> ExcludedChildNames = new(StringComparer.OrdinalIgnoreCase)
         {
             "HandcardApplyZone",
+            "HandcardRecycleZone",
+            "CardRecycleNotice",
         };
 
         /// <summary>

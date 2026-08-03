@@ -151,6 +151,7 @@ namespace NineGrid.Presentation.Setup
                 attackFactory,
                 useItemFactory,
                 new PickupIntentScriptFactory(architecture),
+                new RecycleItemIntentScriptFactory(architecture),
                 new BoardWalkIntentScriptFactory(architecture));
 
             return InstallCore(

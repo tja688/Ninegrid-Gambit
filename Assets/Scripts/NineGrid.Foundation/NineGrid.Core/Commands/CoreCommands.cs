@@ -311,6 +311,36 @@ namespace NineGrid.Core.Commands
         }
     }
 
+    public sealed class RecycleItemSlotCommand : AbstractCommand<CoreCommandResult>
+    {
+        private readonly int mItemUid;
+
+        public RecycleItemSlotCommand(int itemUid)
+        {
+            mItemUid = itemUid;
+        }
+
+        protected override CoreCommandResult OnExecute()
+        {
+            return this.GetSystem<IPhaseSystem>().RecycleItemSlot(mItemUid);
+        }
+    }
+
+    public sealed class ApplyRecycleItemSlotCommand : AbstractCommand<CoreCommandResult>
+    {
+        private readonly int mItemUid;
+
+        public ApplyRecycleItemSlotCommand(int itemUid)
+        {
+            mItemUid = itemUid;
+        }
+
+        protected override CoreCommandResult OnExecute()
+        {
+            return this.GetSystem<IPhaseSystem>().ApplyRecycleItemSlot(mItemUid);
+        }
+    }
+
     public sealed class RefreshShopCommand : AbstractCommand<CoreCommandResult>
     {
         protected override CoreCommandResult OnExecute()

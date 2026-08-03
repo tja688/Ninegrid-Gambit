@@ -5,6 +5,7 @@ using System.Threading;
 using Cysharp.Threading.Tasks;
 using DG.Tweening;
 using NineGrid.Cards.Convergence;
+using NineGrid.Core;
 using NineGrid.Flow;
 using NineGrid.Flow.Diagnostics;
 using NineGrid.Flow.Presentation;
@@ -30,6 +31,7 @@ namespace NineGrid.Cards
             public int OriginHandSlot = -1;
             public bool WasHovering;
             public bool PointerReleasedInZone;
+            public bool PointerReleasedInRecycleZone;
         }
 
 
@@ -39,6 +41,12 @@ namespace NineGrid.Cards
 
         [Tooltip("场景 CardHandAnchors/HandcardApplyZone 的 Collider。留空时作为 handAnchorsRoot 子节点查找。")]
         [SerializeField] private Collider applyZoneCollider;
+
+        [Tooltip("场景 CardHandAnchors/HandcardRecycleZone 的 Collider。拖动时激活；留空时按子节点名查找。")]
+        [SerializeField] private Collider recycleZoneCollider;
+
+        [Tooltip("场景 CardHandAnchors/CardRecycleNotice。拖动时激活；留空时按子节点名查找。")]
+        [SerializeField] private GameObject recycleNotice;
 
         [Header("Layout")]
         [Tooltip("手牌布局与动效参数。")]
@@ -140,7 +148,10 @@ namespace NineGrid.Cards
             InitializeLayoutOrigin();
             UseItemInputHook.RequestWire(this);
             PickupInputHook.RequestWire(this);
+            RecycleItemInputHook.RequestWire(this);
             PickupIntentFlushHook.Notify = OnPickupIntentFlushed;
+            RecycleItemIntentFlushHook.Notify = OnRecycleItemIntentFlushed;
+            SetRecycleUiActive(false);
         }
 
         private void OnDestroy()
@@ -149,6 +160,11 @@ namespace NineGrid.Cards
             if (PickupIntentFlushHook.Notify == (Action<int, PickupItemPresentationResult>)OnPickupIntentFlushed)
             {
                 PickupIntentFlushHook.Notify = null;
+            }
+
+            if (RecycleItemIntentFlushHook.Notify == (Action<int, CoreCommandResult>)OnRecycleItemIntentFlushed)
+            {
+                RecycleItemIntentFlushHook.Notify = null;
             }
         }
 
@@ -1088,7 +1104,7 @@ namespace NineGrid.Cards
                 return false;
             }
 
-            if (!_dragSession.PointerReleasedInZone)
+            if (!_dragSession.PointerReleasedInZone && !_dragSession.PointerReleasedInRecycleZone)
             {
                 return false;
             }
@@ -1112,6 +1128,7 @@ namespace NineGrid.Cards
             _dragLoopCts?.Cancel();
             _dragLoopCts?.Dispose();
             _dragLoopCts = new CancellationTokenSource();
+            SetRecycleUiActive(true);
             RunDragLoopAsync(_dragLoopCts.Token).Forget();
         }
 
@@ -1120,6 +1137,7 @@ namespace NineGrid.Cards
             var session = _dragSession;
             if (session?.Card?.Transform == null)
             {
+                SetRecycleUiActive(false);
                 return;
             }
 
@@ -1169,9 +1187,11 @@ namespace NineGrid.Cards
                 }
 
                 var releaseWorld = ScreenToWorldOnPlane(releaseScreen, camera, dragZ);
-                session.PointerReleasedInZone = IsPointInApplyZone(releaseWorld);
+                session.PointerReleasedInRecycleZone = IsPointInRecycleZone(releaseWorld);
+                session.PointerReleasedInZone = !session.PointerReleasedInRecycleZone
+                    && IsPointInApplyZone(releaseWorld);
 
-                if (!session.PointerReleasedInZone)
+                if (!session.PointerReleasedInRecycleZone && !session.PointerReleasedInZone)
                 {
                     await FinishDragWithReturnAsync(session);
                     return;
@@ -1194,6 +1214,24 @@ namespace NineGrid.Cards
             if (card == null)
             {
                 ClearDragSession();
+                SetRecycleUiActive(false);
+                return;
+            }
+
+            if (session.PointerReleasedInRecycleZone)
+            {
+                var recycled = TrySubmitRecycleForDrag(card);
+                if (!recycled)
+                {
+                    await FinishDragWithReturnAsync(session);
+                    return;
+                }
+
+                RegistryTraceSink.NotifyUserInteraction?.Invoke("HandDragRecycle");
+                ClearDragSession();
+                CardOpacityUtility.ResetAlpha(card);
+                SetRecycleUiActive(false);
+                await VanishCardAfterApplyAsync(card);
                 return;
             }
 
@@ -1210,6 +1248,7 @@ namespace NineGrid.Cards
             RegistryTraceSink.NotifyUserInteraction?.Invoke("HandDragApply");
             ClearDragSession();
             CardOpacityUtility.ResetAlpha(card);
+            SetRecycleUiActive(false);
 
             if (PresentationInputGates.BoardSelectModeActive)
             {
@@ -1412,6 +1451,7 @@ namespace NineGrid.Cards
             {
                 _isBusy = false;
                 ClearDragSession();
+                SetRecycleUiActive(false);
             }
         }
 
@@ -1514,6 +1554,65 @@ namespace NineGrid.Cards
             return applyZoneCollider.bounds.Contains(worldPoint);
         }
 
+        private bool IsPointInRecycleZone(Vector3 worldPoint)
+        {
+            if (recycleZoneCollider == null
+                || !recycleZoneCollider.enabled
+                || !recycleZoneCollider.gameObject.activeInHierarchy)
+            {
+                return false;
+            }
+
+            return recycleZoneCollider.bounds.Contains(worldPoint);
+        }
+
+        private void SetRecycleUiActive(bool active)
+        {
+            if (recycleZoneCollider != null)
+            {
+                recycleZoneCollider.gameObject.SetActive(active);
+            }
+
+            if (recycleNotice != null)
+            {
+                recycleNotice.SetActive(active);
+            }
+        }
+
+        private static bool TrySubmitRecycleForDrag(ManagedCard card)
+        {
+            if (card == null || card.Uid <= 0)
+            {
+                return false;
+            }
+
+            if (RecycleItemInputHook.TrySubmitRecycleItem == null)
+            {
+                Debug.LogWarning("[CardHandManager] RecycleItemInputHook.TrySubmitRecycleItem 未装配。");
+                return false;
+            }
+
+            return RecycleItemInputHook.TrySubmitRecycleItem(card.Uid);
+        }
+
+        /// <summary>
+        /// Director flush Recycle 后：Core 已 Apply。若手牌仍持有该卡（缓冲路径未先 Vanish），此处离手。
+        /// </summary>
+        private void OnRecycleItemIntentFlushed(int itemUid, CoreCommandResult result)
+        {
+            if (result == null || !result.Accepted || itemUid <= 0)
+            {
+                return;
+            }
+
+            if (!TryRemoveFromHand(itemUid, out var removed) || removed == null)
+            {
+                return;
+            }
+
+            VanishCardAfterApplyAsync(removed).Forget();
+        }
+
         private static bool IsOverGroundCard(Vector3 worldPoint)
         {
             return TryResolveGroundSlotUnderPoint(worldPoint, out var slot)
@@ -1578,6 +1677,27 @@ namespace NineGrid.Cards
                 if (zone != null)
                 {
                     applyZoneCollider = zone.GetComponent<Collider>();
+                }
+            }
+
+            if (handAnchorsRoot != null)
+            {
+                if (recycleZoneCollider == null)
+                {
+                    var recycleZone = handAnchorsRoot.Find("HandcardRecycleZone");
+                    if (recycleZone != null)
+                    {
+                        recycleZoneCollider = recycleZone.GetComponent<Collider>();
+                    }
+                }
+
+                if (recycleNotice == null)
+                {
+                    var notice = handAnchorsRoot.Find("CardRecycleNotice");
+                    if (notice != null)
+                    {
+                        recycleNotice = notice.gameObject;
+                    }
                 }
             }
         }

@@ -87,6 +87,53 @@ namespace NineGrid.Presentation.Tests.IntentIntake
         }
 
         [Test]
+        public void Busy_RecycleItem_BuffersLatestWins_DoesNotReject()
+        {
+            using (var arch = PresentationArchitectureFixture.CreateBare())
+            using (var runtime = PresentationRuntimeFixture.Install(
+                       arch,
+                       new RecordingScriptFactory(continueTicks: 2),
+                       out var uiPick))
+            {
+                var accel = new RecordingAccelerationSink();
+                var intake = IntentIntakeSystem.EnsureRegistered(
+                    arch.Architecture, accel, _ => true);
+
+                bool preview;
+                Assert.AreEqual(
+                    IntentDisposition.Allow,
+                    intake.Submit(
+                        new InputIntent(InputIntentKinds.Explore, 1),
+                        InputOwner.ProtectedField,
+                        out preview));
+                Assert.IsTrue(runtime.MainlineBusy.Value);
+
+                Assert.AreEqual(
+                    IntentDisposition.BufferToDirector,
+                    intake.Submit(
+                        new InputIntent(InputIntentKinds.RecycleItem, 42),
+                        InputOwner.ProtectedField,
+                        out preview));
+                Assert.IsTrue(preview);
+
+                Assert.AreEqual(
+                    IntentDisposition.BufferToDirector,
+                    intake.Submit(
+                        new InputIntent(InputIntentKinds.RecycleItem, 77),
+                        InputOwner.ProtectedField,
+                        out preview));
+                Assert.IsTrue(preview);
+                Assert.AreEqual(2, uiPick.Previews.Count);
+                Assert.AreEqual(77, uiPick.Previews[1].TargetId);
+
+                runtime.TickUntilIdle();
+                Assert.AreEqual(2, runtime.ScriptFactory.Built.Count);
+                Assert.AreEqual(InputIntentKinds.RecycleItem, runtime.ScriptFactory.Built[1].Kind);
+                Assert.AreEqual(77, runtime.ScriptFactory.Built[1].TargetId);
+            }
+        }
+
+        [Test]
         public void Busy_BoardSelectBegin_RejectsWithoutBuffer()
         {
             using (var arch = PresentationArchitectureFixture.CreateBare())

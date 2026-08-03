@@ -64,6 +64,9 @@ namespace NineGrid.Presentation.Tests
                 "Commands/SubmitUseItemIntentCommand.cs",
                 @"intake\.Submit\s*\(");
             AssertSourceMatches(
+                "Commands/SubmitRecycleItemIntentCommand.cs",
+                @"intake\.Submit\s*\(");
+            AssertSourceMatches(
                 "Commands/SubmitRevealFaceIntentCommand.cs",
                 @"intake\.Submit\s*\(");
             AssertSourceMatches(
@@ -90,6 +93,9 @@ namespace NineGrid.Presentation.Tests
             AssertSourceMentions(
                 "Controllers/UseItemInputController.cs",
                 "SubmitUseItemIntentCommand");
+            AssertSourceMentions(
+                "Controllers/RecycleItemInputController.cs",
+                "SubmitRecycleItemIntentCommand");
             // Pickup / 模态 / BoardSelect：Controller 内直接 intake.Submit。
             AssertSourceMatches(
                 "Controllers/PickupInputController.cs",
