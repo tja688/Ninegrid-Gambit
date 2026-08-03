@@ -91,5 +91,55 @@ namespace NineGrid.Presentation.Tests
                 text.Contains("softOccupied"),
                 "GroundMotionExecutor 不得再按软占关命中框");
         }
+
+        [Test]
+        public void MotionExecutor_ReleasesClaimBeforeHop_AndSyncsAfterLand()
+        {
+            // ADR-0023：飞行/跳跃中不认领；落地才登记。避免悬停/点击与肉眼卡错位。
+            var text = File.ReadAllText(Path.Combine(
+                PresentationRoot, "Cards", "Ground", "GroundMotionExecutor.cs"));
+
+            Assert.IsTrue(
+                text.Contains("ReleaseGroundCardClaim(card);\r\n                    hopPlans.Add")
+                || text.Contains("ReleaseGroundCardClaim(card);\n                    hopPlans.Add"),
+                "General.Hop 须在建 hopPlans 时 ReleaseGroundCardClaim");
+            Assert.IsTrue(
+                text.Contains("SyncGroundCardClaim(plan.card, plan.toSlot)"),
+                "General.Hop 落地后须 SyncGroundCardClaim(plan)");
+
+            Assert.IsTrue(
+                text.Contains("ReleaseGroundCardClaim(moved)"),
+                "RingShift 动画前须 ReleaseGroundCardClaim(moved)");
+            Assert.IsTrue(
+                text.Contains("SyncGroundCardClaim(landed, toSlot)"),
+                "RingShift 落地后须 SyncGroundCardClaim(landed)");
+
+            Assert.IsTrue(
+                text.Contains("ReleaseGroundCardClaim(cardA)")
+                && text.Contains("ReleaseGroundCardClaim(cardB)"),
+                "Cross.Swap 置换后须 Release 双方");
+            Assert.IsTrue(
+                text.Contains("SyncGroundCardClaim(cardA, moveA.ToSlot)")
+                && text.Contains("SyncGroundCardClaim(cardB, moveB.ToSlot)"),
+                "Cross.Swap 落地后须 Sync 双方认领");
+        }
+
+        [Test]
+        public void PointerHitRouter_RefreshesMultiColliderHoverWhileStaying()
+        {
+            var router = File.ReadAllText(Path.Combine(
+                PresentationRoot, "Flow", "PointerHitRouter.cs"));
+            Assert.IsTrue(
+                Regex.IsMatch(
+                    router,
+                    @"IMultiColliderPointerHitTarget\s+multiStay[\s\S]{0,120}?RefreshPointerHover"),
+                "Router 在同一多框表面停留时须 RefreshPointerHover");
+
+            var multi = File.ReadAllText(Path.Combine(
+                PresentationRoot, "Flow", "IMultiColliderPointerHitTarget.cs"));
+            Assert.IsTrue(
+                multi.Contains("RefreshPointerHover"),
+                "IMultiColliderPointerHitTarget 须声明 RefreshPointerHover");
+        }
     }
 }

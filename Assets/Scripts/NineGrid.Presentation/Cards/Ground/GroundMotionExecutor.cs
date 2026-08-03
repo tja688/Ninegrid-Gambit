@@ -630,19 +630,27 @@ namespace NineGrid.Cards
                 return false;
             }
 
-            if (animate)
-            {
-                MoveCardAnimatedAsync(card, fromSlot, toSlot, EnsureFieldAnimToken()).Forget();
-            }
-            else if (TryGetAnchor(toSlot, out var anchor))
-            {
-                SlotFrameConvergence.SnapHome(card, anchor.position, "Ground.Move.Snap", uid);
-                CardEntityLifecycleHook.CardsOrNull().RefreshDisplayMode(card);
-            }
-
             RefreshSlotHitCollider(fromSlot);
             RefreshSlotHitCollider(toSlot);
-            SyncGroundCardClaim(card, toSlot);
+
+            if (animate)
+            {
+                // ADR-0023：跳跃中不认领；落地后再登记，避免悬停/点击与肉眼卡错位。
+                ReleaseGroundCardClaim(card);
+                MoveCardAnimatedThenClaimAsync(card, fromSlot, toSlot, EnsureFieldAnimToken())
+                    .Forget();
+            }
+            else
+            {
+                if (TryGetAnchor(toSlot, out var anchor))
+                {
+                    SlotFrameConvergence.SnapHome(card, anchor.position, "Ground.Move.Snap", uid);
+                    CardEntityLifecycleHook.CardsOrNull().RefreshDisplayMode(card);
+                }
+
+                SyncGroundCardClaim(card, toSlot);
+            }
+
             return true;
         }
 
@@ -1342,6 +1350,8 @@ namespace NineGrid.Cards
                 {
                     var expected = expectedMoves[i];
                     cardManager.TryGet(expected.uid, out var card);
+                    // ADR-0023：起飞卸认领，落地再登记（见下方 WhenAll 后 Sync）。
+                    ReleaseGroundCardClaim(card);
                     hopPlans.Add((card, expected.fromSlot, expected.toSlot));
                 }
 
@@ -1419,6 +1429,12 @@ namespace NineGrid.Cards
                     {
                         await UniTask.WhenAll(moveTasks);
                     }
+                }
+
+                for (var i = 0; i < hopPlans.Count; i++)
+                {
+                    var plan = hopPlans[i];
+                    SyncGroundCardClaim(plan.card, plan.toSlot);
                 }
 
                 RefreshAllSlotHitColliders();
@@ -1551,14 +1567,14 @@ namespace NineGrid.Cards
                     "clockwise", clockwise ? "1" : "0");
 
                 _deal?.OnRingShifted(clockwise);
-                // 占格已迁到环移后格：立刻刷新空槽代理，避免与视觉/占格短暂分叉。
+                // 占格已迁到环移后格：立刻刷新空槽代理；认领须等 hop 落地（ADR-0023）。
                 RefreshAllSlotHitColliders();
                 for (var i = 0; i < batch.Count; i++)
                 {
-                    var (uid, toSlot) = batch[i];
+                    var (uid, _) = batch[i];
                     if (CardEntityLifecycleHook.CardsOrNull().TryGet(uid, out var moved))
                     {
-                        SyncGroundCardClaim(moved, toSlot);
+                        ReleaseGroundCardClaim(moved);
                     }
                 }
 
@@ -1688,6 +1704,15 @@ namespace NineGrid.Cards
                             "Ground.RingShift.Barrier",
                             layer: "L2",
                             verdict: "fail");
+                    }
+                }
+
+                for (var i = 0; i < batch.Count; i++)
+                {
+                    var (uid, toSlot) = batch[i];
+                    if (CardEntityLifecycleHook.CardsOrNull().TryGet(uid, out var landed))
+                    {
+                        SyncGroundCardClaim(landed, toSlot);
                     }
                 }
 
@@ -2046,6 +2071,10 @@ namespace NineGrid.Cards
                     return;
                 }
 
+                // ADR-0023：换位飞行中不认领。
+                ReleaseGroundCardClaim(cardA);
+                ReleaseGroundCardClaim(cardB);
+
                 var duration = LayoutSettings != null ? LayoutSettings.swapMoveDuration : 0.3f;
                 CardEntityLifecycleHook.CardsOrNull().RefreshDisplayMode(cardA);
                 CardEntityLifecycleHook.CardsOrNull().RefreshDisplayMode(cardB);
@@ -2096,6 +2125,8 @@ namespace NineGrid.Cards
 
                 CardEntityLifecycleHook.CardsOrNull().RefreshDisplayMode(cardA);
                 CardEntityLifecycleHook.CardsOrNull().RefreshDisplayMode(cardB);
+                SyncGroundCardClaim(cardA, moveA.ToSlot);
+                SyncGroundCardClaim(cardB, moveB.ToSlot);
                 RefreshAllSlotHitColliders();
             }
             finally
@@ -2108,13 +2139,20 @@ namespace NineGrid.Cards
             }
         }
 
-        private UniTask MoveCardAnimatedAsync(
+        private async UniTask MoveCardAnimatedThenClaimAsync(
             ManagedCard card,
             int fromSlot,
             int toSlot,
             CancellationToken cancellationToken)
         {
-            return AnimateCardHopToSlotAsync(card, fromSlot, toSlot, cancellationToken);
+            try
+            {
+                await AnimateCardHopToSlotAsync(card, fromSlot, toSlot, cancellationToken);
+            }
+            finally
+            {
+                SyncGroundCardClaim(card, toSlot);
+            }
         }
 
         private async UniTask RemoveCardAnimatedAsync(ManagedCard card, int slot, CancellationToken cancellationToken)
