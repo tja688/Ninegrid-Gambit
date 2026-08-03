@@ -23,13 +23,13 @@ using UnityEditor;
 namespace NineGrid.Flow.ShopBoard
 {
     /// <summary>
-    /// 商店房场地：4 真卡货架 + 刷新就地选项 + 离开图标；任意距离点击购买（#92 / ADR-0020）。
+    /// 商店房场地：最多 4 真卡货架 + 道具牌格升级选项 + 刷新就地选项 + 离开图标（#92 / #109 / ADR-0020）。
     /// </summary>
     public sealed class ShopBoardPresenter
     {
         public static ShopBoardPresenter Current { get; private set; } = new ShopBoardPresenter();
 
-        private readonly List<ManagedCard> mShelfCards = new List<ManagedCard>(4);
+        private readonly List<ManagedCard> mShelfCards = new List<ManagedCard>(5);
         private readonly List<GameObject> mExtras = new List<GameObject>(2);
         private readonly RoomIconDwellSession mLeaveDwell = new RoomIconDwellSession();
         private CancellationTokenSource mWatchCts;
@@ -182,6 +182,27 @@ namespace NineGrid.Flow.ShopBoard
                 RoomIconOccupancy.Current.Register(
                     slot, i, entry.DefId, RoomIconWalkRole.SoftBlockOnly);
 
+                var tip = BuildShelfTip(entry.DefId, content);
+                if (IsShopSlotUpgradeOption(entry.DefId))
+                {
+                    var go = TryInstantiate(
+                        CardChassisPaths.RoomOptionFacePrefab,
+                        geometry,
+                        slot,
+                        entry.DefId);
+                    if (go == null)
+                    {
+                        mShelfCards.Add(null);
+                        continue;
+                    }
+
+                    AttachClickProxy(go, ShopBoardHitKind.BuyShelf, i, tip, slot);
+                    mExtras.Add(go);
+                    // 占位对齐 Pending 索引，避免 ShatterShelfVisual 错位。
+                    mShelfCards.Add(null);
+                    continue;
+                }
+
                 if (cards == null)
                 {
                     continue;
@@ -202,7 +223,6 @@ namespace NineGrid.Flow.ShopBoard
                 managed.View.transform.rotation = Quaternion.identity;
 
                 CoreCardPresentationMapper.ApplyVisualsByDefId(managed, CardPresentationKind.HelpCard);
-                var tip = BuildShelfTip(entry.DefId, content);
                 AttachClickProxy(managed.View.gameObject, ShopBoardHitKind.BuyShelf, i, tip, slot);
                 mShelfCards.Add(managed);
             }
@@ -249,11 +269,21 @@ namespace NineGrid.Flow.ShopBoard
             mExtras.Add(go);
         }
 
+        private static bool IsShopSlotUpgradeOption(string defId)
+        {
+            return string.Equals(
+                defId,
+                RewardSystem.ShopExpandItemSlotsDefId,
+                StringComparison.Ordinal);
+        }
+
         private static string BuildShelfTip(string defId, IContentSystem content)
         {
             string name = defId;
             string brief = string.Empty;
-            int? price = null;
+            int? price = IsShopSlotUpgradeOption(defId)
+                ? RewardSystem.ShopExpandItemSlotsPriceGold
+                : (int?)null;
             if (content != null && content.HasCatalog
                 && content.Catalog.Cards.TryGetValue(defId, out var card)
                 && card != null)
@@ -279,6 +309,11 @@ namespace NineGrid.Flow.ShopBoard
                 if (!string.IsNullOrWhiteSpace(dto.description))
                 {
                     brief = dto.description;
+                }
+
+                if (dto.gold > 0)
+                {
+                    price = dto.gold;
                 }
             }
 

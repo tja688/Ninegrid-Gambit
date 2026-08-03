@@ -381,17 +381,23 @@ namespace NineGrid.Core.Systems
         }
 
         /// <summary>
-        /// 商店四货架：宝箱 / 随机属性道具 / 恢复药水 / 食品（设计案房间.md）。
+        /// 商店货架：宝箱 / 随机属性道具 / 恢复药水 / 食品；容量未满时追加「道具牌格升级」（#109 / ADR-0025）。
         /// </summary>
         public IReadOnlyList<RewardEntry> BuildShopShelves()
         {
-            var shelves = new List<RewardEntry>(4)
+            var shelves = new List<RewardEntry>(5)
             {
                 new RewardEntry(ShopChestDefId, CardKind.HelpCard, 1, 1),
                 new RewardEntry(RollShopAttributeDefId(), CardKind.HelpCard, 1, 1),
                 new RewardEntry(ShopPotionDefId, CardKind.HelpCard, 1, 1),
                 new RewardEntry(ShopFoodDefId, CardKind.HelpCard, 1, 1),
             };
+            var player = this.GetModel<PlayerModel>();
+            if (player != null && player.ItemSlotsCapacity < PlayerModel.MaxItemSlotsCapacity)
+            {
+                shelves.Add(new RewardEntry(ShopExpandItemSlotsDefId, CardKind.HelpCard, 1, 1));
+            }
+
             return shelves;
         }
 
@@ -434,6 +440,9 @@ namespace NineGrid.Core.Systems
         public const string ShopChestDefId = "help.common_chest_card";
         public const string ShopPotionDefId = "help.healing_potion";
         public const string ShopFoodDefId = "help.food_card";
+        /// <summary>商店「道具牌格升级」选项（#109）；勿与卡店 <see cref="TavernExpandDefId"/> 混淆。</summary>
+        public const string ShopExpandItemSlotsDefId = "ExpandItemSlots";
+        public const int ShopExpandItemSlotsPriceGold = 50;
 
         public const string TavernUpgradeDefId = "UpgradeItemStats";
         public const string TavernFixItemDefId = "FixItem";

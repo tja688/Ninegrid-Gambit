@@ -864,7 +864,14 @@ namespace NineGrid.Core.Systems
 
             var isShop = PendingChoiceModel.IsShopPool(poolId);
             var isSpecialReward = PendingChoiceModel.IsSpecialRewardPool(poolId);
+            var isShopSlotUpgrade = isShop
+                && entry != null
+                && string.Equals(
+                    entry.DefId,
+                    RewardSystem.ShopExpandItemSlotsDefId,
+                    System.StringComparison.Ordinal);
             if ((isShop || isSpecialReward)
+                && !isShopSlotUpgrade
                 && entry != null
                 && entry.Kind == CardKind.HelpCard
                 && !this.GetModel<PlayerModel>().CanAcceptIntoItemSlots(
@@ -893,6 +900,12 @@ namespace NineGrid.Core.Systems
             if (PendingChoiceModel.IsTavernPool(poolId))
             {
                 return SelectTavernService(entry, pipeline);
+            }
+
+            // 商店「道具牌格升级」：扣 50 金 +1 格；满级后移除选项（#109）。
+            if (isShopSlotUpgrade)
+            {
+                return SelectShopExpandItemSlots(optionIndex, pipeline);
             }
 
             // 商店购买：按卡牌 Price 扣金；通关/宝箱等免费池不扣。
@@ -930,6 +943,49 @@ namespace NineGrid.Core.Systems
             pipeline.Enqueue(new ClearPendingRewardChoiceAction());
             var resolved = ResolvePostRewardChoiceFlow(pipeline, 0);
             return CoreCommandResult.Accept(resolved);
+        }
+
+        private CoreCommandResult SelectShopExpandItemSlots(int optionIndex, IActionPipelineSystem pipeline)
+        {
+            var player = this.GetModel<PlayerModel>();
+            if (player.ItemSlotsCapacity >= PlayerModel.MaxItemSlotsCapacity)
+            {
+                return Reject(GameCommandKind.SelectReward, "Item slots capacity maxed", SlotId.None, 0);
+            }
+
+            var price = ResolveShopExpandItemSlotsPrice();
+            if (price > 0 && player.Coins.Value < price)
+            {
+                return Reject(GameCommandKind.SelectReward, "Not enough gold", SlotId.None, 0);
+            }
+
+            if (price > 0)
+            {
+                pipeline.Enqueue(new ModifyGoldAction(
+                    -price,
+                    "shopBuy:" + RewardSystem.ShopExpandItemSlotsDefId,
+                    RewardSystem.ShopExpandItemSlotsDefId));
+            }
+
+            var resolved = pipeline.RunToCompletion();
+            player.SetItemSlotsCapacity(player.ItemSlotsCapacity + 1);
+            if (player.ItemSlotsCapacity >= PlayerModel.MaxItemSlotsCapacity)
+            {
+                this.GetModel<PendingChoiceModel>().RemoveRewardOptionAt(optionIndex);
+            }
+
+            return CoreCommandResult.Accept(resolved);
+        }
+
+        private int ResolveShopExpandItemSlotsPrice()
+        {
+            var catalogPrice = ResolveShopPrice(RewardSystem.ShopExpandItemSlotsDefId);
+            if (catalogPrice > 0)
+            {
+                return catalogPrice;
+            }
+
+            return RewardSystem.ShopExpandItemSlotsPriceGold;
         }
 
         private CoreCommandResult SelectTavernService(RewardEntry entry, IActionPipelineSystem pipeline)

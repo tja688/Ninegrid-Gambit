@@ -161,12 +161,12 @@
 - 胜负 / 房间 stub Notice：`GameFlowController.ShowNotice` 改走简要解释文字框，旧 `NoticeText` 不再写出
 - **禁**：复活 `DescriptionManagerSingleton` / `DescriptionDisplayHook`；战斗真卡悬停写简要解释（右键详述另责）
 
-### 商店房就地货架（#92 · ADR-0020 / ADR-0022）
+### 商店房就地货架（#92 / #109 · ADR-0020 / ADR-0022 / ADR-0025）
 
-- Core：进 `Shop` → `OfferShopSession` 固定 4 货架（宝箱 / 随机属性道具 / 恢复药水 / 食品）+ 本次进店刷新价初值 10；`SelectReward` 扣 `Price`、直写道具卡格（满则拒）、**留店**；`RefreshShop` 扣刷新价并翻倍；`SkipHelpChoice` 出店（不加 skip 金）
+- Core：进 `Shop` → `OfferShopSession` 固定 4 货架（宝箱 / 随机属性道具 / 恢复药水 / 食品）+ 容量未满时追加 `ExpandItemSlots`（道具牌格升级，50 金）+ 本次进店刷新价初值 10；`SelectReward` 扣 `Price`、直写道具卡格（满则拒）、**留店**；升级选项扣 50 金写 `ItemSlotsCapacity+1`（不发卡、不改 `ItemDeckCapacity`），满 5 后选项移除/不再出现；`RefreshShop` 扣刷新价并翻倍；`SkipHelpChoice` 出店（不加 skip 金）
 - 刷新价作用域：**本次进店**（离开清零；再进店重新从 10 起）
-- 表现：`ShopBoardPresenter` 落格 1/3/7/9 货架、2 刷新、8 离开；Avatar 硬切格 5；货架/刷新任意距离点击；离开驻留 1s；金币不足写简要解释 Notice
-- 货架真卡 `GroundCardMode`（预制体原生尺寸，与战斗卡同尺度）；刷新就地选项 / 离开图标同按预制体根缩放（#104 / ADR-0024，已删 `RoomIconVisualFit`）；货架·刷新登记 `SoftBlockOnly`，离开 `WalkDestination`
+- 表现：`ShopBoardPresenter` 落格 1/3/7/9 货架、4 升级选项（未满级）、2 刷新、8 离开；Avatar 硬切格 5；货架/刷新/升级任意距离点击；离开驻留 1s；金币不足写简要解释 Notice
+- 货架真卡 `GroundCardMode`（预制体原生尺寸，与战斗卡同尺度）；升级/刷新就地选项 / 离开图标同按预制体根缩放（#104 / ADR-0024，已删 `RoomIconVisualFit`）；货架·刷新·升级登记 `SoftBlockOnly`，离开 `WalkDestination`
   - 落格只写世界位置、不 SetParent 到 `GroundAnchors/slotN`（`BoardSlotWorldPlacement`）；避免继承锚点 ×2 缩放
 - 扣金后经 `InRoomGoldPresentation` 推 EventLog→HUD（非战斗无 GoldGainBeat）；**房内会话不持 ChoiceOverlay**（场地=ProtectedField，否则 BoardWalk ownerMismatch 全点不动）；Presenter 内勿嵌套 Set/清门；局内宝箱 Bounce 仍短暂持 overlay
 - 离开监视：先 `mActive=true` 再 `StartAvatarWatch`；失败驻留须重开计时
@@ -232,8 +232,9 @@
 | 「血量+2 / 攻击+1 / 护甲+1」 | **属性房**开局从 **血量卡/加攻卡/加甲卡** 中抽进卡组；旧局内 BounceFan `Attack`/`Armor`/`Hp` 三选一 UI 已退役（#90） | HelpCard 真卡；ChoiceOption 内容条目可留至 M2 |
 | 「给钱」 | **金币房**开局塞 **金币卡** | HelpCard，不建 `GainGold` ChoiceOption |
 | 卡店三项 + 刷新 | 策划消费房明文服务 | `UpgradeItemStats` / `FixItem` / `ExpandItemCapacity` / `RefreshShop` |
+| 商店道具牌格升级 | 商店就地扩容道具卡格（3…5） | `ExpandItemSlots`（勿与卡店 `ExpandItemCapacity` 混淆） |
 
-特殊选项卡种子（`ChoiceOption`）：卡店服务 `UpgradeItemStats`/`FixItem`/`ExpandItemCapacity`/`RefreshShop`；`Attack`/`Armor`/`Hp` 内容条目仍在（UI 入口 #90 已退役，去留交 M2）。
+特殊选项卡种子（`ChoiceOption`）：卡店服务 `UpgradeItemStats`/`FixItem`/`ExpandItemCapacity`/`RefreshShop`；商店 `ExpandItemSlots`；`Attack`/`Armor`/`Hp` 内容条目仍在（UI 入口 #90 已退役，去留交 M2）。
 
 局内选房走场地图标 + 驻留提交；`RoomChoicePresenter` 与 `RoomChoisePanel` 接线已删（#90）。`SelectorManagerSingleton` 只剩 Bounce；扇形 `BounceFanChoicePresenter` 仅服务宝箱开遗物。通关三选一已退役（ADR-0021）：清关进 `RoomChoice` 后由 `NodeSettlementReadiness` 唤醒主循环刷图标；`TryForceNodeVictory` 同路走 `TryCompleteClearedNode`。图标落格只对齐世界位置、保留预制体根缩放（#100 校准进目标盒约 `2.55 × 3.7`；#104 已删 `RoomIconVisualFit` / `slotHitBoxSize`）；`BoardBriefTipHitProxy` 配置 Walk 槽后单击转发 BoardWalk。房内货架/就地选项卡点选属 M2。
 

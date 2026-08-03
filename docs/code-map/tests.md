@@ -55,7 +55,7 @@
 | `ThemeMonsterDeckContractTests` | #86 / ADR-0022：每层主题卡组不重复绑定、节点按序列 1–5 抽、Reserve 不参与、层主击杀固定 1 金箱+2 金币 |
 | `MonsterLoadoutPresentationValidatorTests` | 过渡卡组 staging 校验绿；交付就绪在怪物仍挂 `deck.transition` 时必须失败 |
 | `MapNodeProgressionContractTests` | #84 / ADR-0021 / #107：8 节点编排全表、非战斗不进 InteractionLoop、清关跳过 help.choice、道具卡格清关不兑不清+清 Trap、困难房门槛、第 3 层节点 8 通关 |
-| `ShopBuyGoldContractTests` / `ShopSessionContractTests` | #92 / #108：商店四货架、购买留店扣金直写道具卡格、刷新翻倍（本次进店）、离开、余额/格满拒买 |
+| `ShopBuyGoldContractTests` / `ShopSessionContractTests` / `ShopItemSlotsUpgradeContractTests` | #92 / #108 / #109：商店四货架 + 未满级升级项、购买留店扣金直写道具卡格、格升级 50 金且不改 `ItemDeckCapacity`、满 5 隐藏、刷新翻倍、离开、余额/格满拒买 |
 | `TavernSessionContractTests` | #93：卡店三项服务、扩容/强化扣费留店、刷新翻倍、离开、道具卡固定二级选择确认/取消、余额不足拒买 |
 | `SpecialRewardSessionContractTests` | #94 / #108：宝箱奖励 4 卡 / 道具奖励 5 卡、免费拿直写道具卡格留房、满格拒领、离开放弃不加 skip 金 |
 | `RoomOpeningInjectContractTests` | #95 / ADR-0022：五种战斗房开局注入（固定/权重可重复/不可重复）、困难房怪物侧序列 3+4、注入顺序（固定→房间）、RandomBattle 开局分房 |

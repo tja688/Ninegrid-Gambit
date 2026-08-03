@@ -134,7 +134,7 @@ namespace NineGrid.Core.Tests
             var enter = mPhase.EnterRoom();
             Assert.IsTrue(enter.Accepted, enter.Reason);
             Assert.AreEqual(GamePhase.RewardItemChoice, mPhase.CurrentPhase);
-            Assert.AreEqual(4, mArch.GetModel<PendingChoiceModel>().RewardOptions.Count);
+            Assert.AreEqual(5, mArch.GetModel<PendingChoiceModel>().RewardOptions.Count);
         }
 
         private void EnterSpecialReward(RoomKind room)

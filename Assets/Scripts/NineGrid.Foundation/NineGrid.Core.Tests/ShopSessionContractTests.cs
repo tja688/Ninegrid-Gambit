@@ -8,7 +8,7 @@ using QFramework;
 namespace NineGrid.Core.Tests
 {
     /// <summary>
-    /// #92 商店会话：四货架 / 购买留店 / 刷新翻倍（本次进店）/ 离开。
+    /// #92 商店会话：四货架 + 道具牌格升级 / 购买留店 / 刷新翻倍（本次进店）/ 离开。
     /// Seam：IPhaseSystem + PendingChoiceModel.ShopRefreshPriceGold。
     /// </summary>
     public sealed class ShopSessionContractTests
@@ -39,7 +39,7 @@ namespace NineGrid.Core.Tests
         {
             EnterShop();
             var pending = mArch.GetModel<PendingChoiceModel>();
-            Assert.AreEqual(4, pending.RewardOptions.Count);
+            Assert.AreEqual(5, pending.RewardOptions.Count);
             Assert.AreEqual(RewardSystem.ShopChestDefId, pending.RewardOptions[0].DefId);
             Assert.IsTrue(
                 pending.RewardOptions[1].DefId == "help.hp_card"
@@ -47,6 +47,7 @@ namespace NineGrid.Core.Tests
                 || pending.RewardOptions[1].DefId == "help.attack_card");
             Assert.AreEqual(RewardSystem.ShopPotionDefId, pending.RewardOptions[2].DefId);
             Assert.AreEqual(RewardSystem.ShopFoodDefId, pending.RewardOptions[3].DefId);
+            Assert.AreEqual(RewardSystem.ShopExpandItemSlotsDefId, pending.RewardOptions[4].DefId);
             Assert.AreEqual(10, pending.ShopRefreshPriceGold.Value);
             Assert.IsTrue(mPhase.CanExecute(GameCommandKind.RefreshShop));
         }
@@ -84,10 +85,11 @@ namespace NineGrid.Core.Tests
             Assert.IsTrue(refresh.Accepted, refresh.Reason);
             Assert.AreEqual(coinsBefore - 10, player.Coins.Value);
             Assert.AreEqual(20, pending.ShopRefreshPriceGold.Value);
-            Assert.AreEqual(4, pending.RewardOptions.Count);
+            Assert.AreEqual(5, pending.RewardOptions.Count);
             Assert.AreEqual(RewardSystem.ShopChestDefId, pending.RewardOptions[0].DefId);
             Assert.AreEqual(RewardSystem.ShopPotionDefId, pending.RewardOptions[2].DefId);
             Assert.AreEqual(RewardSystem.ShopFoodDefId, pending.RewardOptions[3].DefId);
+            Assert.AreEqual(RewardSystem.ShopExpandItemSlotsDefId, pending.RewardOptions[4].DefId);
             _ = firstAttr;
 
             Assert.IsTrue(mPhase.RefreshShop().Accepted);
@@ -173,6 +175,9 @@ namespace NineGrid.Core.Tests
                 .WithPrice(30));
             catalog.AddCard(new CardContentDefinition(RewardSystem.ShopFoodDefId, "食品卡", CardKind.HelpCard)
                 .WithPrice(50));
+            catalog.AddCard(new CardContentDefinition(
+                    RewardSystem.ShopExpandItemSlotsDefId, "道具牌格升级", CardKind.HelpCard)
+                .WithPrice(RewardSystem.ShopExpandItemSlotsPriceGold));
             catalog.AddCard(new CardContentDefinition("monster.hold", "占位怪", CardKind.Monster));
             catalog.Rewards.AddRoom(new RoomDefinition(RoomKind.Shop, "商店") { Weight = 1 });
             return catalog;

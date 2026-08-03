@@ -169,7 +169,7 @@ namespace NineGrid.Core.Tests
             var pending = mArch.GetModel<PendingChoiceModel>();
             Assert.AreEqual(PendingChoiceKind.Reward, pending.Kind.Value);
             Assert.AreEqual(PendingChoiceModel.ShopPoolId, pending.PoolId.Value);
-            Assert.AreEqual(4, pending.RewardOptions.Count);
+            Assert.AreEqual(5, pending.RewardOptions.Count);
         }
 
         private int IndexOfDef(string defId)
