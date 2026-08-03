@@ -2645,33 +2645,60 @@ namespace NineGrid.Content.Editor
                     }),
                     tooltip: "设计案槽位标签（近战1 / 远程2 / boss3…）；不进 Core，仅编辑器与交付对照。"));
 
+                // 序列对应主题卡组发牌 seq1–5（node_deck_rules / RewardSystem）；5=层主。
+                var sequenceLabels = new List<string>
+                {
+                    "未设置",
+                    "1",
+                    "2",
+                    "3",
+                    "4",
+                    "5（层主）",
+                };
+                var sequenceValues = new[] { 0, 1, 2, 3, 4, 5 };
+                var clampedSeq = Mathf.Clamp(dto.sequence, 0, 5);
+                if (dto.sequence != clampedSeq)
+                {
+                    dto.sequence = clampedSeq;
+                }
+
+                var sequenceIndex = clampedSeq; // 0→未设置 … 5→5（层主）
+                var sequenceField = new PopupField<string>(sequenceLabels, sequenceIndex);
+                sequenceField.tooltip =
+                    "主题卡组发牌序列（对战接线 seq1–5）。选 5 时等级自动为层主。";
+                sequenceField.RegisterValueChangedCallback(evt =>
+                {
+                    var pickedIndex = sequenceLabels.IndexOf(evt.newValue);
+                    dto.sequence = pickedIndex >= 0 && pickedIndex < sequenceValues.Length
+                        ? sequenceValues[pickedIndex]
+                        : 0;
+                    if (dto.sequence == 5)
+                    {
+                        dto.level = "层主";
+                        dto.isBoss = true;
+                        dto.isElite = false;
+                    }
+                    else if (dto.sequence > 0
+                             && string.Equals(dto.level, "层主", StringComparison.Ordinal))
+                    {
+                        dto.level = "普通";
+                        dto.isBoss = false;
+                    }
+
+                    OnDtoEdited(entry);
+                    rootVisualElement.schedule.Execute(() =>
+                    {
+                        RefreshContent();
+                        UpdateStatus();
+                    });
+                });
+
                 column.Add(ContentVisualWarmConsoleUi.CreateInlineFieldGroup(
                     ContentVisualWarmConsoleUi.WrapControlRow(
                         "序列",
-                        BindInt(dto.sequence, v =>
-                        {
-                            dto.sequence = Mathf.Clamp(v, 0, 5);
-                            if (dto.sequence == 5)
-                            {
-                                dto.level = "层主";
-                                dto.isBoss = true;
-                                dto.isElite = false;
-                            }
-                            else if (dto.sequence > 0
-                                     && string.Equals(dto.level, "层主", StringComparison.Ordinal))
-                            {
-                                dto.level = "普通";
-                                dto.isBoss = false;
-                            }
-
-                            OnDtoEdited(entry);
-                            rootVisualElement.schedule.Execute(() =>
-                            {
-                                RefreshContent();
-                                UpdateStatus();
-                            });
-                        }),
-                        40f),
+                        sequenceField,
+                        72f,
+                        tooltip: "对战接线怪物卡组发牌序列 1–5；序列 5 即层主。"),
                     ContentVisualWarmConsoleUi.WrapControlRow(
                         "等级",
                         BindText(dto.level ?? string.Empty, v =>
@@ -2688,6 +2715,11 @@ namespace NineGrid.Content.Editor
                             }
 
                             OnDtoEdited(entry);
+                            rootVisualElement.schedule.Execute(() =>
+                            {
+                                RefreshContent();
+                                UpdateStatus();
+                            });
                         }),
                         48f)));
 
