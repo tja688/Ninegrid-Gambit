@@ -164,7 +164,8 @@
 - Core：进 `Shop` → `OfferShopSession` 固定 4 货架（宝箱 / 随机属性道具 / 恢复药水 / 食品）+ 本次进店刷新价初值 10；`SelectReward` 扣 `Price`、进携带卡包、**留店**；`RefreshShop` 扣刷新价并翻倍；`SkipHelpChoice` 出店（不加 skip 金）
 - 刷新价作用域：**本次进店**（离开清零；再进店重新从 10 起）
 - 表现：`ShopBoardPresenter` 落格 1/3/7/9 货架、2 刷新、8 离开；Avatar 硬切格 5；货架/刷新任意距离点击；离开驻留 1s；金币不足写简要解释 Notice
-- 货架真卡 `GroundCardMode`（战斗同尺度，**不** `RoomIconVisualFit`）；刷新就地选项 / 离开图标仍 Fit；货架·刷新登记 `SoftBlockOnly`，离开 `WalkDestination`
+- 货架真卡 `GroundCardMode`（意图是「战斗同尺度」，**不** `RoomIconVisualFit`）；刷新就地选项 / 离开图标仍 Fit；货架·刷新登记 `SoftBlockOnly`，离开 `WalkDestination`
+  - ⚠ 实测**未达成同尺度**：货架真卡 `Instantiate(prefab, anchor)` 成为 `GroundAnchors/slotN`（`localScale (2,2,2)`）的子物体，`GroundCardMode` 的 `localScale = 1` 于是渲染为战斗卡的两倍；战斗侧 `SlotFrameConvergence.SnapHome` 只写世界位置、不 SetParent，才是那个「同尺度」的来源。修复方向见 [ADR-0024](../adr/0024-board-placement-and-prefab-authored-size.md)
 - 扣金后经 `InRoomGoldPresentation` 推 EventLog→HUD（非战斗无 GoldGainBeat）；**房内会话不持 ChoiceOverlay**（场地=ProtectedField，否则 BoardWalk ownerMismatch 全点不动）；Presenter 内勿嵌套 Set/清门；局内宝箱 Bounce 仍短暂持 overlay
 - 离开监视：先 `mActive=true` 再 `StartAvatarWatch`；失败驻留须重开计时
 - 货架挂 `ShopBoardHitProxy` 时禁用同 GO `GroundCardHitProxy`，避免误入 Pickup
@@ -232,7 +233,7 @@
 
 特殊选项卡种子（`ChoiceOption`）：卡店服务 `UpgradeItemStats`/`FixItem`/`ExpandItemCapacity`/`RefreshShop`；`Attack`/`Armor`/`Hp` 内容条目仍在（UI 入口 #90 已退役，去留交 M2）。
 
-局内选房走场地图标 + 驻留提交；`RoomChoicePresenter` 与 `RoomChoisePanel` 接线已删（#90）。`SelectorManagerSingleton` 只剩 Bounce；扇形 `BounceFanChoicePresenter` 仅服务宝箱开遗物。通关三选一已退役（ADR-0021）：清关进 `RoomChoice` 后由 `NodeSettlementReadiness` 唤醒主循环刷图标；`TryForceNodeVictory` 同路走 `TryCompleteClearedNode`。图标落格经 `RoomIconVisualFit` 压进格内；`BoardBriefTipHitProxy` 配置 Walk 槽后单击转发 BoardWalk。房内货架/就地选项卡点选属 M2。
+局内选房走场地图标 + 驻留提交；`RoomChoicePresenter` 与 `RoomChoisePanel` 接线已删（#90）。`SelectorManagerSingleton` 只剩 Bounce；扇形 `BounceFanChoicePresenter` 仅服务宝箱开遗物。通关三选一已退役（ADR-0021）：清关进 `RoomChoice` 后由 `NodeSettlementReadiness` 唤醒主循环刷图标；`TryForceNodeVictory` 同路走 `TryCompleteClearedNode`。图标落格经 `RoomIconVisualFit` 压进格内（归一后压到 `0.85 × slotHitBoxSize` 的绝对世界值 `1.36 × 1.87`，与格位无关；该 Fit 将按 [ADR-0024](../adr/0024-board-placement-and-prefab-authored-size.md) 整体退役，前置作业是人工校准那批根 `localScale` 0.2–6 的图标预制体）；`BoardBriefTipHitProxy` 配置 Walk 槽后单击转发 BoardWalk。房内货架/就地选项卡点选属 M2。
 
 ## ADR 不变量（摘要）
 
@@ -244,6 +245,8 @@
 - 卡面**数值**只经结算指令在表演锚点提交，不直读 Core（ADR-0005）；装饰消费者经同一排期器多处理器分发（ADR-0007）  
 - **触发可见因果** / **基础触发表现**：无命中帧、靠运动落地才成立的触发，Impact 须在条件可见之后；Triggered 卡牌触发须 `EffectTriggered` + 在场持有者 v1 缩放（ADR-0018）  
 - Windows Player 高回报率鼠标：`RIDEV_NOLEGACY` + 轮询注入 Input System；命中走 `PointerHitRouter`，禁 `OnMouse*`（ADR-0006）
+- **（待落地）** 格位命中框为九宫格唯一命中权威、一格一认领者、命中恒成功、禁用启停 collider 表达规则（ADR-0023）
+- **（待落地）** 落格对象不 SetParent 到格位锚点、尺寸权威在预制体、运行时不写 `localScale`（ADR-0024）
 
 ## 指针与命中（ADR-0006）
 
@@ -255,6 +258,31 @@
 - **Win Player mitigation**：`Platform/WindowsHighPollingMouseMitigation`（`#if UNITY_STANDALONE_WIN && !UNITY_EDITOR`）
 - **工程设置**：`activeInputHandler = 1`（New Input System only）
 - **专项回归**：125 / 1000 / 4000+ Hz × 窗口/无边框/全屏；hover、空槽、点怪、手牌拖放、BoardSelect、BounceFan、右键详述
+
+### 命中权威盘点（现状 8 套）
+
+| 权威 | 机制 | 服务 |
+|------|------|------|
+| `PointerHitRouter` + `PointerHitRegistry` | 按各目标 collider 所在平面 `ScreenToWorld` + `Collider2D.OverlapPoint`，取 `HitSortOrder` → `HitTypePriority` 最大者；**同分保留先注册者** | 棋盘 / 手牌 / 覆层主路径 |
+| `CardHandManagerSingleton` 布局带 | `handHitBoxSize` AABB 数学，不用 collider；`DefaultExecutionOrder(-50)` | 手牌 hover + 起拖 |
+| `CardHandManagerSingleton` 拖拽 | `Physics2D.OverlapPointAll` | 拖拽落点（是否压着地面卡 / 解析目标格） |
+| `WorldPointerUtility.TryPickCollider` | 自算 `ScreenToWorld` 并**强制 z = 0** + OverlapPoint | 主菜单 StartRun / Quit |
+| `BounceFanChoicePresenter` | 自算 OverlapPoint，倒序遍历 entries | 战斗内扇形三选一 |
+| `PlayerInfoHudPresenter` | 私有 `ScreenToWorldPoint(depth = 0)` + OverlapPoint | 血条上限揭示 |
+| legacy `OnMouseEnter` / `OnMouseExit` | Unity 消息 | `StartRunHoverScale`；**NOLEGACY 下 Player 内不触发**（假实现） |
+| `Physics2D.GetRayIntersection` | — | `Arts/` 下 demo，不属表现层 |
+
+其中第 4、6 套与 Router 的屏幕→世界换算不一致（前者锁 z = 0，后者按各 collider 平面），同一屏幕点可落在不同世界坐标。
+
+collider 尺寸现状：`GroundSlotHitProxy` / `GroundCardHitProxy` / `HandCardHitProxy` / 各 `Board*HitProxy` 都把 `slotHitBoxSize (1.6, 2.2)` 写进 `BoxCollider2D.size`（**本地**单位）。卡与手牌父级缩放为 1（世界 `1.6 × 2.2`），格位锚点父级缩放为 2（世界 `3.2 × 4.4`）——同一字段在两处相差一倍。
+
+房间图标再叠 `RoomIconVisualFit` 的 fitScale：世界 collider = `(3.2S, 4.4S)`，`S = min(1.36/Bx, 1.87/By)` 由源图世界包围盒反推。实测跨度 —— 温泉 / 常规战斗 `3.87 × 5.32`、属性提升 `1.39 × 1.92`、牌店 `0.32 × 0.44`、宝箱 `0.18 × 0.25`，**相差 21 倍**，而 Fit 后视觉一律约 1.36 宽。软占格又禁用大号空槽 collider，只剩这个小框可打。左右差异只与该格图标的源图像素尺寸相关（`boardSlot` 把温泉钉格 1、宝箱 / 牌店钉格 3），**与注册顺序平局无关**——两格 AABB 相距 6.14 世界单位，实测不重叠。
+
+板面参照：底板 Sliced `1.9 × 2.45` × 2 = 世界 `3.8 × 4.9`；格距 `5 × 5.5`；slot 自带 `BoxCollider2D` 本地 `1.625 × 2.0625`（世界 `3.25 × 4.125`，磁盘上仍 `enabled: 0`）。卡牌底盘预制体无 SpriteRenderer，卡面运行时挂 `FacePivot`。
+
+### 收敛方向（ADR-0023 / ADR-0024，**尚未落地**）
+
+决策已定、代码未改，勿把下表当作既成事实：格位命中框（场景权威、常开、落格对象不自带 collider）+ 一格一认领者；棋盘塌成单一「场地面」表面；表面优先级只管几何、权限归 ADR-0004 所有权轴；手牌拖拽落点交棒场地面；退役第 4 / 6 / 7 套野生拾取路径。实施拆票见 issue #99。
 ## Core 表演契约与统一表现管线（#54–#62）
 
 - `NineGrid.Core.PresentationBeat`：`Impact` / `Settled` / `None`（**表演消费归属**，非仅卡面；升级路径注释在枚举旁）

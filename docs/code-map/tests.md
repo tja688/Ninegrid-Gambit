@@ -26,6 +26,20 @@
 | `CardFaceBeatStructuralTests.cs` | 结构护栏（#55–#62）：禁石头爱好者卡面提前同步；攻击/反击命中帧须报 Impact 且不得 Sync/SpawnDamagePopups；PresentStep 通道前 FlushUpdateFaceUp、Idle 门控、ack 前 FlushBeats；战斗 Present `flushFaceUpBeforeBegin: false`；Handler 禁 Forget PlayFlipAsync、须 Enqueue Coordinator；用道具 Present 禁 CommitAllSpawnedCards、须 Vacate 前报 Impact；探索/用道具批次投影禁写卡面数值；禁 JSON stats 盖写；首次 ApplyToManagedCard 禁 TryRead；Handler 消费 Spawn/Deal/Avatar/OfferReward；Bounce 禁 `clearCombatStats` 数值旁路；CommitPresentation 生产调用方白名单（含 `CardFaceFlipBeatHandler`）；MarkFieldDead 禁直置零；ApplyKill 取 RemainingHp；底盘数值 Setter 非公开；禁 `PresentEffectTriggersFromEventLog` / `SpawnDamagePopups` / `PresentGoldGainsFromEventLog`；组合根注册飘字/FX/金币/Avatar HUD/翻牌朝向处理器并接线 FlushUpdateFaceUp；排期器禁 SyncFromCore；ADR-0005/0007 交叉引用；排期器多 `IBattleBeatHandler` |
 | `FlipPlaybackCoordinatorTests.cs` | ADR-0016：串行入队不丢翻；PresentStep FaceUp 未 Idle 前不 Begin；战斗延后 FaceUp 不前置 Flush；FlushUpdateFaceUp 只消费 FaceUp |
 
+### 待新增护栏（ADR-0023 / ADR-0024，随实施票落地）
+
+现有 `Flow/RoomIconVisualFit` 测试与 `InRoomLeaveWatchStructuralTests` 里「选项 Fit / 真卡禁 Fit」两条断言会随 Fit 退役而作废——**改断言必须同 PR 更新 code-map 与 ADR，不得静默删除**。
+
+| 计划护栏 | 保护什么 |
+|----------|----------|
+| 落格 collider 护栏 | 落格对象不得自建 `Collider2D`；运行时不得写格位命中框 `size` / `offset`（ADR-0023） |
+| 认领唯一性 | 一格一认领者；重复认领断言失败；Avatar 与运动中对象不认领（ADR-0023） |
+| 表面优先级 | 注册表面优先级显式且互不相同，同分即失败（ADR-0023） |
+| 命中恒成功 | 无「按规则禁用命中框」的代码路径；`BoardWalkSlotHitPolicy` / 软占关 collider / `int.MinValue` 穿透不得回流（ADR-0023） |
+| 落格父级 | 无任何代码把对象 parent 到 `GroundAnchors` 之下（ADR-0024） |
+| 运行时缩放 | 落格路径不得写 `localScale` 绝对值；无 `RoomIconVisualFit` 回流（ADR-0024） |
+| 野生拾取路径 | 无 `WorldPointerUtility.TryPickCollider` z=0 拾取、无 legacy `OnMouse*`、HUD 不自算 `ScreenToWorldPoint`（ADR-0023 / ADR-0006） |
+
 ### Core 契约护栏（`NineGrid.Core.Tests`）
 
 | 测试 | 保护什么 |
