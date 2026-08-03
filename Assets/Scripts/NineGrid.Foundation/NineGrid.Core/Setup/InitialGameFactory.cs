@@ -69,6 +69,7 @@ namespace NineGrid.Core
             architecture.GetSystem<ITriggerSystem>().Clear();
             architecture.GetSystem<IEconomySystem>().RebindSystemTriggers();
             architecture.GetSystem<IRewardSystem>().RebindSystemTriggers();
+            architecture.GetSystem<IDeckSystem>().RebindSystemTriggers();
             architecture.GetSystem<IActionPipelineSystem>().Clear();
             // 导演硬清/跨局可能留下未 Ack 批次；不清除则 IsInputLocked 粘连，
             // phase 虽已 Reset 为 BuildEnemyPool，StartNode 仍会被拒。

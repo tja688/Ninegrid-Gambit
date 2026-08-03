@@ -20,11 +20,15 @@ namespace NineGrid.Core
             var registry = context.GetModel<CardRegistry>();
             var board = context.GetModel<BoardModel>();
             var deck = context.GetModel<DeckModel>();
+            var battle = context.GetModel<BattleContextModel>();
             var deactivatedEffects = DeactivateNonPersistentRuntimeEffects(context, registry, deck);
 
             board.ClearBoardCards();
             deck.ClearBattleZones();
             RemoveNonPersistentCards(registry, deck);
+
+            // #112 / ADR-0026：每节点重置离开机关进度；开局真怪 UID 在造卡后登记（N 不含机关）。
+            battle.ResetLeaveTrapProgress();
 
             var result = new GameActionResult();
             for (var i = 0; i < Options.PlayerCards.Count; i++)
@@ -49,6 +53,11 @@ namespace NineGrid.Core
             {
                 var card = CreateConfiguredCard(context, Options.EnemyCards[i], registry);
                 deck.AddToEnemyCardPool(card);
+                if (CardCombatRules.IsTrueMonster(card.Kind))
+                {
+                    battle.RegisterOpeningTrueMonster(card.Uid);
+                }
+
                 result.AddWithFaceAbsolutes(
                     context,
                     card,

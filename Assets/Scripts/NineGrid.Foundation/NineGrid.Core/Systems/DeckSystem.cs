@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using QFramework;
 
 namespace NineGrid.Core.Systems
@@ -9,12 +10,36 @@ namespace NineGrid.Core.Systems
         bool HasEnemyInDrawPile();
         bool HasPendingEnemyCards();
         bool IsNodeCleared();
+
+        /// <summary>
+        /// 重绑系统级 Trigger（InitialGameFactory 若 Clear 了 TriggerSystem 后必须调用）。
+        /// </summary>
+        void RebindSystemTriggers();
     }
 
     public sealed class DeckSystem : AbstractSystem, IDeckSystem
     {
+        private const string LeaveTrapDefId = "trap.leave";
+
+        private IUnRegister mLeaveTrapInsertUnregister;
+
         protected override void OnInit()
         {
+            RebindSystemTriggers();
+        }
+
+        public void RebindSystemTriggers()
+        {
+            if (mLeaveTrapInsertUnregister != null)
+            {
+                mLeaveTrapInsertUnregister.UnRegister();
+                mLeaveTrapInsertUnregister = null;
+            }
+
+            mLeaveTrapInsertUnregister = this.GetSystem<ITriggerSystem>().Register(
+                TriggerPoint.OnKill,
+                TriggerTiming.Post,
+                new DelegateTriggerReaction("deck.leaveTrapInsert", ReactToTrueMonsterKillForLeaveTrap));
         }
 
         public int SetupNode(NodeDeckOptions options)
@@ -68,9 +93,46 @@ namespace NineGrid.Core.Systems
         public bool IsNodeCleared()
         {
             // ADR-0017：清关只看真怪物；抽牌堆/敌池/场上残留 Trap 不挡关。
+            // #113 将改为离开机关击破语义；本票 (#112) 不改写。
             return !HasEnemyInDrawPile()
                 && !HasEnemyInEnemyCardPool()
                 && !HasEnemyOnBoard();
+        }
+
+        private IEnumerable<GameAction> ReactToTrueMonsterKillForLeaveTrap(TriggerContext context)
+        {
+            if (context.Events == null)
+            {
+                return null;
+            }
+
+            var battle = this.GetModel<BattleContextModel>();
+            var recorded = false;
+            for (var i = 0; i < context.Events.Count; i++)
+            {
+                var evt = context.Events[i];
+                if (evt.Type != CoreEventType.CardKilled || evt.CardUid == 0)
+                {
+                    continue;
+                }
+
+                // 仅开局编入真怪 UID 计入 ⌈N/2⌉ 进度（局中新生怪不加速出门）。
+                if (battle.TryRecordOpeningTrueMonsterDefeat(evt.CardUid))
+                {
+                    recorded = true;
+                }
+            }
+
+            if (!recorded || !battle.ShouldInsertLeaveTrap())
+            {
+                return null;
+            }
+
+            battle.MarkLeaveTrapInserted();
+            return new GameAction[]
+            {
+                new ShuffleIntoDrawPileAction(LeaveTrapDefId, CardKind.Trap, 1, false, "leaveTrap.insert")
+            };
         }
 
         private bool HasEnemyInEnemyCardPool()
