@@ -1,94 +1,101 @@
 {
-  "schemaVersion": 2,
-  "contentId": "monster.skeleton_king",
-  "kind": "Monster",
-  "deckId": "deck.transition",
-  "role": "",
-  "displayName": "紫袍鹰王",
-  "description": "",
-  "faceIntro": "鹰之王者不会飞是因为太他吃太胖了",
-  "attackPattern": "全向近战",
-  "gold": 5,
-  "stats": {
-    "hp": 12,
-    "armor": 10,
-    "attack": 3,
-    "action": 3,
-    "recovery": 0
-  },
-  "sprites": {
-    "mainIcon": "Assets/Resources/ContentArt/Multiple/pixel_art_card_pack 1.png",
-    "faceBackground": "",
-    "cardFrame": "",
-    "banner": "",
-    "backBorder": "",
-    "backShirt": "",
-    "backLogo": ""
-  },
-  "mainVisual": {
-    "offsetX": 0.0,
-    "offsetY": -0.5299999713897705,
-    "uniformScale": 1.0
-  },
-  "animations": {
-    "defaultFps": 8.0,
-    "slots": [
-      {
-        "id": "idle",
-        "sourceType": "folder",
-        "path": "Assets/Resources/ContentArt/Png/像素怪物合集/sprites/Corvyn_idle_01",
+    "schemaVersion": 2,
+    "contentId": "monster.skeleton_king",
+    "kind": "Monster",
+    "deckId": "deck.orc_legion",
+    "role": "",
+    "displayName": "boss2",
+    "designSlotName": "boss2",
+    "description": "[[普通近战]]，[[空间掌握]]",
+    "faceIntro": "鹰之王者不会飞是因为太他吃太胖了",
+    "attackPattern": "普通近战",
+    "gold": 5,
+    "stats": {
+        "hp": 30,
+        "armor": 0,
+        "attack": 3,
+        "action": 3,
+        "recovery": 0
+    },
+    "sprites": {
+        "mainIcon": "Assets/Resources/ContentArt/Multiple/pixel_art_card_pack 1.png",
+        "faceBackground": "",
+        "cardFrame": "",
+        "banner": "",
+        "backBorder": "",
+        "backShirt": "",
+        "backLogo": ""
+    },
+    "mainVisual": {
         "offsetX": 0.0,
-        "offsetY": 0.0
-      },
-      {
-        "id": "attack",
-        "sourceType": "none",
-        "path": "",
-        "offsetX": 0.0,
-        "offsetY": 0.0
-      },
-      {
-        "id": "hurt",
-        "sourceType": "none",
-        "path": "",
-        "offsetX": 0.0,
-        "offsetY": 0.0
-      },
-      {
-        "id": "death",
-        "sourceType": "none",
-        "path": "",
-        "offsetX": 0.0,
-        "offsetY": 0.0
-      },
-      {
-        "id": "lunch",
-        "sourceType": "none",
-        "path": "",
-        "offsetX": 0.0,
-        "offsetY": 0.0
-      }
-    ]
-  },
-  "extraSlots": [],
-  "rarity": "None",
-  "tags": [],
-  "effectAssemblies": [],
-  "effectIds": [],
-  "skillIds": [],
-  "level": "层主",
-  "isElite": false,
-  "isBoss": true,
-  "isReserve": false,
-  "containerType": "",
-  "deckKind": "",
-  "monsterDefIds": [],
-  "weight": 0,
-  "goldDelta": 0,
-  "maxHpDelta": 0,
-  "healToFull": false,
-  "rewardPoolId": "",
-  "shopOfferCount": 0,
-  "sequence": 5,
-  "designSlotName": "boss3"
+        "offsetY": -0.5299999713897705,
+        "uniformScale": 1.0
+    },
+    "animations": {
+        "defaultFps": 8.0,
+        "slots": [
+            {
+                "id": "idle",
+                "sourceType": "folder",
+                "path": "Assets/Resources/ContentArt/Png/像素怪物合集/sprites/Corvyn_idle_01",
+                "offsetX": 0.0,
+                "offsetY": 0.0
+            },
+            {
+                "id": "attack",
+                "sourceType": "none",
+                "path": "",
+                "offsetX": 0.0,
+                "offsetY": 0.0
+            },
+            {
+                "id": "hurt",
+                "sourceType": "none",
+                "path": "",
+                "offsetX": 0.0,
+                "offsetY": 0.0
+            },
+            {
+                "id": "death",
+                "sourceType": "none",
+                "path": "",
+                "offsetX": 0.0,
+                "offsetY": 0.0
+            },
+            {
+                "id": "lunch",
+                "sourceType": "none",
+                "path": "",
+                "offsetX": 0.0,
+                "offsetY": 0.0
+            }
+        ]
+    },
+    "extraSlots": [],
+    "rarity": "None",
+    "tags": [],
+    "effectAssemblies": [
+        {
+            "id": "skill.space_mastery.battle",
+            "templateId": "tpl.skill.space_mastery.battle",
+            "containerType": "MonsterSkill",
+            "argsJson": "{\"sourceAction\":\"DealDamage\",\"count\":1}"
+        }
+    ],
+    "effectIds": [],
+    "skillIds": [],
+    "level": "层主",
+    "sequence": 5,
+    "isElite": false,
+    "isBoss": true,
+    "isReserve": false,
+    "containerType": "",
+    "deckKind": "",
+    "monsterDefIds": [],
+    "weight": 0,
+    "rewardPoolId": "",
+    "shopOfferCount": 0,
+    "openingInjects": [],
+    "iconPrefab": "",
+    "boardSlot": 0
 }

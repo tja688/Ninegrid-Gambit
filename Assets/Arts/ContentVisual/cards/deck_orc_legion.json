@@ -1,89 +1,94 @@
 {
-  "schemaVersion": 2,
-  "contentId": "deck.orc_legion",
-  "kind": "Deck",
-  "deckId": "",
-  "role": "",
-  "displayName": "植物牌组",
-  "description": "",
-  "attackPattern": "",
-  "gold": 0,
-  "stats": {
-    "hp": 0,
-    "armor": 0,
-    "attack": 0,
-    "action": 0,
-    "recovery": 0
-  },
-  "sprites": {
-    "mainIcon": "",
-    "faceBackground": "",
-    "cardFrame": "",
-    "banner": "",
-    "backBorder": "",
-    "backShirt": "",
-    "backLogo": ""
-  },
-  "mainVisual": {
-    "offsetX": 0.0,
-    "offsetY": 0.0,
-    "uniformScale": 1.0
-  },
-  "animations": {
-    "defaultFps": 8.0,
-    "slots": [
-      {
-        "id": "idle",
-        "sourceType": "none",
-        "path": "",
+    "schemaVersion": 2,
+    "contentId": "deck.orc_legion",
+    "kind": "Deck",
+    "deckId": "",
+    "role": "",
+    "displayName": "旋转怪物卡组 ",
+    "designSlotName": "",
+    "description": "",
+    "faceIntro": "",
+    "attackPattern": "",
+    "gold": 0,
+    "stats": {
+        "hp": 0,
+        "armor": 0,
+        "attack": 0,
+        "action": 0,
+        "recovery": 0
+    },
+    "sprites": {
+        "mainIcon": "",
+        "faceBackground": "",
+        "cardFrame": "",
+        "banner": "",
+        "backBorder": "",
+        "backShirt": "",
+        "backLogo": ""
+    },
+    "mainVisual": {
         "offsetX": 0.0,
-        "offsetY": 0.0
-      },
-      {
-        "id": "attack",
-        "sourceType": "none",
-        "path": "",
-        "offsetX": 0.0,
-        "offsetY": 0.0
-      },
-      {
-        "id": "hurt",
-        "sourceType": "none",
-        "path": "",
-        "offsetX": 0.0,
-        "offsetY": 0.0
-      },
-      {
-        "id": "death",
-        "sourceType": "none",
-        "path": "",
-        "offsetX": 0.0,
-        "offsetY": 0.0
-      },
-      {
-        "id": "lunch",
-        "sourceType": "none",
-        "path": "",
-        "offsetX": 0.0,
-        "offsetY": 0.0
-      }
-    ]
-  },
-  "extraSlots": [],
-  "rarity": "",
-  "tags": [],
-  "effectAssemblies": [],
-  "effectIds": [],
-  "skillIds": [],
-  "level": 0,
-  "isElite": false,
-  "isBoss": false,
-  "isReserve": false,
-  "containerType": "",
-  "weight": 0,
-  "goldDelta": 0,
-  "maxHpDelta": 0,
-  "healToFull": false,
-  "rewardPoolId": "",
-  "shopOfferCount": 0
+        "offsetY": 0.0,
+        "uniformScale": 1.0
+    },
+    "animations": {
+        "defaultFps": 8.0,
+        "slots": [
+            {
+                "id": "idle",
+                "sourceType": "none",
+                "path": "",
+                "offsetX": 0.0,
+                "offsetY": 0.0
+            },
+            {
+                "id": "attack",
+                "sourceType": "none",
+                "path": "",
+                "offsetX": 0.0,
+                "offsetY": 0.0
+            },
+            {
+                "id": "hurt",
+                "sourceType": "none",
+                "path": "",
+                "offsetX": 0.0,
+                "offsetY": 0.0
+            },
+            {
+                "id": "death",
+                "sourceType": "none",
+                "path": "",
+                "offsetX": 0.0,
+                "offsetY": 0.0
+            },
+            {
+                "id": "lunch",
+                "sourceType": "none",
+                "path": "",
+                "offsetX": 0.0,
+                "offsetY": 0.0
+            }
+        ]
+    },
+    "extraSlots": [],
+    "rarity": "",
+    "tags": [],
+    "effectAssemblies": [],
+    "effectIds": [],
+    "skillIds": [],
+    "level": "0",
+    "sequence": 0,
+    "isElite": false,
+    "isBoss": false,
+    "isReserve": false,
+    "containerType": "",
+    "deckKind": "",
+    "monsterDefIds": [],
+    "weight": 0,
+    "rewardPoolId": "",
+    "shopOfferCount": 0,
+    "openingInjects": [],
+    "iconPrefab": "",
+    "boardSlot": 0
 }

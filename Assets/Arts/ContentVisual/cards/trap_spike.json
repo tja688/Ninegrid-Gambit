@@ -5,7 +5,7 @@
     "deckId": "deck.trap",
     "role": "",
     "displayName": "刺藤",
-    "description": "",
+    "description": "[场上]本卡每移动{amount}次，邻格真怪各受到1点伤害；[场上]本卡每移动{amount}次，若正交邻玩家则对玩家造成1点伤害",
     "faceIntro": "",
     "attackPattern": "无",
     "gold": 0,
@@ -92,7 +92,8 @@
         "trap.spike.move_player"
     ],
     "skillIds": [],
-    "level": 1,
+    "level": "1",
+    "sequence": 0,
     "isElite": false,
     "isBoss": false,
     "isReserve": false,
@@ -100,9 +101,9 @@
     "deckKind": "",
     "monsterDefIds": [],
     "weight": 0,
-    "goldDelta": 0,
-    "maxHpDelta": 0,
-    "healToFull": false,
     "rewardPoolId": "",
-    "shopOfferCount": 0
+    "shopOfferCount": 0,
+    "openingInjects": [],
+    "iconPrefab": "",
+    "boardSlot": 0
 }

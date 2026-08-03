@@ -1,94 +1,97 @@
 {
-  "schemaVersion": 2,
-  "contentId": "monster.salamander",
-  "kind": "Monster",
-  "deckId": "deck.transition",
-  "role": "",
-  "displayName": "战士蜥",
-  "description": "",
-  "faceIntro": "蜥蜴一族中的战士",
-  "attackPattern": "普通远程",
-  "gold": 5,
-  "stats": {
-    "hp": 9,
-    "armor": 0,
-    "attack": 3,
-    "action": 5,
-    "recovery": 0
-  },
-  "sprites": {
-    "mainIcon": "Assets/Resources/ContentArt/Multiple/pixel_art_card_pack 1.png",
-    "faceBackground": "",
-    "cardFrame": "",
-    "banner": "",
-    "backBorder": "",
-    "backShirt": "",
-    "backLogo": ""
-  },
-  "mainVisual": {
-    "offsetX": 0.20000000298023224,
-    "offsetY": -0.20000000298023224,
-    "uniformScale": 1.0
-  },
-  "animations": {
-    "defaultFps": 8.0,
-    "slots": [
-      {
-        "id": "idle",
-        "sourceType": "folder",
-        "path": "Assets/Resources/ContentArt/Png/像素怪物合集/sprites/53LizardMan03_idle_01",
-        "offsetX": 0.0,
-        "offsetY": 0.0
-      },
-      {
-        "id": "attack",
-        "sourceType": "none",
-        "path": "",
-        "offsetX": 0.0,
-        "offsetY": 0.0
-      },
-      {
-        "id": "hurt",
-        "sourceType": "none",
-        "path": "",
-        "offsetX": 0.0,
-        "offsetY": 0.0
-      },
-      {
-        "id": "death",
-        "sourceType": "none",
-        "path": "",
-        "offsetX": 0.0,
-        "offsetY": 0.0
-      },
-      {
-        "id": "lunch",
-        "sourceType": "none",
-        "path": "",
-        "offsetX": 0.0,
-        "offsetY": 0.0
-      }
-    ]
-  },
-  "extraSlots": [],
-  "rarity": "None",
-  "tags": [],
-  "effectAssemblies": [],
-  "effectIds": [],
-  "skillIds": [],
-  "level": "普通",
-  "isElite": false,
-  "isBoss": false,
-  "isReserve": false,
-  "containerType": "",
-  "deckKind": "",
-  "monsterDefIds": [],
-  "weight": 0,
-  "goldDelta": 0,
-  "maxHpDelta": 0,
-  "healToFull": false,
-  "rewardPoolId": "",
-  "shopOfferCount": 0,
-  "sequence": 2,
-  "designSlotName": "远程1"
+    "schemaVersion": 2,
+    "contentId": "monster.salamander",
+    "kind": "Monster",
+    "deckId": "deck.stone_legion",
+    "role": "",
+    "displayName": "远程6",
+    "designSlotName": "远程6",
+    "description": "[[普通远程]]，[[远程武器]]，[[烈焰沸腾]]",
+    "faceIntro": "蜥蜴一族中的战士",
+    "attackPattern": "普通远程",
+    "gold": 5,
+    "stats": {
+        "hp": 4,
+        "armor": 0,
+        "attack": 1,
+        "action": 5,
+        "recovery": 0
+    },
+    "sprites": {
+        "mainIcon": "Assets/Resources/ContentArt/Multiple/pixel_art_card_pack 1.png",
+        "faceBackground": "",
+        "cardFrame": "",
+        "banner": "",
+        "backBorder": "",
+        "backShirt": "",
+        "backLogo": ""
+    },
+    "mainVisual": {
+        "offsetX": 0.20000000298023224,
+        "offsetY": -0.20000000298023224,
+        "uniformScale": 1.0
+    },
+    "animations": {
+        "defaultFps": 8.0,
+        "slots": [
+            {
+                "id": "idle",
+                "sourceType": "folder",
+                "path": "Assets/Resources/ContentArt/Png/像素怪物合集/sprites/53LizardMan03_idle_01",
+                "offsetX": 0.0,
+                "offsetY": 0.0
+            },
+            {
+                "id": "attack",
+                "sourceType": "none",
+                "path": "",
+                "offsetX": 0.0,
+                "offsetY": 0.0
+            },
+            {
+                "id": "hurt",
+                "sourceType": "none",
+                "path": "",
+                "offsetX": 0.0,
+                "offsetY": 0.0
+            },
+            {
+                "id": "death",
+                "sourceType": "none",
+                "path": "",
+                "offsetX": 0.0,
+                "offsetY": 0.0
+            },
+            {
+                "id": "lunch",
+                "sourceType": "none",
+                "path": "",
+                "offsetX": 0.0,
+                "offsetY": 0.0
+            }
+        ]
+    },
+    "extraSlots": [],
+    "rarity": "None",
+    "tags": [],
+    "effectAssemblies": [],
+    "effectIds": [],
+    "skillIds": [
+        "skill.ranged_weapon",
+        "skill.flame_boiling"
+    ],
+    "level": "普通",
+    "sequence": 2,
+    "isElite": false,
+    "isBoss": false,
+    "isReserve": false,
+    "containerType": "",
+    "deckKind": "",
+    "monsterDefIds": [],
+    "weight": 0,
+    "rewardPoolId": "",
+    "shopOfferCount": 0,
+    "openingInjects": [],
+    "iconPrefab": "",
+    "boardSlot": 0
 }

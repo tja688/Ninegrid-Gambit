@@ -1,94 +1,107 @@
 {
-  "schemaVersion": 2,
-  "contentId": "monster.bone_courier",
-  "kind": "Monster",
-  "deckId": "deck.transition",
-  "role": "",
-  "displayName": "绿毛老鼠",
-  "description": "",
-  "faceIntro": "他坚信自己是刺猬",
-  "attackPattern": "普通近战",
-  "gold": 5,
-  "stats": {
-    "hp": 7,
-    "armor": 1,
-    "attack": 2,
-    "action": 3,
-    "recovery": 0
-  },
-  "sprites": {
-    "mainIcon": "Assets/Resources/ContentArt/Multiple/pixel_art_card_pack 1.png",
-    "faceBackground": "",
-    "cardFrame": "",
-    "banner": "",
-    "backBorder": "",
-    "backShirt": "",
-    "backLogo": ""
-  },
-  "mainVisual": {
-    "offsetX": -0.06499999761581421,
-    "offsetY": -0.07000000029802322,
-    "uniformScale": 1.0
-  },
-  "animations": {
-    "defaultFps": 8.0,
-    "slots": [
-      {
-        "id": "idle",
-        "sourceType": "folder",
-        "path": "Assets/Resources/ContentArt/Png/像素怪物合集/sprites/10mouse_idle_01",
-        "offsetX": 0.0,
-        "offsetY": 0.0
-      },
-      {
-        "id": "attack",
-        "sourceType": "none",
-        "path": "",
-        "offsetX": 0.0,
-        "offsetY": 0.0
-      },
-      {
-        "id": "hurt",
-        "sourceType": "none",
-        "path": "",
-        "offsetX": 0.0,
-        "offsetY": 0.0
-      },
-      {
-        "id": "death",
-        "sourceType": "none",
-        "path": "",
-        "offsetX": 0.0,
-        "offsetY": 0.0
-      },
-      {
-        "id": "lunch",
-        "sourceType": "none",
-        "path": "",
-        "offsetX": 0.0,
-        "offsetY": 0.0
-      }
-    ]
-  },
-  "extraSlots": [],
-  "rarity": "None",
-  "tags": [],
-  "effectAssemblies": [],
-  "effectIds": [],
-  "skillIds": [],
-  "level": "普通",
-  "isElite": false,
-  "isBoss": false,
-  "isReserve": false,
-  "containerType": "",
-  "deckKind": "",
-  "monsterDefIds": [],
-  "weight": 0,
-  "goldDelta": 0,
-  "maxHpDelta": 0,
-  "healToFull": false,
-  "rewardPoolId": "",
-  "shopOfferCount": 0,
-  "sequence": 0,
-  "designSlotName": "绿毛老鼠"
+    "schemaVersion": 2,
+    "contentId": "monster.bone_courier",
+    "kind": "Monster",
+    "deckId": "deck.void",
+    "role": "",
+    "displayName": "卑劣决斗者",
+    "designSlotName": "卑劣决斗者",
+    "description": "[[神圣决斗]]，[[逃避]]",
+    "faceIntro": "他坚信自己是刺猬",
+    "attackPattern": "无",
+    "gold": 5,
+    "stats": {
+        "hp": 4,
+        "armor": 0,
+        "attack": 1,
+        "action": 0,
+        "recovery": 0
+    },
+    "sprites": {
+        "mainIcon": "Assets/Resources/ContentArt/Multiple/pixel_art_card_pack 1.png",
+        "faceBackground": "",
+        "cardFrame": "",
+        "banner": "",
+        "backBorder": "",
+        "backShirt": "",
+        "backLogo": ""
+    },
+    "mainVisual": {
+        "offsetX": -0.06499999761581421,
+        "offsetY": -0.07000000029802323,
+        "uniformScale": 1.0
+    },
+    "animations": {
+        "defaultFps": 8.0,
+        "slots": [
+            {
+                "id": "idle",
+                "sourceType": "folder",
+                "path": "Assets/Arts/Images/Png/像素怪物合集/sprites/Eric_attack_idle",
+                "offsetX": 0.0,
+                "offsetY": 0.0
+            },
+            {
+                "id": "attack",
+                "sourceType": "none",
+                "path": "",
+                "offsetX": 0.0,
+                "offsetY": 0.0
+            },
+            {
+                "id": "hurt",
+                "sourceType": "none",
+                "path": "",
+                "offsetX": 0.0,
+                "offsetY": 0.0
+            },
+            {
+                "id": "death",
+                "sourceType": "none",
+                "path": "",
+                "offsetX": 0.0,
+                "offsetY": 0.0
+            },
+            {
+                "id": "lunch",
+                "sourceType": "none",
+                "path": "",
+                "offsetX": 0.0,
+                "offsetY": 0.0
+            }
+        ]
+    },
+    "extraSlots": [],
+    "rarity": "None",
+    "tags": [],
+    "effectAssemblies": [
+        {
+            "id": "skill.holy_duel.activate",
+            "templateId": "tpl.skill.holy_duel.activate",
+            "containerType": "MonsterSkill",
+            "argsJson": "{\"value\":1,\"source\":\"skill.holy_duel\"}"
+        },
+        {
+            "id": "skill.evade.battle",
+            "templateId": "tpl.skill.evade.battle",
+            "containerType": "MonsterSkill",
+            "argsJson": "{\"sourceAction\":\"DealDamage\"}"
+        }
+    ],
+    "effectIds": [],
+    "skillIds": [],
+    "level": "普通",
+    "sequence": 2,
+    "isElite": false,
+    "isBoss": false,
+    "isReserve": false,
+    "containerType": "",
+    "deckKind": "",
+    "monsterDefIds": [],
+    "weight": 0,
+    "rewardPoolId": "",
+    "shopOfferCount": 0,
+    "openingInjects": [],
+    "iconPrefab": "",
+    "boardSlot": 0
 }

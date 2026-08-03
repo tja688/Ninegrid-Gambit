@@ -3,8 +3,11 @@
     "contentId": "relic.craving",
     "kind": "Relic",
     "deckId": "deck.relic",
+    "role": "Utility",
     "displayName": "渴望",
-    "description": "",
+    "description": "所有恢复血量效果翻倍",
+    "faceIntro": "",
+    "attackPattern": "",
     "gold": 0,
     "stats": {
         "hp": 0,
@@ -72,21 +75,6 @@
     "tags": [
         "tag.special"
     ],
-    "effectIds": [],
-    "skillIds": [],
-    "level": 0,
-    "isElite": false,
-    "isBoss": false,
-    "isReserve": false,
-    "containerType": "",
-    "deckKind": "",
-    "monsterDefIds": [],
-    "weight": 0,
-    "goldDelta": 0,
-    "maxHpDelta": 0,
-    "healToFull": false,
-    "rewardPoolId": "",
-    "shopOfferCount": 0,
     "effectAssemblies": [
         {
             "id": "relic.craving.rule",
@@ -95,5 +83,20 @@
             "argsJson": "{\"value\":2}"
         }
     ],
-    "role": "Utility"
+    "effectIds": [],
+    "skillIds": [],
+    "level": "0",
+    "sequence": 0,
+    "isElite": false,
+    "isBoss": false,
+    "isReserve": false,
+    "containerType": "",
+    "deckKind": "",
+    "monsterDefIds": [],
+    "weight": 0,
+    "rewardPoolId": "",
+    "shopOfferCount": 0,
+    "openingInjects": [],
+    "iconPrefab": "",
+    "boardSlot": 0
 }

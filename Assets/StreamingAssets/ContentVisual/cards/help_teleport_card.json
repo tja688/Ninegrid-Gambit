@@ -3,8 +3,11 @@
     "contentId": "help.teleport_card",
     "kind": "HelpCard",
     "deckId": "deck.help",
+    "role": "Utility",
     "displayName": "传送",
-    "description": "",
+    "description": "[使用时] 选择除玩家卡外的{count}张卡牌洗回战斗卡组",
+    "faceIntro": "",
+    "attackPattern": "",
     "gold": 30,
     "stats": {
         "hp": 0,
@@ -72,21 +75,6 @@
     "tags": [
         "tag.displace"
     ],
-    "effectIds": [],
-    "skillIds": [],
-    "level": 0,
-    "isElite": false,
-    "isBoss": false,
-    "isReserve": false,
-    "containerType": "",
-    "deckKind": "",
-    "monsterDefIds": [],
-    "weight": 0,
-    "goldDelta": 0,
-    "maxHpDelta": 0,
-    "healToFull": false,
-    "rewardPoolId": "",
-    "shopOfferCount": 0,
     "effectAssemblies": [
         {
             "id": "help.teleport_card.use",
@@ -95,5 +83,20 @@
             "argsJson": "{\"count\":1}"
         }
     ],
-    "role": "Utility"
+    "effectIds": [],
+    "skillIds": [],
+    "level": "0",
+    "sequence": 0,
+    "isElite": false,
+    "isBoss": false,
+    "isReserve": false,
+    "containerType": "",
+    "deckKind": "",
+    "monsterDefIds": [],
+    "weight": 0,
+    "rewardPoolId": "",
+    "shopOfferCount": 0,
+    "openingInjects": [],
+    "iconPrefab": "",
+    "boardSlot": 0
 }

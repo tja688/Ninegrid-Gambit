@@ -3,8 +3,11 @@
     "contentId": "help.golden_chest_card",
     "kind": "HelpCard",
     "deckId": "deck.help",
+    "role": "Utility",
     "displayName": "高级宝箱",
-    "description": "",
+    "description": "[使用时] 从三个遗物中选择一个获得",
+    "faceIntro": "",
+    "attackPattern": "",
     "gold": 400,
     "stats": {
         "hp": 0,
@@ -73,21 +76,6 @@
         "tag.special",
         "tag.kill_boss"
     ],
-    "effectIds": [],
-    "skillIds": [],
-    "level": 0,
-    "isElite": false,
-    "isBoss": false,
-    "isReserve": false,
-    "containerType": "",
-    "deckKind": "",
-    "monsterDefIds": [],
-    "weight": 0,
-    "goldDelta": 0,
-    "maxHpDelta": 0,
-    "healToFull": false,
-    "rewardPoolId": "",
-    "shopOfferCount": 0,
     "effectAssemblies": [
         {
             "id": "help.golden_chest_card.use",
@@ -96,5 +84,20 @@
             "argsJson": "{\"poolId\":\"relic.golden_chest\"}"
         }
     ],
-    "role": "Utility"
+    "effectIds": [],
+    "skillIds": [],
+    "level": "0",
+    "sequence": 0,
+    "isElite": false,
+    "isBoss": false,
+    "isReserve": false,
+    "containerType": "",
+    "deckKind": "",
+    "monsterDefIds": [],
+    "weight": 0,
+    "rewardPoolId": "",
+    "shopOfferCount": 0,
+    "openingInjects": [],
+    "iconPrefab": "",
+    "boardSlot": 0
 }

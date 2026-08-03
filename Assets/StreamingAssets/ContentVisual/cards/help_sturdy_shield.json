@@ -3,8 +3,12 @@
     "contentId": "help.sturdy_shield",
     "kind": "HelpCard",
     "deckId": "deck.help",
+    "role": "Defense",
     "displayName": "耐用盾牌",
-    "description": "",
+    "designSlotName": "",
+    "description": "[使用时] 玩家获得{amount}点护甲",
+    "faceIntro": "",
+    "attackPattern": "",
     "gold": 50,
     "stats": {
         "hp": 0,
@@ -72,21 +76,6 @@
     "tags": [
         "tag.armor"
     ],
-    "effectIds": [],
-    "skillIds": [],
-    "level": 0,
-    "isElite": false,
-    "isBoss": false,
-    "isReserve": false,
-    "containerType": "",
-    "deckKind": "",
-    "monsterDefIds": [],
-    "weight": 0,
-    "goldDelta": 0,
-    "maxHpDelta": 0,
-    "healToFull": false,
-    "rewardPoolId": "",
-    "shopOfferCount": 0,
     "effectAssemblies": [
         {
             "id": "help.sturdy_shield.use",
@@ -95,5 +84,20 @@
             "argsJson": "{\"amount\":5}"
         }
     ],
-    "role": "Defense"
+    "effectIds": [],
+    "skillIds": [],
+    "level": "0",
+    "sequence": 0,
+    "isElite": false,
+    "isBoss": false,
+    "isReserve": false,
+    "containerType": "",
+    "deckKind": "",
+    "monsterDefIds": [],
+    "weight": 0,
+    "rewardPoolId": "",
+    "shopOfferCount": 0,
+    "openingInjects": [],
+    "iconPrefab": "",
+    "boardSlot": 0
 }

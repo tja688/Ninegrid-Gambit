@@ -3,8 +3,11 @@
     "contentId": "help.ward_magic_card",
     "kind": "HelpCard",
     "deckId": "deck.help",
+    "role": "Defense",
     "displayName": "庇佑",
-    "description": "",
+    "description": "[使用时] 下一次玩家受到伤害时，该次伤害变为{value}",
+    "faceIntro": "",
+    "attackPattern": "",
     "gold": 20,
     "stats": {
         "hp": 0,
@@ -72,21 +75,6 @@
     "tags": [
         "tag.armor"
     ],
-    "effectIds": [],
-    "skillIds": [],
-    "level": 0,
-    "isElite": false,
-    "isBoss": false,
-    "isReserve": false,
-    "containerType": "",
-    "deckKind": "",
-    "monsterDefIds": [],
-    "weight": 0,
-    "goldDelta": 0,
-    "maxHpDelta": 0,
-    "healToFull": false,
-    "rewardPoolId": "",
-    "shopOfferCount": 0,
     "effectAssemblies": [
         {
             "id": "help.ward_magic_card.use",
@@ -95,5 +83,20 @@
             "argsJson": "{\"value\":0,\"source\":\"help.ward_magic_card\"}"
         }
     ],
-    "role": "Defense"
+    "effectIds": [],
+    "skillIds": [],
+    "level": "0",
+    "sequence": 0,
+    "isElite": false,
+    "isBoss": false,
+    "isReserve": false,
+    "containerType": "",
+    "deckKind": "",
+    "monsterDefIds": [],
+    "weight": 0,
+    "rewardPoolId": "",
+    "shopOfferCount": 0,
+    "openingInjects": [],
+    "iconPrefab": "",
+    "boardSlot": 0
 }

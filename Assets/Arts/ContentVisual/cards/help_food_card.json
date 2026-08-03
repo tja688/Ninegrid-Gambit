@@ -3,8 +3,12 @@
     "contentId": "help.food_card",
     "kind": "HelpCard",
     "deckId": "deck.help",
+    "role": "Utility",
     "displayName": "生日蛋糕",
-    "description": "",
+    "designSlotName": "",
+    "description": "[使用时] 将玩家卡血量回满",
+    "faceIntro": "",
+    "attackPattern": "",
     "gold": 50,
     "stats": {
         "hp": 0,
@@ -72,21 +76,6 @@
     "tags": [
         "tag.heal"
     ],
-    "effectIds": [],
-    "skillIds": [],
-    "level": 0,
-    "isElite": false,
-    "isBoss": false,
-    "isReserve": false,
-    "containerType": "",
-    "deckKind": "",
-    "monsterDefIds": [],
-    "weight": 0,
-    "goldDelta": 0,
-    "maxHpDelta": 0,
-    "healToFull": false,
-    "rewardPoolId": "",
-    "shopOfferCount": 0,
     "effectAssemblies": [
         {
             "id": "help.food_card.use",
@@ -95,5 +84,20 @@
             "argsJson": "{\"source\":\"Player\"}"
         }
     ],
-    "role": "Utility"
+    "effectIds": [],
+    "skillIds": [],
+    "level": "0",
+    "sequence": 0,
+    "isElite": false,
+    "isBoss": false,
+    "isReserve": false,
+    "containerType": "",
+    "deckKind": "",
+    "monsterDefIds": [],
+    "weight": 0,
+    "rewardPoolId": "",
+    "shopOfferCount": 0,
+    "openingInjects": [],
+    "iconPrefab": "",
+    "boardSlot": 0
 }

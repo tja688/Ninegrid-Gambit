@@ -79,9 +79,10 @@ namespace NineGrid.Core.Tests
             Assert.AreEqual(CardKind.Monster, beggar.Kind);
             Assert.AreEqual(AttackPattern.OrthogonalMelee, beggar.AttackPattern);
             Assert.AreEqual(3, beggar.Stats.Action);
-            // 技能仍以独立 Skill JSON 存在；怪物挂载可为空（当前乞丐无 skillIds）。
-            Assert.IsTrue(catalog.Skills.ContainsKey("skill.beggar_bond"));
-            Assert.AreEqual(0, beggar.SkillIds.Count);
+            // boss1：描述 [[普通近战]]，[[吸收]] → 攻击模式字段 + skill.absorb 挂载。
+            Assert.IsTrue(catalog.Skills.ContainsKey("skill.absorb"));
+            Assert.AreEqual(1, beggar.SkillIds.Count);
+            Assert.AreEqual("skill.absorb", beggar.SkillIds[0]);
 
             Assert.IsTrue(catalog.MonsterDecks.TryGetValue("deck.transition", out var transition));
             Assert.Greater(transition.MonsterDefIds.Count, 0, "过渡卡组应挂有全部还原后的怪物");

@@ -1,94 +1,97 @@
 {
-  "schemaVersion": 2,
-  "contentId": "monster.thug",
-  "kind": "Monster",
-  "deckId": "deck.transition",
-  "role": "",
-  "displayName": "刺客",
-  "description": "",
-  "faceIntro": "虽然白毛会暴露行踪，但是这是个性的表达",
-  "attackPattern": "普通近战",
-  "gold": 5,
-  "stats": {
-    "hp": 6,
-    "armor": 0,
-    "attack": 2,
-    "action": 3,
-    "recovery": 0
-  },
-  "sprites": {
-    "mainIcon": "Assets/Resources/ContentArt/Multiple/pixel_art_card_pack 1.png",
-    "faceBackground": "",
-    "cardFrame": "",
-    "banner": "",
-    "backBorder": "",
-    "backShirt": "",
-    "backLogo": ""
-  },
-  "mainVisual": {
-    "offsetX": 0.30000001192092896,
-    "offsetY": -0.3700000047683716,
-    "uniformScale": 0.8799999952316284
-  },
-  "animations": {
-    "defaultFps": 8.0,
-    "slots": [
-      {
-        "id": "idle",
-        "sourceType": "folder",
-        "path": "Assets/Resources/ContentArt/Png/像素怪物合集/sprites/Icey_idle_01",
-        "offsetX": 0.0,
-        "offsetY": 0.0
-      },
-      {
-        "id": "attack",
-        "sourceType": "none",
-        "path": "",
-        "offsetX": 0.0,
-        "offsetY": 0.0
-      },
-      {
-        "id": "hurt",
-        "sourceType": "none",
-        "path": "",
-        "offsetX": 0.0,
-        "offsetY": 0.0
-      },
-      {
-        "id": "death",
-        "sourceType": "none",
-        "path": "",
-        "offsetX": 0.0,
-        "offsetY": 0.0
-      },
-      {
-        "id": "lunch",
-        "sourceType": "none",
-        "path": "",
-        "offsetX": 0.0,
-        "offsetY": 0.0
-      }
-    ]
-  },
-  "extraSlots": [],
-  "rarity": "None",
-  "tags": [],
-  "effectAssemblies": [],
-  "effectIds": [],
-  "skillIds": [],
-  "level": "普通",
-  "isElite": false,
-  "isBoss": false,
-  "isReserve": false,
-  "containerType": "",
-  "deckKind": "",
-  "monsterDefIds": [],
-  "weight": 0,
-  "goldDelta": 0,
-  "maxHpDelta": 0,
-  "healToFull": false,
-  "rewardPoolId": "",
-  "shopOfferCount": 0,
-  "sequence": 1,
-  "designSlotName": "近战4"
+    "schemaVersion": 2,
+    "contentId": "monster.thug",
+    "kind": "Monster",
+    "deckId": "deck.smallanimal",
+    "role": "",
+    "displayName": "特10",
+    "designSlotName": "特10",
+    "description": "[[链接近战]]，[[链接战术]]",
+    "faceIntro": "虽然白毛会暴露行踪，但是这是个性的表达",
+    "attackPattern": "普通近战",
+    "gold": 5,
+    "stats": {
+        "hp": 6,
+        "armor": 0,
+        "attack": 2,
+        "action": 3,
+        "recovery": 0
+    },
+    "sprites": {
+        "mainIcon": "Assets/Resources/ContentArt/Multiple/pixel_art_card_pack 1.png",
+        "faceBackground": "",
+        "cardFrame": "",
+        "banner": "",
+        "backBorder": "",
+        "backShirt": "",
+        "backLogo": ""
+    },
+    "mainVisual": {
+        "offsetX": 0.30000001192092896,
+        "offsetY": -0.3700000047683716,
+        "uniformScale": 0.8799999952316284
+    },
+    "animations": {
+        "defaultFps": 8.0,
+        "slots": [
+            {
+                "id": "idle",
+                "sourceType": "folder",
+                "path": "Assets/Resources/ContentArt/Png/像素怪物合集/sprites/Icey_idle_01",
+                "offsetX": 0.0,
+                "offsetY": 0.0
+            },
+            {
+                "id": "attack",
+                "sourceType": "none",
+                "path": "",
+                "offsetX": 0.0,
+                "offsetY": 0.0
+            },
+            {
+                "id": "hurt",
+                "sourceType": "none",
+                "path": "",
+                "offsetX": 0.0,
+                "offsetY": 0.0
+            },
+            {
+                "id": "death",
+                "sourceType": "none",
+                "path": "",
+                "offsetX": 0.0,
+                "offsetY": 0.0
+            },
+            {
+                "id": "lunch",
+                "sourceType": "none",
+                "path": "",
+                "offsetX": 0.0,
+                "offsetY": 0.0
+            }
+        ]
+    },
+    "extraSlots": [],
+    "rarity": "None",
+    "tags": [],
+    "effectAssemblies": [],
+    "effectIds": [],
+    "skillIds": [
+        "skill.link_attack_bonus",
+        "skill.link_tactics"
+    ],
+    "level": "普通",
+    "sequence": 4,
+    "isElite": false,
+    "isBoss": false,
+    "isReserve": false,
+    "containerType": "",
+    "deckKind": "",
+    "monsterDefIds": [],
+    "weight": 0,
+    "rewardPoolId": "",
+    "shopOfferCount": 0,
+    "openingInjects": [],
+    "iconPrefab": "",
+    "boardSlot": 0
 }

@@ -5,7 +5,7 @@
     "deckId": "deck.trap",
     "role": "",
     "displayName": "攻击图腾",
-    "description": "",
+    "description": "[场上]邻接真怪攻击+{value}；离开邻接后失效（上场/发牌时施加）；[场上]邻接真怪攻击+{value}；任意卡移动时刷新；[场上]邻接玩家攻击+{value}；离开邻接后失效（上场/发牌时施加）；[场上]邻接玩家攻击+{value}；任意卡移动时刷新",
     "faceIntro": "",
     "attackPattern": "无",
     "gold": 0,
@@ -106,7 +106,8 @@
         "trap.attack_totem.refresh_player"
     ],
     "skillIds": [],
-    "level": 1,
+    "level": "1",
+    "sequence": 0,
     "isElite": false,
     "isBoss": false,
     "isReserve": false,
@@ -114,9 +115,9 @@
     "deckKind": "",
     "monsterDefIds": [],
     "weight": 0,
-    "goldDelta": 0,
-    "maxHpDelta": 0,
-    "healToFull": false,
     "rewardPoolId": "",
-    "shopOfferCount": 0
+    "shopOfferCount": 0,
+    "openingInjects": [],
+    "iconPrefab": "",
+    "boardSlot": 0
 }

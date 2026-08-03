@@ -175,8 +175,8 @@ namespace NineGrid.Core.Tests
                 }
             }
 
-            Assert.AreEqual(AttackPattern.None, expected["monster.big_stone"]);
             Assert.AreEqual(AttackPattern.None, expected["monster.fire_priest"]);
+            Assert.AreEqual(AttackPattern.DiagonalMelee, expected["monster.big_stone"]);
             Assert.IsTrue(
                 monsters.Any(m => m.AttackPattern != AttackPattern.None),
                 "content must leave the all-无 migration intermediate");
@@ -186,21 +186,27 @@ namespace NineGrid.Core.Tests
         }
 
         /// <summary>
-        /// #82/#86 非默认（非普通近战）的设计赋模；攻 0 怪显式「无」；主题卡组回填后的序列怪按设计案。
+        /// #82/#86 非默认（非普通近战）的设计赋模；决斗/吞云吐雾显式「无」；主题卡组按序列回填后的赋模。
         /// </summary>
         private static System.Collections.Generic.Dictionary<string, AttackPattern> DesignAttackPatterns()
         {
             return new System.Collections.Generic.Dictionary<string, AttackPattern>
             {
-                { "monster.big_stone", AttackPattern.None },
+                // 决斗卡组（神圣决斗）/ 烈焰层主（吞云吐雾）→ 无
+                { "monster.bone_club_skeleton", AttackPattern.None },
+                { "monster.bone_courier", AttackPattern.None },
                 { "monster.fire_priest", AttackPattern.None },
+                { "monster.fire_swallower", AttackPattern.None },
+                { "monster.fire_bather", AttackPattern.None },
+                { "monster.shelter_stone", AttackPattern.None },
 
                 // 主题序列远程
-                { "monster.salamander", AttackPattern.Ranged },
-                { "monster.veteran_orc", AttackPattern.Ranged },
-                { "monster.skull_head", AttackPattern.Ranged },
-                { "monster.pickpocket", AttackPattern.Ranged },
+                { "monster.big_skeleton_reborn", AttackPattern.Ranged },
+                { "monster.sky_eye", AttackPattern.Ranged },
                 { "monster.smuggler", AttackPattern.Ranged },
+                { "monster.brainless_orc", AttackPattern.Ranged },
+                { "monster.pickpocket", AttackPattern.Ranged },
+                { "monster.salamander", AttackPattern.Ranged },
                 { "monster.observer", AttackPattern.Ranged },
 
                 // Reserve 残留远程
@@ -208,7 +214,8 @@ namespace NineGrid.Core.Tests
                 { "monster.skeleton_mage", AttackPattern.Ranged },
 
                 // 主题序列斜角 / 全向
-                { "monster.young_orc", AttackPattern.DiagonalMelee },
+                { "monster.big_stone", AttackPattern.DiagonalMelee },
+                { "monster.big_skeleton", AttackPattern.OmnidirectionalMelee },
                 { "monster.summon.special_omni", AttackPattern.OmnidirectionalMelee },
 
                 // Reserve 残留非默认
