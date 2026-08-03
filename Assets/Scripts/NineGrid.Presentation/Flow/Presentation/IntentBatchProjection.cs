@@ -2,6 +2,7 @@ using System;
 using NineGrid.Cards;
 using NineGrid.Core;
 using NineGrid.Core.Systems;
+using NineGrid.Flow;
 using QFramework;
 
 namespace NineGrid.Flow.Presentation
@@ -31,11 +32,9 @@ namespace NineGrid.Flow.Presentation
             {
                 Accepted = true,
                 AvatarDefeated = phase.CurrentPhase == GamePhase.Defeat,
-                NodeClearedOrRewardPhase =
-                    phase.CurrentPhase == GamePhase.RewardItemChoice
-                    || phase.CurrentPhase == GamePhase.ClearCheck
-                    || phase.CurrentPhase == GamePhase.NodeCompleted
-                    || architecture.GetSystem<IDeckSystem>().IsNodeCleared(),
+                NodeClearedOrRewardPhase = NodeSettlementReadiness.IsPostClearPhase(
+                    phase.CurrentPhase,
+                    architecture.GetSystem<IDeckSystem>().IsNodeCleared()),
             };
 
             var registry = architecture.GetModel<CardRegistry>();

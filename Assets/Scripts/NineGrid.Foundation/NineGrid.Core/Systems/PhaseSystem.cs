@@ -42,6 +42,10 @@ namespace NineGrid.Core.Systems
             /// </summary>
             CoreCommandResult ResolvePostKillRotate();
             /// <summary>
+            /// 若已清场则推进到 RoomChoice 并发出选房/导航 Offer（ADR-0021；无 help.choice）。
+            /// </summary>
+            CoreCommandResult TryCompleteClearedNode();
+            /// <summary>
             /// 敌方行动阶段报名：非「无」怪倒计时 −1；归零者按 uid 升序冻结名单（ADR-0012）。
             /// </summary>
             CoreCommandResult RegisterEnemyActionPhase();
@@ -493,6 +497,11 @@ namespace NineGrid.Core.Systems
         public CoreCommandResult ResolvePostKillRotate()
         {
             return CoreCommandResult.Accept(ResolvePostKillRotateInternal());
+        }
+
+        public CoreCommandResult TryCompleteClearedNode()
+        {
+            return CoreCommandResult.Accept(CompleteNodeIfCleared());
         }
 
         public CoreCommandResult RegisterEnemyActionPhase()

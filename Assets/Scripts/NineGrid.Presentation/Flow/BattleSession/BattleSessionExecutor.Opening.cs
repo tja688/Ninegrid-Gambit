@@ -239,7 +239,7 @@ namespace NineGrid.Flow
                 RefreshPersistentInBattleUi(animate: false);
                 PlayerInfoHudPresenter.TryGetInstance()?.SyncFromCore(animate: false);
 
-                // 开局即空怪：IsNodeCleared 但尚未 OfferReward，先走 PostKill→CompleteNodeIfCleared。
+                // 开局即空怪：IsNodeCleared 但尚未放出选房/导航，先走 PostKill→CompleteNodeIfCleared。
                 if (phase.CurrentPhase == GamePhase.InteractionLoop
                     && arch.GetSystem<IDeckSystem>().IsNodeCleared())
                 {

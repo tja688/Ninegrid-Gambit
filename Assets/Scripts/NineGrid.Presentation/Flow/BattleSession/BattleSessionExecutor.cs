@@ -510,14 +510,9 @@ namespace NineGrid.Flow
             var arch = NineGridArchitecture.Current;
             var phase = arch.GetSystem<IPhaseSystem>().CurrentPhase;
             var pending = arch.GetModel<PendingChoiceModel>();
-            // 仅通关奖励相位唤醒主循环。局内宝箱留在 InteractionLoop + PendingReward，
-            // 由 UseItem Present 当场 Bounce；若此处误判会提前结算并清掉 ChoiceOverlay。
-            var inReward = phase == GamePhase.RewardItemChoice
-                && pending.Kind.Value == PendingChoiceKind.Reward
-                && pending.RewardOptions != null
-                && pending.RewardOptions.Count > 0;
-
-            if (!inReward)
+            // ADR-0021：清关直接 RoomChoice/Navigation；局内宝箱仍 InteractionLoop 当场 Bounce，
+            // 不得在此误判。RewardItemChoice 仅保留给仍挂着 Reward Pending 的孤儿路径。
+            if (!NodeSettlementReadiness.IsReady(phase, pending))
             {
                 return false;
             }

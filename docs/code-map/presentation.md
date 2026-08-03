@@ -225,7 +225,7 @@
 
 特殊选项卡种子（`ChoiceOption`）：卡店服务 `UpgradeItemStats`/`FixItem`/`ExpandItemCapacity`/`RefreshShop`；`Attack`/`Armor`/`Hp` 内容条目仍在（UI 入口 #90 已退役，去留交 M2）。
 
-局内选房走场地图标 + 驻留提交；`RoomChoicePresenter` 与 `RoomChoisePanel` 接线已删（#90）。`SelectorManagerSingleton` 只剩 Bounce；扇形 `BounceFanChoicePresenter` 服务宝箱开遗物（及通关奖励三选一）。房内货架/就地选项卡点选属 M2。
+局内选房走场地图标 + 驻留提交；`RoomChoicePresenter` 与 `RoomChoisePanel` 接线已删（#90）。`SelectorManagerSingleton` 只剩 Bounce；扇形 `BounceFanChoicePresenter` 仅服务宝箱开遗物。通关三选一已退役（ADR-0021）：清关进 `RoomChoice` 后由 `NodeSettlementReadiness` 唤醒主循环刷图标；`TryForceNodeVictory` 同路走 `TryCompleteClearedNode`。房内货架/就地选项卡点选属 M2。
 
 ## ADR 不变量（摘要）
 

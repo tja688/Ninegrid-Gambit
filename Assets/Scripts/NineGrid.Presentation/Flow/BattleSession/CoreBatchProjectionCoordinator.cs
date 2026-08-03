@@ -138,11 +138,9 @@ namespace NineGrid.Flow
 
             var phase = phaseSystem.CurrentPhase;
             summary.AvatarDefeated = phase == GamePhase.Defeat;
-            summary.NodeClearedOrRewardPhase =
-                phase == GamePhase.RewardItemChoice
-                || phase == GamePhase.ClearCheck
-                || phase == GamePhase.NodeCompleted
-                || arch.GetSystem<IDeckSystem>().IsNodeCleared();
+            summary.NodeClearedOrRewardPhase = NodeSettlementReadiness.IsPostClearPhase(
+                phase,
+                arch.GetSystem<IDeckSystem>().IsNodeCleared());
 
             FillBoardDeltaFromEventLog(pipeline, startIndex, out var moves, out var deals, out _, out var removedUids, out var steps);
             summary.Steps = steps;
@@ -293,11 +291,9 @@ namespace NineGrid.Flow
             {
                 Accepted = result.Accepted,
                 AvatarDefeated = phase == GamePhase.Defeat,
-                NodeClearedOrRewardPhase =
-                    phase == GamePhase.RewardItemChoice
-                    || phase == GamePhase.ClearCheck
-                    || phase == GamePhase.NodeCompleted
-                    || arch.GetSystem<IDeckSystem>().IsNodeCleared(),
+                NodeClearedOrRewardPhase = NodeSettlementReadiness.IsPostClearPhase(
+                    phase,
+                    arch.GetSystem<IDeckSystem>().IsNodeCleared()),
             };
 
             if (!result.Accepted)

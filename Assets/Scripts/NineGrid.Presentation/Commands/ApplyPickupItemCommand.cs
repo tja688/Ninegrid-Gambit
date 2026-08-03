@@ -75,11 +75,9 @@ namespace NineGrid.Presentation.Commands
             }
 
             var phase = arch.GetSystem<IPhaseSystem>().CurrentPhase;
-            summary.NodeClearedOrRewardPhase =
-                phase == GamePhase.RewardItemChoice
-                || phase == GamePhase.ClearCheck
-                || phase == GamePhase.NodeCompleted
-                || arch.GetSystem<IDeckSystem>().IsNodeCleared();
+            summary.NodeClearedOrRewardPhase = NodeSettlementReadiness.IsPostClearPhase(
+                phase,
+                arch.GetSystem<IDeckSystem>().IsNodeCleared());
 
             BattleSessionController.PresentPickupPostApplyEffects(startIndex, pickedUid);
             return summary;

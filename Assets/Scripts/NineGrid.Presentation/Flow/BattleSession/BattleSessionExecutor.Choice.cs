@@ -151,12 +151,9 @@ namespace NineGrid.Flow
                         Deals = deals ?? Array.Empty<PostKillCardDeal>(),
                         RemovedUids = removedUids ?? Array.Empty<int>(),
                         DamagePopups = Array.Empty<CombatDamagePopup>(),
-                        NodeClearedOrRewardPhase =
-                            phase == GamePhase.RewardItemChoice
-                            || phase == GamePhase.ClearCheck
-                            || phase == GamePhase.NodeCompleted
-                            || phase == GamePhase.RoomChoice
-                            || arch.GetSystem<IDeckSystem>().IsNodeCleared(),
+                        NodeClearedOrRewardPhase = NodeSettlementReadiness.IsPostClearPhase(
+                            phase,
+                            arch.GetSystem<IDeckSystem>().IsNodeCleared()),
                         AvatarDefeated = phase == GamePhase.Defeat,
                     };
 

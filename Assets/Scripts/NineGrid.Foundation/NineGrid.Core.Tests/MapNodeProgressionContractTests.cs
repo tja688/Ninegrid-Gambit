@@ -96,6 +96,41 @@ namespace NineGrid.Core.Tests
         }
 
         [Test]
+        public void TryCompleteClearedNode_WhenCleared_OffersRoomChoice()
+        {
+            Assert.IsTrue(mPhase.StartNode(CreateSingleMonsterNode(hp: 1, attack: 0)).Accepted);
+            PlaceSoleBoardCardAt(sAdjacentSlot);
+            // 模拟作弊清场：直接移走唯一怪并清空敌池/抽牌。
+            var board = mArch.GetModel<BoardModel>();
+            var registry = mArch.GetModel<CardRegistry>();
+            var deck = mArch.GetModel<DeckModel>();
+            var uid = board.GetCardUid(sAdjacentSlot);
+            Assert.Greater(uid, 0);
+            board.ClearSlot(sAdjacentSlot);
+            if (registry.TryGet(uid, out var card))
+            {
+                card.Zone.Value = ZoneId.None;
+                card.Slot.Value = SlotId.None;
+            }
+
+            while (deck.DrawPileUids.Count > 0)
+            {
+                deck.RemoveUid(deck.DrawPileUids[0]);
+            }
+
+            while (deck.EnemyCardPoolUids.Count > 0)
+            {
+                deck.RemoveUid(deck.EnemyCardPoolUids[0]);
+            }
+
+            Assert.IsTrue(mArch.GetSystem<IDeckSystem>().IsNodeCleared());
+            Assert.IsTrue(mPhase.TryCompleteClearedNode().Accepted);
+            Assert.AreEqual(GamePhase.RoomChoice, mPhase.CurrentPhase);
+            Assert.AreEqual(PendingChoiceKind.Room, mArch.GetModel<PendingChoiceModel>().Kind.Value);
+            Assert.AreNotEqual("help.choice", mArch.GetModel<PendingChoiceModel>().PoolId.Value);
+        }
+
+        [Test]
         public void SettleUnusedHelpCards_IncludesItemSlots_AndClearsTraps()
         {
             Assert.IsTrue(mPhase.StartNode(CreateSingleMonsterNode(hp: 1, attack: 0)).Accepted);

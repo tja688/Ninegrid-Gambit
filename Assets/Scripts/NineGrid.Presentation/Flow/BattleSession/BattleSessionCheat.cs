@@ -413,8 +413,9 @@ namespace NineGrid.Flow
         {
             var session = BattleSessionSystem.EnsureRegistered();
             var arch = NineGridArchitecture.Current;
-            var phase = arch.GetSystem<IPhaseSystem>().CurrentPhase;
-            if (phase == GamePhase.RewardItemChoice)
+            var phaseSystem = arch.GetSystem<IPhaseSystem>();
+            var phase = phaseSystem.CurrentPhase;
+            if (phase == GamePhase.RoomChoice || phase == GamePhase.RewardItemChoice)
             {
                 session.TryEnterNodeSettlement();
                 return true;
@@ -433,17 +434,16 @@ namespace NineGrid.Flow
             PresentationInputGates.ForceEndExternalHold("CheatForceNodeVictory");
             session.CancelPresentationWork();
 
-            var pipeline = arch.GetSystem<IActionPipelineSystem>();
-            pipeline.Enqueue(new ChangePhaseAction(GamePhase.ClearCheck));
-            pipeline.Enqueue(new ChangePhaseAction(GamePhase.NodeCompleted));
-            pipeline.Enqueue(new NodeCompletedAction());
-            pipeline.RunToCompletion();
-            arch.GetSystem<IEconomySystem>().SettleUnusedHelpCards();
-            pipeline.Enqueue(new ChangePhaseAction(GamePhase.RewardItemChoice));
-            pipeline.Enqueue(new OfferRewardChoiceAction("help.choice", 3));
-            pipeline.RunToCompletion();
+            // ADR-0021：与 CompleteNodeIfCleared 同路 — RoomChoice + 选房/导航 Offer，不再走通关三选一。
+            var complete = phaseSystem.TryCompleteClearedNode();
+            if (!complete.Accepted)
+            {
+                Debug.LogWarning($"[BattleSessionCheat] TryCompleteClearedNode 被拒: {complete.Reason}");
+                return false;
+            }
 
-            Debug.Log("[BattleSessionCheat] 强制节点胜利 → RewardItemChoice");
+            Debug.Log(
+                $"[BattleSessionCheat] 强制节点胜利 → {phaseSystem.CurrentPhase} pending={arch.GetModel<PendingChoiceModel>().Kind.Value}");
             session.TryEnterNodeSettlement();
             return true;
         }

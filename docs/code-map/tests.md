@@ -12,7 +12,7 @@
 | `Lifecycle/` | 卡实体生命周期 / Handoff |
 | `FieldGeometry/` | Geometry / FieldBattle System（含无 Instance 护栏） |
 | `FlowShell/` | 流程壳 Controller；**WalkSandboxRetirementStructuralTests**（#91：无跳格沙盒 API；`\0`=流程测试 Sequential） |
-| `BattleSession/` | 局内会话 |
+| `BattleSession/` | 局内会话；**NodeSettlementReadiness**（#83 / ADR-0021：清关 RoomChoice 须唤醒主循环）；**ForceNodeVictoryStructuralTests**（跳过战斗不得再 Offer help.choice） |
 | `Output/` | 描述 / 伤害等输出 |
 | `Cards/` | 卡面 Commit、牌库闸、飞行排序、致死表现回归；**DealFlightRemoveCancelContractTests**（同批 Deal→Remove 须取消飞牌，防 choreo 泄漏 / Pickup Buffered）；表现层配置器条目门槛（Skill 不进窗口、HelpCard/Item 保留）+ **空装配清 effectIds / 挂装配投影 / 效果分类标注（道具/遗物/怪物技能/机关技能）/ 同类多载过滤 / skillIds→assemblies 展开**（解耦装配 IA）+ **装配描述自动同步/自定义锁定 / design_text→{param} 参数化** 等；**ContentArt** 路径约定 / Resources 帧加载 / 断链校验（#66）；**JSON→Catalog 投影**（帮助卡/怪物/技能/遗物/牌组/房间）+ 表 JSON（效果模板 + 装配引用，#67–#70、ADR-0008/0009）；**词条/`{param}`/详情合成**（#71）；**右键详述 live 挂载优先**（空白板 JSON + 局内注入技能 / 忽略预设 skillIds）；**Disable Domain Reload 下 Catalog 重绑**；**装配 argsJson 缺占位实参拦截 / 选模板建议实参**；**特效库** `visual_effects.json` 扫描/粘性合并/atlas 帧加载（与 DSL 效果池区分；纯预览阶段） |
 | `Flow/` | Flow 侧遗留/切片；**BoardBriefTipCopy / Session**（#89 简要解释与楼层提示文案）；**ShopBoardSlotResolver**（#92 商店六占格）；**TavernBoardSlotResolver**（#93 卡店服务/二级候选占格）；**RewardBoardSlotResolver**（#94 特殊房真卡+离开占格） |
