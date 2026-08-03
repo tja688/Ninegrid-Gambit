@@ -55,13 +55,13 @@
 | `ThemeMonsterDeckContractTests` | #86 / ADR-0022：每层主题卡组不重复绑定、节点按序列 1–5 抽、Reserve 不参与、层主击杀固定 1 金箱+2 金币 |
 | `MonsterLoadoutPresentationValidatorTests` | 过渡卡组 staging 校验绿；交付就绪在怪物仍挂 `deck.transition` 时必须失败 |
 | `MapNodeProgressionContractTests` | #84 / ADR-0021 / #107：8 节点编排全表、非战斗不进 InteractionLoop、清关跳过 help.choice、道具卡格清关不兑不清+清 Trap、困难房门槛、第 3 层节点 8 通关 |
-| `ShopBuyGoldContractTests` / `ShopSessionContractTests` | #92：商店四货架、购买留店扣金、刷新翻倍（本次进店）、离开、余额不足拒买 |
+| `ShopBuyGoldContractTests` / `ShopSessionContractTests` | #92 / #108：商店四货架、购买留店扣金直写道具卡格、刷新翻倍（本次进店）、离开、余额/格满拒买 |
 | `TavernSessionContractTests` | #93：卡店三项服务、扩容/强化扣费留店、刷新翻倍、离开、道具卡固定二级选择确认/取消、余额不足拒买 |
-| `SpecialRewardSessionContractTests` | #94：宝箱奖励 4 卡 / 道具奖励 5 卡、免费拿走进携带卡包留房、离开放弃不加 skip 金 |
-| `RoomOpeningInjectContractTests` | #95 / ADR-0022：五种战斗房开局注入（固定/权重可重复/不可重复）、困难房怪物侧序列 3+4、注入顺序（固定→房间→携带）、RandomBattle 开局分房 |
-| `CarryPackClosedLoopContractTests` | #96 / ADR-0022：商店买 3 张→下战斗张数=容量+房间注入+3、特殊房进包、注入未用清关 +10/张、与固定卡分容器 |
+| `SpecialRewardSessionContractTests` | #94 / #108：宝箱奖励 4 卡 / 道具奖励 5 卡、免费拿直写道具卡格留房、满格拒领、离开放弃不加 skip 金 |
+| `RoomOpeningInjectContractTests` | #95 / ADR-0022：五种战斗房开局注入（固定/权重可重复/不可重复）、困难房怪物侧序列 3+4、注入顺序（固定→房间）、RandomBattle 开局分房 |
+| `ItemSlotsDirectGrantContractTests` | #108 / ADR-0025：商店/特殊房直写道具卡格、无携带开局注入、满格拒拾、默认容量 3 |
 | `RelicInventoryEconomyContractTests` | #98：遗物栏上限 12、满栏 SelectReward 拒收保留 Pending、DiscardRelic +20、宝箱 SkipRelicChoiceGold +20 |
-| `CarryPackPreserveBootstrapContractTests`（Presentation `BattleSession/`） | #107：`BootstrapRun(preserveRunInventory)` 道具卡格存活；无 preserve 则清空。仍含 #96 携带卡包断言（待 #108 退役） |
+| `CarryPackPreserveBootstrapContractTests`（Presentation `BattleSession/`） | #107 / #108：`BootstrapRun(preserveRunInventory)` 道具卡格与容量存活；无 preserve 则清空 |
 | `ContentCatalogValidationTests` | 小型夹具 `ValidateCatalog` 绿；生产 Bootstrap（模板表 + 装配引用解析 + schema≥2 JSON 投影 + 奖池查询展开 + 节点序列规则）校验绿；跨容器共享模板不同实参（#70 / ADR-0009） |
 | `EffectTemplateAssemblyContractTests` | #70：取消 typeTag/verb 门禁；`requires` 解析；装配实参替换与跨容器共享模板 |
 | `EffectSelfDeclarationContractTests` | #72 / ADR-0010：requires 校验（未知 token / mount 错配 / 缺声明）；拒上下文开关旧形；生产卡挂载显式场景声明审计归零；`ValidateCatalog` 绿 |

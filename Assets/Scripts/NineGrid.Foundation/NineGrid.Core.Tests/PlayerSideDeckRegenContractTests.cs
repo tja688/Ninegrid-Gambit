@@ -10,7 +10,7 @@ namespace NineGrid.Core.Tests
 {
     /// <summary>
     /// ADR-0022 / #87：玩家侧卡组每关重生成；跨节点持有生成规则而非持久牌堆。
-    /// Seams：PlayerModel 规则位、BuildNodeDeckOptions 生成顺序、Grant→携带卡包、清关全清。
+    /// Seams：PlayerModel 规则位、BuildNodeDeckOptions 生成顺序、Grant→道具卡格、清关保留道具卡格。
     /// </summary>
     public sealed class PlayerSideDeckRegenContractTests
     {
@@ -50,7 +50,7 @@ namespace NineGrid.Core.Tests
             CollectionAssert.DoesNotContain(player.ItemSourcePoolDefIds, "help.carry_a");
             Assert.AreEqual(3, player.ItemSourcePoolDefIds.Count, "仅 deck.help + deck.player 的道具卡");
             Assert.AreEqual(0, player.FixedItemCardDefIds.Count);
-            Assert.AreEqual(0, player.CarryPackDefIds.Count);
+            Assert.AreEqual(PlayerModel.DefaultItemSlotsCapacity, player.ItemSlotsCapacity);
         }
 
         [Test]
@@ -68,34 +68,26 @@ namespace NineGrid.Core.Tests
         }
 
         [Test]
-        public void BuildNodeDeckOptions_AppendsFixedThenCarryPack_AndDrainsCarry()
+        public void BuildNodeDeckOptions_AppendsFixed_WithoutCarryPackInject()
         {
             var player = mArch.GetModel<PlayerModel>();
             player.SetItemDeckCapacity(2);
             player.AddFixedItemCard("help.fixed_card");
-            player.AddToCarryPack("help.carry_a");
-            player.AddToCarryPack("help.carry_b");
 
             var options = mReward.BuildNodeDeckOptions(1, null);
-            Assert.AreEqual(5, options.PlayerCards.Count, "容量2 + 固定1 + 携带2");
+            Assert.AreEqual(3, options.PlayerCards.Count, "容量2 + 固定1");
             Assert.AreEqual("help.fixed_card", options.PlayerCards[2].DefId);
-            Assert.AreEqual("help.carry_a", options.PlayerCards[3].DefId);
-            Assert.AreEqual("help.carry_b", options.PlayerCards[4].DefId);
-            Assert.AreEqual(0, player.CarryPackDefIds.Count, "携带卡包开局倒空");
             Assert.AreEqual(1, player.FixedItemCardDefIds.Count, "固定卡跨节点保留");
         }
 
         [Test]
-        public void GrantHelpCardToPlayerSideDeck_GoesToCarryPack()
+        public void GrantHelpCardToPlayerSideDeck_GoesToItemSlots()
         {
-            var player = mArch.GetModel<PlayerModel>();
             var pipeline = mArch.GetSystem<IActionPipelineSystem>();
             pipeline.Enqueue(new GrantHelpCardToPlayerSideDeckAction("help.carry_a", 2));
             pipeline.RunToCompletion();
 
-            Assert.AreEqual(2, player.CarryPackDefIds.Count);
-            Assert.AreEqual("help.carry_a", player.CarryPackDefIds[0]);
-            Assert.AreEqual("help.carry_a", player.CarryPackDefIds[1]);
+            Assert.AreEqual(2, CountItemSlotsByDef("help.carry_a"));
         }
 
         [Test]
@@ -116,7 +108,6 @@ namespace NineGrid.Core.Tests
             Assert.AreEqual(1, CountItemSlotHelpCards(), "清关后道具卡格应保留");
             Assert.AreEqual(capacity, player.ItemDeckCapacity, "清关不改容量");
             Assert.AreEqual(poolCount, player.ItemSourcePoolDefIds.Count, "清关不改来源池");
-            Assert.AreEqual(0, player.CarryPackDefIds.Count);
         }
 
         [Test]
@@ -124,18 +115,37 @@ namespace NineGrid.Core.Tests
         {
             var player = mArch.GetModel<PlayerModel>();
             player.SetItemDeckCapacity(9);
+            player.SetItemSlotsCapacity(4);
             player.ReplaceItemSourcePool(new[] { "help.pool_a", "help.fixed_card" });
             player.ReplaceFixedItemCards(new[] { "help.fixed_card" });
-            player.ReplaceCarryPack(new[] { "help.carry_a" });
 
             Assert.AreEqual(9, player.ItemDeckCapacity);
+            Assert.AreEqual(4, player.ItemSlotsCapacity);
             Assert.AreEqual(2, player.ItemSourcePoolDefIds.Count);
             Assert.AreEqual(1, player.FixedItemCardDefIds.Count);
-            Assert.AreEqual(1, player.CarryPackDefIds.Count);
 
-            player.ReplaceCarryPack(System.Array.Empty<string>());
-            Assert.AreEqual(0, player.CarryPackDefIds.Count);
+            player.SetItemSlotsCapacity(PlayerModel.MaxItemSlotsCapacity + 3);
+            Assert.AreEqual(PlayerModel.MaxItemSlotsCapacity, player.ItemSlotsCapacity);
             Assert.AreEqual(9, player.ItemDeckCapacity);
+        }
+
+        private int CountItemSlotsByDef(string defId)
+        {
+            var registry = mArch.GetModel<CardRegistry>();
+            var deck = mArch.GetModel<DeckModel>();
+            var count = 0;
+            for (var i = 0; i < deck.ItemSlotUids.Count; i++)
+            {
+                CardInstance card;
+                if (registry.TryGet(deck.ItemSlotUids[i], out card)
+                    && card != null
+                    && card.DefId == defId)
+                {
+                    count++;
+                }
+            }
+
+            return count;
         }
 
         private void SpawnHelpIntoItemSlots(string defId)

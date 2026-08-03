@@ -8,55 +8,11 @@ using QFramework;
 namespace NineGrid.Presentation.Tests.BattleSession
 {
     /// <summary>
-    /// #107 / ADR-0025：道具卡格跨 <see cref="IBattleSessionSystem.BootstrapRun"/> preserve 存活。
-    /// 仍保留 #96 携带卡包断言（待 #108 退役携带卡包时删除）。
-    /// Seam：BootstrapRun(preserveRunInventory: true) ↔ DeckModel.ItemSlotUids（及遗留 CarryPackDefIds）。
+    /// #107 / #108 / ADR-0025：道具卡格跨 <see cref="IBattleSessionSystem.BootstrapRun"/> preserve 存活。
+    /// Seam：BootstrapRun(preserveRunInventory: true) ↔ DeckModel.ItemSlotUids / ItemSlotsCapacity。
     /// </summary>
     public sealed class CarryPackPreserveBootstrapContractTests
     {
-        [Test]
-        public void BootstrapRun_Preserve_RestoresCarryPack()
-        {
-            using (var arch = PresentationArchitectureFixture.CreateStartedGameWithCatalog(seed: 7UL))
-            {
-                var player = arch.Architecture.GetModel<PlayerModel>();
-                player.ReplaceCarryPack(new[]
-                {
-                    "help.healing_potion",
-                    "help.food_card",
-                    "help.hp_card"
-                });
-                Assert.AreEqual(3, player.CarryPackDefIds.Count);
-
-                var session = BattleSessionSystem.EnsureRegistered(arch.Architecture);
-                session.BootstrapRun(
-                    new InitialGameOptions { Seed = 7UL },
-                    preserveRunInventory: true);
-
-                player = arch.Architecture.GetModel<PlayerModel>();
-                Assert.AreEqual(3, player.CarryPackDefIds.Count);
-                Assert.AreEqual("help.healing_potion", player.CarryPackDefIds[0]);
-                Assert.AreEqual("help.food_card", player.CarryPackDefIds[1]);
-                Assert.AreEqual("help.hp_card", player.CarryPackDefIds[2]);
-            }
-        }
-
-        [Test]
-        public void BootstrapRun_WithoutPreserve_ClearsCarryPack()
-        {
-            using (var arch = PresentationArchitectureFixture.CreateStartedGameWithCatalog(seed: 7UL))
-            {
-                var player = arch.Architecture.GetModel<PlayerModel>();
-                player.ReplaceCarryPack(new[] { "help.healing_potion" });
-
-                var session = BattleSessionSystem.EnsureRegistered(arch.Architecture);
-                session.BootstrapRun(new InitialGameOptions { Seed = 7UL }, preserveRunInventory: false);
-
-                player = arch.Architecture.GetModel<PlayerModel>();
-                Assert.AreEqual(0, player.CarryPackDefIds.Count);
-            }
-        }
-
         [Test]
         public void BootstrapRun_Preserve_RestoresItemSlots()
         {
@@ -91,6 +47,24 @@ namespace NineGrid.Presentation.Tests.BattleSession
                 session.BootstrapRun(new InitialGameOptions { Seed = 7UL }, preserveRunInventory: false);
 
                 Assert.AreEqual(0, arch.Architecture.GetModel<DeckModel>().ItemSlotUids.Count);
+            }
+        }
+
+        [Test]
+        public void BootstrapRun_Preserve_RestoresItemSlotsCapacity()
+        {
+            using (var arch = PresentationArchitectureFixture.CreateStartedGameWithCatalog(seed: 7UL))
+            {
+                var player = arch.Architecture.GetModel<PlayerModel>();
+                player.SetItemSlotsCapacity(4);
+
+                var session = BattleSessionSystem.EnsureRegistered(arch.Architecture);
+                session.BootstrapRun(
+                    new InitialGameOptions { Seed = 7UL },
+                    preserveRunInventory: true);
+
+                player = arch.Architecture.GetModel<PlayerModel>();
+                Assert.AreEqual(4, player.ItemSlotsCapacity);
             }
         }
 

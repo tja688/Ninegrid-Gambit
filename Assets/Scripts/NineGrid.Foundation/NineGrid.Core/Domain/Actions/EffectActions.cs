@@ -538,17 +538,34 @@ namespace NineGrid.Core
 
                 if (Zone == ZoneId.PlayerCardPool
                     && Kind == CardKind.HelpCard
-                    && HelpCardGrantRouting.ShouldGrantToCarryPack(context))
+                    && HelpCardGrantRouting.ShouldGrantToItemSlots(context))
                 {
-                    context.GetModel<PlayerModel>().AddToCarryPack(DefId, 1);
-                    result.AddEvent(new CoreGameEvent(CoreEventType.CardSpawned, context.ActionId, ActionName)
-                        .WithMessage(DefId)
-                        .WithSource(DefId, Cause));
+                    var player = context.GetModel<PlayerModel>();
+                    if (player.IsItemSlotsFull(deck))
+                    {
+                        continue;
+                    }
+
+                    var holdCard = CreateConfiguredCard(context, registry, DefId, Kind);
+                    deck.AddToItemSlots(holdCard);
+                    result.AddWithFaceAbsolutes(
+                        context,
+                        holdCard,
+                        new CoreGameEvent(CoreEventType.CardSpawned, context.ActionId, ActionName)
+                            .WithCard(holdCard.Uid)
+                            .WithMessage(DefId)
+                            .WithSource(DefId, Cause));
                     continue;
                 }
 
                 // 同槽竞态（如死亡召唤+死亡之主同拍、复活石亡语+死亡之主）：先到先得，后到放弃。
                 if (Zone == ZoneId.Board && Slot.IsBoardSlot && !board.IsEmpty(Slot))
+                {
+                    continue;
+                }
+
+                if (Zone == ZoneId.ItemSlots
+                    && context.GetModel<PlayerModel>().IsItemSlotsFull(deck))
                 {
                     continue;
                 }

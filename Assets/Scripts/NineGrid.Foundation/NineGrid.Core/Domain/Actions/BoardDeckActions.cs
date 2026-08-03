@@ -20,11 +20,11 @@ namespace NineGrid.Core
             var registry = context.GetModel<CardRegistry>();
             var board = context.GetModel<BoardModel>();
             var deck = context.GetModel<DeckModel>();
-            var deactivatedEffects = DeactivateNonAvatarRuntimeEffects(context, registry);
+            var deactivatedEffects = DeactivateNonPersistentRuntimeEffects(context, registry, deck);
 
             board.ClearBoardCards();
-            deck.Clear();
-            RemoveNonAvatarCards(registry);
+            deck.ClearBattleZones();
+            RemoveNonPersistentCards(registry, deck);
 
             var result = new GameActionResult();
             for (var i = 0; i < Options.PlayerCards.Count; i++)
@@ -77,15 +77,24 @@ namespace NineGrid.Core
             return card;
         }
 
-        private static void RemoveNonAvatarCards(CardRegistry registry)
+        private static void RemoveNonPersistentCards(CardRegistry registry, DeckModel deck)
         {
+            var keep = new HashSet<int>();
+            var itemSlots = deck.ItemSlotUids;
+            for (var i = 0; i < itemSlots.Count; i++)
+            {
+                keep.Add(itemSlots[i]);
+            }
+
             var removeUids = new List<int>();
             foreach (var pair in registry.Cards)
             {
-                if (pair.Value.Kind != CardKind.Avatar)
+                if (pair.Value.Kind == CardKind.Avatar || keep.Contains(pair.Key))
                 {
-                    removeUids.Add(pair.Key);
+                    continue;
                 }
+
+                removeUids.Add(pair.Key);
             }
 
             for (var i = 0; i < removeUids.Count; i++)
@@ -94,13 +103,23 @@ namespace NineGrid.Core
             }
         }
 
-        private static List<DeactivatedEffectRecord> DeactivateNonAvatarRuntimeEffects(GameActionContext context, CardRegistry registry)
+        private static List<DeactivatedEffectRecord> DeactivateNonPersistentRuntimeEffects(
+            GameActionContext context,
+            CardRegistry registry,
+            DeckModel deck)
         {
+            var keep = new HashSet<int>();
+            var itemSlots = deck.ItemSlotUids;
+            for (var i = 0; i < itemSlots.Count; i++)
+            {
+                keep.Add(itemSlots[i]);
+            }
+
             var result = new List<DeactivatedEffectRecord>();
             var content = context.GetSystem<IContentSystem>();
             foreach (var pair in registry.Cards)
             {
-                if (pair.Value.Kind == CardKind.Avatar)
+                if (pair.Value.Kind == CardKind.Avatar || keep.Contains(pair.Key))
                 {
                     continue;
                 }

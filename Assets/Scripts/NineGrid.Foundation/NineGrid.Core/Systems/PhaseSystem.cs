@@ -617,6 +617,12 @@ namespace NineGrid.Core.Systems
                 return Reject(GameCommandKind.PickupItem, "Monsters must be attacked, not picked up.", targetSlot, cardUid);
             }
 
+            if (WillAcquireHelpCardToItemSlots(card)
+                && this.GetModel<PlayerModel>().IsItemSlotsFull(this.GetModel<DeckModel>()))
+            {
+                return Reject(GameCommandKind.PickupItem, "道具卡格已满", targetSlot, cardUid);
+            }
+
             var shouldRotate = requireInteractionLoopRotate && CurrentPhase == GamePhase.InteractionLoop;
             var pipeline = this.GetSystem<IActionPipelineSystem>();
             pipeline.Enqueue(new PickupCardAction(cardUid));
@@ -627,6 +633,13 @@ namespace NineGrid.Core.Systems
             }
 
             return CoreCommandResult.Accept(resolved);
+        }
+
+        private static bool WillAcquireHelpCardToItemSlots(CardInstance card)
+        {
+            return card != null
+                && card.Kind == CardKind.HelpCard
+                && card.Counters.Get(CoreCounterKeys.GoldReward) == 0;
         }
 
         public CoreCommandResult RevealFace(SlotId targetSlot)
@@ -849,6 +862,18 @@ namespace NineGrid.Core.Systems
                 return Reject(GameCommandKind.SelectReward, "遗物格子已满", SlotId.None, 0);
             }
 
+            var isShop = PendingChoiceModel.IsShopPool(poolId);
+            var isSpecialReward = PendingChoiceModel.IsSpecialRewardPool(poolId);
+            if ((isShop || isSpecialReward)
+                && entry != null
+                && entry.Kind == CardKind.HelpCard
+                && !this.GetModel<PlayerModel>().CanAcceptIntoItemSlots(
+                    this.GetModel<DeckModel>(),
+                    entry.Count < 1 ? 1 : entry.Count))
+            {
+                return Reject(GameCommandKind.SelectReward, "道具卡格已满", SlotId.None, 0);
+            }
+
             if (IsRelicRewardPool(poolId))
             {
                 this.GetSystem<IRewardSystem>().RememberUnselectedRelics(
@@ -871,8 +896,6 @@ namespace NineGrid.Core.Systems
             }
 
             // 商店购买：按卡牌 Price 扣金；通关/宝箱等免费池不扣。
-            var isShop = PendingChoiceModel.IsShopPool(poolId);
-            var isSpecialReward = PendingChoiceModel.IsSpecialRewardPool(poolId);
             if (isShop)
             {
                 var price = ResolveShopPrice(entry != null ? entry.DefId : null);

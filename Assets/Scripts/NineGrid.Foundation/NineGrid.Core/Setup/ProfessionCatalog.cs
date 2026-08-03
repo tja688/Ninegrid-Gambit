@@ -92,7 +92,6 @@ namespace NineGrid.Core
             var profession = Get(professionId);
             player.SetItemDeckCapacity(PlayerModel.DefaultItemDeckCapacity);
             player.ReplaceFixedItemCards(null);
-            player.ReplaceCarryPack(null);
 
             var pool = new List<string>();
             if (catalog != null && catalog.Cards != null)

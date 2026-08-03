@@ -333,9 +333,9 @@ namespace NineGrid.Flow
         {
             public string[] RelicDefIds;
             public int ItemDeckCapacity;
+            public int ItemSlotsCapacity;
             public string[] ItemSourcePoolDefIds;
             public string[] FixedItemCardDefIds;
-            public string[] CarryPackDefIds;
             public string[] ItemSlotDefIds;
             public int Coins;
             public int InteractionCount;
@@ -359,7 +359,6 @@ namespace NineGrid.Flow
             var relics = player.RelicDefIds;
             var sourcePool = player.ItemSourcePoolDefIds;
             var fixedCards = player.FixedItemCardDefIds;
-            var carry = player.CarryPackDefIds;
             var itemSlots = deck.ItemSlotUids;
             var itemSlotDefIds = new string[itemSlots.Count];
             for (var i = 0; i < itemSlots.Count; i++)
@@ -374,9 +373,9 @@ namespace NineGrid.Flow
             {
                 RelicDefIds = new string[relics.Count],
                 ItemDeckCapacity = player.ItemDeckCapacity,
+                ItemSlotsCapacity = player.ItemSlotsCapacity,
                 ItemSourcePoolDefIds = new string[sourcePool.Count],
                 FixedItemCardDefIds = new string[fixedCards.Count],
-                CarryPackDefIds = new string[carry.Count],
                 ItemSlotDefIds = itemSlotDefIds,
                 Coins = player.Coins.Value,
                 InteractionCount = player.InteractionCount.Value,
@@ -398,11 +397,6 @@ namespace NineGrid.Flow
             for (var i = 0; i < fixedCards.Count; i++)
             {
                 snapshot.FixedItemCardDefIds[i] = fixedCards[i];
-            }
-
-            for (var i = 0; i < carry.Count; i++)
-            {
-                snapshot.CarryPackDefIds[i] = carry[i];
             }
 
             return snapshot;
@@ -429,9 +423,13 @@ namespace NineGrid.Flow
             player.AddCoins(inventory.Coins - player.Coins.Value);
             player.AddInteractionCount(inventory.InteractionCount - player.InteractionCount.Value);
             player.SetItemDeckCapacity(inventory.ItemDeckCapacity);
+            if (inventory.ItemSlotsCapacity > 0)
+            {
+                player.SetItemSlotsCapacity(inventory.ItemSlotsCapacity);
+            }
+
             player.ReplaceItemSourcePool(inventory.ItemSourcePoolDefIds);
             player.ReplaceFixedItemCards(inventory.FixedItemCardDefIds);
-            player.ReplaceCarryPack(inventory.CarryPackDefIds);
 
             if (inventory.RelicDefIds != null)
             {

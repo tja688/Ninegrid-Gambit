@@ -384,6 +384,13 @@ namespace NineGrid.Core
             var deck = context.GetModel<DeckModel>();
             var card = registry.Get(CardUid);
             var fromSlot = card.Slot.Value;
+
+            if (ShouldAcquireHelpCardToItemSlots(card)
+                && context.GetModel<PlayerModel>().IsItemSlotsFull(deck))
+            {
+                return GameActionResult.Empty;
+            }
+
             board.RemoveCard(card);
 
             if (ShouldAcquireHelpCardToItemSlots(card))

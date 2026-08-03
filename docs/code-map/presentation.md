@@ -163,7 +163,7 @@
 
 ### 商店房就地货架（#92 · ADR-0020 / ADR-0022）
 
-- Core：进 `Shop` → `OfferShopSession` 固定 4 货架（宝箱 / 随机属性道具 / 恢复药水 / 食品）+ 本次进店刷新价初值 10；`SelectReward` 扣 `Price`、进携带卡包、**留店**；`RefreshShop` 扣刷新价并翻倍；`SkipHelpChoice` 出店（不加 skip 金）
+- Core：进 `Shop` → `OfferShopSession` 固定 4 货架（宝箱 / 随机属性道具 / 恢复药水 / 食品）+ 本次进店刷新价初值 10；`SelectReward` 扣 `Price`、直写道具卡格（满则拒）、**留店**；`RefreshShop` 扣刷新价并翻倍；`SkipHelpChoice` 出店（不加 skip 金）
 - 刷新价作用域：**本次进店**（离开清零；再进店重新从 10 起）
 - 表现：`ShopBoardPresenter` 落格 1/3/7/9 货架、2 刷新、8 离开；Avatar 硬切格 5；货架/刷新任意距离点击；离开驻留 1s；金币不足写简要解释 Notice
 - 货架真卡 `GroundCardMode`（预制体原生尺寸，与战斗卡同尺度）；刷新就地选项 / 离开图标同按预制体根缩放（#104 / ADR-0024，已删 `RoomIconVisualFit`）；货架·刷新登记 `SoftBlockOnly`，离开 `WalkDestination`
@@ -183,7 +183,7 @@
 
 ### 特殊奖励房（#94 · ADR-0020 / ADR-0022）
 
-- Core：进 `TreasureReward` → 1 宝箱 + 3 随机道具（`ItemSourcePoolDefIds`）；进 `ItemReward` → 2 属性道具（40/40/20）+ 3 随机道具；pool=`reward.treasure` / `reward.item`；`SelectReward` **免费**进携带卡包并留房；`SkipHelpChoice` 离开放弃剩余（不加 skip 金）
+- Core：进 `TreasureReward` → 1 宝箱 + 3 随机道具（`ItemSourcePoolDefIds`）；进 `ItemReward` → 2 属性道具（40/40/20）+ 3 随机道具；pool=`reward.treasure` / `reward.item`；`SelectReward` **免费**直写道具卡格（满则拒）并留房；`SkipHelpChoice` 离开放弃剩余（不加 skip 金）
 - 表现：`RewardBoardPresenter` 落格 1/2/3/7/9 真卡、8 离开；Avatar 硬切格 5；任意距离点击拿走；离开驻留 1s；悬停 tip=卡名+效果（无价格）
 - 真卡 `GroundCardMode`（预制体原生尺寸，#104）；货架 `SoftBlockOnly`，离开 `WalkDestination`；离开监视约定同商店（免费拿无需推金；**不持 ChoiceOverlay**；禁用 `GroundCardHitProxy`）
 - `GameFlowOrchestrator.PresentInRoomSessionAfterEnterAsync`：`IsSpecialRewardPool` 走特殊房场地板；道具奖励房选房图标仍缺（见 #83）
@@ -222,7 +222,7 @@
 
 **已删**：`Battle`（随机战斗房从具体战斗房类型抽）、`Event`（由 `Attribute` 承接）。
 
-**开局注入（ADR-0022 / #95）**：`RoomDefinition.OpeningInjects` 声明往玩家侧/怪物侧塞哪些卡；`RewardSystem.BuildNodeDeckOptions` 按 `RunModel.Room` 执行（玩家侧在固定卡之后、携带卡包之前；怪物侧在节点序列抽卡之后）。节点 1/5 `RandomBattle` 开局若尚未是战斗房则现场抽一种（不含困难房）。
+**开局注入（ADR-0022 / #95）**：`RoomDefinition.OpeningInjects` 声明往玩家侧/怪物侧塞哪些卡；`RewardSystem.BuildNodeDeckOptions` 按 `RunModel.Room` 执行（玩家侧在固定卡之后；怪物侧在节点序列抽卡之后）。携带卡包开局倒空已退役（ADR-0025 / #108）。节点 1/5 `RandomBattle` 开局若尚未是战斗房则现场抽一种（不含困难房）。
 
 **勿与选项卡混淆（设计案对照）**
 

@@ -8,10 +8,10 @@ using QFramework;
 namespace NineGrid.Core.Tests
 {
     /// <summary>
-    /// #96 / ADR-0022：携带卡包跨节点闭环。
-    /// Seam：商店/特殊房 SelectReward → CarryPack；BuildNodeDeckOptions 倒空注入；清关 SettleUnusedHelpCards。
+    /// #108 / ADR-0025：购领直写道具卡格；退役携带卡包开局注入；满格拒写。
+    /// 取代旧 <c>CarryPackClosedLoopContractTests</c>。
     /// </summary>
-    public sealed class CarryPackClosedLoopContractTests
+    public sealed class ItemSlotsDirectGrantContractTests
     {
         private IArchitecture mArch;
         private IPhaseSystem mPhase;
@@ -41,17 +41,18 @@ namespace NineGrid.Core.Tests
         }
 
         [Test]
-        public void ShopBuyThree_NextBattleDeckCount_EqualsCapacityPlusRoomInjectPlusThree()
+        public void ShopBuyThree_WritesItemSlots_NotInjectedIntoNextBattleDeck()
         {
             EnterShop();
             var player = mArch.GetModel<PlayerModel>();
             player.AddCoins(500);
-            player.SetItemDeckCapacity(2);
+            player.SetItemDeckCapacity(0);
+            player.SetItemSlotsCapacity(PlayerModel.MaxItemSlotsCapacity);
 
             Assert.IsTrue(mPhase.SelectReward(0).Accepted);
             Assert.IsTrue(mPhase.SelectReward(0).Accepted);
             Assert.IsTrue(mPhase.SelectReward(0).Accepted);
-            Assert.AreEqual(3, player.CarryPackDefIds.Count);
+            Assert.AreEqual(3, mArch.GetModel<DeckModel>().ItemSlotUids.Count);
             Assert.AreEqual(0, player.FixedItemCardDefIds.Count, "商店购买不得写入固定卡列表");
 
             Assert.IsTrue(mPhase.SkipHelpChoice().Accepted);
@@ -63,71 +64,22 @@ namespace NineGrid.Core.Tests
 
             var options = mReward.BuildNodeDeckOptions(1, null);
             Assert.AreEqual(
-                2 + 1 + 3,
+                1,
                 options.PlayerCards.Count,
-                "容量 + 金币房注入1 + 携带3");
-            Assert.AreEqual(0, player.CarryPackDefIds.Count, "开局倒空后携带卡包为空");
-
-            options.AddEnemyCard(new CardDraft("monster.hold", CardKind.Monster) { MaxHp = 1, Attack = 0 });
-            options.EnemyOpeningCount = 1;
-            options.PlayerOpeningCount = 0;
-            Assert.IsTrue(mPhase.StartNode(options).Accepted);
-            Assert.AreEqual(GamePhase.InteractionLoop, mPhase.CurrentPhase);
-            Assert.AreEqual(0, player.CarryPackDefIds.Count, "战斗进行中包仍为空");
-
-            var monsterSlot = EnsureMonsterAdjacentToAvatar();
-            Assert.IsTrue(mPhase.Attack(monsterSlot).Accepted);
-            Assert.AreEqual(0, player.CarryPackDefIds.Count, "该节点结束后携带卡包为空");
-        }
-
-        [Test]
-        public void CarryInjectedUnused_SettlesAsGoldOnClear_AndPackStaysEmpty()
-        {
-            var player = mArch.GetModel<PlayerModel>();
-            player.SetItemDeckCapacity(0);
-            player.AddToCarryPack(RewardSystem.ShopPotionDefId);
-            player.AddToCarryPack(RewardSystem.ShopFoodDefId);
-            player.AddToCarryPack("help.hp_card");
-            Assert.AreEqual(3, player.CarryPackDefIds.Count);
-
-            // 金币房注入 1：容量0 + 注入1 + 携带3 = 4；NodeIndex=0 且已是战斗房，Ensure 不重掷。
-            var run = mArch.GetModel<RunModel>();
-            run.Room.Value = RoomKind.Gold;
-            run.NodeIndex.Value = 0;
-
-            var options = mReward.BuildNodeDeckOptions(1, null);
-            Assert.AreEqual(4, options.PlayerCards.Count, "容量0 + 金币注入1 + 携带3");
+                "仅金币房注入1；无携带注入");
             Assert.AreEqual("help.gold_card", options.PlayerCards[0].DefId);
-            Assert.AreEqual(RewardSystem.ShopPotionDefId, options.PlayerCards[1].DefId);
-            Assert.AreEqual(RewardSystem.ShopFoodDefId, options.PlayerCards[2].DefId);
-            Assert.AreEqual("help.hp_card", options.PlayerCards[3].DefId);
-            Assert.AreEqual(0, player.CarryPackDefIds.Count);
-
-            options.AddEnemyCard(new CardDraft("monster.hold", CardKind.Monster) { MaxHp = 1, Attack = 0 });
-            options.EnemyOpeningCount = 1;
-            options.PlayerOpeningCount = 0;
-            Assert.IsTrue(mPhase.StartNode(options).Accepted);
-
-            var monsterSlot = EnsureMonsterAdjacentToAvatar();
-            var coinsBefore = player.Coins.Value;
-            Assert.IsTrue(mPhase.Attack(monsterSlot).Accepted);
-
-            Assert.AreEqual(
-                coinsBefore + 40,
-                player.Coins.Value,
-                "4 张未用帮助卡（含 3 张携带注入）按 UnusedHelpCardGold=10 结算");
-            Assert.AreEqual(0, player.CarryPackDefIds.Count, "清关后携带卡包仍为空");
+            Assert.AreEqual(3, mArch.GetModel<DeckModel>().ItemSlotUids.Count, "道具卡格跨节点保留");
         }
 
         [Test]
-        public void SpecialReward_GoesToCarryPack_NotFixedList_ThenDrainsOnNextBattle()
+        public void SpecialReward_GoesToItemSlots_NotFixedList_AndNotDrainedIntoBattleDeck()
         {
             EnterSpecialReward(RoomKind.TreasureReward);
             var player = mArch.GetModel<PlayerModel>();
             var taken = mArch.GetModel<PendingChoiceModel>().RewardOptions[0].DefId;
 
             Assert.IsTrue(mPhase.SelectReward(0).Accepted);
-            Assert.AreEqual(1, player.CountCarryPackByDefId(taken));
+            Assert.AreEqual(1, CountItemSlotsByDef(taken));
             Assert.AreEqual(0, player.FixedItemCardDefIds.Count);
             Assert.IsTrue(mPhase.SkipHelpChoice().Accepted);
 
@@ -137,10 +89,39 @@ namespace NineGrid.Core.Tests
             run.NodeIndex.Value = 0;
 
             var options = mReward.BuildNodeDeckOptions(1, null);
-            Assert.AreEqual(2, options.PlayerCards.Count, "金币注入1 + 携带1");
+            Assert.AreEqual(1, options.PlayerCards.Count, "仅金币注入1");
             Assert.AreEqual("help.gold_card", options.PlayerCards[0].DefId);
-            Assert.AreEqual(taken, options.PlayerCards[1].DefId);
-            Assert.AreEqual(0, player.CarryPackDefIds.Count);
+            Assert.AreEqual(1, CountItemSlotsByDef(taken), "领取物仍在道具卡格");
+        }
+
+        [Test]
+        public void PickupItem_RejectsWhenItemSlotsFull_LeavesCardOnBoard()
+        {
+            Assert.IsTrue(mPhase.StartNode(CreateMinimalNode()).Accepted);
+            var board = mArch.GetModel<BoardModel>();
+            var avatarSlot = board.AvatarSlot.Value;
+            var adjacent = FindAdjacentEmpty(avatarSlot);
+            Assert.AreNotEqual(SlotId.None, adjacent);
+
+            FillItemSlotsToCapacity("help.hp_card");
+            var occupied = SnapshotItemSlotUids();
+            SpawnHelpOnBoard("help.food_card", adjacent);
+
+            var pickup = mPhase.PickupItem(adjacent);
+            Assert.IsFalse(pickup.Accepted);
+            Assert.AreEqual("道具卡格已满", pickup.Reason);
+            Assert.AreEqual(board.GetCardUid(adjacent), mArch.GetModel<CardRegistry>()
+                .Get(board.GetCardUid(adjacent)).Uid);
+            Assert.AreNotEqual(0, board.GetCardUid(adjacent), "满格拒拾，卡仍在原格");
+            CollectionAssert.AreEqual(occupied, SnapshotItemSlotUids());
+        }
+
+        [Test]
+        public void Bootstrap_SeedsDefaultItemSlotsCapacity()
+        {
+            Assert.AreEqual(
+                PlayerModel.DefaultItemSlotsCapacity,
+                mArch.GetModel<PlayerModel>().ItemSlotsCapacity);
         }
 
         private void EnterShop()
@@ -167,74 +148,76 @@ namespace NineGrid.Core.Tests
             Assert.IsTrue(enter.Accepted, enter.Reason);
         }
 
-        private SlotId EnsureMonsterAdjacentToAvatar()
+        private void FillItemSlotsToCapacity(string defId)
         {
-            var board = mArch.GetModel<BoardModel>();
+            var content = mArch.GetSystem<IContentSystem>();
             var registry = mArch.GetModel<CardRegistry>();
             var deck = mArch.GetModel<DeckModel>();
-            var boardSystem = mArch.GetSystem<IBoardSystem>();
-            var avatarSlot = board.AvatarSlot.Value;
-            var monsterSlot = FindMonsterBoardSlot();
-            Assert.AreNotEqual(SlotId.None, monsterSlot, "开局应有一只怪物在盘面");
-            if (boardSystem.AreAdjacent(avatarSlot, monsterSlot))
+            var player = mArch.GetModel<PlayerModel>();
+            while (deck.ItemSlotUids.Count < player.ItemSlotsCapacity)
             {
-                return monsterSlot;
+                deck.AddToItemSlots(content.CreateDraft(defId).Create(registry));
             }
+        }
 
-            var monster = registry.Get(board.GetCardUid(monsterSlot));
+        private void SpawnHelpOnBoard(string defId, SlotId slot)
+        {
+            var content = mArch.GetSystem<IContentSystem>();
+            var registry = mArch.GetModel<CardRegistry>();
+            var board = mArch.GetModel<BoardModel>();
+            var card = content.CreateDraft(defId).Create(registry);
+            board.PlaceCard(card, slot);
+        }
+
+        private SlotId FindAdjacentEmpty(SlotId avatarSlot)
+        {
+            var board = mArch.GetModel<BoardModel>();
+            var boardSystem = mArch.GetSystem<IBoardSystem>();
             for (var i = SlotId.MinBoardIndex; i <= SlotId.MaxBoardIndex; i++)
             {
                 var candidate = SlotId.Board(i);
-                if (candidate == avatarSlot || !boardSystem.AreAdjacent(avatarSlot, candidate))
+                if (candidate == avatarSlot
+                    || !boardSystem.AreAdjacent(avatarSlot, candidate)
+                    || !board.IsEmpty(candidate))
                 {
                     continue;
                 }
 
-                var occupantUid = board.GetCardUid(candidate);
-                if (occupantUid != 0)
-                {
-                    var occupant = registry.Get(occupantUid);
-                    if (occupant.Kind == CardKind.Monster)
-                    {
-                        continue;
-                    }
-
-                    board.ClearSlot(candidate);
-                    deck.AddToPlayerCardPool(occupant);
-                }
-
-                board.ClearSlot(monster.Slot.Value);
-                board.PlaceCard(monster, candidate);
                 return candidate;
             }
 
-            Assert.Fail("Avatar 旁无可用邻格安置怪物");
             return SlotId.None;
         }
 
-        private SlotId FindMonsterBoardSlot()
+        private int[] SnapshotItemSlotUids()
         {
-            var board = mArch.GetModel<BoardModel>();
-            var registry = mArch.GetModel<CardRegistry>();
-            for (var i = SlotId.MinBoardIndex; i <= SlotId.MaxBoardIndex; i++)
+            var deck = mArch.GetModel<DeckModel>();
+            var copy = new int[deck.ItemSlotUids.Count];
+            for (var i = 0; i < copy.Length; i++)
             {
-                var slot = SlotId.Board(i);
-                var uid = board.GetCardUid(slot);
-                if (uid == 0)
-                {
-                    continue;
-                }
+                copy[i] = deck.ItemSlotUids[i];
+            }
 
+            return copy;
+        }
+
+        private int CountItemSlotsByDef(string defId)
+        {
+            var registry = mArch.GetModel<CardRegistry>();
+            var deck = mArch.GetModel<DeckModel>();
+            var count = 0;
+            for (var i = 0; i < deck.ItemSlotUids.Count; i++)
+            {
                 CardInstance card;
-                if (registry.TryGet(uid, out card)
+                if (registry.TryGet(deck.ItemSlotUids[i], out card)
                     && card != null
-                    && card.Kind == CardKind.Monster)
+                    && card.DefId == defId)
                 {
-                    return slot;
+                    count++;
                 }
             }
 
-            return SlotId.None;
+            return count;
         }
 
         private static NodeDeckOptions CreateMinimalNode()
@@ -251,27 +234,22 @@ namespace NineGrid.Core.Tests
             var catalog = new GameContentCatalog();
             catalog.Economy.SkipHelpChoiceGold = 10;
             catalog.Economy.UnusedHelpCardGold = 10;
-            catalog.Economy.MonsterRemovedGold = 0;
-
+            catalog.Economy.MonsterRemovedGold = 5;
             catalog.AddCard(new CardContentDefinition(RewardSystem.ShopChestDefId, "普通宝箱卡", CardKind.HelpCard)
                 .WithPrice(100));
-            catalog.AddCard(new CardContentDefinition("help.hp_card", "血量卡", CardKind.HelpCard).WithPrice(50)
-                .InDeck("deck.help"));
-            catalog.AddCard(new CardContentDefinition("help.armor_card", "加甲卡", CardKind.HelpCard).WithPrice(50)
-                .InDeck("deck.help"));
-            catalog.AddCard(new CardContentDefinition("help.attack_card", "加攻卡", CardKind.HelpCard).WithPrice(50)
-                .InDeck("deck.help"));
+            catalog.AddCard(new CardContentDefinition("help.hp_card", "血量卡", CardKind.HelpCard).WithPrice(50));
+            catalog.AddCard(new CardContentDefinition("help.armor_card", "加甲卡", CardKind.HelpCard).WithPrice(50));
+            catalog.AddCard(new CardContentDefinition("help.attack_card", "加攻卡", CardKind.HelpCard).WithPrice(50));
             catalog.AddCard(new CardContentDefinition(RewardSystem.ShopPotionDefId, "恢复药水", CardKind.HelpCard)
                 .WithPrice(30));
             catalog.AddCard(new CardContentDefinition(RewardSystem.ShopFoodDefId, "食品卡", CardKind.HelpCard)
                 .WithPrice(50));
+            catalog.AddCard(new CardContentDefinition("help.food_card", "食品卡", CardKind.HelpCard));
             catalog.AddCard(new CardContentDefinition("help.gold_card", "金币卡", CardKind.HelpCard));
             catalog.AddCard(new CardContentDefinition("monster.hold", "占位怪", CardKind.Monster));
-
             catalog.Rewards
                 .AddRoom(new RoomDefinition(RoomKind.Shop, "商店") { Weight = 1 })
                 .AddRoom(new RoomDefinition(RoomKind.TreasureReward, "宝箱奖励") { Weight = 1 })
-                .AddRoom(new RoomDefinition(RoomKind.ItemReward, "道具奖励") { Weight = 1 })
                 .AddRoom(new RoomDefinition(RoomKind.Gold, "金币房") { Weight = 1 }
                     .AddOpeningInject(new RoomInjectDeclaration
                     {
@@ -280,7 +258,6 @@ namespace NineGrid.Core.Tests
                         CardDefId = "help.gold_card",
                         Count = 1
                     }));
-
             catalog.Rewards.AddNodeRule(new NodeDeckRule { NodeIndex = 1, Seq1Count = 1 });
             catalog.Rewards.AddNodeRule(new NodeDeckRule { NodeIndex = 2, Seq1Count = 1 });
             return catalog;

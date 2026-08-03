@@ -148,21 +148,19 @@ namespace NineGrid.Core.Tests
         }
 
         [Test]
-        public void InjectOrder_IsAfterFixed_BeforeCarryPack()
+        public void InjectOrder_IsAfterFixed_WithoutCarryPack()
         {
             var player = mArch.GetModel<PlayerModel>();
             player.SetItemDeckCapacity(1);
             player.AddFixedItemCard("help.fixed_card");
-            player.AddToCarryPack("help.carry_a");
             var run = mArch.GetModel<RunModel>();
             run.Room.Value = RoomKind.Gold;
             run.NodeIndex.Value = 1;
 
             var options = mReward.BuildNodeDeckOptions(2, null);
-            Assert.AreEqual(4, options.PlayerCards.Count);
+            Assert.AreEqual(3, options.PlayerCards.Count);
             Assert.AreEqual("help.fixed_card", options.PlayerCards[1].DefId);
             Assert.AreEqual("help.gold_card", options.PlayerCards[2].DefId);
-            Assert.AreEqual("help.carry_a", options.PlayerCards[3].DefId);
         }
 
         [Test]

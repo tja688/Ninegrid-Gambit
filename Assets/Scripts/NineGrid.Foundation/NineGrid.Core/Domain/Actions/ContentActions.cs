@@ -151,11 +151,40 @@ namespace NineGrid.Core
 
         public override GameActionResult Apply(GameActionContext context)
         {
-            context.GetModel<PlayerModel>().AddToCarryPack(DefId, Count);
-            return new GameActionResult()
+            if (string.IsNullOrEmpty(DefId))
+            {
+                return GameActionResult.Empty;
+            }
+
+            var content = context.GetSystem<IContentSystem>();
+            var registry = context.GetModel<CardRegistry>();
+            var deck = context.GetModel<DeckModel>();
+            var player = context.GetModel<PlayerModel>();
+            if (!player.CanAcceptIntoItemSlots(deck, Count))
+            {
+                return GameActionResult.Empty;
+            }
+
+            var result = new GameActionResult()
                 .AddEvent(new CoreGameEvent(CoreEventType.RewardSelected, context.ActionId, ActionName)
                     .WithAmount(Count)
                     .WithMessage(DefId + ":HelpCard:" + Count));
+
+            for (var i = 0; i < Count; i++)
+            {
+                var draft = content.CreateDraft(DefId);
+                var card = draft.Create(registry);
+                content.ApplyContentToCard(card);
+                deck.AddToItemSlots(card);
+                result.AddWithFaceAbsolutes(
+                    context,
+                    card,
+                    new CoreGameEvent(CoreEventType.CardSpawned, context.ActionId, ActionName)
+                        .WithCard(card.Uid)
+                        .WithMessage(DefId));
+            }
+
+            return result;
         }
     }
 
@@ -177,10 +206,10 @@ namespace NineGrid.Core
                     .WithAmount(offered.Count)
                     .WithMessage(RewardOfferFaceEncoding.Format(PoolId, offered)));
 
-            var toCarryPack = HelpCardGrantRouting.ShouldGrantToCarryPack(context);
+            var toItemSlots = HelpCardGrantRouting.ShouldGrantToItemSlots(context);
             for (var i = 0; i < offered.Count; i++)
             {
-                RewardGrantActionSupport.AddGrantFollowUp(result, offered[i], toCarryPack);
+                RewardGrantActionSupport.AddGrantFollowUp(result, offered[i], toItemSlots);
             }
 
             return result;
@@ -334,7 +363,7 @@ namespace NineGrid.Core
             RewardGrantActionSupport.AddGrantFollowUp(
                 result,
                 Entry,
-                HelpCardGrantRouting.ShouldGrantToCarryPack(context));
+                HelpCardGrantRouting.ShouldGrantToItemSlots(context));
             return result;
         }
     }
@@ -413,9 +442,9 @@ namespace NineGrid.Core
     internal static class HelpCardGrantRouting
     {
         /// <summary>
-        /// 局内（InteractionLoop / 开局发牌）帮助卡进战斗卡组；通关/商店/节点末进携带卡包。
+        /// 局外授予（商店/特殊房/节点末）直写道具卡格；局内 InteractionLoop / DealOpeningCards 进战斗卡组。
         /// </summary>
-        public static bool ShouldGrantToCarryPack(GameActionContext context)
+        public static bool ShouldGrantToItemSlots(GameActionContext context)
         {
             var phase = context.GetModel<RunModel>().Phase.Value;
             return phase != GamePhase.InteractionLoop && phase != GamePhase.DealOpeningCards;
@@ -424,7 +453,7 @@ namespace NineGrid.Core
 
     internal static class RewardGrantActionSupport
     {
-        public static void AddGrantFollowUp(GameActionResult result, RewardEntry entry, bool toCarryPack)
+        public static void AddGrantFollowUp(GameActionResult result, RewardEntry entry, bool toItemSlots)
         {
             if (entry == null || string.IsNullOrEmpty(entry.DefId))
             {
@@ -439,7 +468,7 @@ namespace NineGrid.Core
                 }
                 else if (entry.Kind == CardKind.HelpCard)
                 {
-                    if (toCarryPack)
+                    if (toItemSlots)
                     {
                         if (i == 0)
                         {

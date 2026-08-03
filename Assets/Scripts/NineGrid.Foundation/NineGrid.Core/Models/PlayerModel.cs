@@ -7,14 +7,18 @@ namespace NineGrid.Core
     public sealed class PlayerModel : AbstractModel
     {
         public const int DefaultItemDeckCapacity = 6;
+        /// <summary>道具卡格容量初始值（ADR-0025）。</summary>
+        public const int DefaultItemSlotsCapacity = 3;
+        /// <summary>道具卡格容量上限（ADR-0025）。</summary>
+        public const int MaxItemSlotsCapacity = 5;
         /// <summary>装备栏上限（设计案：12）。</summary>
         public const int MaxRelicSlots = 12;
 
         private readonly List<string> mRelicDefIds = new List<string>();
         private readonly List<string> mItemSourcePoolDefIds = new List<string>();
         private readonly List<string> mFixedItemCardDefIds = new List<string>();
-        private readonly List<string> mCarryPackDefIds = new List<string>();
         private int mItemDeckCapacity = DefaultItemDeckCapacity;
+        private int mItemSlotsCapacity = DefaultItemSlotsCapacity;
         private int mItemStatBonus;
 
         // 神圣决斗（skill.holy_duel）：玩家侧交战记忆，先挂简单状态，预留日后 buff 化。
@@ -78,6 +82,12 @@ namespace NineGrid.Core
             get { return mItemDeckCapacity; }
         }
 
+        /// <summary>道具卡格容量（初始 3，最高 5）；与 <see cref="ItemDeckCapacity"/> 拆开（ADR-0025）。</summary>
+        public int ItemSlotsCapacity
+        {
+            get { return mItemSlotsCapacity; }
+        }
+
         /// <summary>道具卡来源池（通用卡组 + 角色卡组）；跨节点持久。</summary>
         public IReadOnlyList<string> ItemSourcePoolDefIds
         {
@@ -96,12 +106,6 @@ namespace NineGrid.Core
         public int ItemStatBonus
         {
             get { return mItemStatBonus; }
-        }
-
-        /// <summary>携带卡包；下一战斗节点开局倒空注入后清空。</summary>
-        public IReadOnlyList<string> CarryPackDefIds
-        {
-            get { return mCarryPackDefIds; }
         }
 
         protected override void OnInit()
@@ -153,6 +157,37 @@ namespace NineGrid.Core
             }
 
             return removed;
+        }
+
+        public void SetItemSlotsCapacity(int capacity)
+        {
+            var next = capacity < DefaultItemSlotsCapacity
+                ? DefaultItemSlotsCapacity
+                : (capacity > MaxItemSlotsCapacity ? MaxItemSlotsCapacity : capacity);
+            if (mItemSlotsCapacity == next)
+            {
+                return;
+            }
+
+            mItemSlotsCapacity = next;
+            Touch();
+        }
+
+        /// <summary>道具卡格是否已满（不可再写入；不挤掉旧卡）。</summary>
+        public bool IsItemSlotsFull(DeckModel deck)
+        {
+            return deck != null && deck.ItemSlotUids.Count >= mItemSlotsCapacity;
+        }
+
+        /// <summary>道具卡格是否还能再收下 <paramref name="count"/> 张。</summary>
+        public bool CanAcceptIntoItemSlots(DeckModel deck, int count)
+        {
+            if (deck == null || count <= 0)
+            {
+                return false;
+            }
+
+            return deck.ItemSlotUids.Count + count <= mItemSlotsCapacity;
         }
 
         public void SetItemDeckCapacity(int capacity)
@@ -253,76 +288,6 @@ namespace NineGrid.Core
             Touch();
         }
 
-        public void AddToCarryPack(string defId, int count = 1)
-        {
-            if (string.IsNullOrEmpty(defId) || count <= 0)
-            {
-                return;
-            }
-
-            for (var i = 0; i < count; i++)
-            {
-                mCarryPackDefIds.Add(defId);
-            }
-
-            Touch();
-        }
-
-        public void ReplaceCarryPack(IEnumerable<string> defIds)
-        {
-            mCarryPackDefIds.Clear();
-            if (defIds != null)
-            {
-                foreach (var defId in defIds)
-                {
-                    if (!string.IsNullOrEmpty(defId))
-                    {
-                        mCarryPackDefIds.Add(defId);
-                    }
-                }
-            }
-
-            Touch();
-        }
-
-        /// <summary>倒空携带卡包，返回本关待注入的 defId 列表。</summary>
-        public List<string> DrainCarryPack()
-        {
-            if (mCarryPackDefIds.Count == 0)
-            {
-                return new List<string>();
-            }
-
-            var drained = new List<string>(mCarryPackDefIds.Count);
-            for (var i = 0; i < mCarryPackDefIds.Count; i++)
-            {
-                drained.Add(mCarryPackDefIds[i]);
-            }
-
-            mCarryPackDefIds.Clear();
-            Touch();
-            return drained;
-        }
-
-        public int CountCarryPackByDefId(string defId)
-        {
-            if (string.IsNullOrEmpty(defId))
-            {
-                return 0;
-            }
-
-            var count = 0;
-            for (var i = 0; i < mCarryPackDefIds.Count; i++)
-            {
-                if (mCarryPackDefIds[i] == defId)
-                {
-                    count++;
-                }
-            }
-
-            return count;
-        }
-
         public void Reset()
         {
             Stats.Clear();
@@ -331,9 +296,9 @@ namespace NineGrid.Core
             ProfessionId.Value = string.Empty;
             mRelicDefIds.Clear();
             mItemDeckCapacity = DefaultItemDeckCapacity;
+            mItemSlotsCapacity = DefaultItemSlotsCapacity;
             mItemSourcePoolDefIds.Clear();
             mFixedItemCardDefIds.Clear();
-            mCarryPackDefIds.Clear();
             mItemStatBonus = 0;
             mDuelMarkMonsterUid = 0;
             Touch();

@@ -42,8 +42,6 @@ namespace NineGrid.Core.Tests
     public void ThrowingKnifeBag_OnNodeStart_AddsToDrawPileOnly()
     {
       mContent.ActivateRelic("relic.throwing_knife_bag");
-      var player = mArch.GetModel<PlayerModel>();
-      var carryBefore = player.CountCarryPackByDefId(ThrowingKnifeDefId);
 
       Assert.IsTrue(mPhase.StartNode(CreateMinimalNode()).Accepted);
 
@@ -53,9 +51,9 @@ namespace NineGrid.Core.Tests
         CountDefInList(mArch.GetModel<CardRegistry>(), deck.DrawPileUids, ThrowingKnifeDefId),
         "飞刀袋应在关卡开始时将两张飞刀写入本关抽牌堆");
       Assert.AreEqual(
-        carryBefore,
-        player.CountCarryPackByDefId(ThrowingKnifeDefId),
-        "关卡开始遗物加卡只写入本关牌堆，不进携带卡包");
+        0,
+        CountDefInList(mArch.GetModel<CardRegistry>(), deck.ItemSlotUids, ThrowingKnifeDefId),
+        "关卡开始遗物加卡只写入本关牌堆，不进道具卡格");
     }
 
     [Test]

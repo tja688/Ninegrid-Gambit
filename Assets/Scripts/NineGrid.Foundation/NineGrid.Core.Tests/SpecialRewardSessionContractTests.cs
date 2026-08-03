@@ -8,8 +8,8 @@ using QFramework;
 namespace NineGrid.Core.Tests
 {
     /// <summary>
-    /// #94 特殊房：宝箱奖励 / 道具奖励铺卡、免费拿走进携带卡包、离开放弃。
-    /// Seam：IPhaseSystem + PendingChoiceModel 特殊房 pool + PlayerModel.CarryPack。
+    /// #94 / #108 特殊房：宝箱奖励 / 道具奖励铺卡、免费拿直写道具卡格、离开放弃、满格拒领。
+    /// Seam：IPhaseSystem + PendingChoiceModel 特殊房 pool + DeckModel.ItemSlots。
     /// </summary>
     public sealed class SpecialRewardSessionContractTests
     {
@@ -73,7 +73,7 @@ namespace NineGrid.Core.Tests
         }
 
         [Test]
-        public void SelectReward_SpecialRoom_FreeTakeStaysAndGoesToCarryPack()
+        public void SelectReward_SpecialRoom_FreeTakeStaysAndGoesToItemSlots()
         {
             EnterRoom(RoomKind.TreasureReward);
             var player = mArch.GetModel<PlayerModel>();
@@ -86,14 +86,33 @@ namespace NineGrid.Core.Tests
             Assert.AreEqual(GamePhase.RewardItemChoice, mPhase.CurrentPhase);
             Assert.AreEqual(PendingChoiceKind.Reward, pending.Kind.Value);
             Assert.AreEqual(beforeCount - 1, pending.RewardOptions.Count);
-            Assert.AreEqual(1, player.CountCarryPackByDefId(taken));
+            Assert.AreEqual(1, CountItemSlotsByDef(taken));
             Assert.AreEqual(coinsBefore, player.Coins.Value, "特殊房拿走免费");
             Assert.IsTrue(mPhase.CanExecute(GameCommandKind.SelectReward));
             Assert.IsTrue(mPhase.CanExecute(GameCommandKind.SkipHelpChoice));
         }
 
         [Test]
-        public void SkipHelpChoice_LeavesSpecialRoom_UntakenNotInCarryPack_NoSkipGold()
+        public void SelectReward_SpecialRoom_RejectsWhenItemSlotsFull()
+        {
+            EnterRoom(RoomKind.TreasureReward);
+            FillItemSlotsToCapacity("help.food_card");
+            var player = mArch.GetModel<PlayerModel>();
+            var pending = mArch.GetModel<PendingChoiceModel>();
+            var coinsBefore = player.Coins.Value;
+            var optionCount = pending.RewardOptions.Count;
+            var occupied = SnapshotItemSlotUids();
+
+            var take = mPhase.SelectReward(0);
+            Assert.IsFalse(take.Accepted);
+            Assert.AreEqual("道具卡格已满", take.Reason);
+            Assert.AreEqual(coinsBefore, player.Coins.Value);
+            Assert.AreEqual(optionCount, pending.RewardOptions.Count);
+            CollectionAssert.AreEqual(occupied, SnapshotItemSlotUids());
+        }
+
+        [Test]
+        public void SkipHelpChoice_LeavesSpecialRoom_UntakenNotInItemSlots_NoSkipGold()
         {
             EnterRoom(RoomKind.ItemReward);
             var player = mArch.GetModel<PlayerModel>();
@@ -120,8 +139,8 @@ namespace NineGrid.Core.Tests
 
             Assert.AreEqual(GamePhase.NodeCompleted, mPhase.CurrentPhase);
             Assert.AreEqual(PendingChoiceKind.None, pending.Kind.Value);
-            Assert.AreEqual(1, player.CountCarryPackByDefId(taken));
-            Assert.AreEqual(0, player.CountCarryPackByDefId(abandoned), "未拿的卡不进包");
+            Assert.AreEqual(1, CountItemSlotsByDef(taken));
+            Assert.AreEqual(0, CountItemSlotsByDef(abandoned), "未拿的卡不进道具卡格");
             Assert.AreEqual(coinsBefore, player.Coins.Value, "离开不加 skip 金");
         }
 
@@ -139,6 +158,49 @@ namespace NineGrid.Core.Tests
             var enter = mPhase.EnterRoom();
             Assert.IsTrue(enter.Accepted, enter.Reason);
             Assert.AreEqual(GamePhase.RewardItemChoice, mPhase.CurrentPhase);
+        }
+
+        private void FillItemSlotsToCapacity(string defId)
+        {
+            var content = mArch.GetSystem<IContentSystem>();
+            var registry = mArch.GetModel<CardRegistry>();
+            var deck = mArch.GetModel<DeckModel>();
+            var player = mArch.GetModel<PlayerModel>();
+            while (deck.ItemSlotUids.Count < player.ItemSlotsCapacity)
+            {
+                deck.AddToItemSlots(content.CreateDraft(defId).Create(registry));
+            }
+        }
+
+        private int[] SnapshotItemSlotUids()
+        {
+            var deck = mArch.GetModel<DeckModel>();
+            var copy = new int[deck.ItemSlotUids.Count];
+            for (var i = 0; i < copy.Length; i++)
+            {
+                copy[i] = deck.ItemSlotUids[i];
+            }
+
+            return copy;
+        }
+
+        private int CountItemSlotsByDef(string defId)
+        {
+            var registry = mArch.GetModel<CardRegistry>();
+            var deck = mArch.GetModel<DeckModel>();
+            var count = 0;
+            for (var i = 0; i < deck.ItemSlotUids.Count; i++)
+            {
+                CardInstance card;
+                if (registry.TryGet(deck.ItemSlotUids[i], out card)
+                    && card != null
+                    && card.DefId == defId)
+                {
+                    count++;
+                }
+            }
+
+            return count;
         }
 
         private static bool IsAttributeCard(string defId)

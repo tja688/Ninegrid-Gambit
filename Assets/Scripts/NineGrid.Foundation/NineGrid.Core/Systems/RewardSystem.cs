@@ -551,13 +551,6 @@ namespace NineGrid.Core.Systems
 
             // 3) 叠房间注入卡（ADR-0022 / #95）
             AppendRoomOpeningInjectPlayerCards(catalog, content, options);
-
-            // 4) 倒空携带卡包
-            var carry = player.DrainCarryPack();
-            for (var i = 0; i < carry.Count; i++)
-            {
-                TryAddPlayerCard(catalog, content, options, carry[i]);
-            }
         }
 
         /// <summary>

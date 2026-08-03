@@ -150,6 +150,15 @@ namespace NineGrid.Core
             Touch();
         }
 
+        /// <summary>清战斗区（抽牌堆 / 玩家侧池 / 敌方池）；保留道具卡格（ADR-0025）。</summary>
+        public void ClearBattleZones()
+        {
+            mDrawPileUids.Clear();
+            mPlayerCardPoolUids.Clear();
+            mEnemyCardPoolUids.Clear();
+            Touch();
+        }
+
         private void Touch()
         {
             if (Version != null)

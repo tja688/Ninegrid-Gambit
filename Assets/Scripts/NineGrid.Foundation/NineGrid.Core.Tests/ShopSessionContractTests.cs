@@ -65,7 +65,7 @@ namespace NineGrid.Core.Tests
             Assert.AreEqual(GamePhase.RewardItemChoice, mPhase.CurrentPhase);
             Assert.AreEqual(PendingChoiceKind.Reward, pending.Kind.Value);
             Assert.AreEqual(beforeCount - 1, pending.RewardOptions.Count);
-            Assert.AreEqual(1, player.CountCarryPackByDefId(bought));
+            Assert.AreEqual(1, CountItemSlotsByDef(bought));
             Assert.IsTrue(mPhase.CanExecute(GameCommandKind.SelectReward));
             Assert.IsTrue(mPhase.CanExecute(GameCommandKind.SkipHelpChoice));
         }
@@ -139,6 +139,25 @@ namespace NineGrid.Core.Tests
             Assert.IsTrue(enter.Accepted, enter.Reason);
             Assert.AreEqual(GamePhase.RewardItemChoice, mPhase.CurrentPhase);
             Assert.AreEqual(PendingChoiceModel.ShopPoolId, mArch.GetModel<PendingChoiceModel>().PoolId.Value);
+        }
+
+        private int CountItemSlotsByDef(string defId)
+        {
+            var registry = mArch.GetModel<CardRegistry>();
+            var deck = mArch.GetModel<DeckModel>();
+            var count = 0;
+            for (var i = 0; i < deck.ItemSlotUids.Count; i++)
+            {
+                CardInstance card;
+                if (registry.TryGet(deck.ItemSlotUids[i], out card)
+                    && card != null
+                    && card.DefId == defId)
+                {
+                    count++;
+                }
+            }
+
+            return count;
         }
 
         private static GameContentCatalog BuildShopCatalog()

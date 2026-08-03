@@ -8,7 +8,8 @@ using QFramework;
 namespace NineGrid.Core.Tests
 {
     /// <summary>
-    /// 商店购买扣金 / 余额不足拒买 / 商店 Skip 不加跳过金。
+    /// 商店购买扣金 / 余额不足拒买 / 满格拒买 / 商店 Skip 不加跳过金。
+    /// #108：购买直写道具卡格，不进携带卡包。
     /// </summary>
     public sealed class ShopBuyGoldContractTests
     {
@@ -68,7 +69,7 @@ namespace NineGrid.Core.Tests
             }
 
             Assert.IsTrue(sawSpend, "EventLog 应有商店扣金 GoldModified");
-            Assert.IsTrue(HasCardInCarryPack(defId), "购买后应写入携带卡包");
+            Assert.IsTrue(HasCardInItemSlots(defId), "购买后应写入道具卡格");
         }
 
         [Test]
@@ -85,7 +86,31 @@ namespace NineGrid.Core.Tests
             Assert.AreEqual("Not enough gold", buy.Reason);
             Assert.AreEqual(coinsBefore, player.Coins.Value);
             Assert.AreEqual(PendingChoiceKind.Reward, mArch.GetModel<PendingChoiceModel>().Kind.Value);
-            Assert.IsFalse(HasCardInCarryPack(defId));
+            Assert.IsFalse(HasCardInItemSlots(defId));
+        }
+
+        [Test]
+        public void SelectReward_Shop_RejectsWhenItemSlotsFull_DoesNotSpendOrDisplace()
+        {
+            EnterShop();
+            var player = mArch.GetModel<PlayerModel>();
+            var deck = mArch.GetModel<DeckModel>();
+            player.AddCoins(200);
+            FillItemSlotsToCapacity("help.hp_card");
+            var occupied = SnapshotItemSlotUids();
+            var coinsBefore = player.Coins.Value;
+            var pending = mArch.GetModel<PendingChoiceModel>();
+            var optionCount = pending.RewardOptions.Count;
+            var defId = pending.RewardOptions[2].DefId;
+
+            var buy = mPhase.SelectReward(2);
+            Assert.IsFalse(buy.Accepted, "格满应拒买");
+            Assert.AreEqual("道具卡格已满", buy.Reason);
+            Assert.AreEqual(coinsBefore, player.Coins.Value);
+            Assert.AreEqual(optionCount, pending.RewardOptions.Count);
+            Assert.AreEqual(occupied.Length, deck.ItemSlotUids.Count);
+            CollectionAssert.AreEqual(occupied, SnapshotItemSlotUids());
+            Assert.IsFalse(HasCardInItemSlots(defId));
         }
 
         [Test]
@@ -105,7 +130,7 @@ namespace NineGrid.Core.Tests
         }
 
         [Test]
-        public void SelectReward_Shop_PersistsAcrossNextNode()
+        public void SelectReward_Shop_PersistsInItemSlotsAcrossNextNode()
         {
             EnterShop();
             var player = mArch.GetModel<PlayerModel>();
@@ -113,19 +138,21 @@ namespace NineGrid.Core.Tests
             var potionIndex = IndexOfDef(RewardSystem.ShopPotionDefId);
             Assert.GreaterOrEqual(potionIndex, 0);
             Assert.IsTrue(mPhase.SelectReward(potionIndex).Accepted);
-            Assert.GreaterOrEqual(player.CountCarryPackByDefId(RewardSystem.ShopPotionDefId), 1);
+            Assert.IsTrue(HasCardInItemSlots(RewardSystem.ShopPotionDefId));
             Assert.AreEqual(GamePhase.RewardItemChoice, mPhase.CurrentPhase);
 
             Assert.IsTrue(mPhase.SkipHelpChoice().Accepted);
             Assert.AreEqual(GamePhase.NodeCompleted, mPhase.CurrentPhase);
 
             var options = mArch.GetSystem<IRewardSystem>().BuildNodeDeckOptions(1, null);
+            Assert.IsFalse(
+                ContainsPlayerCardDef(options, RewardSystem.ShopPotionDefId),
+                "商店购买不应再经开局注入进战斗卡组");
             options.AddEnemyCard(new CardDraft("monster.hold", CardKind.Monster) { MaxHp = 20, Attack = 0 });
             options.EnemyOpeningCount = 1;
             Assert.IsTrue(mPhase.StartNode(options).Accepted);
             Assert.AreEqual(GamePhase.InteractionLoop, mPhase.CurrentPhase);
-            Assert.IsTrue(HasHelpCardInBattleDeck(RewardSystem.ShopPotionDefId), "商店购买卡下一节点应可见");
-            Assert.AreEqual(0, player.CarryPackDefIds.Count, "携带卡包开局倒空");
+            Assert.IsTrue(HasCardInItemSlots(RewardSystem.ShopPotionDefId), "跨节点后仍在道具卡格");
         }
 
         private void EnterShop()
@@ -159,40 +186,55 @@ namespace NineGrid.Core.Tests
             return -1;
         }
 
-        private bool HasCardInCarryPack(string defId)
+        private void FillItemSlotsToCapacity(string defId)
         {
-            return mArch.GetModel<PlayerModel>().CountCarryPackByDefId(defId) > 0;
-        }
-
-        private bool HasHelpCardInBattleDeck(string defId)
-        {
+            var content = mArch.GetSystem<IContentSystem>();
             var registry = mArch.GetModel<CardRegistry>();
             var deck = mArch.GetModel<DeckModel>();
-            var board = mArch.GetModel<BoardModel>();
-            if (HasCardDefInDeck(defId))
+            var player = mArch.GetModel<PlayerModel>();
+            while (deck.ItemSlotUids.Count < player.ItemSlotsCapacity)
             {
-                return true;
+                var card = content.CreateDraft(defId).Create(registry);
+                deck.AddToItemSlots(card);
+            }
+        }
+
+        private int[] SnapshotItemSlotUids()
+        {
+            var deck = mArch.GetModel<DeckModel>();
+            var copy = new int[deck.ItemSlotUids.Count];
+            for (var i = 0; i < copy.Length; i++)
+            {
+                copy[i] = deck.ItemSlotUids[i];
             }
 
-            foreach (var uid in board.BoardCardUids())
+            return copy;
+        }
+
+        private bool HasCardInItemSlots(string defId)
+        {
+            return ContainsDef(
+                mArch.GetModel<CardRegistry>(),
+                mArch.GetModel<DeckModel>().ItemSlotUids,
+                defId);
+        }
+
+        private static bool ContainsPlayerCardDef(NodeDeckOptions options, string defId)
+        {
+            if (options == null || options.PlayerCards == null)
             {
-                CardInstance card;
-                if (registry.TryGet(uid, out card) && card != null && card.DefId == defId)
+                return false;
+            }
+
+            for (var i = 0; i < options.PlayerCards.Count; i++)
+            {
+                if (options.PlayerCards[i].DefId == defId)
                 {
                     return true;
                 }
             }
 
             return false;
-        }
-
-        private bool HasCardDefInDeck(string defId)
-        {
-            var registry = mArch.GetModel<CardRegistry>();
-            var deck = mArch.GetModel<DeckModel>();
-            return ContainsDef(registry, deck.DrawPileUids, defId)
-                || ContainsDef(registry, deck.PlayerCardPoolUids, defId)
-                || ContainsDef(registry, deck.ItemSlotUids, defId);
         }
 
         private static bool ContainsDef(
