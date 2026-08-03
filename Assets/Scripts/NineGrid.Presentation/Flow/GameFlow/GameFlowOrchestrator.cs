@@ -434,6 +434,7 @@ namespace NineGrid.Flow
 
         /// <summary>
         /// 场地图标选房 / 导航：Spawn → BoardWalk → 驻留 1s → Select+Enter；进房硬切。
+        /// 消费/特殊房进入 <see cref="GamePhase.RewardItemChoice"/> 后接场地板；导航/战斗房进房则直接推进节点。
         /// </summary>
         private async UniTask PlayRoomIconChoiceAsync(CancellationToken ct)
         {
@@ -494,6 +495,7 @@ namespace NineGrid.Flow
 
             try
             {
+                // 驻留提交已 Select+Enter：导航/战斗房 → NodeCompleted；商店/卡店/特殊房 → RewardItemChoice。
                 await UniTask.WaitUntil(
                     () =>
                     {
@@ -503,10 +505,15 @@ namespace NineGrid.Flow
                         }
 
                         var p = phaseSystem.CurrentPhase;
-                        return p == GamePhase.NodeCompleted
-                               || p == GamePhase.Victory
-                               || p == GamePhase.Defeat
-                               || phaseSystem.CanExecute(GameCommandKind.StartNode);
+                        if (p == GamePhase.NodeCompleted
+                            || p == GamePhase.Victory
+                            || p == GamePhase.Defeat
+                            || phaseSystem.CanExecute(GameCommandKind.StartNode))
+                        {
+                            return true;
+                        }
+
+                        return IsAwaitingInRoomBoard(phaseSystem, pending);
                     },
                     cancellationToken: ct);
             }
@@ -519,9 +526,23 @@ namespace NineGrid.Flow
                     presenter.DespawnAll();
                 }
             }
+
+            if (ct.IsCancellationRequested)
+            {
+                return;
+            }
+
+            // 图标路径已 EnterRoom；此处只刷房内场地板（旧 PlayRoomEventAsync 壳层再 Enter 已退役）。
+            if (IsAwaitingInRoomBoard(phaseSystem, pending))
+            {
+                await PresentInRoomSessionAfterEnterAsync(ct);
+            }
         }
 
-        private async UniTask PlayRoomEventAsync(CancellationToken ct)
+        /// <summary>
+        /// 图标驻留已完成 EnterRoom 后：按 Pending 刷商店 / 卡店 / 特殊奖励场地板，直到离开。
+        /// </summary>
+        private async UniTask PresentInRoomSessionAfterEnterAsync(CancellationToken ct)
         {
             RequestSetState(GameFlowShellState.RoomEvent);
             var view = mShell.View;
@@ -529,93 +550,24 @@ namespace NineGrid.Flow
 
             var arch = NineGridArchitecture.Current;
             var phaseSystem = arch.GetSystem<IPhaseSystem>();
-            if (phaseSystem.CurrentPhase != GamePhase.RoomEvent)
-            {
-                Debug.LogWarning($"[GameFlow] 跳过房间事件 phase={phaseSystem.CurrentPhase}");
-                return;
-            }
-
-            var selectedRoom = arch.GetModel<PendingChoiceModel>().SelectedRoom.Value;
+            var pending = arch.GetModel<PendingChoiceModel>();
+            var selectedRoom = pending.SelectedRoom.Value;
             view?.ShowRoomEventOverlay();
-
-            var phaseBeforeEnter = phaseSystem.CurrentPhase.ToString();
-            var pipeline = arch.GetSystem<IActionPipelineSystem>();
-            var goldEventStart = pipeline.EventLog.Entries.Count;
-            // 与 SelectRoom 同理：壳层自动 EnterRoom 也须持有 ChoiceOverlay，
-            // 否则结算 Drain 未尽时会被 IntentIntake 拒掉，卡死跨关。
-            PresentationInputGates.SetChoiceOverlay(true);
-            CoreCommandResult enter;
-            try
-            {
-                enter = SubmitEnterRoom(phaseSystem);
-            }
-            finally
-            {
-                PresentationInputGates.SetChoiceOverlay(false);
-            }
-
-            if (!enter.Accepted)
-            {
-                Debug.LogWarning($"[GameFlow] EnterRoom 被拒: {enter.Reason}");
-                try
-                {
-                    FlowTraceRecorder.Record(
-                        FlowTraceCategory.CoreGate,
-                        FlowTraceNames.EnterRoom,
-                        new Dictionary<string, string>
-                        {
-                            { "room", selectedRoom.ToString() },
-                            { "reason", enter.Reason ?? string.Empty },
-                            { "nodeIndex", mShell.NodeIndex.ToString() },
-                        },
-                        loopState: mShell.State.Value.ToString(),
-                        phaseBefore: phaseBeforeEnter,
-                        phaseAfter: phaseSystem.CurrentPhase.ToString(),
-                        accepted: false);
-                }
-                catch (Exception ex)
-                {
-                    Debug.LogWarning("[GameFlow] FlowTrace EnterRoom reject: " + ex.Message);
-                }
-
-                view?.HideAllOverlays();
-                return;
-            }
-
-            try
-            {
-                FlowTraceRecorder.Record(
-                    FlowTraceCategory.CoreGate,
-                    FlowTraceNames.EnterRoom,
-                    new Dictionary<string, string>
-                    {
-                        { "room", selectedRoom.ToString() },
-                        { "nodeIndex", mShell.NodeIndex.ToString() },
-                    },
-                    loopState: mShell.State.Value.ToString(),
-                    phaseBefore: phaseBeforeEnter,
-                    phaseAfter: phaseSystem.CurrentPhase.ToString(),
-                    accepted: true);
-            }
-            catch (Exception ex)
-            {
-                Debug.LogWarning("[GameFlow] FlowTrace EnterRoom: " + ex.Message);
-            }
-
-            BattleBeatFlush.PresentEventLogSlice(NineGridArchitecture.Current, goldEventStart);
             ResolveSession()?.RefreshPersistentInBattleUi(animate: false);
 
-            var pending = arch.GetModel<PendingChoiceModel>();
             if (pending.Kind.Value == PendingChoiceKind.Reward
-                && pending.RewardOptions != null
-                && pending.RewardOptions.Count > 0)
+                && PendingChoiceModel.IsConsumerBoardPool(pending.PoolId.Value))
             {
                 try
                 {
-                    var optionIds = new List<string>(pending.RewardOptions.Count);
-                    for (var i = 0; i < pending.RewardOptions.Count; i++)
+                    var optionIds = new List<string>(
+                        pending.RewardOptions != null ? pending.RewardOptions.Count : 0);
+                    if (pending.RewardOptions != null)
                     {
-                        optionIds.Add(pending.RewardOptions[i].DefId ?? string.Empty);
+                        for (var i = 0; i < pending.RewardOptions.Count; i++)
+                        {
+                            optionIds.Add(pending.RewardOptions[i].DefId ?? string.Empty);
+                        }
                     }
 
                     FlowTraceRecorder.Record(
@@ -623,11 +575,12 @@ namespace NineGrid.Flow
                         FlowTraceNames.RewardPresented,
                         new Dictionary<string, string>
                         {
-                            { "optionCount", pending.RewardOptions.Count.ToString() },
+                            { "optionCount", optionIds.Count.ToString() },
                             { "options", string.Join(",", optionIds) },
                             { "nodeIndex", mShell.NodeIndex.ToString() },
-                            { "source", "roomEvent" },
+                            { "source", "inRoomBoard" },
                             { "room", selectedRoom.ToString() },
+                            { "pool", pending.PoolId.Value ?? string.Empty },
                         },
                         loopState: mShell.State.Value.ToString(),
                         phaseBefore: phaseSystem.CurrentPhase.ToString());
@@ -650,24 +603,6 @@ namespace NineGrid.Flow
                 {
                     await PresentRewardBoardAsync(ct);
                 }
-                else
-                {
-                    view?.ShowRewardOverlay();
-                    BoardCardSelectModeController.RequestAbort("mainloop-room-reward-overlay");
-                    PresentationInputGates.SetChoiceOverlay(true);
-                    try
-                    {
-                        var session = ResolveSession();
-                        if (session != null)
-                        {
-                            await session.PresentRewardChoiceFromCoreAsync(hoverOnNotice: true);
-                        }
-                    }
-                    finally
-                    {
-                        PresentationInputGates.SetChoiceOverlay(false);
-                    }
-                }
             }
             else
             {
@@ -684,6 +619,16 @@ namespace NineGrid.Flow
 
             view?.HideAllOverlays();
             ResolveSession()?.RefreshPersistentInBattleUi(animate: false);
+        }
+
+        /// <summary>图标 EnterRoom 后进入消费/特殊房场地板会话。</summary>
+        private static bool IsAwaitingInRoomBoard(IPhaseSystem phase, PendingChoiceModel pending)
+        {
+            return phase != null
+                   && pending != null
+                   && phase.CurrentPhase == GamePhase.RewardItemChoice
+                   && pending.Kind.Value == PendingChoiceKind.Reward
+                   && PendingChoiceModel.IsConsumerBoardPool(pending.PoolId.Value);
         }
 
         private async UniTask PresentShopBoardAsync(CancellationToken ct)

@@ -36,6 +36,9 @@ namespace NineGrid.Presentation.Tests.BattleSession
             Assert.IsTrue(
                 body.Contains("TryCompleteClearedNode"),
                 "TryForceNodeVictory 应走 PhaseSystem.TryCompleteClearedNode");
+            Assert.IsTrue(
+                body.Contains("ClearResidualCombatFieldViews"),
+                "TryForceNodeVictory 须在 Core 清关后收口场上残留战斗卡视图（机关/帮助/漏网怪）");
         }
     }
 }

@@ -1,6 +1,7 @@
 using NineGrid.Core;
 using TMPro;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 namespace NineGrid.Flow.BoardBriefTip
 {
@@ -22,49 +23,59 @@ namespace NineGrid.Flow.BoardBriefTip
 
         public static FloorHintPresenter EnsureExists()
         {
-            if (sInstance != null)
-            {
-                sInstance.EnsureBindings();
-                return sInstance;
-            }
-
-            sInstance = FindFirstObjectByType<FloorHintPresenter>();
-            if (sInstance != null)
-            {
-                sInstance.EnsureBindings();
-                return sInstance;
-            }
-
             var found = FindRoot();
-            if (found == null)
+            if (found != null)
             {
-                var go = new GameObject(nameof(FloorHintPresenter));
-                sInstance = go.AddComponent<FloorHintPresenter>();
+                var presenter = found.GetComponent<FloorHintPresenter>();
+                if (presenter == null)
+                {
+                    presenter = found.AddComponent<FloorHintPresenter>();
+                }
+
+                presenter.root = found;
+                presenter.EnsureBindings();
+                AdoptInstance(presenter);
+                return presenter;
+            }
+
+            if (sInstance != null)
+            {
+                sInstance.EnsureBindings();
                 return sInstance;
             }
 
-            var presenter = found.GetComponent<FloorHintPresenter>();
-            if (presenter == null)
+            sInstance = FindFirstObjectByType<FloorHintPresenter>(FindObjectsInactive.Include);
+            if (sInstance != null)
             {
-                presenter = found.AddComponent<FloorHintPresenter>();
+                sInstance.EnsureBindings();
+                return sInstance;
             }
 
-            presenter.root = found;
-            presenter.EnsureBindings();
-            sInstance = presenter;
-            return presenter;
+            var go = new GameObject(nameof(FloorHintPresenter));
+            sInstance = go.AddComponent<FloorHintPresenter>();
+            return sInstance;
         }
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void Bootstrap()
         {
             EnsureExists();
+            SceneManager.sceneLoaded -= OnSceneLoaded;
+            SceneManager.sceneLoaded += OnSceneLoaded;
+        }
+
+        private static void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+        {
+            EnsureExists();
         }
 
         private void Awake()
         {
-            sInstance = this;
             EnsureBindings();
+            if (gameObject.name == RootObjectName)
+            {
+                AdoptInstance(this);
+            }
         }
 
         private void OnDestroy()
@@ -96,6 +107,13 @@ namespace NineGrid.Flow.BoardBriefTip
 
         public void Apply(int floor, int nodeIndex)
         {
+            var self = EnsureExists();
+            if (!ReferenceEquals(self, this))
+            {
+                self.Apply(floor, nodeIndex);
+                return;
+            }
+
             EnsureBindings();
             mLastFloor = floor;
             mLastNodeIndex = nodeIndex;
@@ -108,15 +126,44 @@ namespace NineGrid.Flow.BoardBriefTip
 
         public void EnsureBindings()
         {
-            if (root == null)
+            if (root == null || root.name != RootObjectName)
             {
-                root = gameObject.name == RootObjectName ? gameObject : FindRoot();
+                var found = FindRoot();
+                if (found != null)
+                {
+                    root = found;
+                }
+                else if (gameObject.name == RootObjectName)
+                {
+                    root = gameObject;
+                }
             }
 
             if (bodyText == null && root != null)
             {
                 bodyText = root.GetComponentInChildren<TMP_Text>(true);
             }
+        }
+
+        private static void AdoptInstance(FloorHintPresenter presenter)
+        {
+            if (presenter == null)
+            {
+                return;
+            }
+
+            if (sInstance != null
+                && !ReferenceEquals(sInstance, presenter)
+                && sInstance.gameObject != null
+                && sInstance.gameObject.name == nameof(FloorHintPresenter))
+            {
+                var orphan = sInstance.gameObject;
+                sInstance = presenter;
+                Object.Destroy(orphan);
+                return;
+            }
+
+            sInstance = presenter;
         }
 
         private static GameObject FindRoot()

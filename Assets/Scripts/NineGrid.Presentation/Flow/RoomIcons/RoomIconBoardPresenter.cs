@@ -124,7 +124,8 @@ namespace NineGrid.Flow.RoomIcons
                 var go = TryInstantiateIcon(path, geometry, slot, contentId);
                 if (go != null)
                 {
-                    AttachBriefTip(go, contentId, arch);
+                    FitSpawnedIcon(go, geometry);
+                    AttachBriefTip(go, contentId, arch, slot, geometry);
                     mSpawned.Add(go);
                 }
 
@@ -133,6 +134,14 @@ namespace NineGrid.Flow.RoomIcons
 
             StartAvatarWatch();
             return RoomIconOccupancy.Current.HasAny;
+        }
+
+        private static void FitSpawnedIcon(GameObject go, IGroundFieldGeometrySystem geometry)
+        {
+            var hitBox = geometry?.LayoutSettings != null
+                ? geometry.LayoutSettings.slotHitBoxSize
+                : new Vector2(1.6f, 2.2f);
+            RoomIconVisualFit.FitToTarget(go, RoomIconVisualFit.ResolveTargetSize(hitBox));
         }
 
         /// <summary>进房后：清图标 + Avatar 硬切格 5（无走回）。</summary>
@@ -368,7 +377,12 @@ namespace NineGrid.Flow.RoomIcons
             return go;
         }
 
-        private static void AttachBriefTip(GameObject go, string contentId, IArchitecture arch)
+        private static void AttachBriefTip(
+            GameObject go,
+            string contentId,
+            IArchitecture arch,
+            int walkBoardSlot,
+            IGroundFieldGeometrySystem geometry)
         {
             if (go == null)
             {
@@ -382,7 +396,10 @@ namespace NineGrid.Flow.RoomIcons
                 proxy = go.AddComponent<BoardBriefTipHitProxy>();
             }
 
-            proxy.Configure(tip);
+            var hitBox = geometry?.LayoutSettings != null
+                ? geometry.LayoutSettings.slotHitBoxSize
+                : new Vector2(1.6f, 2.2f);
+            proxy.Configure(tip, walkBoardSlot, hitBox);
         }
 
         private static RoomDefinition ResolveRoomDefinition(IArchitecture arch, RoomKind kind)

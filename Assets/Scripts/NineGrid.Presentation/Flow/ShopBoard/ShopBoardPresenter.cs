@@ -235,7 +235,8 @@ namespace NineGrid.Flow.ShopBoard
                 return;
             }
 
-            AttachBriefTipOnly(go, BoardBriefTipCopy.LeaveTip);
+            FitRoomIcon(go, geometry);
+            AttachBriefTipOnly(go, BoardBriefTipCopy.LeaveTip, slot, geometry);
             mExtras.Add(go);
         }
 
@@ -292,7 +293,11 @@ namespace NineGrid.Flow.ShopBoard
             proxy.Configure(kind, shelfIndex, tip, HandleHit);
         }
 
-        private static void AttachBriefTipOnly(GameObject go, string tip)
+        private static void AttachBriefTipOnly(
+            GameObject go,
+            string tip,
+            int walkBoardSlot,
+            IGroundFieldGeometrySystem geometry)
         {
             if (go == null)
             {
@@ -305,7 +310,18 @@ namespace NineGrid.Flow.ShopBoard
                 proxy = go.AddComponent<BoardBriefTipHitProxy>();
             }
 
-            proxy.Configure(tip);
+            var hitBox = geometry?.LayoutSettings != null
+                ? geometry.LayoutSettings.slotHitBoxSize
+                : new Vector2(1.6f, 2.2f);
+            proxy.Configure(tip, walkBoardSlot, hitBox);
+        }
+
+        private static void FitRoomIcon(GameObject go, IGroundFieldGeometrySystem geometry)
+        {
+            var hitBox = geometry?.LayoutSettings != null
+                ? geometry.LayoutSettings.slotHitBoxSize
+                : new Vector2(1.6f, 2.2f);
+            RoomIconVisualFit.FitToTarget(go, RoomIconVisualFit.ResolveTargetSize(hitBox));
         }
 
         private void HandleHit(ShopBoardHitKind kind, int shelfIndex)

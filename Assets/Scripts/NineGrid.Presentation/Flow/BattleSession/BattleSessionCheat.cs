@@ -442,6 +442,10 @@ namespace NineGrid.Flow
                 return false;
             }
 
+            // 正常击杀清关会经 post-kill board present 卸掉机关/帮助等残留视图；
+            // 作弊路径只改了 Core，须在此补表现收口，否则会盖住房间图标。
+            ClearResidualCombatFieldViews(arch);
+
             Debug.Log(
                 $"[BattleSessionCheat] 强制节点胜利 → {phaseSystem.CurrentPhase} pending={arch.GetModel<PendingChoiceModel>().Kind.Value}");
             session.TryEnterNodeSettlement();
@@ -518,7 +522,13 @@ namespace NineGrid.Flow
                 board.ClearSlot(slot);
                 card.Zone.Value = ZoneId.None;
                 card.Slot.Value = SlotId.None;
-                field?.RequestRemoveFromField(uid, animate: false, skipBusyGuard: true);
+                // 进 RoomChoice 前不得 StartExplore；飞牌中的怪先取消再卸。
+                field?.CancelDealFlightForUid(uid, "CheatForceNodeVictory.MakeNodeCleared");
+                field?.RequestRemoveFromField(
+                    uid,
+                    animate: false,
+                    skipBusyGuard: true,
+                    startExplore: false);
             }
 
             var drawUids = new List<int>(deck.DrawPileUids);
@@ -544,6 +554,77 @@ namespace NineGrid.Flow
                 else
                 {
                     deck.RemoveUid(enemyPoolUids[i]);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Core 清关后场上应只剩 Avatar。作弊无 post-kill board present，
+        /// 须显式卸掉机关 / 帮助 / 漏网怪等残留视图，避免盖住房间图标（ADR-0020/0021）。
+        /// </summary>
+        private static void ClearResidualCombatFieldViews(IArchitecture arch)
+        {
+            var field = GroundFieldGeometryHook.FieldOrNull();
+            var cards = CardEntityLifecycleHook.CardsOrNull();
+            if (field == null)
+            {
+                return;
+            }
+
+            var avatarUid = arch.GetModel<BoardModel>()?.AvatarUid.Value ?? 0;
+            var toRemove = new List<int>(8);
+            var seen = new HashSet<int>();
+
+            for (var i = SlotId.MinBoardIndex; i <= SlotId.MaxBoardIndex; i++)
+            {
+                if (!field.TryGetCardAt(i, out var card) || card == null || card.Uid <= 0)
+                {
+                    continue;
+                }
+
+                if (card.Uid == avatarUid || !seen.Add(card.Uid))
+                {
+                    continue;
+                }
+
+                toRemove.Add(card.Uid);
+            }
+
+            // 飞牌取消 / 占格漏登时仍可能留着 GroundCardMode 孤儿视图。
+            if (cards != null)
+            {
+                foreach (var card in cards.EnumerateCards())
+                {
+                    if (card == null
+                        || card.Uid <= 0
+                        || card.Uid == avatarUid
+                        || card.DisplayMode != CardDisplayMode.GroundCardMode
+                        || !seen.Add(card.Uid))
+                    {
+                        continue;
+                    }
+
+                    toRemove.Add(card.Uid);
+                }
+            }
+
+            for (var i = 0; i < toRemove.Count; i++)
+            {
+                var uid = toRemove[i];
+                field.CancelDealFlightForUid(uid, "CheatForceNodeVictory.ClearResidual");
+                if (field.RequestRemoveFromField(
+                        uid,
+                        animate: false,
+                        skipBusyGuard: true,
+                        startExplore: false))
+                {
+                    continue;
+                }
+
+                field.TryClearOccupancyForUid(uid, skipBusyGuard: true);
+                if (cards != null && cards.TryGet(uid, out var orphan) && orphan != null)
+                {
+                    cards.Release(orphan, "CheatForceNodeVictory.ClearResidualOrphan");
                 }
             }
         }

@@ -150,11 +150,10 @@
 
 - 文案：`BoardBriefTipCopy`（房间 DisplayName+注入摘要 / 导航固定文案 / 「第 X 层 · 节点 Y」；另备 `ForOptionOrShelf` 供 M2 货架·就地选项）
 - 会话：`BoardBriefTipSession`（悬停与 Notice；Notice 盖悬停；代数清）
-- 场景：`BoardBriefTipPresenter` → `Panels/简要解释文字框`；`FloorHintPresenter` → `楼层提示`（读 `RunModel`）
-- 命中（已接线）：场地图标 Spawn 挂 `BoardBriefTipHitProxy`；战斗真卡不挂
-- 命中（已接线 · #92）：商店货架 / 刷新挂 `ShopBoardHitProxy`（悬停 + 点击）；离开图标仍挂 `BoardBriefTipHitProxy` + 驻留
-- 命中（已接线 · #93）：卡店服务 / 刷新 / 二级候选挂 `TavernBoardHitProxy`；离开图标挂 `BoardBriefTipHitProxy` + 驻留（二级选择时 tip=「取消选择」）
-- 命中（已接线 · #94）：特殊奖励房真卡挂 `RewardBoardHitProxy`；离开图标挂 `BoardBriefTipHitProxy` + 驻留
+- 场景：`BoardBriefTipPresenter` → `Panels/简要解释文字框`（`EnsureExists` 优先绑定命名面板，sceneLoaded 再绑，避免无 TMP 孤儿）；`FloorHintPresenter` → `楼层提示`
+- 命中：场地图标 `BoardBriefTipHitProxy`；商店 `ShopBoardHitProxy`；卡店 `TavernBoardHitProxy`；特殊房 `RewardBoardHitProxy`；离开图标仍 `BoardBriefTipHitProxy` + 驻留
+- 命中优先级：场地图标=35；商店/卡店/特殊房=40；均高于底盘 `GroundCardHitProxy`(30)，避免同 GO 抢悬停
+- 显示：有文案时激活面板并打开底板 `SpriteRenderer`；无悬停/Notice 即隐藏
 - 胜负 / 房间 stub Notice：`GameFlowController.ShowNotice` 改走简要解释文字框，旧 `NoticeText` 不再写出
 - **禁**：复活 `DescriptionManagerSingleton` / `DescriptionDisplayHook`；战斗真卡悬停写简要解释（右键详述另责）
 
@@ -163,34 +162,34 @@
 - Core：进 `Shop` → `OfferShopSession` 固定 4 货架（宝箱 / 随机属性道具 / 恢复药水 / 食品）+ 本次进店刷新价初值 10；`SelectReward` 扣 `Price`、进携带卡包、**留店**；`RefreshShop` 扣刷新价并翻倍；`SkipHelpChoice` 出店（不加 skip 金）
 - 刷新价作用域：**本次进店**（离开清零；再进店重新从 10 起）
 - 表现：`ShopBoardPresenter` 落格 1/3/7/9 货架、2 刷新、8 离开；Avatar 硬切格 5；货架/刷新任意距离点击；离开驻留 1s；金币不足写简要解释 Notice
-- `GameFlowOrchestrator.PlayRoomEventAsync`：商店走场地板，其它奖励仍 BounceFan
+- `GameFlowOrchestrator.PlayRoomIconChoiceAsync`：图标驻留 Select+Enter 后，若进消费/特殊房会话则 `PresentInRoomSessionAfterEnterAsync` 刷商店场地板（不再壳层二次 EnterRoom）
 
 ### 卡店房就地服务（#93 · ADR-0020 / ADR-0022）
 
 - Core：进 `Tavern` → `OfferTavernSession` 三项服务（`UpgradeItemStats` / `FixItem` / `ExpandItemCapacity`，各 50 金）+ 本次进店刷新价初值 10；扩容写 `ItemDeckCapacity+1`；强化写 `ItemStatBonus+3`（跨节点应用属 #97）；`RefreshShop` 同商店规则；`SkipHelpChoice` 出店
 - **唯一嵌套选择**：「道具卡固定」→ 池切 `tavern.fixItem`，候选来自 `ItemSourcePoolDefIds`；确认后 `AddFixedItemCard` + 扣费回主面；`SkipHelpChoice` 在子池取消回主面（不扣费、不离店）
 - 表现：`TavernBoardPresenter` 落格 1/3/7 服务选项（`房间选项标准模板`）、2 刷新、8 离开；二级选择时服务/刷新退场，候选真卡铺格 1/3/4/6/7/9；离开 tip 改「取消选择」
-- `GameFlowOrchestrator`：`IsTavernPool` / `IsTavernFixItemPool` 走卡店场地板
+- `GameFlowOrchestrator.PresentInRoomSessionAfterEnterAsync`：`IsTavernPool` / `IsTavernFixItemPool` 走卡店场地板
 
 ### 特殊奖励房（#94 · ADR-0020 / ADR-0022）
 
 - Core：进 `TreasureReward` → 1 宝箱 + 3 随机道具（`ItemSourcePoolDefIds`）；进 `ItemReward` → 2 属性道具（40/40/20）+ 3 随机道具；pool=`reward.treasure` / `reward.item`；`SelectReward` **免费**进携带卡包并留房；`SkipHelpChoice` 离开放弃剩余（不加 skip 金）
 - 表现：`RewardBoardPresenter` 落格 1/2/3/7/9 真卡、8 离开；Avatar 硬切格 5；任意距离点击拿走；离开驻留 1s；悬停 tip=卡名+效果（无价格）
-- `GameFlowOrchestrator`：`IsSpecialRewardPool` 走特殊房场地板；道具奖励房选房图标仍缺（见 #83）
+- `GameFlowOrchestrator.PresentInRoomSessionAfterEnterAsync`：`IsSpecialRewardPool` 走特殊房场地板；道具奖励房选房图标仍缺（见 #83）
 
 ### Avatar 跳格（已落地 · ADR-0019 / #88 放宽）
 
 - 意图 `InputIntentKinds.BoardWalk` → IntentIntake → `BoardWalkIntentScriptFactory` → `IAvatarWalkSystem.SetDestination`
 - Core：`MoveAvatar`（单邻格；RoomChoice/RoomEvent 允许踩非空以配合软占回退）+ `AvatarWalkPathfinder` 两阶段 BFS：途经优先完全空置（绕开软占图标/真卡），无空路再允许踩软占；终点可为空格或目标图标格
 - 表现：`HopAvatarToSlotAsync` 复用旋转 hop；半空改目标等落地后重规划
-- `\0` QuickTest：流程测试通道（空 skillIds / 空 trap / Sequential 节点序，内容同正式开局 + HP99/ATK5）；战斗内 **KeypadMinus** 跳过战斗（仅 QuickTest，`TryForceNodeVictory`）
+- `\0` QuickTest：流程测试通道（空 skillIds / 空 trap / Sequential 节点序，内容同正式开局 + HP99/ATK5）；战斗内 **KeypadMinus** 跳过战斗（仅 QuickTest，`TryForceNodeVictory` → `TryCompleteClearedNode` 后 `ClearResidualCombatFieldViews` 收口机关/帮助/漏网怪视图，避免盖住房间图标）
 - 空槽 Hit：跳格开启时任意空格可点（`BoardWalkSlotHitPolicy`，含角格与离场后的格5）；关闭时仍仅中心正交邻格（Explore）
 - Avatar 朝向：`AvatarBoardFacingController` 按卡面图标当前世界 X 相对指针，不锁死格5
 - **战斗 `InteractionLoop` 禁走**；进下一房 Avatar 硬切格 5
 
 ### 节点循环（#88 · ADR-0021）
 
-- `GameFlowOrchestrator.RunNodeCycleAsync` 按 `MapNodeProgression.EntersInteractionLoop` 分支：节点 4/7 走 `PlayNonCombatNodeAsync`（跳过战斗），其余战斗 → 奖励 → `PlayRoomIconChoiceAsync`
+- `GameFlowOrchestrator.RunNodeCycleAsync` 按 `MapNodeProgression.EntersInteractionLoop` 分支：节点 4/7 走 `PlayNonCombatNodeAsync`（跳过战斗），其余战斗 → 奖励 → `PlayRoomIconChoiceAsync`（驻留进房后接 `PresentInRoomSessionAfterEnterAsync`；旧独立 `PlayRoomEventAsync` 已并入此路径）
 
 ### 设计房间名 ↔ `RoomKind`（现状）
 
@@ -225,7 +224,7 @@
 
 特殊选项卡种子（`ChoiceOption`）：卡店服务 `UpgradeItemStats`/`FixItem`/`ExpandItemCapacity`/`RefreshShop`；`Attack`/`Armor`/`Hp` 内容条目仍在（UI 入口 #90 已退役，去留交 M2）。
 
-局内选房走场地图标 + 驻留提交；`RoomChoicePresenter` 与 `RoomChoisePanel` 接线已删（#90）。`SelectorManagerSingleton` 只剩 Bounce；扇形 `BounceFanChoicePresenter` 仅服务宝箱开遗物。通关三选一已退役（ADR-0021）：清关进 `RoomChoice` 后由 `NodeSettlementReadiness` 唤醒主循环刷图标；`TryForceNodeVictory` 同路走 `TryCompleteClearedNode`。房内货架/就地选项卡点选属 M2。
+局内选房走场地图标 + 驻留提交；`RoomChoicePresenter` 与 `RoomChoisePanel` 接线已删（#90）。`SelectorManagerSingleton` 只剩 Bounce；扇形 `BounceFanChoicePresenter` 仅服务宝箱开遗物。通关三选一已退役（ADR-0021）：清关进 `RoomChoice` 后由 `NodeSettlementReadiness` 唤醒主循环刷图标；`TryForceNodeVictory` 同路走 `TryCompleteClearedNode`。图标落格经 `RoomIconVisualFit` 压进格内；`BoardBriefTipHitProxy` 配置 Walk 槽后单击转发 BoardWalk。房内货架/就地选项卡点选属 M2。
 
 ## ADR 不变量（摘要）
 

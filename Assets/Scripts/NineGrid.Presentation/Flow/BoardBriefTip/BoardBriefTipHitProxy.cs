@@ -1,3 +1,5 @@
+using NineGrid.Cards;
+using NineGrid.Core;
 using NineGrid.Flow;
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -7,23 +9,29 @@ namespace NineGrid.Flow.BoardBriefTip
     /// <summary>
     /// 非战斗场地对象悬停 → 简要解释文字框。战斗真卡不挂本代理（右键详述另责）。
     /// M1 挂场地图标；就地选项卡 / 商店货架由 M2 Spawn 时复用本代理。
+    /// 配置 <see cref="WalkBoardSlot"/> 后，跳格开启时单击提交 BoardWalk（图标 collider 高于空槽代理）。
     /// </summary>
     [DisallowMultipleComponent]
     [RequireComponent(typeof(BoxCollider2D))]
     public sealed class BoardBriefTipHitProxy : MonoBehaviour, IPointerHitTarget
     {
-        private const int TypePriority = 25;
+        // 高于 GroundCardHitProxy(30) 空槽(10)；低于半黑屏 UiOverlay(100)。
+        private const int TypePriority = 35;
 
         [SerializeField] private string tipText = string.Empty;
 
         private BoxCollider2D mCollider;
         private int mHoverGeneration;
+        private int mWalkBoardSlot;
 
         public string TipText
         {
             get => tipText;
             set => tipText = value ?? string.Empty;
         }
+
+        /// <summary>1–9：跳格目标格；0 表示不转发点击。</summary>
+        public int WalkBoardSlot => mWalkBoardSlot;
 
         public Collider2D HitCollider =>
             mCollider != null ? mCollider : (mCollider = GetComponent<BoxCollider2D>());
@@ -34,7 +42,13 @@ namespace NineGrid.Flow.BoardBriefTip
 
         public void Configure(string tip, Vector2? colliderSize = null)
         {
+            Configure(tip, walkBoardSlot: 0, colliderSize);
+        }
+
+        public void Configure(string tip, int walkBoardSlot, Vector2? colliderSize = null)
+        {
             TipText = tip;
+            mWalkBoardSlot = walkBoardSlot;
             EnsureCollider(colliderSize);
         }
 
@@ -72,7 +86,25 @@ namespace NineGrid.Flow.BoardBriefTip
 
         public void HandlePointerDown()
         {
-            // 场地图标走驻留提交；就地选项/货架点击由 M2 另挂。
+            // 场地图标：点上去 → BoardWalk；驻留 1s 由 RoomIconBoardPresenter 提交进房。
+            // 就地选项/货架另挂专用 HitProxy，不会配 WalkBoardSlot。
+            if (mWalkBoardSlot < SlotId.MinBoardIndex || mWalkBoardSlot > SlotId.MaxBoardIndex)
+            {
+                return;
+            }
+
+            if (BoardWalkInputHook.IsEnabled == null || !BoardWalkInputHook.IsEnabled())
+            {
+                return;
+            }
+
+            if (BoardWalkInputHook.TrySubmitBoardWalk == null)
+            {
+                Debug.LogWarning("[BoardBriefTip] BoardWalkInputHook.TrySubmitBoardWalk 未装配。");
+                return;
+            }
+
+            BoardWalkInputHook.TrySubmitBoardWalk(mWalkBoardSlot);
         }
 
         private void ClearTipIfHovering()

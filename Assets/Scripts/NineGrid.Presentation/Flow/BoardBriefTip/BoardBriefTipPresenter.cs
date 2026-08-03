@@ -1,5 +1,6 @@
 using TMPro;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 namespace NineGrid.Flow.BoardBriefTip
 {
@@ -21,6 +22,8 @@ namespace NineGrid.Flow.BoardBriefTip
 
         public BoardBriefTipSession Session => mSession;
 
+        public TMP_Text BodyTextOrNull => bodyText;
+
         public static BoardBriefTipPresenter InstanceOrNull()
         {
             if (sInstance != null)
@@ -28,12 +31,28 @@ namespace NineGrid.Flow.BoardBriefTip
                 return sInstance;
             }
 
-            sInstance = FindFirstObjectByType<BoardBriefTipPresenter>();
+            sInstance = FindFirstObjectByType<BoardBriefTipPresenter>(FindObjectsInactive.Include);
             return sInstance;
         }
 
         public static BoardBriefTipPresenter EnsureExists()
         {
+            // 权威：场景命名面板。禁止 AfterSceneLoad 抢先建无 TMP 孤儿后一直写空。
+            var panel = FindPanelRoot();
+            if (panel != null)
+            {
+                var onPanel = panel.GetComponent<BoardBriefTipPresenter>();
+                if (onPanel == null)
+                {
+                    onPanel = panel.AddComponent<BoardBriefTipPresenter>();
+                }
+
+                onPanel.panelRoot = panel;
+                onPanel.EnsureBindings();
+                AdoptInstance(onPanel);
+                return onPanel;
+            }
+
             var existing = InstanceOrNull();
             if (existing != null)
             {
@@ -41,37 +60,33 @@ namespace NineGrid.Flow.BoardBriefTip
                 return existing;
             }
 
-            var panel = FindPanelRoot();
-            if (panel == null)
-            {
-                var go = new GameObject(nameof(BoardBriefTipPresenter));
-                var presenter = go.AddComponent<BoardBriefTipPresenter>();
-                sInstance = presenter;
-                return presenter;
-            }
-
-            var onPanel = panel.GetComponent<BoardBriefTipPresenter>();
-            if (onPanel == null)
-            {
-                onPanel = panel.AddComponent<BoardBriefTipPresenter>();
-            }
-
-            onPanel.panelRoot = panel;
-            onPanel.EnsureBindings();
-            sInstance = onPanel;
-            return onPanel;
+            var go = new GameObject(nameof(BoardBriefTipPresenter));
+            var presenter = go.AddComponent<BoardBriefTipPresenter>();
+            sInstance = presenter;
+            return presenter;
         }
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void Bootstrap()
         {
             EnsureExists();
+            SceneManager.sceneLoaded -= OnSceneLoaded;
+            SceneManager.sceneLoaded += OnSceneLoaded;
+        }
+
+        private static void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+        {
+            EnsureExists();
         }
 
         private void Awake()
         {
-            sInstance = this;
             EnsureBindings();
+            if (IsAuthoritativePanel(gameObject))
+            {
+                AdoptInstance(this);
+            }
+
             ApplyVisual();
         }
 
@@ -85,6 +100,12 @@ namespace NineGrid.Flow.BoardBriefTip
 
         public int ShowHover(string text)
         {
+            var self = EnsureExists();
+            if (!ReferenceEquals(self, this))
+            {
+                return self.ShowHover(text);
+            }
+
             EnsureBindings();
             var gen = mSession.ShowHover(text);
             ApplyVisual();
@@ -105,6 +126,12 @@ namespace NineGrid.Flow.BoardBriefTip
 
         public int ShowNotice(string text)
         {
+            var self = EnsureExists();
+            if (!ReferenceEquals(self, this))
+            {
+                return self.ShowNotice(text);
+            }
+
             EnsureBindings();
             var gen = mSession.ShowNotice(text);
             ApplyVisual();
@@ -125,11 +152,17 @@ namespace NineGrid.Flow.BoardBriefTip
 
         public void EnsureBindings()
         {
-            if (panelRoot == null)
+            if (panelRoot == null || !IsAuthoritativePanel(panelRoot))
             {
-                panelRoot = gameObject.name == PanelObjectName
-                    ? gameObject
-                    : FindPanelRoot();
+                var panel = FindPanelRoot();
+                if (panel != null)
+                {
+                    panelRoot = panel;
+                }
+                else if (IsAuthoritativePanel(gameObject))
+                {
+                    panelRoot = gameObject;
+                }
             }
 
             if (bodyText == null && panelRoot != null)
@@ -146,14 +179,60 @@ namespace NineGrid.Flow.BoardBriefTip
                 bodyText.text = text;
             }
 
-            if (panelRoot != null)
+            if (panelRoot == null)
             {
-                var visible = mSession.IsVisible;
-                if (panelRoot.activeSelf != visible)
-                {
-                    panelRoot.SetActive(visible);
-                }
+                return;
             }
+
+            var visible = mSession.IsVisible;
+            if (panelRoot.activeSelf != visible)
+            {
+                panelRoot.SetActive(visible);
+            }
+
+            // 设计：底板 + 文字；场景里底板 SpriteRenderer 常默认关着，显示时打开。
+            var board = panelRoot.GetComponent<SpriteRenderer>();
+            if (board != null && board.enabled != visible)
+            {
+                board.enabled = visible;
+            }
+        }
+
+        private static void AdoptInstance(BoardBriefTipPresenter presenter)
+        {
+            if (presenter == null)
+            {
+                return;
+            }
+
+            if (sInstance != null
+                && !ReferenceEquals(sInstance, presenter)
+                && IsOrphanFallback(sInstance))
+            {
+                var orphan = sInstance.gameObject;
+                sInstance = presenter;
+                if (orphan != null)
+                {
+                    Object.Destroy(orphan);
+                }
+
+                return;
+            }
+
+            sInstance = presenter;
+        }
+
+        private static bool IsOrphanFallback(BoardBriefTipPresenter presenter)
+        {
+            return presenter != null
+                   && presenter.gameObject != null
+                   && presenter.gameObject.name == nameof(BoardBriefTipPresenter)
+                   && !IsAuthoritativePanel(presenter.gameObject);
+        }
+
+        private static bool IsAuthoritativePanel(GameObject go)
+        {
+            return go != null && go.name == PanelObjectName;
         }
 
         private static GameObject FindPanelRoot()

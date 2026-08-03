@@ -12,7 +12,8 @@ namespace NineGrid.Flow.TavernBoard
     [RequireComponent(typeof(BoxCollider2D))]
     public sealed class TavernBoardHitProxy : MonoBehaviour, IPointerHitTarget
     {
-        private const int TypePriority = 30;
+        // 高于底盘 GroundCardHitProxy(30)，否则同 GO 上悬停/点击被场地卡代理抢走。
+        private const int TypePriority = 40;
 
         private BoxCollider2D mCollider;
         private int mHoverGeneration;
