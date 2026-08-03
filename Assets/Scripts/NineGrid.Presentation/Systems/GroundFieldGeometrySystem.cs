@@ -257,6 +257,26 @@ namespace NineGrid.Presentation.Systems
             mMotion.RefreshSlotHitColliders();
         }
 
+        public bool TryClaimSlot(int slot, SlotClaimant claimant)
+        {
+            return mIndex.Claims.TryClaim(slot, claimant);
+        }
+
+        public bool ReleaseSlotClaim(int slot, object owner)
+        {
+            return mIndex.Claims.Release(slot, owner);
+        }
+
+        public void ReleaseAllClaimsForOwner(object owner)
+        {
+            mIndex.Claims.ReleaseAllForOwner(owner);
+        }
+
+        public bool TryGetSlotClaimant(int slot, out SlotClaimant claimant)
+        {
+            return mIndex.Claims.TryGet(slot, out claimant);
+        }
+
         public bool TryHandleEmptySlotClick(int slot)
         {
             return mMotion.TryHandleEmptySlotClick(slot);

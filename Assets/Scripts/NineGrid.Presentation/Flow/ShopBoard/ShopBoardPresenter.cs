@@ -211,7 +211,7 @@ namespace NineGrid.Flow.ShopBoard
 
                 CoreCardPresentationMapper.ApplyVisualsByDefId(managed, CardPresentationKind.HelpCard);
                 var tip = BuildShelfTip(entry.DefId, content);
-                AttachClickProxy(managed.View.gameObject, ShopBoardHitKind.BuyShelf, i, tip, geometry);
+                AttachClickProxy(managed.View.gameObject, ShopBoardHitKind.BuyShelf, i, tip, slot);
                 mShelfCards.Add(managed);
             }
         }
@@ -234,7 +234,7 @@ namespace NineGrid.Flow.ShopBoard
 
             FitRoomIcon(go, geometry);
             var tip = BoardBriefTipCopy.ForOptionOrShelf("刷新货架", refreshPrice);
-            AttachClickProxy(go, ShopBoardHitKind.Refresh, -1, tip, geometry);
+            AttachClickProxy(go, ShopBoardHitKind.Refresh, -1, tip, ShopBoardSlotResolver.RefreshSlot);
             mExtras.Add(go);
         }
 
@@ -301,7 +301,7 @@ namespace NineGrid.Flow.ShopBoard
             ShopBoardHitKind kind,
             int shelfIndex,
             string tip,
-            IGroundFieldGeometrySystem geometry)
+            int boardSlot)
         {
             if (go == null)
             {
@@ -322,10 +322,7 @@ namespace NineGrid.Flow.ShopBoard
                 proxy = go.AddComponent<ShopBoardHitProxy>();
             }
 
-            var hitBox = geometry?.LayoutSettings != null
-                ? geometry.LayoutSettings.slotHitBoxSize
-                : new Vector2(1.6f, 2.2f);
-            proxy.Configure(kind, shelfIndex, tip, HandleHit, hitBox);
+            proxy.Configure(kind, shelfIndex, tip, HandleHit, boardSlot);
         }
 
         private static void AttachBriefTipOnly(
@@ -345,10 +342,7 @@ namespace NineGrid.Flow.ShopBoard
                 proxy = go.AddComponent<BoardBriefTipHitProxy>();
             }
 
-            var hitBox = geometry?.LayoutSettings != null
-                ? geometry.LayoutSettings.slotHitBoxSize
-                : new Vector2(1.6f, 2.2f);
-            proxy.Configure(tip, walkBoardSlot, hitBox);
+            proxy.Configure(tip, walkBoardSlot);
         }
 
         private static void FitRoomIcon(GameObject go, IGroundFieldGeometrySystem geometry)

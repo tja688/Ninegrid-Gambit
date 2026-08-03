@@ -1,4 +1,5 @@
 using NineGrid.Flow;
+using NineGrid.Flow.BoardBriefTip;
 using NineGrid.Presentation;
 using UnityEngine;
 
@@ -6,7 +7,7 @@ namespace NineGrid.Cards
 {
     /// <summary>
     /// 场地面：九宫格作为单一 <see cref="IPointerHitTarget"/> 注册；
-    /// 命中权威为场景格位 <see cref="BoxCollider2D"/>，按世界点解析格号（ADR-0023 / #101）。
+    /// 命中权威为场景格位 <see cref="BoxCollider2D"/>，按世界点解析格号后查认领者（ADR-0023）。
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class GroundFieldHitSurface : MonoBehaviour, IPointerHitTarget, IMultiColliderPointerHitTarget
@@ -16,6 +17,8 @@ namespace NineGrid.Cards
 
         private int _resolvedSlot;
         private Collider2D _resolvedCollider;
+        private int _hoverTipGeneration;
+        private SlotClaimant _hoveredClaimant;
 
         public Collider2D HitCollider =>
             _resolvedCollider != null
@@ -36,6 +39,7 @@ namespace NineGrid.Cards
         private void OnDisable()
         {
             PointerHitRegistry.Unregister(this);
+            ClearHoverState();
         }
 
         /// <summary>绑定场景九格命中框；不写 size / offset。</summary>
@@ -47,7 +51,7 @@ namespace NineGrid.Cards
             _resolvedCollider = null;
         }
 
-        /// <summary>世界点落入哪一格命中框（仅已启用的框）。</summary>
+        /// <summary>世界点落入哪一格命中框（九框恒开）。</summary>
         public bool TryResolveSlotAtWorld(Vector2 worldXY, out int slot)
         {
             for (slot = GroundSlotTopology.MinSlot; slot <= GroundSlotTopology.MaxSlot; slot++)
@@ -93,10 +97,30 @@ namespace NineGrid.Cards
 
         public void HandlePointerEnter()
         {
+            if (!GroundSlotTopology.IsValidSlot(_resolvedSlot))
+            {
+                return;
+            }
+
+            var field = GroundFieldGeometryHook.FieldOrNull();
+            if (field == null || !field.TryGetSlotClaimant(_resolvedSlot, out var claimant))
+            {
+                return;
+            }
+
+            _hoveredClaimant = claimant;
+            if (!string.IsNullOrEmpty(claimant.BriefTipText))
+            {
+                var presenter = BoardBriefTipPresenter.EnsureExists();
+                _hoverTipGeneration = presenter.ShowHover(claimant.BriefTipText);
+            }
+
+            claimant.HoverEnter?.Invoke();
         }
 
         public void HandlePointerExit()
         {
+            ClearHoverState();
             _resolvedSlot = 0;
             _resolvedCollider = null;
         }
@@ -126,7 +150,35 @@ namespace NineGrid.Cards
                 return;
             }
 
+            if (field.TryGetSlotClaimant(_resolvedSlot, out var claimant))
+            {
+                claimant.Activate?.Invoke();
+                return;
+            }
+
             field.OnEmptySlotClicked(_resolvedSlot);
+        }
+
+        private void ClearHoverState()
+        {
+            if (_hoveredClaimant != null)
+            {
+                _hoveredClaimant.HoverExit?.Invoke();
+                _hoveredClaimant = null;
+            }
+
+            if (_hoverTipGeneration <= 0)
+            {
+                return;
+            }
+
+            var presenter = BoardBriefTipPresenter.InstanceOrNull();
+            if (presenter != null)
+            {
+                presenter.ClearHover(_hoverTipGeneration);
+            }
+
+            _hoverTipGeneration = 0;
         }
 
         private BoxCollider2D GetSlotCollider(int slot)

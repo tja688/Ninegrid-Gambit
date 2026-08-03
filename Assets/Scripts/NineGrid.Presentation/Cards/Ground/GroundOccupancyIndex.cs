@@ -5,16 +5,21 @@ using UnityEngine;
 namespace NineGrid.Cards
 {
     /// <summary>
-    /// 场地几何占格表（slot↔uid 双向索引）。逻辑占格权威仍在 Core BoardModel。
+    /// 场地几何占格表（slot↔uid）与命中认领（slot→认领者）的同一登记体。
+    /// 逻辑占格权威仍在 Core BoardModel；认领仅服务命中/悬停（ADR-0023）。
     /// 冲突显式失败并置标志；禁止 force-sync 自愈。
     /// </summary>
     public sealed class GroundOccupancyIndex
     {
         private readonly int[] _uidBySlot = new int[GroundSlotTopology.MaxSlot + 1];
         private readonly Dictionary<int, int> _slotByUid = new();
+        private readonly SlotClaimRegistry _claims = new();
         private bool _occupancyConflictSinceClear;
 
         public bool HasOccupancyConflictSinceClear => _occupancyConflictSinceClear;
+
+        /// <summary>格位认领（几何注册的命中语义扩写，ADR-0023）。</summary>
+        public SlotClaimRegistry Claims => _claims;
 
         public event Action OccupancyMaybeClear;
 
@@ -38,6 +43,7 @@ namespace NineGrid.Cards
             }
 
             _slotByUid.Clear();
+            _claims.Clear();
         }
 
         public int GetUidAt(int slot)

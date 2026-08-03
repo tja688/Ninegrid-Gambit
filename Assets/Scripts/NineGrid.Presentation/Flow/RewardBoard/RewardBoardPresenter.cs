@@ -201,7 +201,7 @@ namespace NineGrid.Flow.RewardBoard
 
                 CoreCardPresentationMapper.ApplyVisualsByDefId(managed, CardPresentationKind.HelpCard);
                 var tip = BuildShelfTip(entry.DefId, content);
-                AttachClickProxy(managed.View.gameObject, i, tip, geometry);
+                AttachClickProxy(managed.View.gameObject, i, tip, slot);
                 mShelfCards.Add(managed);
             }
         }
@@ -260,7 +260,7 @@ namespace NineGrid.Flow.RewardBoard
             GameObject go,
             int shelfIndex,
             string tip,
-            IGroundFieldGeometrySystem geometry)
+            int boardSlot)
         {
             if (go == null)
             {
@@ -279,10 +279,7 @@ namespace NineGrid.Flow.RewardBoard
                 proxy = go.AddComponent<RewardBoardHitProxy>();
             }
 
-            var hitBox = geometry?.LayoutSettings != null
-                ? geometry.LayoutSettings.slotHitBoxSize
-                : new Vector2(1.6f, 2.2f);
-            proxy.Configure(shelfIndex, tip, HandleTake, hitBox);
+            proxy.Configure(shelfIndex, tip, HandleTake, boardSlot);
         }
 
         private static void AttachBriefTipOnly(
@@ -302,10 +299,7 @@ namespace NineGrid.Flow.RewardBoard
                 proxy = go.AddComponent<BoardBriefTipHitProxy>();
             }
 
-            var hitBox = geometry?.LayoutSettings != null
-                ? geometry.LayoutSettings.slotHitBoxSize
-                : new Vector2(1.6f, 2.2f);
-            proxy.Configure(tip, walkBoardSlot, hitBox);
+            proxy.Configure(tip, walkBoardSlot);
         }
 
         private static void FitRoomIcon(GameObject go, IGroundFieldGeometrySystem geometry)

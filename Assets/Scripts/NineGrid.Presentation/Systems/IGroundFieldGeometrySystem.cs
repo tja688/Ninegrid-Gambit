@@ -114,7 +114,16 @@ namespace NineGrid.Presentation.Systems
 
         UniTask WaitAllActiveDealFlightsAsync(CancellationToken cancellationToken);
 
+        /// <summary>九格命中框恒开（ADR-0023）；保留方法名供旧调用方，语义为 Ensure。</summary>
         void RefreshSlotHitColliders();
+
+        bool TryClaimSlot(int slot, SlotClaimant claimant);
+
+        bool ReleaseSlotClaim(int slot, object owner);
+
+        void ReleaseAllClaimsForOwner(object owner);
+
+        bool TryGetSlotClaimant(int slot, out SlotClaimant claimant);
 
         bool TryHandleEmptySlotClick(int slot);
 

@@ -1,122 +1,72 @@
 using System;
-using NineGrid.Flow.BoardBriefTip;
+using NineGrid.Cards;
 using UnityEngine;
 
 namespace NineGrid.Flow.RewardBoard
 {
     /// <summary>
-    /// 特殊奖励房真卡：悬停简要文案 + 任意距离点击拿走（ADR-0020 / #94）。
+    /// 特殊奖励房真卡：格位认领 + 悬停简要文案 + 任意距离点击（ADR-0020 / #94 / ADR-0023）。
     /// </summary>
     [DisallowMultipleComponent]
-    [RequireComponent(typeof(BoxCollider2D))]
-    public sealed class RewardBoardHitProxy : MonoBehaviour, IPointerHitTarget
+    public sealed class RewardBoardHitProxy : MonoBehaviour
     {
-        // 高于底盘 GroundCardHitProxy(30) 与空槽(0)；勿用 SortingGroup(-10)，否则空槽抢悬停/点击。
-        private const int TypePriority = 40;
-        private const int BoardInteractionSortOrder = 50;
-
-        private BoxCollider2D mCollider;
-        private int mHoverGeneration;
         private int mShelfIndex;
         private string mTip = string.Empty;
         private Action<int> mOnHit;
 
-        public Collider2D HitCollider =>
-            mCollider != null ? mCollider : (mCollider = GetComponent<BoxCollider2D>());
-
-        public int HitSortOrder => BoardInteractionSortOrder;
-
-        public int HitTypePriority => TypePriority;
-
-        public void Configure(int shelfIndex, string tip, Action<int> onHit, Vector2? colliderSize = null)
+        public void Configure(int shelfIndex, string tip, Action<int> onHit, int boardSlot)
         {
             mShelfIndex = shelfIndex;
             mTip = tip ?? string.Empty;
             mOnHit = onHit;
-            EnsureCollider(colliderSize);
+
+            var field = GroundFieldGeometryHook.FieldOrNull();
+            if (field == null)
+            {
+                return;
+            }
+
+            field.ReleaseAllClaimsForOwner(this);
+
+            if (!GroundSlotTopology.IsValidSlot(boardSlot))
+            {
+                return;
+            }
+
+            var claimant = new SlotClaimant(this, mTip, ActivateHit);
+            field.TryClaimSlot(boardSlot, claimant);
         }
 
         private void Awake()
         {
-            EnsureCollider(null);
-        }
-
-        private void OnEnable()
-        {
-            PointerHitRegistry.Register(this);
+            DisableColliderIfPresent();
         }
 
         private void OnDisable()
         {
-            PointerHitRegistry.Unregister(this);
-            ClearTipIfHovering();
+            ReleaseClaims();
         }
 
-        public void HandlePointerEnter()
+        private void ReleaseClaims()
         {
-            if (string.IsNullOrEmpty(mTip))
+            var field = GroundFieldGeometryHook.FieldOrNull();
+            if (field != null)
             {
-                return;
+                field.ReleaseAllClaimsForOwner(this);
             }
-
-            var presenter = BoardBriefTipPresenter.EnsureExists();
-            mHoverGeneration = presenter.ShowHover(mTip);
         }
 
-        public void HandlePointerExit()
-        {
-            ClearTipIfHovering();
-        }
-
-        public void HandlePointerDown()
+        private void ActivateHit()
         {
             mOnHit?.Invoke(mShelfIndex);
         }
 
-        private void ClearTipIfHovering()
+        private void DisableColliderIfPresent()
         {
-            if (mHoverGeneration <= 0)
+            var collider = GetComponent<BoxCollider2D>();
+            if (collider != null)
             {
-                return;
-            }
-
-            var presenter = BoardBriefTipPresenter.InstanceOrNull();
-            if (presenter != null)
-            {
-                presenter.ClearHover(mHoverGeneration);
-            }
-
-            mHoverGeneration = 0;
-        }
-
-        private void EnsureCollider(Vector2? size)
-        {
-            mCollider = GetComponent<BoxCollider2D>();
-            if (mCollider == null)
-            {
-                mCollider = gameObject.AddComponent<BoxCollider2D>();
-            }
-
-            mCollider.isTrigger = true;
-            if (size.HasValue)
-            {
-                mCollider.size = size.Value;
-                return;
-            }
-
-            if (mCollider.size.sqrMagnitude > 0.01f)
-            {
-                return;
-            }
-
-            var renderer = GetComponentInChildren<SpriteRenderer>(true);
-            if (renderer != null && renderer.sprite != null)
-            {
-                mCollider.size = renderer.sprite.bounds.size;
-            }
-            else
-            {
-                mCollider.size = new Vector2(1.2f, 1.2f);
+                collider.enabled = false;
             }
         }
     }

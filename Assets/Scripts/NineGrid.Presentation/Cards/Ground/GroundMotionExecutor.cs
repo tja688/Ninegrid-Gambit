@@ -148,35 +148,52 @@ namespace NineGrid.Cards
 
         private void RefreshSlotHitCollider(int slot)
         {
-            if (_view == null)
-            {
-                return;
-            }
-
-            var softOccupied = NineGrid.Flow.RoomIcons.RoomIconOccupancy.Current.IsIconSlot(slot);
-            var enabled = BoardWalkSlotHitPolicy.ShouldEnableEmptySlotHit(
-                _index.IsEmpty(slot),
-                slot,
-                BoardWalkSlotHitPolicy.IsWalkEnabledNow(),
-                softOccupied);
-            _view.RefreshSlotHit(slot, enabled);
+            // ADR-0023：九框恒开；禁止用启停 collider 表达规则。
+            _view?.RefreshSlotHit(slot, hitEnabled: true);
         }
 
         private void RefreshAllSlotHitColliders()
         {
-            var walkEnabled = BoardWalkSlotHitPolicy.IsWalkEnabledNow();
-            var occupancy = NineGrid.Flow.RoomIcons.RoomIconOccupancy.Current;
-            _view?.RefreshAllSlotHits(slot =>
-                BoardWalkSlotHitPolicy.ShouldEnableEmptySlotHit(
-                    _index.IsEmpty(slot),
-                    slot,
-                    walkEnabled,
-                    occupancy != null && occupancy.IsIconSlot(slot)));
+            _view?.RefreshAllSlotHits(_ => true);
         }
 
         public void RefreshSlotHitColliders()
         {
             RefreshAllSlotHitColliders();
+        }
+
+        private static void SyncGroundCardClaim(ManagedCard card, int slot)
+        {
+            if (card?.View == null)
+            {
+                return;
+            }
+
+            var proxy = card.View.GetComponent<GroundCardHitProxy>();
+            if (proxy == null)
+            {
+                return;
+            }
+
+            if (!proxy.isActiveAndEnabled
+                || card.CoreKind == CardPresentationKind.Avatar
+                || card.CoreKind == CardPresentationKind.Unknown)
+            {
+                proxy.ReleaseClaim();
+                return;
+            }
+
+            proxy.SyncClaimForSlot(slot);
+        }
+
+        private static void ReleaseGroundCardClaim(ManagedCard card)
+        {
+            if (card?.View == null)
+            {
+                return;
+            }
+
+            card.View.GetComponent<GroundCardHitProxy>()?.ReleaseClaim();
         }
 
         private bool TryGetAnchor(int slot, out Transform anchor)
@@ -327,6 +344,7 @@ namespace NineGrid.Cards
 
             CardEntityLifecycleHook.CardsOrNull().SetDisplayMode(card, CardDisplayMode.GroundCardMode);
             RefreshSlotHitCollider(slot);
+            SyncGroundCardClaim(card, slot);
             return true;
         }
 
@@ -448,6 +466,11 @@ namespace NineGrid.Cards
 
             RefreshSlotHitCollider(fromSlot);
             RefreshSlotHitCollider(toSlot);
+
+            if (CardEntityLifecycleHook.CardsOrNull().TryGet(uid, out var relocated))
+            {
+                SyncGroundCardClaim(relocated, toSlot);
+            }
 
             if (snapToAnchor
                 && CardEntityLifecycleHook.CardsOrNull().TryGet(uid, out var card)
@@ -615,6 +638,7 @@ namespace NineGrid.Cards
 
             RefreshSlotHitCollider(fromSlot);
             RefreshSlotHitCollider(toSlot);
+            SyncGroundCardClaim(card, toSlot);
             return true;
         }
 
@@ -742,6 +766,7 @@ namespace NineGrid.Cards
                 CancelDealFlightForUid(flightUid, "VacateSlotForExplore");
             }
 
+            ReleaseGroundCardClaim(card);
             _index.Unregister(slot);
             RefreshSlotHitCollider(slot);
             if (startExplore)
@@ -798,6 +823,7 @@ namespace NineGrid.Cards
             Vector3 launchPos,
             DealFlightContext context)
         {
+            ReleaseGroundCardClaim(card);
             return _deal?.LaunchDrainFlight(card, targetSlot, launchPos, context);
         }
 
@@ -875,6 +901,7 @@ namespace NineGrid.Cards
                         _index.Unregister(slot, "ClearField");
                         if (cardManager.TryGet(uid, out var card) && card != null)
                         {
+                            ReleaseGroundCardClaim(card);
                             cardManager.Release(card, "Ground.ClearField");
                         }
                     }
@@ -914,17 +941,8 @@ namespace NineGrid.Cards
 
         public bool TryHandleEmptySlotClick(int slot)
         {
-            // 几何命中门：视图登记非空则无空槽代理可点。逻辑合法性由 Flow idle（BoardModel）裁决。
+            // 无认领者时的走格/探索提交；几何非空（含 Avatar）不再静默吞掉——合法性交 IntentIntake（ADR-0023）。
             var walkEnabled = BoardWalkInputHook.IsEnabled != null && BoardWalkInputHook.IsEnabled();
-            if (!IsEmpty(slot))
-            {
-                return false;
-            }
-
-            if (!walkEnabled && !IsAvatarOrthogonalBattleSlot(slot))
-            {
-                return false;
-            }
 
             // 轴二所有权快拒；轴一互斥只认 MainlineBusy（IntentIntake），勿再轮询 FieldBusy/BattleBusy。
             // 房内场地板（商店等）不得整段持有 ChoiceOverlay；此处拦截是给局内浮层宝箱保底。
@@ -950,7 +968,7 @@ namespace NineGrid.Cards
                     return false;
                 }
 
-                Debug.Log($"[GroundMotionExecutor] 空槽点击 → BoardWalk: slot={slot}");
+                Debug.Log($"[GroundMotionExecutor] 未认领格点击 → BoardWalk: slot={slot}");
                 _onEmptySlotClicked?.Invoke(slot);
                 var accepted = BoardWalkInputHook.TrySubmitBoardWalk(slot);
                 if (!accepted)
@@ -969,7 +987,7 @@ namespace NineGrid.Cards
                 return false;
             }
 
-            Debug.Log($"[GroundMotionExecutor] 空槽点击 → ExploreInputController: slot={slot}");
+            Debug.Log($"[GroundMotionExecutor] 未认领格点击 → ExploreInputController: slot={slot}");
             _onEmptySlotClicked?.Invoke(slot);
             return ExploreInputHook.TrySubmitExplore(slot);
         }
@@ -988,6 +1006,13 @@ namespace NineGrid.Cards
             if (!IsValidSlot(slot) || _index.GetUidAt(slot) == 0)
             {
                 return false;
+            }
+
+            var uid = _index.GetUidAt(slot);
+            var cards = CardEntityLifecycleHook.CardsOrNull();
+            if (cards != null && cards.TryGet(uid, out var occupant))
+            {
+                ReleaseGroundCardClaim(occupant);
             }
 
             _index.Unregister(slot);
@@ -1509,6 +1534,14 @@ namespace NineGrid.Cards
                 _deal?.OnRingShifted(clockwise);
                 // 占格已迁到环移后格：立刻刷新空槽代理，避免与视觉/占格短暂分叉。
                 RefreshAllSlotHitColliders();
+                for (var i = 0; i < batch.Count; i++)
+                {
+                    var (uid, toSlot) = batch[i];
+                    if (CardEntityLifecycleHook.CardsOrNull().TryGet(uid, out var moved))
+                    {
+                        SyncGroundCardClaim(moved, toSlot);
+                    }
+                }
 
                 SyncPresentationClock();
                 var sourceTime = LayoutSettings != null ? LayoutSettings.moveDuration : 0.35f;

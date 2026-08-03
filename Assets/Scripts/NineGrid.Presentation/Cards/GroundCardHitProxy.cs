@@ -2,102 +2,105 @@ using NineGrid.Cards.Convergence;
 using NineGrid.Flow;
 using NineGrid.Presentation;
 using UnityEngine;
-using UnityEngine.Rendering;
 
 namespace NineGrid.Cards
 {
     /// <summary>
-    /// 场地卡牌 hover 命中代理：挂在 Standard Card 根节点，由预制体或运行时装配。
-    /// 由 <see cref="PointerHitRouter"/> 轮询驱动（不再使用 OnMouse*）。
+    /// 场地卡牌命中代理：挂在 Standard Card 根节点，由预制体或运行时装配。
+    /// 通过格位认领登记激活与 Hover 视觉（ADR-0023）；命中由 <see cref="GroundFieldHitSurface"/> 统一承接。
     /// </summary>
     [DisallowMultipleComponent]
-    [RequireComponent(typeof(BoxCollider2D))]
     [RequireComponent(typeof(CardVisualDriver))]
-    public sealed class GroundCardHitProxy : MonoBehaviour, IPointerHitTarget
+    public sealed class GroundCardHitProxy : MonoBehaviour
     {
         private const float InputRootAlignEpsilonSqr = 0.01f;
-        private const int TypePriority = 30;
-        /// <summary>跳格时 Avatar 让位给空槽代理（TypePriority 10），避免卡面 collider 吞邻格点击。</summary>
-        private const int AvatarWalkPassthroughTypePriority = 0;
 
-        private BoxCollider2D _collider;
         private CardVisualDriver _driver;
-
-        public Collider2D HitCollider => _collider != null ? _collider : (_collider = GetComponent<BoxCollider2D>());
-
-        public int HitSortOrder =>
-            IsAvatarWalkPassthrough() ? int.MinValue : ResolveHitSortOrder();
-
-        public int HitTypePriority =>
-            IsAvatarWalkPassthrough() ? AvatarWalkPassthroughTypePriority : TypePriority;
 
         private void Awake()
         {
-            _collider = GetComponent<BoxCollider2D>();
             _driver = GetComponent<CardVisualDriver>();
             ApplyColliderSize();
         }
 
         private void OnEnable()
         {
-            PointerHitRegistry.Register(this);
+            var field = GroundFieldGeometryHook.FieldOrNull();
+            if (field == null)
+            {
+                return;
+            }
+
+            var card = _driver?.BoundCard;
+            if (card != null && field.TryGetSlotOf(card.Uid, out var slot))
+            {
+                SyncClaimForSlot(slot);
+            }
         }
 
         private void OnDisable()
         {
-            PointerHitRegistry.Unregister(this);
+            ReleaseClaim();
         }
 
         public void ApplyColliderSize()
         {
-            _collider ??= GetComponent<BoxCollider2D>();
-            if (_collider == null)
+            var collider = GetComponent<BoxCollider2D>();
+            if (collider != null)
             {
+                collider.enabled = false;
+            }
+        }
+
+        public void SyncClaimForSlot(int slot)
+        {
+            if (!isActiveAndEnabled)
+            {
+                ReleaseClaim();
+                return;
+            }
+
+            _driver ??= GetComponent<CardVisualDriver>();
+            var card = _driver?.BoundCard;
+            if (card == null
+                || card.CoreKind == CardPresentationKind.Avatar
+                || card.CoreKind == CardPresentationKind.Unknown)
+            {
+                ReleaseClaim();
                 return;
             }
 
             var field = GroundFieldGeometryHook.FieldOrNull();
-            var size = field != null
-                ? field.LayoutSettings.slotHitBoxSize
-                : new Vector2(1.6f, 2.2f);
+            if (field == null || !GroundSlotTopology.IsValidSlot(slot))
+            {
+                return;
+            }
 
-            _collider.size = size;
-            _collider.isTrigger = false;
+            if (field.IsDealInFlight(card.Uid))
+            {
+                ReleaseClaim();
+                return;
+            }
+
+            var claimant = new SlotClaimant(
+                this,
+                string.Empty,
+                ActivateClaim,
+                HoverEnterClaim,
+                HoverExitClaim);
+            field.TryClaimSlot(slot, claimant);
         }
 
-        public void HandlePointerEnter()
+        public void ReleaseClaim()
         {
-            if (!CanRespondToHover())
+            var field = GroundFieldGeometryHook.FieldOrNull();
+            if (field != null)
             {
-                return;
+                field.ReleaseAllClaimsForOwner(this);
             }
-
-            _driver ??= GetComponent<CardVisualDriver>();
-            if (_driver != null && _driver.IsSelectedVisual)
-            {
-                return;
-            }
-
-            _driver?.SetTarget(CardVisualTarget.Hover);
         }
 
-        public void HandlePointerExit()
-        {
-            if (!CanRespondToHover())
-            {
-                return;
-            }
-
-            _driver ??= GetComponent<CardVisualDriver>();
-            if (_driver != null && _driver.IsSelectedVisual)
-            {
-                return;
-            }
-
-            _driver?.SetTarget(CardVisualTarget.Base);
-        }
-
-        public void HandlePointerDown()
+        private void ActivateClaim()
         {
             _driver ??= GetComponent<CardVisualDriver>();
             var card = _driver?.BoundCard;
@@ -139,32 +142,39 @@ namespace NineGrid.Cards
             }
 
             RecordPickupEligibility(card, canRespond: true);
-            // 道具卡 / 帮助卡等：场地仅允许点击入手，禁止拖拽
             CardEntityLifecycleHook.HandOrNull()?.TryPickupFromGround(card);
         }
 
-        private bool IsAvatarWalkPassthrough()
+        private void HoverEnterClaim()
         {
-            if (!BoardWalkSlotHitPolicy.IsWalkEnabledNow())
+            if (!CanRespondToHover())
             {
-                return false;
+                return;
             }
 
             _driver ??= GetComponent<CardVisualDriver>();
-            var card = _driver != null ? _driver.BoundCard : null;
-            return card != null && card.CoreKind == CardPresentationKind.Avatar;
-        }
-
-        private int ResolveHitSortOrder()
-        {
-            var group = GetComponent<SortingGroup>();
-            if (group != null)
+            if (_driver != null && _driver.IsSelectedVisual)
             {
-                return group.sortingOrder;
+                return;
             }
 
-            var renderer = GetComponentInChildren<SpriteRenderer>(true);
-            return renderer != null ? renderer.sortingOrder : 0;
+            _driver?.SetTarget(CardVisualTarget.Hover);
+        }
+
+        private void HoverExitClaim()
+        {
+            if (!CanRespondToHover())
+            {
+                return;
+            }
+
+            _driver ??= GetComponent<CardVisualDriver>();
+            if (_driver != null && _driver.IsSelectedVisual)
+            {
+                return;
+            }
+
+            _driver?.SetTarget(CardVisualTarget.Base);
         }
 
         private void RecordPickupEligibility(ManagedCard card, bool canRespond, string blockReason = null)
@@ -268,7 +278,6 @@ namespace NineGrid.Cards
                 return false;
             }
 
-            // 主线忙仍可点：交 IntentIntake 缓冲；勿用含 MainlineBusy 的 CanAcceptCard 自拒。
             if (hand.IsSelfBusy
                 || hand.HandCount >= hand.MaxHandSlots
                 || PresentationInputGates.ChoiceOverlayActive
@@ -289,10 +298,6 @@ namespace NineGrid.Cards
                    && _driver.IsGroundHoverEligible;
         }
 
-        /// <summary>
-        /// 场地输入资格：占格登记、无 Opening、无 Deal/Slot 收敛、L0 根与注册格锚对齐。
-        /// 时序互斥不在此轮询 FieldBusy（#51 → IntentIntake / MainlineBusy）。
-        /// </summary>
         private bool TryPassGroundInputGate(ManagedCard card, out string blockReason)
         {
             blockReason = null;
@@ -303,7 +308,6 @@ namespace NineGrid.Cards
             }
 
             var field = GroundFieldGeometryHook.FieldOrNull();
-            // #51：FieldBusy 不再作独立输入互斥；须阻塞时由主线持有，经 IntentIntake 裁决。
 
             if (PresentationInputGates.OpeningPresentationActive)
             {

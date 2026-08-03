@@ -399,10 +399,7 @@ namespace NineGrid.Flow.RoomIcons
                 proxy = go.AddComponent<BoardBriefTipHitProxy>();
             }
 
-            var hitBox = geometry?.LayoutSettings != null
-                ? geometry.LayoutSettings.slotHitBoxSize
-                : new Vector2(1.6f, 2.2f);
-            proxy.Configure(tip, walkBoardSlot, hitBox);
+            proxy.Configure(tip, walkBoardSlot);
         }
 
         private static RoomDefinition ResolveRoomDefinition(IArchitecture arch, RoomKind kind)

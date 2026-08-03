@@ -202,7 +202,7 @@ namespace NineGrid.Flow.TavernBoard
 
                 FitRoomIcon(go, geometry);
                 var tip = BuildServiceTip(entry.DefId, content);
-                AttachClickProxy(go, TavernBoardHitKind.SelectService, i, tip, geometry);
+                AttachClickProxy(go, TavernBoardHitKind.SelectService, i, tip, slot);
                 mExtras.Add(go);
             }
         }
@@ -262,7 +262,7 @@ namespace NineGrid.Flow.TavernBoard
                     TavernBoardHitKind.SelectFixCandidate,
                     i,
                     tip,
-                    geometry);
+                    slot);
                 mCandidateCards.Add(managed);
             }
         }
@@ -288,7 +288,7 @@ namespace NineGrid.Flow.TavernBoard
 
             FitRoomIcon(go, geometry);
             var tip = BoardBriefTipCopy.ForOptionOrShelf("刷新货架", refreshPrice);
-            AttachClickProxy(go, TavernBoardHitKind.Refresh, -1, tip, geometry);
+            AttachClickProxy(go, TavernBoardHitKind.Refresh, -1, tip, TavernBoardSlotResolver.RefreshSlot);
             mExtras.Add(go);
         }
 
@@ -391,7 +391,7 @@ namespace NineGrid.Flow.TavernBoard
             TavernBoardHitKind kind,
             int optionIndex,
             string tip,
-            IGroundFieldGeometrySystem geometry)
+            int boardSlot)
         {
             if (go == null)
             {
@@ -410,10 +410,7 @@ namespace NineGrid.Flow.TavernBoard
                 proxy = go.AddComponent<TavernBoardHitProxy>();
             }
 
-            var hitBox = geometry?.LayoutSettings != null
-                ? geometry.LayoutSettings.slotHitBoxSize
-                : new Vector2(1.6f, 2.2f);
-            proxy.Configure(kind, optionIndex, tip, HandleHit, hitBox);
+            proxy.Configure(kind, optionIndex, tip, HandleHit, boardSlot);
         }
 
         private static void AttachBriefTipOnly(
@@ -433,10 +430,7 @@ namespace NineGrid.Flow.TavernBoard
                 proxy = go.AddComponent<BoardBriefTipHitProxy>();
             }
 
-            var hitBox = geometry?.LayoutSettings != null
-                ? geometry.LayoutSettings.slotHitBoxSize
-                : new Vector2(1.6f, 2.2f);
-            proxy.Configure(tip, walkBoardSlot, hitBox);
+            proxy.Configure(tip, walkBoardSlot);
         }
 
         private static void FitRoomIcon(GameObject go, IGroundFieldGeometrySystem geometry)

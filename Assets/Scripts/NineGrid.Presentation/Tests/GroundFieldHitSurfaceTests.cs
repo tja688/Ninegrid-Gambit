@@ -111,10 +111,23 @@ namespace NineGrid.Presentation.Tests
         }
 
         [Test]
-        public void DisabledSlotCollider_IsNotResolved()
+        public void DisabledSlotCollider_IsNotResolved_Defensive()
         {
+            // 生产路径九框恒开；此测仅锁定「禁用框不参与解析」的防御语义。
             _colliders[5].enabled = false;
             Assert.IsFalse(_surface.TryResolveSlotAtWorld(Vector2.zero, out _));
+        }
+
+        [Test]
+        public void AllEnabledSlots_AreIndependentlyResolvable()
+        {
+            for (var slot = GroundSlotTopology.MinSlot; slot <= GroundSlotTopology.MaxSlot; slot++)
+            {
+                Assert.IsTrue(_colliders[slot].enabled, "slot " + slot + " 应恒开");
+                var center = (Vector2)_colliders[slot].transform.position;
+                Assert.IsTrue(_surface.TryResolveSlotAtWorld(center, out var resolved));
+                Assert.AreEqual(slot, resolved);
+            }
         }
     }
 }

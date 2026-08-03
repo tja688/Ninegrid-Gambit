@@ -146,15 +146,16 @@
 - 编辑器：Room 条目「格位」字段；JSON `boardSlot`
 - 选房：`RoomIconBoardPresenter` + 驻留提交（#88）；旧浮层 `RoomChoicePresenter` / `RoomChoisePanel` 接线已退役（#90）
 - 悬停：Spawn 时挂 `BoardBriefTipHitProxy`（#89）；战斗真卡不挂
-- 软占变更后 `RoomIconOccupancySlotHits.Refresh` 同步空槽 Hit（软占格禁用格位 `BoxCollider2D`，场地面解格时 miss；#102 退役规则型关框）
+- 软占变更后 `RoomIconOccupancySlotHits.Refresh` 仅 Ensure 九框恒开（#102 已退役按软占关框）
+- 认领：图标 / 货架 / 选项经 `BoardBriefTipHitProxy` / `ShopBoardHitProxy` 等向格位登记认领者；悬停文案与点击由 `GroundFieldHitSurface` 查认领同源派发
 
 ### 简要解释文字框与楼层提示（#89 · ADR-0020）
 
 - 文案：`BoardBriefTipCopy`（房间 DisplayName+注入摘要 / 导航固定文案 / 「第 X 层 · 节点 Y」；另备 `ForOptionOrShelf` 供 M2 货架·就地选项）
 - 会话：`BoardBriefTipSession`（悬停与 Notice；Notice 盖悬停；代数清）
 - 场景：`BoardBriefTipPresenter` → `Panels/简要解释文字框`（`EnsureExists` 优先绑定命名面板，sceneLoaded 再绑，避免无 TMP 孤儿）；`FloorHintPresenter` → `楼层提示`
-- 命中：场地图标 `BoardBriefTipHitProxy`；商店 `ShopBoardHitProxy`；卡店 `TavernBoardHitProxy`；特殊房 `RewardBoardHitProxy`；离开图标仍 `BoardBriefTipHitProxy` + 驻留
-- 命中优先级：场地图标 Walk=35 / SortOrder=50；商店/卡店/特殊房 TypePriority=40 / SortOrder=50（高于空槽 SortOrder=0，避免真卡 SortingGroup=-10 被空槽抢走悬停）
+- 命中：场地图标 `BoardBriefTipHitProxy`；商店 `ShopBoardHitProxy`；卡店 `TavernBoardHitProxy`；特殊房 `RewardBoardHitProxy`；离开图标仍 `BoardBriefTipHitProxy` + 驻留——均**认领格位**、不自建命中盒、不注册 Router（#102）
+- 悬停/点击同源：`GroundFieldHitSurface` 读当前格认领者的 `BriefTipText` / `Activate`
 - 显示：有文案时激活面板并打开底板 `SpriteRenderer`；无悬停/Notice 即隐藏
 - 胜负 / 房间 stub Notice：`GameFlowController.ShowNotice` 改走简要解释文字框，旧 `NoticeText` 不再写出
 - **禁**：复活 `DescriptionManagerSingleton` / `DescriptionDisplayHook`；战斗真卡悬停写简要解释（右键详述另责）
@@ -192,7 +193,7 @@
 - Core：`MoveAvatar`（单邻格；RoomChoice/RoomEvent 允许踩非空以配合软占回退）+ `AvatarWalkPathfinder` 两阶段 BFS：途经优先完全空置（绕开软占/真卡），无空路再允许踩软占；终点为「完全空且非软占」或 `WalkDestination` 图标格（货架/选项 SoftBlockOnly 不可落格）
 - 表现：`HopAvatarToSlotAsync` 复用旋转 hop；半空改目标等落地后重规划
 - `\0` QuickTest：流程测试通道（空 skillIds / 空 trap / Sequential 节点序，内容同正式开局 + HP99/ATK5）；战斗内 **KeypadMinus** 跳过战斗（仅 QuickTest，`TryForceNodeVictory` → `TryCompleteClearedNode` 后 `ClearResidualCombatFieldViews` 收口机关/帮助/漏网怪视图，避免盖住房间图标）
-- 空槽 Hit：跳格开启时任意**非软占**空格可点（`BoardWalkSlotHitPolicy` + `RoomIconOccupancy`）；软占格禁用空槽 Hit，避免抢走货架/选项点击；关闭跳格时仍仅中心正交邻格（Explore）
+- 空槽 / 未认领格：九框恒开；点击一律提交 BoardWalk 或 Explore，合法性交 IntentIntake（已退役 `BoardWalkSlotHitPolicy` / 软占关框 / Avatar `int.MinValue` 穿透）
 - Avatar 朝向：`AvatarBoardFacingController` 按卡面图标当前世界 X 相对指针，不锁死格5
 - **战斗 `InteractionLoop` 禁走**；进下一房 Avatar 硬切格 5
 
@@ -245,16 +246,16 @@
 - 卡面**数值**只经结算指令在表演锚点提交，不直读 Core（ADR-0005）；装饰消费者经同一排期器多处理器分发（ADR-0007）  
 - **触发可见因果** / **基础触发表现**：无命中帧、靠运动落地才成立的触发，Impact 须在条件可见之后；Triggered 卡牌触发须 `EffectTriggered` + 在场持有者 v1 缩放（ADR-0018）  
 - Windows Player 高回报率鼠标：`RIDEV_NOLEGACY` + 轮询注入 Input System；命中走 `PointerHitRouter`，禁 `OnMouse*`（ADR-0006）
-- **（待落地）** 格位命中框为九宫格唯一命中权威、一格一认领者、命中恒成功、禁用启停 collider 表达规则（ADR-0023）
+- 格位命中框为九宫格唯一命中权威、一格一认领者、命中恒成功、禁用启停 collider 表达规则（ADR-0023 / #101+#102）
 - **（待落地）** 落格对象不 SetParent 到格位锚点、尺寸权威在预制体、运行时不写 `localScale`（ADR-0024）
 
-## 指针与命中（ADR-0006）
+## 指针与命中（ADR-0006 / ADR-0023）
 
 - **读口**：`Flow/WorldPointerUtility` —— 屏幕/世界/主键边沿；优先 New Input `Mouse.current`，可 `SetOverrideSource`（测试 / 未来平台）；右键边沿 `WasSecondaryPressedThisFrame`
 - **键盘**：`Flow/KeyboardUtility` —— New Input only 下替代 `Input.GetKey*`（DevTest 热键 / UITestBootstrap / Escape Esc 跳过）
 - **命中**：`Flow/PointerHitRouter`（`RuntimeInitializeOnLoad` 自举；`-40`）轮询 `PointerHitRegistry`；**手牌按下优先** `CardHandManagerSingleton.TryBeginDragFromHoveredCard`（Hand `-50` 先刷 hover 槽位带）；**右键**开 `CardInspectOverlayPresenter`（再右键或关闭钮关）
 - **局内 UI 叠层**：`BattleUiDimmerOverlay` + `UiOverlayHitProxy`（半黑屏吞点 / 关闭钮）；`PresentationInputGates.BattleUiOverlayActive` 只读投影
-- **代理**：`GroundFieldHitSurface`（场地面单一注册，按九格命中框解格号）/ `GroundCardHitProxy` / `HandCardHitProxy` / `BoardSelectParkedCardHitProxy` 实现 `IPointerHitTarget`，**无** `OnMouse*`；`GroundSlotHitProxy` 已降为遗留壳（不注册 Router）；命中按目标平面 Z 做 Overlap，场地面走 `IMultiColliderPointerHitTarget`
+- **代理**：`GroundFieldHitSurface`（场地面单一注册，解格号 → 查 `SlotClaimRegistry`）/ `HandCardHitProxy` / `BoardSelectParkedCardHitProxy` 实现 `IPointerHitTarget`；落格 `GroundCardHitProxy` / `BoardBriefTipHitProxy` / 商店·卡店·奖励 Board HitProxy 改为**认领登记**（无自建命中盒、不注册 Router）；`GroundSlotHitProxy` 遗留壳
 - **Win Player mitigation**：`Platform/WindowsHighPollingMouseMitigation`（`#if UNITY_STANDALONE_WIN && !UNITY_EDITOR`）
 - **工程设置**：`activeInputHandler = 1`（New Input System only）
 - **专项回归**：125 / 1000 / 4000+ Hz × 窗口/无边框/全屏；hover、空槽、点怪、手牌拖放、BoardSelect、BounceFan、右键详述
@@ -265,7 +266,7 @@
 |------|------|------|
 | `PointerHitRouter` + `PointerHitRegistry` | 按目标平面 `ScreenToWorld` + Overlap（场地面为九框）；`HitSortOrder` → `HitTypePriority`；**同分报装配错误** | 棋盘 / 手牌 / 覆层主路径 |
 | `PointerHitSurfacePriorities` | 场地面=28 / 手牌带=20 / 覆层=10，显式互异；覆层不再用 TypePriority=100 + HitSort=100000 抢几何 | 表面仲裁 |
-| `GroundFieldHitSurface` | 单一场地面；场景格位 `BoxCollider2D`（本地 1.625×2.0625，锚点×2 → 世界 3.25×4.125）为命中权威；运行时**不写** size/offset | 空槽 / 格号解析 |
+| `GroundFieldHitSurface` + `SlotClaimRegistry` | 单一场地面；场景格位框恒开；查认领者派发悬停/点击 | 棋盘命中与认领 |
 | `CardHandManagerSingleton` 布局带 | `handHitBoxSize` AABB 数学，不用 collider；`DefaultExecutionOrder(-50)` | 手牌 hover + 起拖 |
 | `CardHandManagerSingleton` 拖拽 | `Physics2D.OverlapPointAll`（#103 交棒场地面） | 拖拽落点 |
 | `WorldPointerUtility.TryPickCollider` | 强制 z=0 OverlapPoint（#103 退役） | 主菜单 StartRun / Quit |
@@ -276,11 +277,11 @@
 
 板面参照：底板 Sliced `1.9 × 2.45` × 2 = 世界 `3.8 × 4.9`；格距 `5 × 5.5`；`GroundAnchors/slotN` 自带 `BoxCollider2D` 本地 `1.625 × 2.0625`（已启用）。
 
-### 收敛方向（ADR-0023 / ADR-0024，#101 已落地部分）
+### 收敛方向（ADR-0023 / ADR-0024）
 
-**已落地（#101）**：格位命中框场景权威 + 场地面单一注册 + 表面优先级互异/同分告警 + 覆层不靠 TypePriority=100 抢 + 运行时停写格位 size/offset。
+**已落地（#101+#102）**：格位命中框场景权威 + 场地面单一注册 + 表面优先级互异/同分告警 + 一格一认领（`SlotClaimRegistry`）+ 落格对象去 collider/Router + 退役 `BoardWalkSlotHitPolicy` / 软占关框 / Avatar 穿透 + 运行时停写格位 size/offset。
 
-**尚未落地（#102–#105）**：一格一认领者；落格对象去 collider；退役软占关 collider / Avatar 穿透；手牌拖拽落点交棒；野生拾取路径退役；删 Fit / `slotHitBoxSize`；结构护栏全集。实施拆票见 issue #99。
+**尚未落地（#103–#105）**：手牌拖拽落点交棒；野生拾取路径退役；删 Fit / `slotHitBoxSize`；结构护栏全集。实施拆票见 issue #99。
 ## Core 表演契约与统一表现管线（#54–#62）
 
 - `NineGrid.Core.PresentationBeat`：`Impact` / `Settled` / `None`（**表演消费归属**，非仅卡面；升级路径注释在枚举旁）

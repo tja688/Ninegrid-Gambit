@@ -72,17 +72,39 @@ namespace NineGrid.Cards
             EmptySlotClicked?.Invoke(slot);
         }
 
+        public bool TryClaimSlot(int slot, SlotClaimant claimant)
+        {
+            return Geometry != null && Geometry.TryClaimSlot(slot, claimant);
+        }
+
+        public bool ReleaseSlotClaim(int slot, object owner)
+        {
+            return Geometry != null && Geometry.ReleaseSlotClaim(slot, owner);
+        }
+
+        public void ReleaseAllClaimsForOwner(object owner)
+        {
+            Geometry?.ReleaseAllClaimsForOwner(owner);
+        }
+
+        public bool TryGetSlotClaimant(int slot, out SlotClaimant claimant)
+        {
+            if (Geometry != null)
+            {
+                return Geometry.TryGetSlotClaimant(slot, out claimant);
+            }
+
+            claimant = null;
+            return false;
+        }
+
         private void Awake()
         {
             ResolveSceneReferences();
             CacheAnchors();
             EnsureHitProxies();
-            // Awake 时尚无走格门禁；默认按战斗 Explore（中心正交邻格）。开跳格后由 Geometry 全量刷新。
-            RefreshAllSlotHits(slot =>
-                BoardWalkSlotHitPolicy.ShouldEnableEmptySlotHit(
-                    isEmpty: true,
-                    slot,
-                    walkEnabled: false));
+            // ADR-0023：九框恒开；合法性交 IntentIntake，禁止规则型启停。
+            RefreshAllSlotHits(_ => true);
             ResolveSkeletonDeckPresentation();
             GroundFieldGeometryHook.RequestWire(this);
             ExploreInputHook.RequestWire(this);

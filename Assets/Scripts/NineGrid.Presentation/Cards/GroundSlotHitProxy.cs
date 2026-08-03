@@ -40,12 +40,13 @@ namespace NineGrid.Cards
             }
         }
 
+        /// <summary>遗留 API：命中恒启用，由场地面统一承接（ADR-0023）。</summary>
         public void SetHitEnabled(bool enabled)
         {
             _collider ??= GetComponent<BoxCollider2D>();
             if (_collider != null)
             {
-                _collider.enabled = enabled;
+                _collider.enabled = true;
             }
         }
     }

@@ -5,7 +5,7 @@ using QFramework;
 namespace NineGrid.Flow.RoomIcons
 {
     /// <summary>
-    /// 软占登记变更后刷新空槽 Hit，使 BoardWalkSlotHitPolicy 与 RoomIconOccupancy 对齐。
+    /// 软占变更后刷新格位命中框（ADR-0023 后仅为 Ensure 恒开，不再按软占关框）。
     /// </summary>
     public static class RoomIconOccupancySlotHits
     {
