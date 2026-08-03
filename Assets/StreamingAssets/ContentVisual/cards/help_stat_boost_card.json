@@ -3,8 +3,11 @@
     "contentId": "help.stat_boost_card",
     "kind": "HelpCard",
     "deckId": "deck.help",
+    "role": "Utility",
     "displayName": "属性提升",
-    "description": "",
+    "description": "[使用时] 选择攻击+{delta}、护甲+1或血量上限与当前血量+2",
+    "faceIntro": "",
+    "attackPattern": "",
     "gold": 100,
     "stats": {
         "hp": 0,
@@ -74,21 +77,6 @@
         "tag.kill_boss",
         "tag.kill_elite"
     ],
-    "effectIds": [],
-    "skillIds": [],
-    "level": 0,
-    "isElite": false,
-    "isBoss": false,
-    "isReserve": false,
-    "containerType": "",
-    "deckKind": "",
-    "monsterDefIds": [],
-    "weight": 0,
-    "goldDelta": 0,
-    "maxHpDelta": 0,
-    "healToFull": false,
-    "rewardPoolId": "",
-    "shopOfferCount": 0,
     "effectAssemblies": [
         {
             "id": "help.stat_boost_card.use",
@@ -97,5 +85,20 @@
             "argsJson": "{\"option\":\"Attack\",\"delta\":1,\"reason\":\"statBoost.attack\",\"action_elseAction_condition_option\":\"Armor\",\"action_elseAction_action_reason\":\"statBoost.armor\",\"action_elseAction_elseAction_condition_option\":\"Hp\",\"action_elseAction_elseAction_action_delta\":2,\"action_elseAction_elseAction_action_reason\":\"statBoost.hp\"}"
         }
     ],
-    "role": "Utility"
+    "effectIds": [],
+    "skillIds": [],
+    "level": "0",
+    "sequence": 0,
+    "isElite": false,
+    "isBoss": false,
+    "isReserve": false,
+    "containerType": "",
+    "deckKind": "",
+    "monsterDefIds": [],
+    "weight": 0,
+    "rewardPoolId": "",
+    "shopOfferCount": 0,
+    "openingInjects": [],
+    "iconPrefab": "",
+    "boardSlot": 0
 }

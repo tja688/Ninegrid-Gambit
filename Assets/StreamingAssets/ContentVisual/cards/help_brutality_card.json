@@ -3,8 +3,11 @@
     "contentId": "help.brutality_card",
     "kind": "HelpCard",
     "deckId": "deck.help",
+    "role": "Attack",
     "displayName": "暴力",
-    "description": "",
+    "description": "[使用时] 玩家下{value}次对怪物造成的战斗伤害翻倍",
+    "faceIntro": "",
+    "attackPattern": "",
     "gold": 30,
     "stats": {
         "hp": 0,
@@ -72,21 +75,6 @@
     "tags": [
         "tag.attack_buff"
     ],
-    "effectIds": [],
-    "skillIds": [],
-    "level": 0,
-    "isElite": false,
-    "isBoss": false,
-    "isReserve": false,
-    "containerType": "",
-    "deckKind": "",
-    "monsterDefIds": [],
-    "weight": 0,
-    "goldDelta": 0,
-    "maxHpDelta": 0,
-    "healToFull": false,
-    "rewardPoolId": "",
-    "shopOfferCount": 0,
     "effectAssemblies": [
         {
             "id": "help.brutality_card.use",
@@ -95,5 +83,20 @@
             "argsJson": "{\"value\":2,\"source\":\"help.brutality_card\",\"sourceAction\":\"DealDamage\",\"excludeSourcePrefix\":\"help.\"}"
         }
     ],
-    "role": "Attack"
+    "effectIds": [],
+    "skillIds": [],
+    "level": "0",
+    "sequence": 0,
+    "isElite": false,
+    "isBoss": false,
+    "isReserve": false,
+    "containerType": "",
+    "deckKind": "",
+    "monsterDefIds": [],
+    "weight": 0,
+    "rewardPoolId": "",
+    "shopOfferCount": 0,
+    "openingInjects": [],
+    "iconPrefab": "",
+    "boardSlot": 0
 }

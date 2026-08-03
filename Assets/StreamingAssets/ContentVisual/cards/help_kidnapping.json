@@ -3,8 +3,11 @@
     "contentId": "help.kidnapping",
     "kind": "HelpCard",
     "deckId": "deck.help",
+    "role": "Defense",
     "displayName": "绑票",
-    "description": "",
+    "description": "[使用时] 移除{count}张非精英非层主怪物卡，并获得等同于其当前护甲的护甲",
+    "faceIntro": "",
+    "attackPattern": "",
     "gold": 100,
     "stats": {
         "hp": 0,
@@ -72,21 +75,6 @@
     "tags": [
         "tag.armor"
     ],
-    "effectIds": [],
-    "skillIds": [],
-    "level": 0,
-    "isElite": false,
-    "isBoss": false,
-    "isReserve": false,
-    "containerType": "",
-    "deckKind": "",
-    "monsterDefIds": [],
-    "weight": 0,
-    "goldDelta": 0,
-    "maxHpDelta": 0,
-    "healToFull": false,
-    "rewardPoolId": "",
-    "shopOfferCount": 0,
     "effectAssemblies": [
         {
             "id": "help.kidnapping.use",
@@ -95,5 +83,20 @@
             "argsJson": "{\"count\":1,\"cause\":\"help.kidnapping\",\"reason\":\"help.kidnapping\"}"
         }
     ],
-    "role": "Defense"
+    "effectIds": [],
+    "skillIds": [],
+    "level": "0",
+    "sequence": 0,
+    "isElite": false,
+    "isBoss": false,
+    "isReserve": false,
+    "containerType": "",
+    "deckKind": "",
+    "monsterDefIds": [],
+    "weight": 0,
+    "rewardPoolId": "",
+    "shopOfferCount": 0,
+    "openingInjects": [],
+    "iconPrefab": "",
+    "boardSlot": 0
 }

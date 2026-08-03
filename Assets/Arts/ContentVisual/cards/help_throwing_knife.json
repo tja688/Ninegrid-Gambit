@@ -3,8 +3,12 @@
     "contentId": "help.throwing_knife",
     "kind": "HelpCard",
     "deckId": "deck.help",
+    "role": "Attack",
     "displayName": "飞刀",
-    "description": "",
+    "designSlotName": "",
+    "description": "[使用时] 对目标怪物卡造成{amount}点伤害",
+    "faceIntro": "",
+    "attackPattern": "",
     "gold": 20,
     "stats": {
         "hp": 0,
@@ -72,21 +76,6 @@
     "tags": [
         "tag.direct_damage"
     ],
-    "effectIds": [],
-    "skillIds": [],
-    "level": 0,
-    "isElite": false,
-    "isBoss": false,
-    "isReserve": false,
-    "containerType": "",
-    "deckKind": "",
-    "monsterDefIds": [],
-    "weight": 0,
-    "goldDelta": 0,
-    "maxHpDelta": 0,
-    "healToFull": false,
-    "rewardPoolId": "",
-    "shopOfferCount": 0,
     "effectAssemblies": [
         {
             "id": "help.throwing_knife.use",
@@ -95,5 +84,20 @@
             "argsJson": "{\"count\":1,\"amount\":6}"
         }
     ],
-    "role": "Attack"
+    "effectIds": [],
+    "skillIds": [],
+    "level": "0",
+    "sequence": 0,
+    "isElite": false,
+    "isBoss": false,
+    "isReserve": false,
+    "containerType": "",
+    "deckKind": "",
+    "monsterDefIds": [],
+    "weight": 0,
+    "rewardPoolId": "",
+    "shopOfferCount": 0,
+    "openingInjects": [],
+    "iconPrefab": "",
+    "boardSlot": 0
 }

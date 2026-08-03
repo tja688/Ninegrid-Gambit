@@ -5,7 +5,7 @@
     "deckId": "deck.trap",
     "role": "",
     "displayName": "疗愈之光",
-    "description": "",
+    "description": "[场上]本卡移动/旋转落地后，若正交邻玩家则为玩家恢复{amount}点血量",
     "faceIntro": "",
     "attackPattern": "无",
     "gold": 0,
@@ -85,7 +85,8 @@
         "trap.healing_spring.heal_on_move"
     ],
     "skillIds": [],
-    "level": 1,
+    "level": "1",
+    "sequence": 0,
     "isElite": false,
     "isBoss": false,
     "isReserve": false,
@@ -93,9 +94,9 @@
     "deckKind": "",
     "monsterDefIds": [],
     "weight": 0,
-    "goldDelta": 0,
-    "maxHpDelta": 0,
-    "healToFull": false,
     "rewardPoolId": "",
-    "shopOfferCount": 0
+    "shopOfferCount": 0,
+    "openingInjects": [],
+    "iconPrefab": "",
+    "boardSlot": 0
 }

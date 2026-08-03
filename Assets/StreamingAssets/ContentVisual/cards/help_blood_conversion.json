@@ -3,8 +3,12 @@
     "contentId": "help.blood_conversion",
     "kind": "HelpCard",
     "deckId": "deck.help",
+    "role": "Utility",
     "displayName": "血液转换",
-    "description": "",
+    "designSlotName": "",
+    "description": "[使用时] 扣除{delta}点血量上限并随机获得攻击+{weight}、护甲+1、50金币或随机遗物",
+    "faceIntro": "",
+    "attackPattern": "",
     "gold": 50,
     "stats": {
         "hp": 0,
@@ -72,21 +76,6 @@
     "tags": [
         "tag.special"
     ],
-    "effectIds": [],
-    "skillIds": [],
-    "level": 0,
-    "isElite": false,
-    "isBoss": false,
-    "isReserve": false,
-    "containerType": "",
-    "deckKind": "",
-    "monsterDefIds": [],
-    "weight": 0,
-    "goldDelta": 0,
-    "maxHpDelta": 0,
-    "healToFull": false,
-    "rewardPoolId": "",
-    "shopOfferCount": 0,
     "effectAssemblies": [
         {
             "id": "help.blood_conversion.use",
@@ -95,5 +84,20 @@
             "argsJson": "{\"delta\":-5,\"reason\":\"bloodConversion\",\"weight\":1,\"action_actions_1_choices_0_action_delta\":1,\"action_actions_1_choices_0_action_reason\":\"bloodConversion.attack\",\"action_actions_1_choices_1_action_delta\":1,\"action_actions_1_choices_1_action_reason\":\"bloodConversion.armor\",\"action_actions_1_choices_2_action_delta\":50,\"action_actions_1_choices_2_action_reason\":\"bloodConversion.gold\",\"poolId\":\"relic.blood_conversion\"}"
         }
     ],
-    "role": "Utility"
+    "effectIds": [],
+    "skillIds": [],
+    "level": "0",
+    "sequence": 0,
+    "isElite": false,
+    "isBoss": false,
+    "isReserve": false,
+    "containerType": "",
+    "deckKind": "",
+    "monsterDefIds": [],
+    "weight": 0,
+    "rewardPoolId": "",
+    "shopOfferCount": 0,
+    "openingInjects": [],
+    "iconPrefab": "",
+    "boardSlot": 0
 }

@@ -1,94 +1,107 @@
 {
-  "schemaVersion": 2,
-  "contentId": "monster.veteran_orc",
-  "kind": "Monster",
-  "deckId": "deck.transition",
-  "role": "",
-  "displayName": "弓骑哥布",
-  "description": "",
-  "faceIntro": "准头不高，但是射得快",
-  "attackPattern": "普通近战",
-  "gold": 5,
-  "stats": {
-    "hp": 10,
-    "armor": 0,
-    "attack": 2,
-    "action": 3,
-    "recovery": 0
-  },
-  "sprites": {
-    "mainIcon": "Assets/Resources/ContentArt/Multiple/pixel_art_card_pack 1.png",
-    "faceBackground": "",
-    "cardFrame": "",
-    "banner": "",
-    "backBorder": "",
-    "backShirt": "",
-    "backLogo": ""
-  },
-  "mainVisual": {
-    "offsetX": 0.10000000149011612,
-    "offsetY": -0.05000000074505806,
-    "uniformScale": 0.8600000143051147
-  },
-  "animations": {
-    "defaultFps": 8.0,
-    "slots": [
-      {
-        "id": "idle",
-        "sourceType": "folder",
-        "path": "Assets/Resources/ContentArt/Png/像素怪物合集/sprites/25WolfGobin_idle_01",
-        "offsetX": 0.0,
-        "offsetY": 0.0
-      },
-      {
-        "id": "attack",
-        "sourceType": "none",
-        "path": "",
-        "offsetX": 0.0,
-        "offsetY": 0.0
-      },
-      {
-        "id": "hurt",
-        "sourceType": "none",
-        "path": "",
-        "offsetX": 0.0,
-        "offsetY": 0.0
-      },
-      {
-        "id": "death",
-        "sourceType": "none",
-        "path": "",
-        "offsetX": 0.0,
-        "offsetY": 0.0
-      },
-      {
-        "id": "lunch",
-        "sourceType": "none",
-        "path": "",
-        "offsetX": 0.0,
-        "offsetY": 0.0
-      }
-    ]
-  },
-  "extraSlots": [],
-  "rarity": "None",
-  "tags": [],
-  "effectAssemblies": [],
-  "effectIds": [],
-  "skillIds": [],
-  "level": "普通",
-  "isElite": false,
-  "isBoss": false,
-  "isReserve": false,
-  "containerType": "",
-  "deckKind": "",
-  "monsterDefIds": [],
-  "weight": 0,
-  "goldDelta": 0,
-  "maxHpDelta": 0,
-  "healToFull": false,
-  "rewardPoolId": "",
-  "shopOfferCount": 0,
-  "sequence": 2,
-  "designSlotName": "远程2"
+    "schemaVersion": 2,
+    "contentId": "monster.veteran_orc",
+    "kind": "Monster",
+    "deckId": "deck.skeleton_legion",
+    "role": "",
+    "displayName": "特8",
+    "designSlotName": "特8",
+    "description": "[[潜伏近战]]，[[盗取]]",
+    "faceIntro": "准头不高，但是射得快",
+    "attackPattern": "普通近战",
+    "gold": 5,
+    "stats": {
+        "hp": 6,
+        "armor": 0,
+        "attack": 2,
+        "action": 3,
+        "recovery": 0
+    },
+    "sprites": {
+        "mainIcon": "Assets/Resources/ContentArt/Multiple/pixel_art_card_pack 1.png",
+        "faceBackground": "",
+        "cardFrame": "",
+        "banner": "",
+        "backBorder": "",
+        "backShirt": "",
+        "backLogo": ""
+    },
+    "mainVisual": {
+        "offsetX": 0.10000000149011612,
+        "offsetY": -0.05000000074505806,
+        "uniformScale": 0.8600000143051148
+    },
+    "animations": {
+        "defaultFps": 8.0,
+        "slots": [
+            {
+                "id": "idle",
+                "sourceType": "folder",
+                "path": "Assets/Resources/ContentArt/Png/像素怪物合集/sprites/25WolfGobin_idle_01",
+                "offsetX": 0.0,
+                "offsetY": 0.0
+            },
+            {
+                "id": "attack",
+                "sourceType": "none",
+                "path": "",
+                "offsetX": 0.0,
+                "offsetY": 0.0
+            },
+            {
+                "id": "hurt",
+                "sourceType": "none",
+                "path": "",
+                "offsetX": 0.0,
+                "offsetY": 0.0
+            },
+            {
+                "id": "death",
+                "sourceType": "none",
+                "path": "",
+                "offsetX": 0.0,
+                "offsetY": 0.0
+            },
+            {
+                "id": "lunch",
+                "sourceType": "none",
+                "path": "",
+                "offsetX": 0.0,
+                "offsetY": 0.0
+            }
+        ]
+    },
+    "extraSlots": [],
+    "rarity": "None",
+    "tags": [],
+    "effectAssemblies": [
+        {
+            "id": "skill.ambush_melee.interact",
+            "templateId": "tpl.skill.ambush_melee.interact",
+            "containerType": "MonsterSkill",
+            "argsJson": "{}"
+        },
+        {
+            "id": "skill.steal.flip",
+            "templateId": "tpl.skill.steal.flip",
+            "containerType": "MonsterSkill",
+            "argsJson": "{\"count\":1,\"reason\":\"skill.steal\"}"
+        }
+    ],
+    "effectIds": [],
+    "skillIds": [],
+    "level": "普通",
+    "sequence": 4,
+    "isElite": false,
+    "isBoss": false,
+    "isReserve": false,
+    "containerType": "",
+    "deckKind": "",
+    "monsterDefIds": [],
+    "weight": 0,
+    "rewardPoolId": "",
+    "shopOfferCount": 0,
+    "openingInjects": [],
+    "iconPrefab": "",
+    "boardSlot": 0
 }

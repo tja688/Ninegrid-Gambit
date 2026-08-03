@@ -1,94 +1,96 @@
 {
-  "schemaVersion": 2,
-  "contentId": "monster.big_skeleton_reborn",
-  "kind": "Monster",
-  "deckId": "deck.transition",
-  "role": "",
-  "displayName": "弓箭骷髅",
-  "description": "",
-  "faceIntro": "有人问他的箭从哪里来，答案是就地取材",
-  "attackPattern": "普通近战",
-  "gold": 5,
-  "stats": {
-    "hp": 10,
-    "armor": 0,
-    "attack": 2,
-    "action": 3,
-    "recovery": 0
-  },
-  "sprites": {
-    "mainIcon": "",
-    "faceBackground": "",
-    "cardFrame": "",
-    "banner": "",
-    "backBorder": "",
-    "backShirt": "",
-    "backLogo": ""
-  },
-  "mainVisual": {
-    "offsetX": 0.0,
-    "offsetY": -0.15000000596046448,
-    "uniformScale": 0.8999999761581421
-  },
-  "animations": {
-    "defaultFps": 8.0,
-    "slots": [
-      {
-        "id": "idle",
-        "sourceType": "folder",
-        "path": "Assets/Resources/ContentArt/Png/像素怪物合集/sprites/005skull_idle_01",
+    "schemaVersion": 2,
+    "contentId": "monster.big_skeleton_reborn",
+    "kind": "Monster",
+    "deckId": "deck.dragon",
+    "role": "",
+    "displayName": "远程1",
+    "designSlotName": "远程1",
+    "description": "[[普通远程]]，[[远程武器]]",
+    "faceIntro": "有人问他的箭从哪里来，答案是就地取材",
+    "attackPattern": "普通远程",
+    "gold": 5,
+    "stats": {
+        "hp": 4,
+        "armor": 0,
+        "attack": 2,
+        "action": 5,
+        "recovery": 0
+    },
+    "sprites": {
+        "mainIcon": "",
+        "faceBackground": "",
+        "cardFrame": "",
+        "banner": "",
+        "backBorder": "",
+        "backShirt": "",
+        "backLogo": ""
+    },
+    "mainVisual": {
         "offsetX": 0.0,
-        "offsetY": 0.0
-      },
-      {
-        "id": "attack",
-        "sourceType": "none",
-        "path": "",
-        "offsetX": 0.0,
-        "offsetY": 0.0
-      },
-      {
-        "id": "hurt",
-        "sourceType": "none",
-        "path": "",
-        "offsetX": 0.0,
-        "offsetY": 0.0
-      },
-      {
-        "id": "death",
-        "sourceType": "none",
-        "path": "",
-        "offsetX": 0.0,
-        "offsetY": 0.0
-      },
-      {
-        "id": "lunch",
-        "sourceType": "none",
-        "path": "",
-        "offsetX": 0.0,
-        "offsetY": 0.0
-      }
-    ]
-  },
-  "extraSlots": [],
-  "rarity": "None",
-  "tags": [],
-  "effectAssemblies": [],
-  "effectIds": [],
-  "skillIds": [],
-  "level": "普通",
-  "isElite": false,
-  "isBoss": false,
-  "isReserve": true,
-  "containerType": "",
-  "deckKind": "",
-  "monsterDefIds": [],
-  "weight": 0,
-  "goldDelta": 0,
-  "maxHpDelta": 0,
-  "healToFull": false,
-  "rewardPoolId": "",
-  "shopOfferCount": 0,
-  "sequence": 0,
-  "designSlotName": "弓箭骷髅"
+        "offsetY": -0.15000000596046448,
+        "uniformScale": 0.8999999761581421
+    },
+    "animations": {
+        "defaultFps": 8.0,
+        "slots": [
+            {
+                "id": "idle",
+                "sourceType": "folder",
+                "path": "Assets/Resources/ContentArt/Png/像素怪物合集/sprites/005skull_idle_01",
+                "offsetX": 0.0,
+                "offsetY": 0.0
+            },
+            {
+                "id": "attack",
+                "sourceType": "none",
+                "path": "",
+                "offsetX": 0.0,
+                "offsetY": 0.0
+            },
+            {
+                "id": "hurt",
+                "sourceType": "none",
+                "path": "",
+                "offsetX": 0.0,
+                "offsetY": 0.0
+            },
+            {
+                "id": "death",
+                "sourceType": "none",
+                "path": "",
+                "offsetX": 0.0,
+                "offsetY": 0.0
+            },
+            {
+                "id": "lunch",
+                "sourceType": "none",
+                "path": "",
+                "offsetX": 0.0,
+                "offsetY": 0.0
+            }
+        ]
+    },
+    "extraSlots": [],
+    "rarity": "None",
+    "tags": [],
+    "effectAssemblies": [],
+    "effectIds": [],
+    "skillIds": [
+        "skill.ranged_weapon"
+    ],
+    "level": "普通",
+    "sequence": 2,
+    "isElite": false,
+    "isBoss": false,
+    "isReserve": true,
+    "containerType": "",
+    "deckKind": "",
+    "monsterDefIds": [],
+    "weight": 0,
+    "rewardPoolId": "",
+    "shopOfferCount": 0,
+    "openingInjects": [],
+    "iconPrefab": "",
+    "boardSlot": 0
 }

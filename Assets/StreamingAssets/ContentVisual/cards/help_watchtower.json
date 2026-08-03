@@ -3,8 +3,11 @@
     "contentId": "help.watchtower",
     "kind": "HelpCard",
     "deckId": "deck.help",
+    "role": "Attack",
     "displayName": "瞭望塔",
-    "description": "",
+    "description": "[场上] 移动到角格时，对随机怪物造成{amount}点伤害；触发{count}次后移除本卡；[道具牌格] 玩家与怪物战斗时，对随机一张怪物卡造成{amount}点伤害；[使用时] 直接移除本卡，不触发其他效果",
+    "faceIntro": "",
+    "attackPattern": "",
     "gold": 150,
     "stats": {
         "hp": 0,
@@ -72,21 +75,6 @@
     "tags": [
         "tag.direct_damage"
     ],
-    "effectIds": [],
-    "skillIds": [],
-    "level": 0,
-    "isElite": false,
-    "isBoss": false,
-    "isReserve": false,
-    "containerType": "",
-    "deckKind": "",
-    "monsterDefIds": [],
-    "weight": 0,
-    "goldDelta": 0,
-    "maxHpDelta": 0,
-    "healToFull": false,
-    "rewardPoolId": "",
-    "shopOfferCount": 0,
     "effectAssemblies": [
         {
             "id": "help.watchtower.board_corner",
@@ -107,5 +95,20 @@
             "argsJson": "{\"reason\":\"help.watchtower.use\"}"
         }
     ],
-    "role": "Attack"
+    "effectIds": [],
+    "skillIds": [],
+    "level": "0",
+    "sequence": 0,
+    "isElite": false,
+    "isBoss": false,
+    "isReserve": false,
+    "containerType": "",
+    "deckKind": "",
+    "monsterDefIds": [],
+    "weight": 0,
+    "rewardPoolId": "",
+    "shopOfferCount": 0,
+    "openingInjects": [],
+    "iconPrefab": "",
+    "boardSlot": 0
 }
