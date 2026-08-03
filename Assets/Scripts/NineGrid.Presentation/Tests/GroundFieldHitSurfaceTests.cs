@@ -1,5 +1,8 @@
 using NineGrid.Cards;
+using NineGrid.Core;
 using NineGrid.Flow;
+using NineGrid.Presentation.Systems;
+using NineGrid.Presentation.Tests.Fixtures;
 using NUnit.Framework;
 using UnityEngine;
 
@@ -45,6 +48,7 @@ namespace NineGrid.Presentation.Tests
         public void TearDown()
         {
             PointerHitRegistry.ClearForTests();
+            GroundFieldGeometryHook.Reset();
             if (_root != null)
             {
                 Object.DestroyImmediate(_root);
@@ -127,6 +131,88 @@ namespace NineGrid.Presentation.Tests
                 var center = (Vector2)_colliders[slot].transform.position;
                 Assert.IsTrue(_surface.TryResolveSlotAtWorld(center, out var resolved));
                 Assert.AreEqual(slot, resolved);
+            }
+        }
+
+        [Test]
+        public void RefreshPointerHover_CrossSlotWithoutExit_SwitchesClaimant()
+        {
+            // 回归：单一场地面上跨格时 Router 不重入 Enter，须 RefreshPointerHover 切认领者。
+            PointerHitRegistry.ClearForTests();
+            GroundFieldGeometryHook.Reset();
+
+            using (PresentationArchitectureFixture.CreateBare())
+            {
+                var fieldGo = new GameObject("Field_CrossSlotHover");
+                var field = fieldGo.AddComponent<GroundFieldView>();
+                var system = new GroundFieldGeometrySystem();
+                NineGridArchitecture.Interface.RegisterSystem<IGroundFieldGeometrySystem>(system);
+                system.Bind(field);
+                GroundFieldGeometryHook.ResolveField = () => field;
+
+                var enterA = 0;
+                var exitA = 0;
+                var enterB = 0;
+                var exitB = 0;
+                Assert.IsTrue(field.TryClaimSlot(
+                    1,
+                    new SlotClaimant(new object(), "A", () => { }, () => enterA++, () => exitA++)));
+                Assert.IsTrue(field.TryClaimSlot(
+                    3,
+                    new SlotClaimant(new object(), "B", () => { }, () => enterB++, () => exitB++)));
+
+                Assert.IsTrue(_surface.TryResolveSlotAtWorld(
+                    (Vector2)_colliders[1].transform.position,
+                    out _));
+                _surface.HandlePointerEnter();
+                Assert.AreEqual(1, enterA);
+                Assert.AreEqual(0, enterB);
+
+                Assert.IsTrue(_surface.TryResolveSlotAtWorld(
+                    (Vector2)_colliders[3].transform.position,
+                    out _));
+                _surface.RefreshPointerHover();
+                Assert.AreEqual(1, exitA, "跨格须先 Exit 旧认领者");
+                Assert.AreEqual(1, enterB, "跨格须 Enter 新认领者");
+                Assert.AreEqual(0, exitB);
+
+                _surface.RefreshPointerHover();
+                Assert.AreEqual(1, enterB, "同格同认领者不得重复 Enter");
+
+                Object.DestroyImmediate(fieldGo);
+                GroundFieldGeometryHook.Reset();
+            }
+        }
+
+        [Test]
+        public void RefreshPointerHover_ClaimReleasedUnderCursor_ClearsHover()
+        {
+            PointerHitRegistry.ClearForTests();
+            GroundFieldGeometryHook.Reset();
+
+            using (PresentationArchitectureFixture.CreateBare())
+            {
+                var fieldGo = new GameObject("Field_ClaimReleased");
+                var field = fieldGo.AddComponent<GroundFieldView>();
+                var system = new GroundFieldGeometrySystem();
+                NineGridArchitecture.Interface.RegisterSystem<IGroundFieldGeometrySystem>(system);
+                system.Bind(field);
+                GroundFieldGeometryHook.ResolveField = () => field;
+
+                var exitCount = 0;
+                var owner = new object();
+                Assert.IsTrue(field.TryClaimSlot(
+                    5,
+                    new SlotClaimant(owner, "tip", () => { }, null, () => exitCount++)));
+
+                Assert.IsTrue(_surface.TryResolveSlotAtWorld(Vector2.zero, out _));
+                _surface.HandlePointerEnter();
+                Assert.IsTrue(field.ReleaseSlotClaim(5, owner));
+                _surface.RefreshPointerHover();
+                Assert.AreEqual(1, exitCount);
+
+                Object.DestroyImmediate(fieldGo);
+                GroundFieldGeometryHook.Reset();
             }
         }
     }

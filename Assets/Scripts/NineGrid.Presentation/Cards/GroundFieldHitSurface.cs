@@ -97,17 +97,45 @@ namespace NineGrid.Cards
 
         public void HandlePointerEnter()
         {
+            ApplyHoverForResolvedSlot();
+        }
+
+        public void HandlePointerExit()
+        {
+            ClearHoverState();
+            _resolvedSlot = 0;
+            _resolvedCollider = null;
+        }
+
+        /// <inheritdoc cref="IMultiColliderPointerHitTarget.RefreshPointerHover"/>
+        public void RefreshPointerHover()
+        {
+            ApplyHoverForResolvedSlot();
+        }
+
+        private void ApplyHoverForResolvedSlot()
+        {
             if (!GroundSlotTopology.IsValidSlot(_resolvedSlot))
             {
+                ClearHoverState();
                 return;
             }
 
             var field = GroundFieldGeometryHook.FieldOrNull();
-            if (field == null || !field.TryGetSlotClaimant(_resolvedSlot, out var claimant))
+            SlotClaimant claimant = null;
+            var hasClaim = field != null && field.TryGetSlotClaimant(_resolvedSlot, out claimant);
+            if (!hasClaim)
+            {
+                ClearHoverState();
+                return;
+            }
+
+            if (ReferenceEquals(_hoveredClaimant, claimant))
             {
                 return;
             }
 
+            ClearHoverState();
             _hoveredClaimant = claimant;
             if (!string.IsNullOrEmpty(claimant.BriefTipText))
             {
@@ -116,13 +144,6 @@ namespace NineGrid.Cards
             }
 
             claimant.HoverEnter?.Invoke();
-        }
-
-        public void HandlePointerExit()
-        {
-            ClearHoverState();
-            _resolvedSlot = 0;
-            _resolvedCollider = null;
         }
 
         public void HandlePointerDown()

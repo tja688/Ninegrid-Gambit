@@ -56,6 +56,11 @@ namespace NineGrid.Flow
                 _hovered = best;
                 _hovered?.HandlePointerEnter();
             }
+            else if (_hovered is IMultiColliderPointerHitTarget multiStay)
+            {
+                // 同一场地面上跨格 / 认领变更时表面身份不变，须刷新子目标悬停。
+                multiStay.RefreshPointerHover();
+            }
 
             if (WorldPointerUtility.WasSecondaryPressedThisFrame())
             {
