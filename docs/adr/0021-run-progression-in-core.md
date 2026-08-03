@@ -1,5 +1,6 @@
 ---
 status: accepted
+superseded_in_part_by: ADR-0025, ADR-0026
 ---
 
 # 跑图进度与节点编排归 Core
@@ -25,7 +26,7 @@ status: accepted
 - **非战斗节点（4 / 7）不进 `InteractionLoop`**：没有发牌、没有怪、没有清关判定，进房即进房间内交互，靠离开图标推进。
 - **困难房出现条件按层重新数**：每层节点 5、6 清关时放出的战斗房选项里才可能含困难房。
 - **无清关三选一**：`CompleteNodeIfCleared` 里的 `OfferRewardChoiceAction("help.choice", 3)` 删除；清关直接放房间图标。
-- **清关即全量结算**：清关那一拍结算**全部**未使用道具卡——场上残留、道具卡格内的都算——每张 +10 金币；残留机关卡一并清场。因此**道具卡格不跨节点留存**。
+- **清关条件与收场（已修正）**：战斗房清关条件见 [ADR-0026](0026-leave-trap-sole-clear-condition.md)（离开机关击破，而非真怪物清零）。清关收场清掉场上残留且**不兑金**；道具卡格按 [ADR-0025](0025-item-slots-run-persistent-hold.md) 跨节点保留。~~旧条款「清关即全量结算场上+道具卡格每张 +10」废止。~~
 - **通关**：第 3 层节点 8 清关后踩下楼图标（或等价推进）触发 `GamePhase.Victory`，沿用 `RunModel.AdvanceNode()`。
 
 ## 为什么
@@ -34,18 +35,19 @@ status: accepted
 
 `RunModel` 本来就有 `Floor` / `NodeIndex` / `Seed` 与 `AdvanceNode()`，把编排收进来是**补齐**而非新建。
 
-清关即全量结算（而非设计案原文的「玩家选定选项后才结算，且不含道具卡格」）：让玩家不必为了换金币而临走前扫一遍场地，也让「踩图标」这个提交动作只承担导航语义。代价是清关后玩家再拾取道具已无收益——可接受，因为清关后本就没有可用目标。
+（历史注：曾选「清关即全量结算」以免扫场兑金；已被策划改为离开机关出口 + 主动回收经济，见 ADR-0025 / 0026。）
 
 ## 后果
 
 - 表现层壳的 `NodeIndex` 退化为 Core 投影，`GameFlowOrchestrator` 的 `IncrementNodeIndex()` 不再是进度真相。
 - `GameFlowOrchestrator.RunNodeCycleAsync` 的固定四段（Battle → Reward → RoomChoice → RoomEvent）不再适用于节点 4 / 7，循环须按 Core 给出的节点类型分支。
 - `node_deck_rules.json` 由 9 行改 8 行（且节点 4 / 7 无怪物行）。
-- 设计案 `层级流程.md` 的节点数与本 ADR 一致（8）；`战斗关卡流程.md` 第 8 步「除道具卡格内的道具卡」与 `经济.md`「含道具牌格」冲突，以 `经济.md` 为准，设计案待修。
 - `GoUp` 上一层图标存在但不接线，跑图为单向向下。
 
 ## 相关
 
 - [ADR-0020](0020-board-as-interaction-surface.md) — 图标怎么放、怎么踩
 - [ADR-0022](0022-node-loadout-model.md) — 每个节点具体装填什么牌
-- [ADR-0017](0017-trap-card-kind-and-dual-bucket.md) — 清关只看真怪物，机关不挡关
+- [ADR-0017](0017-trap-card-kind-and-dual-bucket.md) — Trap 双桶
+- [ADR-0025](0025-item-slots-run-persistent-hold.md) — 道具卡格持续持有
+- [ADR-0026](0026-leave-trap-sole-clear-condition.md) — 离开机关清关

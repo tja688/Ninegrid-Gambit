@@ -25,11 +25,14 @@
 | [ADR-0013](../adr/0013-action-countdown-unified.md) | 行动计数统一为倒计时、开火窗口一次性（**#76 Core 效果侧已落地**；攻击模式消费见 #79/#80；卡面上屏见 #81） |
 | [ADR-0014](../adr/0014-theme-ids-are-legacy-opaque.md) | 主题化 contentId/deckId 是历史残留不透明主键；卡组仅内部渠道；勿被虚构命名带偏 |
 | [ADR-0016](../adr/0016-card-face-orientation.md) | 牌面朝向 Core 权威；背面双向惰性（不可伤害 / 不敌方开火 / 攻击倒计时冻结）；独立 `faceDownTick.*` |
-| [ADR-0017](../adr/0017-trap-card-kind-and-dual-bucket.md) | 机关卡 `CardKind.Trap`；双桶交战；清关/赏金排除；静默 CounterAttackBanned；五套卡面 |
+| [ADR-0017](../adr/0017-trap-card-kind-and-dual-bucket.md) | 机关卡 `CardKind.Trap`；双桶交战；赏金排除；清关条件见 ADR-0026；静默 CounterAttackBanned；五套卡面 |
 | [ADR-0018](../adr/0018-trigger-visible-causality.md) | 触发可见因果；Triggered 卡牌基础触发表现（v1 持有者缩放） |
 | [ADR-0019](../adr/0019-avatar-board-walk.md) | 非战斗 Avatar 正交跳格；IntentIntake `boardWalk`；终点可图标格 |
 | [ADR-0020](../adr/0020-board-as-interaction-surface.md) | 场地即交互面；场地图标落格 + 驻留提交；简要解释文字框 / 楼层提示（#89） |
-| [ADR-0021](../adr/0021-run-progression-in-core.md) | 跑图进度与节点编排归 Core；8 节点/层；4/7 非战斗 |
+| [ADR-0021](../adr/0021-run-progression-in-core.md) | 跑图进度与节点编排归 Core；8 节点/层；4/7 非战斗（清关兑金条款见 ADR-0025/0026） |
+| [ADR-0022](../adr/0022-node-loadout-model.md) | 关卡装填：主题序列 + 玩家侧重生成；携带卡包已退役（ADR-0025） |
+| [ADR-0025](../adr/0025-item-slots-run-persistent-hold.md) | 道具卡格跑图内持续持有；双容量；商店升级；回收；携带卡包退役 |
+| [ADR-0026](../adr/0026-leave-trap-sole-clear-condition.md) | 离开机关为战斗房唯一清关；门/离开；⌈N/2⌉ 洗入牌堆 |
 
 > ADR-0011–0013 已落地（含卡面倒计时 Commit 与单向打击 Counter 分拍，#81）。落地方案见 `Assets/Notes/怪物攻击模式与敌方行动阶段-落地方案-2026-07-29.md`（过程笔记，非权威）。
 
