@@ -13,7 +13,6 @@ namespace NineGrid.Core.Tests
     /// <summary>
     /// #112 / ADR-0026：开局真怪击破达 ⌈N/2⌉ 后，将离开机关洗入战斗卡组随机位（经补牌上场，无强制占格）。
     /// 缝：StartNode 编组 → 真怪击破 → DrawPile/Board 出现 trap.leave；N 不含机关；奇数上取整；只插入一次。
-    /// 本票不改写 <see cref="IDeckSystem.IsNodeCleared"/>（留给 #113）。
     /// </summary>
     public sealed class LeaveTrapInsertContractTests
     {

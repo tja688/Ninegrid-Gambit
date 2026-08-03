@@ -86,7 +86,7 @@ namespace NineGrid.Core.Tests
         {
             Assert.IsTrue(mPhase.StartNode(CreateSingleMonsterNode(hp: 1, attack: 0)).Accepted);
             PlaceSoleBoardCardAt(sAdjacentSlot);
-            Assert.IsTrue(mPhase.Attack(sAdjacentSlot).Accepted);
+            CompleteViaLeaveTrapBroken();
 
             Assert.AreEqual(GamePhase.RoomChoice, mPhase.CurrentPhase);
             Assert.AreEqual(PendingChoiceKind.Room, mArch.GetModel<PendingChoiceModel>().Kind.Value);
@@ -100,29 +100,9 @@ namespace NineGrid.Core.Tests
         {
             Assert.IsTrue(mPhase.StartNode(CreateSingleMonsterNode(hp: 1, attack: 0)).Accepted);
             PlaceSoleBoardCardAt(sAdjacentSlot);
-            // 模拟作弊清场：直接移走唯一怪并清空敌池/抽牌。
-            var board = mArch.GetModel<BoardModel>();
-            var registry = mArch.GetModel<CardRegistry>();
-            var deck = mArch.GetModel<DeckModel>();
-            var uid = board.GetCardUid(sAdjacentSlot);
-            Assert.Greater(uid, 0);
-            board.ClearSlot(sAdjacentSlot);
-            if (registry.TryGet(uid, out var card))
-            {
-                card.Zone.Value = ZoneId.None;
-                card.Slot.Value = SlotId.None;
-            }
+            Assert.IsFalse(mArch.GetSystem<IDeckSystem>().IsNodeCleared(), "真怪仍在场不得清关");
 
-            while (deck.DrawPileUids.Count > 0)
-            {
-                deck.RemoveUid(deck.DrawPileUids[0]);
-            }
-
-            while (deck.EnemyCardPoolUids.Count > 0)
-            {
-                deck.RemoveUid(deck.EnemyCardPoolUids[0]);
-            }
-
+            mArch.GetModel<BattleContextModel>().MarkLeaveTrapBroken();
             Assert.IsTrue(mArch.GetSystem<IDeckSystem>().IsNodeCleared());
             Assert.IsTrue(mPhase.TryCompleteClearedNode().Accepted);
             Assert.AreEqual(GamePhase.RoomChoice, mPhase.CurrentPhase);
@@ -140,7 +120,7 @@ namespace NineGrid.Core.Tests
 
             var player = mArch.GetModel<PlayerModel>();
             var coinsBefore = player.Coins.Value;
-            Assert.IsTrue(mPhase.Attack(sAdjacentSlot).Accepted);
+            CompleteViaLeaveTrapBroken();
 
             Assert.AreEqual(coinsBefore, player.Coins.Value, "道具卡格不应因清关兑金");
             Assert.AreEqual(0, CountBoardTraps(), "残留机关应同拍清场");
@@ -180,7 +160,7 @@ namespace NineGrid.Core.Tests
             run.NodeIndex.Value = 7;
             Assert.IsTrue(mPhase.StartNode(CreateSingleMonsterNode(hp: 1, attack: 0)).Accepted);
             PlaceSoleBoardCardAt(sAdjacentSlot);
-            Assert.IsTrue(mPhase.Attack(sAdjacentSlot).Accepted);
+            CompleteViaLeaveTrapBroken();
 
             Assert.AreEqual(GamePhase.RoomChoice, mPhase.CurrentPhase);
             Assert.AreEqual(PendingChoiceKind.Navigation, mArch.GetModel<PendingChoiceModel>().Kind.Value);
@@ -189,6 +169,12 @@ namespace NineGrid.Core.Tests
             Assert.IsTrue(mPhase.SelectRoom(0).Accepted);
             Assert.IsTrue(mPhase.EnterRoom().Accepted);
             Assert.AreEqual(GamePhase.Victory, mPhase.CurrentPhase);
+        }
+
+        private void CompleteViaLeaveTrapBroken()
+        {
+            mArch.GetModel<BattleContextModel>().MarkLeaveTrapBroken();
+            Assert.IsTrue(mPhase.TryCompleteClearedNode().Accepted);
         }
 
         private static void AssertSchedule(

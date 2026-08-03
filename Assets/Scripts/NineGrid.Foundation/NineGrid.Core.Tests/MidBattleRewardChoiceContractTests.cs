@@ -150,7 +150,8 @@ namespace NineGrid.Core.Tests
             Assert.IsTrue(mPhase.StartNode(CreateSingleMonsterNode(hp: 1, attack: 0)).Accepted);
             PlaceSoleBoardCardAt(sAdjacentSlot);
 
-            var result = mPhase.Attack(sAdjacentSlot);
+            mArch.GetModel<BattleContextModel>().MarkLeaveTrapBroken();
+            var result = mPhase.TryCompleteClearedNode();
             Assert.IsTrue(result.Accepted, result.Reason);
 
             Assert.AreEqual(GamePhase.RoomChoice, mPhase.CurrentPhase);
@@ -179,8 +180,9 @@ namespace NineGrid.Core.Tests
 
             // 清场 → 选房 → 入房 → 下一节点，遗物必须仍在。
             PlaceSoleBoardCardAt(sAdjacentSlot);
-            var kill = mPhase.Attack(sAdjacentSlot);
-            Assert.IsTrue(kill.Accepted, kill.Reason);
+            mArch.GetModel<BattleContextModel>().MarkLeaveTrapBroken();
+            var clear = mPhase.TryCompleteClearedNode();
+            Assert.IsTrue(clear.Accepted, clear.Reason);
             Assert.AreEqual(GamePhase.RoomChoice, mPhase.CurrentPhase);
             Assert.IsTrue(mPhase.SelectRoom(0).Accepted);
             Assert.IsTrue(mPhase.EnterRoom().Accepted);

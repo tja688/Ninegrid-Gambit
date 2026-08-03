@@ -13,8 +13,8 @@ namespace NineGrid.Core.Tests
 {
     /// <summary>
     /// #111 / ADR-0026：离开机关内容 + 门/离开技能契约。
-    /// 缝：Catalog 装配；门挡非交战伤与直接移除、放行交战玩家出手；离开击破置清关向标志；无赏金。
-    /// 本票不改写 <see cref="IDeckSystem.IsNodeCleared"/>（留给 #113）。
+    /// 缝：Catalog 装配；门挡非交战伤与直接移除、放行交战玩家出手；离开击破置清关标志。
+    /// 全局清关收场见 <see cref="LeaveTrapClearContractTests"/>（#113）。
     /// </summary>
     public sealed class LeaveTrapDoorLeaveContractTests
     {
@@ -132,12 +132,12 @@ namespace NineGrid.Core.Tests
         }
 
         [Test]
-        public void Leave_BreakByCombat_MarksClearOrientedFlag_WithoutGold()
+        public void Leave_BreakByCombat_MarksClearFlag_WithoutGold()
         {
             StartEmptyNode();
             PrepareAvatar(99, 99, 0);
             var leaveUid = SpawnLeaveTrap(hp: 1);
-            // 场上留一只真怪：旧 IsNodeCleared（真怪清零）仍为 false，证明本票未切换全局清关条件。
+            // 场上留一只真怪：证明击破离开机关不依赖真怪清零。
             mPipeline.Enqueue(new SpawnCardAction("monster.skull_head", CardKind.Monster, ZoneId.Board, SlotId.Board(8), 1, "test"));
             Assert.Greater(mPipeline.RunToCompletion(), 0);
             var monsterUid = mArch.GetModel<BoardModel>().GetCardUid(SlotId.Board(8));
@@ -153,14 +153,14 @@ namespace NineGrid.Core.Tests
             var registry = mArch.GetModel<CardRegistry>();
 
             Assert.IsFalse(battle.IsLeaveTrapBroken);
-            Assert.IsFalse(mArch.GetSystem<IDeckSystem>().IsNodeCleared(), "有真怪存活时旧清关条件应为 false");
+            Assert.IsFalse(mArch.GetSystem<IDeckSystem>().IsNodeCleared());
             Assert.IsTrue(mPhase.ApplyCombatHit(board.AvatarUid.Value, leaveUid).Accepted);
 
-            Assert.IsTrue(battle.IsLeaveTrapBroken, "击破离开机关应置清关向标志");
+            Assert.IsTrue(battle.IsLeaveTrapBroken, "击破离开机关应置清关标志");
+            Assert.IsTrue(mArch.GetSystem<IDeckSystem>().IsNodeCleared(), "离开标志即 IsNodeCleared");
             Assert.AreNotEqual(ZoneId.Board, registry.Get(leaveUid).Zone.Value, "击破后应离场");
             Assert.AreEqual(coinsBefore, player.Coins.Value, "击破离开机关无击杀赏金");
-            Assert.AreEqual(ZoneId.Board, registry.Get(monsterUid).Zone.Value, "真怪应仍在场");
-            Assert.IsFalse(mArch.GetSystem<IDeckSystem>().IsNodeCleared(), "本票不切换全局清关条件");
+            Assert.AreEqual(ZoneId.Board, registry.Get(monsterUid).Zone.Value, "ApplyCombatHit 不走收场清残留");
         }
 
         private void StartEmptyNode()

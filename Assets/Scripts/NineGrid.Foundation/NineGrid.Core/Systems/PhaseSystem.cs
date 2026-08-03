@@ -1695,7 +1695,7 @@ namespace NineGrid.Core.Systems
             pipeline.Enqueue(new ChangePhaseAction(GamePhase.NodeCompleted));
             pipeline.Enqueue(new NodeCompletedAction());
             var resolved = pipeline.RunToCompletion();
-            // 清关当拍结算全部未使用道具卡，并清掉残留机关；不再走 help.choice 三选一。
+            // ADR-0026 / #113：清关清场残留（帮助/怪/机关）不兑金；道具卡格保留；不再走 help.choice。
             resolved += this.GetSystem<IEconomySystem>().SettleUnusedHelpCards();
             resolved += this.GetSystem<IEconomySystem>().ClearResidualTraps();
             pipeline.Enqueue(new ChangePhaseAction(GamePhase.RoomChoice));

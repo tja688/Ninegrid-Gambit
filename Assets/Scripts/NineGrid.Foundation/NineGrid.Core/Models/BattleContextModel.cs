@@ -6,7 +6,7 @@ namespace NineGrid.Core
     /// <summary>
     /// 追踪玩家当前交战敌人与交战窗口是否打开。
     /// EngagedEnemyUid 供 UntilEnemyChanges；IsEngagementActive 供 OnBattle 门禁（#78 / ADR-0012）。
-    /// IsLeaveTrapBroken 供离开机关「离开」技能清关向结果（#111 / ADR-0026；全局 IsNodeCleared 改写见 #113）。
+    /// IsLeaveTrapBroken 即战斗房清关标志（#113 / ADR-0026；<c>IDeckSystem.IsNodeCleared</c> 读此位）。
     /// 开局真怪 N / 击破进度 / 离开机关是否已洗入供 #112 ⌈N/2⌉ 插入（ADR-0026）。
     /// </summary>
     public sealed class BattleContextModel : AbstractModel
@@ -21,7 +21,7 @@ namespace NineGrid.Core
         /// </summary>
         public bool IsEngagementActive { get; private set; }
 
-        /// <summary>离开机关被击破后由「离开」技能置位；本票不直接驱动 <c>IsNodeCleared</c>。</summary>
+        /// <summary>离开机关被击破后由「离开」技能置位；驱动 <c>IsNodeCleared</c>。</summary>
         public bool IsLeaveTrapBroken { get; private set; }
 
         /// <summary>本节点开局编入的真怪物总数（不含机关）；SetupNodeDeck 写入。</summary>

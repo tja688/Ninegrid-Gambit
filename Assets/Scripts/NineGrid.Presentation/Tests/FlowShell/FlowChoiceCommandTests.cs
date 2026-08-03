@@ -25,7 +25,8 @@ namespace NineGrid.Presentation.Tests.FlowShell
             {
                 Assert.IsTrue(arch.Phase.StartNode(CreateSingleMonsterNode(hp: 1, attack: 0)).Accepted);
                 arch.PlaceSoleBoardCardAt(sAdjacentSlot);
-                Assert.IsTrue(arch.Phase.Attack(sAdjacentSlot).Accepted);
+                arch.Architecture.GetModel<BattleContextModel>().MarkLeaveTrapBroken();
+                Assert.IsTrue(arch.Phase.TryCompleteClearedNode().Accepted);
                 Assert.AreEqual(GamePhase.RoomChoice, arch.Phase.CurrentPhase);
 
                 var selectRoom = arch.Architecture.SendCommand(new SubmitSelectRoomCommand(0));
@@ -45,7 +46,8 @@ namespace NineGrid.Presentation.Tests.FlowShell
             {
                 Assert.IsTrue(arch.Phase.StartNode(CreateSingleMonsterNode(hp: 1, attack: 0)).Accepted);
                 arch.PlaceSoleBoardCardAt(sAdjacentSlot);
-                Assert.IsTrue(arch.Phase.Attack(sAdjacentSlot).Accepted);
+                arch.Architecture.GetModel<BattleContextModel>().MarkLeaveTrapBroken();
+                Assert.IsTrue(arch.Phase.TryCompleteClearedNode().Accepted);
                 Assert.AreEqual(GamePhase.RoomChoice, arch.Phase.CurrentPhase);
                 Assert.IsFalse(arch.Phase.CanExecute(GameCommandKind.SkipHelpChoice));
                 Assert.IsTrue(arch.Phase.CanExecute(GameCommandKind.SelectRoom));

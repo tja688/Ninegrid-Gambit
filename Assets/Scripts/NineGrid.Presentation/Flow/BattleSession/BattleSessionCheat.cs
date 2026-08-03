@@ -503,59 +503,8 @@ namespace NineGrid.Flow
 
         private static void MakeNodeCleared(IArchitecture arch)
         {
-            var registry = arch.GetModel<CardRegistry>();
-            var board = arch.GetModel<BoardModel>();
-            var deck = arch.GetModel<DeckModel>();
-            var field = GroundFieldGeometryHook.FieldOrNull();
-
-            for (var i = SlotId.MinBoardIndex; i <= SlotId.MaxBoardIndex; i++)
-            {
-                var slot = SlotId.Board(i);
-                var uid = board.GetCardUid(slot);
-                if (uid <= 0
-                    || !registry.TryGet(uid, out var card)
-                    || card.Kind != CardKind.Monster)
-                {
-                    continue;
-                }
-
-                board.ClearSlot(slot);
-                card.Zone.Value = ZoneId.None;
-                card.Slot.Value = SlotId.None;
-                // 进 RoomChoice 前不得 StartExplore；飞牌中的怪先取消再卸。
-                field?.CancelDealFlightForUid(uid, "CheatForceNodeVictory.MakeNodeCleared");
-                field?.RequestRemoveFromField(
-                    uid,
-                    animate: false,
-                    skipBusyGuard: true,
-                    startExplore: false);
-            }
-
-            var drawUids = new List<int>(deck.DrawPileUids);
-            for (var i = 0; i < drawUids.Count; i++)
-            {
-                if (registry.TryGet(drawUids[i], out var card))
-                {
-                    deck.RemoveCard(card);
-                }
-                else
-                {
-                    deck.RemoveUid(drawUids[i]);
-                }
-            }
-
-            var enemyPoolUids = new List<int>(deck.EnemyCardPoolUids);
-            for (var i = 0; i < enemyPoolUids.Count; i++)
-            {
-                if (registry.TryGet(enemyPoolUids[i], out var card))
-                {
-                    deck.RemoveCard(card);
-                }
-                else
-                {
-                    deck.RemoveUid(enemyPoolUids[i]);
-                }
-            }
+            // ADR-0026 / #113：QuickTest 跳关与击破离开机关等价 — 置清关标志即可走 CompleteNodeIfCleared。
+            arch.GetModel<BattleContextModel>().MarkLeaveTrapBroken();
         }
 
         /// <summary>

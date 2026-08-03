@@ -11,6 +11,7 @@ namespace NineGrid.Core.Systems
         int AwardDiscardRelic();
         int AwardRecycleItemSlot();
         int SettleUnusedHelpCards();
+        /// <summary>清关时清掉场上残留怪与机关（不兑金）。</summary>
         int ClearResidualTraps();
         int DeleteHelpCard(int cardUid);
 
@@ -89,33 +90,31 @@ namespace NineGrid.Core.Systems
 
         public int SettleUnusedHelpCards()
         {
-            var catalog = CatalogOrNull();
-            if (catalog == null)
-            {
-                return 0;
-            }
-
-            var count = CountUnusedHelpCards();
+            // ADR-0026 / #113：清关清场未拾取帮助卡，但不兑金；道具卡格由 RemoveLingeringHelpCards 跳过。
             RemoveLingeringHelpCards();
-
-            if (count <= 0 || catalog.Economy.UnusedHelpCardGold == 0)
-            {
-                return 0;
-            }
-
-            return ExecuteGold(count * catalog.Economy.UnusedHelpCardGold, "unusedHelpCards");
+            return 0;
         }
 
         public int ClearResidualTraps()
         {
+            // ADR-0026 / #113：清关同拍清掉场上残留怪与机关（不兑金）。
             var registry = this.GetModel<CardRegistry>();
             var board = this.GetModel<BoardModel>();
+            var avatarUid = board.AvatarUid.Value;
             var targets = new List<int>();
             var seen = new HashSet<int>();
             foreach (var uid in board.BoardCardUids())
             {
                 CardInstance card;
-                if (uid == 0 || !seen.Add(uid) || !registry.TryGet(uid, out card) || card.Kind != CardKind.Trap)
+                if (uid == 0
+                    || uid == avatarUid
+                    || !seen.Add(uid)
+                    || !registry.TryGet(uid, out card))
+                {
+                    continue;
+                }
+
+                if (card.Kind != CardKind.Trap && !CardCombatRules.IsTrueMonster(card.Kind))
                 {
                     continue;
                 }
@@ -131,7 +130,7 @@ namespace NineGrid.Core.Systems
             var pipeline = this.GetSystem<IActionPipelineSystem>();
             for (var i = 0; i < targets.Count; i++)
             {
-                pipeline.Enqueue(new RemoveCardAction(targets[i], ZoneId.Removed, "clearResidualTrap"));
+                pipeline.Enqueue(new RemoveCardAction(targets[i], ZoneId.Removed, "clearResidualBoard"));
             }
 
             return pipeline.RunToCompletion();
@@ -175,6 +174,12 @@ namespace NineGrid.Core.Systems
                     continue;
                 }
 
+                // ADR-0026 / #113：清关清场移除不兑金（恋战击杀仍走正常移除赏金）。
+                if (IsClearResidualRemove(evt))
+                {
+                    continue;
+                }
+
                 // Legacy tests can still attach explicit GoldReward; those actions already pay it.
                 if (card.Counters.Get(CoreCounterKeys.GoldReward) != 0)
                 {
@@ -201,6 +206,19 @@ namespace NineGrid.Core.Systems
             }
 
             return result;
+        }
+
+        private static bool IsClearResidualRemove(CoreGameEvent evt)
+        {
+            if (evt == null)
+            {
+                return false;
+            }
+
+            return evt.Message == "clearResidualBoard"
+                || evt.Cause == "clearResidualBoard"
+                || evt.Message == "clearResidualTrap"
+                || evt.Cause == "clearResidualTrap";
         }
 
         private void RemoveLingeringHelpCards()
@@ -258,41 +276,6 @@ namespace NineGrid.Core.Systems
             }
 
             targets.Add(uid);
-        }
-
-        private int CountUnusedHelpCards()
-        {
-            var registry = this.GetModel<CardRegistry>();
-            var board = this.GetModel<BoardModel>();
-            var deck = this.GetModel<DeckModel>();
-            var seen = new HashSet<int>();
-
-            AddHelpCardsFromList(registry, deck.DrawPileUids, seen);
-            AddHelpCardsFromList(registry, deck.PlayerCardPoolUids, seen);
-            // ADR-0025 / #107：道具卡格不计入清关未用帮助卡兑金。
-            foreach (var uid in board.BoardCardUids())
-            {
-                AddHelpCard(registry, uid, seen);
-            }
-
-            return seen.Count;
-        }
-
-        private static void AddHelpCardsFromList(CardRegistry registry, IReadOnlyList<int> uids, HashSet<int> seen)
-        {
-            for (var i = 0; i < uids.Count; i++)
-            {
-                AddHelpCard(registry, uids[i], seen);
-            }
-        }
-
-        private static void AddHelpCard(CardRegistry registry, int uid, HashSet<int> seen)
-        {
-            CardInstance card;
-            if (uid != 0 && registry.TryGet(uid, out card) && card.Kind == CardKind.HelpCard)
-            {
-                seen.Add(uid);
-            }
         }
 
         private int ExecuteGold(int amount, string reason)

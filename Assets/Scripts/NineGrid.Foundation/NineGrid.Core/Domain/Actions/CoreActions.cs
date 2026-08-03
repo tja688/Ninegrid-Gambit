@@ -474,8 +474,11 @@ namespace NineGrid.Core
             var card = registry.Get(CardUid);
 
             // ADR-0026 / #111：门 — 直接移除/放逐无效（Kill 不经此 Action）。
+            // #113：清关收场清残留须能卸掉仍在场的离开机关（含 QuickTest 仅置标志跳关）。
+            var isClearResidual = Reason == "clearResidualBoard" || Reason == "clearResidualTrap";
             var statSystem = context.GetSystem<IStatSystem>();
-            if (statSystem.EvaluateRule(RuleId.DoorProtection, 0f, statSystem.CreateContext(card)) > 0f)
+            if (!isClearResidual
+                && statSystem.EvaluateRule(RuleId.DoorProtection, 0f, statSystem.CreateContext(card)) > 0f)
             {
                 return GameActionResult.Empty;
             }

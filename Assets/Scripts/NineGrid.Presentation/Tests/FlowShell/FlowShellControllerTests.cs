@@ -48,7 +48,10 @@ namespace NineGrid.Presentation.Tests.FlowShell
             {
                 Assert.IsTrue(arch.Phase.StartNode(CreateSingleMonsterNode(hp: 1, attack: 0)).Accepted);
                 arch.PlaceSoleBoardCardAt(sAdjacentSlot);
-                Assert.IsTrue(arch.Phase.Attack(sAdjacentSlot).Accepted);
+                NineGrid.Core.NineGridArchitecture.Interface
+                    .GetModel<BattleContextModel>()
+                    .MarkLeaveTrapBroken();
+                Assert.IsTrue(arch.Phase.TryCompleteClearedNode().Accepted);
                 Assert.AreEqual(GamePhase.RoomChoice, arch.Phase.CurrentPhase);
                 PresentationInputStateSystem.EnsureRegistered(arch.Architecture)
                     .SetChoiceOverlayActive(true);
@@ -81,7 +84,10 @@ namespace NineGrid.Presentation.Tests.FlowShell
             {
                 Assert.IsTrue(arch.Phase.StartNode(CreateSingleMonsterNode(hp: 1, attack: 0)).Accepted);
                 arch.PlaceSoleBoardCardAt(sAdjacentSlot);
-                Assert.IsTrue(arch.Phase.Attack(sAdjacentSlot).Accepted);
+                NineGrid.Core.NineGridArchitecture.Interface
+                    .GetModel<BattleContextModel>()
+                    .MarkLeaveTrapBroken();
+                Assert.IsTrue(arch.Phase.TryCompleteClearedNode().Accepted);
                 Assert.AreEqual(GamePhase.RoomChoice, arch.Phase.CurrentPhase);
 
                 Assert.IsTrue(runtime.Runtime.TryBeginExternalHold("settlement-drain"));

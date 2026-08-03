@@ -102,7 +102,8 @@ namespace NineGrid.Core.Tests
             var capacity = player.ItemDeckCapacity;
             var poolCount = player.ItemSourcePoolDefIds.Count;
 
-            Assert.IsTrue(mPhase.Attack(SlotId.Board(2)).Accepted);
+            mArch.GetModel<BattleContextModel>().MarkLeaveTrapBroken();
+            Assert.IsTrue(mPhase.TryCompleteClearedNode().Accepted);
 
             Assert.AreEqual(coinsBefore, player.Coins.Value, "道具卡格不应因清关兑金");
             Assert.AreEqual(1, CountItemSlotHelpCards(), "清关后道具卡格应保留");

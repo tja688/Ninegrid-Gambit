@@ -192,7 +192,7 @@ namespace NineGrid.Core.Tests
         }
 
         [Test]
-        public void NodeCleared_WhenOnlyTrapRemainsOnBoardAndDrawPile()
+        public void NodeCleared_RequiresLeaveTrapBroken_NotOnlyTrapRemaining()
         {
             StartEmptyNode();
             SpawnTrap(sAdjacentSlot);
@@ -205,7 +205,9 @@ namespace NineGrid.Core.Tests
             deck.AddToDrawPile(pileTrap, true);
 
             Assert.IsFalse(mDeck.HasEnemyInDrawPile(), "抽牌堆仅 Trap 不算有敌");
-            Assert.IsTrue(mDeck.IsNodeCleared(), "仅剩 Trap 时应可清关");
+            Assert.IsFalse(mDeck.IsNodeCleared(), "仅剩 Trap / 真怪清零不得清关；须击破离开机关");
+            mArch.GetModel<BattleContextModel>().MarkLeaveTrapBroken();
+            Assert.IsTrue(mDeck.IsNodeCleared(), "离开机关击破标志即清关");
         }
 
         [Test]

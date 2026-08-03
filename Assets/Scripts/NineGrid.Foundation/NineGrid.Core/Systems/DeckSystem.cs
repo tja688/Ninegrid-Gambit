@@ -92,11 +92,8 @@ namespace NineGrid.Core.Systems
 
         public bool IsNodeCleared()
         {
-            // ADR-0017：清关只看真怪物；抽牌堆/敌池/场上残留 Trap 不挡关。
-            // #113 将改为离开机关击破语义；本票 (#112) 不改写。
-            return !HasEnemyInDrawPile()
-                && !HasEnemyInEnemyCardPool()
-                && !HasEnemyOnBoard();
+            // ADR-0026 / #113：唯一清关条件是离开机关已被击破（或等价清关标志）。
+            return this.GetModel<BattleContextModel>().IsLeaveTrapBroken;
         }
 
         private IEnumerable<GameAction> ReactToTrueMonsterKillForLeaveTrap(TriggerContext context)
