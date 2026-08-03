@@ -452,6 +452,8 @@ namespace NineGrid.Cards
                 SlotFrameConvergence.SnapHome(probe.Card, settlePos, "DealFlight.ExploreSettle", probe.Card.Uid);
                 CardEdgeDustFx.PlayPlace(probe.Card);
 
+                // 先卸 in-flight，再落格认领（ADR-0023：落地才登记；IsDealInFlight 会拒领）。
+                _exploreByBirthSlot.Remove(probe.BirthSlot);
                 if (!_host.PlaceForExplore(probe.TrackedSlot, probe.Card))
                 {
                     outcome = "placeFail";
@@ -537,6 +539,10 @@ namespace NineGrid.Cards
                 SlotFrameConvergence.SnapHome(probe.Card, settlePos, "DealFlight.DrainSettle", uid);
                 CardEdgeDustFx.PlayPlace(probe.Card);
                 CardEntityLifecycleHook.CardsOrNull()?.RefreshDisplayMode(probe.Card);
+
+                // 开局/Drain 发牌：起飞时已 ReleaseClaim，落地后须回登记，否则场地面点击全走「未认领→Explore」。
+                _drainByUid.Remove(uid);
+                _host.NotifyDealFlightLanded(probe.Card, settleSlot);
                 probe.Handle.Complete(true);
             }
             catch (OperationCanceledException)

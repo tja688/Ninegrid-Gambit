@@ -803,7 +803,15 @@ namespace NineGrid.Cards
 
             CardEntityLifecycleHook.CardsOrNull().SetDisplayMode(card, CardDisplayMode.GroundCardMode);
             RefreshSlotHitCollider(slot);
+            // 调用方须已结束 in-flight，否则 Sync 会因 IsDealInFlight 拒领。
+            SyncGroundCardClaim(card, slot);
             return true;
+        }
+
+        /// <inheritdoc cref="IDealFlightHost.NotifyDealFlightLanded"/>
+        public void NotifyDealFlightLanded(ManagedCard card, int slot)
+        {
+            SyncGroundCardClaim(card, slot);
         }
 
         public bool TryGetExploreAnchorPosition(int slot, out Vector3 position)
@@ -827,8 +835,15 @@ namespace NineGrid.Cards
             Vector3 launchPos,
             DealFlightContext context)
         {
+            // 无飞牌协调器时不注销认领（否则 fallback 动画路径永远不回登记）。
+            if (_deal == null)
+            {
+                return null;
+            }
+
+            // ADR-0023：起飞即注销，落地由 DealFlightCoordinator → NotifyDealFlightLanded 再登记。
             ReleaseGroundCardClaim(card);
-            return _deal?.LaunchDrainFlight(card, targetSlot, launchPos, context);
+            return _deal.LaunchDrainFlight(card, targetSlot, launchPos, context);
         }
 
         public bool IsDealInFlight(int uid)

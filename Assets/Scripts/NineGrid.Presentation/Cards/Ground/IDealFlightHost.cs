@@ -16,5 +16,11 @@ namespace NineGrid.Cards
         bool TryGetExploreAnchorPosition(int slot, out Vector3 position);
 
         bool PlaceForExplore(int slot, ManagedCard card);
+
+        /// <summary>
+        /// 飞牌落地后登记格位认领（ADR-0023：起飞注销、落地才认领）。
+        /// 调用方须已从 in-flight 表移除该 uid，否则 <see cref="GroundCardHitProxy"/> 会拒领。
+        /// </summary>
+        void NotifyDealFlightLanded(ManagedCard card, int slot);
     }
 }

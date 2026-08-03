@@ -50,6 +50,39 @@ namespace NineGrid.Presentation.Tests.Cards
                 "WaitProbeConvergenceAsync 须在卡已销毁时退出，防止 ActiveCount 粘死");
         }
 
+        [Test]
+        public void DealFlightLand_ReclaimsSlotAfterInFlightCleared()
+        {
+            var coordinator = ReadPresentationSource("Cards/Ground/DealFlightCoordinator.cs");
+            Assert.IsTrue(
+                Regex.IsMatch(
+                    coordinator,
+                    @"_drainByUid\.Remove\(uid\);\s*_host\.NotifyDealFlightLanded"),
+                "Drain 落地须先卸 in-flight 再 NotifyDealFlightLanded（回登记认领）");
+            Assert.IsTrue(
+                Regex.IsMatch(
+                    coordinator,
+                    @"_exploreByBirthSlot\.Remove\(probe\.BirthSlot\);\s*if\s*\(!_host\.PlaceForExplore"),
+                "Explore 落地须先卸 in-flight 再 PlaceForExplore（内含认领）");
+
+            var host = ReadPresentationSource("Cards/Ground/IDealFlightHost.cs");
+            Assert.IsTrue(
+                host.Contains("NotifyDealFlightLanded"),
+                "IDealFlightHost 须声明 NotifyDealFlightLanded");
+
+            var motion = ReadPresentationSource("Cards/Ground/GroundMotionExecutor.cs");
+            Assert.IsTrue(
+                Regex.IsMatch(
+                    motion,
+                    @"bool PlaceForExplore\([\s\S]{0,800}?SyncGroundCardClaim"),
+                "PlaceForExplore 须 SyncGroundCardClaim");
+            Assert.IsTrue(
+                Regex.IsMatch(
+                    motion,
+                    @"void NotifyDealFlightLanded\([\s\S]{0,200}?SyncGroundCardClaim"),
+                "NotifyDealFlightLanded 须 SyncGroundCardClaim");
+        }
+
         private static string ReadPresentationSource(string relativeUnderPresentation)
         {
             var path = Path.GetFullPath(
