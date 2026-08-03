@@ -1,6 +1,7 @@
 using NineGrid.Flow.Presentation;
 using NineGrid.Presentation.Systems;
 using QFramework;
+using UnityEngine;
 
 namespace NineGrid.Presentation.Commands
 {
@@ -26,8 +27,25 @@ namespace NineGrid.Presentation.Commands
                 InputOwner.ProtectedField,
                 out preview);
 
-            return disposition == IntentDisposition.Allow
-                || disposition == IntentDisposition.BufferToDirector;
+            var accepted = disposition == IntentDisposition.Allow
+                           || disposition == IntentDisposition.BufferToDirector;
+            if (!accepted)
+            {
+                Debug.LogWarning(
+                    "[BoardWalk] IntentIntake disposition=" + disposition
+                    + " slot=" + mGroundSlot
+                    + " owner=" + PresentationInputGates.CurrentOwner
+                    + " choiceOverlay=" + PresentationInputGates.ChoiceOverlayActive);
+            }
+            else
+            {
+                Debug.Log(
+                    "[BoardWalk] accepted disposition=" + disposition
+                    + " slot=" + mGroundSlot
+                    + " owner=" + PresentationInputGates.CurrentOwner);
+            }
+
+            return accepted;
         }
     }
 }

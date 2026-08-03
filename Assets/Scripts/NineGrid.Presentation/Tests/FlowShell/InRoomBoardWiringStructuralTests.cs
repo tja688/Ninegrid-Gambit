@@ -61,5 +61,33 @@ namespace NineGrid.Presentation.Tests.FlowShell
                 Regex.IsMatch(text, @"\bPlayRoomEventAsync\s*\("),
                 "独立 PlayRoomEventAsync 已并入图标进房路径，不应再保留二次 EnterRoom 死代码");
         }
+
+        [Test]
+        public void InRoomBoardSessions_DoNotHoldChoiceOverlayForWait()
+        {
+            // ADR-0020：房内场地板是受保护场地；整段 ChoiceOverlay 会让 BoardWalk
+            // （ProtectedField）ownerMismatch，商店/卡店/特殊房全部点不动。
+            var text = File.ReadAllText(OrchestratorPath);
+            var methodNames = new[]
+            {
+                "PresentShopBoardAsync",
+                "PresentTavernBoardAsync",
+                "PresentRewardBoardAsync",
+            };
+
+            for (var i = 0; i < methodNames.Length; i++)
+            {
+                var name = methodNames[i];
+                var match = Regex.Match(
+                    text,
+                    name + @"\s*\([^)]*\)\s*\{(?<body>[\s\S]*?)\n        (?:private |public |///)",
+                    RegexOptions.CultureInvariant);
+                Assert.IsTrue(match.Success, "无法定位 " + name + " 方法体");
+                var body = match.Groups["body"].Value;
+                Assert.IsFalse(
+                    body.IndexOf("SetChoiceOverlay(true)", StringComparison.Ordinal) >= 0,
+                    name + " 不得整段 SetChoiceOverlay(true)；店内跳格/购买须走 ProtectedField");
+            }
+        }
     }
 }

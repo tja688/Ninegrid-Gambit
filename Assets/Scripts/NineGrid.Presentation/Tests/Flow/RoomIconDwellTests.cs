@@ -134,10 +134,12 @@ namespace NineGrid.Presentation.Tests.Flow
         [Test]
         public void SoftBlocked_OtherIcon_NotDestination()
         {
-            RoomIconOccupancy.Current.Register(1, 0, "Shop");
-            RoomIconOccupancy.Current.Register(3, 1, "Tavern");
+            RoomIconOccupancy.Current.Register(1, 0, "Shop", RoomIconWalkRole.SoftBlockOnly);
+            RoomIconOccupancy.Current.Register(3, 1, "Leave", RoomIconWalkRole.WalkDestination);
             Assert.IsTrue(RoomIconOccupancy.Current.IsSoftBlocked(NineGrid.Core.SlotId.Board(1)));
             Assert.IsTrue(RoomIconOccupancy.Current.IsIconSlot(3));
+            Assert.IsFalse(RoomIconOccupancy.Current.IsWalkDestination(1));
+            Assert.IsTrue(RoomIconOccupancy.Current.IsWalkDestination(3));
         }
     }
 }

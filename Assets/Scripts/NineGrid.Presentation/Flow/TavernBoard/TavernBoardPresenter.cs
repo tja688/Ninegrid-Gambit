@@ -10,6 +10,7 @@ using NineGrid.Core.Systems;
 using NineGrid.Flow.BoardBriefTip;
 using NineGrid.Flow.InRoomBoard;
 using NineGrid.Flow.RoomIcons;
+using NineGrid.Presentation;
 using NineGrid.Presentation.Systems;
 using QFramework;
 using UnityEngine;
@@ -97,6 +98,7 @@ namespace NineGrid.Flow.TavernBoard
 
             mExtras.Clear();
             RoomIconOccupancy.Current.Clear();
+            RoomIconOccupancySlotHits.Refresh(mArch);
             BoardBriefTipPresenter.InstanceOrNull()?.ClearHover();
         }
 
@@ -145,6 +147,7 @@ namespace NineGrid.Flow.TavernBoard
                 StartAvatarWatch();
             }
 
+            RoomIconOccupancySlotHits.Refresh(arch);
             return mActive;
         }
 
@@ -184,7 +187,8 @@ namespace NineGrid.Flow.TavernBoard
                 }
 
                 var slot = TavernBoardSlotResolver.ServiceSlotAt(i);
-                RoomIconOccupancy.Current.Register(slot, i, entry.DefId);
+                RoomIconOccupancy.Current.Register(
+                    slot, i, entry.DefId, RoomIconWalkRole.SoftBlockOnly);
 
                 var go = TryInstantiate(
                     CardChassisPaths.RoomOptionFacePrefab,
@@ -198,7 +202,7 @@ namespace NineGrid.Flow.TavernBoard
 
                 FitRoomIcon(go, geometry);
                 var tip = BuildServiceTip(entry.DefId, content);
-                AttachClickProxy(go, TavernBoardHitKind.SelectService, i, tip);
+                AttachClickProxy(go, TavernBoardHitKind.SelectService, i, tip, geometry);
                 mExtras.Add(go);
             }
         }
@@ -220,7 +224,8 @@ namespace NineGrid.Flow.TavernBoard
                 }
 
                 var slot = TavernBoardSlotResolver.CandidateSlotAt(i);
-                RoomIconOccupancy.Current.Register(slot, i, entry.DefId);
+                RoomIconOccupancy.Current.Register(
+                    slot, i, entry.DefId, RoomIconWalkRole.SoftBlockOnly);
 
                 if (cards == null)
                 {
@@ -233,6 +238,7 @@ namespace NineGrid.Flow.TavernBoard
                     parent = geometry.GetGroundAnchor(slot);
                 }
 
+                // GroundCardMode：与场地真卡同尺度；勿再 RoomIconVisualFit。
                 var managed = cards.SpawnPresentationOnly(
                     entry.DefId,
                     parent,
@@ -250,9 +256,13 @@ namespace NineGrid.Flow.TavernBoard
                 }
 
                 CoreCardPresentationMapper.ApplyVisualsByDefId(managed, CardPresentationKind.HelpCard);
-                FitRoomIcon(managed.View.gameObject, geometry);
                 var tip = BuildCandidateTip(entry.DefId, content);
-                AttachClickProxy(managed.View.gameObject, TavernBoardHitKind.SelectFixCandidate, i, tip);
+                AttachClickProxy(
+                    managed.View.gameObject,
+                    TavernBoardHitKind.SelectFixCandidate,
+                    i,
+                    tip,
+                    geometry);
                 mCandidateCards.Add(managed);
             }
         }
@@ -263,7 +273,8 @@ namespace NineGrid.Flow.TavernBoard
             RoomIconOccupancy.Current.Register(
                 slot,
                 -1,
-                TavernBoardSlotResolver.RefreshContentId);
+                TavernBoardSlotResolver.RefreshContentId,
+                RoomIconWalkRole.SoftBlockOnly);
 
             var go = TryInstantiate(
                 CardChassisPaths.RoomOptionFacePrefab,
@@ -277,7 +288,7 @@ namespace NineGrid.Flow.TavernBoard
 
             FitRoomIcon(go, geometry);
             var tip = BoardBriefTipCopy.ForOptionOrShelf("刷新货架", refreshPrice);
-            AttachClickProxy(go, TavernBoardHitKind.Refresh, -1, tip);
+            AttachClickProxy(go, TavernBoardHitKind.Refresh, -1, tip, geometry);
             mExtras.Add(go);
         }
 
@@ -287,7 +298,8 @@ namespace NineGrid.Flow.TavernBoard
             RoomIconOccupancy.Current.Register(
                 slot,
                 -2,
-                TavernBoardSlotResolver.LeaveContentId);
+                TavernBoardSlotResolver.LeaveContentId,
+                RoomIconWalkRole.WalkDestination);
 
             var path = CardChassisPaths.ResolveRoomIconPrefab(TavernBoardSlotResolver.LeaveContentId, null);
             var go = TryInstantiate(path, geometry, slot, TavernBoardSlotResolver.LeaveContentId);
@@ -374,11 +386,22 @@ namespace NineGrid.Flow.TavernBoard
             return BoardBriefTipCopy.ForOptionOrShelf(body, RewardSystem.TavernServicePriceGold);
         }
 
-        private void AttachClickProxy(GameObject go, TavernBoardHitKind kind, int optionIndex, string tip)
+        private void AttachClickProxy(
+            GameObject go,
+            TavernBoardHitKind kind,
+            int optionIndex,
+            string tip,
+            IGroundFieldGeometrySystem geometry)
         {
             if (go == null)
             {
                 return;
+            }
+
+            var groundHit = go.GetComponent<GroundCardHitProxy>();
+            if (groundHit != null)
+            {
+                groundHit.enabled = false;
             }
 
             var proxy = go.GetComponent<TavernBoardHitProxy>();
@@ -387,7 +410,10 @@ namespace NineGrid.Flow.TavernBoard
                 proxy = go.AddComponent<TavernBoardHitProxy>();
             }
 
-            proxy.Configure(kind, optionIndex, tip, HandleHit);
+            var hitBox = geometry?.LayoutSettings != null
+                ? geometry.LayoutSettings.slotHitBoxSize
+                : new Vector2(1.6f, 2.2f);
+            proxy.Configure(kind, optionIndex, tip, HandleHit, hitBox);
         }
 
         private static void AttachBriefTipOnly(
@@ -423,6 +449,11 @@ namespace NineGrid.Flow.TavernBoard
 
         private void HandleHit(TavernBoardHitKind kind, int optionIndex)
         {
+            Debug.Log(
+                "[TavernBoard] Hit kind=" + kind
+                + " optionIndex=" + optionIndex
+                + " choiceOverlay=" + PresentationInputGates.ChoiceOverlayActive
+                + " owner=" + PresentationInputGates.CurrentOwner);
             switch (kind)
             {
                 case TavernBoardHitKind.SelectService:

@@ -274,6 +274,50 @@ namespace NineGrid.Presentation.Tests.IntentIntake
         }
 
         [Test]
+        public void OverlayOwner_BoardWalk_Rejects_OwnerMismatch()
+        {
+            // 复现商店「全点不动」：房内会话误持 ChoiceOverlay 时，BoardWalk 以 ProtectedField
+            // 提交被拒 → 离开图标/空格跳格失效（ADR-0020 场地即交互面）。
+            using (var arch = PresentationArchitectureFixture.CreateBare())
+            using (PresentationRuntimeFixture.Install(arch, new RecordingScriptFactory()))
+            {
+                var intake = IntentIntakeSystem.EnsureRegistered(
+                    arch.Architecture, legalityOverride: _ => true);
+                PresentationInputStateSystem.EnsureRegistered(arch.Architecture)
+                    .SetChoiceOverlayActive(true);
+
+                bool preview;
+                Assert.AreEqual(
+                    IntentDisposition.Reject,
+                    intake.Submit(
+                        new InputIntent(InputIntentKinds.BoardWalk, 8),
+                        InputOwner.ProtectedField,
+                        out preview));
+            }
+        }
+
+        [Test]
+        public void Idle_SelectReward_OnProtectedField_Allows_ForInRoomBoard()
+        {
+            // 商店/卡店/特殊房：不持 ChoiceOverlay，购买须以 ProtectedField 放行。
+            using (var arch = PresentationArchitectureFixture.CreateBare())
+            using (PresentationRuntimeFixture.Install(arch, new RecordingScriptFactory()))
+            {
+                var intake = IntentIntakeSystem.EnsureRegistered(
+                    arch.Architecture, legalityOverride: _ => true);
+                PresentationInputStateSystem.EnsureRegistered(arch.Architecture);
+
+                bool preview;
+                Assert.AreEqual(
+                    IntentDisposition.Allow,
+                    intake.Submit(
+                        new InputIntent(InputIntentKinds.SelectReward, 0),
+                        InputOwner.ProtectedField,
+                        out preview));
+            }
+        }
+
+        [Test]
         public void SameFrameBurst_BusySubmits_AreDeterministicLatestWins()
         {
             using (var arch = PresentationArchitectureFixture.CreateBare())

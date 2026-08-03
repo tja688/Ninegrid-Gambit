@@ -649,7 +649,12 @@ namespace NineGrid.Flow
                 return;
             }
 
-            PresentationInputGates.SetChoiceOverlay(true);
+            // ADR-0020：房内场地板=受保护场地，勿整段持有 ChoiceOverlay，否则 BoardWalk
+            // 以 ProtectedField 提交会 ownerMismatch，离开/空格全点不动。
+            // 购买/刷新/离开走 RewardChoice + 当前 CurrentOwner（店内为 ProtectedField）。
+            Debug.Log(
+                "[InRoom] ShopBoard session begin walkEnabled=true choiceOverlay=false phase="
+                + phaseSystem.CurrentPhase);
             try
             {
                 await UniTask.WaitUntil(
@@ -670,7 +675,9 @@ namespace NineGrid.Flow
             }
             finally
             {
-                PresentationInputGates.SetChoiceOverlay(false);
+                Debug.Log(
+                    "[InRoom] ShopBoard session end phase=" + phaseSystem.CurrentPhase
+                    + " shopActive=" + shop.IsActive);
                 walk?.SetEnabled(false);
                 walk?.Cancel();
                 if (shop.IsActive)
@@ -698,7 +705,10 @@ namespace NineGrid.Flow
                 return;
             }
 
-            PresentationInputGates.SetChoiceOverlay(true);
+            // 同商店：场地即交互面，勿整段 ChoiceOverlay（ADR-0020）。
+            Debug.Log(
+                "[InRoom] TavernBoard session begin walkEnabled=true choiceOverlay=false phase="
+                + phaseSystem.CurrentPhase);
             try
             {
                 await UniTask.WaitUntil(
@@ -719,7 +729,9 @@ namespace NineGrid.Flow
             }
             finally
             {
-                PresentationInputGates.SetChoiceOverlay(false);
+                Debug.Log(
+                    "[InRoom] TavernBoard session end phase=" + phaseSystem.CurrentPhase
+                    + " tavernActive=" + tavern.IsActive);
                 walk?.SetEnabled(false);
                 walk?.Cancel();
                 if (tavern.IsActive)
@@ -747,7 +759,10 @@ namespace NineGrid.Flow
                 return;
             }
 
-            PresentationInputGates.SetChoiceOverlay(true);
+            // 同商店：场地即交互面，勿整段 ChoiceOverlay（ADR-0020）。
+            Debug.Log(
+                "[InRoom] RewardBoard session begin walkEnabled=true choiceOverlay=false phase="
+                + phaseSystem.CurrentPhase);
             try
             {
                 await UniTask.WaitUntil(
@@ -768,7 +783,9 @@ namespace NineGrid.Flow
             }
             finally
             {
-                PresentationInputGates.SetChoiceOverlay(false);
+                Debug.Log(
+                    "[InRoom] RewardBoard session end phase=" + phaseSystem.CurrentPhase
+                    + " rewardActive=" + reward.IsActive);
                 walk?.SetEnabled(false);
                 walk?.Cancel();
                 if (reward.IsActive)

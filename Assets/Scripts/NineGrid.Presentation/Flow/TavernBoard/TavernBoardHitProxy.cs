@@ -1,7 +1,6 @@
 using System;
 using NineGrid.Flow.BoardBriefTip;
 using UnityEngine;
-using UnityEngine.Rendering;
 
 namespace NineGrid.Flow.TavernBoard
 {
@@ -12,8 +11,9 @@ namespace NineGrid.Flow.TavernBoard
     [RequireComponent(typeof(BoxCollider2D))]
     public sealed class TavernBoardHitProxy : MonoBehaviour, IPointerHitTarget
     {
-        // 高于底盘 GroundCardHitProxy(30)，否则同 GO 上悬停/点击被场地卡代理抢走。
+        // 高于底盘 GroundCardHitProxy(30) 与空槽(0)；勿用 SortingGroup(-10)，否则空槽抢悬停/点击。
         private const int TypePriority = 40;
+        private const int BoardInteractionSortOrder = 50;
 
         private BoxCollider2D mCollider;
         private int mHoverGeneration;
@@ -25,7 +25,7 @@ namespace NineGrid.Flow.TavernBoard
         public Collider2D HitCollider =>
             mCollider != null ? mCollider : (mCollider = GetComponent<BoxCollider2D>());
 
-        public int HitSortOrder => ResolveHitSortOrder();
+        public int HitSortOrder => BoardInteractionSortOrder;
 
         public int HitTypePriority => TypePriority;
 
@@ -125,18 +125,6 @@ namespace NineGrid.Flow.TavernBoard
             {
                 mCollider.size = new Vector2(1.2f, 1.2f);
             }
-        }
-
-        private int ResolveHitSortOrder()
-        {
-            var group = GetComponent<SortingGroup>();
-            if (group != null)
-            {
-                return group.sortingOrder;
-            }
-
-            var renderer = GetComponentInChildren<SpriteRenderer>(true);
-            return renderer != null ? renderer.sortingOrder : 0;
         }
     }
 

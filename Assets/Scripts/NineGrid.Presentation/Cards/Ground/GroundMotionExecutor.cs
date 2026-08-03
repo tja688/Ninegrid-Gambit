@@ -153,21 +153,25 @@ namespace NineGrid.Cards
                 return;
             }
 
+            var softOccupied = NineGrid.Flow.RoomIcons.RoomIconOccupancy.Current.IsIconSlot(slot);
             var enabled = BoardWalkSlotHitPolicy.ShouldEnableEmptySlotHit(
                 _index.IsEmpty(slot),
                 slot,
-                BoardWalkSlotHitPolicy.IsWalkEnabledNow());
+                BoardWalkSlotHitPolicy.IsWalkEnabledNow(),
+                softOccupied);
             _view.RefreshSlotHit(slot, enabled);
         }
 
         private void RefreshAllSlotHitColliders()
         {
             var walkEnabled = BoardWalkSlotHitPolicy.IsWalkEnabledNow();
+            var occupancy = NineGrid.Flow.RoomIcons.RoomIconOccupancy.Current;
             _view?.RefreshAllSlotHits(slot =>
                 BoardWalkSlotHitPolicy.ShouldEnableEmptySlotHit(
                     _index.IsEmpty(slot),
                     slot,
-                    walkEnabled));
+                    walkEnabled,
+                    occupancy != null && occupancy.IsIconSlot(slot)));
         }
 
         public void RefreshSlotHitColliders()
@@ -923,10 +927,18 @@ namespace NineGrid.Cards
             }
 
             // 轴二所有权快拒；轴一互斥只认 MainlineBusy（IntentIntake），勿再轮询 FieldBusy/BattleBusy。
+            // 房内场地板（商店等）不得整段持有 ChoiceOverlay；此处拦截是给局内浮层宝箱保底。
             if (PresentationInputGates.ChoiceOverlayActive
                 || PresentationInputGates.OpeningPresentationActive
                 || PresentationInputGates.BoardSelectModeActive)
             {
+                Debug.Log(
+                    "[GroundMotionExecutor] 空槽点击被门禁拦截 slot=" + slot
+                    + " walkEnabled=" + walkEnabled
+                    + " choiceOverlay=" + PresentationInputGates.ChoiceOverlayActive
+                    + " opening=" + PresentationInputGates.OpeningPresentationActive
+                    + " boardSelect=" + PresentationInputGates.BoardSelectModeActive
+                    + " owner=" + PresentationInputGates.CurrentOwner);
                 return false;
             }
 
@@ -940,7 +952,15 @@ namespace NineGrid.Cards
 
                 Debug.Log($"[GroundMotionExecutor] 空槽点击 → BoardWalk: slot={slot}");
                 _onEmptySlotClicked?.Invoke(slot);
-                return BoardWalkInputHook.TrySubmitBoardWalk(slot);
+                var accepted = BoardWalkInputHook.TrySubmitBoardWalk(slot);
+                if (!accepted)
+                {
+                    Debug.LogWarning(
+                        "[GroundMotionExecutor] BoardWalk submit returned false slot=" + slot
+                        + " owner=" + PresentationInputGates.CurrentOwner);
+                }
+
+                return accepted;
             }
 
             if (ExploreInputHook.TrySubmitExplore == null)

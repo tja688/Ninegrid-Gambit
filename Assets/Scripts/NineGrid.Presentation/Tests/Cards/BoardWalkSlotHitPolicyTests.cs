@@ -26,6 +26,15 @@ namespace NineGrid.Presentation.Tests
         }
 
         [Test]
+        public void WalkEnabled_SoftOccupied_NotHittable()
+        {
+            Assert.IsFalse(BoardWalkSlotHitPolicy.ShouldEnableEmptySlotHit(
+                isEmpty: true, slot: 7, walkEnabled: true, softOccupied: true));
+            Assert.IsFalse(BoardWalkSlotHitPolicy.ShouldEnableEmptySlotHit(
+                isEmpty: true, slot: 1, walkEnabled: true, softOccupied: true));
+        }
+
+        [Test]
         public void WalkEnabled_Occupied_NotHittable()
         {
             Assert.IsFalse(BoardWalkSlotHitPolicy.ShouldEnableEmptySlotHit(

@@ -10,6 +10,7 @@ using NineGrid.Core.Systems;
 using NineGrid.Flow.BoardBriefTip;
 using NineGrid.Flow.InRoomBoard;
 using NineGrid.Flow.RoomIcons;
+using NineGrid.Presentation;
 using NineGrid.Presentation.Systems;
 using QFramework;
 using UnityEngine;
@@ -95,6 +96,7 @@ namespace NineGrid.Flow.ShopBoard
 
             mExtras.Clear();
             RoomIconOccupancy.Current.Clear();
+            RoomIconOccupancySlotHits.Refresh(mArch);
             BoardBriefTipPresenter.InstanceOrNull()?.ClearHover();
         }
 
@@ -128,6 +130,13 @@ namespace NineGrid.Flow.ShopBoard
                 StartAvatarWatch();
             }
 
+            Debug.Log(
+                "[ShopBoard] Spawn active=" + mActive
+                + " shelves=" + mShelfCards.Count
+                + " extras=" + mExtras.Count
+                + " leaveSlot=" + ShopBoardSlotResolver.LeaveSlot
+                + " avatarSlot=" + (arch.GetModel<BoardModel>()?.AvatarSlot.Value.Index ?? -1));
+            RoomIconOccupancySlotHits.Refresh(arch);
             return mActive;
         }
 
@@ -169,7 +178,8 @@ namespace NineGrid.Flow.ShopBoard
                 }
 
                 var slot = ShopBoardSlotResolver.ShelfSlotAt(i);
-                RoomIconOccupancy.Current.Register(slot, i, entry.DefId);
+                RoomIconOccupancy.Current.Register(
+                    slot, i, entry.DefId, RoomIconWalkRole.SoftBlockOnly);
 
                 if (cards == null)
                 {
@@ -182,7 +192,7 @@ namespace NineGrid.Flow.ShopBoard
                     parent = geometry.GetGroundAnchor(slot);
                 }
 
-                // GroundCardMode：与场地真卡同尺度；RemovedMode(1.08) 会显得过大。
+                // GroundCardMode：与场地真卡同尺度；勿再 RoomIconVisualFit（图标乱缩放专用）。
                 var managed = cards.SpawnPresentationOnly(
                     entry.DefId,
                     parent,
@@ -200,9 +210,8 @@ namespace NineGrid.Flow.ShopBoard
                 }
 
                 CoreCardPresentationMapper.ApplyVisualsByDefId(managed, CardPresentationKind.HelpCard);
-                FitRoomIcon(managed.View.gameObject, geometry);
                 var tip = BuildShelfTip(entry.DefId, content);
-                AttachClickProxy(managed.View.gameObject, ShopBoardHitKind.BuyShelf, i, tip);
+                AttachClickProxy(managed.View.gameObject, ShopBoardHitKind.BuyShelf, i, tip, geometry);
                 mShelfCards.Add(managed);
             }
         }
@@ -213,7 +222,8 @@ namespace NineGrid.Flow.ShopBoard
             RoomIconOccupancy.Current.Register(
                 slot,
                 -1,
-                ShopBoardSlotResolver.RefreshContentId);
+                ShopBoardSlotResolver.RefreshContentId,
+                RoomIconWalkRole.SoftBlockOnly);
 
             var path = CardChassisPaths.RoomOptionFacePrefab;
             var go = TryInstantiate(path, geometry, slot, ShopBoardSlotResolver.RefreshContentId);
@@ -224,7 +234,7 @@ namespace NineGrid.Flow.ShopBoard
 
             FitRoomIcon(go, geometry);
             var tip = BoardBriefTipCopy.ForOptionOrShelf("刷新货架", refreshPrice);
-            AttachClickProxy(go, ShopBoardHitKind.Refresh, -1, tip);
+            AttachClickProxy(go, ShopBoardHitKind.Refresh, -1, tip, geometry);
             mExtras.Add(go);
         }
 
@@ -234,7 +244,8 @@ namespace NineGrid.Flow.ShopBoard
             RoomIconOccupancy.Current.Register(
                 slot,
                 -2,
-                ShopBoardSlotResolver.LeaveContentId);
+                ShopBoardSlotResolver.LeaveContentId,
+                RoomIconWalkRole.WalkDestination);
 
             var path = CardChassisPaths.ResolveRoomIconPrefab(ShopBoardSlotResolver.LeaveContentId, null);
             var go = TryInstantiate(path, geometry, slot, ShopBoardSlotResolver.LeaveContentId);
@@ -285,11 +296,24 @@ namespace NineGrid.Flow.ShopBoard
             return BoardBriefTipCopy.ForOptionOrShelf(body, price);
         }
 
-        private void AttachClickProxy(GameObject go, ShopBoardHitKind kind, int shelfIndex, string tip)
+        private void AttachClickProxy(
+            GameObject go,
+            ShopBoardHitKind kind,
+            int shelfIndex,
+            string tip,
+            IGroundFieldGeometrySystem geometry)
         {
             if (go == null)
             {
                 return;
+            }
+
+            // 货架真卡底盘常带 GroundCardHitProxy；店内任意距离购买由 ShopBoardHitProxy 独占，
+            // 禁 Pickup 抢点（ChoiceOverlay 关掉后更易误入入手路径）。
+            var groundHit = go.GetComponent<GroundCardHitProxy>();
+            if (groundHit != null)
+            {
+                groundHit.enabled = false;
             }
 
             var proxy = go.GetComponent<ShopBoardHitProxy>();
@@ -298,7 +322,10 @@ namespace NineGrid.Flow.ShopBoard
                 proxy = go.AddComponent<ShopBoardHitProxy>();
             }
 
-            proxy.Configure(kind, shelfIndex, tip, HandleHit);
+            var hitBox = geometry?.LayoutSettings != null
+                ? geometry.LayoutSettings.slotHitBoxSize
+                : new Vector2(1.6f, 2.2f);
+            proxy.Configure(kind, shelfIndex, tip, HandleHit, hitBox);
         }
 
         private static void AttachBriefTipOnly(
@@ -334,6 +361,12 @@ namespace NineGrid.Flow.ShopBoard
 
         private void HandleHit(ShopBoardHitKind kind, int shelfIndex)
         {
+            Debug.Log(
+                "[ShopBoard] Hit kind=" + kind
+                + " shelfIndex=" + shelfIndex
+                + " active=" + mActive
+                + " choiceOverlay=" + PresentationInputGates.ChoiceOverlayActive
+                + " owner=" + PresentationInputGates.CurrentOwner);
             switch (kind)
             {
                 case ShopBoardHitKind.BuyShelf:
@@ -350,14 +383,16 @@ namespace NineGrid.Flow.ShopBoard
             var arch = mArch ?? NineGridArchitecture.Current;
             if (arch == null)
             {
+                Debug.LogWarning("[ShopBoard] TryBuy abort: no architecture");
                 return;
             }
 
-            // ChoiceOverlay 由 GameFlowOrchestrator 会话持有；此处勿嵌套 Set/清，否则会拆掉跳格门禁语义。
+            // ChoiceOverlay 仅局内宝箱等浮层短暂持有；店内购买走 ProtectedField（ADR-0020）。
             RewardChoiceCoreHook.RequestWire();
             if (RewardChoiceCoreHook.SelectReward == null)
             {
                 ShowNotice("商店输入未接线");
+                Debug.LogWarning("[ShopBoard] TryBuy abort: SelectReward hook not wired");
                 return;
             }
 
@@ -366,6 +401,8 @@ namespace NineGrid.Flow.ShopBoard
             if (result == null || !result.Accepted)
             {
                 var reason = result?.Reason ?? string.Empty;
+                Debug.LogWarning(
+                    "[ShopBoard] Buy rejected shelfIndex=" + shelfIndex + " reason=" + reason);
                 if (string.Equals(reason, "Not enough gold", StringComparison.Ordinal))
                 {
                     ShowNotice("金币不足");
@@ -378,6 +415,7 @@ namespace NineGrid.Flow.ShopBoard
                 return;
             }
 
+            Debug.Log("[ShopBoard] Buy accepted shelfIndex=" + shelfIndex);
             InRoomGoldPresentation.PresentGoldChangesSince(arch, logStart);
             // 碎裂：释放该格表现卡后重建。
             ShatterShelfVisual(shelfIndex);
@@ -389,6 +427,7 @@ namespace NineGrid.Flow.ShopBoard
             var arch = mArch ?? NineGridArchitecture.Current;
             if (arch == null)
             {
+                Debug.LogWarning("[ShopBoard] TryRefresh abort: no architecture");
                 return;
             }
 
@@ -403,6 +442,8 @@ namespace NineGrid.Flow.ShopBoard
             var result = RewardChoiceCoreHook.RefreshShop();
             if (result == null || !result.Accepted)
             {
+                Debug.LogWarning(
+                    "[ShopBoard] Refresh rejected reason=" + (result?.Reason ?? string.Empty));
                 if (string.Equals(result?.Reason, "Not enough gold", StringComparison.Ordinal))
                 {
                     ShowNotice("金币不足");
@@ -411,6 +452,7 @@ namespace NineGrid.Flow.ShopBoard
                 return;
             }
 
+            Debug.Log("[ShopBoard] Refresh accepted");
             InRoomGoldPresentation.PresentGoldChangesSince(arch, logStart);
             ResyncFromPending(arch);
         }
@@ -427,10 +469,13 @@ namespace NineGrid.Flow.ShopBoard
             var result = RewardChoiceCoreHook.SkipHelpChoice();
             if (result != null && result.Accepted)
             {
+                Debug.Log("[ShopBoard] Leave accepted (SkipHelpChoice)");
                 DespawnAll();
                 return true;
             }
 
+            Debug.LogWarning(
+                "[ShopBoard] Leave rejected reason=" + (result?.Reason ?? string.Empty));
             return false;
         }
 
@@ -532,6 +577,7 @@ namespace NineGrid.Flow.ShopBoard
             }
 
             mLeaveDwell.Begin(slot, 0);
+            Debug.Log("[ShopBoard] Leave dwell armed slot=" + slot);
             RunLeaveDwellAsync(slot, parentCt).Forget();
         }
 
@@ -543,11 +589,16 @@ namespace NineGrid.Flow.ShopBoard
             }
             catch (OperationCanceledException)
             {
+                Debug.Log("[ShopBoard] Leave dwell cancelled slot=" + slot);
                 return;
             }
 
             if (!mLeaveDwell.IsArmed || mLeaveDwell.ArmedSlot != slot)
             {
+                Debug.Log(
+                    "[ShopBoard] Leave dwell stale slot=" + slot
+                    + " armed=" + mLeaveDwell.IsArmed
+                    + " armedSlot=" + mLeaveDwell.ArmedSlot);
                 return;
             }
 
@@ -556,6 +607,7 @@ namespace NineGrid.Flow.ShopBoard
                 return;
             }
 
+            Debug.Log("[ShopBoard] Leave dwell commit slot=" + slot);
             if (TryLeave())
             {
                 mLeaveDwell.MarkSubmitted();

@@ -143,6 +143,30 @@ namespace NineGrid.Core.Tests
         }
 
         [Test]
+        public void SoftBlockedEmpty_Destination_Rejected_UnlessWalkDestination()
+        {
+            var path = new List<SlotId>();
+            Assert.IsFalse(AvatarWalkPathfinder.TryFindPath(
+                mBoard,
+                SlotId.Board(5),
+                SlotId.Board(1),
+                path,
+                isDestination: _ => false,
+                isSoftBlocked: slot => slot.Index == 1),
+                "货架/选项软占格不得作终点");
+
+            Assert.IsTrue(AvatarWalkPathfinder.TryFindPath(
+                mBoard,
+                SlotId.Board(5),
+                SlotId.Board(1),
+                path,
+                isDestination: slot => slot.Index == 1,
+                isSoftBlocked: slot => slot.Index == 1),
+                "离开/导航 WalkDestination 即使软占也可达");
+            Assert.AreEqual(1, path[path.Count - 1].Index);
+        }
+
+        [Test]
         public void OccupiedNonIcon_Destination_Rejected_EvenWithSoftFallback()
         {
             var draft = new CardDraft("monster.block", CardKind.Monster) { MaxHp = 1, Attack = 0 };

@@ -70,11 +70,27 @@ namespace NineGrid.Presentation.Controllers
         {
             var intake = this.GetSystem<IIntentIntake>()
                 ?? IntentIntakeSystem.EnsureRegistered();
+            // 局内宝箱 Bounce 持有 ChoiceOverlay；房内场地板（商店/卡店/特殊房）是受保护场地
+            // （ADR-0020），须跟 CurrentOwner，硬编码 ChoiceOverlay 会在店内 ownerMismatch。
+            var owner = PresentationInputGates.ChoiceOverlayActive
+                ? InputOwner.ChoiceOverlay
+                : InputOwner.ProtectedField;
             bool preview;
-            return intake.Submit(
+            var disposition = intake.Submit(
                 new InputIntent(kind, targetId),
-                InputOwner.ChoiceOverlay,
-                out preview) == IntentDisposition.Allow;
+                owner,
+                out preview);
+            if (disposition != IntentDisposition.Allow)
+            {
+                Debug.LogWarning(
+                    "[RewardChoice] IntentIntake Reject kind=" + kind
+                    + " target=" + targetId
+                    + " owner=" + owner
+                    + " choiceOverlay=" + PresentationInputGates.ChoiceOverlayActive
+                    + " disposition=" + disposition);
+            }
+
+            return disposition == IntentDisposition.Allow;
         }
 
         private void InstallHandlers()

@@ -116,9 +116,9 @@ namespace NineGrid.Flow.Presentation
                     var to = SlotId.Board(mDesiredSlot);
                     var occupancy = NineGrid.Flow.RoomIcons.RoomIconOccupancy.Current;
                     System.Func<SlotId, bool> isDestination = slot =>
-                        occupancy != null && occupancy.IsIconSlot(slot.Index);
+                        occupancy != null && occupancy.IsWalkDestination(slot);
                     System.Func<SlotId, bool> isSoftBlocked = slot =>
-                        occupancy != null && occupancy.IsIconSlot(slot.Index);
+                        occupancy != null && occupancy.IsSoftBlocked(slot);
                     if (!AvatarWalkPathfinder.TryGetNextStep(
                             board, from, to, out var next, isDestination, isSoftBlocked)
                         || !next.IsBoardSlot)

@@ -9,6 +9,7 @@ using NineGrid.Core.Content;
 using NineGrid.Core.Systems;
 using NineGrid.Flow.BoardBriefTip;
 using NineGrid.Flow.RoomIcons;
+using NineGrid.Presentation;
 using NineGrid.Presentation.Systems;
 using QFramework;
 using UnityEngine;
@@ -94,6 +95,7 @@ namespace NineGrid.Flow.RewardBoard
 
             mExtras.Clear();
             RoomIconOccupancy.Current.Clear();
+            RoomIconOccupancySlotHits.Refresh(mArch);
             BoardBriefTipPresenter.InstanceOrNull()?.ClearHover();
         }
 
@@ -125,6 +127,7 @@ namespace NineGrid.Flow.RewardBoard
                 StartAvatarWatch();
             }
 
+            RoomIconOccupancySlotHits.Refresh(arch);
             return mActive;
         }
 
@@ -165,7 +168,8 @@ namespace NineGrid.Flow.RewardBoard
                 }
 
                 var slot = RewardBoardSlotResolver.ShelfSlotAt(i);
-                RoomIconOccupancy.Current.Register(slot, i, entry.DefId);
+                RoomIconOccupancy.Current.Register(
+                    slot, i, entry.DefId, RoomIconWalkRole.SoftBlockOnly);
 
                 if (cards == null)
                 {
@@ -178,6 +182,7 @@ namespace NineGrid.Flow.RewardBoard
                     parent = geometry.GetGroundAnchor(slot);
                 }
 
+                // GroundCardMode：与场地真卡同尺度；勿再 RoomIconVisualFit。
                 var managed = cards.SpawnPresentationOnly(
                     entry.DefId,
                     parent,
@@ -195,9 +200,8 @@ namespace NineGrid.Flow.RewardBoard
                 }
 
                 CoreCardPresentationMapper.ApplyVisualsByDefId(managed, CardPresentationKind.HelpCard);
-                FitRoomIcon(managed.View.gameObject, geometry);
                 var tip = BuildShelfTip(entry.DefId, content);
-                AttachClickProxy(managed.View.gameObject, i, tip);
+                AttachClickProxy(managed.View.gameObject, i, tip, geometry);
                 mShelfCards.Add(managed);
             }
         }
@@ -208,7 +212,8 @@ namespace NineGrid.Flow.RewardBoard
             RoomIconOccupancy.Current.Register(
                 slot,
                 -2,
-                RewardBoardSlotResolver.LeaveContentId);
+                RewardBoardSlotResolver.LeaveContentId,
+                RoomIconWalkRole.WalkDestination);
 
             var path = CardChassisPaths.ResolveRoomIconPrefab(RewardBoardSlotResolver.LeaveContentId, null);
             var go = TryInstantiate(path, geometry, slot, RewardBoardSlotResolver.LeaveContentId);
@@ -251,11 +256,21 @@ namespace NineGrid.Flow.RewardBoard
             return BoardBriefTipCopy.ForOptionOrShelf(body);
         }
 
-        private void AttachClickProxy(GameObject go, int shelfIndex, string tip)
+        private void AttachClickProxy(
+            GameObject go,
+            int shelfIndex,
+            string tip,
+            IGroundFieldGeometrySystem geometry)
         {
             if (go == null)
             {
                 return;
+            }
+
+            var groundHit = go.GetComponent<GroundCardHitProxy>();
+            if (groundHit != null)
+            {
+                groundHit.enabled = false;
             }
 
             var proxy = go.GetComponent<RewardBoardHitProxy>();
@@ -264,7 +279,10 @@ namespace NineGrid.Flow.RewardBoard
                 proxy = go.AddComponent<RewardBoardHitProxy>();
             }
 
-            proxy.Configure(shelfIndex, tip, HandleTake);
+            var hitBox = geometry?.LayoutSettings != null
+                ? geometry.LayoutSettings.slotHitBoxSize
+                : new Vector2(1.6f, 2.2f);
+            proxy.Configure(shelfIndex, tip, HandleTake, hitBox);
         }
 
         private static void AttachBriefTipOnly(
@@ -306,6 +324,11 @@ namespace NineGrid.Flow.RewardBoard
                 return;
             }
 
+            Debug.Log(
+                "[RewardBoard] Take shelfIndex=" + shelfIndex
+                + " choiceOverlay=" + PresentationInputGates.ChoiceOverlayActive
+                + " owner=" + PresentationInputGates.CurrentOwner);
+
             RewardChoiceCoreHook.RequestWire();
             if (RewardChoiceCoreHook.SelectReward == null)
             {
@@ -316,6 +339,9 @@ namespace NineGrid.Flow.RewardBoard
             var result = RewardChoiceCoreHook.SelectReward(shelfIndex);
             if (result == null || !result.Accepted)
             {
+                Debug.LogWarning(
+                    "[RewardBoard] Take rejected shelfIndex=" + shelfIndex
+                    + " reason=" + (result?.Reason ?? string.Empty));
                 if (!string.IsNullOrEmpty(result?.Reason))
                 {
                     ShowNotice(result.Reason);
@@ -324,6 +350,7 @@ namespace NineGrid.Flow.RewardBoard
                 return;
             }
 
+            Debug.Log("[RewardBoard] Take accepted shelfIndex=" + shelfIndex);
             ShatterShelfVisual(shelfIndex);
             ResyncFromPending(arch);
         }

@@ -1,6 +1,7 @@
 using NineGrid.Cards;
 using NineGrid.Core;
 using NineGrid.Flow;
+using NineGrid.Presentation;
 using UnityEngine;
 using UnityEngine.Rendering;
 
@@ -16,7 +17,9 @@ namespace NineGrid.Flow.BoardBriefTip
     public sealed class BoardBriefTipHitProxy : MonoBehaviour, IPointerHitTarget
     {
         // 高于 GroundCardHitProxy(30) 空槽(10)；低于半黑屏 UiOverlay(100)。
+        // Walk 图标固定 SortOrder，避免 SortingGroup 低于空槽时抢走 BoardWalk。
         private const int TypePriority = 35;
+        private const int WalkIconSortOrder = 50;
 
         [SerializeField] private string tipText = string.Empty;
 
@@ -36,7 +39,10 @@ namespace NineGrid.Flow.BoardBriefTip
         public Collider2D HitCollider =>
             mCollider != null ? mCollider : (mCollider = GetComponent<BoxCollider2D>());
 
-        public int HitSortOrder => ResolveHitSortOrder();
+        public int HitSortOrder =>
+            mWalkBoardSlot >= SlotId.MinBoardIndex && mWalkBoardSlot <= SlotId.MaxBoardIndex
+                ? WalkIconSortOrder
+                : ResolveHitSortOrder();
 
         public int HitTypePriority => TypePriority;
 
@@ -86,7 +92,7 @@ namespace NineGrid.Flow.BoardBriefTip
 
         public void HandlePointerDown()
         {
-            // 场地图标：点上去 → BoardWalk；驻留 1s 由 RoomIconBoardPresenter 提交进房。
+            // 场地图标：点上去 → BoardWalk；驻留 1s 由 RoomIconBoardPresenter / 房内 Presenter 提交。
             // 就地选项/货架另挂专用 HitProxy，不会配 WalkBoardSlot。
             if (mWalkBoardSlot < SlotId.MinBoardIndex || mWalkBoardSlot > SlotId.MaxBoardIndex)
             {
@@ -95,6 +101,11 @@ namespace NineGrid.Flow.BoardBriefTip
 
             if (BoardWalkInputHook.IsEnabled == null || !BoardWalkInputHook.IsEnabled())
             {
+                Debug.LogWarning(
+                    "[BoardBriefTip] BoardWalk click ignored: walk disabled slot="
+                    + mWalkBoardSlot
+                    + " choiceOverlay=" + PresentationInputGates.ChoiceOverlayActive
+                    + " owner=" + PresentationInputGates.CurrentOwner);
                 return;
             }
 
@@ -104,7 +115,18 @@ namespace NineGrid.Flow.BoardBriefTip
                 return;
             }
 
-            BoardWalkInputHook.TrySubmitBoardWalk(mWalkBoardSlot);
+            Debug.Log(
+                "[BoardBriefTip] BoardWalk submit slot=" + mWalkBoardSlot
+                + " choiceOverlay=" + PresentationInputGates.ChoiceOverlayActive
+                + " owner=" + PresentationInputGates.CurrentOwner);
+            var accepted = BoardWalkInputHook.TrySubmitBoardWalk(mWalkBoardSlot);
+            if (!accepted)
+            {
+                Debug.LogWarning(
+                    "[BoardBriefTip] BoardWalk rejected/buffered-fail slot=" + mWalkBoardSlot
+                    + " choiceOverlay=" + PresentationInputGates.ChoiceOverlayActive
+                    + " owner=" + PresentationInputGates.CurrentOwner);
+            }
         }
 
         private void ClearTipIfHovering()

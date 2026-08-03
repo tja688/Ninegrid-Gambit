@@ -69,6 +69,7 @@ namespace NineGrid.Flow.RoomIcons
 
             mSpawned.Clear();
             RoomIconOccupancy.Current.Clear();
+            RoomIconOccupancySlotHits.Refresh(mArch);
             BoardBriefTipPresenter.InstanceOrNull()?.ClearHover();
         }
 
@@ -129,10 +130,12 @@ namespace NineGrid.Flow.RoomIcons
                     mSpawned.Add(go);
                 }
 
-                RoomIconOccupancy.Current.Register(slot, i, contentId);
+                RoomIconOccupancy.Current.Register(
+                    slot, i, contentId, RoomIconWalkRole.WalkDestination);
             }
 
             StartAvatarWatch();
+            RoomIconOccupancySlotHits.Refresh(arch);
             return RoomIconOccupancy.Current.HasAny;
         }
 

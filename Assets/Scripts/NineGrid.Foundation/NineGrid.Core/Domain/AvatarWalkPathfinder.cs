@@ -5,7 +5,8 @@ namespace NineGrid.Core
 {
     /// <summary>
     /// 九宫正交 BFS（ADR-0019 / ADR-0020）：
-    /// 终点可为空格或目标图标格；途经优先完全空置（绕开软占/真卡），无空路时回退允许踩软占。
+    /// 终点可为「完全空且非软占」或 isDestination 图标格；
+    /// 途经优先完全空置（绕开软占/真卡），无空路时回退允许踩软占。
     /// 无谓词的重载保持旧行为：途经与终点皆须空格，无软占回退。
     /// </summary>
     public static class AvatarWalkPathfinder
@@ -228,12 +229,19 @@ namespace NineGrid.Core
             var isDest = slot == destination;
             if (isDest)
             {
-                if (board.IsEmpty(slot))
+                // 显式终点（离开/导航图标）优先，即使软占或非空。
+                if (isDestination != null && isDestination(slot))
                 {
                     return true;
                 }
 
-                return isDestination != null && isDestination(slot);
+                // 普通空格终点：Core 空且无软占（货架/选项格不得落格）。
+                if (!board.IsEmpty(slot))
+                {
+                    return false;
+                }
+
+                return isSoftBlocked == null || !isSoftBlocked(slot);
             }
 
             // 途经

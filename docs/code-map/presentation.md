@@ -140,12 +140,13 @@
 ### 场地图标选房（#88 · ADR-0020）
 
 - Spawn：`RoomIconBoardPresenter` 读 `PendingChoice`（Room 双选 / Navigation 单选），按 `boardSlot` 落格（撞格回退 1/3/2）；**不**进 `CardKind` 五套 Spawn、**不** `PlaceCard`
-- 登记：`RoomIconOccupancy`（表现侧）供寻路软占与驻留
+- 登记：`RoomIconOccupancy`（表现侧）供寻路软占与驻留；角色分 `WalkDestination`（离开/导航，可落格）与 `SoftBlockOnly`（货架/选项/刷新，禁落格、任意距离点击）
 - 驻留：踩上图标 → 表现侧 1s（`RoomIconDwellSession`）→ IntentIntake `SelectRoom` + `EnterRoom`；跳走取消；只提交一次；计时器不进门禁
 - 进房硬切：图标退场 + Avatar `MoveAvatarAction` 至格 5
 - 编辑器：Room 条目「格位」字段；JSON `boardSlot`
 - 选房：`RoomIconBoardPresenter` + 驻留提交（#88）；旧浮层 `RoomChoicePresenter` / `RoomChoisePanel` 接线已退役（#90）
 - 悬停：Spawn 时挂 `BoardBriefTipHitProxy`（#89）；战斗真卡不挂
+- 软占变更后 `RoomIconOccupancySlotHits.Refresh` 同步空槽 Hit（软占格禁 `GroundSlotHitProxy`）
 
 ### 简要解释文字框与楼层提示（#89 · ADR-0020）
 
@@ -153,7 +154,7 @@
 - 会话：`BoardBriefTipSession`（悬停与 Notice；Notice 盖悬停；代数清）
 - 场景：`BoardBriefTipPresenter` → `Panels/简要解释文字框`（`EnsureExists` 优先绑定命名面板，sceneLoaded 再绑，避免无 TMP 孤儿）；`FloorHintPresenter` → `楼层提示`
 - 命中：场地图标 `BoardBriefTipHitProxy`；商店 `ShopBoardHitProxy`；卡店 `TavernBoardHitProxy`；特殊房 `RewardBoardHitProxy`；离开图标仍 `BoardBriefTipHitProxy` + 驻留
-- 命中优先级：场地图标=35；商店/卡店/特殊房=40；均高于底盘 `GroundCardHitProxy`(30)，避免同 GO 抢悬停
+- 命中优先级：场地图标 Walk=35 / SortOrder=50；商店/卡店/特殊房 TypePriority=40 / SortOrder=50（高于空槽 SortOrder=0，避免真卡 SortingGroup=-10 被空槽抢走悬停）
 - 显示：有文案时激活面板并打开底板 `SpriteRenderer`；无悬停/Notice 即隐藏
 - 胜负 / 房间 stub Notice：`GameFlowController.ShowNotice` 改走简要解释文字框，旧 `NoticeText` 不再写出
 - **禁**：复活 `DescriptionManagerSingleton` / `DescriptionDisplayHook`；战斗真卡悬停写简要解释（右键详述另责）
@@ -163,9 +164,10 @@
 - Core：进 `Shop` → `OfferShopSession` 固定 4 货架（宝箱 / 随机属性道具 / 恢复药水 / 食品）+ 本次进店刷新价初值 10；`SelectReward` 扣 `Price`、进携带卡包、**留店**；`RefreshShop` 扣刷新价并翻倍；`SkipHelpChoice` 出店（不加 skip 金）
 - 刷新价作用域：**本次进店**（离开清零；再进店重新从 10 起）
 - 表现：`ShopBoardPresenter` 落格 1/3/7/9 货架、2 刷新、8 离开；Avatar 硬切格 5；货架/刷新任意距离点击；离开驻留 1s；金币不足写简要解释 Notice
-- 货架真卡用 `GroundCardMode` + `RoomIconVisualFit` 压进格；刷新就地选项同 Fit（与场地图标一致）
-- 扣金后经 `InRoomGoldPresentation` 推 EventLog→HUD（非战斗无 GoldGainBeat）；ChoiceOverlay 由 Orchestrator 会话持有，Presenter 内勿嵌套清门
+- 货架真卡 `GroundCardMode`（战斗同尺度，**不** `RoomIconVisualFit`）；刷新就地选项 / 离开图标仍 Fit；货架·刷新登记 `SoftBlockOnly`，离开 `WalkDestination`
+- 扣金后经 `InRoomGoldPresentation` 推 EventLog→HUD（非战斗无 GoldGainBeat）；**房内会话不持 ChoiceOverlay**（场地=ProtectedField，否则 BoardWalk ownerMismatch 全点不动）；Presenter 内勿嵌套 Set/清门；局内宝箱 Bounce 仍短暂持 overlay
 - 离开监视：先 `mActive=true` 再 `StartAvatarWatch`；失败驻留须重开计时
+- 货架挂 `ShopBoardHitProxy` 时禁用同 GO `GroundCardHitProxy`，避免误入 Pickup
 - `GameFlowOrchestrator.PlayRoomIconChoiceAsync`：图标驻留 Select+Enter 后，若进消费/特殊房会话则 `PresentInRoomSessionAfterEnterAsync` 刷商店场地板（不再壳层二次 EnterRoom）
 
 ### 卡店房就地服务（#93 · ADR-0020 / ADR-0022）
@@ -173,23 +175,23 @@
 - Core：进 `Tavern` → `OfferTavernSession` 三项服务（`UpgradeItemStats` / `FixItem` / `ExpandItemCapacity`，各 50 金）+ 本次进店刷新价初值 10；扩容写 `ItemDeckCapacity+1`；强化写 `ItemStatBonus+3`（跨节点应用属 #97）；`RefreshShop` 同商店规则；`SkipHelpChoice` 出店
 - **唯一嵌套选择**：「道具卡固定」→ 池切 `tavern.fixItem`，候选来自 `ItemSourcePoolDefIds`；确认后 `AddFixedItemCard` + 扣费回主面；`SkipHelpChoice` 在子池取消回主面（不扣费、不离店）
 - 表现：`TavernBoardPresenter` 落格 1/3/7 服务选项（`房间选项标准模板`）、2 刷新、8 离开；二级选择时服务/刷新退场，候选真卡铺格 1/3/4/6/7/9；离开 tip 改「取消选择」
-- 服务/刷新选项与候选真卡均 `RoomIconVisualFit`；扣金同商店走 `InRoomGoldPresentation`；离开监视与 ChoiceOverlay 约定同商店
+- 服务/刷新选项 Fit；候选真卡 `GroundCardMode` **不** Fit；服务·刷新·候选 `SoftBlockOnly`，离开 `WalkDestination`；扣金同商店走 `InRoomGoldPresentation`；离开监视与 **不持 ChoiceOverlay** 约定同商店；候选真卡禁用 `GroundCardHitProxy`
 - `GameFlowOrchestrator.PresentInRoomSessionAfterEnterAsync`：`IsTavernPool` / `IsTavernFixItemPool` 走卡店场地板
 
 ### 特殊奖励房（#94 · ADR-0020 / ADR-0022）
 
 - Core：进 `TreasureReward` → 1 宝箱 + 3 随机道具（`ItemSourcePoolDefIds`）；进 `ItemReward` → 2 属性道具（40/40/20）+ 3 随机道具；pool=`reward.treasure` / `reward.item`；`SelectReward` **免费**进携带卡包并留房；`SkipHelpChoice` 离开放弃剩余（不加 skip 金）
 - 表现：`RewardBoardPresenter` 落格 1/2/3/7/9 真卡、8 离开；Avatar 硬切格 5；任意距离点击拿走；离开驻留 1s；悬停 tip=卡名+效果（无价格）
-- 真卡 `GroundCardMode` + Fit；离开监视约定同商店（免费拿无需推金）
+- 真卡 `GroundCardMode`（**不** Fit）；货架 `SoftBlockOnly`，离开 `WalkDestination`；离开监视约定同商店（免费拿无需推金；**不持 ChoiceOverlay**；禁用 `GroundCardHitProxy`）
 - `GameFlowOrchestrator.PresentInRoomSessionAfterEnterAsync`：`IsSpecialRewardPool` 走特殊房场地板；道具奖励房选房图标仍缺（见 #83）
 
 ### Avatar 跳格（已落地 · ADR-0019 / #88 放宽）
 
 - 意图 `InputIntentKinds.BoardWalk` → IntentIntake → `BoardWalkIntentScriptFactory` → `IAvatarWalkSystem.SetDestination`
-- Core：`MoveAvatar`（单邻格；RoomChoice/RoomEvent 允许踩非空以配合软占回退）+ `AvatarWalkPathfinder` 两阶段 BFS：途经优先完全空置（绕开软占图标/真卡），无空路再允许踩软占；终点可为空格或目标图标格
+- Core：`MoveAvatar`（单邻格；RoomChoice/RoomEvent 允许踩非空以配合软占回退）+ `AvatarWalkPathfinder` 两阶段 BFS：途经优先完全空置（绕开软占/真卡），无空路再允许踩软占；终点为「完全空且非软占」或 `WalkDestination` 图标格（货架/选项 SoftBlockOnly 不可落格）
 - 表现：`HopAvatarToSlotAsync` 复用旋转 hop；半空改目标等落地后重规划
 - `\0` QuickTest：流程测试通道（空 skillIds / 空 trap / Sequential 节点序，内容同正式开局 + HP99/ATK5）；战斗内 **KeypadMinus** 跳过战斗（仅 QuickTest，`TryForceNodeVictory` → `TryCompleteClearedNode` 后 `ClearResidualCombatFieldViews` 收口机关/帮助/漏网怪视图，避免盖住房间图标）
-- 空槽 Hit：跳格开启时任意空格可点（`BoardWalkSlotHitPolicy`，含角格与离场后的格5）；关闭时仍仅中心正交邻格（Explore）
+- 空槽 Hit：跳格开启时任意**非软占**空格可点（`BoardWalkSlotHitPolicy` + `RoomIconOccupancy`）；软占格禁用空槽 Hit，避免抢走货架/选项点击；关闭跳格时仍仅中心正交邻格（Explore）
 - Avatar 朝向：`AvatarBoardFacingController` 按卡面图标当前世界 X 相对指针，不锁死格5
 - **战斗 `InteractionLoop` 禁走**；进下一房 Avatar 硬切格 5
 
