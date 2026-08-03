@@ -1,11 +1,12 @@
+using NineGrid.Flow;
 using Unity.Pipeline.HotReload;
 using UnityEngine;
 
 namespace NineGrid.TemporaryTest
 {
     /// <summary>
-    /// 临时热重载实验（override 工作流） FLOW_EDIT_MARKER 21:44:43：StartRun hover 放大。
-    /// Editor 下 in-place [HotReload] 不会自动 RegisterReloadableMethod；改用官方 helper 路径。
+    /// 临时热重载实验（override 工作流）：StartRun hover 放大。
+    /// 用指针平面 Overlap 轮询，不用 legacy OnMouse*（ADR-0023 / #103）。
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class StartRunHoverScale : MonoBehaviour
@@ -14,19 +15,46 @@ namespace NineGrid.TemporaryTest
         public Vector3 baseScale = Vector3.one;
         public bool hovering;
 
+        private Collider2D _collider;
+
         private void Awake()
         {
             baseScale = transform.localScale;
+            _collider = GetComponent<Collider2D>();
             HotReloadRegistry.RegisterReloadableType(typeof(StartRunHoverScale));
         }
 
-        [HotReloadWithOverrides]
-        public void OnMouseEnter()
+        private void Update()
         {
-            HotReloadHelper.ExecuteWithHotReload(this, "OnMouseEnter", OriginalOnMouseEnter);
+            var cam = Camera.main;
+            if (cam == null || _collider == null)
+            {
+                return;
+            }
+
+            var over = WorldPointerUtility.TryOverlapColliderOnPlane(cam, _collider);
+            if (over == hovering)
+            {
+                return;
+            }
+
+            if (over)
+            {
+                ApplyHoverEnter();
+            }
+            else
+            {
+                ApplyHoverExit();
+            }
         }
 
-        public void OriginalOnMouseEnter()
+        [HotReloadWithOverrides]
+        public void ApplyHoverEnter()
+        {
+            HotReloadHelper.ExecuteWithHotReload(this, "ApplyHoverEnter", OriginalApplyHoverEnter);
+        }
+
+        public void OriginalApplyHoverEnter()
         {
             hovering = true;
             transform.localScale = baseScale * hoverScale;
@@ -34,12 +62,12 @@ namespace NineGrid.TemporaryTest
         }
 
         [HotReloadWithOverrides]
-        public void OnMouseExit()
+        public void ApplyHoverExit()
         {
-            HotReloadHelper.ExecuteWithHotReload(this, "OnMouseExit", OriginalOnMouseExit);
+            HotReloadHelper.ExecuteWithHotReload(this, "ApplyHoverExit", OriginalApplyHoverExit);
         }
 
-        public void OriginalOnMouseExit()
+        public void OriginalApplyHoverExit()
         {
             hovering = false;
             transform.localScale = baseScale;

@@ -183,6 +183,23 @@ namespace NineGrid.Cards
             _fieldHitSurface.BindSlotColliders(_slotHitColliders);
         }
 
+        /// <summary>世界点落入哪一格命中框（交棒手牌拖拽落点等，ADR-0023 / #103）。</summary>
+        public bool TryResolveSlotAtWorld(Vector2 worldXY, out int slot)
+        {
+            if (_fieldHitSurface == null)
+            {
+                EnsureHitProxies();
+            }
+
+            if (_fieldHitSurface == null)
+            {
+                slot = 0;
+                return false;
+            }
+
+            return _fieldHitSurface.TryResolveSlotAtWorld(worldXY, out slot);
+        }
+
         public void RefreshSlotHit(int slot, bool hitEnabled)
         {
             if (!GroundSlotTopology.IsValidSlot(slot))

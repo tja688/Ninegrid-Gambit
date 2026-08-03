@@ -1516,57 +1516,27 @@ namespace NineGrid.Cards
 
         private static bool IsOverGroundCard(Vector3 worldPoint)
         {
-            var hits = Physics2D.OverlapPointAll(worldPoint);
-            for (var i = 0; i < hits.Length; i++)
-            {
-                var hit = hits[i];
-                if (hit == null)
-                {
-                    continue;
-                }
-
-                var driver = hit.GetComponent<CardVisualDriver>();
-                if (driver?.BoundCard != null &&
-                    driver.BoundCard.DisplayMode == CardDisplayMode.GroundCardMode)
-                {
-                    return true;
-                }
-            }
-
-            return false;
+            return TryResolveGroundSlotUnderPoint(worldPoint, out var slot)
+                   && GroundFieldGeometryHook.FieldOrNull() is { } field
+                   && field.TryGetCardAt(slot, out _);
         }
 
-        private int? TryResolveGroundSlotUnderPoint(Vector3 worldPoint)
+        private static int? TryResolveGroundSlotUnderPoint(Vector3 worldPoint)
+        {
+            return TryResolveGroundSlotUnderPoint(worldPoint, out var slot) ? slot : null;
+        }
+
+        private static bool TryResolveGroundSlotUnderPoint(Vector3 worldPoint, out int slot)
         {
             var field = GroundFieldGeometryHook.FieldOrNull();
-            if (field == null)
+            if (field == null
+                || !field.TryResolveSlotAtWorld(new Vector2(worldPoint.x, worldPoint.y), out slot))
             {
-                return null;
+                slot = 0;
+                return false;
             }
 
-            var hits = Physics2D.OverlapPointAll(worldPoint);
-            for (var i = 0; i < hits.Length; i++)
-            {
-                var hit = hits[i];
-                if (hit == null)
-                {
-                    continue;
-                }
-
-                var driver = hit.GetComponent<CardVisualDriver>();
-                var bound = driver?.BoundCard;
-                if (bound == null || bound.DisplayMode != CardDisplayMode.GroundCardMode)
-                {
-                    continue;
-                }
-
-                if (field.TryGetSlotOf(bound.Uid, out var slot))
-                {
-                    return slot;
-                }
-            }
-
-            return null;
+            return true;
         }
 
         private static Vector3 ScreenToWorldOnPlane(Vector3 screenPosition, Camera camera, float worldZ)

@@ -631,14 +631,7 @@ namespace NineGrid.Flow
                 return;
             }
 
-            if (!WorldPointerUtility.TryGetPointerScreen(out var mouse))
-            {
-                return;
-            }
-
-            var world = cam.ScreenToWorldPoint(new Vector3(mouse.x, mouse.y, 0f));
-            world.z = bloodSlotCollider.bounds.center.z;
-            var hovering = bloodSlotCollider.OverlapPoint(world);
+            var hovering = WorldPointerUtility.TryOverlapColliderOnPlane(cam, bloodSlotCollider);
             if (hovering == _hoveringSlot)
             {
                 return;

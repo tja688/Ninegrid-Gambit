@@ -116,13 +116,13 @@ namespace NineGrid.Flow
             }
 
             EnsureViewBindings();
-            if (WorldPointerUtility.TryPickCollider(worldCamera, startRunHit))
+            if (WorldPointerUtility.TryOverlapColliderOnPlane(worldCamera, startRunHit))
             {
                 BeginRun(testMode: true);
                 return;
             }
 
-            if (WorldPointerUtility.TryPickCollider(worldCamera, quitGameHit))
+            if (WorldPointerUtility.TryOverlapColliderOnPlane(worldCamera, quitGameHit))
             {
                 QuitGame();
             }

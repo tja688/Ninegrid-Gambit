@@ -8,8 +8,8 @@ using NineGrid.TemporaryTest;
 /// </summary>
 public static class StartRunHoverScaleOverrides
 {
-    [HotReloadOverrideMethod("StartRunHoverScale.OnMouseEnter")]
-    public static void TweakedOnMouseEnter(StartRunHoverScale instance)
+    [HotReloadOverrideMethod("StartRunHoverScale.ApplyHoverEnter")]
+    public static void TweakedOnHoverEnter(StartRunHoverScale instance)
     {
         instance.hovering = true;
         var factor = 2.0f;
@@ -17,8 +17,8 @@ public static class StartRunHoverScaleOverrides
         Debug.Log("[StartRunHoverScale] Enter OVERRIDE v3 factor=" + factor);
     }
 
-    [HotReloadOverrideMethod("StartRunHoverScale.OnMouseExit")]
-    public static void TweakedOnMouseExit(StartRunHoverScale instance)
+    [HotReloadOverrideMethod("StartRunHoverScale.ApplyHoverExit")]
+    public static void TweakedOnHoverExit(StartRunHoverScale instance)
     {
         instance.hovering = false;
         instance.transform.localScale = instance.baseScale;

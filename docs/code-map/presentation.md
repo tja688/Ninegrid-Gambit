@@ -268,20 +268,18 @@
 | `PointerHitSurfacePriorities` | 场地面=28 / 手牌带=20 / 覆层=10，显式互异；覆层不再用 TypePriority=100 + HitSort=100000 抢几何 | 表面仲裁 |
 | `GroundFieldHitSurface` + `SlotClaimRegistry` | 单一场地面；场景格位框恒开；查认领者派发悬停/点击 | 棋盘命中与认领 |
 | `CardHandManagerSingleton` 布局带 | `handHitBoxSize` AABB 数学，不用 collider；`DefaultExecutionOrder(-50)` | 手牌 hover + 起拖 |
-| `CardHandManagerSingleton` 拖拽 | `Physics2D.OverlapPointAll`（#103 交棒场地面） | 拖拽落点 |
-| `WorldPointerUtility.TryPickCollider` | 强制 z=0 OverlapPoint（#103 退役） | 主菜单 StartRun / Quit |
+| `CardHandManagerSingleton` 拖拽落点 | 交棒 `GroundFieldView.TryResolveSlotAtWorld`（场地面九框） | 拖拽落格 |
+| `WorldPointerUtility.TryOverlapColliderOnPlane` | 与 Router 同平面换算；已退役 z=0 `TryPickCollider` | 主菜单 StartRun / Quit；HUD 血槽悬停；StartRunHoverScale |
 | `BounceFanChoicePresenter` | 自算 OverlapPoint，倒序遍历 entries | 战斗内扇形三选一 |
-| `PlayerInfoHudPresenter` | 私有 ScreenToWorldPoint（#103 退役） | 血条上限揭示 |
-| legacy `OnMouseEnter` / `OnMouseExit` | Unity 消息 | `StartRunHoverScale`；NOLEGACY 下 Player 内不触发 |
 | `Physics2D.GetRayIntersection` | — | `Arts/` demo，不属表现层 |
 
 板面参照：底板 Sliced `1.9 × 2.45` × 2 = 世界 `3.8 × 4.9`；格距 `5 × 5.5`；`GroundAnchors/slotN` 自带 `BoxCollider2D` 本地 `1.625 × 2.0625`（已启用）。
 
 ### 收敛方向（ADR-0023 / ADR-0024）
 
-**已落地（#101+#102）**：格位命中框场景权威 + 场地面单一注册 + 表面优先级互异/同分告警 + 一格一认领（`SlotClaimRegistry`）+ 落格对象去 collider/Router + 退役 `BoardWalkSlotHitPolicy` / 软占关框 / Avatar 穿透 + 运行时停写格位 size/offset。
+**已落地（#101+#102+#103）**：格位命中框场景权威 + 场地面单一注册 + 表面优先级互异/同分告警 + 一格一认领（`SlotClaimRegistry`）+ 落格对象去 collider/Router + 退役 `BoardWalkSlotHitPolicy` / 软占关框 / Avatar 穿透 + 运行时停写格位 size/offset + 手牌拖拽落点交棒场地面 + 悬停简要解释与点击同源（认领者）+ 退役野生拾取（`TryPickCollider` / legacy `OnMouse*` / HUD 私有 z=0 换算）。
 
-**尚未落地（#103–#105）**：手牌拖拽落点交棒；野生拾取路径退役；删 Fit / `slotHitBoxSize`；结构护栏全集。实施拆票见 issue #99。
+**尚未落地（#104–#105）**：删 Fit / `slotHitBoxSize`；结构护栏全集。实施拆票见 issue #99。
 ## Core 表演契约与统一表现管线（#54–#62）
 
 - `NineGrid.Core.PresentationBeat`：`Impact` / `Settled` / `None`（**表演消费归属**，非仅卡面；升级路径注释在枚举旁）

@@ -22,11 +22,11 @@
 | `InRoomBoardWiringStructuralTests.cs` | 结构护栏：`PlayRoomIconChoiceAsync` 进消费/特殊房后须调用 `PresentInRoomSessionAfterEnterAsync`；无独立 `PlayRoomEventAsync` 二次 Enter |
 | `WalkSandboxRetirementStructuralTests.cs` | 结构护栏（#91）：无 `WalkSandbox`/`StartWalkSandboxNode`；`\0` 流程测试通道（空技能/Sequential） |
 | `IntentIntakeStructuralTests.cs` | 结构护栏（#52）：输入路径须经 IntentIntake（含 RevealFace）；门禁/收口决策禁用壁钟；ADR-0004 accepted |
-| `PointerInputStructuralTests.cs` / `PointerHitRouterTests.cs` / `GroundFieldHitSurfaceTests.cs` / `PointerHitSurfacePriorityTests.cs` / `SlotClaimRegistryTests.cs` / `SlotClaimStructuralTests.cs` | ADR-0006 / #101+#102：禁 HitProxy `OnMouse*`；场地面解格号；停写格位 size/offset；表面优先级互异与同分装配错误；一格一认领；禁 `BoardWalkSlotHitPolicy` / Avatar `int.MinValue` / 落格自建 collider 回流；mitigation 标记 |
+| `PointerInputStructuralTests.cs` / `PointerHitRouterTests.cs` / `GroundFieldHitSurfaceTests.cs` / `PointerHitSurfacePriorityTests.cs` / `SlotClaimRegistryTests.cs` / `SlotClaimStructuralTests.cs` / `WildPickPathStructuralTests.cs` | ADR-0006 / #101–#103：禁 HitProxy `OnMouse*`；场地面解格号；停写格位 size/offset；表面优先级互异与同分装配错误；一格一认领；禁 `BoardWalkSlotHitPolicy` / Avatar `int.MinValue` / 落格自建 collider 回流；禁手牌 `OverlapPointAll` / `TryPickCollider` / HUD z=0 换算 / legacy `OnMouse*`；mitigation 标记 |
 | `CardFaceBeatStructuralTests.cs` | 结构护栏（#55–#62）：禁石头爱好者卡面提前同步；攻击/反击命中帧须报 Impact 且不得 Sync/SpawnDamagePopups；PresentStep 通道前 FlushUpdateFaceUp、Idle 门控、ack 前 FlushBeats；战斗 Present `flushFaceUpBeforeBegin: false`；Handler 禁 Forget PlayFlipAsync、须 Enqueue Coordinator；用道具 Present 禁 CommitAllSpawnedCards、须 Vacate 前报 Impact；探索/用道具批次投影禁写卡面数值；禁 JSON stats 盖写；首次 ApplyToManagedCard 禁 TryRead；Handler 消费 Spawn/Deal/Avatar/OfferReward；Bounce 禁 `clearCombatStats` 数值旁路；CommitPresentation 生产调用方白名单（含 `CardFaceFlipBeatHandler`）；MarkFieldDead 禁直置零；ApplyKill 取 RemainingHp；底盘数值 Setter 非公开；禁 `PresentEffectTriggersFromEventLog` / `SpawnDamagePopups` / `PresentGoldGainsFromEventLog`；组合根注册飘字/FX/金币/Avatar HUD/翻牌朝向处理器并接线 FlushUpdateFaceUp；排期器禁 SyncFromCore；ADR-0005/0007 交叉引用；排期器多 `IBattleBeatHandler` |
 | `FlipPlaybackCoordinatorTests.cs` | ADR-0016：串行入队不丢翻；PresentStep FaceUp 未 Idle 前不 Begin；战斗延后 FaceUp 不前置 Flush；FlushUpdateFaceUp 只消费 FaceUp |
 
-### 待新增护栏（ADR-0023 / ADR-0024，随实施票落地）
+### 待新增护栏（ADR-0024，随 #104/#105 落地）
 
 现有 `Flow/RoomIconVisualFit` 测试与 `InRoomLeaveWatchStructuralTests` 里「选项 Fit / 真卡禁 Fit」两条断言会随 Fit 退役而作废——**改断言必须同 PR 更新 code-map 与 ADR，不得静默删除**。
 
@@ -36,9 +36,9 @@
 | 认领唯一性 | 一格一认领者；重复认领失败保留先到；Avatar 与运动中对象不认领（`SlotClaimRegistryTests` / #102） |
 | 表面优先级 | **已落地（#101）**：`PointerHitSurfacePriorities` 互异；Router 同分 Error；`PointerHitSurfacePriorityTests` |
 | 命中恒成功 | **已落地（#102）**：无「按规则禁用命中框」路径；`BoardWalkSlotHitPolicy` / 软占关 collider / `int.MinValue` 穿透不得回流（`SlotClaimStructuralTests`） |
+| 野生拾取路径 | **已落地（#103）**：无 `TryPickCollider` z=0 拾取、无 legacy `OnMouse*`、HUD / 主菜单走平面 Overlap（`WildPickPathStructuralTests`） |
 | 落格父级 | 无任何代码把对象 parent 到 `GroundAnchors` 之下（ADR-0024） |
 | 运行时缩放 | 落格路径不得写 `localScale` 绝对值；无 `RoomIconVisualFit` 回流（ADR-0024） |
-| 野生拾取路径 | 无 `WorldPointerUtility.TryPickCollider` z=0 拾取、无 legacy `OnMouse*`、HUD 不自算 `ScreenToWorldPoint`（ADR-0023 / ADR-0006） |
 
 ### Core 契约护栏（`NineGrid.Core.Tests`）
 

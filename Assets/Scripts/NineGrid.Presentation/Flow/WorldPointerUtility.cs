@@ -197,14 +197,19 @@ namespace NineGrid.Flow
 #endif
         }
 
-        public static bool TryPickCollider(Camera camera, Collider2D collider)
+        /// <summary>
+        /// 在 collider 自身平面上做 Overlap（与 PointerHitRouter 同换算）；
+        /// 替代已退役的 z=0 <c>TryPickCollider</c>（ADR-0023 / #103）。
+        /// </summary>
+        public static bool TryOverlapColliderOnPlane(Camera camera, Collider2D collider)
         {
             if (collider == null || !collider.enabled || !collider.gameObject.activeInHierarchy)
             {
                 return false;
             }
 
-            if (!TryGetPointerWorld(camera, out var world))
+            var planeZ = collider.bounds.center.z;
+            if (!TryGetPointerWorldOnPlane(camera, planeZ, out var world))
             {
                 return false;
             }
