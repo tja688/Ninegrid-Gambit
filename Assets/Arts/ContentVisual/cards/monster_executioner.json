@@ -2,17 +2,17 @@
   "schemaVersion": 2,
   "contentId": "monster.executioner",
   "kind": "Monster",
-  "deckId": "deck.wandering_legion",
+  "deckId": "deck.transition",
   "role": "",
-  "displayName": "特2",
+  "displayName": "灰狼",
   "description": "",
   "faceIntro": "他究其一生没能找到属于自己的狈",
-  "attackPattern": "普通近战",
+  "attackPattern": "全向近战",
   "gold": 5,
   "stats": {
-    "hp": 6,
+    "hp": 14,
     "armor": 0,
-    "attack": 2,
+    "attack": 3,
     "action": 3,
     "recovery": 0
   },
@@ -75,9 +75,7 @@
   "tags": [],
   "effectAssemblies": [],
   "effectIds": [],
-  "skillIds": [
-    "skill.sacrifice"
-  ],
+  "skillIds": [],
   "level": "普通",
   "isElite": false,
   "isBoss": false,
@@ -91,5 +89,6 @@
   "healToFull": false,
   "rewardPoolId": "",
   "shopOfferCount": 0,
-  "sequence": 4
+  "sequence": 4,
+  "designSlotName": "特2"
 }

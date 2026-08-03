@@ -83,8 +83,12 @@ namespace NineGrid.Core.Tests
             Assert.IsTrue(catalog.Skills.ContainsKey("skill.beggar_bond"));
             Assert.AreEqual(0, beggar.SkillIds.Count);
 
+            Assert.IsTrue(catalog.MonsterDecks.TryGetValue("deck.transition", out var transition));
+            Assert.Greater(transition.MonsterDefIds.Count, 0, "过渡卡组应挂有全部还原后的怪物");
+            Assert.AreNotEqual(MonsterDeckKind.Reserve, transition.Kind);
+
             Assert.IsTrue(catalog.MonsterDecks.TryGetValue("deck.dragon", out var dragon));
-            Assert.Greater(dragon.MonsterDefIds.Count, 0);
+            Assert.AreEqual(MonsterDeckKind.Reserve, dragon.Kind, "主题卡组待策划交付前为 Reserve");
 
             Assert.IsTrue(catalog.Rewards.TryGetRoom(RoomKind.Fountain, out var fountain));
             Assert.AreEqual(1, fountain.OpeningInjects.Count);
@@ -144,11 +148,13 @@ namespace NineGrid.Core.Tests
             Assert.AreEqual(1, node8.Seq5Count);
 
             Assert.IsTrue(catalog.MonsterDecks.TryGetValue("deck.insect", out var insect));
-            Assert.AreNotEqual(MonsterDeckKind.Reserve, insect.Kind);
+            Assert.AreEqual(MonsterDeckKind.Reserve, insect.Kind);
             Assert.IsTrue(catalog.Cards.TryGetValue("monster.fire_dragon", out var floorBoss));
             Assert.AreEqual(5, floorBoss.Sequence);
             Assert.IsTrue(floorBoss.IsBoss);
             Assert.AreEqual(MonsterRank.FloorBoss, floorBoss.Rank);
+            Assert.AreEqual("deck.transition", floorBoss.DeckId);
+            Assert.AreEqual("紫鹰", floorBoss.DisplayName);
         }
 
         private static string FormatIssues(ContentValidationReport report)

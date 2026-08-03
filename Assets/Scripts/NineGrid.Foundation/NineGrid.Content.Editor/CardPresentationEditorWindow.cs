@@ -652,7 +652,7 @@ namespace NineGrid.Content.Editor
 
         private static string FormatEntryTitle(CardPresentationEditorEntry entry)
         {
-            var titleText = entry.DisplayName;
+            var titleText = entry.SidebarLabel;
             if (string.IsNullOrWhiteSpace(titleText))
             {
                 titleText = entry.ContentId;
@@ -2633,6 +2633,73 @@ namespace NineGrid.Content.Editor
                 });
             });
             column.Add(ContentVisualWarmConsoleUi.WrapControlRow("所属卡组", deckField, 72f));
+
+            if (CardPresentationEditorSession.IsMonsterKind(dto.kind))
+            {
+                column.Add(ContentVisualWarmConsoleUi.WrapControlRow(
+                    "策划槽位名",
+                    BindText(dto.designSlotName, v =>
+                    {
+                        dto.designSlotName = v ?? string.Empty;
+                        OnDtoEdited(entry);
+                    }),
+                    tooltip: "设计案槽位标签（近战1 / 远程2 / boss3…）；不进 Core，仅编辑器与交付对照。"));
+
+                column.Add(ContentVisualWarmConsoleUi.CreateInlineFieldGroup(
+                    ContentVisualWarmConsoleUi.WrapControlRow(
+                        "序列",
+                        BindInt(dto.sequence, v =>
+                        {
+                            dto.sequence = Mathf.Clamp(v, 0, 5);
+                            if (dto.sequence == 5)
+                            {
+                                dto.level = "层主";
+                                dto.isBoss = true;
+                                dto.isElite = false;
+                            }
+                            else if (dto.sequence > 0
+                                     && string.Equals(dto.level, "层主", StringComparison.Ordinal))
+                            {
+                                dto.level = "普通";
+                                dto.isBoss = false;
+                            }
+
+                            OnDtoEdited(entry);
+                            rootVisualElement.schedule.Execute(() =>
+                            {
+                                RefreshContent();
+                                UpdateStatus();
+                            });
+                        }),
+                        40f),
+                    ContentVisualWarmConsoleUi.WrapControlRow(
+                        "等级",
+                        BindText(dto.level ?? string.Empty, v =>
+                        {
+                            dto.level = v ?? string.Empty;
+                            if (string.Equals(dto.level.Trim(), "层主", StringComparison.Ordinal))
+                            {
+                                dto.isBoss = true;
+                                dto.isElite = false;
+                                if (dto.sequence <= 0)
+                                {
+                                    dto.sequence = 5;
+                                }
+                            }
+
+                            OnDtoEdited(entry);
+                        }),
+                        48f)));
+
+                column.Add(ContentVisualWarmConsoleUi.WrapControlRow(
+                    "储备怪",
+                    BindToggle(dto.isReserve, v =>
+                    {
+                        dto.isReserve = v;
+                        OnDtoEdited(entry);
+                    }),
+                    tooltip: "勾选后不参与遭遇抽选（QuickTest / Reserve 池）。"));
+            }
 
             var faceIntroField = new TextField
             {

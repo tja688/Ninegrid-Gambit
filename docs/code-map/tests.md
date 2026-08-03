@@ -53,6 +53,7 @@
 | `RewardOfferFaceProjectionContractTests` | #62：`OfferRewardChoice` 把 CreateDraft 攻/甲/血写入 `RewardEntry` 与 `RewardOffered` Message |
 | `RewardPoolQueryContractTests` / `RewardPoolDiversityContractTests` | #71：奖池查询规则展开、role 均衡、稀有度分层抽取 |
 | `ThemeMonsterDeckContractTests` | #86 / ADR-0022：每层主题卡组不重复绑定、节点按序列 1–5 抽、Reserve 不参与、层主击杀固定 1 金箱+2 金币 |
+| `MonsterLoadoutPresentationValidatorTests` | 过渡卡组 staging 校验绿；交付就绪在怪物仍挂 `deck.transition` 时必须失败 |
 | `MapNodeProgressionContractTests` | #84 / ADR-0021：8 节点编排全表、非战斗不进 InteractionLoop、清关跳过 help.choice、道具卡格结算+清 Trap、困难房门槛、第 3 层节点 8 通关 |
 | `ShopBuyGoldContractTests` / `ShopSessionContractTests` | #92：商店四货架、购买留店扣金、刷新翻倍（本次进店）、离开、余额不足拒买 |
 | `TavernSessionContractTests` | #93：卡店三项服务、扩容/强化扣费留店、刷新翻倍、离开、道具卡固定二级选择确认/取消、余额不足拒买 |

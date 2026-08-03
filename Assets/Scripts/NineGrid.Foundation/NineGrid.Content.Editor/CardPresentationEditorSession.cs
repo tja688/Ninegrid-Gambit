@@ -61,6 +61,23 @@ namespace NineGrid.Content.Editor
         public string DeckId => Dto?.deckId ?? string.Empty;
         public string DisplayName => Dto?.displayName ?? string.Empty;
 
+        /// <summary>侧栏标题：显示名 · 策划槽位名（若不同）。</summary>
+        public string SidebarLabel
+        {
+            get
+            {
+                var name = (Dto?.displayName ?? string.Empty).Trim();
+                var slot = (Dto?.designSlotName ?? string.Empty).Trim();
+                if (!string.IsNullOrEmpty(slot)
+                    && !string.Equals(slot, name, StringComparison.Ordinal))
+                {
+                    return string.IsNullOrEmpty(name) ? slot : name + " · " + slot;
+                }
+
+                return name;
+            }
+        }
+
         public bool IsDirty
         {
             get

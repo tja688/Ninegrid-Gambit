@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "contentId": "monster.fire_swallower",
   "kind": "Monster",
-  "deckId": "deck.smallanimal",
+  "deckId": "deck.transition",
   "role": "",
   "displayName": "田鼠",
   "description": "",
@@ -79,7 +79,7 @@
   "level": "普通",
   "isElite": false,
   "isBoss": false,
-  "isReserve": true,
+  "isReserve": false,
   "containerType": "",
   "deckKind": "",
   "monsterDefIds": [],
@@ -89,5 +89,6 @@
   "healToFull": false,
   "rewardPoolId": "",
   "shopOfferCount": 0,
-  "sequence": 0
+  "sequence": 0,
+  "designSlotName": "田鼠"
 }

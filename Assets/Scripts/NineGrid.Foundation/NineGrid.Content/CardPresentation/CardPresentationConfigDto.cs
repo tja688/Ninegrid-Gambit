@@ -23,6 +23,11 @@ namespace NineGrid.Content.CardPresentation
         public string role;
         /// <summary>显示名；schema≥2 投影写入 Catalog，已投影卡种不再由 Overlay 覆盖。</summary>
         public string displayName;
+        /// <summary>
+        /// 策划槽位名（仅表现/编辑器，不进 Core）：如「近战1」「远程2」「boss3」。
+        /// 与 <see cref="sequence"/> 配套，交付主题卡组时供对照设计案。
+        /// </summary>
+        public string designSlotName;
         /// <summary>描述权威（有值时覆盖 TbContentVisual.description）；Relic/Skill 亦作 designText。</summary>
         public string description;
         /// <summary>

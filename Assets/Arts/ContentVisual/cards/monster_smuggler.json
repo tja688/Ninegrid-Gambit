@@ -2,18 +2,18 @@
   "schemaVersion": 2,
   "contentId": "monster.smuggler",
   "kind": "Monster",
-  "deckId": "deck.void",
+  "deckId": "deck.transition",
   "role": "",
-  "displayName": "远程5",
+  "displayName": "考古学家",
   "description": "",
   "faceIntro": "和醉鬼是酒友",
-  "attackPattern": "普通远程",
+  "attackPattern": "斜角近战",
   "gold": 5,
   "stats": {
     "hp": 4,
-    "armor": 0,
-    "attack": 1,
-    "action": 5,
+    "armor": 5,
+    "attack": 2,
+    "action": 3,
     "recovery": 0
   },
   "sprites": {
@@ -75,9 +75,7 @@
   "tags": [],
   "effectAssemblies": [],
   "effectIds": [],
-  "skillIds": [
-    "skill.ranged_weapon"
-  ],
+  "skillIds": [],
   "level": "普通",
   "isElite": false,
   "isBoss": false,
@@ -91,5 +89,6 @@
   "healToFull": false,
   "rewardPoolId": "",
   "shopOfferCount": 0,
-  "sequence": 2
+  "sequence": 2,
+  "designSlotName": "远程5"
 }

@@ -2,17 +2,17 @@
   "schemaVersion": 2,
   "contentId": "monster.multi_bone_worm",
   "kind": "Monster",
-  "deckId": "deck.insect",
+  "deckId": "deck.transition",
   "role": "",
-  "displayName": "特13",
+  "displayName": "沙虫",
   "description": "",
   "faceIntro": "会吐口水（就是沙子）",
   "attackPattern": "普通近战",
   "gold": 5,
   "stats": {
-    "hp": 12,
-    "armor": 0,
-    "attack": 1,
+    "hp": 3,
+    "armor": 6,
+    "attack": 2,
     "action": 3,
     "recovery": 0
   },
@@ -75,10 +75,7 @@
   "tags": [],
   "effectAssemblies": [],
   "effectIds": [],
-  "skillIds": [
-    "skill.holy_duel",
-    "skill.battle_hardened"
-  ],
+  "skillIds": [],
   "level": "普通",
   "isElite": false,
   "isBoss": false,
@@ -92,5 +89,6 @@
   "healToFull": false,
   "rewardPoolId": "",
   "shopOfferCount": 0,
-  "sequence": 3
+  "sequence": 3,
+  "designSlotName": "特13"
 }

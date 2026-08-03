@@ -177,58 +177,13 @@ namespace NineGrid.Content.Editor
 
         private static string BuildNodePoolSummary(string deckKindLabel)
         {
-            var folder = ContentCatalogTableLoader.ResolveTablesDirectory();
-            if (string.IsNullOrEmpty(folder))
+            // ADR-0022：节点规则是全局 seq1–5，不再按 deck_kind 分档过滤。
+            if (string.Equals(deckKindLabel, "Reserve", StringComparison.OrdinalIgnoreCase))
             {
-                return string.Empty;
+                return "Reserve：不参与每层主题随机（空组可待策划交付）";
             }
 
-            var path = Path.Combine(folder, "node_deck_rules.json");
-            if (!File.Exists(path))
-            {
-                return string.Empty;
-            }
-
-            try
-            {
-                var raw = File.ReadAllText(path, Encoding.UTF8);
-                var wrapped = "{\"items\":" + raw + "}";
-                var list = JsonUtility.FromJson<NodeDeckRuleRowList>(wrapped);
-                if (list?.items == null || list.items.Length == 0)
-                {
-                    return string.Empty;
-                }
-
-                var nodes = new List<int>();
-                for (var i = 0; i < list.items.Length; i++)
-                {
-                    var row = list.items[i];
-                    if (row != null
-                        && string.Equals(row.deck_kind, deckKindLabel, StringComparison.OrdinalIgnoreCase))
-                    {
-                        nodes.Add(row.node_index);
-                    }
-                }
-
-                if (nodes.Count == 0)
-                {
-                    return string.Empty;
-                }
-
-                nodes.Sort();
-                if (nodes.Count == 1)
-                {
-                    return "节点 " + nodes[0];
-                }
-
-                return "节点 " + nodes[0] + "–" + nodes[nodes.Count - 1]
-                    + "（共 " + nodes.Count + " 个）";
-            }
-            catch (Exception ex)
-            {
-                Debug.LogWarning("[MonsterDeckUsageInspector] node_deck_rules: " + ex.Message);
-                return string.Empty;
-            }
+            return "全局序列制（node_deck_rules 的 seq1–5；每层绑定一套非 Reserve 主题卡组）";
         }
 
         [Serializable]

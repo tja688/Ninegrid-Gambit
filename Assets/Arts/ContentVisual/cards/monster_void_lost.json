@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "contentId": "monster.void_lost",
   "kind": "Monster",
-  "deckId": "deck.smallanimal",
+  "deckId": "deck.transition",
   "role": "",
   "displayName": "双球青莱姆",
   "description": "",
@@ -78,7 +78,7 @@
   "level": "普通",
   "isElite": false,
   "isBoss": false,
-  "isReserve": true,
+  "isReserve": false,
   "containerType": "",
   "deckKind": "",
   "monsterDefIds": [],
@@ -88,5 +88,6 @@
   "healToFull": false,
   "rewardPoolId": "",
   "shopOfferCount": 0,
-  "sequence": 0
+  "sequence": 0,
+  "designSlotName": "双球青莱姆"
 }

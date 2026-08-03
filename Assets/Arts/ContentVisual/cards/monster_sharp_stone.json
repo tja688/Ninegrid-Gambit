@@ -2,16 +2,16 @@
   "schemaVersion": 2,
   "contentId": "monster.sharp_stone",
   "kind": "Monster",
-  "deckId": "deck.insect",
+  "deckId": "deck.transition",
   "role": "",
-  "displayName": "近战7",
+  "displayName": "紫壳蝎",
   "description": "",
   "faceIntro": "有人说他像螃蟹，这属实把他给气坏了",
   "attackPattern": "普通近战",
   "gold": 5,
   "stats": {
-    "hp": 4,
-    "armor": 4,
+    "hp": 3,
+    "armor": 1,
     "attack": 1,
     "action": 3,
     "recovery": 0
@@ -75,9 +75,7 @@
   "tags": [],
   "effectAssemblies": [],
   "effectIds": [],
-  "skillIds": [
-    "skill.holy_duel"
-  ],
+  "skillIds": [],
   "level": "普通",
   "isElite": false,
   "isBoss": false,
@@ -91,5 +89,6 @@
   "healToFull": false,
   "rewardPoolId": "",
   "shopOfferCount": 0,
-  "sequence": 1
+  "sequence": 1,
+  "designSlotName": "近战7"
 }

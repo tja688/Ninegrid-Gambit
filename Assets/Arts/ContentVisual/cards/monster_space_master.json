@@ -2,17 +2,17 @@
   "schemaVersion": 2,
   "contentId": "monster.space_master",
   "kind": "Monster",
-  "deckId": "deck.void",
+  "deckId": "deck.transition",
   "role": "",
-  "displayName": "boss5",
+  "displayName": "花花莱姆",
   "description": "",
   "faceIntro": "头顶的花是他的伙伴",
-  "attackPattern": "普通近战",
+  "attackPattern": "全向近战",
   "gold": 5,
   "stats": {
-    "hp": 30,
-    "armor": 0,
-    "attack": 3,
+    "hp": 42,
+    "armor": 10,
+    "attack": 4,
     "action": 3,
     "recovery": 0
   },
@@ -75,10 +75,7 @@
   "tags": [],
   "effectAssemblies": [],
   "effectIds": [],
-  "skillIds": [
-    "skill.link_prep",
-    "skill.link_armor"
-  ],
+  "skillIds": [],
   "level": "层主",
   "isElite": false,
   "isBoss": true,
@@ -92,5 +89,6 @@
   "healToFull": false,
   "rewardPoolId": "",
   "shopOfferCount": 0,
-  "sequence": 5
+  "sequence": 5,
+  "designSlotName": "boss5"
 }

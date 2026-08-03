@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "contentId": "monster.melee_3",
   "kind": "Monster",
-  "deckId": "deck.skeleton_legion",
+  "deckId": "deck.transition",
   "role": "",
   "displayName": "近战3",
   "description": "",
@@ -75,9 +75,7 @@
   "tags": [],
   "effectAssemblies": [],
   "effectIds": [],
-  "skillIds": [
-    "skill.death_summon"
-  ],
+  "skillIds": [],
   "level": "普通",
   "isElite": false,
   "isBoss": false,
@@ -91,5 +89,6 @@
   "healToFull": false,
   "rewardPoolId": "",
   "shopOfferCount": 0,
-  "sequence": 1
+  "sequence": 1,
+  "designSlotName": "近战3"
 }

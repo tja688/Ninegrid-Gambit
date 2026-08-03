@@ -2,17 +2,17 @@
   "schemaVersion": 2,
   "contentId": "monster.megalith",
   "kind": "Monster",
-  "deckId": "deck.insect",
+  "deckId": "deck.transition",
   "role": "",
-  "displayName": "boss7",
+  "displayName": "蜂巢",
   "description": "",
   "faceIntro": "不收快递",
-  "attackPattern": "普通近战",
+  "attackPattern": "全向近战",
   "gold": 5,
   "stats": {
-    "hp": 150,
-    "armor": 0,
-    "attack": 10,
+    "hp": 8,
+    "armor": 12,
+    "attack": 2,
     "action": 3,
     "recovery": 0
   },
@@ -75,10 +75,7 @@
   "tags": [],
   "effectAssemblies": [],
   "effectIds": [],
-  "skillIds": [
-    "skill.holy_duel",
-    "skill.attrition"
-  ],
+  "skillIds": [],
   "level": "层主",
   "isElite": false,
   "isBoss": true,
@@ -92,5 +89,6 @@
   "healToFull": false,
   "rewardPoolId": "",
   "shopOfferCount": 0,
-  "sequence": 5
+  "sequence": 5,
+  "designSlotName": "boss7"
 }

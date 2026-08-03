@@ -2,17 +2,17 @@
   "schemaVersion": 2,
   "contentId": "monster.fire_dragon",
   "kind": "Monster",
-  "deckId": "deck.wandering_legion",
+  "deckId": "deck.transition",
   "role": "",
-  "displayName": "boss1",
+  "displayName": "紫鹰",
   "description": "",
   "faceIntro": "他最得意的就是他的发型",
-  "attackPattern": "普通近战",
+  "attackPattern": "全向近战",
   "gold": 5,
   "stats": {
-    "hp": 30,
-    "armor": 0,
-    "attack": 3,
+    "hp": 50,
+    "armor": 5,
+    "attack": 5,
     "action": 3,
     "recovery": 0
   },
@@ -75,9 +75,7 @@
   "tags": [],
   "effectAssemblies": [],
   "effectIds": [],
-  "skillIds": [
-    "skill.absorb"
-  ],
+  "skillIds": [],
   "level": "层主",
   "isElite": false,
   "isBoss": true,
@@ -91,5 +89,6 @@
   "healToFull": false,
   "rewardPoolId": "",
   "shopOfferCount": 0,
-  "sequence": 5
+  "sequence": 5,
+  "designSlotName": "boss1"
 }

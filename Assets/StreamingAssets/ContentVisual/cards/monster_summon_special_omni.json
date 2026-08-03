@@ -2,9 +2,9 @@
   "schemaVersion": 2,
   "contentId": "monster.summon.special_omni",
   "kind": "Monster",
-  "deckId": "deck.skeleton_legion",
+  "deckId": "deck.transition",
   "role": "",
-  "displayName": "特5",
+  "displayName": "重生骷髅",
   "description": "",
   "faceIntro": "",
   "attackPattern": "全向近战",
@@ -89,5 +89,6 @@
   "healToFull": false,
   "rewardPoolId": "",
   "shopOfferCount": 0,
-  "sequence": 3
+  "sequence": 3,
+  "designSlotName": "特5"
 }

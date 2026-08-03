@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "contentId": "monster.melee_6",
   "kind": "Monster",
-  "deckId": "deck.dragon",
+  "deckId": "deck.transition",
   "role": "",
   "displayName": "近战6",
   "description": "",
@@ -75,9 +75,7 @@
   "tags": [],
   "effectAssemblies": [],
   "effectIds": [],
-  "skillIds": [
-    "skill.offer_fire"
-  ],
+  "skillIds": [],
   "level": "普通",
   "isElite": false,
   "isBoss": false,
@@ -91,5 +89,6 @@
   "healToFull": false,
   "rewardPoolId": "",
   "shopOfferCount": 0,
-  "sequence": 1
+  "sequence": 1,
+  "designSlotName": "近战6"
 }

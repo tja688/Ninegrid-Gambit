@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "contentId": "monster.big_skeleton_reborn",
   "kind": "Monster",
-  "deckId": "deck.smallanimal",
+  "deckId": "deck.transition",
   "role": "",
   "displayName": "弓箭骷髅",
   "description": "",
@@ -89,5 +89,6 @@
   "healToFull": false,
   "rewardPoolId": "",
   "shopOfferCount": 0,
-  "sequence": 0
+  "sequence": 0,
+  "designSlotName": "弓箭骷髅"
 }
