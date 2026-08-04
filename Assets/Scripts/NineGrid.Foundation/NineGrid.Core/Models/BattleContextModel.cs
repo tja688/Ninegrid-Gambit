@@ -7,11 +7,12 @@ namespace NineGrid.Core
     /// 追踪玩家当前交战敌人与交战窗口是否打开。
     /// EngagedEnemyUid 供 UntilEnemyChanges；IsEngagementActive 供 OnBattle 门禁（#78 / ADR-0012）。
     /// IsLeaveTrapBroken 即战斗房清关标志（#113 / ADR-0026；<c>IDeckSystem.IsNodeCleared</c> 读此位）。
-    /// 开局真怪 N / 击破进度 / 离开机关是否已洗入供 #112 ⌈N/2⌉ 插入（ADR-0026）。
+    /// 开局真怪 N / 击破进度 / 离开机关是否已洗入供 #112 插入（ADR-0026：默认 ⌈N/2⌉；层主房改为击破开局层主）。
     /// </summary>
     public sealed class BattleContextModel : AbstractModel
     {
         private readonly HashSet<int> mOpeningTrueMonsterUids = new HashSet<int>();
+        private readonly HashSet<int> mOpeningBossMonsterUids = new HashSet<int>();
 
         public BindableProperty<int> EngagedEnemyUid { get; private set; }
 
@@ -29,6 +30,9 @@ namespace NineGrid.Core
 
         /// <summary>本节点已击破的开局真怪物数（仅计开局编入 UID）。</summary>
         public int DefeatedTrueMonsterCount { get; private set; }
+
+        /// <summary>本节点是否已击破开局编入的层主（Boss Counter）。</summary>
+        public bool IsOpeningBossDefeated { get; private set; }
 
         /// <summary>离开机关是否已洗入本节点战斗卡组（幂等）。</summary>
         public bool IsLeaveTrapInserted { get; private set; }
@@ -54,8 +58,10 @@ namespace NineGrid.Core
             IsLeaveTrapBroken = false;
             OpeningTrueMonsterCount = 0;
             DefeatedTrueMonsterCount = 0;
+            IsOpeningBossDefeated = false;
             IsLeaveTrapInserted = false;
             mOpeningTrueMonsterUids.Clear();
+            mOpeningBossMonsterUids.Clear();
         }
 
         public void SetEngagedEnemy(int monsterUid)
@@ -73,7 +79,7 @@ namespace NineGrid.Core
             IsLeaveTrapBroken = true;
         }
 
-        public void RegisterOpeningTrueMonster(int cardUid)
+        public void RegisterOpeningTrueMonster(int cardUid, bool isBoss = false)
         {
             if (cardUid <= 0 || !mOpeningTrueMonsterUids.Add(cardUid))
             {
@@ -81,6 +87,10 @@ namespace NineGrid.Core
             }
 
             OpeningTrueMonsterCount = mOpeningTrueMonsterUids.Count;
+            if (isBoss)
+            {
+                mOpeningBossMonsterUids.Add(cardUid);
+            }
         }
 
         /// <summary>仅开局编入的真怪击破计入进度；返回是否计入。</summary>
@@ -95,15 +105,40 @@ namespace NineGrid.Core
             return true;
         }
 
+        /// <summary>仅开局编入且带 Boss Counter 的真怪击破计入层主进度。</summary>
+        public bool TryRecordOpeningBossDefeat(int cardUid)
+        {
+            if (cardUid <= 0 || !mOpeningBossMonsterUids.Contains(cardUid))
+            {
+                return false;
+            }
+
+            IsOpeningBossDefeated = true;
+            return true;
+        }
+
         public void MarkLeaveTrapInserted()
         {
             IsLeaveTrapInserted = true;
         }
 
-        /// <summary>⌈N/2⌉；N=0 时永不触发（避免无怪即出门）。</summary>
-        public bool ShouldInsertLeaveTrap()
+        /// <summary>
+        /// 非层主房：⌈N/2⌉（N=0 永不触发）。
+        /// 层主房（<paramref name="bossRoom"/>）：须已击破开局层主。
+        /// </summary>
+        public bool ShouldInsertLeaveTrap(bool bossRoom)
         {
-            if (IsLeaveTrapInserted || OpeningTrueMonsterCount <= 0)
+            if (IsLeaveTrapInserted)
+            {
+                return false;
+            }
+
+            if (bossRoom)
+            {
+                return IsOpeningBossDefeated;
+            }
+
+            if (OpeningTrueMonsterCount <= 0)
             {
                 return false;
             }

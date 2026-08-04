@@ -11,8 +11,9 @@ using QFramework;
 namespace NineGrid.Core.Tests
 {
     /// <summary>
-    /// #112 / ADR-0026：开局真怪击破达 ⌈N/2⌉ 后，将离开机关洗入战斗卡组随机位（经补牌上场，无强制占格）。
-    /// 缝：StartNode 编组 → 真怪击破 → DrawPile/Board 出现 trap.leave；N 不含机关；奇数上取整；只插入一次。
+    /// #112 / ADR-0026：离开机关洗入战斗卡组。
+    /// 默认战斗房：开局真怪击破达 ⌈N/2⌉ 后插入（N 不含机关；奇数上取整；幂等；经补牌上场）。
+    /// 层主房（RoomKind.Boss）：改为击破开局层主后才插入；过半无效。
     /// </summary>
     public sealed class LeaveTrapInsertContractTests
     {
@@ -52,7 +53,7 @@ namespace NineGrid.Core.Tests
             PrepareAvatar(99, 99, 0);
             Assert.AreEqual(0, CountLeaveTrapInBattleDeck(), "开局不得预先含离开机关");
 
-            KillOneTrueMonsterOnBoard();
+            KillOneTrueMonsterOnBoard(preferBoss: false);
             Assert.AreEqual(1, CountLeaveTrapInBattleDeck(), "击破达 ⌈N/2⌉ 后离开机关应出现在战斗卡组（堆或经补牌上场）");
             Assert.IsTrue(HasShuffleIntoLeaveTrapEvent(), "须经 ShuffleIntoDrawPile 洗入，而非本票强制瞬占格");
         }
@@ -64,10 +65,10 @@ namespace NineGrid.Core.Tests
             Assert.IsTrue(mPhase.StartNode(CreateBattleNode(trueMonsterCount: 3, includeTrap: false)).Accepted);
             PrepareAvatar(99, 99, 0);
 
-            KillOneTrueMonsterOnBoard();
+            KillOneTrueMonsterOnBoard(preferBoss: false);
             Assert.AreEqual(0, CountLeaveTrapInBattleDeck(), "未达 ⌈N/2⌉ 不得插入");
 
-            KillOneTrueMonsterOnBoard();
+            KillOneTrueMonsterOnBoard(preferBoss: false);
             Assert.AreEqual(1, CountLeaveTrapInBattleDeck(), "奇数 N 用上取整：第三只编组中击破第二只后插入");
         }
 
@@ -79,7 +80,7 @@ namespace NineGrid.Core.Tests
             PrepareAvatar(99, 99, 0);
             Assert.AreEqual(0, CountLeaveTrapInBattleDeck());
 
-            KillOneTrueMonsterOnBoard();
+            KillOneTrueMonsterOnBoard(preferBoss: false);
             Assert.AreEqual(1, CountLeaveTrapInBattleDeck(), "半数分母不含开局机关");
         }
 
@@ -89,10 +90,10 @@ namespace NineGrid.Core.Tests
             Assert.IsTrue(mPhase.StartNode(CreateBattleNode(trueMonsterCount: 2, includeTrap: false)).Accepted);
             PrepareAvatar(99, 99, 0);
 
-            KillOneTrueMonsterOnBoard();
+            KillOneTrueMonsterOnBoard(preferBoss: false);
             Assert.AreEqual(1, CountLeaveTrapInBattleDeck());
 
-            KillOneTrueMonsterOnBoard();
+            KillOneTrueMonsterOnBoard(preferBoss: false);
             Assert.AreEqual(1, CountLeaveTrapInBattleDeck(), "只洗入一次");
         }
 
@@ -115,7 +116,7 @@ namespace NineGrid.Core.Tests
             Assert.IsTrue(mPhase.ApplyCombatHit(board.AvatarUid.Value, spawnedUid).Accepted);
             Assert.AreEqual(0, CountLeaveTrapInBattleDeck(), "局中新生真怪击破不计开局进度");
 
-            KillOneTrueMonsterOnBoard();
+            KillOneTrueMonsterOnBoard(preferBoss: false);
             Assert.AreEqual(1, CountLeaveTrapInBattleDeck(), "击破一只开局真怪后才应插入");
         }
 
@@ -128,6 +129,76 @@ namespace NineGrid.Core.Tests
                 EnemyOpeningCount = 0
             }).Accepted);
             Assert.AreEqual(0, CountLeaveTrapInBattleDeck(), "无开局真怪时不得插入离开机关");
+        }
+
+        [Test]
+        public void BossRoom_HalfTrueMonsterKills_DoNotInsert()
+        {
+            mArch.GetModel<RunModel>().Room.Value = RoomKind.Boss;
+            Assert.IsTrue(mPhase.StartNode(CreateBossBattleNode(fodderCount: 2)).Accepted);
+            PrepareAvatar(99, 99, 0);
+
+            KillOneTrueMonsterOnBoard(preferBoss: false);
+            Assert.AreEqual(0, CountLeaveTrapInBattleDeck(), "层主房过半不得插入");
+
+            KillOneTrueMonsterOnBoard(preferBoss: false);
+            Assert.AreEqual(0, CountLeaveTrapInBattleDeck(), "层主房击破全部杂兵仍不得插入");
+        }
+
+        [Test]
+        public void BossRoom_KillOpeningBoss_InsertsLeaveTrap()
+        {
+            mArch.GetModel<RunModel>().Room.Value = RoomKind.Boss;
+            Assert.IsTrue(mPhase.StartNode(CreateBossBattleNode(fodderCount: 2)).Accepted);
+            PrepareAvatar(99, 99, 0);
+            Assert.AreEqual(0, CountLeaveTrapInBattleDeck());
+
+            // 先杀一只杂兵：证明过半路径已关闭。
+            KillOneTrueMonsterOnBoard(preferBoss: false);
+            Assert.AreEqual(0, CountLeaveTrapInBattleDeck());
+
+            KillOneTrueMonsterOnBoard(preferBoss: true);
+            Assert.AreEqual(1, CountLeaveTrapInBattleDeck(), "层主房须击破开局层主后才插入");
+            Assert.IsTrue(HasShuffleIntoLeaveTrapEvent());
+        }
+
+        [Test]
+        public void BossRoom_Insert_IsIdempotent()
+        {
+            mArch.GetModel<RunModel>().Room.Value = RoomKind.Boss;
+            Assert.IsTrue(mPhase.StartNode(CreateBossBattleNode(fodderCount: 1)).Accepted);
+            PrepareAvatar(99, 99, 0);
+
+            KillOneTrueMonsterOnBoard(preferBoss: true);
+            Assert.AreEqual(1, CountLeaveTrapInBattleDeck());
+
+            KillOneTrueMonsterOnBoard(preferBoss: false);
+            Assert.AreEqual(1, CountLeaveTrapInBattleDeck(), "层主房也只洗入一次");
+        }
+
+        [Test]
+        public void BossRoom_MidBattleSpawnedBoss_Kill_DoesNotInsert()
+        {
+            mArch.GetModel<RunModel>().Room.Value = RoomKind.Boss;
+            Assert.IsTrue(mPhase.StartNode(CreateBossBattleNode(fodderCount: 1)).Accepted);
+            PrepareAvatar(99, 99, 0);
+
+            mPipeline.Enqueue(new SpawnCardAction(FodderDefId, CardKind.Monster, ZoneId.Board, SlotId.Board(8), 1, "test"));
+            Assert.Greater(mPipeline.RunToCompletion(), 0);
+            var spawnedUid = mArch.GetModel<BoardModel>().GetCardUid(SlotId.Board(8));
+            var spawned = mArch.GetModel<CardRegistry>().Get(spawnedUid);
+            spawned.Stats.SetBase(StatId.MaxHp, 1);
+            spawned.Stats.SetBase(StatId.Hp, 1);
+            spawned.Stats.SetBase(StatId.Attack, 0);
+            spawned.Counters.Set(CoreCounterKeys.Boss, 1);
+            spawned.Counters.Set(CoreCounterKeys.Elite, 1);
+
+            var board = mArch.GetModel<BoardModel>();
+            Assert.IsTrue(mPhase.ApplyCombatHit(board.AvatarUid.Value, spawnedUid).Accepted);
+            Assert.AreEqual(0, CountLeaveTrapInBattleDeck(), "局中新生层主击破不得插入");
+
+            KillOneTrueMonsterOnBoard(preferBoss: true);
+            Assert.AreEqual(1, CountLeaveTrapInBattleDeck(), "仍须击破开局层主");
         }
 
         private static NodeDeckOptions CreateBattleNode(int trueMonsterCount, bool includeTrap)
@@ -161,6 +232,36 @@ namespace NineGrid.Core.Tests
             return options;
         }
 
+        private static NodeDeckOptions CreateBossBattleNode(int fodderCount)
+        {
+            var options = new NodeDeckOptions
+            {
+                PlayerOpeningCount = 0,
+                EnemyOpeningCount = fodderCount + 1,
+                RequireElite = true
+            };
+            for (var i = 0; i < fodderCount; i++)
+            {
+                options.AddEnemyCard(new CardDraft(FodderDefId, CardKind.Monster)
+                {
+                    MaxHp = 1,
+                    Hp = 1,
+                    Attack = 0,
+                    GoldReward = 0
+                });
+            }
+
+            options.AddEnemyCard(new CardDraft(FodderDefId, CardKind.Monster)
+            {
+                MaxHp = 1,
+                Hp = 1,
+                Attack = 0,
+                GoldReward = 0,
+                IsBoss = true
+            });
+            return options;
+        }
+
         private void PrepareAvatar(int hp, int attack, int armor)
         {
             var avatar = mArch.GetModel<CardRegistry>().Get(mArch.GetModel<BoardModel>().AvatarUid.Value);
@@ -171,7 +272,7 @@ namespace NineGrid.Core.Tests
             avatar.Stats.SetBase(StatId.CurrentArmor, armor);
         }
 
-        private void KillOneTrueMonsterOnBoard()
+        private void KillOneTrueMonsterOnBoard(bool preferBoss)
         {
             var board = mArch.GetModel<BoardModel>();
             var registry = mArch.GetModel<CardRegistry>();
@@ -184,11 +285,17 @@ namespace NineGrid.Core.Tests
                     continue;
                 }
 
+                var isBoss = card.Counters.Get(CoreCounterKeys.Boss) > 0;
+                if (preferBoss != isBoss)
+                {
+                    continue;
+                }
+
                 targetUid = uid;
                 break;
             }
 
-            Assert.Greater(targetUid, 0, "场上应有可击破真怪");
+            Assert.Greater(targetUid, 0, preferBoss ? "场上应有可击破层主" : "场上应有可击破非层主真怪");
             var hit = mPhase.ApplyCombatHit(board.AvatarUid.Value, targetUid);
             Assert.IsTrue(hit.Accepted, hit.Reason);
         }

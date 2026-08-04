@@ -32,7 +32,7 @@
 | [ADR-0021](../adr/0021-run-progression-in-core.md) | 跑图进度与节点编排归 Core；8 节点/层；4/7 非战斗（清关兑金条款见 ADR-0025/0026） |
 | [ADR-0022](../adr/0022-node-loadout-model.md) | 关卡装填：主题序列 + 玩家侧重生成；携带卡包已退役（ADR-0025） |
 | [ADR-0025](../adr/0025-item-slots-run-persistent-hold.md) | 道具卡格跑图内持续持有；双容量；商店升级；回收；携带卡包退役 |
-| [ADR-0026](../adr/0026-leave-trap-sole-clear-condition.md) | 离开机关为战斗房唯一清关；门/离开；⌈N/2⌉ 洗入牌堆 |
+| [ADR-0026](../adr/0026-leave-trap-sole-clear-condition.md) | 离开机关为战斗房唯一清关；门/离开；默认 ⌈N/2⌉ 洗入，层主房改击破开局层主 |
 
 > ADR-0011–0013 已落地（含卡面倒计时 Commit 与单向打击 Counter 分拍，#81）。落地方案见 `Assets/Notes/怪物攻击模式与敌方行动阶段-落地方案-2026-07-29.md`（过程笔记，非权威）。
 

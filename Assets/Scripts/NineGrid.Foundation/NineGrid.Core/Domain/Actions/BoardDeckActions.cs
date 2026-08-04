@@ -55,7 +55,8 @@ namespace NineGrid.Core
                 deck.AddToEnemyCardPool(card);
                 if (CardCombatRules.IsTrueMonster(card.Kind))
                 {
-                    battle.RegisterOpeningTrueMonster(card.Uid);
+                    var isBoss = card.Counters.Get(CoreCounterKeys.Boss) > 0;
+                    battle.RegisterOpeningTrueMonster(card.Uid, isBoss);
                 }
 
                 result.AddWithFaceAbsolutes(

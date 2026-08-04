@@ -104,6 +104,7 @@ namespace NineGrid.Core.Systems
             }
 
             var battle = this.GetModel<BattleContextModel>();
+            var bossRoom = this.GetModel<RunModel>().Room.Value == RoomKind.Boss;
             var recorded = false;
             for (var i = 0; i < context.Events.Count; i++)
             {
@@ -113,14 +114,22 @@ namespace NineGrid.Core.Systems
                     continue;
                 }
 
-                // 仅开局编入真怪 UID 计入 ⌈N/2⌉ 进度（局中新生怪不加速出门）。
-                if (battle.TryRecordOpeningTrueMonsterDefeat(evt.CardUid))
+                // 开局编入真怪 UID 才计入进度（局中新生怪不加速出门）。
+                // 层主房：只认开局层主击破；其它战斗房：⌈N/2⌉（ADR-0026）。
+                if (bossRoom)
+                {
+                    if (battle.TryRecordOpeningBossDefeat(evt.CardUid))
+                    {
+                        recorded = true;
+                    }
+                }
+                else if (battle.TryRecordOpeningTrueMonsterDefeat(evt.CardUid))
                 {
                     recorded = true;
                 }
             }
 
-            if (!recorded || !battle.ShouldInsertLeaveTrap())
+            if (!recorded || !battle.ShouldInsertLeaveTrap(bossRoom))
             {
                 return null;
             }
