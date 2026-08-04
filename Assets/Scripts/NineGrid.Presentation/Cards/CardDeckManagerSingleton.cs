@@ -15,6 +15,8 @@ namespace NineGrid.Cards
     /// </summary>
     public sealed class CardDeckManagerSingleton : MonoBehaviour, IHandoffEndpoint
     {
+        private const string MainSortingLayerName = "Main";
+        private const string RecycleBackgroundSortingLayerName = "BG";
 
         [Header("Scene Anchors")]
         [Tooltip("场景 Anchors/CardDeckAnchors。留空时 Awake 按名称 CardDeckAnchors 查找。")]
@@ -39,6 +41,7 @@ namespace NineGrid.Cards
         private List<Transform> _addAnchors = new();
         private List<Transform> _groundAnchors = new();
         private bool _isBusy;
+        private bool _recycleBackgroundSuppressed;
         private ManagedCard _hoveredDeckCard;
         private readonly HashSet<int> _returnInFlightUids = new();
         private readonly Dictionary<int, UniTaskCompletionSource> _returnSettledWaiters = new();
@@ -439,6 +442,28 @@ namespace NineGrid.Cards
         }
 
         /// <summary>
+        /// 回收区 UI 激活期间：卡组卡临时下沉到 BG Sorting Layer，使 CardRecycleNotice 压住卡组，
+        /// 同时手牌/遗物拖拽仍留在 Main 压住 Notice。关闭时恢复 Main。
+        /// </summary>
+        public void SetRecycleBackgroundSuppressed(bool active)
+        {
+            if (_recycleBackgroundSuppressed == active)
+            {
+                return;
+            }
+
+            _recycleBackgroundSuppressed = active;
+            if (_slotContainer == null)
+            {
+                return;
+            }
+
+            _slotContainer.SetSortingLayerName(
+                active ? RecycleBackgroundSortingLayerName : MainSortingLayerName);
+            _slotContainer.ApplySortingOrders();
+        }
+
+        /// <summary>
         /// 按 Uid 从卡组槽卸下视图，不 Release（供未用帮助卡结算等外层自行退场）。
         /// </summary>
         public bool TryDetachByUid(int uid, out ManagedCard card)
@@ -483,6 +508,12 @@ namespace NineGrid.Cards
             else
             {
                 _returnSettledWaiters.Clear();
+            }
+
+            if (_recycleBackgroundSuppressed)
+            {
+                _recycleBackgroundSuppressed = false;
+                _slotContainer?.SetSortingLayerName(MainSortingLayerName);
             }
 
             _slotContainer?.Clear();

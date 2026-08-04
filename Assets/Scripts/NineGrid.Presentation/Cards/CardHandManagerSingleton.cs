@@ -6,9 +6,11 @@ using Cysharp.Threading.Tasks;
 using DG.Tweening;
 using NineGrid.Cards.Convergence;
 using NineGrid.Core;
+using NineGrid.Core.Systems;
 using NineGrid.Flow;
 using NineGrid.Flow.Diagnostics;
 using NineGrid.Flow.Presentation;
+using TMPro;
 using UnityEngine;
 using UnityEngine.Rendering;
 using NineGrid.Presentation;
@@ -48,6 +50,9 @@ namespace NineGrid.Cards
         [Tooltip("场景 CardHandAnchors/CardRecycleNotice。拖动时激活；留空时按子节点名查找。")]
         [SerializeField] private GameObject recycleNotice;
 
+        [Tooltip("CardRecycleNotice 下标准世界文字（如「标准世界文字 (2)」）。悬停回收区时显示 +N。")]
+        [SerializeField] private TMP_Text recycleValueText;
+
         [Header("Layout")]
         [Tooltip("手牌布局与动效参数。")]
         [SerializeField] private CardHandLayoutSettings layoutSettings = new();
@@ -60,6 +65,7 @@ namespace NineGrid.Cards
         private bool _isBusy;
         private CancellationTokenSource _dragLoopCts;
         private CancellationTokenSource _handWorkCts;
+        private int _recyclePreviewGold;
 
         private readonly struct HandHoverCandidate
         {
@@ -1208,7 +1214,7 @@ namespace NineGrid.Cards
             _dragLoopCts?.Cancel();
             _dragLoopCts?.Dispose();
             _dragLoopCts = new CancellationTokenSource();
-            SetRecycleUiActive(true);
+            SetRecycleUiActive(true, ResolveRecycleItemSlotGold());
             RunDragLoopAsync(_dragLoopCts.Token).Forget();
         }
 
@@ -1250,6 +1256,7 @@ namespace NineGrid.Cards
 
                     var world = ScreenToWorldOnPlane(dragScreen, camera, dragZ);
                     card.Transform.position = world;
+                    UpdateRecycleValueHover(world);
 
                     var inZone = IsPointInApplyZone(world);
                     var overGround = IsOverGroundCard(world);
@@ -1683,7 +1690,7 @@ namespace NineGrid.Cards
             return recycleZoneCollider.bounds.Contains(worldPoint);
         }
 
-        private void SetRecycleUiActive(bool active)
+        private void SetRecycleUiActive(bool active, int? previewGold = null)
         {
             if (recycleZoneCollider != null)
             {
@@ -1694,18 +1701,88 @@ namespace NineGrid.Cards
             {
                 recycleNotice.SetActive(active);
             }
+
+            CardEntityLifecycleHook.DeckOrNull()?.SetRecycleBackgroundSuppressed(active);
+
+            if (active)
+            {
+                _recyclePreviewGold = previewGold ?? ResolveRecycleItemSlotGold();
+                SetRecycleValueVisible(false);
+            }
+            else
+            {
+                SetRecycleValueVisible(false);
+                _recyclePreviewGold = 0;
+            }
         }
 
         /// <summary>遗物拖动与道具拖动共用回收区 UI（ADR-0027）。</summary>
-        public void SetRecycleZonePresentationActive(bool active)
+        public void SetRecycleZonePresentationActive(bool active, int? previewGold = null)
         {
-            SetRecycleUiActive(active);
+            SetRecycleUiActive(active, previewGold);
+        }
+
+        /// <summary>拖动中按指针世界点刷新回收价值文案（悬停区内显示 +N）。</summary>
+        public void UpdateRecycleValueHover(Vector3 worldPoint)
+        {
+            if (recycleNotice == null || !recycleNotice.activeInHierarchy)
+            {
+                return;
+            }
+
+            SetRecycleValueVisible(IsPointInRecycleZone(worldPoint));
         }
 
         /// <summary>世界点是否在已激活的回收判定区内。</summary>
         public bool ContainsWorldPointInRecycleZone(Vector3 worldPoint)
         {
             return IsPointInRecycleZone(worldPoint);
+        }
+
+        private void SetRecycleValueVisible(bool visible)
+        {
+            EnsureRecycleValueText();
+            if (recycleValueText == null)
+            {
+                return;
+            }
+
+            if (visible)
+            {
+                recycleValueText.text = $"+{_recyclePreviewGold}";
+                recycleValueText.gameObject.SetActive(true);
+            }
+            else
+            {
+                recycleValueText.gameObject.SetActive(false);
+            }
+        }
+
+        private void EnsureRecycleValueText()
+        {
+            if (recycleValueText != null || recycleNotice == null)
+            {
+                return;
+            }
+
+            recycleValueText = recycleNotice.GetComponentInChildren<TMP_Text>(true);
+            if (recycleValueText != null)
+            {
+                return;
+            }
+
+            var named = recycleNotice.transform.Find("标准世界文字 (2)");
+            if (named != null)
+            {
+                recycleValueText = named.GetComponent<TMP_Text>();
+            }
+        }
+
+        private static int ResolveRecycleItemSlotGold()
+        {
+            var catalog = NineGridArchitecture.Current?.GetSystem<IContentSystem>()?.Catalog;
+            var gold = catalog?.Economy?.RecycleItemSlotGold ?? 10;
+            return Mathf.Max(0, gold);
         }
 
         private static bool TrySubmitRecycleForDrag(ManagedCard card)
@@ -1828,6 +1905,8 @@ namespace NineGrid.Cards
                         recycleNotice = notice.gameObject;
                     }
                 }
+
+                EnsureRecycleValueText();
             }
         }
 

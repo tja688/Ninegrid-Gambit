@@ -4,6 +4,7 @@ using Cysharp.Threading.Tasks;
 using NineGrid.Cards;
 using NineGrid.Content.CardPresentation;
 using NineGrid.Core;
+using NineGrid.Core.Systems;
 using NineGrid.Presentation;
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -144,7 +145,7 @@ namespace NineGrid.Flow
             _dragDefId = defId;
             HideSlotVisual(slotIndex);
             SpawnDragGhost(slotRenderer, camera, screen);
-            hand?.SetRecycleZonePresentationActive(true);
+            hand?.SetRecycleZonePresentationActive(true, ResolveDiscardRelicGold());
 
             _dragCts?.Cancel();
             _dragCts?.Dispose();
@@ -173,7 +174,9 @@ namespace NineGrid.Flow
                     }
 
                     var z = _dragGhost.transform.position.z;
-                    _dragGhost.transform.position = ScreenToWorldOnPlane(dragScreen, camera, z);
+                    var world = ScreenToWorldOnPlane(dragScreen, camera, z);
+                    _dragGhost.transform.position = world;
+                    hand?.UpdateRecycleValueHover(world);
                     await UniTask.Yield(PlayerLoopTiming.Update, cancellationToken);
                 }
 
@@ -399,6 +402,13 @@ namespace NineGrid.Flow
             world = camera.ScreenToWorldPoint(new Vector3(screen.x, screen.y, depth));
             world.z = planeZ;
             return true;
+        }
+
+        private static int ResolveDiscardRelicGold()
+        {
+            var catalog = NineGridArchitecture.Current?.GetSystem<IContentSystem>()?.Catalog;
+            var gold = catalog?.Economy?.DiscardRelicGold ?? 20;
+            return Mathf.Max(0, gold);
         }
 
         private void EnsureBindings()

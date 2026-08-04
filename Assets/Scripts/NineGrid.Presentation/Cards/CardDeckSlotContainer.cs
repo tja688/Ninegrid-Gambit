@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using NineGrid.Cards.Anim;
 using UnityEngine;
 using UnityEngine.Rendering;
 
@@ -32,6 +33,8 @@ namespace NineGrid.Cards
     /// </summary>
     public sealed class CardDeckSlotContainer
     {
+        private const string DefaultSortingLayerName = "Main";
+
         private readonly List<ManagedCard> _slots = new();
         private readonly CardDeckLayoutSettings _settings;
         private readonly int _maxSlots;
@@ -39,11 +42,22 @@ namespace NineGrid.Cards
         private float _layoutLeftX;
         private float _layoutBaseY;
         private float _layoutBaseZ;
+        private string _sortingLayerName = DefaultSortingLayerName;
 
         public CardDeckSlotContainer(CardDeckLayoutSettings settings)
         {
             _settings = settings ?? throw new ArgumentNullException(nameof(settings));
             _maxSlots = Mathf.Max(1, settings.maxSlots);
+        }
+
+        /// <summary>
+        /// 卡组域 SortingLayer（默认 Main）。回收 UI 激活时可临时切到 BG，使 Notice 压住卡组。
+        /// </summary>
+        public void SetSortingLayerName(string sortingLayerName)
+        {
+            _sortingLayerName = string.IsNullOrEmpty(sortingLayerName)
+                ? DefaultSortingLayerName
+                : sortingLayerName;
         }
 
         /// <summary>视觉槽位上限（场景锚点数），不是逻辑容量上限。</summary>
@@ -164,6 +178,7 @@ namespace NineGrid.Cards
 
         /// <summary>
         /// 按槽位索引设置单卡 sortingOrder：左起（索引小）更高，右下更低。
+        /// 同步写入当前域 SortingLayer，并 Propagate 到子 Renderer / Mask。
         /// </summary>
         public void ApplySortingOrder(ManagedCard card, int slotIndex)
         {
@@ -173,9 +188,16 @@ namespace NineGrid.Cards
             }
 
             var sortingGroup = card.View.GetComponent<SortingGroup>();
-            if (sortingGroup != null)
+            if (sortingGroup == null)
             {
-                sortingGroup.sortingOrder = ComputeSortingOrder(slotIndex);
+                return;
+            }
+
+            sortingGroup.sortingOrder = ComputeSortingOrder(slotIndex);
+            if (sortingGroup.sortingLayerName != _sortingLayerName)
+            {
+                sortingGroup.sortingLayerName = _sortingLayerName;
+                CardMainVisualMaskAnchor.PropagateSortingLayerFromGroup(sortingGroup);
             }
         }
 
