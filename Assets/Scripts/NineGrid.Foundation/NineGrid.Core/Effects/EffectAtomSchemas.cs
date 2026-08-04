@@ -480,6 +480,10 @@ namespace NineGrid.Core.Effects
             {
                 result.Add("schema.action.key", path + ".key is required for SetCounter.");
             }
+            else if (Same(atom, "RemoveRuleModifiersBySource") && !node.Has("source"))
+            {
+                result.Add("schema.action.source", path + ".source is required for RemoveRuleModifiersBySource.");
+            }
             else if (Same(atom, "ModifyRelicRunContribution"))
             {
                 if (!node.Has("stat"))

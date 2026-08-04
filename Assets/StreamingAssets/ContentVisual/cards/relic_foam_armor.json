@@ -1,0 +1,120 @@
+{
+    "schemaVersion": 2,
+    "contentId": "relic.foam_armor",
+    "kind": "Relic",
+    "deckId": "deck.relic",
+    "role": "Defense",
+    "displayName": "泡沫盔甲",
+    "description": "基础护甲+1；[受到伤害时] 每关卡第一次当前护甲归零时，下一次受到伤害变为0（多段只免疫第一段）",
+    "faceIntro": "",
+    "attackPattern": "",
+    "gold": 0,
+    "stats": {
+        "hp": 0,
+        "armor": 0,
+        "attack": 0,
+        "action": 0,
+        "recovery": 0
+    },
+    "sprites": {
+        "mainIcon": "",
+        "faceBackground": "",
+        "cardFrame": "",
+        "banner": "",
+        "backBorder": "",
+        "backShirt": "",
+        "backLogo": ""
+    },
+    "mainVisual": {
+        "offsetX": 0.0,
+        "offsetY": 0.0,
+        "uniformScale": 1.0
+    },
+    "animations": {
+        "defaultFps": 8.0,
+        "slots": [
+            {
+                "id": "idle",
+                "sourceType": "none",
+                "path": "",
+                "offsetX": 0.0,
+                "offsetY": 0.0
+            },
+            {
+                "id": "attack",
+                "sourceType": "none",
+                "path": "",
+                "offsetX": 0.0,
+                "offsetY": 0.0
+            },
+            {
+                "id": "hurt",
+                "sourceType": "none",
+                "path": "",
+                "offsetX": 0.0,
+                "offsetY": 0.0
+            },
+            {
+                "id": "death",
+                "sourceType": "none",
+                "path": "",
+                "offsetX": 0.0,
+                "offsetY": 0.0
+            },
+            {
+                "id": "lunch",
+                "sourceType": "none",
+                "path": "",
+                "offsetX": 0.0,
+                "offsetY": 0.0
+            }
+        ]
+    },
+    "extraSlots": [],
+    "rarity": "White",
+    "tags": [
+        "tag.armor"
+    ],
+    "effectAssemblies": [
+        {
+            "id": "relic.foam_armor.base",
+            "templateId": "tpl.shared.4.relic_dragon_scale_armor_base",
+            "containerType": "Relic",
+            "argsJson": "{\"value\":1}"
+        },
+        {
+            "id": "relic.foam_armor.activate",
+            "templateId": "tpl.relic.foam_armor.activate",
+            "containerType": "Relic",
+            "argsJson": "{}"
+        },
+        {
+            "id": "relic.foam_armor.node_start",
+            "templateId": "tpl.relic.foam_armor.node_start",
+            "containerType": "Relic",
+            "argsJson": "{}"
+        },
+        {
+            "id": "relic.foam_armor.arm",
+            "templateId": "tpl.relic.foam_armor.arm",
+            "containerType": "Relic",
+            "argsJson": "{\"value\":0,\"source\":\"relic.foam_armor\"}"
+        }
+    ],
+    "effectIds": [],
+    "skillIds": [],
+    "level": "0",
+    "sequence": 0,
+    "isElite": false,
+    "isBoss": false,
+    "isReserve": false,
+    "containerType": "",
+    "deckKind": "",
+    "monsterDefIds": [],
+    "weight": 0,
+    "rewardPoolId": "",
+    "shopOfferCount": 0,
+    "openingInjects": [],
+    "iconPrefab": "",
+    "boardSlot": 0
+}

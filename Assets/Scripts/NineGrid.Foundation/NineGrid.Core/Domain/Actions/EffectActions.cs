@@ -1176,6 +1176,29 @@ namespace NineGrid.Core
         }
     }
 
+    /// <summary>#121：按 ModifierSource 移除 RuleModifier。</summary>
+    public sealed class RemoveRuleModifiersBySourceAction : GameAction
+    {
+        public RemoveRuleModifiersBySourceAction(string source)
+        {
+            Source = source ?? string.Empty;
+        }
+
+        public string Source { get; private set; }
+        public override string ActionName { get { return "RemoveRuleModifiersBySource"; } }
+
+        public override GameActionResult Apply(GameActionContext context)
+        {
+            if (string.IsNullOrEmpty(Source))
+            {
+                return GameActionResult.Empty;
+            }
+
+            context.GetSystem<IStatSystem>().RuleModifiers.RemoveBySource(new ModifierSource(Source));
+            return GameActionResult.Empty;
+        }
+    }
+
     public sealed class ReplayHelpCardEffectsAction : GameAction
     {
         public ReplayHelpCardEffectsAction(int towerUid, string towerEffectInstanceId, UseItemAction useItem, CardKind targetKind, bool deactivateSelf)

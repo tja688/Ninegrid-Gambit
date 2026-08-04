@@ -14,7 +14,9 @@ namespace NineGrid.Core.Tests
     public sealed class SharpStoneArmorBreakRegressionTests
     {
         private const string SharpStoneEffectJson =
-            "{\"id\":\"skill.sharp_stone.armor_break\",\"typeTag\":\"【类型怪物技能】\",\"containerType\":\"MonsterSkill\",\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnArmorBreak\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"DealDamage\",\"amount\":1,\"actor\":\"Self\"}}";
+            "{\"id\":\"skill.sharp_stone.armor_break\",\"typeTag\":\"【类型怪物技能】\",\"containerType\":\"MonsterSkill\",\"kind\":\"Triggered\","
+            + "\"requires\":[\"HasOwnerEntity\",\"CardZoneTriggerable\"],"
+            + "\"trigger\":{\"atom\":\"OnArmorBreak\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"DealDamage\",\"amount\":1,\"actor\":\"Self\"}}";
 
         private static readonly SlotId sAdjacentSlot = SlotId.Board(2);
         private static readonly SlotId sSideSlot = SlotId.Board(4);
@@ -141,7 +143,10 @@ namespace NineGrid.Core.Tests
         {
             var definition = mEffects.ParseJson(SharpStoneEffectJson);
             var validation = mEffects.Validate(definition);
-            Assert.IsTrue(validation.IsValid, "尖石 DSL 应可解析, issues=" + validation.Issues.Count);
+            var issueText = validation.Issues.Count == 0
+                ? string.Empty
+                : validation.Issues[0].Code + ": " + validation.Issues[0].Message;
+            Assert.IsTrue(validation.IsValid, "尖石 DSL 应可解析, issues=" + validation.Issues.Count + " " + issueText);
             mEffects.Activate(
                 definition,
                 new EffectOwner(EffectContainerType.MonsterSkill, "skill.sharp_stone", ownerUid));

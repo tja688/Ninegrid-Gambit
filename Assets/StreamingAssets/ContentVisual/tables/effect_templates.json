@@ -1750,5 +1750,29 @@
   "requires_json": "[\"NoOwnerEntity\"]",
   "conditions_json": "[]",
   "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnKill\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"ModifyRelicRunContribution\",\"stat\":\"Attack\",\"delta\":\"{{delta}}\"}}"
+ },
+ {
+  "id": "tpl.relic.foam_armor.arm",
+  "state": "Implemented",
+  "design_text": "[受到伤害时] 本关首次当前护甲归零时，武装下一次伤害全额免疫（归零击本身不免疫）",
+  "requires_json": "[\"NoOwnerEntity\"]",
+  "conditions_json": "[\"CardCounter\"]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnArmorBreak\"},\"conditions\":[{\"atom\":\"CardCounter\",\"target\":\"Player\",\"key\":\"relic.foam_armor.can_arm\",\"min\":1}],\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"Sequence\",\"actions\":[{\"atom\":\"AddRuleModifier\",\"rule\":\"DamageMultiplier\",\"op\":\"Override\",\"value\":\"{{value}}\",\"layer\":\"Temporary\",\"scope\":\"Once\",\"source\":\"{{source}}\"},{\"atom\":\"SetCounter\",\"key\":\"relic.foam_armor.can_arm\",\"value\":0}]}}"
+ },
+ {
+  "id": "tpl.relic.foam_armor.node_start",
+  "state": "Implemented",
+  "design_text": "[每关卡开始时] 丢弃未消耗泡沫盾并重置本关武装配额",
+  "requires_json": "[\"NoOwnerEntity\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnNodeStart\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"Sequence\",\"actions\":[{\"atom\":\"RemoveRuleModifiersBySource\",\"source\":\"relic.foam_armor\"},{\"atom\":\"SetCounter\",\"key\":\"relic.foam_armor.can_arm\",\"value\":1}]}}"
+ },
+ {
+  "id": "tpl.relic.foam_armor.activate",
+  "state": "Implemented",
+  "design_text": "[获得时] 允许本关武装泡沫盾",
+  "requires_json": "[\"NoOwnerEntity\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnActivate\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"SetCounter\",\"key\":\"relic.foam_armor.can_arm\",\"value\":1}}"
  }
 ]

@@ -703,8 +703,15 @@ namespace NineGrid.Core.Effects
 
         public override bool Matches(EffectRuntimeContext context)
         {
-            // 仅本卡护甲归零：场上其他卡碎甲 / 反伤打掉玩家甲 不得误触发。
-            if (!base.Matches(context) || context.OwnerUid == 0)
+            if (!base.Matches(context))
+            {
+                return false;
+            }
+
+            // 有主卡：仅本卡护甲归零（场上其他卡碎甲 / 反伤打掉玩家甲 不得误触发）。
+            // 无主卡遗物（OwnerUid==0）：匹配 Avatar 护甲归零（#121 泡沫盔甲）。
+            var expectedUid = context.OwnerUid != 0 ? context.OwnerUid : context.AvatarUid;
+            if (expectedUid == 0)
             {
                 return false;
             }
@@ -713,7 +720,7 @@ namespace NineGrid.Core.Effects
             for (var i = 0; i < events.Count; i++)
             {
                 if (events[i].Type == CoreEventType.ArmorChanged
-                    && events[i].CardUid == context.OwnerUid
+                    && events[i].CardUid == expectedUid
                     && events[i].Delta < 0
                     && events[i].RemainingArmor <= 0)
                 {
@@ -3796,6 +3803,28 @@ namespace NineGrid.Core.Effects
             }
 
             return result;
+        }
+    }
+
+    /// <summary>#121：按 source 清掉 RuleModifier（关卡开始丢弃未消耗的泡沫 Once 盾等）。</summary>
+    [EffectAtom("RemoveRuleModifiersBySource", EffectAtomKind.Action)]
+    public sealed class RemoveRuleModifiersBySourceEffectAction : IAction
+    {
+        private string mSource = string.Empty;
+
+        public void Configure(EffectDslNode config)
+        {
+            mSource = config.Get("source").AsString(string.Empty);
+        }
+
+        public IReadOnlyList<GameAction> BuildActions(EffectRuntimeContext context, IReadOnlyList<int> targets)
+        {
+            if (string.IsNullOrEmpty(mSource))
+            {
+                return Array.Empty<GameAction>();
+            }
+
+            return new GameAction[] { new RemoveRuleModifiersBySourceAction(mSource) };
         }
     }
 

@@ -58,6 +58,7 @@
 | `RelicR1KeeperAuditContractTests` | #118：20 件名称对齐留用遗物在役+非空描述+装配；渴望 MaxHp+10；幸运硬币仅层主击杀；废物三件 `OnAnyHelpCardUsed` 与利用机回血样本 |
 | `RelicR2CumulativeContractTests` | #119：OnCumulative 扩展 `monsterRemoved` / `helpCardUsed` / `damageTaken`（含甲吸收）；六件累计遗物在役+奖池+装配；恐怖面罩只移普通等级怪；血魔承伤涨上限 |
 | `RelicR3GrowthContractTests` | #120：`RelicRunContribution` run 内成长；锻造器具关初扣甲成长；金剑战斗衰减/击杀成长/下限 0；新 run 清空；丢弃清贡献 |
+| `RelicR3FoamContractTests` | #121：泡沫盔甲 +1 基础甲；本关首次甲归零后武装下一击 Once 免疫（归零击不吃盾）；同关不重武装；多段只免第一段；未消耗盾关初清除 |
 | `ThemeMonsterDeckContractTests` | #86 / ADR-0022：每层主题卡组不重复绑定、节点按序列 1–5 抽、Reserve 不参与、层主击杀固定 1 金箱+2 金币 |
 | `MonsterLoadoutPresentationValidatorTests` | 过渡卡组 staging 校验绿；交付就绪在怪物仍挂 `deck.transition` 时必须失败 |
 | `MapNodeProgressionContractTests` | #84 / ADR-0021 / #107 / #113：8 节点编排全表（节点 7=层主房图标战前缓冲）、非战斗不进 InteractionLoop、进层主房图标推进至节点 8、清关跳过 help.choice（经离开机关标志）、道具卡格清关不兑不清+清场残留、困难房门槛、第 3 层节点 8 通关 |
