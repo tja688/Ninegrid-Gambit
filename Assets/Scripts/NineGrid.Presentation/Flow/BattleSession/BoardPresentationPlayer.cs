@@ -991,19 +991,13 @@ namespace NineGrid.Flow
                 return;
             }
 
-            if (!TryResolveShuffleIntoOrigin(entry, out var origin))
-            {
-                if (!deckManager.TryGetDefaultDealOrigin(out origin))
-                {
-                    Debug.LogWarning(
-                        $"[InBattleManager] ShuffleInto uid={entry.Uid} 无飞入起点，fallback 直接入组。");
-                }
-            }
-
+            // NewCard / RandomCard（离开机关洗入等）：必须经 CardDeckAddAnchors 入组。
+            // 勿传遗物/技能锚点 origin——AddCardAtFromOrigin 有 origin 时会走「起点缩小直插卡组」捷径，
+            // 跳过 AddAnchors 下落，表现为「卡组 ripple 一下牌就进组」。
             var deckOk = await deckManager.AddCardAtFromOriginAsync(
                 CardDeckManagerSingleton.RandomInsertIndex,
                 ensureCard,
-                origin,
+                originAnchor: null,
                 ct);
             if (!deckOk)
             {

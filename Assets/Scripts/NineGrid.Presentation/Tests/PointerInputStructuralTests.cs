@@ -84,5 +84,53 @@ namespace NineGrid.Presentation.Tests
             Assert.IsNotNull(typeof(NineGrid.Cards.GroundFieldHitSurface));
             Assert.AreEqual("0006", WindowsHighPollingMouseMitigationInfo.AdrId);
         }
+
+        [Test]
+        public void RightClickInspect_ResolvesFieldCardViaClaimNotColliderDriver()
+        {
+            var root = Path.GetFullPath(Path.Combine(Application.dataPath, "Scripts", "NineGrid.Presentation"));
+            var router = File.ReadAllText(Path.Combine(root, "Flow", "PointerHitRouter.cs"));
+            var surface = File.ReadAllText(Path.Combine(root, "Cards", "GroundFieldHitSurface.cs"));
+
+            Assert.IsTrue(
+                router.Contains("GroundFieldHitSurface")
+                && router.Contains("TryResolveInspectCard"),
+                "ADR-0023 后场卡无自带 collider：右键详述须经 GroundFieldHitSurface.TryResolveInspectCard");
+            Assert.IsTrue(
+                surface.Contains("TryResolveInspectCard")
+                && surface.Contains("GroundCardHitProxy"),
+                "场地面详述只认 GroundCardHitProxy 认领者，不误开房间图标");
+        }
+
+        [Test]
+        public void ShuffleIntoNewCard_UsesAddAnchorsPath_NotOriginShortcut()
+        {
+            var path = Path.GetFullPath(Path.Combine(
+                Application.dataPath,
+                "Scripts",
+                "NineGrid.Presentation",
+                "Flow",
+                "BattleSession",
+                "BoardPresentationPlayer.cs"));
+            Assert.IsTrue(File.Exists(path), "missing BoardPresentationPlayer.cs");
+            var text = File.ReadAllText(path);
+
+            // PresentOneShuffleIntoDeckAsync 的 NewCard 段须显式 originAnchor: null，
+            // 才能走 CardDeckAddAnchors；禁止把死亡格/卡组左槽当 origin 直插。
+            var method = Regex.Match(
+                text,
+                @"private async UniTask PresentOneShuffleIntoDeckAsync\([\s\S]*?\n        private bool TryResolveShuffleIntoOrigin",
+                RegexOptions.CultureInvariant);
+            Assert.IsTrue(method.Success, "找不到 PresentOneShuffleIntoDeckAsync");
+            Assert.IsTrue(
+                method.Value.Contains("originAnchor: null")
+                || method.Value.Contains("originAnchor : null"),
+                "NewCard 洗入须经 CardDeckAddAnchors（originAnchor: null）");
+            Assert.IsFalse(
+                Regex.IsMatch(
+                    method.Value,
+                    @"AddCardAtFromOriginAsync\s*\(\s*[^)]*TryResolveShuffleIntoOrigin"),
+                "NewCard 洗入不得把 ShuffleIntoOrigin 传给 AddCardAtFromOrigin");
+        }
     }
 }

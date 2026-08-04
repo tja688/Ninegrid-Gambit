@@ -31,6 +31,33 @@ namespace NineGrid.Cards
 
         public int ResolvedSlot => _resolvedSlot;
 
+        /// <summary>
+        /// 右键详述：当前格认领者为场地卡时返回其 <see cref="ManagedCard"/>（ADR-0023）。
+        /// 房间图标等非卡认领者返回 false，避免误开详述。
+        /// </summary>
+        public bool TryResolveInspectCard(out ManagedCard card)
+        {
+            card = null;
+            if (!GroundSlotTopology.IsValidSlot(_resolvedSlot))
+            {
+                return false;
+            }
+
+            var field = GroundFieldGeometryHook.FieldOrNull();
+            if (field == null || !field.TryGetSlotClaimant(_resolvedSlot, out var claimant))
+            {
+                return false;
+            }
+
+            if (claimant.Owner is GroundCardHitProxy proxy)
+            {
+                card = proxy.BoundCardOrNull;
+                return card != null;
+            }
+
+            return false;
+        }
+
         private void OnEnable()
         {
             PointerHitRegistry.Register(this);

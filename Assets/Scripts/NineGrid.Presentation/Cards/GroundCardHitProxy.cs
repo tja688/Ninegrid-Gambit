@@ -17,6 +17,16 @@ namespace NineGrid.Cards
 
         private CardVisualDriver _driver;
 
+        /// <summary>供场地面右键详述等从认领者取卡（ADR-0023）。</summary>
+        public ManagedCard BoundCardOrNull
+        {
+            get
+            {
+                _driver ??= GetComponent<CardVisualDriver>();
+                return _driver != null ? _driver.BoundCard : null;
+            }
+        }
+
         private void Awake()
         {
             _driver = GetComponent<CardVisualDriver>();

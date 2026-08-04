@@ -191,7 +191,20 @@ namespace NineGrid.Flow
 
         private static ManagedCard ResolveManagedCard(IPointerHitTarget target)
         {
-            if (target == null || target.HitCollider == null)
+            if (target == null)
+            {
+                return null;
+            }
+
+            // ADR-0023：场卡无自带 collider，命中面是 GroundFieldHitSurface；
+            // 须从当前格认领者取 ManagedCard，不能再指望 HitCollider 上挂 CardVisualDriver。
+            if (target is GroundFieldHitSurface fieldSurface
+                && fieldSurface.TryResolveInspectCard(out var claimed))
+            {
+                return claimed;
+            }
+
+            if (target.HitCollider == null)
             {
                 return null;
             }

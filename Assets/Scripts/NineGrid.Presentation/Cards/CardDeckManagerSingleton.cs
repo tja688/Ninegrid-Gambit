@@ -516,6 +516,7 @@ namespace NineGrid.Cards
 
         /// <summary>
         /// 从遗物/技能锚点飞入卡组槽位（仅 InGame）：起点缩小 + 位移 + ScaleAppear。
+        /// <paramref name="originAnchor"/> 为 null 时改经 <c>CardDeckAddAnchors</c> 入组（局内洗入 / 离开机关等须走此路径）。
         /// </summary>
         public UniTask<bool> AddCardAtFromOriginAsync(
             int slotIndex,
