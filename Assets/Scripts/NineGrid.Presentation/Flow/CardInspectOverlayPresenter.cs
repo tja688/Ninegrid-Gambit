@@ -171,11 +171,7 @@ namespace NineGrid.Flow
                 return false;
             }
 
-            // 选择叠层已占用输入时不抢右键详述。
-            if (PresentationInputGates.ChoiceOverlayActive && !_open)
-            {
-                return false;
-            }
+            // ChoiceOverlay 下主路径仍由 PointerHitRouter 禁开；BounceFan 合法悬停可主动 TryOpen。
 
             if (root == null)
             {

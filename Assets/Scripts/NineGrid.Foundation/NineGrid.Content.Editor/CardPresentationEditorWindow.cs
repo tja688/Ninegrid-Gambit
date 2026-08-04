@@ -10,6 +10,7 @@ using NineGrid.Cards.Slots;
 using NineGrid.Content;
 using NineGrid.Content.CardPresentation;
 using NineGrid.Content.Editor.Ui;
+using NineGrid.Flow.Transitions;
 using NineGrid.Presentation.Editor;
 using UnityEditor;
 using UnityEditor.UIElements;
@@ -238,6 +239,7 @@ namespace NineGrid.Content.Editor
             listContainer.Add(BuildEffectPoolSectionFoldout());
             listContainer.Add(BuildVfxLibrarySectionFoldout());
             listContainer.Add(BuildDecksSectionFoldout());
+            listContainer.Add(BuildTransitionSectionFoldout());
         }
 
         private VisualElement BuildSectionFoldout(string key, string title, Action<VisualElement> buildContent)
@@ -521,6 +523,192 @@ namespace NineGrid.Content.Editor
 
                 container.Add(BuildCreateDeckInlineForm());
             });
+        }
+
+        private VisualElement BuildTransitionSectionFoldout()
+        {
+            return BuildSectionFoldout("section:transitions", "过场", container =>
+            {
+                container.Add(ContentVisualWarmConsoleUi.CreateDescriptionLabel(
+                    "局内节点：同层 Directional / 跨层 Round（Feel）"));
+
+                var so = LoadOrCreateTransitionSettings();
+                if (so == null)
+                {
+                    container.Add(ContentVisualWarmConsoleUi.CreateDescriptionLabel(
+                        "无法加载 Resources/Transitions/RunSceneTransition"));
+                    return;
+                }
+
+                void Dirty()
+                {
+                    EditorUtility.SetDirty(so);
+                }
+
+                var enabled = new Toggle { value = so.Enabled };
+                enabled.RegisterValueChangedCallback(evt =>
+                {
+                    so.SetEnabled(evt.newValue);
+                    Dirty();
+                });
+                container.Add(ContentVisualWarmConsoleUi.WrapControlRow("启用", enabled, 72f));
+
+                var ignoreTs = new Toggle { value = so.IgnoreTimeScale };
+                ignoreTs.RegisterValueChangedCallback(evt =>
+                {
+                    so.SetIgnoreTimeScale(evt.newValue);
+                    Dirty();
+                });
+                container.Add(ContentVisualWarmConsoleUi.WrapControlRow("忽略 TimeScale", ignoreTs, 100f));
+
+                var blockRay = new Toggle { value = so.BlockRaycastsDuringFade };
+                blockRay.RegisterValueChangedCallback(evt =>
+                {
+                    so.SetBlockRaycastsDuringFade(evt.newValue);
+                    Dirty();
+                });
+                container.Add(ContentVisualWarmConsoleUi.WrapControlRow("遮挡射线", blockRay, 72f));
+
+                container.Add(ContentVisualWarmConsoleUi.CreateTitleLabel(
+                    "Directional（同层）", 11, true, ContentVisualWarmConsoleUi.Theme.TextPrimary));
+
+                var dirIn = BindFloat(so.DirectionalFadeInDuration, v =>
+                {
+                    so.SetDirectionalFadeInDuration(v);
+                    Dirty();
+                });
+                container.Add(ContentVisualWarmConsoleUi.WrapControlRow("FadeIn 秒", dirIn, 72f));
+
+                var dirOut = BindFloat(so.DirectionalFadeOutDuration, v =>
+                {
+                    so.SetDirectionalFadeOutDuration(v);
+                    Dirty();
+                });
+                container.Add(ContentVisualWarmConsoleUi.WrapControlRow("FadeOut 秒", dirOut, 72f));
+
+                var dirTween = new EnumField(so.DirectionalTween);
+                dirTween.RegisterValueChangedCallback(evt =>
+                {
+                    if (evt.newValue is TransitionTweenCurve curve)
+                    {
+                        so.SetDirectionalTween(curve);
+                        Dirty();
+                    }
+                });
+                container.Add(ContentVisualWarmConsoleUi.WrapControlRow("缓动", dirTween, 72f));
+
+                container.Add(ContentVisualWarmConsoleUi.CreateTitleLabel(
+                    "Round（跨层）", 11, true, ContentVisualWarmConsoleUi.Theme.TextPrimary));
+
+                var roundIn = BindFloat(so.RoundFadeInDuration, v =>
+                {
+                    so.SetRoundFadeInDuration(v);
+                    Dirty();
+                });
+                container.Add(ContentVisualWarmConsoleUi.WrapControlRow("FadeIn 秒", roundIn, 72f));
+
+                var roundOut = BindFloat(so.RoundFadeOutDuration, v =>
+                {
+                    so.SetRoundFadeOutDuration(v);
+                    Dirty();
+                });
+                container.Add(ContentVisualWarmConsoleUi.WrapControlRow("FadeOut 秒", roundOut, 72f));
+
+                var roundTween = new EnumField(so.RoundTween);
+                roundTween.RegisterValueChangedCallback(evt =>
+                {
+                    if (evt.newValue is TransitionTweenCurve curve)
+                    {
+                        so.SetRoundTween(curve);
+                        Dirty();
+                    }
+                });
+                container.Add(ContentVisualWarmConsoleUi.WrapControlRow("缓动", roundTween, 72f));
+
+                var maskMin = BindFloat(so.RoundMaskScale.x, v =>
+                {
+                    so.SetRoundMaskScale(new Vector2(v, so.RoundMaskScale.y));
+                    Dirty();
+                });
+                container.Add(ContentVisualWarmConsoleUi.WrapControlRow("MaskScale.min", maskMin, 100f));
+
+                var maskMax = BindFloat(so.RoundMaskScale.y, v =>
+                {
+                    so.SetRoundMaskScale(new Vector2(so.RoundMaskScale.x, v));
+                    Dirty();
+                });
+                container.Add(ContentVisualWarmConsoleUi.WrapControlRow("MaskScale.max", maskMax, 100f));
+
+                var maskSprite = new ObjectField
+                {
+                    objectType = typeof(Sprite),
+                    allowSceneObjects = false,
+                    value = so.RoundMaskSprite,
+                };
+                maskSprite.RegisterValueChangedCallback(evt =>
+                {
+                    so.SetRoundMaskSprite(evt.newValue as Sprite);
+                    Dirty();
+                });
+                container.Add(ContentVisualWarmConsoleUi.WrapControlRow("洞形 Sprite", maskSprite, 88f));
+
+                var bgColor = new ColorField { value = so.RoundBackgroundColor };
+                bgColor.RegisterValueChangedCallback(evt =>
+                {
+                    so.SetRoundBackgroundColor(evt.newValue);
+                    Dirty();
+                });
+                container.Add(ContentVisualWarmConsoleUi.WrapControlRow("背景色", bgColor, 72f));
+
+                var saveBtn = new Button(() =>
+                {
+                    EditorUtility.SetDirty(so);
+                    AssetDatabase.SaveAssets();
+                })
+                {
+                    text = "保存过场配置",
+                };
+                saveBtn.style.marginTop = 6;
+                container.Add(saveBtn);
+            });
+        }
+
+        private static RunSceneTransitionSettingsSO LoadOrCreateTransitionSettings()
+        {
+            var so = Resources.Load<RunSceneTransitionSettingsSO>(RunSceneTransitionSettingsSO.ResourcePath);
+            if (so != null)
+            {
+                return so;
+            }
+
+            const string assetPath = "Assets/Resources/Transitions/RunSceneTransition.asset";
+            so = AssetDatabase.LoadAssetAtPath<RunSceneTransitionSettingsSO>(assetPath);
+            if (so != null)
+            {
+                return so;
+            }
+
+            if (!AssetDatabase.IsValidFolder("Assets/Resources"))
+            {
+                AssetDatabase.CreateFolder("Assets", "Resources");
+            }
+
+            if (!AssetDatabase.IsValidFolder("Assets/Resources/Transitions"))
+            {
+                AssetDatabase.CreateFolder("Assets/Resources", "Transitions");
+            }
+
+            so = ScriptableObject.CreateInstance<RunSceneTransitionSettingsSO>();
+            var mask = AssetDatabase.LoadAssetAtPath<Sprite>(
+                "Assets/Plugins/Feel/MMTools/Accessories/MMGUI/Sprites/MMFaderRoundMask.png");
+            if (mask != null)
+            {
+                so.SetRoundMaskSprite(mask);
+            }
+
+            AssetDatabase.CreateAsset(so, assetPath);
+            AssetDatabase.SaveAssets();
+            return so;
         }
 
         private VisualElement BuildCreateDeckInlineForm()

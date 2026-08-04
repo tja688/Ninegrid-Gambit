@@ -8,7 +8,8 @@
         "UniTask",
         "Unity.TextMeshPro",
         "Unity.InputSystem",
-        "DamageNumbersPro"
+        "DamageNumbersPro",
+        "MoreMountains.Tools"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

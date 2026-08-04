@@ -28,7 +28,8 @@
 | `Presentation/` | `PresentationDirector`、`BattleTimeline`、`IPresentChannel` 实现、Intent Script Factory、`BattleBeatScheduler` / `IBattleBeatHandler`（`CardFaceStatHandler`、`PlayerInfoHudBeatHandler`、飘字/FX/金币装饰处理器）、`BattleBeatFlush`、Scheduler 等编排深模块；部分 struct Event |
 | `BattleSession/` | 局内会话相关类型 / 接口 |
 | `GameFlow/` | 流程壳运行选项等 |
-| `RoomIcons/` | 场地图标 Spawn / 占格登记 / 驻留提交 / 进房硬切（#88） |
+| `RoomIcons/` | 场地图标 Spawn / 占格登记 / 驻留提交 / 进房硬切（#88）；进房经 `RunSceneTransitionService`：同层 Directional、跨层 Round |
+| `Transitions/` | 局内节点过场：`RunSceneTransitionService`（Feel `MMFaderRound`/`MMFaderDirectional`）、`DirectionalBiasPicker`、`RunSceneTransitionSettingsSO`（Resources `Transitions/RunSceneTransition`）；表现层配置器「过场」foldout |
 | `ShopBoard/` | 商店货架 + 刷新 + 离开（#92）：任意距离点击购买、驻留离开 |
 | `TavernBoard/` | 卡店三项服务 + 刷新 + 离开（#93）：就地选项；「道具卡固定」二级选择铺空格候选 |
 | `RewardBoard/` | 特殊奖励房真卡 + 离开（#94）：任意距离点击拿走、踩离开放弃 |
@@ -114,7 +115,7 @@
 - Cards：`CardManagerSingleton`（底盘 + Kind→卡面五套：`Avatar`/`Monster`/`HelpCard|Item|PlayerCard`/`Relic`/`Trap`，路径见 `CardChassisPaths`；ADR-0002 / ADR-0017；**运行时 Spawn 不含** `Room` / `ChoiceOption`）、`CardHandManagerSingleton`、`CardDeckManagerSingleton`
 - 编辑器扩展壳（非运行时五套）：`CardChassisPaths.RoomOptionFacePrefab`（`房间选项标准模板`）+ `ResolveRoomIconPrefab`（`Assets/Prefabs/*图标.prefab`）；卡牌表现编辑器侧栏「卡面」下另分 **房间图标** / **房间选项**
 - **怪物遭遇过渡配置**：全部怪物暂挂 `deck.transition`（遭遇表 `Unknown`；主题卡组暂 `Reserve`）。卡 JSON 保留 `sequence`（1–5）与 `designSlotName`（近战1/远程2…，仅表现、不进 Core）；编辑器可改所属卡组 / 槽位名 / 序列 / 等级。菜单 `NineGrid/Content/校验怪物遭遇配置（过渡期|交付就绪）` 一键校验；交付就绪通过后主题卡组改回 `Unknown` 即可接入 ADR-0022 流程
-- Flow：`DescriptionManagerSingleton`（**已退役**：不再写 Card InfoText / NoticeText；卡面静态描述权威在 `Basic_Description` Commit）、`DamageNumberManagerSingleton`、`GoldGainFxManagerSingleton`、`RelicManagerSingleton`（#69：图标优先一卡一文件 JSON `sprites.mainIcon`；空缺时回退 `RelicVisualCatalog` bootstrap；**#98**：装备栏上限 12；右键丢弃经 `PointerHitRouter` **穿透半黑屏**扫遗物槽 → `RelicHudController` / IntentIntake → `DiscardRelic` +20 金；满栏选新遗物 Bounce 拒收「遗物格子已满」；宝箱跳过走 `SkipRelicChoiceGold`）、`SelectorManagerSingleton`（卡面主视图锚定为祖先变换无关的局部空间计算，见 [ADR-0015](../adr/0015-card-slot-placement-local-space.md)；BounceFan 不得在 `scale=0` 期间提交卡面，`BuildEntries` 保持 `scale=1`，入场归零只在 `PlayEntryAnimation`）
+- Flow：`DescriptionManagerSingleton`（**已退役**：不再写 Card InfoText / NoticeText；卡面静态描述权威在 `Basic_Description` Commit）、`DamageNumberManagerSingleton`、`GoldGainFxManagerSingleton`、`RelicManagerSingleton`（#69：图标优先一卡一文件 JSON `sprites.mainIcon`；空缺时回退 `RelicVisualCatalog` bootstrap；**#98**：装备栏上限 12；右键丢弃经 `PointerHitRouter` **穿透半黑屏**扫遗物槽 → `RelicHudController` / IntentIntake → `DiscardRelic` +20 金；满栏选新遗物 Bounce 拒收「遗物格子已满」；宝箱跳过走 `SkipRelicChoiceGold`）、`SelectorManagerSingleton`（卡面主视图锚定为祖先变换无关的局部空间计算，见 [ADR-0015](../adr/0015-card-slot-placement-local-space.md)；BounceFan 不得在 `scale=0` 期间提交卡面，`BuildEntries` 保持 `scale=1`，入场归零只在 `PlayEntryAnimation`；选择命中为容器本地固定 AABB，ChoiceOverlay 下合法悬停可开右键详述且详述打开期间屏蔽点选）
 
 `DescriptionDisplayHook` 现为 no-op；Hover/Drag/BoardSelect 动态描述 TMP 管道已砍。**简要解释**（非战斗悬停一句话 + 胜负 Notice）走干净通路 `Flow/BoardBriefTip/` → 场景 `Panels/简要解释文字框`（ADR-0020 / #89），**不得**复活 `DescriptionManagerSingleton`。卡牌运行时持续呈现的描述只走卡面槽 `Basic_Description`（可含 `{param}` 装配实参插值与方括号词条图标）。详情文案由 `CardDetailDescriptionComposer` 合成（概括 + 词条展开）写入 `CardPresentationSnapshot.DetailDescription`。卡面 JSON `faceIntro` 经 Mapper 写入 `CardPresentationSnapshot.FaceIntro`，右键详述面板 `CardInspectOverlayPresenter`（场景 `UI面板/右键描述`）消费：敌方 / 常规两态 BG、**占位锚点隐藏成品 mock 后挂真卡面预制体 Commit**、背景/牌组 TMP；**详细效果信息**由 `CardInspectDetailComposer` 展开效果模板 `design_text`（`[场上]`/`[使用时]` 等分门别类），不重复卡面简要 `description`。**技能列表以局内 `IEffectSystem` 已激活挂载为准**（`EffectOwner.SourceDefId`，含 QuickTest 动态注入与未来运行时加技），按技能装配 `argsJson` 填 `design_text` 数值；无 live 挂载时才回退卡 JSON `skillIds` / `effectAssemblies`。半黑屏 `BattleUiDimmerOverlay`（`UI面板/半黑屏BG`）引用计数挡 `PointerHitRouter` 射线、**不**改 `CurrentOwner` / 不暂停主线，局内奖励 Bounce 也 Acquire 同遮罩。稀有度经 `SetFrameColor` 驱动卡框色；卡背优先读卡组 JSON，单卡 `sprites.back*` 可覆写，否则模板兜底（ADR-0009 / #71）。
 
@@ -287,7 +288,7 @@
 | `CardHandManagerSingleton` 布局带 | `handHitBoxSize` AABB 数学，不用 collider；`DefaultExecutionOrder(-50)` | 手牌 hover + 起拖 |
 | `CardHandManagerSingleton` 拖拽落点 | 交棒 `GroundFieldView.TryResolveSlotAtWorld`（场地面九框） | 拖拽落格 |
 | `WorldPointerUtility.TryOverlapColliderOnPlane` | 与 Router 同平面换算；已退役 z=0 `TryPickCollider` | 主菜单 StartRun / Quit；HUD 血槽悬停；StartRunHoverScale |
-| `BounceFanChoicePresenter` | 自算 OverlapPoint，倒序遍历 entries | 战斗内扇形三选一 |
+| `BounceFanChoicePresenter` | 容器本地固定 AABB（`BaseLocalPosition` + `hitBoxSize`），倒序遍历；**不**跟悬停 tween、**不**启用卡面 collider；ChoiceOverlay 下合法悬停可开右键详述，详述打开期间屏蔽点选 | 战斗内扇形三选一（宝箱遗物） |
 | `Physics2D.GetRayIntersection` | — | `Arts/` demo，不属表现层 |
 
 板面参照：底板 Sliced `1.9 × 2.45` × 2 = 世界 `3.8 × 4.9`；格距 `5 × 5.5`；`GroundAnchors/slotN` 自带 `BoxCollider2D` 本地 `1.625 × 2.0625`（已启用）。

@@ -14,6 +14,7 @@ namespace NineGrid.Flow
     /// <summary>
     /// Bounce 扇形点选表现：入场弹性、悬停推挤、点选后未选项掉落 / 选中抬起。
     /// 由 SelectorManagerSingleton 驱动；卡牌以 RemovedMode Spawn，避免手牌/场地交互抢点。
+    /// 选择命中用容器本地固定 AABB（相对静止中心），不跟悬停 tween，也不依赖卡面 Collider2D（ADR-0023）。
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class BounceFanChoicePresenter : MonoBehaviour
@@ -23,13 +24,16 @@ namespace NineGrid.Flow
 
         [Header("Layout")]
         [Tooltip("选项容器相对本物体的本地偏移。")]
-        [SerializeField] private Vector3 containerLocalOffset = new(0f, 0.5f, 0f);
+        [SerializeField] private Vector3 containerLocalOffset = new(0.4f, 0.5f, 0f);
 
         [Tooltip("相邻选项中心水平间距（世界本地单位）；扇形相对中心对称。")]
         [SerializeField] private float spacing = 1.1f;
 
         [Tooltip("相邻选项旋转步进（度）；居中扇形，两侧对称。")]
         [SerializeField] private float rotationStep = 5f;
+
+        [Tooltip("选择判定框全尺寸（容器本地单位）；相对各选项静止中心，不跟随悬停推挤。")]
+        [SerializeField] private Vector2 hitBoxSize = new(1.6f, 2.2f);
 
         [Header("Hover")]
         [Tooltip("悬停时邻卡水平推开距离。")]
@@ -138,14 +142,36 @@ namespace NineGrid.Flow
                 return;
             }
 
-            var hovered = DetermineHoveredIndex();
-            if (hovered == _hoveredIndex)
+            // 右键详述打开：遮挡 + 屏蔽选择；主键/右键只关详述，关后再点才选。
+            if (CardInspectOverlayPresenter.IsOpen)
             {
-                if (hovered >= 0 && WorldPointerUtility.WasPrimaryPressedThisFrame())
+                if (WorldPointerUtility.WasPrimaryPressedThisFrame()
+                    || WorldPointerUtility.WasSecondaryPressedThisFrame())
                 {
-                    BeginSelection(hovered);
+                    CardInspectOverlayPresenter.CloseIfOpen();
                 }
 
+                return;
+            }
+
+            var hovered = DetermineHoveredIndex();
+            if (hovered >= 0)
+            {
+                if (WorldPointerUtility.WasPrimaryPressedThisFrame())
+                {
+                    BeginSelection(hovered);
+                    return;
+                }
+
+                if (WorldPointerUtility.WasSecondaryPressedThisFrame())
+                {
+                    CardInspectOverlayPresenter.TryOpen(_entries[hovered].Card);
+                    return;
+                }
+            }
+
+            if (hovered == _hoveredIndex)
+            {
                 return;
             }
 
@@ -215,22 +241,21 @@ namespace NineGrid.Flow
 
         private void EnsureContainer()
         {
-            if (_cardsContainer != null)
+            if (_cardsContainer == null)
             {
-                return;
+                var existing = transform.Find("BounceCardsContainer");
+                if (existing != null)
+                {
+                    _cardsContainer = existing;
+                }
+                else
+                {
+                    var go = new GameObject("BounceCardsContainer");
+                    _cardsContainer = go.transform;
+                    _cardsContainer.SetParent(transform, false);
+                }
             }
 
-            var existing = transform.Find("BounceCardsContainer");
-            if (existing != null)
-            {
-                _cardsContainer = existing;
-                _cardsContainer.localPosition = containerLocalOffset;
-                return;
-            }
-
-            var go = new GameObject("BounceCardsContainer");
-            _cardsContainer = go.transform;
-            _cardsContainer.SetParent(transform, false);
             _cardsContainer.localPosition = containerLocalOffset;
         }
 
@@ -292,12 +317,10 @@ namespace NineGrid.Flow
                         : managed.View.transform);
                 CardMainVisualMaskAnchor.ResyncAllVisibleInsideMasks(managed.View.transform);
 
-                var collider = managed.View.GetComponent<Collider2D>();
                 _entries.Add(new BounceEntry
                 {
                     Wrapper = wrapper.transform,
                     Card = managed,
-                    Collider = collider,
                     DefId = managed.DefId,
                     BaseLocalPosition = wrapper.transform.localPosition,
                     BaseLocalRotationZ = GetCenteredRotationZ(i, count),
@@ -335,15 +358,51 @@ namespace NineGrid.Flow
 
         private int DetermineHoveredIndex()
         {
-            if (worldCamera == null || !TryGetPointerWorld(out var pointerWorld))
+            if (_cardsContainer == null
+                || worldCamera == null
+                || !TryGetPointerWorld(out var pointerWorld))
             {
                 return -1;
             }
 
+            var pointerLocal = (Vector2)_cardsContainer.InverseTransformPoint(pointerWorld);
             for (var i = _entries.Count - 1; i >= 0; i--)
             {
-                var entry = _entries[i];
-                if (entry.Collider != null && entry.Collider.OverlapPoint(pointerWorld))
+                if (ContainsHitBox(pointerLocal, _entries[i].BaseLocalPosition, hitBoxSize))
+                {
+                    return i;
+                }
+            }
+
+            return -1;
+        }
+
+        /// <summary>
+        /// 容器本地固定 AABB 命中（EditMode / 结构测可复用）。中心取静止 BaseLocalPosition，不跟悬停 tween。
+        /// </summary>
+        public static bool ContainsHitBox(Vector2 pointerLocal, Vector2 centerLocal, Vector2 boxSize)
+        {
+            var half = boxSize * 0.5f;
+            return pointerLocal.x >= centerLocal.x - half.x
+                   && pointerLocal.x <= centerLocal.x + half.x
+                   && pointerLocal.y >= centerLocal.y - half.y
+                   && pointerLocal.y <= centerLocal.y + half.y;
+        }
+
+        /// <summary>倒序遍历静止中心；同点重叠时取靠后（上层）选项。</summary>
+        public static int ResolveHoveredIndex(
+            Vector2 pointerLocal,
+            IReadOnlyList<Vector2> baseLocalCenters,
+            Vector2 boxSize)
+        {
+            if (baseLocalCenters == null || baseLocalCenters.Count == 0)
+            {
+                return -1;
+            }
+
+            for (var i = baseLocalCenters.Count - 1; i >= 0; i--)
+            {
+                if (ContainsHitBox(pointerLocal, baseLocalCenters[i], boxSize))
                 {
                     return i;
                 }
@@ -719,7 +778,6 @@ namespace NineGrid.Flow
         {
             public Transform Wrapper;
             public ManagedCard Card;
-            public Collider2D Collider;
             public string DefId;
             public Vector3 BaseLocalPosition;
             public float BaseLocalRotationZ;

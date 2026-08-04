@@ -10,6 +10,7 @@ using NineGrid.Core.Systems;
 using NineGrid.Flow;
 using NineGrid.Flow.BoardBriefTip;
 using NineGrid.Flow.Presentation;
+using NineGrid.Flow.Transitions;
 using NineGrid.Presentation;
 using NineGrid.Presentation.Systems;
 using QFramework;
@@ -268,7 +269,8 @@ namespace NineGrid.Flow.RoomIcons
             }
 
             _ = optionIndex;
-            if (SubmitSelectAndEnter(submitIndex))
+            var accepted = await SubmitSelectAndEnterAsync(submitIndex, parentCt);
+            if (accepted)
             {
                 mDwell.MarkSubmitted();
             }
@@ -279,7 +281,7 @@ namespace NineGrid.Flow.RoomIcons
             }
         }
 
-        private bool SubmitSelectAndEnter(int optionIndex)
+        private async UniTask<bool> SubmitSelectAndEnterAsync(int optionIndex, CancellationToken ct)
         {
             var arch = mArch ?? NineGridArchitecture.Current;
             if (arch == null)
@@ -287,6 +289,44 @@ namespace NineGrid.Flow.RoomIcons
                 return false;
             }
 
+            RoomChoiceCoreHook.RequestWire();
+            if (RoomChoiceCoreHook.SelectRoom == null || RoomChoiceCoreHook.EnterRoom == null)
+            {
+                Debug.LogWarning("[RoomIcon] RoomChoiceInputController not wired; abort submit.");
+                return false;
+            }
+
+            var crossFloor = RunSceneTransitionService.WillCrossFloor(arch);
+            var transition = RunSceneTransitionService.InstanceOrNull;
+            var useTransition = transition != null && transition.IsEnabled;
+
+            if (!useTransition)
+            {
+                return ExecuteSelectEnterHardCut(arch, optionIndex);
+            }
+
+            var accepted = false;
+            try
+            {
+                await transition.PlayCoverRevealAsync(
+                    crossFloor,
+                    _ =>
+                    {
+                        accepted = ExecuteSelectEnterHardCut(arch, optionIndex);
+                        return UniTask.CompletedTask;
+                    },
+                    ct);
+            }
+            catch (OperationCanceledException)
+            {
+                return false;
+            }
+
+            return accepted;
+        }
+
+        private bool ExecuteSelectEnterHardCut(IArchitecture arch, int optionIndex)
+        {
             global::NineGrid.Presentation.PresentationInputGates.SetChoiceOverlay(true);
             try
             {
