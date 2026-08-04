@@ -185,6 +185,7 @@
 - 货架真卡 `GroundCardMode`（预制体原生尺寸，与战斗卡同尺度）；升级/刷新就地选项 / 离开图标同按预制体根缩放（#104 / ADR-0024，已删 `RoomIconVisualFit`）；货架·刷新·升级登记 `SoftBlockOnly`，离开 `WalkDestination`
   - 落格只写世界位置、不 SetParent 到 `GroundAnchors/slotN`（`BoardSlotWorldPlacement`）；避免继承锚点 ×2 缩放
 - 扣金后经 `InRoomGoldPresentation` 推 EventLog→HUD（非战斗无 GoldGainBeat）；**房内会话不持 ChoiceOverlay**（场地=ProtectedField，否则 BoardWalk ownerMismatch 全点不动）；Presenter 内勿嵌套 Set/清门；局内宝箱 Bounce 仍短暂持 overlay
+- **购领入手牌**：货架为 `SpawnPresentationOnly`；`SelectReward` 接受后经 `InRoomItemAcquirePresentation` 读 EventLog `CardSpawned`→SpawnView(Core uid)→`PullFromGroundAsync` 接入手牌（失败则 `TryPlaceInHandImmediate`）；禁止只 Release 货架导致「Core 有牌、手牌看不见」
 - 离开监视：先 `mActive=true` 再 `StartAvatarWatch`；失败驻留须重开计时
 - 货架挂 `ShopBoardHitProxy` 时禁用同 GO `GroundCardHitProxy`，避免误入 Pickup
 - `GameFlowOrchestrator.PlayRoomIconChoiceAsync`：图标驻留 Select+Enter 后，若进消费/特殊房会话则 `PresentInRoomSessionAfterEnterAsync` 刷商店场地板（不再壳层二次 EnterRoom）
@@ -202,6 +203,7 @@
 - Core：进 `TreasureReward` → 1 宝箱 + 3 随机道具（`ItemSourcePoolDefIds`）；进 `ItemReward` → 2 属性道具（40/40/20）+ 3 随机道具；pool=`reward.treasure` / `reward.item`；`SelectReward` **免费**直写道具卡格（满则拒）并留房；`SkipHelpChoice` 离开放弃剩余（不加 skip 金）
 - 表现：`RewardBoardPresenter` 落格 1/2/3/7/9 真卡、8 离开；Avatar 硬切格 5；任意距离点击拿走；离开驻留 1s；悬停 tip=卡名+效果（无价格）
 - 真卡 `GroundCardMode`（预制体原生尺寸，#104）；货架 `SoftBlockOnly`，离开 `WalkDestination`；离开监视约定同商店（免费拿无需推金；**不持 ChoiceOverlay**；禁用 `GroundCardHitProxy`）
+- **领取入手牌**：同商店，经 `InRoomItemAcquirePresentation` 把 Core ItemSlots 新卡从货架位接入手牌（ADR-0025）
 - `GameFlowOrchestrator.PresentInRoomSessionAfterEnterAsync`：`IsSpecialRewardPool` 走特殊房场地板；道具奖励房选房图标仍缺（见 #83）
 
 ### Avatar 跳格（已落地 · ADR-0019 / #88 放宽）

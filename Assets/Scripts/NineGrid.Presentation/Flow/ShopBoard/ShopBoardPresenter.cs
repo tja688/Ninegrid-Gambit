@@ -11,6 +11,7 @@ using NineGrid.Flow;
 using NineGrid.Flow.BoardBriefTip;
 using NineGrid.Flow.InRoomBoard;
 using NineGrid.Flow.RoomIcons;
+using NineGrid.Flow.Transitions;
 using NineGrid.Presentation;
 using NineGrid.Presentation.Systems;
 using QFramework;
@@ -98,7 +99,7 @@ namespace NineGrid.Flow.ShopBoard
             mExtras.Clear();
             RoomIconOccupancy.Current.Clear();
             RoomIconOccupancySlotHits.Refresh(mArch);
-            BoardBriefTipPresenter.InstanceOrNull()?.ClearHover();
+            BoardBriefTipPresenter.InstanceOrNull()?.HardClear();
         }
 
         /// <summary>按 PendingChoice 商店货架刷板；失败返回 false。</summary>
@@ -198,7 +199,7 @@ namespace NineGrid.Flow.ShopBoard
 
                     AttachClickProxy(go, ShopBoardHitKind.BuyShelf, i, tip, slot);
                     mExtras.Add(go);
-                    // 占位对齐 Pending 索引，避免 ShatterShelfVisual 错位。
+                    // 占位对齐 Pending 索引，避免 PresentShelfAcquireOrShatter 错位。
                     mShelfCards.Add(null);
                     continue;
                 }
@@ -428,9 +429,34 @@ namespace NineGrid.Flow.ShopBoard
 
             Debug.Log("[ShopBoard] Buy accepted shelfIndex=" + shelfIndex);
             InRoomGoldPresentation.PresentGoldChangesSince(arch, logStart);
-            // 碎裂：释放该格表现卡后重建。
-            ShatterShelfVisual(shelfIndex);
+            // ADR-0025：购入直写 ItemSlots；货架纯表现卡须换成 Core uid 并接入手牌，勿只碎裂。
+            PresentShelfAcquireOrShatter(shelfIndex, arch, logStart);
             ResyncFromPending(arch);
+        }
+
+        private void PresentShelfAcquireOrShatter(int shelfIndex, IArchitecture arch, int logStart)
+        {
+            ManagedCard shelf = null;
+            if (shelfIndex >= 0 && shelfIndex < mShelfCards.Count)
+            {
+                shelf = mShelfCards[shelfIndex];
+                mShelfCards[shelfIndex] = null;
+            }
+
+            if (InRoomItemAcquirePresentation.TryAcquireShelfHelpCardToHand(arch, logStart, shelf))
+            {
+                return;
+            }
+
+            // 无 ItemSlots 授予（如牌格升级）或接手失败：退回碎裂释放。
+            if (shelf == null)
+            {
+                return;
+            }
+
+            var cards = CardEntityLifecycleHook.CardsOrNull()
+                        ?? UnityEngine.Object.FindFirstObjectByType<CardManagerSingleton>();
+            cards?.Release(shelf, "ShopBoard.BuyShatter");
         }
 
         private void TryRefresh()
@@ -488,30 +514,6 @@ namespace NineGrid.Flow.ShopBoard
             Debug.LogWarning(
                 "[ShopBoard] Leave rejected reason=" + (result?.Reason ?? string.Empty));
             return false;
-        }
-
-        private void ShatterShelfVisual(int shelfIndex)
-        {
-            if (shelfIndex < 0 || shelfIndex >= mShelfCards.Count)
-            {
-                return;
-            }
-
-            var card = mShelfCards[shelfIndex];
-            if (card == null)
-            {
-                return;
-            }
-
-            var cards = CardEntityLifecycleHook.CardsOrNull()
-                        ?? UnityEngine.Object.FindFirstObjectByType<CardManagerSingleton>();
-            if (cards != null)
-            {
-                // 碎裂退场：走既有 Death 通道；无 EffectManager 时直接 Release。
-                cards.Release(card, "ShopBoard.BuyShatter");
-            }
-
-            mShelfCards[shelfIndex] = null;
         }
 
         private void ShowNotice(string message)
@@ -619,7 +621,8 @@ namespace NineGrid.Flow.ShopBoard
             }
 
             Debug.Log("[ShopBoard] Leave dwell commit slot=" + slot);
-            if (TryLeave())
+            var left = await TryLeaveWithTransitionAsync();
+            if (left)
             {
                 mLeaveDwell.MarkSubmitted();
             }
@@ -628,6 +631,35 @@ namespace NineGrid.Flow.ShopBoard
                 // 失败须重开计时；仅 Begin 不跑 RunLeaveDwellAsync 会永久卡在离开格。
                 mLeaveDwell.Begin(slot, 0);
                 RunLeaveDwellAsync(slot, parentCt).Forget();
+            }
+        }
+
+        private async UniTask<bool> TryLeaveWithTransitionAsync()
+        {
+            var arch = mArch ?? NineGridArchitecture.Current;
+            var transition = RunSceneTransitionService.InstanceOrNull;
+            if (transition == null || !transition.IsEnabled)
+            {
+                return TryLeave();
+            }
+
+            var crossFloor = RunSceneTransitionService.WillCrossFloor(arch);
+            try
+            {
+                await transition.BeginCoverAsync(crossFloor, CancellationToken.None);
+                if (!TryLeave())
+                {
+                    transition.ForceClearFaders();
+                    return false;
+                }
+
+                await transition.CompleteRevealAsync(CancellationToken.None);
+                return true;
+            }
+            catch (OperationCanceledException)
+            {
+                transition.ForceClearFaders();
+                return false;
             }
         }
 

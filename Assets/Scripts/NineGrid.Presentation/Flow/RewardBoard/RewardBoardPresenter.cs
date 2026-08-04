@@ -9,7 +9,9 @@ using NineGrid.Core.Content;
 using NineGrid.Core.Systems;
 using NineGrid.Flow;
 using NineGrid.Flow.BoardBriefTip;
+using NineGrid.Flow.InRoomBoard;
 using NineGrid.Flow.RoomIcons;
+using NineGrid.Flow.Transitions;
 using NineGrid.Presentation;
 using NineGrid.Presentation.Systems;
 using QFramework;
@@ -97,7 +99,7 @@ namespace NineGrid.Flow.RewardBoard
             mExtras.Clear();
             RoomIconOccupancy.Current.Clear();
             RoomIconOccupancySlotHits.Refresh(mArch);
-            BoardBriefTipPresenter.InstanceOrNull()?.ClearHover();
+            BoardBriefTipPresenter.InstanceOrNull()?.HardClear();
         }
 
         /// <summary>按 PendingChoice 特殊房货架刷板；失败返回 false。</summary>
@@ -313,6 +315,7 @@ namespace NineGrid.Flow.RewardBoard
                 return;
             }
 
+            var logStart = InRoomGoldPresentation.CaptureEventLogCount(arch);
             var result = RewardChoiceCoreHook.SelectReward(shelfIndex);
             if (result == null || !result.Accepted)
             {
@@ -328,8 +331,33 @@ namespace NineGrid.Flow.RewardBoard
             }
 
             Debug.Log("[RewardBoard] Take accepted shelfIndex=" + shelfIndex);
-            ShatterShelfVisual(shelfIndex);
+            // ADR-0025：领取直写 ItemSlots；货架纯表现卡须换成 Core uid 并接入手牌，勿只碎裂。
+            PresentShelfAcquireOrShatter(shelfIndex, arch, logStart);
             ResyncFromPending(arch);
+        }
+
+        private void PresentShelfAcquireOrShatter(int shelfIndex, IArchitecture arch, int logStart)
+        {
+            ManagedCard shelf = null;
+            if (shelfIndex >= 0 && shelfIndex < mShelfCards.Count)
+            {
+                shelf = mShelfCards[shelfIndex];
+                mShelfCards[shelfIndex] = null;
+            }
+
+            if (InRoomItemAcquirePresentation.TryAcquireShelfHelpCardToHand(arch, logStart, shelf))
+            {
+                return;
+            }
+
+            if (shelf == null)
+            {
+                return;
+            }
+
+            var cards = CardEntityLifecycleHook.CardsOrNull()
+                        ?? UnityEngine.Object.FindFirstObjectByType<CardManagerSingleton>();
+            cards?.Release(shelf, "RewardBoard.TakeShatter");
         }
 
         private bool TryLeave()
@@ -349,29 +377,6 @@ namespace NineGrid.Flow.RewardBoard
             }
 
             return false;
-        }
-
-        private void ShatterShelfVisual(int shelfIndex)
-        {
-            if (shelfIndex < 0 || shelfIndex >= mShelfCards.Count)
-            {
-                return;
-            }
-
-            var card = mShelfCards[shelfIndex];
-            if (card == null)
-            {
-                return;
-            }
-
-            var cards = CardEntityLifecycleHook.CardsOrNull()
-                        ?? UnityEngine.Object.FindFirstObjectByType<CardManagerSingleton>();
-            if (cards != null)
-            {
-                cards.Release(card, "RewardBoard.TakeShatter");
-            }
-
-            mShelfCards[shelfIndex] = null;
         }
 
         private void ShowNotice(string message)
@@ -471,7 +476,7 @@ namespace NineGrid.Flow.RewardBoard
                 return;
             }
 
-            if (TryLeave())
+            if (await TryLeaveWithTransitionAsync())
             {
                 mLeaveDwell.MarkSubmitted();
             }
@@ -479,6 +484,35 @@ namespace NineGrid.Flow.RewardBoard
             {
                 mLeaveDwell.Begin(slot, 0);
                 RunLeaveDwellAsync(slot, parentCt).Forget();
+            }
+        }
+
+        private async UniTask<bool> TryLeaveWithTransitionAsync()
+        {
+            var arch = mArch ?? NineGridArchitecture.Current;
+            var transition = RunSceneTransitionService.InstanceOrNull;
+            if (transition == null || !transition.IsEnabled)
+            {
+                return TryLeave();
+            }
+
+            var crossFloor = RunSceneTransitionService.WillCrossFloor(arch);
+            try
+            {
+                await transition.BeginCoverAsync(crossFloor, CancellationToken.None);
+                if (!TryLeave())
+                {
+                    transition.ForceClearFaders();
+                    return false;
+                }
+
+                await transition.CompleteRevealAsync(CancellationToken.None);
+                return true;
+            }
+            catch (OperationCanceledException)
+            {
+                transition.ForceClearFaders();
+                return false;
             }
         }
 
