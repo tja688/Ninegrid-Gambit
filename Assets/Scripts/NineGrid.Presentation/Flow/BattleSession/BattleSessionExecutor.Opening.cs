@@ -7,6 +7,7 @@ using NineGrid.Cards;
 using NineGrid.Core;
 using NineGrid.Core.Stats;
 using NineGrid.Core.Systems;
+using NineGrid.Flow.BoardBriefTip;
 using NineGrid.Flow.Diagnostics;
 using NineGrid.Flow.Presentation;
 using NineGrid.Presentation;
@@ -117,6 +118,9 @@ namespace NineGrid.Flow
 
             try
             {
+                // 进战硬清简要解释（悬停 + Notice），兜底清掉房内「金币不足」等粘连文案。
+                BoardBriefTipPresenter.InstanceOrNull()?.HardClear();
+
                 // 跨关前等前关 Drain/tween 收束，避免与 Opening 发牌交错。
                 await WaitPresentationIdleAsync(cancellationToken);
                 CancelPresentationWork();

@@ -169,11 +169,12 @@
 ### 简要解释文字框与楼层提示（#89 · ADR-0020）
 
 - 文案：`BoardBriefTipCopy`（房间 DisplayName+注入摘要 / 导航固定文案 / 「第 X 层 · 节点 Y」；另备 `ForOptionOrShelf` 供 M2 货架·就地选项）
-- 会话：`BoardBriefTipSession`（悬停与 Notice；Notice 盖悬停；代数清）
+- 会话：`BoardBriefTipSession`（悬停与 Notice；Notice 盖悬停；代数清；`HardClear` 双路硬清）
 - 场景：`BoardBriefTipPresenter` → `Panels/简要解释文字框`（`EnsureExists` 优先绑定命名面板，sceneLoaded 再绑，避免无 TMP 孤儿）；`FloorHintPresenter` → `楼层提示`
 - 命中：场地图标 `BoardBriefTipHitProxy`；商店 `ShopBoardHitProxy`；卡店 `TavernBoardHitProxy`；特殊房 `RewardBoardHitProxy`；离开图标仍 `BoardBriefTipHitProxy` + 驻留——均**认领格位**、不自建命中盒、不注册 Router（#102）
 - 悬停/点击同源：`GroundFieldHitSurface` 读当前格认领者的 `BriefTipText` / `Activate`
 - 显示：有文案时激活面板并打开底板 `SpriteRenderer`；无悬停/Notice 即隐藏
+- 清理：场地板 `DespawnAll` 与进战 `StartBattleNode` / `PlayRealBattle` 调用 `HardClear`，避免房内 Notice（如「金币不足」）或悬停粘连进战斗；胜负 Notice 仍由 `HideNotice` 按时收起
 - 胜负 / 房间 stub Notice：`GameFlowController.ShowNotice` 改走简要解释文字框，旧 `NoticeText` 不再写出
 - **禁**：复活 `DescriptionManagerSingleton` / `DescriptionDisplayHook`；战斗真卡悬停写简要解释（右键详述另责）
 
@@ -305,7 +306,7 @@
 - 数值类指令绝对值：血甲用既有 `RemainingHp`/`RemainingArmor`；`BaseStatModified` / 生成类事件攻用 `ResultValue`（`Amount` 仍为 StatId，`Delta` 仍为增量）；`CardKilled` 携带 `RemainingHp`；`RewardOffered` Message 携带候选项攻/甲/血（`RewardOfferFaceEncoding`）
 - 穷尽性：`NineGrid.Core.Tests.PresentationEventMapBeatExhaustivenessTests`
 - **排期器** `Flow/Presentation/BattleBeatScheduler`：批次开启装载非 `None` 指令；`ReportBeat` 交给第一个 `IBattleBeatHandler.TryApply` 成功者；Settled 后未消费只报不改；支持 `PresentStandalone`（非锁步旁路冲刷，恢复当批 pending）；`FlushImpactExcept` 按 Kind 跳过（ADR-0018）
-- **处理器** `IBattleBeatHandler`：`CardFaceStatHandler` 只从指令赋值 → `ManagedCard.CommitPresentation`（含 `OfferReward` 按 DefId 匹配 Bounce 负 uid 卡）；`PlayerInfoHudBeatHandler` 对 Avatar 血甲旁路写 HUD（return false 留给卡面认领）；装饰 `DamageFloaterBeatHandler` / `EffectTriggerPulseBeatHandler` / `GoldGainBeatHandler` 分别在 Impact / Settled 消费飘字、FX、金币，不占主线 ack；数值 Commit 后 `CardFacePresentationBinder` 可对配对图标做非阻塞缩放装饰（不占 ack）
+- **处理器** `IBattleBeatHandler`：`CardFaceStatHandler` 只从指令赋值 → `ManagedCard.CommitPresentation`（含 `OfferReward` 按 DefId 匹配 Bounce 负 uid 卡；`MaxHp` 取 `RemainingHp` 作当前血）；`PlayerInfoHudBeatHandler` 对 Avatar 血甲旁路写 HUD（`MaxHp` 走 `ApplyHpAndMaxHp(RemainingHp, ResultValue)`；return false 留给卡面认领）；装饰 `DamageFloaterBeatHandler` / `EffectTriggerPulseBeatHandler` / `GoldGainBeatHandler` 分别在 Impact / Settled 消费飘字、FX、金币，不占主线 ack；数值 Commit 后 `CardFacePresentationBinder` 可对配对图标做非阻塞缩放装饰（不占 ack）
 - **统一冲刷** `BattleBeatFlush.FlushBeats`（Impact→Settled）：`PresentStep` 就位回执前调用；非锁步（房间/选择/拾取）走 `PresentEventLogSlice`；Bounce spawn 后走 `PresentLatestEventOfType(RewardOffered)`（单条 PresentStandalone）
 - **翻牌门控** `FlipPlaybackCoordinator`：Handler 入队串行 `PlayFlipAsync`；`BattleBeatScheduler.FlushUpdateFaceUp` / `BattleBeatFlush.FlushUpdateFaceUp` 供 `PresentStep` 在 hop 通道 `channel.Begin` 前只刷 FaceUp；战斗通道可跳过前置刷、把 FaceUp 留到 `FlushBeats`；Idle 门控在 Begin 与 ack 两侧（ADR-0016）
 - **生成绝对值** `CardFaceEventValues.WithFaceAbsolutes`：`CardSpawned` / 带 uid 的 `CardDealt` / `AvatarAppeared` 写入造卡/发牌时攻甲血

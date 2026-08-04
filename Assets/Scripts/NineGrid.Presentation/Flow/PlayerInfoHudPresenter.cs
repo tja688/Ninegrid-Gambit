@@ -218,6 +218,19 @@ namespace NineGrid.Flow
             ApplyHpVessel(hp, Mathf.Max(1, maxHp), shouldAnimate, firstPaint);
         }
 
+        /// <summary>
+        /// 指令驱动：同时写入当前血与上限（MaxHp 耦合加血的原子刷新，避免只长槽不涨血）。
+        /// </summary>
+        public void ApplyHpAndMaxHp(int hp, int maxHp, bool animate = true)
+        {
+            EnsureBindings();
+            CaptureVesselBaseIfNeeded();
+            var firstPaint = !_hasSnapshot;
+            var shouldAnimate = animate && !firstPaint;
+            _hasSnapshot = true;
+            ApplyHpVessel(Mathf.Max(0, hp), Mathf.Max(1, maxHp), shouldAnimate, firstPaint);
+        }
+
         /// <summary>指令驱动：写入有效护甲。</summary>
         public void ApplyArmor(int armor, bool animate = true)
         {

@@ -150,6 +150,21 @@ namespace NineGrid.Flow.BoardBriefTip
             ApplyVisual();
         }
 
+        /// <summary>硬清悬停 + Notice 两路文案并刷新场景面板。</summary>
+        public void HardClear()
+        {
+            var self = EnsureExists();
+            if (!ReferenceEquals(self, this))
+            {
+                self.HardClear();
+                return;
+            }
+
+            EnsureBindings();
+            mSession.HardClear();
+            ApplyVisual();
+        }
+
         public void EnsureBindings()
         {
             if (panelRoot == null || !IsAuthoritativePanel(panelRoot))

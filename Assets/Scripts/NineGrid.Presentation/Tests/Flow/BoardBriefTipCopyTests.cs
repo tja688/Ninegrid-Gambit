@@ -103,5 +103,19 @@ namespace NineGrid.Presentation.Tests.Flow
             session.ClearNotice(noticeGen);
             Assert.AreEqual("应被盖住", session.DisplayText);
         }
+
+        [Test]
+        public void HardClear_WipesHoverAndNotice()
+        {
+            var session = new BoardBriefTipSession();
+            session.ShowHover("悬停");
+            session.ShowNotice("金币不足");
+            Assert.AreEqual("金币不足", session.DisplayText);
+
+            session.HardClear();
+            Assert.AreEqual(string.Empty, session.DisplayText);
+            Assert.IsFalse(session.IsVisible);
+            Assert.IsFalse(session.HasNotice);
+        }
     }
 }

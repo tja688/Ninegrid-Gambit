@@ -61,6 +61,17 @@ namespace NineGrid.Flow.BoardBriefTip
             mNotice = string.Empty;
         }
 
+        /// <summary>
+        /// 硬清悬停 + Notice。进战 / 场地板撤场兜底，避免「金币不足」等 Notice 或悬停粘连进战斗。
+        /// </summary>
+        public void HardClear()
+        {
+            mHover = string.Empty;
+            mNotice = string.Empty;
+            mHoverGeneration++;
+            mNoticeGeneration++;
+        }
+
         public void ResetForTests()
         {
             mHover = string.Empty;

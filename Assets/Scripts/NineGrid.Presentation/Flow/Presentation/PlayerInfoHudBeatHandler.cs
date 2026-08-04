@@ -55,7 +55,8 @@ namespace NineGrid.Flow.Presentation
                     hud.ApplyHp(value, animate: true);
                     break;
                 case StatId.MaxHp:
-                    hud.ApplyMaxHp(value, animate: true);
+                    // ResultValue=新上限；RemainingHp=耦合后的当前血（Core ModifyBaseStat 约定）。
+                    hud.ApplyHpAndMaxHp(gameEvent.RemainingHp, value, animate: true);
                     break;
                 case StatId.Armor:
                 case StatId.CurrentArmor:

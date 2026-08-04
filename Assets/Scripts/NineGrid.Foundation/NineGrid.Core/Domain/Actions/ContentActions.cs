@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using NineGrid.Core.Content;
 using NineGrid.Core.Effects;
+using NineGrid.Core.Stats;
 using NineGrid.Core.Systems;
 
 namespace NineGrid.Core
@@ -31,6 +32,7 @@ namespace NineGrid.Core
             var next = Math.Max(0, previous + Delta);
             card.Stats.SetBase(Stat, next);
 
+            // 加上限同时加等量当前血；降上限则把当前血钳到新上限（局内统一约定）。
             if (Stat == StatId.MaxHp && Delta > 0)
             {
                 var hp = (int)Math.Round(card.Stats.GetBase(StatId.Hp));
@@ -42,15 +44,23 @@ namespace NineGrid.Core
                 card.Stats.SetBase(StatId.Hp, Math.Min(hp, next));
             }
 
-            return new GameActionResult()
-                .AddEvent(new CoreGameEvent(CoreEventType.BaseStatModified, context.ActionId, ActionName)
-                    .WithCard(TargetUid)
-                    .WithTarget(TargetUid)
-                    .WithAmount((int)Stat)
-                    .WithDelta(Delta)
-                    .WithResultValue(next)
-                    .WithMessage(Reason)
-                    .WithSource(SourceDefId, Reason));
+            var evt = new CoreGameEvent(CoreEventType.BaseStatModified, context.ActionId, ActionName)
+                .WithCard(TargetUid)
+                .WithTarget(TargetUid)
+                .WithAmount((int)Stat)
+                .WithDelta(Delta)
+                .WithResultValue(next)
+                .WithMessage(Reason)
+                .WithSource(SourceDefId, Reason);
+
+            // MaxHp 变更后的当前血绝对值：表现层按 ADR-0005 用指令赋值，禁止自行累加。
+            if (Stat == StatId.MaxHp)
+            {
+                var hpAfter = (int)Math.Round(card.Stats.GetBase(StatId.Hp));
+                evt.WithRemaining(hpAfter, StatArmorUtility.GetCurrentArmor(card));
+            }
+
+            return new GameActionResult().AddEvent(evt);
         }
     }
 

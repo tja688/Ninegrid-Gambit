@@ -69,6 +69,48 @@ namespace NineGrid.Core.Tests
             Assert.AreEqual(0, (int)Avatar().Stats.GetBase(StatId.Attack));
         }
 
+        [Test]
+        public void ModifyBaseStat_MaxHpIncrease_AlsoRaisesCurrentHp_AndEmitsRemainingHp()
+        {
+            var avatar = Avatar();
+            avatar.Stats.SetBase(StatId.MaxHp, 10);
+            avatar.Stats.SetBase(StatId.Hp, 7);
+            var startIndex = mPipeline.EventLog.Entries.Count;
+
+            mPipeline.Enqueue(new ModifyBaseStatAction(avatar.Uid, StatId.MaxHp, 2, "test:+max"));
+            mPipeline.RunToCompletion();
+
+            Assert.AreEqual(12, (int)Avatar().Stats.GetBase(StatId.MaxHp));
+            Assert.AreEqual(9, (int)Avatar().Stats.GetBase(StatId.Hp), "加上限须同步加等量当前血");
+
+            var evt = FindLastBaseStatModified(startIndex);
+            Assert.IsNotNull(evt);
+            Assert.AreEqual((int)StatId.MaxHp, evt.Amount);
+            Assert.AreEqual(2, evt.Delta);
+            Assert.AreEqual(12, evt.ResultValue);
+            Assert.AreEqual(9, evt.RemainingHp, "RemainingHp 供表现层按绝对值提交当前血");
+        }
+
+        [Test]
+        public void ModifyBaseStat_MaxHpDecrease_ClampsCurrentHp()
+        {
+            var avatar = Avatar();
+            avatar.Stats.SetBase(StatId.MaxHp, 10);
+            avatar.Stats.SetBase(StatId.Hp, 9);
+            var startIndex = mPipeline.EventLog.Entries.Count;
+
+            mPipeline.Enqueue(new ModifyBaseStatAction(avatar.Uid, StatId.MaxHp, -3, "test:-max"));
+            mPipeline.RunToCompletion();
+
+            Assert.AreEqual(7, (int)Avatar().Stats.GetBase(StatId.MaxHp));
+            Assert.AreEqual(7, (int)Avatar().Stats.GetBase(StatId.Hp));
+
+            var evt = FindLastBaseStatModified(startIndex);
+            Assert.IsNotNull(evt);
+            Assert.AreEqual(7, evt.ResultValue);
+            Assert.AreEqual(7, evt.RemainingHp);
+        }
+
         private CardInstance Avatar()
         {
             return mArch.GetModel<CardRegistry>().Get(mArch.GetModel<BoardModel>().AvatarUid.Value);

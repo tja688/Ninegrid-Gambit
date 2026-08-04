@@ -117,8 +117,16 @@ namespace NineGrid.Flow.Presentation
                     CommitNumeric(card, attack: null, armor: value, hp: null, actionCount: null);
                     break;
                 case StatId.Hp:
-                case StatId.MaxHp:
                     CommitNumeric(card, attack: null, armor: null, hp: value, actionCount: null);
+                    break;
+                case StatId.MaxHp:
+                    // ResultValue 是新上限；卡面血量槽显示当前血，取 RemainingHp（耦合后绝对值）。
+                    CommitNumeric(
+                        card,
+                        attack: null,
+                        armor: null,
+                        hp: Mathf.Max(0, gameEvent.RemainingHp),
+                        actionCount: null);
                     break;
             }
         }
