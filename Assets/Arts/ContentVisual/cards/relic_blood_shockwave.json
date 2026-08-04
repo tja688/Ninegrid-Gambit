@@ -2,7 +2,7 @@
     "schemaVersion": 2,
     "contentId": "relic.blood_shockwave",
     "kind": "Relic",
-    "deckId": "deck.relic",
+    "deckId": "deck.relic_archive",
     "role": "Attack",
     "displayName": "血液冲击波",
     "description": "血量上限+{delta}；[每关卡开始时] 将一张撞击教程放入道具牌格；[每关卡开始时] 当前血量低于50%时再放入一张撞击教程",

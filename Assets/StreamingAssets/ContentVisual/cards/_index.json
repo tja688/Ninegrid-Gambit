@@ -29,6 +29,7 @@
         "deck.orc_legion",
         "deck.player",
         "deck.relic",
+        "deck.relic_archive",
         "deck.skeleton_legion",
         "deck.smallanimal",
         "deck.stone_legion",

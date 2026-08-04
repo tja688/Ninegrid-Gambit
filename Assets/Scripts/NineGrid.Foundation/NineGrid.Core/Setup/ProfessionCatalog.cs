@@ -44,13 +44,14 @@ namespace NineGrid.Core
         public const string GenericItemDeckId = "deck.help";
         public const string WarriorItemDeckId = "deck.player";
 
+        // #115：轻车熟路已迁归档卡组；开局遗物由 #116 换成腐朽顺劈斧前暂不授予。
         private static readonly ProfessionDefinition sWarrior = new ProfessionDefinition(
             Jester,
             maxHp: 10,
             attack: 3,
             armor: 1,
             recovery: 1,
-            initialRelicDefId: "relic.easy_road",
+            initialRelicDefId: string.Empty,
             itemSourceDeckIds: new[] { GenericItemDeckId, WarriorItemDeckId });
 
         public static ProfessionDefinition Default

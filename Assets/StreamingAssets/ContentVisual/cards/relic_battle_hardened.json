@@ -2,7 +2,7 @@
     "schemaVersion": 2,
     "contentId": "relic.battle_hardened",
     "kind": "Relic",
-    "deckId": "deck.relic",
+    "deckId": "deck.relic_archive",
     "role": "Attack",
     "displayName": "历战",
     "description": "[战斗时] 攻击+{value}（仅对当前敌人有效）",

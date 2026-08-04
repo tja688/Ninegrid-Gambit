@@ -2,7 +2,7 @@
     "schemaVersion": 2,
     "contentId": "relic.even_hatred",
     "kind": "Relic",
-    "deckId": "deck.relic",
+    "deckId": "deck.relic_archive",
     "role": "Attack",
     "displayName": "偶数仇恨",
     "description": "[战斗时] 若目标怪物卡等级为偶数，玩家造成双倍伤害",

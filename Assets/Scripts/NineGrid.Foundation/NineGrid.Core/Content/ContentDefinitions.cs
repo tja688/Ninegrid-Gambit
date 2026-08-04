@@ -318,6 +318,21 @@ namespace NineGrid.Core.Content
         }
     }
 
+    /// <summary>
+    /// 遗物卡组约定：live 进奖池/授予；archive 仅保留 JSON 参考（#115）。
+    /// </summary>
+    public static class RelicDecks
+    {
+        public const string Live = "deck.relic";
+        public const string Archive = "deck.relic_archive";
+
+        public static bool IsArchive(string deckId)
+        {
+            return !string.IsNullOrEmpty(deckId)
+                && string.Equals(deckId, Archive, System.StringComparison.OrdinalIgnoreCase);
+        }
+    }
+
     public sealed class RelicContentDefinition
     {
         private readonly List<string> mTags = new List<string>();
@@ -336,7 +351,7 @@ namespace NineGrid.Core.Content
         public ContentRarity Rarity { get; private set; }
         /// <summary>功能角色（攻/防/功能）；代号主键。</summary>
         public ContentRole Role { get; set; }
-        /// <summary>卡组归属（决定卡背）；遗物默认 deck.relic。</summary>
+        /// <summary>卡组归属（决定卡背）；遗物默认 <see cref="RelicDecks.Live"/>。</summary>
         public string DeckId { get; set; }
         public string DesignText { get; private set; }
 
@@ -613,6 +628,11 @@ namespace NineGrid.Core.Content
 
         private static bool MatchesRelic(RelicContentDefinition relic, RewardPoolQueryRule query)
         {
+            if (RelicDecks.IsArchive(relic.DeckId))
+            {
+                return false;
+            }
+
             if (query.Rarities.Count > 0 && !query.Rarities.Contains(relic.Rarity))
             {
                 return false;

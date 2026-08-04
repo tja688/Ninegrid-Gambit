@@ -76,6 +76,16 @@ namespace NineGrid.Core
 
         public override GameActionResult Apply(GameActionContext context)
         {
+            var content = context.GetSystem<IContentSystem>();
+            // #115：奖池已排除归档遗物；授予路径同样跳过，避免误接线。
+            if (content != null
+                && content.Catalog != null
+                && content.Catalog.Relics.TryGetValue(RelicDefId, out var relic)
+                && RelicDecks.IsArchive(relic.DeckId))
+            {
+                return GameActionResult.Empty;
+            }
+
             var player = context.GetModel<PlayerModel>();
             if (player.IsRelicInventoryFull && !PlayerOwnsRelic(player, RelicDefId))
             {
@@ -83,7 +93,10 @@ namespace NineGrid.Core
             }
 
             player.AddRelic(RelicDefId);
-            context.GetSystem<IContentSystem>().ActivateRelic(RelicDefId);
+            if (content != null)
+            {
+                content.ActivateRelic(RelicDefId);
+            }
             return new GameActionResult()
                 .AddEvent(new CoreGameEvent(CoreEventType.RelicGranted, context.ActionId, ActionName)
                     .WithMessage(RelicDefId));

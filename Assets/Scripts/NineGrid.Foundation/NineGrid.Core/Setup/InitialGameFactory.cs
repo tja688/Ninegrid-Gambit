@@ -1,4 +1,5 @@
 using System.Text;
+using NineGrid.Core.Content;
 using NineGrid.Core.Effects;
 using NineGrid.Core.Systems;
 using NineGrid.Core.Utilities;
@@ -160,6 +161,15 @@ namespace NineGrid.Core
                 profession.DefId);
 
             if (string.IsNullOrEmpty(profession.InitialRelicDefId))
+            {
+                return;
+            }
+
+            // #115：归档卡组遗物不经 Profession 授予（ActivateRelic 仍可供测试/参考显式调用）。
+            if (content != null
+                && content.Catalog != null
+                && content.Catalog.Relics.TryGetValue(profession.InitialRelicDefId, out var relic)
+                && RelicDecks.IsArchive(relic.DeckId))
             {
                 return;
             }

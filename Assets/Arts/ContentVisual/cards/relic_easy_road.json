@@ -2,7 +2,7 @@
     "schemaVersion": 2,
     "contentId": "relic.easy_road",
     "kind": "Relic",
-    "deckId": "deck.relic",
+    "deckId": "deck.relic_archive",
     "role": "Utility",
     "displayName": "轻车熟路",
     "description": "[每关卡结束时] 进行一次白色帮助卡三选一",

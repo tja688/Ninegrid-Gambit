@@ -2,7 +2,7 @@
     "schemaVersion": 2,
     "contentId": "relic.arsenal",
     "kind": "Relic",
-    "deckId": "deck.relic",
+    "deckId": "deck.relic_archive",
     "role": "Attack",
     "displayName": "军械库",
     "description": "[每关卡结束时] 加入飞刀/爆弹/破击锤之{weight}",
