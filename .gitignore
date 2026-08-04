@@ -108,3 +108,6 @@ Thumbs.db
 
 # Local multi-AI workspace state (claims / EditMode test lock)
 .cursor/ai-workspace/
+
+# Local serial ticket-runner state / agent logs
+.cursor/ticket-runner/

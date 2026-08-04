@@ -1,0 +1,20 @@
+{
+  "model": "cursor-grok-4.5-high",
+  "promptTemplate": "/implement #{number}",
+  "agentPath": "",
+  "strictClose": false,
+  "readyLabel": "ready-for-agent",
+  "force": true,
+  "trust": true,
+  "outputFormat": "stream-json",
+  "ticketBudgetMinutes": 30,
+  "stdoutIdleMinutes": 10,
+  "interventionBudgetMinutes": 30,
+  "interventionGraceMinutes": 15,
+  "pollSeconds": 5,
+  "maxMachineLogRuns": 3,
+  "hooks": {
+    "beforeTicket": "",
+    "afterTicket": ""
+  }
+}
