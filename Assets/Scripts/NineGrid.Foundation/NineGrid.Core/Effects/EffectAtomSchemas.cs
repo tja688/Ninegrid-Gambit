@@ -455,9 +455,9 @@ namespace NineGrid.Core.Effects
                     result.Add("schema.action.amount", path + ".amount is required for TransferArmor unless .all is true.");
                 }
             }
-            else if (Same(atom, "ModifyGold") && !node.Has("delta"))
+            else if (Same(atom, "ModifyGold") && !node.Has("delta") && !node.Has("value"))
             {
-                result.Add("schema.action.delta", path + ".delta is required for ModifyGold.");
+                result.Add("schema.action.delta", path + ".delta or value is required for ModifyGold.");
             }
             else if (Same(atom, "ModifyBaseStat"))
             {

@@ -1534,5 +1534,109 @@
   "requires_json": "[\"NoOwnerEntity\"]",
   "conditions_json": "[]",
   "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnBattle\",\"targetKind\":\"Monster\",\"maxActionDepth\":0},\"conditions\":[{\"atom\":\"EventFilterActorIsPlayer\",\"eventType\":\"ArmorChanged\",\"targetKind\":\"Monster\"},{\"atom\":\"EventFilter\",\"eventType\":\"ArmorChanged\",\"targetKind\":\"Monster\",\"maxDelta\":-1}],\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"AddModifier\",\"stat\":\"Attack\",\"op\":\"Add\",\"value\":\"{{value}}\",\"layer\":\"Temporary\",\"scope\":\"UntilBattleEnds\",\"source\":\"{{source}}\",\"replaceSameSource\":true}}"
+ },
+ {
+  "id": "tpl.relic.composite_armor.node_start",
+  "state": "Implemented",
+  "design_text": "[每关卡开始时] 每有三点攻击，获得1点当前护甲",
+  "requires_json": "[\"NoOwnerEntity\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnNodeStart\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"GainArmor\",\"value\":{\"op\":\"Floor\",\"values\":[{\"op\":\"Divide\",\"values\":[{\"source\":\"Player\",\"stat\":\"Attack\",\"effective\":true},{\"constant\":3}]}]}}}"
+ },
+ {
+  "id": "tpl.relic.gold_blood.taken",
+  "state": "Implemented",
+  "design_text": "[受到伤害时] 每损失1点血量获得等量金币",
+  "requires_json": "[\"NoOwnerEntity\"]",
+  "conditions_json": "[\"EventFilter:eventType=HpChanged\"]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnDamageTaken\"},\"conditions\":[{\"atom\":\"EventFilter\",\"eventType\":\"HpChanged\",\"targetKind\":\"Avatar\",\"maxDelta\":-1}],\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"ModifyGold\",\"value\":{\"op\":\"Negate\",\"values\":[{\"source\":\"Event\",\"field\":\"Delta\"}]},\"reason\":\"{{reason}}\"}}"
+ },
+ {
+  "id": "tpl.relic.rpm_engine.rotate",
+  "state": "Implemented",
+  "design_text": "[旋转时] 多旋转一次（排除本遗物引发的旋转）",
+  "requires_json": "[\"NoOwnerEntity\"]",
+  "conditions_json": "[\"EventFilter:eventType=BoardRotated\"]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnEvent\",\"eventType\":\"BoardRotated\"},\"conditions\":[{\"atom\":\"EventFilter\",\"eventType\":\"BoardRotated\",\"excludeSourceDefId\":\"relic.rpm_engine\"}],\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"Rotate\",\"count\":\"{{count}}\"}}"
+ },
+ {
+  "id": "tpl.relic.trap_cell.move",
+  "state": "Implemented",
+  "design_text": "怪物卡移动到格1时对该怪物造成4点伤害",
+  "requires_json": "[\"NoOwnerEntity\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnMoveToSlot\",\"slot\":1},\"target\":{\"atom\":\"MovedEventCards\",\"targetKind\":\"Monster\",\"toSlot\":1},\"action\":{\"atom\":\"DealDamage\",\"amount\":\"{{amount}}\",\"actor\":\"Player\"}}"
+ },
+ {
+  "id": "tpl.relic.junk_sword.kill",
+  "state": "Implemented",
+  "design_text": "[击杀怪物时] 恢复2点血量",
+  "requires_json": "[\"NoOwnerEntity\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnKill\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"Heal\",\"amount\":\"{{amount}}\",\"actor\":\"Player\"}}"
+ },
+ {
+  "id": "tpl.relic.blood_cycle.taken",
+  "state": "Implemented",
+  "design_text": "[受到伤害时] 恢复2点血量",
+  "requires_json": "[\"NoOwnerEntity\"]",
+  "conditions_json": "[\"EventFilter:eventType=HpChanged\"]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnDamageTaken\"},\"conditions\":[{\"atom\":\"EventFilter\",\"eventType\":\"HpChanged\",\"targetKind\":\"Avatar\",\"maxDelta\":-1}],\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"Heal\",\"amount\":\"{{amount}}\",\"actor\":\"Player\"}}"
+ },
+ {
+  "id": "tpl.relic.blood_violence.atk",
+  "state": "Implemented",
+  "design_text": "当前血量低于上限50%时攻击+2",
+  "requires_json": "[\"NoOwnerEntity\"]",
+  "conditions_json": "[\"HpBelow\"]",
+  "body": "{\"kind\":\"Modifier\",\"target\":{\"atom\":\"Player\"},\"conditions\":[{\"atom\":\"HpBelow\",\"target\":\"Self\",\"pct\":0.5}],\"modifier\":{\"stat\":\"Attack\",\"op\":\"Add\",\"value\":\"{{value}}\",\"layer\":\"Conditional\",\"scope\":\"Permanent\",\"source\":\"{{source}}\"}}"
+ },
+ {
+  "id": "tpl.relic.blood_burst.taken",
+  "state": "Implemented",
+  "design_text": "[受到伤害时] 对随机怪物造成等量伤害",
+  "requires_json": "[\"NoOwnerEntity\"]",
+  "conditions_json": "[\"EventFilter:eventType=HpChanged\"]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnDamageTaken\"},\"conditions\":[{\"atom\":\"EventFilter\",\"eventType\":\"HpChanged\",\"targetKind\":\"Avatar\",\"maxDelta\":-1}],\"target\":{\"atom\":\"RandomMonster\"},\"action\":{\"atom\":\"DealDamage\",\"value\":{\"op\":\"Negate\",\"values\":[{\"source\":\"Event\",\"field\":\"Delta\"}]},\"actor\":\"Player\"}}"
+ },
+ {
+  "id": "tpl.relic.spinning_barb.move",
+  "state": "Implemented",
+  "design_text": "怪物卡每移动一次受到1点伤害",
+  "requires_json": "[\"NoOwnerEntity\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnEvent\",\"eventType\":\"CardMoved\"},\"target\":{\"atom\":\"MovedEventCards\",\"targetKind\":\"Monster\"},\"action\":{\"atom\":\"DealDamage\",\"amount\":\"{{amount}}\",\"actor\":\"Player\"}}"
+ },
+ {
+  "id": "tpl.relic.blood_regen.battle",
+  "state": "Implemented",
+  "design_text": "[战斗时] 血量低于上限50%时恢复2点血量",
+  "requires_json": "[\"NoOwnerEntity\"]",
+  "conditions_json": "[\"EventFilterActorIsPlayer\",\"HpBelow\"]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnBattle\",\"sourceAction\":\"{{sourceAction}}\",\"targetKind\":\"Monster\",\"maxActionDepth\":0},\"conditions\":[{\"atom\":\"EventFilterActorIsPlayer\",\"eventType\":\"DamageDealt\",\"targetKind\":\"Monster\"},{\"atom\":\"HpBelow\",\"target\":\"Player\",\"pct\":0.5}],\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"Heal\",\"amount\":\"{{amount}}\",\"actor\":\"Player\"}}"
+ },
+ {
+  "id": "tpl.relic.sharp_longsword.kill",
+  "state": "Implemented",
+  "design_text": "[击杀怪物时] 本关卡攻击+1",
+  "requires_json": "[\"NoOwnerEntity\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnKill\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"AddModifier\",\"stat\":\"Attack\",\"op\":\"Add\",\"value\":\"{{value}}\",\"layer\":\"Temporary\",\"scope\":\"UntilNodeEnds\",\"source\":\"{{source}}\"}}"
+ },
+ {
+  "id": "tpl.relic.berserker_axe.double",
+  "state": "Implemented",
+  "design_text": "当前血量低于上限50%时攻击翻倍",
+  "requires_json": "[\"NoOwnerEntity\"]",
+  "conditions_json": "[\"HpBelow\"]",
+  "body": "{\"kind\":\"Modifier\",\"target\":{\"atom\":\"Player\"},\"conditions\":[{\"atom\":\"HpBelow\",\"target\":\"Self\",\"pct\":0.5}],\"modifier\":{\"stat\":\"Attack\",\"op\":\"Multiply\",\"value\":\"{{value}}\",\"layer\":\"Conditional\",\"scope\":\"Permanent\",\"source\":\"{{source}}\"}}"
+ },
+ {
+  "id": "tpl.relic.metal_blood.taken",
+  "state": "Implemented",
+  "design_text": "[受到伤害时] 损失血量后获得等量当前护甲",
+  "requires_json": "[\"NoOwnerEntity\"]",
+  "conditions_json": "[\"EventFilter:eventType=HpChanged\"]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnDamageTaken\"},\"conditions\":[{\"atom\":\"EventFilter\",\"eventType\":\"HpChanged\",\"targetKind\":\"Avatar\",\"maxDelta\":-1}],\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"GainArmor\",\"value\":{\"op\":\"Negate\",\"values\":[{\"source\":\"Event\",\"field\":\"Delta\"}]}}}"
  }
 ]

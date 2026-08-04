@@ -1116,6 +1116,82 @@ namespace NineGrid.Core.Effects
         public IReadOnlyList<int> Resolve(EffectRuntimeContext context) { return TargetResolver.Single(context.FirstEventTargetUid()); }
     }
 
+    /// <summary>
+    /// 收集本次动作中盘面→盘面 CardMoved 事件卡；可选过滤 kind / 目标格。
+    /// </summary>
+    [EffectAtom("MovedEventCards", EffectAtomKind.Target)]
+    public sealed class MovedEventCardsTarget : ITarget
+    {
+        private CardKind mTargetKind = CardKind.Unknown;
+        private SlotId mToSlot = SlotId.None;
+        private bool mHasToSlot;
+
+        public void Configure(EffectDslNode config)
+        {
+            mTargetKind = config.Get("targetKind").AsEnum(CardKind.Unknown);
+            mHasToSlot = config != null && config.Has("toSlot");
+            mToSlot = mHasToSlot ? SlotId.Board(config.Get("toSlot").AsInt(1)) : SlotId.None;
+        }
+
+        public IReadOnlyList<int> Resolve(EffectRuntimeContext context)
+        {
+            var result = new List<int>();
+            if (context == null)
+            {
+                return result;
+            }
+
+            var events = context.Events;
+            for (var i = 0; i < events.Count; i++)
+            {
+                if (events[i].Type != CoreEventType.CardMoved
+                    || !events[i].FromSlot.IsBoardSlot
+                    || !events[i].ToSlot.IsBoardSlot)
+                {
+                    continue;
+                }
+
+                if (mHasToSlot && events[i].ToSlot != mToSlot)
+                {
+                    continue;
+                }
+
+                CardInstance card;
+                if (!context.TryGetCard(events[i].CardUid, out card))
+                {
+                    continue;
+                }
+
+                if (mTargetKind != CardKind.Unknown && card.Kind != mTargetKind)
+                {
+                    continue;
+                }
+
+                AddUnique(result, card.Uid);
+            }
+
+            return result;
+        }
+
+        private static void AddUnique(List<int> values, int uid)
+        {
+            if (uid == 0)
+            {
+                return;
+            }
+
+            for (var i = 0; i < values.Count; i++)
+            {
+                if (values[i] == uid)
+                {
+                    return;
+                }
+            }
+
+            values.Add(uid);
+        }
+    }
+
     [EffectAtom("BoardMarkEventCard", EffectAtomKind.Target)]
     public sealed class BoardMarkEventCardTarget : ITarget
     {
@@ -2860,17 +2936,23 @@ namespace NineGrid.Core.Effects
     public sealed class ModifyGoldEffectAction : IAction
     {
         private int mDelta;
+        private EffectValueExpression mValue;
+        private bool mUseValue;
         private string mReason = string.Empty;
 
         public void Configure(EffectDslNode config)
         {
             mDelta = config.Get("delta").AsInt(0);
+            mUseValue = config != null && config.Has("value");
+            mValue = mUseValue ? EffectValueExpression.FromActionAmount(config) : null;
             mReason = config.Get("reason").AsString("effect");
         }
 
         public IReadOnlyList<GameAction> BuildActions(EffectRuntimeContext context, IReadOnlyList<int> targets)
         {
-            return new[] { new ModifyGoldAction(mDelta, mReason, context.SourceDefId) };
+            var avatarUid = context == null ? 0 : context.AvatarUid;
+            var delta = mUseValue ? mValue.Evaluate(context, avatarUid) : mDelta;
+            return new[] { new ModifyGoldAction(delta, mReason, context.SourceDefId) };
         }
     }
 
@@ -4258,6 +4340,10 @@ namespace NineGrid.Core.Effects
                 {
                     current *= next;
                 }
+                else if (Same(op, "Divide"))
+                {
+                    current = next == 0f ? 0f : current / next;
+                }
                 else if (Same(op, "Min"))
                 {
                     current = Math.Min(current, next);
@@ -4458,6 +4544,10 @@ namespace NineGrid.Core.Effects
                 else if (Same(op, "Multiply"))
                 {
                     current *= next;
+                }
+                else if (Same(op, "Divide"))
+                {
+                    current = next == 0f ? 0f : current / next;
                 }
                 else if (Same(op, "Min"))
                 {
@@ -4770,6 +4860,7 @@ namespace NineGrid.Core.Effects
             return Same(op, "Add")
                 || Same(op, "Subtract")
                 || Same(op, "Multiply")
+                || Same(op, "Divide")
                 || Same(op, "Min")
                 || Same(op, "Max")
                 || Same(op, "Floor")
