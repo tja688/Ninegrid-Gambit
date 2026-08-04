@@ -211,6 +211,8 @@ namespace NineGrid.Flow
                 }
 
                 var plan = CaptureOpeningPresentationPlan(arch);
+                // Reset 已清手牌视图；在 Avatar/环发牌前立刻贴回持续持有，避免空窗。
+                ApplyOpeningHandRestores(plan);
                 var presentationCt = RenewPresentationToken();
                 using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(
                     cancellationToken,
@@ -275,6 +277,9 @@ namespace NineGrid.Flow
             public readonly List<ManagedCard> DeckCards = new();
             public readonly List<BoardPlacement> BoardPlacements = new();
             public readonly List<DeckDealFromSource> DeckAdds = new();
+            /// <summary>跨节点持续持有：就地贴回，无飞入。</summary>
+            public readonly List<HandDealFromSource> HandRestores = new();
+            /// <summary>本关遗物/技能开局授予：从源锚点飞入手牌。</summary>
             public readonly List<HandDealFromSource> HandDeals = new();
             public readonly HashSet<int> PendingDeckAddUids = new();
         }
@@ -531,27 +536,30 @@ namespace NineGrid.Flow
             var registry = arch.GetModel<CardRegistry>();
             var player = arch.GetModel<PlayerModel>();
             var entries = arch.GetSystem<IActionPipelineSystem>().EventLog.Entries;
-            if (deck.ItemSlotUids.Count == 0 || entries == null)
+            if (deck.ItemSlotUids.Count == 0)
             {
                 return;
             }
 
             var spawnMeta = new Dictionary<int, (string sourceDefId, long sequence)>();
-            for (var i = _nodeEventLogStart; i < entries.Count; i++)
+            if (entries != null)
             {
-                var entry = entries[i];
-                if (entry.Type != CoreEventType.CardSpawned || entry.CardUid <= 0)
+                for (var i = _nodeEventLogStart; i < entries.Count; i++)
                 {
-                    continue;
-                }
+                    var entry = entries[i];
+                    if (entry.Type != CoreEventType.CardSpawned || entry.CardUid <= 0)
+                    {
+                        continue;
+                    }
 
-                if (spawnMeta.ContainsKey(entry.CardUid))
-                {
-                    continue;
-                }
+                    if (spawnMeta.ContainsKey(entry.CardUid))
+                    {
+                        continue;
+                    }
 
-                var sourceDefId = entry.Cause ?? string.Empty;
-                spawnMeta[entry.CardUid] = (sourceDefId, entry.Sequence);
+                    var sourceDefId = entry.Cause ?? string.Empty;
+                    spawnMeta[entry.CardUid] = (sourceDefId, entry.Sequence);
+                }
             }
 
             for (var i = 0; i < deck.ItemSlotUids.Count; i++)
@@ -564,19 +572,30 @@ namespace NineGrid.Flow
 
                 var sourceDefId = string.Empty;
                 long eventSequence = i;
+                var isOpeningGrant = false;
                 if (spawnMeta.TryGetValue(uid, out var meta))
                 {
                     sourceDefId = meta.sourceDefId;
                     eventSequence = meta.sequence;
+                    isOpeningGrant = IsOpeningGrantSource(sourceDefId);
                 }
 
                 var slotIndex = ResolveHandDealSourceSlotIndex(sourceDefId, player);
-                plan.HandDeals.Add(new HandDealFromSource(
+                var entry = new HandDealFromSource(
                     uid,
                     coreCard.DefId,
                     sourceDefId,
                     slotIndex,
-                    eventSequence));
+                    eventSequence);
+                // 仅本关遗物/技能授予走飞入；其余为跑图持续持有，就地贴回。
+                if (isOpeningGrant)
+                {
+                    plan.HandDeals.Add(entry);
+                }
+                else
+                {
+                    plan.HandRestores.Add(entry);
+                }
             }
 
             plan.HandDeals.Sort((a, b) =>
@@ -786,7 +805,8 @@ namespace NineGrid.Flow
 
                 if (plan.HandDeals.Count > 0)
                 {
-                                        for (var h = 0; h < plan.HandDeals.Count; h++)
+                    // 本关遗物/技能飞入；持续持有已在 Opening 开头 ApplyOpeningHandRestores。
+                    for (var h = 0; h < plan.HandDeals.Count; h++)
                     {
                         cancellationToken.ThrowIfCancellationRequested();
                         var handDeal = plan.HandDeals[h];
@@ -856,6 +876,54 @@ namespace NineGrid.Flow
                 PresentationOutputProjector.UpdateAvatarDebugText();
             }
         }
+
+        private void ApplyOpeningHandRestores(OpeningPresentationPlan plan)
+        {
+            if (plan == null || plan.HandRestores.Count == 0 || Hand == null || Cards == null)
+            {
+                return;
+            }
+
+            for (var r = 0; r < plan.HandRestores.Count; r++)
+            {
+                var restore = plan.HandRestores[r];
+                Cards.TryGet(restore.Uid, out var restoreCard);
+                if (restoreCard == null)
+                {
+                    restoreCard = Cards.SpawnView(
+                        restore.Uid,
+                        restore.DefId,
+                        initialMode: CardDisplayMode.HandCardMode,
+                        kind: CoreCardPresentationMapper.ResolvePresentationKind(
+                            restore.Uid, restore.DefId));
+                    if (restoreCard != null)
+                    {
+                        CoreCardPresentationMapper.ApplyToManagedCard(restoreCard);
+                    }
+                }
+
+                if (restoreCard == null)
+                {
+                    Debug.LogWarning(
+                        $"[BattleSession] Opening HandRestore 无视图 uid={restore.Uid}。");
+                    continue;
+                }
+
+                var restoreOk = Hand.TryPlaceInHandImmediate(restoreCard, skipBusyGuard: true);
+                FieldTraceHelper.RecordOpeningGrantProgress(
+                    restore.Uid,
+                    "item_slots.preserve",
+                    "hand",
+                    restoreOk,
+                    r);
+                if (!restoreOk)
+                {
+                    Debug.LogWarning(
+                        $"[BattleSession] Opening HandRestore 失败 uid={restore.Uid}。");
+                }
+            }
+        }
+
         private async UniTask WaitPresentationIdleAsync(
             CancellationToken cancellationToken,
             float timeoutSeconds = 2f)

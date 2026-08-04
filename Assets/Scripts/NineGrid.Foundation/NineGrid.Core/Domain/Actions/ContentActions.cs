@@ -160,22 +160,26 @@ namespace NineGrid.Core
             var registry = context.GetModel<CardRegistry>();
             var deck = context.GetModel<DeckModel>();
             var player = context.GetModel<PlayerModel>();
-            if (!player.CanAcceptIntoItemSlots(deck, Count))
+            if (player.IsItemSlotsFull(deck))
             {
+                // 满格：静默丢弃，不兑金。
                 return GameActionResult.Empty;
             }
 
-            var result = new GameActionResult()
-                .AddEvent(new CoreGameEvent(CoreEventType.RewardSelected, context.ActionId, ActionName)
-                    .WithAmount(Count)
-                    .WithMessage(DefId + ":HelpCard:" + Count));
-
+            var result = new GameActionResult();
+            var accepted = 0;
             for (var i = 0; i < Count; i++)
             {
+                if (player.IsItemSlotsFull(deck))
+                {
+                    break;
+                }
+
                 var draft = content.CreateDraft(DefId);
                 var card = draft.Create(registry);
                 content.ApplyContentToCard(card);
                 deck.AddToItemSlots(card);
+                accepted++;
                 result.AddWithFaceAbsolutes(
                     context,
                     card,
@@ -184,6 +188,14 @@ namespace NineGrid.Core
                         .WithMessage(DefId));
             }
 
+            if (accepted <= 0)
+            {
+                return GameActionResult.Empty;
+            }
+
+            result.AddEvent(new CoreGameEvent(CoreEventType.RewardSelected, context.ActionId, ActionName)
+                .WithAmount(accepted)
+                .WithMessage(DefId + ":HelpCard:" + accepted));
             return result;
         }
     }

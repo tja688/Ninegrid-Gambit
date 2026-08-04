@@ -72,6 +72,13 @@
 - **拖放**：`CardHandManagerSingleton` 拖起激活 `CardRecycleNotice`（半透明黑底 + 图标子对象）+ `HandcardRecycleZone`；落入回收区优先于 ApplyZone；提交 `SubmitRecycleItemIntentCommand`
 - **退场**：回收成功后走 `PlayDeathAsync` 碎裂（`ShatterCardAfterRecycleAsync`），与使用道具的 `PlayUseAsync`/缩小退场分开
 
+### 开局手牌（ADR-0025 持续持有）
+
+- **持续持有**：`CaptureOpeningHandDeals` 把非本关授予的 ItemSlots 归入 `HandRestores`；`StartBattleNode` 在 `ResetCardPresentationSurface` + `CaptureOpeningPresentationPlan` 之后立刻 `ApplyOpeningHandRestores`（`TryPlaceInHandImmediate`），须早于 Avatar/环发牌，避免空窗闪烁
+- **本关授予**：仅 `relic.*` / `skill.*` 的 `CardSpawned` 走 `HandDeals` → `DealCardToHandAsync` 从源锚点飞入（仍在 Opening 末尾）
+- **满格**：Core `SpawnCard` / `GrantHelpCardToPlayerSideDeck` 写满即止、多余静默丢弃、不兑金；表现层不会收到被丢弃卡的 spawn
+- **非战斗打出**：`RoomChoice` / `RoomEvent` / `RewardItemChoice` 仅合法 `RecycleItemSlot`，禁 `UseItem`（Core `PhaseSystem` + `BoardIntentLegality`；拖放 ApplyZone 亦要求 `InteractionLoop`）
+
 ## Systems
 
 | 类型 | 用途 |

@@ -90,6 +90,38 @@ namespace NineGrid.Core.Tests
         }
 
         [Test]
+        public void NonCombatPhases_AllowRecycle_ButRejectUseItem()
+        {
+            // RoomChoice（清关后选房）：可回收，不可打出。
+            Assert.IsTrue(mPhase.StartNode(CreateSingleMonsterNode(hp: 1, attack: 0)).Accepted);
+            var uid = SpawnHelpIntoItemSlots("help.hp_card");
+            mArch.GetModel<BattleContextModel>().MarkLeaveTrapBroken();
+            Assert.IsTrue(mPhase.TryCompleteClearedNode().Accepted);
+            Assert.AreEqual(GamePhase.RoomChoice, mPhase.CurrentPhase);
+
+            Assert.IsTrue(mPhase.CanExecute(GameCommandKind.RecycleItemSlot));
+            Assert.IsFalse(mPhase.CanExecute(GameCommandKind.UseItem));
+            Assert.IsFalse(mPhase.UseItem(uid, null, null).Accepted);
+            Assert.AreEqual(1, mArch.GetModel<DeckModel>().ItemSlotUids.Count);
+
+            // RoomEvent：同上。
+            mPipeline.Enqueue(new ChangePhaseAction(GamePhase.RoomEvent));
+            mPipeline.RunToCompletion();
+            Assert.AreEqual(GamePhase.RoomEvent, mPhase.CurrentPhase);
+            Assert.IsTrue(mPhase.CanExecute(GameCommandKind.RecycleItemSlot));
+            Assert.IsFalse(mPhase.CanExecute(GameCommandKind.UseItem));
+            Assert.IsFalse(mPhase.UseItem(uid, null, null).Accepted);
+
+            // RewardItemChoice（商店）：同上（EnterShop 会重开节点，重新写入一张）。
+            EnterShop();
+            Assert.AreEqual(GamePhase.RewardItemChoice, mPhase.CurrentPhase);
+            var shopUid = SpawnHelpIntoItemSlots("help.hp_card");
+            Assert.IsTrue(mPhase.CanExecute(GameCommandKind.RecycleItemSlot));
+            Assert.IsFalse(mPhase.CanExecute(GameCommandKind.UseItem));
+            Assert.IsFalse(mPhase.UseItem(shopUid, null, null).Accepted);
+        }
+
+        [Test]
         public void ApplyRecycleItemSlot_SkipsPhaseGate_StillRemovesAndPays()
         {
             Assert.IsTrue(mPhase.StartNode(CreateSingleMonsterNode(hp: 5, attack: 0)).Accepted);

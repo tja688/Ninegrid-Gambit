@@ -24,6 +24,13 @@ namespace NineGrid.Flow
                 return false;
             }
 
+            // 非 InteractionLoop（选房 / 房间事件 / 商店等）：手牌拖放只允许回收，ApplyZone 一律回手。
+            var phase = NineGridArchitecture.Current?.GetSystem<IPhaseSystem>();
+            if (phase == null || phase.CurrentPhase != GamePhase.InteractionLoop)
+            {
+                return false;
+            }
+
             // MainlineBusy 由 IntentIntake（BoardSelect begin / UseItem）裁决，此处不提前短路。
             // 旧属性三选一（Attack/Armor/Hp Bounce）已退役（#90）；永久属性改由属性房发卡。
 

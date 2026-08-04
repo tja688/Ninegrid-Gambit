@@ -1943,7 +1943,7 @@ namespace NineGrid.Core.Systems
                 case GamePhase.RoomChoice:
                     mLegalCommands.Add(GameCommandKind.SelectRoom);
                     mLegalCommands.Add(GameCommandKind.PickupItem);
-                    mLegalCommands.Add(GameCommandKind.UseItem);
+                    // 非战斗选房：道具卡格仅回收，不合法打出（ADR-0025）。
                     mLegalCommands.Add(GameCommandKind.MoveAvatar);
                     mLegalCommands.Add(GameCommandKind.DiscardRelic);
                     mLegalCommands.Add(GameCommandKind.RecycleItemSlot);

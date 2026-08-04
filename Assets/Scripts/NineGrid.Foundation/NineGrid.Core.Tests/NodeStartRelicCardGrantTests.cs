@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using NineGrid.Content;
 using NineGrid.Core;
@@ -71,6 +72,56 @@ namespace NineGrid.Core.Tests
     }
 
     [Test]
+    public void SwapButton_OnNodeStart_WhenItemSlotsFull_SilentlyDiscards_NoGold()
+    {
+      FillItemSlotsToCapacity("help.hp_card");
+      var coinsBefore = mArch.GetModel<PlayerModel>().Coins.Value;
+      var occupied = SnapshotItemSlotUids();
+
+      mContent.ActivateRelic("relic.swap_button");
+      Assert.IsTrue(mPhase.StartNode(CreateMinimalNode()).Accepted);
+
+      var deck = mArch.GetModel<DeckModel>();
+      Assert.AreEqual(
+        0,
+        CountDefInList(mArch.GetModel<CardRegistry>(), deck.ItemSlotUids, SwapCardDefId),
+        "满格时开局授予应静默丢弃，不写入道具卡格");
+      CollectionAssert.AreEqual(occupied, SnapshotItemSlotUids(), "不得挤掉既有持有");
+      Assert.AreEqual(
+        coinsBefore,
+        mArch.GetModel<PlayerModel>().Coins.Value,
+        "满格丢弃不得兑金");
+    }
+
+    [Test]
+    public void TowerChild_OnNodeStart_WhenOneSlotFree_FillsThenDiscardsRest_NoGold()
+    {
+      // 容量 3：先占 2，留 1；若有多张开局授予只应收满，多余静默丢。
+      var player = mArch.GetModel<PlayerModel>();
+      player.SetItemSlotsCapacity(PlayerModel.DefaultItemSlotsCapacity);
+      FillItemSlotsToCapacity("help.hp_card", leaveFree: 1);
+      var coinsBefore = player.Coins.Value;
+      var freeBefore = player.ItemSlotsCapacity - mArch.GetModel<DeckModel>().ItemSlotUids.Count;
+      Assert.AreEqual(1, freeBefore);
+
+      mContent.ActivateRelic("relic.tower_child");
+      Assert.IsTrue(mPhase.StartNode(CreateMinimalNode()).Accepted);
+
+      Assert.AreEqual(
+        1,
+        CountDefInList(
+          mArch.GetModel<CardRegistry>(),
+          mArch.GetModel<DeckModel>().ItemSlotUids,
+          "help.doubling_tower"),
+        "有空位时应写入道具卡格");
+      Assert.AreEqual(
+        player.ItemSlotsCapacity,
+        mArch.GetModel<DeckModel>().ItemSlotUids.Count,
+        "写满即止");
+      Assert.AreEqual(coinsBefore, player.Coins.Value, "不得兑金");
+    }
+
+    [Test]
     public void ThrowingKnifeBag_EmitsCardSpawnedWithCauseAndUid()
     {
       mContent.ActivateRelic("relic.throwing_knife_bag");
@@ -102,6 +153,31 @@ namespace NineGrid.Core.Tests
         PlayerOpeningCount = 0,
         EnemyOpeningCount = 1,
       }.AddEnemyCard(new CardDraft("monster.test", CardKind.Monster) { MaxHp = 5, Attack = 0 });
+    }
+
+    private void FillItemSlotsToCapacity(string defId, int leaveFree = 0)
+    {
+      var deck = mArch.GetModel<DeckModel>();
+      var player = mArch.GetModel<PlayerModel>();
+      var content = mContent;
+      var registry = mArch.GetModel<CardRegistry>();
+      var target = Math.Max(0, player.ItemSlotsCapacity - leaveFree);
+      while (deck.ItemSlotUids.Count < target)
+      {
+        deck.AddToItemSlots(content.CreateDraft(defId).Create(registry));
+      }
+    }
+
+    private int[] SnapshotItemSlotUids()
+    {
+      var deck = mArch.GetModel<DeckModel>();
+      var copy = new int[deck.ItemSlotUids.Count];
+      for (var i = 0; i < deck.ItemSlotUids.Count; i++)
+      {
+        copy[i] = deck.ItemSlotUids[i];
+      }
+
+      return copy;
     }
 
     private static int CountDefInList(CardRegistry registry, IReadOnlyList<int> uids, string defId)

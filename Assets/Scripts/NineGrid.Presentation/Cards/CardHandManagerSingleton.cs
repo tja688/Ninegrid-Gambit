@@ -277,6 +277,86 @@ namespace NineGrid.Cards
             return false;
         }
 
+        /// <summary>
+        /// 无飞入动画：直接把卡贴入手牌槽（跨节点持续持有重建；ADR-0025）。
+        /// </summary>
+        public bool TryPlaceInHandImmediate(ManagedCard card, bool skipBusyGuard = false)
+        {
+            if (card == null
+                || IsDragging
+                || HandCount >= layoutSettings.maxSlots
+                || PresentationInputGates.ChoiceOverlayActive)
+            {
+                return false;
+            }
+
+            if (!skipBusyGuard && _isBusy)
+            {
+                return false;
+            }
+
+            if (ContainsUid(card.Uid))
+            {
+                EnsureHandLayout(card);
+                return true;
+            }
+
+            var cardManager = CardEntityLifecycleHook.CardsOrNull();
+            if (cardManager == null || _slotContainer == null)
+            {
+                return false;
+            }
+
+            _isBusy = true;
+            try
+            {
+                CardOpacityUtility.ResetAlpha(card);
+                CardEntityLifecycleHook.DeckOrNull()?.TryDetachByUid(card.Uid, out _);
+                cardManager.SetDisplayMode(card, CardDisplayMode.HandCardMode);
+
+                if (!_slotContainer.TryInsertAt(HandCount, card, out var rippleMoves))
+                {
+                    return false;
+                }
+
+                // 就地贴位：不走 MoveRipple 缓动，直接杀 tween 贴布局。
+                if (rippleMoves != null)
+                {
+                    for (var i = 0; i < rippleMoves.Count; i++)
+                    {
+                        var move = rippleMoves[i];
+                        if (move.Card?.Transform == null)
+                        {
+                            continue;
+                        }
+
+                        CardDeckTween.KillMotion(move.Card.Transform);
+                        move.Card.Transform.position = move.TargetPosition;
+                    }
+                }
+
+                EnsureHandLayout(card);
+                try
+                {
+                    FlowFieldTraceSink.HandLifecycle?.Invoke(
+                        card.Uid,
+                        "acquire",
+                        true,
+                        "HandRestoreImmediate");
+                }
+                catch
+                {
+                    // ignore
+                }
+
+                return true;
+            }
+            finally
+            {
+                _isBusy = false;
+            }
+        }
+
         public async UniTask<bool> PullFromGroundAsync(
             ManagedCard card,
             int? insertSlot = null,

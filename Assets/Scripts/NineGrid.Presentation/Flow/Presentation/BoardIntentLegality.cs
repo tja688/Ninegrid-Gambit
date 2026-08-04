@@ -448,8 +448,8 @@ namespace NineGrid.Flow.Presentation
                            || command == GameCommandKind.RevealFace
                            || command == GameCommandKind.RecycleItemSlot;
                 case GamePhase.RoomChoice:
-                    return command == GameCommandKind.UseItem
-                           || command == GameCommandKind.PickupItem
+                    // 与 PhaseSystem 对齐：选房相位禁 UseItem，仅回收/走格/拾取。
+                    return command == GameCommandKind.PickupItem
                            || command == GameCommandKind.MoveAvatar
                            || command == GameCommandKind.RecycleItemSlot;
                 case GamePhase.RoomEvent:

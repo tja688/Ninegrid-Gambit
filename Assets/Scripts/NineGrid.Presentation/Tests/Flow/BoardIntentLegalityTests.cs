@@ -170,6 +170,24 @@ namespace NineGrid.Presentation.Tests
             StringAssert.Contains("itemMissing", reason);
         }
 
+        [Test]
+        public void UseItem_InRoomChoice_IsIllegal_WhileRecyclePhaseRemainsLegal()
+        {
+            Assert.IsTrue(mPhase.StartNode(CreateSingleMonsterNode(hp: 1, attack: 0)).Accepted);
+            mArch.GetModel<BattleContextModel>().MarkLeaveTrapBroken();
+            Assert.IsTrue(mPhase.TryCompleteClearedNode().Accepted);
+            Assert.AreEqual(GamePhase.RoomChoice, mPhase.CurrentPhase);
+
+            string reason;
+            Assert.IsFalse(
+                BoardIntentLegality.TryExplainUseItem(mArch, 1, null, null, out reason),
+                "选房相位不得打出道具卡格");
+            StringAssert.Contains("notLegal", reason);
+            Assert.IsTrue(
+                mPhase.CanExecute(GameCommandKind.RecycleItemSlot),
+                "选房相位仍应可回收");
+        }
+
         private static NodeDeckOptions CreateSingleMonsterNode(int hp, int attack)
         {
             return new NodeDeckOptions
