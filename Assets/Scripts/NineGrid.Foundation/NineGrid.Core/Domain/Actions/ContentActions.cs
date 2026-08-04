@@ -64,6 +64,42 @@ namespace NineGrid.Core
         }
     }
 
+    /// <summary>#119：遗物关卡累计倒计时清零（恐怖面罩「本关卡」）。</summary>
+    public sealed class SetCounterAction : GameAction
+    {
+        public SetCounterAction(int targetUid, string key, int value)
+        {
+            TargetUid = targetUid;
+            Key = key ?? string.Empty;
+            Value = value;
+        }
+
+        public int TargetUid { get; private set; }
+        public string Key { get; private set; }
+        public int Value { get; private set; }
+        public override string ActionName { get { return "SetCounter"; } }
+
+        public override GameActionResult Apply(GameActionContext context)
+        {
+            if (string.IsNullOrEmpty(Key) || TargetUid == 0)
+            {
+                return GameActionResult.Empty;
+            }
+
+            var card = context.GetModel<CardRegistry>().Get(TargetUid);
+            if (Value == 0)
+            {
+                card.Counters.Remove(Key);
+            }
+            else
+            {
+                card.Counters.Set(Key, Value);
+            }
+
+            return GameActionResult.Empty;
+        }
+    }
+
     public sealed class GrantRelicAction : GameAction
     {
         public GrantRelicAction(string relicDefId)

@@ -1,0 +1,114 @@
+{
+    "schemaVersion": 2,
+    "contentId": "relic.terror_mask",
+    "kind": "Relic",
+    "deckId": "deck.relic",
+    "role": "Attack",
+    "displayName": "恐怖面罩",
+    "description": "攻击+1；[击杀怪物时] 本关卡每移除6张怪物卡，随机移除一张九宫格上的普通等级怪物卡",
+    "faceIntro": "",
+    "attackPattern": "",
+    "gold": 0,
+    "stats": {
+        "hp": 0,
+        "armor": 0,
+        "attack": 0,
+        "action": 0,
+        "recovery": 0
+    },
+    "sprites": {
+        "mainIcon": "",
+        "faceBackground": "",
+        "cardFrame": "",
+        "banner": "",
+        "backBorder": "",
+        "backShirt": "",
+        "backLogo": ""
+    },
+    "mainVisual": {
+        "offsetX": 0.0,
+        "offsetY": 0.0,
+        "uniformScale": 1.0
+    },
+    "animations": {
+        "defaultFps": 8.0,
+        "slots": [
+            {
+                "id": "idle",
+                "sourceType": "none",
+                "path": "",
+                "offsetX": 0.0,
+                "offsetY": 0.0
+            },
+            {
+                "id": "attack",
+                "sourceType": "none",
+                "path": "",
+                "offsetX": 0.0,
+                "offsetY": 0.0
+            },
+            {
+                "id": "hurt",
+                "sourceType": "none",
+                "path": "",
+                "offsetX": 0.0,
+                "offsetY": 0.0
+            },
+            {
+                "id": "death",
+                "sourceType": "none",
+                "path": "",
+                "offsetX": 0.0,
+                "offsetY": 0.0
+            },
+            {
+                "id": "lunch",
+                "sourceType": "none",
+                "path": "",
+                "offsetX": 0.0,
+                "offsetY": 0.0
+            }
+        ]
+    },
+    "extraSlots": [],
+    "rarity": "Blue",
+    "tags": [
+        "tag.attack"
+    ],
+    "effectAssemblies": [
+        {
+            "id": "relic.terror_mask.attack",
+            "templateId": "tpl.relic.wood_sword.base",
+            "containerType": "Relic",
+            "argsJson": "{\"value\":1}"
+        },
+        {
+            "id": "relic.terror_mask.node_start",
+            "templateId": "tpl.relic.terror_mask.node_start",
+            "containerType": "Relic",
+            "argsJson": "{}"
+        },
+        {
+            "id": "relic.terror_mask.remove",
+            "templateId": "tpl.relic.terror_mask.remove",
+            "containerType": "Relic",
+            "argsJson": "{\"count\":1,\"reason\":\"relic.terror_mask\"}"
+        }
+    ],
+    "effectIds": [],
+    "skillIds": [],
+    "level": "0",
+    "sequence": 0,
+    "isElite": false,
+    "isBoss": false,
+    "isReserve": false,
+    "containerType": "",
+    "deckKind": "",
+    "monsterDefIds": [],
+    "weight": 0,
+    "rewardPoolId": "",
+    "shopOfferCount": 0,
+    "openingInjects": [],
+    "iconPrefab": "",
+    "boardSlot": 0
+}

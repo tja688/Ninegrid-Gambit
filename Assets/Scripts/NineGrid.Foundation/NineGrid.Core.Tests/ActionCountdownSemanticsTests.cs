@@ -185,21 +185,28 @@ namespace NineGrid.Core.Tests
             PrepareAvatarAttack(1);
             var atk0 = ReadAttack(ownerUid);
 
-            Assert.IsTrue(mPhase.ApplyCombatHit(board.AvatarUid.Value, ownerUid).Accepted);
+            // 固定 DealDamage 量，避免开局遗物 Attack Modifier 改变掉甲计量。
+            mPipeline.Enqueue(new DealDamageAction(board.AvatarUid.Value, ownerUid, 1, "test.countdown"));
+            Assert.Greater(mPipeline.RunToCompletion(), 0);
             Assert.AreEqual(atk0, ReadAttack(ownerUid), "掉甲 1 不触发");
             Assert.AreEqual(2, registry.Get(ownerUid).Counters.Get("test.cumulative.cd"));
 
-            Assert.IsTrue(mPhase.ApplyCombatHit(board.AvatarUid.Value, ownerUid).Accepted);
+            mPipeline.Enqueue(new DealDamageAction(board.AvatarUid.Value, ownerUid, 1, "test.countdown"));
+            Assert.Greater(mPipeline.RunToCompletion(), 0);
             Assert.AreEqual(atk0, ReadAttack(ownerUid), "掉甲 2 不触发");
 
-            Assert.IsTrue(mPhase.ApplyCombatHit(board.AvatarUid.Value, ownerUid).Accepted);
+            mPipeline.Enqueue(new DealDamageAction(board.AvatarUid.Value, ownerUid, 1, "test.countdown"));
+            Assert.Greater(mPipeline.RunToCompletion(), 0);
             Assert.AreEqual(atk0 + 1, ReadAttack(ownerUid), "累计掉甲 3 触发");
             Assert.AreEqual(3, registry.Get(ownerUid).Counters.Get("test.cumulative.cd"), "触发后重置为 threshold");
 
-            Assert.IsTrue(mPhase.ApplyCombatHit(board.AvatarUid.Value, ownerUid).Accepted);
-            Assert.IsTrue(mPhase.ApplyCombatHit(board.AvatarUid.Value, ownerUid).Accepted);
+            mPipeline.Enqueue(new DealDamageAction(board.AvatarUid.Value, ownerUid, 1, "test.countdown"));
+            Assert.Greater(mPipeline.RunToCompletion(), 0);
+            mPipeline.Enqueue(new DealDamageAction(board.AvatarUid.Value, ownerUid, 1, "test.countdown"));
+            Assert.Greater(mPipeline.RunToCompletion(), 0);
             Assert.AreEqual(atk0 + 1, ReadAttack(ownerUid));
-            Assert.IsTrue(mPhase.ApplyCombatHit(board.AvatarUid.Value, ownerUid).Accepted);
+            mPipeline.Enqueue(new DealDamageAction(board.AvatarUid.Value, ownerUid, 1, "test.countdown"));
+            Assert.Greater(mPipeline.RunToCompletion(), 0);
             Assert.AreEqual(atk0 + 2, ReadAttack(ownerUid), "第二轮累计 3 再触发");
         }
 

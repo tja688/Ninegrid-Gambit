@@ -884,9 +884,47 @@ namespace NineGrid.Core.Effects
                 {
                     sum += events[i].Delta;
                 }
+                else if ((Same(mMetric, "damageTaken") || Same(mMetric, "totalDamageTaken"))
+                    && events[i].Type == CoreEventType.DamageDealt
+                    && events[i].Delta > 0)
+                {
+                    // 含护甲吸收的实际承伤（与 DamageDealt.Delta = armorLoss + hpLoss 对齐）。
+                    sum += events[i].Delta;
+                }
+                else if (Same(mMetric, "monsterRemoved") && events[i].Type == CoreEventType.CardRemoved)
+                {
+                    if (IsResidualClearCause(events[i]))
+                    {
+                        continue;
+                    }
+
+                    var removedUid = events[i].CardUid != 0 ? events[i].CardUid : events[i].TargetUid;
+                    CardInstance removed;
+                    if (context.TryGetCard(removedUid, out removed) && CardCombatRules.IsTrueMonster(removed.Kind))
+                    {
+                        sum += 1;
+                    }
+                }
+                else if (Same(mMetric, "helpCardUsed") && events[i].Type == CoreEventType.ItemUsed)
+                {
+                    sum += 1;
+                }
             }
 
             return sum;
+        }
+
+        private static bool IsResidualClearCause(CoreGameEvent gameEvent)
+        {
+            if (gameEvent == null)
+            {
+                return false;
+            }
+
+            return Same(gameEvent.Cause, "clearResidualBoard")
+                || Same(gameEvent.Cause, "clearResidualTrap")
+                || Same(gameEvent.Message, "clearResidualBoard")
+                || Same(gameEvent.Message, "clearResidualTrap");
         }
 
         private bool MatchesEvent(EffectRuntimeContext context, CoreGameEvent gameEvent)
@@ -3727,6 +3765,33 @@ namespace NineGrid.Core.Effects
                 if (targets[i] != 0)
                 {
                     result.Add(new RemoveCardAction(targets[i], mDestination, mReason, context.SourceDefId));
+                }
+            }
+
+            return result;
+        }
+    }
+
+    [EffectAtom("SetCounter", EffectAtomKind.Action)]
+    public sealed class SetCounterEffectAction : IAction
+    {
+        private string mKey = string.Empty;
+        private int mValue;
+
+        public void Configure(EffectDslNode config)
+        {
+            mKey = config.Get("key").AsString(string.Empty);
+            mValue = config.Get("value").AsInt(0);
+        }
+
+        public IReadOnlyList<GameAction> BuildActions(EffectRuntimeContext context, IReadOnlyList<int> targets)
+        {
+            var result = new List<GameAction>();
+            for (var i = 0; i < targets.Count; i++)
+            {
+                if (targets[i] != 0)
+                {
+                    result.Add(new SetCounterAction(targets[i], mKey, mValue));
                 }
             }
 

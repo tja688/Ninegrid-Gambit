@@ -187,5 +187,15 @@
         "Treasure",
         "TreasureReward",
         "UpgradeItemStats"
-    ]
+    ],
+    "cards": {
+        "Relic": [
+            "relic.blood_demon",
+            "relic.junk_body",
+            "relic.junk_cycler",
+            "relic.punch_card_knife",
+            "relic.rotation_trick",
+            "relic.terror_mask"
+        ]
+    }
 }

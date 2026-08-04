@@ -492,7 +492,8 @@ namespace NineGrid.Core
         private static readonly TriggerPoint[] sPostTriggers =
         {
             TriggerPoint.AfterAction,
-            TriggerPoint.OnUseHelpCard
+            TriggerPoint.OnUseHelpCard,
+            TriggerPoint.OnCumulative
         };
 
         public UseItemAction(int itemUid)

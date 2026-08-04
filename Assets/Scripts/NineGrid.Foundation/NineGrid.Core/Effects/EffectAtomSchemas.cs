@@ -476,6 +476,10 @@ namespace NineGrid.Core.Effects
                     EffectValueExpression.Validate(node.Get("value"), path + ".value", result);
                 }
             }
+            else if (Same(atom, "SetCounter") && !node.Has("key"))
+            {
+                result.Add("schema.action.key", path + ".key is required for SetCounter.");
+            }
             else if (Same(atom, "OfferRewardChoice") && !node.Has("poolId"))
             {
                 result.Add("schema.action.poolId", path + ".poolId is required for OfferRewardChoice.");
@@ -638,6 +642,11 @@ namespace NineGrid.Core.Effects
                 if (Same(atom, "OnCumulative") && node.Has("threshold") && node.Get("threshold").AsInt(1) < 1)
                 {
                     result.Add("schema.range.threshold", path + ".threshold must be >= 1.");
+                }
+
+                if (Same(atom, "OnCumulative") && node.Has("metric") && !IsSupportedCumulativeMetric(node.Get("metric").AsString(string.Empty)))
+                {
+                    result.Add("schema.trigger.metric", path + ".metric is not supported.");
                 }
 
                 if (Same(atom, "OnCumulative") && node.Has("eventType") && !IsSupportedEventType(node.Get("eventType").AsString(string.Empty)))
@@ -985,6 +994,17 @@ namespace NineGrid.Core.Effects
 
             CoreEventType ignored;
             return Enum.TryParse(eventType, true, out ignored);
+        }
+
+        private static bool IsSupportedCumulativeMetric(string metric)
+        {
+            return Same(metric, "armorLost")
+                || Same(metric, "hpLost")
+                || Same(metric, "damageDealt")
+                || Same(metric, "damageTaken")
+                || Same(metric, "totalDamageTaken")
+                || Same(metric, "monsterRemoved")
+                || Same(metric, "helpCardUsed");
         }
 
         private static bool IsSupportedZone(string zone)

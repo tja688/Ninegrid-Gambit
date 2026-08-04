@@ -479,7 +479,8 @@ namespace NineGrid.Core
         private static readonly TriggerPoint[] sPostTriggers =
         {
             TriggerPoint.AfterAction,
-            TriggerPoint.OnRemove
+            TriggerPoint.OnRemove,
+            TriggerPoint.OnCumulative
         };
 
         public RemoveCardAction(int cardUid, ZoneId destinationZone, string reason, string sourceDefId = null)
@@ -549,7 +550,8 @@ namespace NineGrid.Core
         {
             TriggerPoint.AfterAction,
             TriggerPoint.OnKill,
-            TriggerPoint.OnRemove
+            TriggerPoint.OnRemove,
+            TriggerPoint.OnCumulative
         };
 
         public KillAction(int killerUid, int targetUid)

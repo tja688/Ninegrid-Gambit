@@ -1654,5 +1654,61 @@
   "requires_json": "[\"NoOwnerEntity\"]",
   "conditions_json": "[\"EventFilter:eventType=HpChanged\"]",
   "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnDamageTaken\"},\"conditions\":[{\"atom\":\"EventFilter\",\"eventType\":\"HpChanged\",\"targetKind\":\"Avatar\",\"maxDelta\":-1}],\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"GainArmor\",\"value\":{\"op\":\"Negate\",\"values\":[{\"source\":\"Event\",\"field\":\"Delta\"}]}}}"
+ },
+ {
+  "id": "tpl.relic.punch_card_knife.remove",
+  "state": "Implemented",
+  "design_text": "[击杀怪物时] 每移除5张怪物卡，随机洗入一张常规道具卡到战斗卡组",
+  "requires_json": "[\"NoOwnerEntity\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnCumulative\",\"metric\":\"monsterRemoved\",\"threshold\":5,\"counterKey\":\"relic.punch_card_knife.remove\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"ShuffleRandomContent\",\"kind\":\"HelpCard\",\"count\":\"{{count}}\",\"top\":false}}"
+ },
+ {
+  "id": "tpl.relic.rotation_trick.remove",
+  "state": "Implemented",
+  "design_text": "[击杀怪物时] 每移除6张怪物卡，洗入一张旋转轮到战斗卡组",
+  "requires_json": "[\"NoOwnerEntity\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnCumulative\",\"metric\":\"monsterRemoved\",\"threshold\":6,\"counterKey\":\"relic.rotation_trick.remove\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"ShuffleInto\",\"defId\":\"help.rotation_wheel\",\"kind\":\"HelpCard\",\"count\":\"{{count}}\",\"top\":false}}"
+ },
+ {
+  "id": "tpl.relic.terror_mask.remove",
+  "state": "Implemented",
+  "design_text": "[击杀怪物时] 本关卡每移除6张怪物卡，随机移除一张九宫格上的普通等级怪物卡",
+  "requires_json": "[\"NoOwnerEntity\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnCumulative\",\"metric\":\"monsterRemoved\",\"threshold\":6,\"counterKey\":\"relic.terror_mask.remove\"},\"target\":{\"atom\":\"FilteredCards\",\"kind\":\"Monster\",\"zone\":\"Board\",\"excludeBoss\":true,\"random\":true,\"count\":\"{{count}}\"},\"action\":{\"atom\":\"RemoveCard\",\"destination\":\"Removed\",\"reason\":\"{{reason}}\"}}"
+ },
+ {
+  "id": "tpl.relic.junk_cycler.use",
+  "state": "Implemented",
+  "design_text": "[使用道具卡时] 每使用9张道具卡，随机洗入一张道具卡到战斗卡组",
+  "requires_json": "[\"NoOwnerEntity\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnCumulative\",\"metric\":\"helpCardUsed\",\"threshold\":9,\"counterKey\":\"relic.junk_cycler.use\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"ShuffleRandomContent\",\"kind\":\"HelpCard\",\"count\":\"{{count}}\",\"top\":false}}"
+ },
+ {
+  "id": "tpl.relic.junk_body.use",
+  "state": "Implemented",
+  "design_text": "[使用道具卡时] 每使用3张道具卡，获得1点血量上限",
+  "requires_json": "[\"NoOwnerEntity\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnCumulative\",\"metric\":\"helpCardUsed\",\"threshold\":3,\"counterKey\":\"relic.junk_body.use\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"ModifyBaseStat\",\"stat\":\"MaxHp\",\"delta\":\"{{delta}}\",\"reason\":\"{{reason}}\"}}"
+ },
+ {
+  "id": "tpl.relic.blood_demon.damage",
+  "state": "Implemented",
+  "design_text": "[受到伤害时] 每受到5点伤害，获得1点血量上限",
+  "requires_json": "[\"NoOwnerEntity\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnCumulative\",\"metric\":\"damageTaken\",\"threshold\":5,\"targetIsPlayer\":true,\"counterKey\":\"relic.blood_demon.damage\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"ModifyBaseStat\",\"stat\":\"MaxHp\",\"delta\":\"{{delta}}\",\"reason\":\"{{reason}}\"}}"
+ },
+ {
+  "id": "tpl.relic.terror_mask.node_start",
+  "state": "Implemented",
+  "design_text": "[每关卡开始时] 清零本关怪物移除累计",
+  "requires_json": "[\"NoOwnerEntity\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnNodeStart\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"SetCounter\",\"key\":\"relic.terror_mask.remove\",\"value\":0}}"
  }
 ]
