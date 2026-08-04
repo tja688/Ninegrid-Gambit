@@ -161,6 +161,20 @@ namespace NineGrid.Flow
             return live.Open(card);
         }
 
+        /// <summary>
+        /// 无 ManagedCard 时按 defId 开详述（装备栏遗物等，ADR-0027）。
+        /// </summary>
+        public static bool TryOpenByDefId(string defId, CardPresentationKind kindHint = CardPresentationKind.Unknown)
+        {
+            EnsureExists();
+            if (!TryGetLiveInstance(out var live) || string.IsNullOrEmpty(defId))
+            {
+                return false;
+            }
+
+            return live.OpenByDefId(defId, kindHint);
+        }
+
         public static void CloseIfOpen()
         {
             if (TryGetLiveInstance(out var live))
@@ -189,7 +203,38 @@ namespace NineGrid.Flow
             var catalog = arch?.GetSystem<IContentSystem>()?.Catalog;
             var liveMounts = CollectLiveEffectMounts(arch, card.Uid);
             var texts = CardInspectDetailComposer.Compose(card.DefId, snapshot, catalog, liveMounts);
+            return PresentInspect(isMonster, card, snapshot, texts);
+        }
 
+        public bool OpenByDefId(string defId, CardPresentationKind kindHint = CardPresentationKind.Unknown)
+        {
+            if (string.IsNullOrEmpty(defId))
+            {
+                return false;
+            }
+
+            if (root == null)
+            {
+                EnsureExists();
+            }
+
+            var kind = kindHint != CardPresentationKind.Unknown
+                ? kindHint
+                : CoreCardPresentationMapper.ResolvePresentationKindFromDefId(defId);
+            var snapshot = CoreCardPresentationMapper.BuildVisualSnapshotFromDefId(defId, kind);
+            var arch = NineGridArchitecture.Interface;
+            var catalog = arch?.GetSystem<IContentSystem>()?.Catalog;
+            var texts = CardInspectDetailComposer.Compose(defId, snapshot, catalog, liveMounts: null);
+            return PresentInspect(isMonster: false, card: null, snapshot, texts, kindOverride: kind);
+        }
+
+        private bool PresentInspect(
+            bool isMonster,
+            ManagedCard card,
+            CardPresentationSnapshot snapshot,
+            CardInspectDetailComposer.Result texts,
+            CardPresentationKind kindOverride = CardPresentationKind.Unknown)
+        {
             if (!_open)
             {
                 if (!BattleUiDimmerOverlay.TryAcquire("card-inspect"))
@@ -227,7 +272,9 @@ namespace NineGrid.Flow
             }
             else
             {
-                _regularBinder = EnsureLiveFace(regularCardFace, card, ref _regularLiveKind);
+                _regularBinder = card != null
+                    ? EnsureLiveFace(regularCardFace, card, ref _regularLiveKind)
+                    : EnsureLiveFaceByKind(regularCardFace, kindOverride, ref _regularLiveKind);
                 ApplyFace(_regularBinder, snapshot);
                 if (_regularBinder != null)
                 {
@@ -423,6 +470,29 @@ namespace NineGrid.Flow
                 kind = CardPresentationKindResolver.FromDefId(card.DefId);
             }
 
+            return EnsureLiveFaceCore(anchor, card, kind, ref liveKind);
+        }
+
+        private CardFacePresentationBinder EnsureLiveFaceByKind(
+            Transform anchor,
+            CardPresentationKind kind,
+            ref CardPresentationKind liveKind)
+        {
+            if (anchor == null || kind == CardPresentationKind.Unknown)
+            {
+                return null;
+            }
+
+            HidePlaceholderMockVisuals(anchor);
+            return EnsureLiveFaceCore(anchor, card: null, kind, ref liveKind);
+        }
+
+        private CardFacePresentationBinder EnsureLiveFaceCore(
+            Transform anchor,
+            ManagedCard card,
+            CardPresentationKind kind,
+            ref CardPresentationKind liveKind)
+        {
             var existing = anchor.Find(InspectLiveFaceName);
             if (existing != null && liveKind == kind)
             {
@@ -464,7 +534,7 @@ namespace NineGrid.Flow
             GameObject source = null;
 
             // 优先克隆场上该卡已挂好的真卡面（与局内一致）。
-            if (card.MountedFaceRoot != null)
+            if (card != null && card.MountedFaceRoot != null)
             {
                 source = card.MountedFaceRoot.gameObject;
             }

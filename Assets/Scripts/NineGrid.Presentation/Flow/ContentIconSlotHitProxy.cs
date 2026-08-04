@@ -5,7 +5,7 @@ namespace NineGrid.Flow
 {
     /// <summary>
     /// 遗物/技能图标槽命中代理：挂在槽位节点，由 Manager ApplyDefIds 写入 DefId。
-    /// 遗物槽右键丢弃经 <see cref="PointerHitRouter"/> → RelicHudHook（#98）。
+    /// 遗物槽：左键拖入回收区丢弃、右键详述（ADR-0027）。
     /// </summary>
     [DisallowMultipleComponent]
     [RequireComponent(typeof(BoxCollider2D))]

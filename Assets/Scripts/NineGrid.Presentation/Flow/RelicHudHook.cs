@@ -12,8 +12,14 @@ namespace NineGrid.Flow
 
         public static Action WireController;
 
-        /// <summary>#98 右键丢弃：返回是否已受理（含 IntentIntake 拒收）。</summary>
+        /// <summary>ADR-0027：拖入回收区丢弃；返回是否已受理（含 IntentIntake 拒收）。</summary>
         public static Func<string, bool> TryDiscardRelic;
+
+        /// <summary>ADR-0027：左键在遗物槽上开始拖动（可穿透半黑屏）。</summary>
+        public static Func<UnityEngine.Camera, UnityEngine.Vector2, bool> TryBeginDragRelic;
+
+        /// <summary>ADR-0027：右键开遗物详述（可穿透半黑屏）。</summary>
+        public static Func<UnityEngine.Camera, UnityEngine.Vector2, bool> TryInspectRelic;
 
         public static void RequestWire()
         {

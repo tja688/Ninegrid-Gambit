@@ -275,6 +275,20 @@ namespace NineGrid.Flow
             return snapshot;
         }
 
+        /// <summary>
+        /// 按 defId 构建纯视觉投影（Bounce / 右键详述 / 无 Core uid 展示）。
+        /// </summary>
+        public static CardPresentationSnapshot BuildVisualSnapshotFromDefId(
+            string defId,
+            CardPresentationKind kindHint = CardPresentationKind.Unknown,
+            bool clearCombatStats = true)
+        {
+            var kind = kindHint != CardPresentationKind.Unknown
+                ? kindHint
+                : InferPresentationKind(defId);
+            return BuildSnapshotFromDefId(defId, kind, clearCombatStats);
+        }
+
         private static CardPresentationSnapshot BuildSnapshotFromDefId(
             string defId,
             CardPresentationKind kind,

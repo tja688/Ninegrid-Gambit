@@ -103,12 +103,12 @@ namespace NineGrid.Presentation.Tests
         }
 
         [Test]
-        public void Tick_SecondaryOnRelicSlot_DiscardsEvenUnderHigherSortOverlay()
+        public void Tick_SecondaryOnRelicSlot_InspectsEvenUnderHigherSortOverlay()
         {
-            var discarded = new System.Collections.Generic.List<string>();
-            RelicHudHook.TryDiscardRelic = defId =>
+            string inspected = null;
+            RelicHudHook.TryInspectRelic = (cam, screen) =>
             {
-                discarded.Add(defId);
+                inspected = "relic.wood_shield";
                 return true;
             };
 
@@ -127,28 +127,52 @@ namespace NineGrid.Presentation.Tests
 
                 CreateTarget("Dimmer", Vector2.zero, sortOrder: BattleUiDimmerOverlay.HitSort, typePriority: PointerHitSurfacePriorities.Overlay);
 
-                var registered = false;
-                for (var i = 0; i < PointerHitRegistry.All.Count; i++)
-                {
-                    if (ReferenceEquals(PointerHitRegistry.All[i], proxy))
-                    {
-                        registered = true;
-                        break;
-                    }
-                }
-
-                Assert.IsTrue(registered, "Relic proxy must be registered before secondary tick.");
-
                 _pointer.Screen = WorldToScreen(Vector3.zero);
                 _pointer.PressSecondaryThisFrame = true;
                 _router.Tick();
 
-                Assert.AreEqual(1, discarded.Count, "Expected discard under dimmer; registryCount=" + PointerHitRegistry.All.Count);
-                Assert.AreEqual("relic.wood_shield", discarded[0]);
+                Assert.AreEqual("relic.wood_shield", inspected, "Expected inspect under dimmer");
             }
             finally
             {
-                RelicHudHook.TryDiscardRelic = null;
+                RelicHudHook.TryInspectRelic = null;
+            }
+        }
+
+        [Test]
+        public void Tick_PrimaryOnRelicSlot_BeginsDragEvenUnderHigherSortOverlay()
+        {
+            var began = false;
+            RelicHudHook.TryBeginDragRelic = (cam, screen) =>
+            {
+                began = true;
+                return true;
+            };
+
+            try
+            {
+                var relicGo = new GameObject("RelicSlot");
+                relicGo.SetActive(false);
+                relicGo.transform.position = Vector3.zero;
+                var box = relicGo.AddComponent<BoxCollider2D>();
+                box.size = new Vector2(1.5f, 1.5f);
+                var proxy = relicGo.AddComponent<ContentIconSlotHitProxy>();
+                proxy.DefId = "relic.wood_shield";
+                relicGo.SetActive(true);
+                PointerHitRegistry.Register(proxy);
+                _targets.Add(relicGo);
+
+                CreateTarget("Dimmer", Vector2.zero, sortOrder: BattleUiDimmerOverlay.HitSort, typePriority: PointerHitSurfacePriorities.Overlay);
+
+                _pointer.Screen = WorldToScreen(Vector3.zero);
+                _pointer.PressPrimaryThisFrame = true;
+                _router.Tick();
+
+                Assert.IsTrue(began, "Expected relic drag under dimmer");
+            }
+            finally
+            {
+                RelicHudHook.TryBeginDragRelic = null;
             }
         }
 

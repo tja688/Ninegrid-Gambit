@@ -1696,6 +1696,18 @@ namespace NineGrid.Cards
             }
         }
 
+        /// <summary>遗物拖动与道具拖动共用回收区 UI（ADR-0027）。</summary>
+        public void SetRecycleZonePresentationActive(bool active)
+        {
+            SetRecycleUiActive(active);
+        }
+
+        /// <summary>世界点是否在已激活的回收判定区内。</summary>
+        public bool ContainsWorldPointInRecycleZone(Vector3 worldPoint)
+        {
+            return IsPointInRecycleZone(worldPoint);
+        }
+
         private static bool TrySubmitRecycleForDrag(ManagedCard card)
         {
             if (card == null || card.Uid <= 0)
