@@ -384,13 +384,35 @@ namespace NineGrid.Cards
             var pos = target.position;
             var exitPos = new Vector3(pos.x, Mathf.Max(pos.y, exitY), pos.z);
             var effectiveDuration = pos.y >= exitY - 0.001f ? 0f : exitDuration;
-            MoveToWorld(
+            var finished = false;
+            void CompleteOnce()
+            {
+                if (finished)
+                {
+                    return;
+                }
+
+                finished = true;
+                onExitComplete?.Invoke();
+            }
+
+            // KillMotion(complete:false) 不会触发 OnComplete；若不挂 OnKill，
+            // ReturnInFlight 会永久粘住，后续同 uid Deal 挂死主线。
+            var tween = MoveToWorld(
                 target,
                 exitPos,
                 effectiveDuration,
-                onComplete: () => onExitComplete?.Invoke(),
+                onComplete: CompleteOnce,
                 uid: uid,
                 reason: "fieldExit");
+            if (tween != null)
+            {
+                tween.OnKill(CompleteOnce);
+            }
+            else
+            {
+                CompleteOnce();
+            }
         }
 
         public static async UniTask WaitOneFrameAsync(CancellationToken cancellationToken = default)

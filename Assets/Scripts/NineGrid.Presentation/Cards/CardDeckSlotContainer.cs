@@ -194,11 +194,15 @@ namespace NineGrid.Cards
             }
 
             sortingGroup.sortingOrder = ComputeSortingOrder(slotIndex);
+            // 新入组牌（离开机关洗入等）SG 层名可能已是目标层，但仍须 Propagate：
+            // URP Mask 比对的是子 Renderer/Mask 的 sortingLayerID；只改 SG 不 Propagate
+            // 时子节点会留在 Main，表现为逃出卡组 BG 约束、始终压在最上。
             if (sortingGroup.sortingLayerName != _sortingLayerName)
             {
                 sortingGroup.sortingLayerName = _sortingLayerName;
-                CardMainVisualMaskAnchor.PropagateSortingLayerFromGroup(sortingGroup);
             }
+
+            CardMainVisualMaskAnchor.PropagateSortingLayerFromGroup(sortingGroup);
         }
 
         public bool TryRemoveAt(int slotIndex, out ManagedCard removed, out IReadOnlyList<CardDeckRippleMove> rippleMoves)

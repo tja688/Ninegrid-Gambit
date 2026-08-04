@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using NineGrid.Cards;
@@ -760,12 +761,111 @@ namespace NineGrid.Flow
         private void RaiseSettlementReady()
         {
             _settlementRaised = true;
+            // ADR-0026：清关进选房前卸掉抽牌堆残留视图（场上清残留已由 Core/Present 处理；
+            // 卡组视图若等到下一关 StartBattle 才 Reset，选房阶段会看见上局牌）。
+            ClearResidualBattleDeckViews();
             RunUnusedHelpCardSettlementPresentationAsync(
                 _nodeEventLogStart,
                 EnsurePresentationToken()).Forget();
             OnNodeSettlementReady?.Invoke();
             var arch = NineGridArchitecture.Interface ?? NineGridArchitecture.Current;
             arch?.SendEvent(new BattleSessionSettlementReadyEvent());
+        }
+
+        /// <summary>
+        /// 清关/跳关选房前：卸掉卡组槽内战斗残留视图并 Release。
+        /// 道具卡格在手牌，不受影响；下一关 SetupNodeDeck 会重建抽牌堆。
+        /// </summary>
+        private void ClearResidualBattleDeckViews()
+        {
+            var deck = Deck;
+            var cards = Cards;
+            if (deck == null)
+            {
+                return;
+            }
+
+            // 先收集回库途中（尚未入槽）的视图，Detach 只会清槽内牌。
+            var orphanInFlight = new List<ManagedCard>();
+            if (cards != null)
+            {
+                foreach (var card in cards.EnumerateCards())
+                {
+                    if (card != null
+                        && card.Uid > 0
+                        && deck.IsReturnInFlight(card.Uid))
+                    {
+                        orphanInFlight.Add(card);
+                    }
+                }
+            }
+
+            var detached = deck.DetachAllInGameCards();
+            var seen = new HashSet<int>();
+            void ReleaseOne(ManagedCard card, string reason)
+            {
+                if (card == null || card.Uid <= 0 || !seen.Add(card.Uid) || cards == null)
+                {
+                    return;
+                }
+
+                if (card.Transform != null)
+                {
+                    CardDeckTween.KillMotion(card.Transform, reason, card.Uid);
+                }
+
+                cards.Release(card, reason);
+            }
+
+            for (var i = 0; i < detached.Count; i++)
+            {
+                ReleaseOne(detached[i], "Settlement.ClearResidualDeck");
+            }
+
+            for (var i = 0; i < orphanInFlight.Count; i++)
+            {
+                var card = orphanInFlight[i];
+                if (card == null || card.Uid <= 0 || seen.Contains(card.Uid))
+                {
+                    continue;
+                }
+
+                if (cards != null && cards.TryGet(card.Uid, out var live) && live != null)
+                {
+                    ReleaseOne(live, "Settlement.ClearResidualDeckInFlight");
+                }
+            }
+
+            // 漏网：仍标 CardDeckMode 但不在手牌的孤儿（含 AddAnchor 途中）。
+            if (cards == null)
+            {
+                return;
+            }
+
+            var hand = Hand;
+            var leftovers = new List<ManagedCard>();
+            foreach (var card in cards.EnumerateCards())
+            {
+                if (card == null
+                    || card.Uid <= 0
+                    || card.DisplayMode != CardDisplayMode.CardDeckMode
+                    || seen.Contains(card.Uid))
+                {
+                    continue;
+                }
+
+                if (hand != null && hand.ContainsUid(card.Uid))
+                {
+                    continue;
+                }
+
+                leftovers.Add(card);
+            }
+
+            for (var i = 0; i < leftovers.Count; i++)
+            {
+                ReleaseOne(leftovers[i], "Settlement.ClearResidualDeckOrphan");
+            }
         }
 
         private async UniTaskVoid RunUnusedHelpCardSettlementPresentationAsync(

@@ -491,6 +491,47 @@ namespace NineGrid.Cards
         }
 
         /// <summary>
+        /// 卸下 InGame 卡组槽内全部视图；顺带中止回库 in-flight，避免 uid 粘住。
+        /// 不改 Mode、不 Release（由调用方决定）。清关选房用。
+        /// </summary>
+        public List<ManagedCard> DetachAllInGameCards()
+        {
+            if (_returnInFlightUids.Count > 0)
+            {
+                var pending = new List<int>(_returnInFlightUids);
+                _returnInFlightUids.Clear();
+                for (var i = 0; i < pending.Count; i++)
+                {
+                    CompleteReturnSettledWaiters(pending[i]);
+                }
+            }
+
+            var detached = new List<ManagedCard>();
+            if (_slotContainer == null)
+            {
+                return detached;
+            }
+
+            while (_slotContainer.Count > 0)
+            {
+                if (!_slotContainer.TryRemoveAt(0, out var card, out _) || card == null)
+                {
+                    break;
+                }
+
+                if (card.Transform != null)
+                {
+                    CardDeckTween.KillMotion(card.Transform, "Deck.DetachAll", card.Uid);
+                }
+
+                detached.Add(card);
+            }
+
+            _isBusy = false;
+            return detached;
+        }
+
+        /// <summary>
         /// 清卡组槽并回到 Standby，供局内重新开局前复位。不销毁卡视图（由 CardManager 统一释放）。
         /// </summary>
         public void ResetToStandby()
@@ -853,6 +894,13 @@ namespace NineGrid.Cards
                     EndReturnInFlight(card.Uid, "deckReturn.abort");
                 }
 
+                return;
+            }
+
+            // Settlement / ResetToStandby 已清 _returnInFlightUids 后再 Kill 场离 tween 时，
+            // OnKill→CompleteOnce 不得再 Insert 把牌塞回卡组。
+            if (!_returnInFlightUids.Contains(card.Uid))
+            {
                 return;
             }
 

@@ -1,0 +1,1 @@
+﻿{"schemaVersion":2,"seed":"1","sessionId":"20260804-160916","runTag":"","runTagNote":"","events":[{"index":0,"beatId":0,"tMs":0,"kind":"DirectorIntentRejected","uid":-1,"site":"Director.Intent","payload":{"path":"director","lane":"mainline","chainId":"0","choreoSeqId":"0","intentKind":"explore","intentSlot":"1","reason":"notLegal phase=None pendingChoice=None"}}]}

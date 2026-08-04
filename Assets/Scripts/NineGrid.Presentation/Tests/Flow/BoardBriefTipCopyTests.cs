@@ -42,11 +42,23 @@ namespace NineGrid.Presentation.Tests.Flow
         }
 
         [Test]
-        public void FormatFloorHint_UsesDisplayNode()
+        public void FormatFloorLevelHint_UsesLatinNumeral()
         {
-            Assert.AreEqual("第 1 层 · 节点 1", BoardBriefTipCopy.FormatFloorHint(1, 0));
-            Assert.AreEqual("第 2 层 · 节点 8", BoardBriefTipCopy.FormatFloorHint(2, 7));
-            Assert.AreEqual("第 3 层 · 节点 5", BoardBriefTipCopy.FormatFloorHint(3, 4));
+            Assert.AreEqual("楼层·Ⅰ", BoardBriefTipCopy.FormatFloorLevelHint(1));
+            Assert.AreEqual("楼层·Ⅱ", BoardBriefTipCopy.FormatFloorLevelHint(2));
+            Assert.AreEqual("楼层·Ⅲ", BoardBriefTipCopy.FormatFloorLevelHint(3));
+            Assert.AreEqual(string.Empty, BoardBriefTipCopy.FormatFloorLevelHint(0));
+        }
+
+        [Test]
+        public void FormatRoomHint_UsesRoomCategoryLabels()
+        {
+            Assert.AreEqual("战斗房间", BoardBriefTipCopy.FormatRoomHint(RoomKind.Gold));
+            Assert.AreEqual("精英战斗房间", BoardBriefTipCopy.FormatRoomHint(RoomKind.Elite));
+            Assert.AreEqual("Boss房间", BoardBriefTipCopy.FormatRoomHint(RoomKind.Boss));
+            Assert.AreEqual("商店房间", BoardBriefTipCopy.FormatRoomHint(RoomKind.Shop));
+            Assert.AreEqual("卡店房间", BoardBriefTipCopy.FormatRoomHint(RoomKind.Tavern));
+            Assert.AreEqual(string.Empty, BoardBriefTipCopy.FormatRoomHint(RoomKind.None));
         }
 
         [Test]

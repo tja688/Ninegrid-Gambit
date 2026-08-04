@@ -131,6 +131,9 @@ namespace NineGrid.Presentation.Tests
                     method.Value,
                     @"AddCardAtFromOriginAsync\s*\(\s*[^)]*TryResolveShuffleIntoOrigin"),
                 "NewCard 洗入不得把 ShuffleIntoOrigin 传给 AddCardAtFromOrigin");
+            Assert.IsTrue(
+                method.Value.Contains("WaitReturnSettledAsync"),
+                "ExistingCard 回库须 await WaitReturnSettledAsync，禁止 fire-and-forget（传送后同 uid Deal 会卡死主线）");
         }
     }
 }

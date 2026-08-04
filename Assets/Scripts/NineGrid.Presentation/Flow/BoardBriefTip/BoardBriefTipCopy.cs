@@ -103,9 +103,60 @@ namespace NineGrid.Flow.BoardBriefTip
             return brief;
         }
 
-        public static string FormatFloorHint(int floor, int nodeIndex)
+        /// <summary>大楼层提示：仅楼层，拉丁数字，如「楼层·Ⅱ」。</summary>
+        public static string FormatFloorLevelHint(int floor)
         {
-            return "第 " + floor + " 层 · 节点 " + MapNodeProgression.ToDisplayNode(nodeIndex);
+            if (floor <= 0)
+            {
+                return string.Empty;
+            }
+
+            return "楼层·" + ToLatinNumeral(floor);
+        }
+
+        /// <summary>小房间提示：仅房间类型名，不含节点序号。</summary>
+        public static string FormatRoomHint(RoomKind room)
+        {
+            switch (room)
+            {
+                case RoomKind.Elite:
+                    return "精英战斗房间";
+                case RoomKind.Boss:
+                    return "Boss房间";
+                case RoomKind.Shop:
+                    return "商店房间";
+                case RoomKind.Tavern:
+                    return "卡店房间";
+                case RoomKind.Attribute:
+                case RoomKind.Gold:
+                case RoomKind.Fountain:
+                case RoomKind.Treasure:
+                    return "战斗房间";
+                case RoomKind.TreasureReward:
+                    return "宝箱奖励房间";
+                case RoomKind.ItemReward:
+                    return "道具奖励房间";
+                default:
+                    return string.Empty;
+            }
+        }
+
+        private static string ToLatinNumeral(int value)
+        {
+            switch (value)
+            {
+                case 1: return "Ⅰ";
+                case 2: return "Ⅱ";
+                case 3: return "Ⅲ";
+                case 4: return "Ⅳ";
+                case 5: return "Ⅴ";
+                case 6: return "Ⅵ";
+                case 7: return "Ⅶ";
+                case 8: return "Ⅷ";
+                case 9: return "Ⅸ";
+                case 10: return "Ⅹ";
+                default: return value.ToString();
+            }
         }
     }
 }

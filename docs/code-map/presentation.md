@@ -71,7 +71,7 @@
 - **意图**：`InputIntentKinds.RecycleItem` 为 board action；主线 busy → `BufferToDirector`（不拒收）
 - **装配**：`RecycleItemIntentScriptFactory`（`ApplyRecycleItemSlotCommand`）经 `PresentationCompositionRoot` 路由
 - **拖放**：`CardHandManagerSingleton` 拖起激活 `CardRecycleNotice`（半透明黑底 + 图标 + `标准世界文字 (2)` 价值 TMP）+ `HandcardRecycleZone`；落入回收区优先于 ApplyZone；提交 `SubmitRecycleItemIntentCommand`
-- **叠层**：回收 UI 激活期间 `CardDeckManagerSingleton.SetRecycleBackgroundSuppressed(true)` 把卡组卡临时切到 Sorting Layer `BG`，Notice 留在 `Main` 压住卡组；手牌拖拽 / 遗物 ghost 仍在 `Main` 更高 order，压住 Notice
+- **叠层**：回收 UI 激活期间 `CardDeckManagerSingleton.SetRecycleBackgroundSuppressed(true)` 把卡组卡临时切到 Sorting Layer `BG`，Notice 留在 `Main` 压住卡组；手牌拖拽 / 遗物 ghost 仍在 `Main` 更高 order，压住 Notice。`CardDeckSlotContainer.ApplySortingOrder` **每次**入槽都 `PropagateSortingLayerFromGroup`（不只在 layer 名变化时），避免新洗入牌子 Renderer 留在 Main 逃出 BG 约束
 - **价值预览**：指针悬停回收区时 TMP 显示 `+RecycleItemSlotGold` / 遗物拖时 `+DiscardRelicGold`；拖出或拖结束隐藏
 - **退场**：回收成功后走 `PlayDeathAsync` 碎裂（`ShatterCardAfterRecycleAsync`），与使用道具的 `PlayUseAsync`/缩小退场分开
 
@@ -170,7 +170,7 @@
 
 ### 简要解释文字框与楼层提示（#89 · ADR-0020）
 
-- 文案：`BoardBriefTipCopy`（房间 DisplayName+注入摘要 / 导航固定文案 / 「第 X 层 · 节点 Y」；另备 `ForOptionOrShelf` 供 M2 货架·就地选项）
+- 文案：`BoardBriefTipCopy`（房间 DisplayName+注入摘要 / 导航固定文案 / 楼层提示「楼层·Ⅱ」+ 房间类型「战斗房间」等；另备 `ForOptionOrShelf` 供 M2 货架·就地选项）
 - 会话：`BoardBriefTipSession`（悬停与 Notice；Notice 盖悬停；代数清；`HardClear` 双路硬清）
 - 场景：`BoardBriefTipPresenter` → `Panels/简要解释文字框`（`EnsureExists` 优先绑定命名面板，sceneLoaded 再绑，避免无 TMP 孤儿）；`FloorHintPresenter` → `楼层提示`
 - 命中：场地图标 `BoardBriefTipHitProxy`；商店 `ShopBoardHitProxy`；卡店 `TavernBoardHitProxy`；特殊房 `RewardBoardHitProxy`；离开图标仍 `BoardBriefTipHitProxy` + 驻留——均**认领格位**、不自建命中盒、不注册 Router（#102）
@@ -214,7 +214,7 @@
 - 意图 `InputIntentKinds.BoardWalk` → IntentIntake → `BoardWalkIntentScriptFactory` → `IAvatarWalkSystem.SetDestination`
 - Core：`MoveAvatar`（单邻格；RoomChoice/RoomEvent 允许踩非空以配合软占回退）+ `AvatarWalkPathfinder` 两阶段 BFS：途经优先完全空置（绕开软占/真卡），无空路再允许踩软占；终点为「完全空且非软占」或 `WalkDestination` 图标格（货架/选项 SoftBlockOnly 不可落格）
 - 表现：`HopAvatarToSlotAsync` 复用旋转 hop；半空改目标等落地后重规划
-- `\0` QuickTest：流程测试通道（空 skillIds / 空 trap / Sequential 节点序，内容同正式开局 + HP99/ATK5）；战斗内 **KeypadMinus** 跳过战斗（仅 QuickTest，`TryForceNodeVictory` → `MarkLeaveTrapBroken` + `TryCompleteClearedNode` 后 `ClearResidualCombatFieldViews` 收口机关/帮助/漏网怪视图，避免盖住房间图标）
+- `\0` QuickTest：流程测试通道（空 skillIds / 空 trap / Sequential 节点序，内容同正式开局 + HP99/ATK5）；战斗内 **KeypadMinus** 跳过战斗（仅 QuickTest，`TryForceNodeVictory` → `MarkLeaveTrapBroken` + `TryCompleteClearedNode` 后 `ClearResidualCombatFieldViews` 收口机关/帮助/漏网怪视图，避免盖住房间图标；卡组抽牌堆残留由 `TryEnterNodeSettlement` → `RaiseSettlementReady` → `ClearResidualBattleDeckViews` 同步卸掉）
 - 空槽 / 未认领格：九框恒开；点击一律提交 BoardWalk 或 Explore，合法性交 IntentIntake（已退役 `BoardWalkSlotHitPolicy` / 软占关框 / Avatar `int.MinValue` 穿透）
 - Avatar 朝向：`AvatarBoardFacingController` 按卡面图标当前世界 X 相对指针，不锁死格5
 - **战斗 `InteractionLoop` 禁走**；进下一房 Avatar 硬切格 5

@@ -6,7 +6,8 @@
         "NineGrid.Content",
         "NineGrid.Core",
         "DamageNumbersPro",
-        "MoreMountains.Tools"
+        "MoreMountains.Tools",
+        "Unity.TextMeshPro"
     ],
     "includePlatforms": [
         "Editor"

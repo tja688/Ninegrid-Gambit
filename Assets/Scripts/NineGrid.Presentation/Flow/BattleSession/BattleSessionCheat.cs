@@ -444,6 +444,7 @@ namespace NineGrid.Flow
 
             // 正常击杀清关会经 post-kill board present 卸掉机关/帮助等残留视图；
             // 作弊路径只改了 Core，须在此补表现收口，否则会盖住房间图标。
+            // 卡组抽牌堆残留由 TryEnterNodeSettlement → RaiseSettlementReady 同步清掉。
             ClearResidualCombatFieldViews(arch);
 
             Debug.Log(

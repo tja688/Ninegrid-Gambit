@@ -1,0 +1,725 @@
+{
+  "success": true,
+  "command": "command console",
+  "data": {
+    "command": "console",
+    "parameters": {
+      "format": "json"
+    },
+    "result": {
+      "entries": [
+        {
+          "seq": 6362,
+          "timestampUtc": "2026-08-04T08:09:55.7214977Z",
+          "level": "warn",
+          "message": "The character with Unicode value \\u4E45 was not found in the [SmileySans-Oblique-3 SDF] font asset or any potential fallbacks. It was replaced by Unicode character \\u25A1 in text object [鏍囧噯涓栫晫鏂囧瓧].",
+          "stackTrace": "UnityEngine.Debug:LogWarning (object,UnityEngine.Object)\nTMPro.TextMeshPro:SetArraySizes (TMPro.TMP_Text/TextProcessingElement[]) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:1699)\nTMPro.TMP_Text:ParseInputText () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_Text.cs:2044)\nTMPro.TextMeshPro:OnPreRenderObject () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:2144)\nTMPro.TextMeshPro:Rebuild (UnityEngine.UI.CanvasUpdate) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:294)\nTMPro.TMP_UpdateManager:DoRebuilds () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_UpdateManager.cs:177)\nUnityEngine.Canvas:SendWillRenderCanvases ()\n"
+        },
+        {
+          "seq": 6363,
+          "timestampUtc": "2026-08-04T08:09:55.7214977Z",
+          "level": "warn",
+          "message": "The character with Unicode value \\u83B7 was not found in the [SmileySans-Oblique-3 SDF] font asset or any potential fallbacks. It was replaced by Unicode character \\u25A1 in text object [鏍囧噯涓栫晫鏂囧瓧].",
+          "stackTrace": "UnityEngine.Debug:LogWarning (object,UnityEngine.Object)\nTMPro.TextMeshPro:SetArraySizes (TMPro.TMP_Text/TextProcessingElement[]) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:1699)\nTMPro.TMP_Text:ParseInputText () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_Text.cs:2044)\nTMPro.TextMeshPro:OnPreRenderObject () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:2144)\nTMPro.TextMeshPro:Rebuild (UnityEngine.UI.CanvasUpdate) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:294)\nTMPro.TMP_UpdateManager:DoRebuilds () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_UpdateManager.cs:177)\nUnityEngine.Canvas:SendWillRenderCanvases ()\n"
+        },
+        {
+          "seq": 6364,
+          "timestampUtc": "2026-08-04T08:09:55.7225029Z",
+          "level": "warn",
+          "message": "The character with Unicode value \\u5F97 was not found in the [SmileySans-Oblique-3 SDF] font asset or any potential fallbacks. It was replaced by Unicode character \\u25A1 in text object [鏍囧噯涓栫晫鏂囧瓧].",
+          "stackTrace": "UnityEngine.Debug:LogWarning (object,UnityEngine.Object)\nTMPro.TextMeshPro:SetArraySizes (TMPro.TMP_Text/TextProcessingElement[]) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:1699)\nTMPro.TMP_Text:ParseInputText () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_Text.cs:2044)\nTMPro.TextMeshPro:OnPreRenderObject () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:2144)\nTMPro.TextMeshPro:Rebuild (UnityEngine.UI.CanvasUpdate) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:294)\nTMPro.TMP_UpdateManager:DoRebuilds () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_UpdateManager.cs:177)\nUnityEngine.Canvas:SendWillRenderCanvases ()\n"
+        },
+        {
+          "seq": 6365,
+          "timestampUtc": "2026-08-04T08:09:55.7225029Z",
+          "level": "warn",
+          "message": "The character with Unicode value \\u653B was not found in the [SmileySans-Oblique-3 SDF] font asset or any potential fallbacks. It was replaced by Unicode character \\u25A1 in text object [鏍囧噯涓栫晫鏂囧瓧].",
+          "stackTrace": "UnityEngine.Debug:LogWarning (object,UnityEngine.Object)\nTMPro.TextMeshPro:SetArraySizes (TMPro.TMP_Text/TextProcessingElement[]) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:1699)\nTMPro.TMP_Text:ParseInputText () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_Text.cs:2044)\nTMPro.TextMeshPro:OnPreRenderObject () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:2144)\nTMPro.TextMeshPro:Rebuild (UnityEngine.UI.CanvasUpdate) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:294)\nTMPro.TMP_UpdateManager:DoRebuilds () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_UpdateManager.cs:177)\nUnityEngine.Canvas:SendWillRenderCanvases ()\n"
+        },
+        {
+          "seq": 6366,
+          "timestampUtc": "2026-08-04T08:09:55.723044Z",
+          "level": "warn",
+          "message": "The character with Unicode value \\u52A0 was not found in the [SmileySans-Oblique-3 SDF] font asset or any potential fallbacks. It was replaced by Unicode character \\u25A1 in text object [鍚嶅瓧].",
+          "stackTrace": "UnityEngine.Debug:LogWarning (object,UnityEngine.Object)\nTMPro.TextMeshPro:SetArraySizes (TMPro.TMP_Text/TextProcessingElement[]) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:1699)\nTMPro.TMP_Text:ParseInputText () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_Text.cs:2044)\nTMPro.TextMeshPro:OnPreRenderObject () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:2144)\nTMPro.TextMeshPro:Rebuild (UnityEngine.UI.CanvasUpdate) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:294)\nTMPro.TMP_UpdateManager:DoRebuilds () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_UpdateManager.cs:177)\nUnityEngine.Canvas:SendWillRenderCanvases ()\n"
+        },
+        {
+          "seq": 6367,
+          "timestampUtc": "2026-08-04T08:09:55.723044Z",
+          "level": "warn",
+          "message": "The character with Unicode value \\u653B was not found in the [SmileySans-Oblique-3 SDF] font asset or any potential fallbacks. It was replaced by Unicode character \\u25A1 in text object [鍚嶅瓧].",
+          "stackTrace": "UnityEngine.Debug:LogWarning (object,UnityEngine.Object)\nTMPro.TextMeshPro:SetArraySizes (TMPro.TMP_Text/TextProcessingElement[]) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:1699)\nTMPro.TMP_Text:ParseInputText () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_Text.cs:2044)\nTMPro.TextMeshPro:OnPreRenderObject () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:2144)\nTMPro.TextMeshPro:Rebuild (UnityEngine.UI.CanvasUpdate) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:294)\nTMPro.TMP_UpdateManager:DoRebuilds () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_UpdateManager.cs:177)\nUnityEngine.Canvas:SendWillRenderCanvases ()\n"
+        },
+        {
+          "seq": 6368,
+          "timestampUtc": "2026-08-04T08:09:55.7240491Z",
+          "level": "warn",
+          "message": "The character with Unicode value \\u4F7F was not found in the [SmileySans-Oblique-3 SDF] font asset or any potential fallbacks. It was replaced by Unicode character \\u25A1 in text object [鏍囧噯涓栫晫鏂囧瓧].",
+          "stackTrace": "UnityEngine.Debug:LogWarning (object,UnityEngine.Object)\nTMPro.TextMeshPro:SetArraySizes (TMPro.TMP_Text/TextProcessingElement[]) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:1699)\nTMPro.TMP_Text:ParseInputText () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_Text.cs:2044)\nTMPro.TextMeshPro:OnPreRenderObject () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:2144)\nTMPro.TextMeshPro:Rebuild (UnityEngine.UI.CanvasUpdate) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:294)\nTMPro.TMP_UpdateManager:DoRebuilds () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_UpdateManager.cs:177)\nUnityEngine.Canvas:SendWillRenderCanvases ()\n"
+        },
+        {
+          "seq": 6369,
+          "timestampUtc": "2026-08-04T08:09:55.7240491Z",
+          "level": "warn",
+          "message": "The character with Unicode value \\u7528 was not found in the [SmileySans-Oblique-3 SDF] font asset or any potential fallbacks. It was replaced by Unicode character \\u25A1 in text object [鏍囧噯涓栫晫鏂囧瓧].",
+          "stackTrace": "UnityEngine.Debug:LogWarning (object,UnityEngine.Object)\nTMPro.TextMeshPro:SetArraySizes (TMPro.TMP_Text/TextProcessingElement[]) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:1699)\nTMPro.TMP_Text:ParseInputText () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_Text.cs:2044)\nTMPro.TextMeshPro:OnPreRenderObject () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:2144)\nTMPro.TextMeshPro:Rebuild (UnityEngine.UI.CanvasUpdate) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:294)\nTMPro.TMP_UpdateManager:DoRebuilds () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_UpdateManager.cs:177)\nUnityEngine.Canvas:SendWillRenderCanvases ()\n"
+        },
+        {
+          "seq": 6370,
+          "timestampUtc": "2026-08-04T08:09:55.7240491Z",
+          "level": "warn",
+          "message": "The character with Unicode value \\u83B7 was not found in the [SmileySans-Oblique-3 SDF] font asset or any potential fallbacks. It was replaced by Unicode character \\u25A1 in text object [鏍囧噯涓栫晫鏂囧瓧].",
+          "stackTrace": "UnityEngine.Debug:LogWarning (object,UnityEngine.Object)\nTMPro.TextMeshPro:SetArraySizes (TMPro.TMP_Text/TextProcessingElement[]) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:1699)\nTMPro.TMP_Text:ParseInputText () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_Text.cs:2044)\nTMPro.TextMeshPro:OnPreRenderObject () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:2144)\nTMPro.TextMeshPro:Rebuild (UnityEngine.UI.CanvasUpdate) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:294)\nTMPro.TMP_UpdateManager:DoRebuilds () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_UpdateManager.cs:177)\nUnityEngine.Canvas:SendWillRenderCanvases ()\n"
+        },
+        {
+          "seq": 6371,
+          "timestampUtc": "2026-08-04T08:09:55.7240491Z",
+          "level": "warn",
+          "message": "The character with Unicode value \\u5F97 was not found in the [SmileySans-Oblique-3 SDF] font asset or any potential fallbacks. It was replaced by Unicode character \\u25A1 in text object [鏍囧噯涓栫晫鏂囧瓧].",
+          "stackTrace": "UnityEngine.Debug:LogWarning (object,UnityEngine.Object)\nTMPro.TextMeshPro:SetArraySizes (TMPro.TMP_Text/TextProcessingElement[]) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:1699)\nTMPro.TMP_Text:ParseInputText () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_Text.cs:2044)\nTMPro.TextMeshPro:OnPreRenderObject () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:2144)\nTMPro.TextMeshPro:Rebuild (UnityEngine.UI.CanvasUpdate) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:294)\nTMPro.TMP_UpdateManager:DoRebuilds () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_UpdateManager.cs:177)\nUnityEngine.Canvas:SendWillRenderCanvases ()\n"
+        },
+        {
+          "seq": 6372,
+          "timestampUtc": "2026-08-04T08:09:55.7240491Z",
+          "level": "warn",
+          "message": "The character with Unicode value \\u62A4 was not found in the [SmileySans-Oblique-3 SDF] font asset or any potential fallbacks. It was replaced by Unicode character \\u25A1 in text object [鏍囧噯涓栫晫鏂囧瓧].",
+          "stackTrace": "UnityEngine.Debug:LogWarning (object,UnityEngine.Object)\nTMPro.TextMeshPro:SetArraySizes (TMPro.TMP_Text/TextProcessingElement[]) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:1699)\nTMPro.TMP_Text:ParseInputText () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_Text.cs:2044)\nTMPro.TextMeshPro:OnPreRenderObject () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:2144)\nTMPro.TextMeshPro:Rebuild (UnityEngine.UI.CanvasUpdate) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:294)\nTMPro.TMP_UpdateManager:DoRebuilds () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_UpdateManager.cs:177)\nUnityEngine.Canvas:SendWillRenderCanvases ()\n"
+        },
+        {
+          "seq": 6373,
+          "timestampUtc": "2026-08-04T08:09:55.7261212Z",
+          "level": "warn",
+          "message": "The character with Unicode value \\u7532 was not found in the [SmileySans-Oblique-3 SDF] font asset or any potential fallbacks. It was replaced by Unicode character \\u25A1 in text object [鏍囧噯涓栫晫鏂囧瓧].",
+          "stackTrace": "UnityEngine.Debug:LogWarning (object,UnityEngine.Object)\nTMPro.TextMeshPro:SetArraySizes (TMPro.TMP_Text/TextProcessingElement[]) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:1699)\nTMPro.TMP_Text:ParseInputText () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_Text.cs:2044)\nTMPro.TextMeshPro:OnPreRenderObject () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:2144)\nTMPro.TextMeshPro:Rebuild (UnityEngine.UI.CanvasUpdate) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:294)\nTMPro.TMP_UpdateManager:DoRebuilds () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_UpdateManager.cs:177)\nUnityEngine.Canvas:SendWillRenderCanvases ()\n"
+        },
+        {
+          "seq": 6374,
+          "timestampUtc": "2026-08-04T08:09:55.7261212Z",
+          "level": "warn",
+          "message": "The character with Unicode value \\u8010 was not found in the [SmileySans-Oblique-3 SDF] font asset or any potential fallbacks. It was replaced by Unicode character \\u25A1 in text object [鍚嶅瓧].",
+          "stackTrace": "UnityEngine.Debug:LogWarning (object,UnityEngine.Object)\nTMPro.TextMeshPro:SetArraySizes (TMPro.TMP_Text/TextProcessingElement[]) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:1699)\nTMPro.TMP_Text:ParseInputText () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_Text.cs:2044)\nTMPro.TextMeshPro:OnPreRenderObject () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:2144)\nTMPro.TextMeshPro:Rebuild (UnityEngine.UI.CanvasUpdate) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:294)\nTMPro.TMP_UpdateManager:DoRebuilds () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_UpdateManager.cs:177)\nUnityEngine.Canvas:SendWillRenderCanvases ()\n"
+        },
+        {
+          "seq": 6375,
+          "timestampUtc": "2026-08-04T08:09:55.7261212Z",
+          "level": "warn",
+          "message": "The character with Unicode value \\u7528 was not found in the [SmileySans-Oblique-3 SDF] font asset or any potential fallbacks. It was replaced by Unicode character \\u25A1 in text object [鍚嶅瓧].",
+          "stackTrace": "UnityEngine.Debug:LogWarning (object,UnityEngine.Object)\nTMPro.TextMeshPro:SetArraySizes (TMPro.TMP_Text/TextProcessingElement[]) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:1699)\nTMPro.TMP_Text:ParseInputText () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_Text.cs:2044)\nTMPro.TextMeshPro:OnPreRenderObject () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:2144)\nTMPro.TextMeshPro:Rebuild (UnityEngine.UI.CanvasUpdate) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:294)\nTMPro.TMP_UpdateManager:DoRebuilds () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_UpdateManager.cs:177)\nUnityEngine.Canvas:SendWillRenderCanvases ()\n"
+        },
+        {
+          "seq": 6376,
+          "timestampUtc": "2026-08-04T08:09:55.7271251Z",
+          "level": "warn",
+          "message": "The character with Unicode value \\u76FE was not found in the [SmileySans-Oblique-3 SDF] font asset or any potential fallbacks. It was replaced by Unicode character \\u25A1 in text object [鍚嶅瓧].",
+          "stackTrace": "UnityEngine.Debug:LogWarning (object,UnityEngine.Object)\nTMPro.TextMeshPro:SetArraySizes (TMPro.TMP_Text/TextProcessingElement[]) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:1699)\nTMPro.TMP_Text:ParseInputText () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_Text.cs:2044)\nTMPro.TextMeshPro:OnPreRenderObject () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:2144)\nTMPro.TextMeshPro:Rebuild (UnityEngine.UI.CanvasUpdate) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:294)\nTMPro.TMP_UpdateManager:DoRebuilds () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_UpdateManager.cs:177)\nUnityEngine.Canvas:SendWillRenderCanvases ()\n"
+        },
+        {
+          "seq": 6377,
+          "timestampUtc": "2026-08-04T08:09:55.7271251Z",
+          "level": "warn",
+          "message": "The character with Unicode value \\u724C was not found in the [SmileySans-Oblique-3 SDF] font asset or any potential fallbacks. It was replaced by Unicode character \\u25A1 in text object [鍚嶅瓧].",
+          "stackTrace": "UnityEngine.Debug:LogWarning (object,UnityEngine.Object)\nTMPro.TextMeshPro:SetArraySizes (TMPro.TMP_Text/TextProcessingElement[]) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:1699)\nTMPro.TMP_Text:ParseInputText () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_Text.cs:2044)\nTMPro.TextMeshPro:OnPreRenderObject () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:2144)\nTMPro.TextMeshPro:Rebuild (UnityEngine.UI.CanvasUpdate) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:294)\nTMPro.TMP_UpdateManager:DoRebuilds () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_UpdateManager.cs:177)\nUnityEngine.Canvas:SendWillRenderCanvases ()\n"
+        },
+        {
+          "seq": 6378,
+          "timestampUtc": "2026-08-04T08:09:55.7281245Z",
+          "level": "warn",
+          "message": "The character with Unicode value \\u4EBA was not found in the [SmileySans-Oblique-3 SDF] font asset or any potential fallbacks. It was replaced by Unicode character \\u25A1 in text object [鍚嶅瓧].",
+          "stackTrace": "UnityEngine.Debug:LogWarning (object,UnityEngine.Object)\nTMPro.TextMeshPro:SetArraySizes (TMPro.TMP_Text/TextProcessingElement[]) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:1699)\nTMPro.TMP_Text:ParseInputText () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_Text.cs:2044)\nTMPro.TextMeshPro:OnPreRenderObject () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:2144)\nTMPro.TextMeshPro:Rebuild (UnityEngine.UI.CanvasUpdate) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:294)\nTMPro.TMP_UpdateManager:DoRebuilds () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_UpdateManager.cs:177)\nUnityEngine.Canvas:SendWillRenderCanvases ()\n"
+        },
+        {
+          "seq": 6379,
+          "timestampUtc": "2026-08-04T08:09:55.7281245Z",
+          "level": "warn",
+          "message": "The character with Unicode value \\u9762 was not found in the [SmileySans-Oblique-3 SDF] font asset or any potential fallbacks. It was replaced by Unicode character \\u25A1 in text object [鍚嶅瓧].",
+          "stackTrace": "UnityEngine.Debug:LogWarning (object,UnityEngine.Object)\nTMPro.TextMeshPro:SetArraySizes (TMPro.TMP_Text/TextProcessingElement[]) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:1699)\nTMPro.TMP_Text:ParseInputText () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_Text.cs:2044)\nTMPro.TextMeshPro:OnPreRenderObject () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:2144)\nTMPro.TextMeshPro:Rebuild (UnityEngine.UI.CanvasUpdate) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:294)\nTMPro.TMP_UpdateManager:DoRebuilds () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_UpdateManager.cs:177)\nUnityEngine.Canvas:SendWillRenderCanvases ()\n"
+        },
+        {
+          "seq": 6380,
+          "timestampUtc": "2026-08-04T08:09:55.7286271Z",
+          "level": "warn",
+          "message": "The character with Unicode value \\u83B1 was not found in the [SmileySans-Oblique-3 SDF] font asset or any potential fallbacks. It was replaced by Unicode character \\u25A1 in text object [鍚嶅瓧].",
+          "stackTrace": "UnityEngine.Debug:LogWarning (object,UnityEngine.Object)\nTMPro.TextMeshPro:SetArraySizes (TMPro.TMP_Text/TextProcessingElement[]) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:1699)\nTMPro.TMP_Text:ParseInputText () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_Text.cs:2044)\nTMPro.TextMeshPro:OnPreRenderObject () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:2144)\nTMPro.TextMeshPro:Rebuild (UnityEngine.UI.CanvasUpdate) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:294)\nTMPro.TMP_UpdateManager:DoRebuilds () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_UpdateManager.cs:177)\nUnityEngine.Canvas:SendWillRenderCanvases ()\n"
+        },
+        {
+          "seq": 6381,
+          "timestampUtc": "2026-08-04T08:09:55.7286271Z",
+          "level": "warn",
+          "message": "The character with Unicode value \\u59C6 was not found in the [SmileySans-Oblique-3 SDF] font asset or any potential fallbacks. It was replaced by Unicode character \\u25A1 in text object [鍚嶅瓧].",
+          "stackTrace": "UnityEngine.Debug:LogWarning (object,UnityEngine.Object)\nTMPro.TextMeshPro:SetArraySizes (TMPro.TMP_Text/TextProcessingElement[]) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:1699)\nTMPro.TMP_Text:ParseInputText () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_Text.cs:2044)\nTMPro.TextMeshPro:OnPreRenderObject () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:2144)\nTMPro.TextMeshPro:Rebuild (UnityEngine.UI.CanvasUpdate) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:294)\nTMPro.TMP_UpdateManager:DoRebuilds () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_UpdateManager.cs:177)\nUnityEngine.Canvas:SendWillRenderCanvases ()\n"
+        },
+        {
+          "seq": 6382,
+          "timestampUtc": "2026-08-04T08:09:55.7291302Z",
+          "level": "warn",
+          "message": "The character with Unicode value \\u4F7F was not found in the [SmileySans-Oblique-3 SDF] font asset or any potential fallbacks. It was replaced by Unicode character \\u25A1 in text object [鏍囧噯涓栫晫鏂囧瓧].",
+          "stackTrace": "UnityEngine.Debug:LogWarning (object,UnityEngine.Object)\nTMPro.TextMeshPro:SetArraySizes (TMPro.TMP_Text/TextProcessingElement[]) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:1699)\nTMPro.TMP_Text:ParseInputText () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_Text.cs:2044)\nTMPro.TextMeshPro:OnPreRenderObject () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:2144)\nTMPro.TextMeshPro:Rebuild (UnityEngine.UI.CanvasUpdate) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:294)\nTMPro.TMP_UpdateManager:DoRebuilds () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_UpdateManager.cs:177)\nUnityEngine.Canvas:SendWillRenderCanvases ()\n"
+        },
+        {
+          "seq": 6383,
+          "timestampUtc": "2026-08-04T08:09:55.7301494Z",
+          "level": "warn",
+          "message": "The character with Unicode value \\u7528 was not found in the [SmileySans-Oblique-3 SDF] font asset or any potential fallbacks. It was replaced by Unicode character \\u25A1 in text object [鏍囧噯涓栫晫鏂囧瓧].",
+          "stackTrace": "UnityEngine.Debug:LogWarning (object,UnityEngine.Object)\nTMPro.TextMeshPro:SetArraySizes (TMPro.TMP_Text/TextProcessingElement[]) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:1699)\nTMPro.TMP_Text:ParseInputText () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_Text.cs:2044)\nTMPro.TextMeshPro:OnPreRenderObject () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:2144)\nTMPro.TextMeshPro:Rebuild (UnityEngine.UI.CanvasUpdate) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:294)\nTMPro.TMP_UpdateManager:DoRebuilds () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_UpdateManager.cs:177)\nUnityEngine.Canvas:SendWillRenderCanvases ()\n"
+        },
+        {
+          "seq": 6384,
+          "timestampUtc": "2026-08-04T08:09:55.7301494Z",
+          "level": "warn",
+          "message": "The character with Unicode value \\u6C38 was not found in the [SmileySans-Oblique-3 SDF] font asset or any potential fallbacks. It was replaced by Unicode character \\u25A1 in text object [鏍囧噯涓栫晫鏂囧瓧].",
+          "stackTrace": "UnityEngine.Debug:LogWarning (object,UnityEngine.Object)\nTMPro.TextMeshPro:SetArraySizes (TMPro.TMP_Text/TextProcessingElement[]) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:1699)\nTMPro.TMP_Text:ParseInputText () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_Text.cs:2044)\nTMPro.TextMeshPro:OnPreRenderObject () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:2144)\nTMPro.TextMeshPro:Rebuild (UnityEngine.UI.CanvasUpdate) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:294)\nTMPro.TMP_UpdateManager:DoRebuilds () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_UpdateManager.cs:177)\nUnityEngine.Canvas:SendWillRenderCanvases ()\n"
+        },
+        {
+          "seq": 6385,
+          "timestampUtc": "2026-08-04T08:09:55.7301494Z",
+          "level": "warn",
+          "message": "The character with Unicode value \\u4E45 was not found in the [SmileySans-Oblique-3 SDF] font asset or any potential fallbacks. It was replaced by Unicode character \\u25A1 in text object [鏍囧噯涓栫晫鏂囧瓧].",
+          "stackTrace": "UnityEngine.Debug:LogWarning (object,UnityEngine.Object)\nTMPro.TextMeshPro:SetArraySizes (TMPro.TMP_Text/TextProcessingElement[]) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:1699)\nTMPro.TMP_Text:ParseInputText () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_Text.cs:2044)\nTMPro.TextMeshPro:OnPreRenderObject () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:2144)\nTMPro.TextMeshPro:Rebuild (UnityEngine.UI.CanvasUpdate) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:294)\nTMPro.TMP_UpdateManager:DoRebuilds () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_UpdateManager.cs:177)\nUnityEngine.Canvas:SendWillRenderCanvases ()\n"
+        },
+        {
+          "seq": 6386,
+          "timestampUtc": "2026-08-04T08:09:55.7301494Z",
+          "level": "warn",
+          "message": "The character with Unicode value \\u83B7 was not found in the [SmileySans-Oblique-3 SDF] font asset or any potential fallbacks. It was replaced by Unicode character \\u25A1 in text object [鏍囧噯涓栫晫鏂囧瓧].",
+          "stackTrace": "UnityEngine.Debug:LogWarning (object,UnityEngine.Object)\nTMPro.TextMeshPro:SetArraySizes (TMPro.TMP_Text/TextProcessingElement[]) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:1699)\nTMPro.TMP_Text:ParseInputText () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_Text.cs:2044)\nTMPro.TextMeshPro:OnPreRenderObject () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:2144)\nTMPro.TextMeshPro:Rebuild (UnityEngine.UI.CanvasUpdate) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:294)\nTMPro.TMP_UpdateManager:DoRebuilds () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_UpdateManager.cs:177)\nUnityEngine.Canvas:SendWillRenderCanvases ()\n"
+        },
+        {
+          "seq": 6387,
+          "timestampUtc": "2026-08-04T08:09:55.7311548Z",
+          "level": "warn",
+          "message": "The character with Unicode value \\u5F97 was not found in the [SmileySans-Oblique-3 SDF] font asset or any potential fallbacks. It was replaced by Unicode character \\u25A1 in text object [鏍囧噯涓栫晫鏂囧瓧].",
+          "stackTrace": "UnityEngine.Debug:LogWarning (object,UnityEngine.Object)\nTMPro.TextMeshPro:SetArraySizes (TMPro.TMP_Text/TextProcessingElement[]) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:1699)\nTMPro.TMP_Text:ParseInputText () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_Text.cs:2044)\nTMPro.TextMeshPro:OnPreRenderObject () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:2144)\nTMPro.TextMeshPro:Rebuild (UnityEngine.UI.CanvasUpdate) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:294)\nTMPro.TMP_UpdateManager:DoRebuilds () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_UpdateManager.cs:177)\nUnityEngine.Canvas:SendWillRenderCanvases ()\n"
+        },
+        {
+          "seq": 6388,
+          "timestampUtc": "2026-08-04T08:09:55.7311548Z",
+          "level": "warn",
+          "message": "The character with Unicode value \\u9650 was not found in the [SmileySans-Oblique-3 SDF] font asset or any potential fallbacks. It was replaced by Unicode character \\u25A1 in text object [鏍囧噯涓栫晫鏂囧瓧].",
+          "stackTrace": "UnityEngine.Debug:LogWarning (object,UnityEngine.Object)\nTMPro.TextMeshPro:SetArraySizes (TMPro.TMP_Text/TextProcessingElement[]) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:1699)\nTMPro.TMP_Text:ParseInputText () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_Text.cs:2044)\nTMPro.TextMeshPro:OnPreRenderObject () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:2144)\nTMPro.TextMeshPro:Rebuild (UnityEngine.UI.CanvasUpdate) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:294)\nTMPro.TMP_UpdateManager:DoRebuilds () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_UpdateManager.cs:177)\nUnityEngine.Canvas:SendWillRenderCanvases ()\n"
+        },
+        {
+          "seq": 6389,
+          "timestampUtc": "2026-08-04T08:09:55.7321536Z",
+          "level": "warn",
+          "message": "The character with Unicode value \\u8FD1 was not found in the [SmileySans-Oblique-3 SDF] font asset or any potential fallbacks. It was replaced by Unicode character \\u25A1 in text object [鍚嶅瓧].",
+          "stackTrace": "UnityEngine.Debug:LogWarning (object,UnityEngine.Object)\nTMPro.TextMeshPro:SetArraySizes (TMPro.TMP_Text/TextProcessingElement[]) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:1699)\nTMPro.TMP_Text:ParseInputText () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_Text.cs:2044)\nTMPro.TextMeshPro:OnPreRenderObject () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:2144)\nTMPro.TextMeshPro:Rebuild (UnityEngine.UI.CanvasUpdate) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:294)\nTMPro.TMP_UpdateManager:DoRebuilds () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_UpdateManager.cs:177)\nUnityEngine.Canvas:SendWillRenderCanvases ()\n"
+        },
+        {
+          "seq": 6390,
+          "timestampUtc": "2026-08-04T08:09:55.7321536Z",
+          "level": "warn",
+          "message": "The character with Unicode value \\u8FD1 was not found in the [SmileySans-Oblique-3 SDF] font asset or any potential fallbacks. It was replaced by Unicode character \\u25A1 in text object [鍚嶅瓧].",
+          "stackTrace": "UnityEngine.Debug:LogWarning (object,UnityEngine.Object)\nTMPro.TextMeshPro:SetArraySizes (TMPro.TMP_Text/TextProcessingElement[]) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:1699)\nTMPro.TMP_Text:ParseInputText () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_Text.cs:2044)\nTMPro.TextMeshPro:OnPreRenderObject () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:2144)\nTMPro.TextMeshPro:Rebuild (UnityEngine.UI.CanvasUpdate) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:294)\nTMPro.TMP_UpdateManager:DoRebuilds () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_UpdateManager.cs:177)\nUnityEngine.Canvas:SendWillRenderCanvases ()\n"
+        },
+        {
+          "seq": 6391,
+          "timestampUtc": "2026-08-04T08:09:55.7331539Z",
+          "level": "warn",
+          "message": "The character with Unicode value \\u4F7F was not found in the [SmileySans-Oblique-3 SDF] font asset or any potential fallbacks. It was replaced by Unicode character \\u25A1 in text object [鏍囧噯涓栫晫鏂囧瓧].",
+          "stackTrace": "UnityEngine.Debug:LogWarning (object,UnityEngine.Object)\nTMPro.TextMeshPro:SetArraySizes (TMPro.TMP_Text/TextProcessingElement[]) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:1699)\nTMPro.TMP_Text:ParseInputText () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_Text.cs:2044)\nTMPro.TextMeshPro:OnPreRenderObject () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:2144)\nTMPro.TextMeshPro:Rebuild (UnityEngine.UI.CanvasUpdate) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:294)\nTMPro.TMP_UpdateManager:DoRebuilds () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_UpdateManager.cs:177)\nUnityEngine.Canvas:SendWillRenderCanvases ()\n"
+        },
+        {
+          "seq": 6392,
+          "timestampUtc": "2026-08-04T08:09:55.7331539Z",
+          "level": "warn",
+          "message": "The character with Unicode value \\u7528 was not found in the [SmileySans-Oblique-3 SDF] font asset or any potential fallbacks. It was replaced by Unicode character \\u25A1 in text object [鏍囧噯涓栫晫鏂囧瓧].",
+          "stackTrace": "UnityEngine.Debug:LogWarning (object,UnityEngine.Object)\nTMPro.TextMeshPro:SetArraySizes (TMPro.TMP_Text/TextProcessingElement[]) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:1699)\nTMPro.TMP_Text:ParseInputText () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_Text.cs:2044)\nTMPro.TextMeshPro:OnPreRenderObject () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:2144)\nTMPro.TextMeshPro:Rebuild (UnityEngine.UI.CanvasUpdate) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:294)\nTMPro.TMP_UpdateManager:DoRebuilds () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_UpdateManager.cs:177)\nUnityEngine.Canvas:SendWillRenderCanvases ()\n"
+        },
+        {
+          "seq": 6393,
+          "timestampUtc": "2026-08-04T08:09:55.7336584Z",
+          "level": "warn",
+          "message": "The character with Unicode value \\u63D0 was not found in the [SmileySans-Oblique-3 SDF] font asset or any potential fallbacks. It was replaced by Unicode character \\u25A1 in text object [鏍囧噯涓栫晫鏂囧瓧].",
+          "stackTrace": "UnityEngine.Debug:LogWarning (object,UnityEngine.Object)\nTMPro.TextMeshPro:SetArraySizes (TMPro.TMP_Text/TextProcessingElement[]) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:1699)\nTMPro.TMP_Text:ParseInputText () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_Text.cs:2044)\nTMPro.TextMeshPro:OnPreRenderObject () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:2144)\nTMPro.TextMeshPro:Rebuild (UnityEngine.UI.CanvasUpdate) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:294)\nTMPro.TMP_UpdateManager:DoRebuilds () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_UpdateManager.cs:177)\nUnityEngine.Canvas:SendWillRenderCanvases ()\n"
+        },
+        {
+          "seq": 6394,
+          "timestampUtc": "2026-08-04T08:09:55.7336584Z",
+          "level": "warn",
+          "message": "The character with Unicode value \\u4F9B was not found in the [SmileySans-Oblique-3 SDF] font asset or any potential fallbacks. It was replaced by Unicode character \\u25A1 in text object [鏍囧噯涓栫晫鏂囧瓧].",
+          "stackTrace": "UnityEngine.Debug:LogWarning (object,UnityEngine.Object)\nTMPro.TextMeshPro:SetArraySizes (TMPro.TMP_Text/TextProcessingElement[]) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:1699)\nTMPro.TMP_Text:ParseInputText () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_Text.cs:2044)\nTMPro.TextMeshPro:OnPreRenderObject () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:2144)\nTMPro.TextMeshPro:Rebuild (UnityEngine.UI.CanvasUpdate) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:294)\nTMPro.TMP_UpdateManager:DoRebuilds () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_UpdateManager.cs:177)\nUnityEngine.Canvas:SendWillRenderCanvases ()\n"
+        },
+        {
+          "seq": 6395,
+          "timestampUtc": "2026-08-04T08:09:55.7336584Z",
+          "level": "warn",
+          "message": "The character with Unicode value \\u91D1 was not found in the [SmileySans-Oblique-3 SDF] font asset or any potential fallbacks. It was replaced by Unicode character \\u25A1 in text object [鏍囧噯涓栫晫鏂囧瓧].",
+          "stackTrace": "UnityEngine.Debug:LogWarning (object,UnityEngine.Object)\nTMPro.TextMeshPro:SetArraySizes (TMPro.TMP_Text/TextProcessingElement[]) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:1699)\nTMPro.TMP_Text:ParseInputText () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_Text.cs:2044)\nTMPro.TextMeshPro:OnPreRenderObject () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:2144)\nTMPro.TextMeshPro:Rebuild (UnityEngine.UI.CanvasUpdate) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:294)\nTMPro.TMP_UpdateManager:DoRebuilds () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_UpdateManager.cs:177)\nUnityEngine.Canvas:SendWillRenderCanvases ()\n"
+        },
+        {
+          "seq": 6396,
+          "timestampUtc": "2026-08-04T08:09:55.7336584Z",
+          "level": "warn",
+          "message": "The character with Unicode value \\u5E01 was not found in the [SmileySans-Oblique-3 SDF] font asset or any potential fallbacks. It was replaced by Unicode character \\u25A1 in text object [鏍囧噯涓栫晫鏂囧瓧].",
+          "stackTrace": "UnityEngine.Debug:LogWarning (object,UnityEngine.Object)\nTMPro.TextMeshPro:SetArraySizes (TMPro.TMP_Text/TextProcessingElement[]) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:1699)\nTMPro.TMP_Text:ParseInputText () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_Text.cs:2044)\nTMPro.TextMeshPro:OnPreRenderObject () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:2144)\nTMPro.TextMeshPro:Rebuild (UnityEngine.UI.CanvasUpdate) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:294)\nTMPro.TMP_UpdateManager:DoRebuilds () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_UpdateManager.cs:177)\nUnityEngine.Canvas:SendWillRenderCanvases ()\n"
+        },
+        {
+          "seq": 6397,
+          "timestampUtc": "2026-08-04T08:09:55.7351624Z",
+          "level": "warn",
+          "message": "The character with Unicode value \\u94B1 was not found in the [SmileySans-Oblique-3 SDF] font asset or any potential fallbacks. It was replaced by Unicode character \\u25A1 in text object [鍚嶅瓧].",
+          "stackTrace": "UnityEngine.Debug:LogWarning (object,UnityEngine.Object)\nTMPro.TextMeshPro:SetArraySizes (TMPro.TMP_Text/TextProcessingElement[]) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:1699)\nTMPro.TMP_Text:ParseInputText () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_Text.cs:2044)\nTMPro.TextMeshPro:OnPreRenderObject () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:2144)\nTMPro.TextMeshPro:Rebuild (UnityEngine.UI.CanvasUpdate) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:294)\nTMPro.TMP_UpdateManager:DoRebuilds () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_UpdateManager.cs:177)\nUnityEngine.Canvas:SendWillRenderCanvases ()\n"
+        },
+        {
+          "seq": 6398,
+          "timestampUtc": "2026-08-04T08:09:55.7351624Z",
+          "level": "warn",
+          "message": "The character with Unicode value \\u888B was not found in the [SmileySans-Oblique-3 SDF] font asset or any potential fallbacks. It was replaced by Unicode character \\u25A1 in text object [鍚嶅瓧].",
+          "stackTrace": "UnityEngine.Debug:LogWarning (object,UnityEngine.Object)\nTMPro.TextMeshPro:SetArraySizes (TMPro.TMP_Text/TextProcessingElement[]) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:1699)\nTMPro.TMP_Text:ParseInputText () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_Text.cs:2044)\nTMPro.TextMeshPro:OnPreRenderObject () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:2144)\nTMPro.TextMeshPro:Rebuild (UnityEngine.UI.CanvasUpdate) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:294)\nTMPro.TMP_UpdateManager:DoRebuilds () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_UpdateManager.cs:177)\nUnityEngine.Canvas:SendWillRenderCanvases ()\n"
+        },
+        {
+          "seq": 6399,
+          "timestampUtc": "2026-08-04T08:09:55.7351624Z",
+          "level": "warn",
+          "message": "The character with Unicode value \\u5B50 was not found in the [SmileySans-Oblique-3 SDF] font asset or any potential fallbacks. It was replaced by Unicode character \\u25A1 in text object [鍚嶅瓧].",
+          "stackTrace": "UnityEngine.Debug:LogWarning (object,UnityEngine.Object)\nTMPro.TextMeshPro:SetArraySizes (TMPro.TMP_Text/TextProcessingElement[]) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:1699)\nTMPro.TMP_Text:ParseInputText () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_Text.cs:2044)\nTMPro.TextMeshPro:OnPreRenderObject () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:2144)\nTMPro.TextMeshPro:Rebuild (UnityEngine.UI.CanvasUpdate) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:294)\nTMPro.TMP_UpdateManager:DoRebuilds () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_UpdateManager.cs:177)\nUnityEngine.Canvas:SendWillRenderCanvases ()\n"
+        },
+        {
+          "seq": 6400,
+          "timestampUtc": "2026-08-04T08:09:55.7361671Z",
+          "level": "warn",
+          "message": "The character with Unicode value \\u4EBA was not found in the [SmileySans-Oblique-3 SDF] font asset or any potential fallbacks. It was replaced by Unicode character \\u25A1 in text object [鍚嶅瓧].",
+          "stackTrace": "UnityEngine.Debug:LogWarning (object,UnityEngine.Object)\nTMPro.TextMeshPro:SetArraySizes (TMPro.TMP_Text/TextProcessingElement[]) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:1699)\nTMPro.TMP_Text:ParseInputText () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_Text.cs:2044)\nTMPro.TextMeshPro:OnPreRenderObject () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:2144)\nTMPro.TextMeshPro:Rebuild (UnityEngine.UI.CanvasUpdate) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:294)\nTMPro.TMP_UpdateManager:DoRebuilds () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_UpdateManager.cs:177)\nUnityEngine.Canvas:SendWillRenderCanvases ()\n"
+        },
+        {
+          "seq": 6401,
+          "timestampUtc": "2026-08-04T08:09:55.7361671Z",
+          "level": "warn",
+          "message": "The character with Unicode value \\u9762 was not found in the [SmileySans-Oblique-3 SDF] font asset or any potential fallbacks. It was replaced by Unicode character \\u25A1 in text object [鍚嶅瓧].",
+          "stackTrace": "UnityEngine.Debug:LogWarning (object,UnityEngine.Object)\nTMPro.TextMeshPro:SetArraySizes (TMPro.TMP_Text/TextProcessingElement[]) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:1699)\nTMPro.TMP_Text:ParseInputText () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_Text.cs:2044)\nTMPro.TextMeshPro:OnPreRenderObject () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:2144)\nTMPro.TextMeshPro:Rebuild (UnityEngine.UI.CanvasUpdate) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:294)\nTMPro.TMP_UpdateManager:DoRebuilds () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_UpdateManager.cs:177)\nUnityEngine.Canvas:SendWillRenderCanvases ()\n"
+        },
+        {
+          "seq": 6402,
+          "timestampUtc": "2026-08-04T08:09:55.7361671Z",
+          "level": "warn",
+          "message": "The character with Unicode value \\u83B1 was not found in the [SmileySans-Oblique-3 SDF] font asset or any potential fallbacks. It was replaced by Unicode character \\u25A1 in text object [鍚嶅瓧].",
+          "stackTrace": "UnityEngine.Debug:LogWarning (object,UnityEngine.Object)\nTMPro.TextMeshPro:SetArraySizes (TMPro.TMP_Text/TextProcessingElement[]) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:1699)\nTMPro.TMP_Text:ParseInputText () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_Text.cs:2044)\nTMPro.TextMeshPro:OnPreRenderObject () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:2144)\nTMPro.TextMeshPro:Rebuild (UnityEngine.UI.CanvasUpdate) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:294)\nTMPro.TMP_UpdateManager:DoRebuilds () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_UpdateManager.cs:177)\nUnityEngine.Canvas:SendWillRenderCanvases ()\n"
+        },
+        {
+          "seq": 6403,
+          "timestampUtc": "2026-08-04T08:09:55.7371676Z",
+          "level": "warn",
+          "message": "The character with Unicode value \\u59C6 was not found in the [SmileySans-Oblique-3 SDF] font asset or any potential fallbacks. It was replaced by Unicode character \\u25A1 in text object [鍚嶅瓧].",
+          "stackTrace": "UnityEngine.Debug:LogWarning (object,UnityEngine.Object)\nTMPro.TextMeshPro:SetArraySizes (TMPro.TMP_Text/TextProcessingElement[]) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:1699)\nTMPro.TMP_Text:ParseInputText () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_Text.cs:2044)\nTMPro.TextMeshPro:OnPreRenderObject () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:2144)\nTMPro.TextMeshPro:Rebuild (UnityEngine.UI.CanvasUpdate) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:294)\nTMPro.TMP_UpdateManager:DoRebuilds () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_UpdateManager.cs:177)\nUnityEngine.Canvas:SendWillRenderCanvases ()\n"
+        },
+        {
+          "seq": 6404,
+          "timestampUtc": "2026-08-04T08:09:55.7371676Z",
+          "level": "warn",
+          "message": "The character with Unicode value \\u91CE was not found in the [SmileySans-Oblique-3 SDF] font asset or any potential fallbacks. It was replaced by Unicode character \\u25A1 in text object [鍚嶅瓧].",
+          "stackTrace": "UnityEngine.Debug:LogWarning (object,UnityEngine.Object)\nTMPro.TextMeshPro:SetArraySizes (TMPro.TMP_Text/TextProcessingElement[]) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:1699)\nTMPro.TMP_Text:ParseInputText () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_Text.cs:2044)\nTMPro.TextMeshPro:OnPreRenderObject () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:2144)\nTMPro.TextMeshPro:Rebuild (UnityEngine.UI.CanvasUpdate) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:294)\nTMPro.TMP_UpdateManager:DoRebuilds () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_UpdateManager.cs:177)\nUnityEngine.Canvas:SendWillRenderCanvases ()\n"
+        },
+        {
+          "seq": 6405,
+          "timestampUtc": "2026-08-04T08:09:55.7371676Z",
+          "level": "warn",
+          "message": "The character with Unicode value \\u732A was not found in the [SmileySans-Oblique-3 SDF] font asset or any potential fallbacks. It was replaced by Unicode character \\u25A1 in text object [鍚嶅瓧].",
+          "stackTrace": "UnityEngine.Debug:LogWarning (object,UnityEngine.Object)\nTMPro.TextMeshPro:SetArraySizes (TMPro.TMP_Text/TextProcessingElement[]) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:1699)\nTMPro.TMP_Text:ParseInputText () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_Text.cs:2044)\nTMPro.TextMeshPro:OnPreRenderObject () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:2144)\nTMPro.TextMeshPro:Rebuild (UnityEngine.UI.CanvasUpdate) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:294)\nTMPro.TMP_UpdateManager:DoRebuilds () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_UpdateManager.cs:177)\nUnityEngine.Canvas:SendWillRenderCanvases ()\n"
+        },
+        {
+          "seq": 6406,
+          "timestampUtc": "2026-08-04T08:09:55.7371676Z",
+          "level": "warn",
+          "message": "The character with Unicode value \\u4F7F was not found in the [SmileySans-Oblique-3 SDF] font asset or any potential fallbacks. It was replaced by Unicode character \\u25A1 in text object [鏍囧噯涓栫晫鏂囧瓧].",
+          "stackTrace": "UnityEngine.Debug:LogWarning (object,UnityEngine.Object)\nTMPro.TextMeshPro:SetArraySizes (TMPro.TMP_Text/TextProcessingElement[]) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:1699)\nTMPro.TMP_Text:ParseInputText () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_Text.cs:2044)\nTMPro.TextMeshPro:OnPreRenderObject () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:2144)\nTMPro.TextMeshPro:Rebuild (UnityEngine.UI.CanvasUpdate) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:294)\nTMPro.TMP_UpdateManager:DoRebuilds () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_UpdateManager.cs:177)\nUnityEngine.Canvas:SendWillRenderCanvases ()\n"
+        },
+        {
+          "seq": 6407,
+          "timestampUtc": "2026-08-04T08:09:55.7386709Z",
+          "level": "warn",
+          "message": "The character with Unicode value \\u7528 was not found in the [SmileySans-Oblique-3 SDF] font asset or any potential fallbacks. It was replaced by Unicode character \\u25A1 in text object [鏍囧噯涓栫晫鏂囧瓧].",
+          "stackTrace": "UnityEngine.Debug:LogWarning (object,UnityEngine.Object)\nTMPro.TextMeshPro:SetArraySizes (TMPro.TMP_Text/TextProcessingElement[]) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:1699)\nTMPro.TMP_Text:ParseInputText () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_Text.cs:2044)\nTMPro.TextMeshPro:OnPreRenderObject () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:2144)\nTMPro.TextMeshPro:Rebuild (UnityEngine.UI.CanvasUpdate) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:294)\nTMPro.TMP_UpdateManager:DoRebuilds () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_UpdateManager.cs:177)\nUnityEngine.Canvas:SendWillRenderCanvases ()\n"
+        },
+        {
+          "seq": 6408,
+          "timestampUtc": "2026-08-04T08:09:55.7386709Z",
+          "level": "warn",
+          "message": "The character with Unicode value \\u6C38 was not found in the [SmileySans-Oblique-3 SDF] font asset or any potential fallbacks. It was replaced by Unicode character \\u25A1 in text object [鏍囧噯涓栫晫鏂囧瓧].",
+          "stackTrace": "UnityEngine.Debug:LogWarning (object,UnityEngine.Object)\nTMPro.TextMeshPro:SetArraySizes (TMPro.TMP_Text/TextProcessingElement[]) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:1699)\nTMPro.TMP_Text:ParseInputText () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_Text.cs:2044)\nTMPro.TextMeshPro:OnPreRenderObject () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:2144)\nTMPro.TextMeshPro:Rebuild (UnityEngine.UI.CanvasUpdate) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:294)\nTMPro.TMP_UpdateManager:DoRebuilds () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_UpdateManager.cs:177)\nUnityEngine.Canvas:SendWillRenderCanvases ()\n"
+        },
+        {
+          "seq": 6409,
+          "timestampUtc": "2026-08-04T08:09:55.7392055Z",
+          "level": "warn",
+          "message": "The character with Unicode value \\u4E45 was not found in the [SmileySans-Oblique-3 SDF] font asset or any potential fallbacks. It was replaced by Unicode character \\u25A1 in text object [鏍囧噯涓栫晫鏂囧瓧].",
+          "stackTrace": "UnityEngine.Debug:LogWarning (object,UnityEngine.Object)\nTMPro.TextMeshPro:SetArraySizes (TMPro.TMP_Text/TextProcessingElement[]) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:1699)\nTMPro.TMP_Text:ParseInputText () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_Text.cs:2044)\nTMPro.TextMeshPro:OnPreRenderObject () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:2144)\nTMPro.TextMeshPro:Rebuild (UnityEngine.UI.CanvasUpdate) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:294)\nTMPro.TMP_UpdateManager:DoRebuilds () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_UpdateManager.cs:177)\nUnityEngine.Canvas:SendWillRenderCanvases ()\n"
+        },
+        {
+          "seq": 6410,
+          "timestampUtc": "2026-08-04T08:09:55.7392055Z",
+          "level": "warn",
+          "message": "The character with Unicode value \\u83B7 was not found in the [SmileySans-Oblique-3 SDF] font asset or any potential fallbacks. It was replaced by Unicode character \\u25A1 in text object [鏍囧噯涓栫晫鏂囧瓧].",
+          "stackTrace": "UnityEngine.Debug:LogWarning (object,UnityEngine.Object)\nTMPro.TextMeshPro:SetArraySizes (TMPro.TMP_Text/TextProcessingElement[]) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:1699)\nTMPro.TMP_Text:ParseInputText () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_Text.cs:2044)\nTMPro.TextMeshPro:OnPreRenderObject () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:2144)\nTMPro.TextMeshPro:Rebuild (UnityEngine.UI.CanvasUpdate) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:294)\nTMPro.TMP_UpdateManager:DoRebuilds () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_UpdateManager.cs:177)\nUnityEngine.Canvas:SendWillRenderCanvases ()\n"
+        },
+        {
+          "seq": 6411,
+          "timestampUtc": "2026-08-04T08:09:55.7392055Z",
+          "level": "warn",
+          "message": "The character with Unicode value \\u5F97 was not found in the [SmileySans-Oblique-3 SDF] font asset or any potential fallbacks. It was replaced by Unicode character \\u25A1 in text object [鏍囧噯涓栫晫鏂囧瓧].",
+          "stackTrace": "UnityEngine.Debug:LogWarning (object,UnityEngine.Object)\nTMPro.TextMeshPro:SetArraySizes (TMPro.TMP_Text/TextProcessingElement[]) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:1699)\nTMPro.TMP_Text:ParseInputText () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_Text.cs:2044)\nTMPro.TextMeshPro:OnPreRenderObject () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:2144)\nTMPro.TextMeshPro:Rebuild (UnityEngine.UI.CanvasUpdate) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:294)\nTMPro.TMP_UpdateManager:DoRebuilds () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_UpdateManager.cs:177)\nUnityEngine.Canvas:SendWillRenderCanvases ()\n"
+        },
+        {
+          "seq": 6412,
+          "timestampUtc": "2026-08-04T08:09:55.7402103Z",
+          "level": "warn",
+          "message": "The character with Unicode value \\u653B was not found in the [SmileySans-Oblique-3 SDF] font asset or any potential fallbacks. It was replaced by Unicode character \\u25A1 in text object [鏍囧噯涓栫晫鏂囧瓧].",
+          "stackTrace": "UnityEngine.Debug:LogWarning (object,UnityEngine.Object)\nTMPro.TextMeshPro:SetArraySizes (TMPro.TMP_Text/TextProcessingElement[]) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:1699)\nTMPro.TMP_Text:ParseInputText () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_Text.cs:2044)\nTMPro.TextMeshPro:OnPreRenderObject () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:2144)\nTMPro.TextMeshPro:Rebuild (UnityEngine.UI.CanvasUpdate) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:294)\nTMPro.TMP_UpdateManager:DoRebuilds () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_UpdateManager.cs:177)\nUnityEngine.Canvas:SendWillRenderCanvases ()\n"
+        },
+        {
+          "seq": 6413,
+          "timestampUtc": "2026-08-04T08:09:55.7407144Z",
+          "level": "warn",
+          "message": "The character with Unicode value \\u52A0 was not found in the [SmileySans-Oblique-3 SDF] font asset or any potential fallbacks. It was replaced by Unicode character \\u25A1 in text object [鍚嶅瓧].",
+          "stackTrace": "UnityEngine.Debug:LogWarning (object,UnityEngine.Object)\nTMPro.TextMeshPro:SetArraySizes (TMPro.TMP_Text/TextProcessingElement[]) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:1699)\nTMPro.TMP_Text:ParseInputText () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_Text.cs:2044)\nTMPro.TextMeshPro:OnPreRenderObject () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:2144)\nTMPro.TextMeshPro:Rebuild (UnityEngine.UI.CanvasUpdate) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:294)\nTMPro.TMP_UpdateManager:DoRebuilds () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_UpdateManager.cs:177)\nUnityEngine.Canvas:SendWillRenderCanvases ()\n"
+        },
+        {
+          "seq": 6414,
+          "timestampUtc": "2026-08-04T08:09:55.7407144Z",
+          "level": "warn",
+          "message": "The character with Unicode value \\u653B was not found in the [SmileySans-Oblique-3 SDF] font asset or any potential fallbacks. It was replaced by Unicode character \\u25A1 in text object [鍚嶅瓧].",
+          "stackTrace": "UnityEngine.Debug:LogWarning (object,UnityEngine.Object)\nTMPro.TextMeshPro:SetArraySizes (TMPro.TMP_Text/TextProcessingElement[]) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:1699)\nTMPro.TMP_Text:ParseInputText () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_Text.cs:2044)\nTMPro.TextMeshPro:OnPreRenderObject () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:2144)\nTMPro.TextMeshPro:Rebuild (UnityEngine.UI.CanvasUpdate) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:294)\nTMPro.TMP_UpdateManager:DoRebuilds () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_UpdateManager.cs:177)\nUnityEngine.Canvas:SendWillRenderCanvases ()\n"
+        },
+        {
+          "seq": 6415,
+          "timestampUtc": "2026-08-04T08:09:55.7407144Z",
+          "level": "warn",
+          "message": "The character with Unicode value \\u5904 was not found in the [SmileySans-Oblique-3 SDF] font asset or any potential fallbacks. It was replaced by Unicode character \\u25A1 in text object [鏍囧噯涓栫晫鏂囧瓧].",
+          "stackTrace": "UnityEngine.Debug:LogWarning (object,UnityEngine.Object)\nTMPro.TextMeshPro:SetArraySizes (TMPro.TMP_Text/TextProcessingElement[]) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:1699)\nTMPro.TMP_Text:ParseInputText () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_Text.cs:2044)\nTMPro.TextMeshPro:OnPreRenderObject () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:2144)\nTMPro.TextMeshPro:Rebuild (UnityEngine.UI.CanvasUpdate) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:294)\nTMPro.TMP_UpdateManager:DoRebuilds () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_UpdateManager.cs:177)\nUnityEngine.Canvas:SendWillRenderCanvases ()\n"
+        },
+        {
+          "seq": 6416,
+          "timestampUtc": "2026-08-04T08:09:55.7417204Z",
+          "level": "warn",
+          "message": "The character with Unicode value \\u4E8E was not found in the [SmileySans-Oblique-3 SDF] font asset or any potential fallbacks. It was replaced by Unicode character \\u25A1 in text object [鏍囧噯涓栫晫鏂囧瓧].",
+          "stackTrace": "UnityEngine.Debug:LogWarning (object,UnityEngine.Object)\nTMPro.TextMeshPro:SetArraySizes (TMPro.TMP_Text/TextProcessingElement[]) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:1699)\nTMPro.TMP_Text:ParseInputText () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_Text.cs:2044)\nTMPro.TextMeshPro:OnPreRenderObject () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:2144)\nTMPro.TextMeshPro:Rebuild (UnityEngine.UI.CanvasUpdate) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:294)\nTMPro.TMP_UpdateManager:DoRebuilds () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_UpdateManager.cs:177)\nUnityEngine.Canvas:SendWillRenderCanvases ()\n"
+        },
+        {
+          "seq": 6417,
+          "timestampUtc": "2026-08-04T08:09:55.7422244Z",
+          "level": "warn",
+          "message": "The character with Unicode value \\u5BF9 was not found in the [SmileySans-Oblique-3 SDF] font asset or any potential fallbacks. It was replaced by Unicode character \\u25A1 in text object [鏍囧噯涓栫晫鏂囧瓧].",
+          "stackTrace": "UnityEngine.Debug:LogWarning (object,UnityEngine.Object)\nTMPro.TextMeshPro:SetArraySizes (TMPro.TMP_Text/TextProcessingElement[]) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:1699)\nTMPro.TMP_Text:ParseInputText () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_Text.cs:2044)\nTMPro.TextMeshPro:OnPreRenderObject () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:2144)\nTMPro.TextMeshPro:Rebuild (UnityEngine.UI.CanvasUpdate) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:294)\nTMPro.TMP_UpdateManager:DoRebuilds () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_UpdateManager.cs:177)\nUnityEngine.Canvas:SendWillRenderCanvases ()\n"
+        },
+        {
+          "seq": 6418,
+          "timestampUtc": "2026-08-04T08:09:55.7422244Z",
+          "level": "warn",
+          "message": "The character with Unicode value \\u4F7F was not found in the [SmileySans-Oblique-3 SDF] font asset or any potential fallbacks. It was replaced by Unicode character \\u25A1 in text object [鏍囧噯涓栫晫鏂囧瓧].",
+          "stackTrace": "UnityEngine.Debug:LogWarning (object,UnityEngine.Object)\nTMPro.TextMeshPro:SetArraySizes (TMPro.TMP_Text/TextProcessingElement[]) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:1699)\nTMPro.TMP_Text:ParseInputText () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_Text.cs:2044)\nTMPro.TextMeshPro:OnPreRenderObject () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:2144)\nTMPro.TextMeshPro:Rebuild (UnityEngine.UI.CanvasUpdate) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:294)\nTMPro.TMP_UpdateManager:DoRebuilds () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_UpdateManager.cs:177)\nUnityEngine.Canvas:SendWillRenderCanvases ()\n"
+        },
+        {
+          "seq": 6419,
+          "timestampUtc": "2026-08-04T08:09:55.7422244Z",
+          "level": "warn",
+          "message": "The character with Unicode value \\u7528 was not found in the [SmileySans-Oblique-3 SDF] font asset or any potential fallbacks. It was replaced by Unicode character \\u25A1 in text object [鏍囧噯涓栫晫鏂囧瓧].",
+          "stackTrace": "UnityEngine.Debug:LogWarning (object,UnityEngine.Object)\nTMPro.TextMeshPro:SetArraySizes (TMPro.TMP_Text/TextProcessingElement[]) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:1699)\nTMPro.TMP_Text:ParseInputText () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_Text.cs:2044)\nTMPro.TextMeshPro:OnPreRenderObject () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:2144)\nTMPro.TextMeshPro:Rebuild (UnityEngine.UI.CanvasUpdate) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:294)\nTMPro.TMP_UpdateManager:DoRebuilds () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_UpdateManager.cs:177)\nUnityEngine.Canvas:SendWillRenderCanvases ()\n"
+        },
+        {
+          "seq": 6420,
+          "timestampUtc": "2026-08-04T08:09:55.7422244Z",
+          "level": "warn",
+          "message": "The character with Unicode value \\u7684 was not found in the [SmileySans-Oblique-3 SDF] font asset or any potential fallbacks. It was replaced by Unicode character \\u25A1 in text object [鏍囧噯涓栫晫鏂囧瓧].",
+          "stackTrace": "UnityEngine.Debug:LogWarning (object,UnityEngine.Object)\nTMPro.TextMeshPro:SetArraySizes (TMPro.TMP_Text/TextProcessingElement[]) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:1699)\nTMPro.TMP_Text:ParseInputText () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_Text.cs:2044)\nTMPro.TextMeshPro:OnPreRenderObject () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:2144)\nTMPro.TextMeshPro:Rebuild (UnityEngine.UI.CanvasUpdate) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:294)\nTMPro.TMP_UpdateManager:DoRebuilds () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_UpdateManager.cs:177)\nUnityEngine.Canvas:SendWillRenderCanvases ()\n"
+        },
+        {
+          "seq": 6421,
+          "timestampUtc": "2026-08-04T08:09:55.7432292Z",
+          "level": "warn",
+          "message": "The character with Unicode value \\u5E2E was not found in the [SmileySans-Oblique-3 SDF] font asset or any potential fallbacks. It was replaced by Unicode character \\u25A1 in text object [鏍囧噯涓栫晫鏂囧瓧].",
+          "stackTrace": "UnityEngine.Debug:LogWarning (object,UnityEngine.Object)\nTMPro.TextMeshPro:SetArraySizes (TMPro.TMP_Text/TextProcessingElement[]) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:1699)\nTMPro.TMP_Text:ParseInputText () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_Text.cs:2044)\nTMPro.TextMeshPro:OnPreRenderObject () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:2144)\nTMPro.TextMeshPro:Rebuild (UnityEngine.UI.CanvasUpdate) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:294)\nTMPro.TMP_UpdateManager:DoRebuilds () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_UpdateManager.cs:177)\nUnityEngine.Canvas:SendWillRenderCanvases ()\n"
+        },
+        {
+          "seq": 6422,
+          "timestampUtc": "2026-08-04T08:09:55.7432292Z",
+          "level": "warn",
+          "message": "The character with Unicode value \\u52A9 was not found in the [SmileySans-Oblique-3 SDF] font asset or any potential fallbacks. It was replaced by Unicode character \\u25A1 in text object [鏍囧噯涓栫晫鏂囧瓧].",
+          "stackTrace": "UnityEngine.Debug:LogWarning (object,UnityEngine.Object)\nTMPro.TextMeshPro:SetArraySizes (TMPro.TMP_Text/TextProcessingElement[]) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:1699)\nTMPro.TMP_Text:ParseInputText () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_Text.cs:2044)\nTMPro.TextMeshPro:OnPreRenderObject () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:2144)\nTMPro.TextMeshPro:Rebuild (UnityEngine.UI.CanvasUpdate) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:294)\nTMPro.TMP_UpdateManager:DoRebuilds () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_UpdateManager.cs:177)\nUnityEngine.Canvas:SendWillRenderCanvases ()\n"
+        },
+        {
+          "seq": 6423,
+          "timestampUtc": "2026-08-04T08:09:55.7432292Z",
+          "level": "warn",
+          "message": "The character with Unicode value \\u89E6 was not found in the [SmileySans-Oblique-3 SDF] font asset or any potential fallbacks. It was replaced by Unicode character \\u25A1 in text object [鏍囧噯涓栫晫鏂囧瓧].",
+          "stackTrace": "UnityEngine.Debug:LogWarning (object,UnityEngine.Object)\nTMPro.TextMeshPro:SetArraySizes (TMPro.TMP_Text/TextProcessingElement[]) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:1699)\nTMPro.TMP_Text:ParseInputText () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_Text.cs:2044)\nTMPro.TextMeshPro:OnPreRenderObject () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:2144)\nTMPro.TextMeshPro:Rebuild (UnityEngine.UI.CanvasUpdate) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:294)\nTMPro.TMP_UpdateManager:DoRebuilds () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_UpdateManager.cs:177)\nUnityEngine.Canvas:SendWillRenderCanvases ()\n"
+        },
+        {
+          "seq": 6424,
+          "timestampUtc": "2026-08-04T08:09:55.7442355Z",
+          "level": "warn",
+          "message": "The character with Unicode value \\u53D1 was not found in the [SmileySans-Oblique-3 SDF] font asset or any potential fallbacks. It was replaced by Unicode character \\u25A1 in text object [鏍囧噯涓栫晫鏂囧瓧].",
+          "stackTrace": "UnityEngine.Debug:LogWarning (object,UnityEngine.Object)\nTMPro.TextMeshPro:SetArraySizes (TMPro.TMP_Text/TextProcessingElement[]) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:1699)\nTMPro.TMP_Text:ParseInputText () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_Text.cs:2044)\nTMPro.TextMeshPro:OnPreRenderObject () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:2144)\nTMPro.TextMeshPro:Rebuild (UnityEngine.UI.CanvasUpdate) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:294)\nTMPro.TMP_UpdateManager:DoRebuilds () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_UpdateManager.cs:177)\nUnityEngine.Canvas:SendWillRenderCanvases ()\n"
+        },
+        {
+          "seq": 6425,
+          "timestampUtc": "2026-08-04T08:09:55.744739Z",
+          "level": "warn",
+          "message": "The character with Unicode value \\u4E24 was not found in the [SmileySans-Oblique-3 SDF] font asset or any potential fallbacks. It was replaced by Unicode character \\u25A1 in text object [鏍囧噯涓栫晫鏂囧瓧].",
+          "stackTrace": "UnityEngine.Debug:LogWarning (object,UnityEngine.Object)\nTMPro.TextMeshPro:SetArraySizes (TMPro.TMP_Text/TextProcessingElement[]) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:1699)\nTMPro.TMP_Text:ParseInputText () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_Text.cs:2044)\nTMPro.TextMeshPro:OnPreRenderObject () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:2144)\nTMPro.TextMeshPro:Rebuild (UnityEngine.UI.CanvasUpdate) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:294)\nTMPro.TMP_UpdateManager:DoRebuilds () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_UpdateManager.cs:177)\nUnityEngine.Canvas:SendWillRenderCanvases ()\n"
+        },
+        {
+          "seq": 6426,
+          "timestampUtc": "2026-08-04T08:09:55.744739Z",
+          "level": "warn",
+          "message": "The character with Unicode value \\u6B21 was not found in the [SmileySans-Oblique-3 SDF] font asset or any potential fallbacks. It was replaced by Unicode character \\u25A1 in text object [鏍囧噯涓栫晫鏂囧瓧].",
+          "stackTrace": "UnityEngine.Debug:LogWarning (object,UnityEngine.Object)\nTMPro.TextMeshPro:SetArraySizes (TMPro.TMP_Text/TextProcessingElement[]) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:1699)\nTMPro.TMP_Text:ParseInputText () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_Text.cs:2044)\nTMPro.TextMeshPro:OnPreRenderObject () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:2144)\nTMPro.TextMeshPro:Rebuild (UnityEngine.UI.CanvasUpdate) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:294)\nTMPro.TMP_UpdateManager:DoRebuilds () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_UpdateManager.cs:177)\nUnityEngine.Canvas:SendWillRenderCanvases ()\n"
+        },
+        {
+          "seq": 6427,
+          "timestampUtc": "2026-08-04T08:09:55.744739Z",
+          "level": "warn",
+          "message": "The character with Unicode value \\u5177 was not found in the [SmileySans-Oblique-3 SDF] font asset or any potential fallbacks. It was replaced by Unicode character \\u25A1 in text object [鏍囧噯涓栫晫鏂囧瓧].",
+          "stackTrace": "UnityEngine.Debug:LogWarning (object,UnityEngine.Object)\nTMPro.TextMeshPro:SetArraySizes (TMPro.TMP_Text/TextProcessingElement[]) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:1699)\nTMPro.TMP_Text:ParseInputText () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_Text.cs:2044)\nTMPro.TextMeshPro:OnPreRenderObject () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:2144)\nTMPro.TextMeshPro:Rebuild (UnityEngine.UI.CanvasUpdate) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:294)\nTMPro.TMP_UpdateManager:DoRebuilds () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_UpdateManager.cs:177)\nUnityEngine.Canvas:SendWillRenderCanvases ()\n"
+        },
+        {
+          "seq": 6428,
+          "timestampUtc": "2026-08-04T08:09:55.744739Z",
+          "level": "warn",
+          "message": "The character with Unicode value \\u724C was not found in the [SmileySans-Oblique-3 SDF] font asset or any potential fallbacks. It was replaced by Unicode character \\u25A1 in text object [鏍囧噯涓栫晫鏂囧瓧].",
+          "stackTrace": "UnityEngine.Debug:LogWarning (object,UnityEngine.Object)\nTMPro.TextMeshPro:SetArraySizes (TMPro.TMP_Text/TextProcessingElement[]) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:1699)\nTMPro.TMP_Text:ParseInputText () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_Text.cs:2044)\nTMPro.TextMeshPro:OnPreRenderObject () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:2144)\nTMPro.TextMeshPro:Rebuild (UnityEngine.UI.CanvasUpdate) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:294)\nTMPro.TMP_UpdateManager:DoRebuilds () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_UpdateManager.cs:177)\nUnityEngine.Canvas:SendWillRenderCanvases ()\n"
+        },
+        {
+          "seq": 6429,
+          "timestampUtc": "2026-08-04T08:09:55.7457439Z",
+          "level": "warn",
+          "message": "The character with Unicode value \\u5BF9 was not found in the [SmileySans-Oblique-3 SDF] font asset or any potential fallbacks. It was replaced by Unicode character \\u25A1 in text object [鏍囧噯涓栫晫鏂囧瓧].",
+          "stackTrace": "UnityEngine.Debug:LogWarning (object,UnityEngine.Object)\nTMPro.TextMeshPro:SetArraySizes (TMPro.TMP_Text/TextProcessingElement[]) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:1699)\nTMPro.TMP_Text:ParseInputText () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_Text.cs:2044)\nTMPro.TextMeshPro:OnPreRenderObject () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:2144)\nTMPro.TextMeshPro:Rebuild (UnityEngine.UI.CanvasUpdate) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:294)\nTMPro.TMP_UpdateManager:DoRebuilds () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_UpdateManager.cs:177)\nUnityEngine.Canvas:SendWillRenderCanvases ()\n"
+        },
+        {
+          "seq": 6430,
+          "timestampUtc": "2026-08-04T08:09:55.7457439Z",
+          "level": "warn",
+          "message": "The character with Unicode value \\u4F7F was not found in the [SmileySans-Oblique-3 SDF] font asset or any potential fallbacks. It was replaced by Unicode character \\u25A1 in text object [鏍囧噯涓栫晫鏂囧瓧].",
+          "stackTrace": "UnityEngine.Debug:LogWarning (object,UnityEngine.Object)\nTMPro.TextMeshPro:SetArraySizes (TMPro.TMP_Text/TextProcessingElement[]) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:1699)\nTMPro.TMP_Text:ParseInputText () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_Text.cs:2044)\nTMPro.TextMeshPro:OnPreRenderObject () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:2144)\nTMPro.TextMeshPro:Rebuild (UnityEngine.UI.CanvasUpdate) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:294)\nTMPro.TMP_UpdateManager:DoRebuilds () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_UpdateManager.cs:177)\nUnityEngine.Canvas:SendWillRenderCanvases ()\n"
+        },
+        {
+          "seq": 6431,
+          "timestampUtc": "2026-08-04T08:09:55.7457439Z",
+          "level": "warn",
+          "message": "The character with Unicode value \\u7528 was not found in the [SmileySans-Oblique-3 SDF] font asset or any potential fallbacks. It was replaced by Unicode character \\u25A1 in text object [鏍囧噯涓栫晫鏂囧瓧].",
+          "stackTrace": "UnityEngine.Debug:LogWarning (object,UnityEngine.Object)\nTMPro.TextMeshPro:SetArraySizes (TMPro.TMP_Text/TextProcessingElement[]) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:1699)\nTMPro.TMP_Text:ParseInputText () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_Text.cs:2044)\nTMPro.TextMeshPro:OnPreRenderObject () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:2144)\nTMPro.TextMeshPro:Rebuild (UnityEngine.UI.CanvasUpdate) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:294)\nTMPro.TMP_UpdateManager:DoRebuilds () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_UpdateManager.cs:177)\nUnityEngine.Canvas:SendWillRenderCanvases ()\n"
+        },
+        {
+          "seq": 6432,
+          "timestampUtc": "2026-08-04T08:09:55.7467445Z",
+          "level": "warn",
+          "message": "The character with Unicode value \\u7684 was not found in the [SmileySans-Oblique-3 SDF] font asset or any potential fallbacks. It was replaced by Unicode character \\u25A1 in text object [鏍囧噯涓栫晫鏂囧瓧].",
+          "stackTrace": "UnityEngine.Debug:LogWarning (object,UnityEngine.Object)\nTMPro.TextMeshPro:SetArraySizes (TMPro.TMP_Text/TextProcessingElement[]) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:1699)\nTMPro.TMP_Text:ParseInputText () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_Text.cs:2044)\nTMPro.TextMeshPro:OnPreRenderObject () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:2144)\nTMPro.TextMeshPro:Rebuild (UnityEngine.UI.CanvasUpdate) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:294)\nTMPro.TMP_UpdateManager:DoRebuilds () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_UpdateManager.cs:177)\nUnityEngine.Canvas:SendWillRenderCanvases ()\n"
+        },
+        {
+          "seq": 6433,
+          "timestampUtc": "2026-08-04T08:09:55.7467445Z",
+          "level": "warn",
+          "message": "The character with Unicode value \\u5E2E was not found in the [SmileySans-Oblique-3 SDF] font asset or any potential fallbacks. It was replaced by Unicode character \\u25A1 in text object [鏍囧噯涓栫晫鏂囧瓧].",
+          "stackTrace": "UnityEngine.Debug:LogWarning (object,UnityEngine.Object)\nTMPro.TextMeshPro:SetArraySizes (TMPro.TMP_Text/TextProcessingElement[]) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:1699)\nTMPro.TMP_Text:ParseInputText () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_Text.cs:2044)\nTMPro.TextMeshPro:OnPreRenderObject () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:2144)\nTMPro.TextMeshPro:Rebuild (UnityEngine.UI.CanvasUpdate) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:294)\nTMPro.TMP_UpdateManager:DoRebuilds () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_UpdateManager.cs:177)\nUnityEngine.Canvas:SendWillRenderCanvases ()\n"
+        },
+        {
+          "seq": 6434,
+          "timestampUtc": "2026-08-04T08:09:55.7467445Z",
+          "level": "warn",
+          "message": "The character with Unicode value \\u52A9 was not found in the [SmileySans-Oblique-3 SDF] font asset or any potential fallbacks. It was replaced by Unicode character \\u25A1 in text object [鏍囧噯涓栫晫鏂囧瓧].",
+          "stackTrace": "UnityEngine.Debug:LogWarning (object,UnityEngine.Object)\nTMPro.TextMeshPro:SetArraySizes (TMPro.TMP_Text/TextProcessingElement[]) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:1699)\nTMPro.TMP_Text:ParseInputText () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_Text.cs:2044)\nTMPro.TextMeshPro:OnPreRenderObject () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:2144)\nTMPro.TextMeshPro:Rebuild (UnityEngine.UI.CanvasUpdate) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:294)\nTMPro.TMP_UpdateManager:DoRebuilds () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_UpdateManager.cs:177)\nUnityEngine.Canvas:SendWillRenderCanvases ()\n"
+        },
+        {
+          "seq": 6435,
+          "timestampUtc": "2026-08-04T08:09:55.7467445Z",
+          "level": "warn",
+          "message": "The character with Unicode value \\u751F was not found in the [SmileySans-Oblique-3 SDF] font asset or any potential fallbacks. It was replaced by Unicode character \\u25A1 in text object [鏍囧噯涓栫晫鏂囧瓧].",
+          "stackTrace": "UnityEngine.Debug:LogWarning (object,UnityEngine.Object)\nTMPro.TextMeshPro:SetArraySizes (TMPro.TMP_Text/TextProcessingElement[]) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:1699)\nTMPro.TMP_Text:ParseInputText () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_Text.cs:2044)\nTMPro.TextMeshPro:OnPreRenderObject () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:2144)\nTMPro.TextMeshPro:Rebuild (UnityEngine.UI.CanvasUpdate) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:294)\nTMPro.TMP_UpdateManager:DoRebuilds () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_UpdateManager.cs:177)\nUnityEngine.Canvas:SendWillRenderCanvases ()\n"
+        },
+        {
+          "seq": 6436,
+          "timestampUtc": "2026-08-04T08:09:55.7467445Z",
+          "level": "warn",
+          "message": "The character with Unicode value \\u4E24 was not found in the [SmileySans-Oblique-3 SDF] font asset or any potential fallbacks. It was replaced by Unicode character \\u25A1 in text object [鏍囧噯涓栫晫鏂囧瓧].",
+          "stackTrace": "UnityEngine.Debug:LogWarning (object,UnityEngine.Object)\nTMPro.TextMeshPro:SetArraySizes (TMPro.TMP_Text/TextProcessingElement[]) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:1699)\nTMPro.TMP_Text:ParseInputText () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_Text.cs:2044)\nTMPro.TextMeshPro:OnPreRenderObject () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:2144)\nTMPro.TextMeshPro:Rebuild (UnityEngine.UI.CanvasUpdate) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:294)\nTMPro.TMP_UpdateManager:DoRebuilds () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_UpdateManager.cs:177)\nUnityEngine.Canvas:SendWillRenderCanvases ()\n"
+        },
+        {
+          "seq": 6437,
+          "timestampUtc": "2026-08-04T08:09:55.7482481Z",
+          "level": "warn",
+          "message": "The character with Unicode value \\u6B21 was not found in the [SmileySans-Oblique-3 SDF] font asset or any potential fallbacks. It was replaced by Unicode character \\u25A1 in text object [鏍囧噯涓栫晫鏂囧瓧].",
+          "stackTrace": "UnityEngine.Debug:LogWarning (object,UnityEngine.Object)\nTMPro.TextMeshPro:SetArraySizes (TMPro.TMP_Text/TextProcessingElement[]) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:1699)\nTMPro.TMP_Text:ParseInputText () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_Text.cs:2044)\nTMPro.TextMeshPro:OnPreRenderObject () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:2144)\nTMPro.TextMeshPro:Rebuild (UnityEngine.UI.CanvasUpdate) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:294)\nTMPro.TMP_UpdateManager:DoRebuilds () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_UpdateManager.cs:177)\nUnityEngine.Canvas:SendWillRenderCanvases ()\n"
+        },
+        {
+          "seq": 6438,
+          "timestampUtc": "2026-08-04T08:09:55.7487685Z",
+          "level": "warn",
+          "message": "The character with Unicode value \\u89E6 was not found in the [SmileySans-Oblique-3 SDF] font asset or any potential fallbacks. It was replaced by Unicode character \\u25A1 in text object [鏍囧噯涓栫晫鏂囧瓧].",
+          "stackTrace": "UnityEngine.Debug:LogWarning (object,UnityEngine.Object)\nTMPro.TextMeshPro:SetArraySizes (TMPro.TMP_Text/TextProcessingElement[]) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:1699)\nTMPro.TMP_Text:ParseInputText () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_Text.cs:2044)\nTMPro.TextMeshPro:OnPreRenderObject () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:2144)\nTMPro.TextMeshPro:Rebuild (UnityEngine.UI.CanvasUpdate) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:294)\nTMPro.TMP_UpdateManager:DoRebuilds () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_UpdateManager.cs:177)\nUnityEngine.Canvas:SendWillRenderCanvases ()\n"
+        },
+        {
+          "seq": 6439,
+          "timestampUtc": "2026-08-04T08:09:55.749276Z",
+          "level": "warn",
+          "message": "The character with Unicode value \\u53D1 was not found in the [SmileySans-Oblique-3 SDF] font asset or any potential fallbacks. It was replaced by Unicode character \\u25A1 in text object [鏍囧噯涓栫晫鏂囧瓧].",
+          "stackTrace": "UnityEngine.Debug:LogWarning (object,UnityEngine.Object)\nTMPro.TextMeshPro:SetArraySizes (TMPro.TMP_Text/TextProcessingElement[]) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:1699)\nTMPro.TMP_Text:ParseInputText () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_Text.cs:2044)\nTMPro.TextMeshPro:OnPreRenderObject () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:2144)\nTMPro.TextMeshPro:Rebuild (UnityEngine.UI.CanvasUpdate) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:294)\nTMPro.TMP_UpdateManager:DoRebuilds () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_UpdateManager.cs:177)\nUnityEngine.Canvas:SendWillRenderCanvases ()\n"
+        },
+        {
+          "seq": 6440,
+          "timestampUtc": "2026-08-04T08:09:55.749276Z",
+          "level": "warn",
+          "message": "The character with Unicode value \\u6C38 was not found in the [SmileySans-Oblique-3 SDF] font asset or any potential fallbacks. It was replaced by Unicode character \\u25A1 in text object [鏍囧噯涓栫晫鏂囧瓧].",
+          "stackTrace": "UnityEngine.Debug:LogWarning (object,UnityEngine.Object)\nTMPro.TextMeshPro:SetArraySizes (TMPro.TMP_Text/TextProcessingElement[]) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:1699)\nTMPro.TMP_Text:ParseInputText () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_Text.cs:2044)\nTMPro.TextMeshPro:OnPreRenderObject () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:2144)\nTMPro.TextMeshPro:Rebuild (UnityEngine.UI.CanvasUpdate) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:294)\nTMPro.TMP_UpdateManager:DoRebuilds () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_UpdateManager.cs:177)\nUnityEngine.Canvas:SendWillRenderCanvases ()\n"
+        },
+        {
+          "seq": 6441,
+          "timestampUtc": "2026-08-04T08:09:55.749276Z",
+          "level": "warn",
+          "message": "The character with Unicode value \\u4E45 was not found in the [SmileySans-Oblique-3 SDF] font asset or any potential fallbacks. It was replaced by Unicode character \\u25A1 in text object [鏍囧噯涓栫晫鏂囧瓧].",
+          "stackTrace": "UnityEngine.Debug:LogWarning (object,UnityEngine.Object)\nTMPro.TextMeshPro:SetArraySizes (TMPro.TMP_Text/TextProcessingElement[]) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:1699)\nTMPro.TMP_Text:ParseInputText () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_Text.cs:2044)\nTMPro.TextMeshPro:OnPreRenderObject () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:2144)\nTMPro.TextMeshPro:Rebuild (UnityEngine.UI.CanvasUpdate) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:294)\nTMPro.TMP_UpdateManager:DoRebuilds () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_UpdateManager.cs:177)\nUnityEngine.Canvas:SendWillRenderCanvases ()\n"
+        },
+        {
+          "seq": 6442,
+          "timestampUtc": "2026-08-04T08:09:55.7502784Z",
+          "level": "warn",
+          "message": "The character with Unicode value \\u500D was not found in the [SmileySans-Oblique-3 SDF] font asset or any potential fallbacks. It was replaced by Unicode character \\u25A1 in text object [鍚嶅瓧].",
+          "stackTrace": "UnityEngine.Debug:LogWarning (object,UnityEngine.Object)\nTMPro.TextMeshPro:SetArraySizes (TMPro.TMP_Text/TextProcessingElement[]) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:1699)\nTMPro.TMP_Text:ParseInputText () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_Text.cs:2044)\nTMPro.TextMeshPro:OnPreRenderObject () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:2144)\nTMPro.TextMeshPro:Rebuild (UnityEngine.UI.CanvasUpdate) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:294)\nTMPro.TMP_UpdateManager:DoRebuilds () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_UpdateManager.cs:177)\nUnityEngine.Canvas:SendWillRenderCanvases ()\n"
+        },
+        {
+          "seq": 6443,
+          "timestampUtc": "2026-08-04T08:09:55.7512783Z",
+          "level": "warn",
+          "message": "The character with Unicode value \\u589E was not found in the [SmileySans-Oblique-3 SDF] font asset or any potential fallbacks. It was replaced by Unicode character \\u25A1 in text object [鍚嶅瓧].",
+          "stackTrace": "UnityEngine.Debug:LogWarning (object,UnityEngine.Object)\nTMPro.TextMeshPro:SetArraySizes (TMPro.TMP_Text/TextProcessingElement[]) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:1699)\nTMPro.TMP_Text:ParseInputText () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_Text.cs:2044)\nTMPro.TextMeshPro:OnPreRenderObject () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:2144)\nTMPro.TextMeshPro:Rebuild (UnityEngine.UI.CanvasUpdate) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:294)\nTMPro.TMP_UpdateManager:DoRebuilds () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_UpdateManager.cs:177)\nUnityEngine.Canvas:SendWillRenderCanvases ()\n"
+        },
+        {
+          "seq": 6444,
+          "timestampUtc": "2026-08-04T08:09:55.7512783Z",
+          "level": "warn",
+          "message": "The character with Unicode value \\u5854 was not found in the [SmileySans-Oblique-3 SDF] font asset or any potential fallbacks. It was replaced by Unicode character \\u25A1 in text object [鍚嶅瓧].",
+          "stackTrace": "UnityEngine.Debug:LogWarning (object,UnityEngine.Object)\nTMPro.TextMeshPro:SetArraySizes (TMPro.TMP_Text/TextProcessingElement[]) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:1699)\nTMPro.TMP_Text:ParseInputText () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_Text.cs:2044)\nTMPro.TextMeshPro:OnPreRenderObject () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:2144)\nTMPro.TextMeshPro:Rebuild (UnityEngine.UI.CanvasUpdate) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:294)\nTMPro.TMP_UpdateManager:DoRebuilds () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_UpdateManager.cs:177)\nUnityEngine.Canvas:SendWillRenderCanvases ()\n"
+        },
+        {
+          "seq": 6445,
+          "timestampUtc": "2026-08-04T08:09:55.7512783Z",
+          "level": "warn",
+          "message": "The character with Unicode value \\u8F6E was not found in the [SmileySans-Oblique-3 SDF] font asset or any potential fallbacks. It was replaced by Unicode character \\u25A1 in text object [鍚嶅瓧].",
+          "stackTrace": "UnityEngine.Debug:LogWarning (object,UnityEngine.Object)\nTMPro.TextMeshPro:SetArraySizes (TMPro.TMP_Text/TextProcessingElement[]) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:1699)\nTMPro.TMP_Text:ParseInputText () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_Text.cs:2044)\nTMPro.TextMeshPro:OnPreRenderObject () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:2144)\nTMPro.TextMeshPro:Rebuild (UnityEngine.UI.CanvasUpdate) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:294)\nTMPro.TMP_UpdateManager:DoRebuilds () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_UpdateManager.cs:177)\nUnityEngine.Canvas:SendWillRenderCanvases ()\n"
+        },
+        {
+          "seq": 6446,
+          "timestampUtc": "2026-08-04T08:09:55.7512783Z",
+          "level": "warn",
+          "message": "The character with Unicode value \\u4F7F was not found in the [SmileySans-Oblique-3 SDF] font asset or any potential fallbacks. It was replaced by Unicode character \\u25A1 in text object [鏍囧噯涓栫晫鏂囧瓧].",
+          "stackTrace": "UnityEngine.Debug:LogWarning (object,UnityEngine.Object)\nTMPro.TextMeshPro:SetArraySizes (TMPro.TMP_Text/TextProcessingElement[]) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:1699)\nTMPro.TMP_Text:ParseInputText () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_Text.cs:2044)\nTMPro.TextMeshPro:OnPreRenderObject () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:2144)\nTMPro.TextMeshPro:Rebuild (UnityEngine.UI.CanvasUpdate) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:294)\nTMPro.TMP_UpdateManager:DoRebuilds () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_UpdateManager.cs:177)\nUnityEngine.Canvas:SendWillRenderCanvases ()\n"
+        },
+        {
+          "seq": 6447,
+          "timestampUtc": "2026-08-04T08:09:55.7527806Z",
+          "level": "warn",
+          "message": "The character with Unicode value \\u7528 was not found in the [SmileySans-Oblique-3 SDF] font asset or any potential fallbacks. It was replaced by Unicode character \\u25A1 in text object [鏍囧噯涓栫晫鏂囧瓧].",
+          "stackTrace": "UnityEngine.Debug:LogWarning (object,UnityEngine.Object)\nTMPro.TextMeshPro:SetArraySizes (TMPro.TMP_Text/TextProcessingElement[]) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:1699)\nTMPro.TMP_Text:ParseInputText () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_Text.cs:2044)\nTMPro.TextMeshPro:OnPreRenderObject () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:2144)\nTMPro.TextMeshPro:Rebuild (UnityEngine.UI.CanvasUpdate) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:294)\nTMPro.TMP_UpdateManager:DoRebuilds () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_UpdateManager.cs:177)\nUnityEngine.Canvas:SendWillRenderCanvases ()\n"
+        },
+        {
+          "seq": 6448,
+          "timestampUtc": "2026-08-04T08:09:55.7527806Z",
+          "level": "warn",
+          "message": "The character with Unicode value \\u63D0 was not found in the [SmileySans-Oblique-3 SDF] font asset or any potential fallbacks. It was replaced by Unicode character \\u25A1 in text object [鏍囧噯涓栫晫鏂囧瓧].",
+          "stackTrace": "UnityEngine.Debug:LogWarning (object,UnityEngine.Object)\nTMPro.TextMeshPro:SetArraySizes (TMPro.TMP_Text/TextProcessingElement[]) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:1699)\nTMPro.TMP_Text:ParseInputText () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_Text.cs:2044)\nTMPro.TextMeshPro:OnPreRenderObject () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:2144)\nTMPro.TextMeshPro:Rebuild (UnityEngine.UI.CanvasUpdate) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:294)\nTMPro.TMP_UpdateManager:DoRebuilds () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_UpdateManager.cs:177)\nUnityEngine.Canvas:SendWillRenderCanvases ()\n"
+        },
+        {
+          "seq": 6449,
+          "timestampUtc": "2026-08-04T08:09:55.7527806Z",
+          "level": "warn",
+          "message": "The character with Unicode value \\u4F9B was not found in the [SmileySans-Oblique-3 SDF] font asset or any potential fallbacks. It was replaced by Unicode character \\u25A1 in text object [鏍囧噯涓栫晫鏂囧瓧].",
+          "stackTrace": "UnityEngine.Debug:LogWarning (object,UnityEngine.Object)\nTMPro.TextMeshPro:SetArraySizes (TMPro.TMP_Text/TextProcessingElement[]) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:1699)\nTMPro.TMP_Text:ParseInputText () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_Text.cs:2044)\nTMPro.TextMeshPro:OnPreRenderObject () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:2144)\nTMPro.TextMeshPro:Rebuild (UnityEngine.UI.CanvasUpdate) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:294)\nTMPro.TMP_UpdateManager:DoRebuilds () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_UpdateManager.cs:177)\nUnityEngine.Canvas:SendWillRenderCanvases ()\n"
+        },
+        {
+          "seq": 6450,
+          "timestampUtc": "2026-08-04T08:09:55.7527806Z",
+          "level": "warn",
+          "message": "The character with Unicode value \\u91D1 was not found in the [SmileySans-Oblique-3 SDF] font asset or any potential fallbacks. It was replaced by Unicode character \\u25A1 in text object [鏍囧噯涓栫晫鏂囧瓧].",
+          "stackTrace": "UnityEngine.Debug:LogWarning (object,UnityEngine.Object)\nTMPro.TextMeshPro:SetArraySizes (TMPro.TMP_Text/TextProcessingElement[]) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:1699)\nTMPro.TMP_Text:ParseInputText () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_Text.cs:2044)\nTMPro.TextMeshPro:OnPreRenderObject () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:2144)\nTMPro.TextMeshPro:Rebuild (UnityEngine.UI.CanvasUpdate) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:294)\nTMPro.TMP_UpdateManager:DoRebuilds () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_UpdateManager.cs:177)\nUnityEngine.Canvas:SendWillRenderCanvases ()\n"
+        },
+        {
+          "seq": 6451,
+          "timestampUtc": "2026-08-04T08:09:55.7527806Z",
+          "level": "warn",
+          "message": "The character with Unicode value \\u5E01 was not found in the [SmileySans-Oblique-3 SDF] font asset or any potential fallbacks. It was replaced by Unicode character \\u25A1 in text object [鏍囧噯涓栫晫鏂囧瓧].",
+          "stackTrace": "UnityEngine.Debug:LogWarning (object,UnityEngine.Object)\nTMPro.TextMeshPro:SetArraySizes (TMPro.TMP_Text/TextProcessingElement[]) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:1699)\nTMPro.TMP_Text:ParseInputText () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_Text.cs:2044)\nTMPro.TextMeshPro:OnPreRenderObject () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:2144)\nTMPro.TextMeshPro:Rebuild (UnityEngine.UI.CanvasUpdate) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:294)\nTMPro.TMP_UpdateManager:DoRebuilds () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_UpdateManager.cs:177)\nUnityEngine.Canvas:SendWillRenderCanvases ()\n"
+        },
+        {
+          "seq": 6452,
+          "timestampUtc": "2026-08-04T08:09:55.7542908Z",
+          "level": "warn",
+          "message": "The character with Unicode value \\u94B1 was not found in the [SmileySans-Oblique-3 SDF] font asset or any potential fallbacks. It was replaced by Unicode character \\u25A1 in text object [鍚嶅瓧].",
+          "stackTrace": "UnityEngine.Debug:LogWarning (object,UnityEngine.Object)\nTMPro.TextMeshPro:SetArraySizes (TMPro.TMP_Text/TextProcessingElement[]) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:1699)\nTMPro.TMP_Text:ParseInputText () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_Text.cs:2044)\nTMPro.TextMeshPro:OnPreRenderObject () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:2144)\nTMPro.TextMeshPro:Rebuild (UnityEngine.UI.CanvasUpdate) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:294)\nTMPro.TMP_UpdateManager:DoRebuilds () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_UpdateManager.cs:177)\nUnityEngine.Canvas:SendWillRenderCanvases ()\n"
+        },
+        {
+          "seq": 6453,
+          "timestampUtc": "2026-08-04T08:09:55.7542908Z",
+          "level": "warn",
+          "message": "The character with Unicode value \\u888B was not found in the [SmileySans-Oblique-3 SDF] font asset or any potential fallbacks. It was replaced by Unicode character \\u25A1 in text object [鍚嶅瓧].",
+          "stackTrace": "UnityEngine.Debug:LogWarning (object,UnityEngine.Object)\nTMPro.TextMeshPro:SetArraySizes (TMPro.TMP_Text/TextProcessingElement[]) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:1699)\nTMPro.TMP_Text:ParseInputText () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_Text.cs:2044)\nTMPro.TextMeshPro:OnPreRenderObject () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:2144)\nTMPro.TextMeshPro:Rebuild (UnityEngine.UI.CanvasUpdate) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:294)\nTMPro.TMP_UpdateManager:DoRebuilds () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_UpdateManager.cs:177)\nUnityEngine.Canvas:SendWillRenderCanvases ()\n"
+        },
+        {
+          "seq": 6454,
+          "timestampUtc": "2026-08-04T08:09:55.7542908Z",
+          "level": "warn",
+          "message": "The character with Unicode value \\u5B50 was not found in the [SmileySans-Oblique-3 SDF] font asset or any potential fallbacks. It was replaced by Unicode character \\u25A1 in text object [鍚嶅瓧].",
+          "stackTrace": "UnityEngine.Debug:LogWarning (object,UnityEngine.Object)\nTMPro.TextMeshPro:SetArraySizes (TMPro.TMP_Text/TextProcessingElement[]) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:1699)\nTMPro.TMP_Text:ParseInputText () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_Text.cs:2044)\nTMPro.TextMeshPro:OnPreRenderObject () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:2144)\nTMPro.TextMeshPro:Rebuild (UnityEngine.UI.CanvasUpdate) (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TextMeshPro.cs:294)\nTMPro.TMP_UpdateManager:DoRebuilds () (at ./Library/PackageCache/com.unity.ugui@bb329a87fcdc/Runtime/TMP/TMP_UpdateManager.cs:177)\nUnityEngine.Canvas:SendWillRenderCanvases ()\n"
+        },
+        {
+          "seq": 6455,
+          "timestampUtc": "2026-08-04T08:09:57.2864842Z",
+          "level": "log",
+          "message": "[BattleTrace] Exported: C:/Users/jinji/Documents/GitHub/Ninegrid Gambit/Assets\\Notes\\Logs\\OtherLog\\BattleLog\\battlelog-QuickTest-20260804-160922-seed1.json\nops=10 | [#8 CombatHit/IntentCombatHit dmg=5 kill=True defeat=False] | [#9 StartNode/StartNode dmg=0 kill=False defeat=False]",
+          "stackTrace": "UnityEngine.Debug:Log (object)\nNineGrid.Flow.Diagnostics.BattleTraceRecorder:ExportJson (bool,bool) (at Assets/Scripts/NineGrid.Presentation/Flow/Diagnostics/BattleTraceRecorder.cs:400)\nNineGrid.Flow.Diagnostics.BattleTraceRecorder:ExportOnPlayExit (string) (at Assets/Scripts/NineGrid.Presentation/Flow/Diagnostics/BattleTraceRecorder.cs:444)\nNineGrid.Presentation.Editor.BattleTracePlayModeExporter:OnPlayModeStateChanged (UnityEditor.PlayModeStateChange) (at Assets/Scripts/NineGrid.Presentation/Editor/BattleTracePlayModeExporter.cs:47)\nUnityEngine.GUIUtility:ProcessEvent (int,intptr,bool&)\n"
+        },
+        {
+          "seq": 6456,
+          "timestampUtc": "2026-08-04T08:09:57.2864842Z",
+          "level": "log",
+          "message": "[BattleTrace] Play 缁撴潫宸插鍑烘垬鏂楁棩蹇楋紙ExitingPlayMode锛夛細C:/Users/jinji/Documents/GitHub/Ninegrid Gambit/Assets\\Notes\\Logs\\OtherLog\\BattleLog\\battlelog-QuickTest-20260804-160922-seed1.json",
+          "stackTrace": "UnityEngine.Debug:Log (object)\nNineGrid.Flow.Diagnostics.BattleTraceRecorder:ExportOnPlayExit (string) (at Assets/Scripts/NineGrid.Presentation/Flow/Diagnostics/BattleTraceRecorder.cs:447)\nNineGrid.Presentation.Editor.BattleTracePlayModeExporter:OnPlayModeStateChanged (UnityEditor.PlayModeStateChange) (at Assets/Scripts/NineGrid.Presentation/Editor/BattleTracePlayModeExporter.cs:47)\nUnityEngine.GUIUtility:ProcessEvent (int,intptr,bool&)\n"
+        },
+        {
+          "seq": 6457,
+          "timestampUtc": "2026-08-04T08:09:57.2915132Z",
+          "level": "log",
+          "message": "[FlowTrace] Exported CoreLog: C:/Users/jinji/Documents/GitHub/Ninegrid Gambit/Assets\\Notes\\Logs\\CoreLog\\corelog-QuickTest-20260804-160922-seed1.json\nevents=463 | [#459 Presentation/OpeningDealProgress ok=True] | [#460 Hand/HandAcquire ok=True] | [#461 Presentation/OpeningDealProgress ok=True] | [#462 Presentation/SessionChoreoSummary ok=True]",
+          "stackTrace": "UnityEngine.Debug:Log (object)\nNineGrid.Flow.Diagnostics.FlowTraceRecorder:ExportJson (bool,bool) (at Assets/Scripts/NineGrid.Presentation/Flow/Diagnostics/FlowTraceRecorder.cs:209)\nNineGrid.Flow.Diagnostics.FlowTraceRecorder:ExportOnPlayExit (string) (at Assets/Scripts/NineGrid.Presentation/Flow/Diagnostics/FlowTraceRecorder.cs:239)\nNineGrid.Flow.Diagnostics.BattleTraceRecorder:ExportOnPlayExit (string) (at Assets/Scripts/NineGrid.Presentation/Flow/Diagnostics/BattleTraceRecorder.cs:452)\nNineGrid.Presentation.Editor.BattleTracePlayModeExporter:OnPlayModeStateChanged (UnityEditor.PlayModeStateChange) (at Assets/Scripts/NineGrid.Presentation/Editor/BattleTracePlayModeExporter.cs:47)\nUnityEngine.GUIUtility:ProcessEvent (int,intptr,bool&)\n"
+        },
+        {
+          "seq": 6458,
+          "timestampUtc": "2026-08-04T08:09:57.2915132Z",
+          "level": "log",
+          "message": "[FlowTrace] Play 缁撴潫宸插鍑烘祦绋嬫棩蹇楋紙ExitingPlayMode锛夛細C:/Users/jinji/Documents/GitHub/Ninegrid Gambit/Assets\\Notes\\Logs\\CoreLog\\corelog-QuickTest-20260804-160922-seed1.json",
+          "stackTrace": "UnityEngine.Debug:Log (object)\nNineGrid.Flow.Diagnostics.FlowTraceRecorder:ExportOnPlayExit (string) (at Assets/Scripts/NineGrid.Presentation/Flow/Diagnostics/FlowTraceRecorder.cs:242)\nNineGrid.Flow.Diagnostics.BattleTraceRecorder:ExportOnPlayExit (string) (at Assets/Scripts/NineGrid.Presentation/Flow/Diagnostics/BattleTraceRecorder.cs:452)\nNineGrid.Presentation.Editor.BattleTracePlayModeExporter:OnPlayModeStateChanged (UnityEditor.PlayModeStateChange) (at Assets/Scripts/NineGrid.Presentation/Editor/BattleTracePlayModeExporter.cs:47)\nUnityEngine.GUIUtility:ProcessEvent (int,intptr,bool&)\n"
+        },
+        {
+          "seq": 6459,
+          "timestampUtc": "2026-08-04T08:09:57.3015898Z",
+          "level": "log",
+          "message": "[PerfTrace] Exported: C:/Users/jinji/Documents/GitHub/Ninegrid Gambit/Assets\\Notes\\Logs\\PerfLog\\perflog-QuickTest-20260804-160922-seed1.json events=2142",
+          "stackTrace": "UnityEngine.Debug:Log (object)\nNineGrid.Flow.Diagnostics.PerfTraceRecorder:ExportJson (bool,bool) (at Assets/Scripts/NineGrid.Presentation/Flow/Diagnostics/PerfTraceRecorder.cs:468)\nNineGrid.Flow.Diagnostics.PerfTraceRecorder:ExportOnPlayExit (string) (at Assets/Scripts/NineGrid.Presentation/Flow/Diagnostics/PerfTraceRecorder.cs:489)\nNineGrid.Flow.Diagnostics.BattleTraceRecorder:ExportOnPlayExit (string) (at Assets/Scripts/NineGrid.Presentation/Flow/Diagnostics/BattleTraceRecorder.cs:453)\nNineGrid.Presentation.Editor.BattleTracePlayModeExporter:OnPlayModeStateChanged (UnityEditor.PlayModeStateChange) (at Assets/Scripts/NineGrid.Presentation/Editor/BattleTracePlayModeExporter.cs:47)\nUnityEngine.GUIUtility:ProcessEvent (int,intptr,bool&)\n"
+        },
+        {
+          "seq": 6460,
+          "timestampUtc": "2026-08-04T08:09:57.3015898Z",
+          "level": "log",
+          "message": "[PerfTrace] Play 缁撴潫宸插鍑鸿〃鐜版棩蹇楋紙ExitingPlayMode锛夛細C:/Users/jinji/Documents/GitHub/Ninegrid Gambit/Assets\\Notes\\Logs\\PerfLog\\perflog-QuickTest-20260804-160922-seed1.json",
+          "stackTrace": "UnityEngine.Debug:Log (object)\nNineGrid.Flow.Diagnostics.PerfTraceRecorder:ExportOnPlayExit (string) (at Assets/Scripts/NineGrid.Presentation/Flow/Diagnostics/PerfTraceRecorder.cs:492)\nNineGrid.Flow.Diagnostics.BattleTraceRecorder:ExportOnPlayExit (string) (at Assets/Scripts/NineGrid.Presentation/Flow/Diagnostics/BattleTraceRecorder.cs:453)\nNineGrid.Presentation.Editor.BattleTracePlayModeExporter:OnPlayModeStateChanged (UnityEditor.PlayModeStateChange) (at Assets/Scripts/NineGrid.Presentation/Editor/BattleTracePlayModeExporter.cs:47)\nUnityEngine.GUIUtility:ProcessEvent (int,intptr,bool&)\n"
+        },
+        {
+          "seq": 6461,
+          "timestampUtc": "2026-08-04T08:09:57.3046041Z",
+          "level": "log",
+          "message": "[RegistryTrace] 宸插鍑烘敞鍐岃〃鏃ュ織锛欳:/Users/jinji/Documents/GitHub/Ninegrid Gambit/Assets\\Notes\\Logs\\OtherLog\\RegistryLog\\registrylog-QuickTest-20260804-160922-seed1.json events=290",
+          "stackTrace": "UnityEngine.Debug:Log (object)\nNineGrid.Flow.Diagnostics.RegistryTraceRecorder:ExportJson (bool,bool) (at Assets/Scripts/NineGrid.Presentation/Flow/Diagnostics/RegistryTraceRecorder.cs:512)\nNineGrid.Flow.Diagnostics.BattleTraceRecorder:ExportOnPlayExit (string) (at Assets/Scripts/NineGrid.Presentation/Flow/Diagnostics/BattleTraceRecorder.cs:454)\nNineGrid.Presentation.Editor.BattleTracePlayModeExporter:OnPlayModeStateChanged (UnityEditor.PlayModeStateChange) (at Assets/Scripts/NineGrid.Presentation/Editor/BattleTracePlayModeExporter.cs:47)\nUnityEngine.GUIUtility:ProcessEvent (int,intptr,bool&)\n"
+        }
+      ],
+      "cursor": 6461,
+      "returned": 100,
+      "dropped": false
+    },
+    "target": {
+      "host": "localhost",
+      "port": 7800,
+      "projectPath": "C:\\Users\\jinji\\Documents\\GitHub\\Ninegrid Gambit"
+    },
+    "success": true
+  },
+  "errors": [],
+  "warnings": []
+}
