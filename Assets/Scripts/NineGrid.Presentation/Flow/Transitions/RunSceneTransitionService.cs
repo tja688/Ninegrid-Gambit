@@ -1,3 +1,4 @@
+using System;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using MoreMountains.Tools;
@@ -101,20 +102,56 @@ namespace NineGrid.Flow.Transitions
                 await PlayFadeInAsync(crossFloor, ct);
                 if (ct.IsCancellationRequested)
                 {
+                    ForceClearFaders();
                     return;
                 }
 
-                await midAction(ct);
-                if (ct.IsCancellationRequested)
+                try
                 {
-                    return;
+                    await midAction(ct);
                 }
-
-                await PlayFadeOutAsync(crossFloor, ct);
+                finally
+                {
+                    // midAction（进房硬切）可能取消外部 token；Reveal 必须仍执行，否则黑屏卡死。
+                    await PlayFadeOutAsync(crossFloor, CancellationToken.None);
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                ForceClearFaders();
+                throw;
             }
             finally
             {
                 mBusy = false;
+            }
+        }
+
+        /// <summary>异常/取消时强制收掉遮罩，避免全屏黑死。</summary>
+        private void ForceClearFaders()
+        {
+            if (roundFader != null)
+            {
+                MMFadeStopEvent.Trigger(RunSceneTransitionSettingsSO.RoundFaderId, restore: false);
+                var cg = roundFader.GetComponent<CanvasGroup>();
+                if (cg != null)
+                {
+                    cg.alpha = 0f;
+                    cg.blocksRaycasts = false;
+                }
+            }
+
+            if (directionalFader != null)
+            {
+                MMFadeStopEvent.Trigger(RunSceneTransitionSettingsSO.DirectionalFaderId, restore: false);
+                var cg = directionalFader.GetComponent<CanvasGroup>();
+                if (cg != null)
+                {
+                    cg.alpha = 0f;
+                    cg.blocksRaycasts = false;
+                }
+
+                directionalFader.enabled = false;
             }
         }
 

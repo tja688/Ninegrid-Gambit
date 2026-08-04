@@ -269,7 +269,7 @@ namespace NineGrid.Flow.RoomIcons
             }
 
             _ = optionIndex;
-            var accepted = await SubmitSelectAndEnterAsync(submitIndex, parentCt);
+            var accepted = await SubmitSelectAndEnterAsync(submitIndex);
             if (accepted)
             {
                 mDwell.MarkSubmitted();
@@ -281,7 +281,7 @@ namespace NineGrid.Flow.RoomIcons
             }
         }
 
-        private async UniTask<bool> SubmitSelectAndEnterAsync(int optionIndex, CancellationToken ct)
+        private async UniTask<bool> SubmitSelectAndEnterAsync(int optionIndex)
         {
             var arch = mArch ?? NineGridArchitecture.Current;
             if (arch == null)
@@ -308,6 +308,8 @@ namespace NineGrid.Flow.RoomIcons
             var accepted = false;
             try
             {
+                // 过场不可绑 dwell CTS：HardCut/DespawnAll 会 CancelDwellWatch，
+                // 若 Cover 后 token 已取消会跳过 FadeOut，黑屏卡死。
                 await transition.PlayCoverRevealAsync(
                     crossFloor,
                     _ =>
@@ -315,7 +317,7 @@ namespace NineGrid.Flow.RoomIcons
                         accepted = ExecuteSelectEnterHardCut(arch, optionIndex);
                         return UniTask.CompletedTask;
                     },
-                    ct);
+                    CancellationToken.None);
             }
             catch (OperationCanceledException)
             {
