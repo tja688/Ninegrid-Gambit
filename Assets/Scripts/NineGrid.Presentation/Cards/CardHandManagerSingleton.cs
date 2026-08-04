@@ -1231,7 +1231,7 @@ namespace NineGrid.Cards
                 ClearDragSession();
                 CardOpacityUtility.ResetAlpha(card);
                 SetRecycleUiActive(false);
-                await VanishCardAfterApplyAsync(card);
+                await ShatterCardAfterRecycleAsync(card);
                 return;
             }
 
@@ -1412,6 +1412,43 @@ namespace NineGrid.Cards
 
                 CardOpacityUtility.ClearCache(card.Uid);
                 CardEntityLifecycleHook.CardsOrNull()?.Release(card, "Hand.VanishAfterApply");
+            }
+            finally
+            {
+                _isBusy = false;
+            }
+        }
+
+        /// <summary>
+        /// 回收兑金退场：走 Death 碎裂通道，不用 Use/缩小消失。
+        /// </summary>
+        private async UniTask ShatterCardAfterRecycleAsync(ManagedCard card)
+        {
+            if (card?.Transform == null)
+            {
+                CardEntityLifecycleHook.CardsOrNull()?.Release(card, "Hand.RecycleShatterNoTransform");
+                return;
+            }
+
+            _isBusy = true;
+            try
+            {
+                CardEntityLifecycleHook.CardsOrNull()?.SetDisplayMode(card, CardDisplayMode.RemovedMode);
+                if (card.TryGetEffectManager(out var effectManager))
+                {
+                    await effectManager.PlayDeathAsync(
+                        selfSlot: 0,
+                        selfDirection: CardBoardDirection.None,
+                        cancellationToken: CancellationToken.None);
+                }
+                else
+                {
+                    // 无 EffectManager 时仍避免「缩小」手感：直接离手销毁。
+                    await UniTask.Yield(PlayerLoopTiming.Update);
+                }
+
+                CardOpacityUtility.ClearCache(card.Uid);
+                CardEntityLifecycleHook.CardsOrNull()?.Release(card, "Hand.RecycleShatter");
             }
             finally
             {
@@ -1610,7 +1647,7 @@ namespace NineGrid.Cards
                 return;
             }
 
-            VanishCardAfterApplyAsync(removed).Forget();
+            ShatterCardAfterRecycleAsync(removed).Forget();
         }
 
         private static bool IsOverGroundCard(Vector3 worldPoint)
