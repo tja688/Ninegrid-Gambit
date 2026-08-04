@@ -56,11 +56,16 @@ namespace NineGrid.Core.Tests
             Assert.AreEqual(CardKind.Trap, trap.Kind);
             Assert.AreEqual("deck.trap", trap.DeckId);
             CollectionAssert.Contains(trap.EffectIds, "trap.leave.door");
+            CollectionAssert.Contains(trap.EffectIds, "trap.leave.magic_immunity");
             CollectionAssert.Contains(trap.EffectIds, "trap.leave.leave");
 
             Assert.IsTrue(mContent.Catalog.TryGetEffect("trap.leave.door", out var door));
             Assert.AreEqual(ContentImplementationState.Implemented, door.State);
             Assert.AreEqual(EffectContainerType.Trap, door.ContainerType);
+
+            Assert.IsTrue(mContent.Catalog.TryGetEffect("trap.leave.magic_immunity", out var magic));
+            Assert.AreEqual(ContentImplementationState.Implemented, magic.State);
+            Assert.AreEqual(EffectContainerType.Trap, magic.ContainerType);
 
             Assert.IsTrue(mContent.Catalog.TryGetEffect("trap.leave.leave", out var leave));
             Assert.AreEqual(ContentImplementationState.Implemented, leave.State);
@@ -161,6 +166,53 @@ namespace NineGrid.Core.Tests
             Assert.AreNotEqual(ZoneId.Board, registry.Get(leaveUid).Zone.Value, "击破后应离场");
             Assert.AreEqual(coinsBefore, player.Coins.Value, "击破离开机关无击杀赏金");
             Assert.AreEqual(ZoneId.Board, registry.Get(monsterUid).Zone.Value, "ApplyCombatHit 不走收场清残留");
+        }
+
+        [Test]
+        public void MagicImmunity_IsMounted_OnLeaveTrap()
+        {
+            StartEmptyNode();
+            var leaveUid = SpawnLeaveTrap(hp: 6);
+            var registry = mArch.GetModel<CardRegistry>();
+            Assert.Greater(
+                mStats.EvaluateRule(RuleId.MagicImmunity, 0f, mStats.CreateContext(registry.Get(leaveUid))),
+                0f,
+                "魔免技能应挂 MagicImmunity");
+        }
+
+        [Test]
+        public void MagicImmunity_BlocksTeleportEffect_ButAllowsCombatKill()
+        {
+            StartEmptyNode();
+            PrepareAvatar(99, 99, 0);
+            var leaveUid = SpawnLeaveTrap(hp: 1);
+            var registry = mArch.GetModel<CardRegistry>();
+            var board = mArch.GetModel<BoardModel>();
+
+            mPipeline.Enqueue(new SpawnCardAction(
+                "help.teleport_card",
+                CardKind.HelpCard,
+                ZoneId.ItemSlots,
+                SlotId.None,
+                1,
+                "test"));
+            Assert.Greater(mPipeline.RunToCompletion(), 0);
+            var teleportUid = mArch.GetModel<DeckModel>().ItemSlotUids[
+                mArch.GetModel<DeckModel>().ItemSlotUids.Count - 1];
+
+            Assert.IsTrue(
+                mPhase.ApplyUseItem(teleportUid, new System.Collections.Generic.List<int> { leaveUid }, null)
+                    .Accepted,
+                "传送可选中离开机关（targeting 合法）");
+            Assert.AreEqual(
+                ZoneId.Board,
+                registry.Get(leaveUid).Zone.Value,
+                "魔免：传送效果对离开机关直接失效，不得洗回卡组");
+
+            Assert.IsTrue(mPhase.ApplyCombatHit(board.AvatarUid.Value, leaveUid).Accepted);
+            Assert.IsTrue(
+                mArch.GetModel<BattleContextModel>().IsLeaveTrapBroken,
+                "魔免不挡玩家交战击破");
         }
 
         private void StartEmptyNode()

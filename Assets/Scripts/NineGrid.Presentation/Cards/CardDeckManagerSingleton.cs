@@ -442,6 +442,27 @@ namespace NineGrid.Cards
         }
 
         /// <summary>
+        /// 刷新卡组 sorting（含 SortingLayer Propagate）；供 CardManager 在 CardDeckMode 切换时委托。
+        /// 对齐手牌 EnsureHandSorting：禁止入槽后再被 DisplayMode 默认序 -30 打回。
+        /// </summary>
+        internal void EnsureDeckSorting(ManagedCard card)
+        {
+            if (card == null || _slotContainer == null)
+            {
+                return;
+            }
+
+            if (TryFindDeckSlotByUid(card.Uid, out var slotIndex))
+            {
+                _slotContainer.ApplySortingOrder(card, slotIndex);
+            }
+            else
+            {
+                _slotContainer.ApplySortingOrders();
+            }
+        }
+
+        /// <summary>
         /// 回收区 UI 激活期间：卡组卡临时下沉到 BG Sorting Layer，使 CardRecycleNotice 压住卡组，
         /// 同时手牌/遗物拖拽仍留在 Main 压住 Notice。关闭时恢复 Main。
         /// </summary>

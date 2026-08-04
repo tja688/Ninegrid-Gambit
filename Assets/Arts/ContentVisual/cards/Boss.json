@@ -4,7 +4,7 @@
     "kind": "Room",
     "deckId": "",
     "displayName": "层主房",
-    "description": "无开局注入",
+    "description": "层主战前缓冲图标：走格进入后推进至层主战",
     "faceIntro": "",
     "gold": 0,
     "stats": {
@@ -83,7 +83,7 @@
     "weight": 0,
     "rewardPoolId": "",
     "shopOfferCount": 0,
-    "iconPrefab": "Assets/Prefabs/Boss房图标.prefab",
+    "iconPrefab": "Assets/Prefabs/地形图标/Boss房图标.prefab",
     "boardSlot": 3,
     "effectAssemblies": [],
     "role": "",

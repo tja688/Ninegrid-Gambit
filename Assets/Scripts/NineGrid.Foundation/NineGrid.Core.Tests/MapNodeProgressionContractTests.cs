@@ -54,7 +54,7 @@ namespace NineGrid.Core.Tests
             AssertSchedule(3, 4, NodeRoomSource.PreviousChoice, false, NodeOfferFamily.Leave, false);
             AssertSchedule(4, 5, NodeRoomSource.RandomBattle, true, NodeOfferFamily.BattleRooms, true);
             AssertSchedule(5, 6, NodeRoomSource.PreviousChoice, true, NodeOfferFamily.SpecialRooms, true);
-            AssertSchedule(6, 7, NodeRoomSource.PreviousChoice, false, NodeOfferFamily.Leave, false);
+            AssertSchedule(6, 7, NodeRoomSource.PreviousChoice, false, NodeOfferFamily.Boss, false);
             AssertSchedule(7, 8, NodeRoomSource.Boss, true, NodeOfferFamily.GoDown, false);
         }
 
@@ -79,6 +79,24 @@ namespace NineGrid.Core.Tests
             Assert.IsTrue(mPhase.StartNode(CreateSingleMonsterNode(1, 0)).Accepted);
             Assert.AreEqual(GamePhase.RoomChoice, mPhase.CurrentPhase);
             Assert.AreNotEqual(GamePhase.InteractionLoop, mPhase.CurrentPhase);
+            Assert.AreEqual(PendingChoiceKind.Room, mArch.GetModel<PendingChoiceModel>().Kind.Value);
+            Assert.AreEqual(1, mArch.GetModel<PendingChoiceModel>().RoomOptions.Count);
+            Assert.AreEqual(RoomKind.Boss, mArch.GetModel<PendingChoiceModel>().RoomOptions[0]);
+        }
+
+        [Test]
+        public void EnterBossAntechamber_AdvancesToBossNode()
+        {
+            var run = mArch.GetModel<RunModel>();
+            run.NodeIndex.Value = 6;
+            Assert.IsTrue(mPhase.StartNode(CreateSingleMonsterNode(1, 0)).Accepted);
+            Assert.IsTrue(mPhase.SelectRoom(0).Accepted);
+            Assert.IsTrue(mPhase.EnterRoom().Accepted);
+
+            Assert.AreEqual(7, run.NodeIndex.Value);
+            Assert.AreEqual(RoomKind.Boss, run.Room.Value);
+            Assert.AreEqual(GamePhase.NodeCompleted, mPhase.CurrentPhase);
+            Assert.IsTrue(MapNodeProgression.EntersInteractionLoop(run.NodeIndex.Value));
         }
 
         [Test]
@@ -321,6 +339,7 @@ namespace NineGrid.Core.Tests
                 .AddRoom(new RoomDefinition(RoomKind.Treasure, "宝藏") { Weight = 10 })
                 .AddRoom(new RoomDefinition(RoomKind.Attribute, "属性") { Weight = 10 })
                 .AddRoom(new RoomDefinition(RoomKind.Elite, "困难") { Weight = 10 })
+                .AddRoom(new RoomDefinition(RoomKind.Boss, "层主房") { Weight = 1 })
                 .AddRoom(new RoomDefinition(RoomKind.Shop, "商店") { Weight = 10 })
                 .AddRoom(new RoomDefinition(RoomKind.Tavern, "酒馆") { Weight = 10 })
                 .AddRoom(new RoomDefinition(RoomKind.TreasureReward, "宝箱奖励") { Weight = 10 })

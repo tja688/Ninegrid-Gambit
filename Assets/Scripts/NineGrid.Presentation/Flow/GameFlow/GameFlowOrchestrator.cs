@@ -397,7 +397,7 @@ namespace NineGrid.Flow
             await UniTask.Yield(cancellationToken: ct);
         }
 
-        /// <summary>节点 4/7：StartNode → 非战斗 RoomChoice（离开图标），不进 InteractionLoop。</summary>
+        /// <summary>节点 4/7：StartNode → 非战斗 RoomChoice（4=离开 / 7=层主房图标），不进 InteractionLoop。</summary>
         private async UniTask<bool> PlayNonCombatNodeAsync(CancellationToken ct)
         {
             RequestSetState(GameFlowShellState.RoomChoice);

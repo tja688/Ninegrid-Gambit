@@ -45,7 +45,7 @@
 |------|----------|
 | `PresentationEventMapBeatExhaustivenessTests` | #54/#57/#60/#61/#62：每个 `CoreEventType` 须有表演映射与显式 `PresentationBeat`；`None` 必须带理由；观察型 `BaseStatModified` 不得落在 `Impact`；`CardDealt`/`AvatarAppeared`/`CardFaceChanged` 为 Settled；`DamageDealt`/`EffectTriggered` 为 Impact；`GoldModified`/`RewardOffered` 为 Settled |
 | `CardFaceOrientationTests` | ADR-0016：Flip/Reveal 改 FaceUp 并发 `CardFaceChanged`；攻击拒背面；背面怪不 −1/不开火；`DealDamage`/爆弹类不中背面；`FaceDownTickCounters` 注册/Tick/查询；OnFlip/Flip/IsFaceUp 原子与 `ActiveWhileFaceDown` token |
-| `TrapKindDualBucketRegressionTests` / `Batch2HardSkillsRegressionTests`（复活石） / `TrapBatch2RegressionTests` / `LeaveTrapDoorLeaveContractTests` / `LeaveTrapInsertContractTests` / `LeaveTrapClearContractTests` | ADR-0017：`CardKind.Trap` 双桶；爆弹/`SelectedCards` 指向伤（飞刀等）可伤 Trap；绑架 `trueMonsterOnly` 仍仅真怪；清关/赏金排除；静默 `CounterAttackBanned`；复活石 Kind/deck/container 迁正；批2 滚石/捕熊/烈焰语义与 Help 迁徙；**#111 / ADR-0026**：离开机关 `trap.leave` + 门/离开（交战可伤、非交战/直接移除无效、击破置清关标志、无赏金）；**#112 / ADR-0026**：默认 ⌈N/2⌉ 后 `ShuffleIntoDrawPile(trap.leave)`（N 不含机关、奇数上取整、幂等）；层主房改击破开局层主；经补牌上场；**#113 / ADR-0026**：`IsNodeCleared`=`IsLeaveTrapBroken`；真怪清零不清关；击破离开机关清关；清场不兑金；道具卡格保留；QuickTest 置标志跳关；**清关后 `ResolvePostKillFill` 禁止补牌**（防 Deal 飞行卡死主线） |
+| `TrapKindDualBucketRegressionTests` / `Batch2HardSkillsRegressionTests`（复活石） / `TrapBatch2RegressionTests` / `LeaveTrapDoorLeaveContractTests` / `LeaveTrapInsertContractTests` / `LeaveTrapClearContractTests` | ADR-0017：`CardKind.Trap` 双桶；爆弹/`SelectedCards` 指向伤（飞刀等）可伤 Trap；绑架 `trueMonsterOnly` 仍仅真怪；清关/赏金排除；静默 `CounterAttackBanned`；复活石 Kind/deck/container 迁正；批2 滚石/捕熊/烈焰语义与 Help 迁徙；**#111 / ADR-0026**：离开机关 `trap.leave` + 门/魔免/离开（交战可伤、非交战/直接移除无效、魔免挡外来效果含传送、击破置清关标志、无赏金）；**#112 / ADR-0026**：默认 ⌈N/2⌉ 后 `ShuffleIntoDrawPile(trap.leave)`（N 不含机关、奇数上取整、幂等）；层主房改击破开局层主；经补牌上场；**#113 / ADR-0026**：`IsNodeCleared`=`IsLeaveTrapBroken`；真怪清零不清关；击破离开机关清关；清场不兑金；道具卡格保留；QuickTest 置标志跳关；**清关后 `ResolvePostKillFill` 禁止补牌**（防 Deal 飞行卡死主线） |
 | `BaseStatModifiedResultValueTests` | #54：`BaseStatModified` 携带结算后 `ResultValue`，且保留 `Amount=StatId` / `Delta` 增量约定 |
 | `PermanentAttackFaceCommitTests` | Permanent 有效攻卡面旁路：Apply 发 BaseStatModified；Temporary 不上屏；Swap 条件失效回基值 |
 | `CardSpawnedFaceAbsoluteTests` | #57：`CardSpawned` 携带造卡时攻/甲/血绝对值 |
@@ -54,7 +54,7 @@
 | `RewardPoolQueryContractTests` / `RewardPoolDiversityContractTests` | #71：奖池查询规则展开、role 均衡、稀有度分层抽取 |
 | `ThemeMonsterDeckContractTests` | #86 / ADR-0022：每层主题卡组不重复绑定、节点按序列 1–5 抽、Reserve 不参与、层主击杀固定 1 金箱+2 金币 |
 | `MonsterLoadoutPresentationValidatorTests` | 过渡卡组 staging 校验绿；交付就绪在怪物仍挂 `deck.transition` 时必须失败 |
-| `MapNodeProgressionContractTests` | #84 / ADR-0021 / #107 / #113：8 节点编排全表、非战斗不进 InteractionLoop、清关跳过 help.choice（经离开机关标志）、道具卡格清关不兑不清+清场残留、困难房门槛、第 3 层节点 8 通关 |
+| `MapNodeProgressionContractTests` | #84 / ADR-0021 / #107 / #113：8 节点编排全表（节点 7=层主房图标战前缓冲）、非战斗不进 InteractionLoop、进层主房图标推进至节点 8、清关跳过 help.choice（经离开机关标志）、道具卡格清关不兑不清+清场残留、困难房门槛、第 3 层节点 8 通关 |
 | `ShopBuyGoldContractTests` / `ShopSessionContractTests` / `ShopItemSlotsUpgradeContractTests` | #92 / #108 / #109：商店四货架 + 未满级升级项、购买留店扣金直写道具卡格、格升级 50 金且不改 `ItemDeckCapacity`、满 5 隐藏、刷新翻倍、离开、余额/格满拒买 |
 | `TavernSessionContractTests` | #93：卡店三项服务、扩容/强化扣费留店、刷新翻倍、离开、道具卡固定二级选择确认/取消、余额不足拒买 |
 | `SpecialRewardSessionContractTests` | #94 / #108：宝箱奖励 4 卡 / 道具奖励 5 卡、免费拿直写道具卡格留房、满格拒领、离开放弃不加 skip 金 |

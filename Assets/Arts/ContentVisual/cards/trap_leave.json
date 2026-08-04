@@ -6,7 +6,7 @@
     "role": "",
     "displayName": "离开机关",
     "designSlotName": "",
-    "description": "门；离开",
+    "description": "门；魔免；离开",
     "faceIntro": "",
     "attackPattern": "无",
     "gold": 0,
@@ -82,6 +82,12 @@
             "argsJson": "{}"
         },
         {
+            "id": "trap.leave.magic_immunity",
+            "templateId": "tpl.trap.magic_immunity",
+            "containerType": "Trap",
+            "argsJson": "{}"
+        },
+        {
             "id": "trap.leave.leave",
             "templateId": "tpl.trap.leave",
             "containerType": "Trap",
@@ -90,6 +96,7 @@
     ],
     "effectIds": [
         "trap.leave.door",
+        "trap.leave.magic_immunity",
         "trap.leave.leave"
     ],
     "skillIds": [],

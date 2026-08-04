@@ -17,20 +17,20 @@ namespace NineGrid.Cards
         public const string TrapFacePrefab = "Assets/Prefabs/机关卡标准模版.prefab";
         public const string RoomOptionFacePrefab = "Assets/Prefabs/房间选项标准模板.prefab";
 
-        public const string RoomIconBattle = "Assets/Prefabs/常规战斗图标.prefab";
-        public const string RoomIconElite = "Assets/Prefabs/困难战斗图标.prefab";
-        public const string RoomIconBoss = "Assets/Prefabs/Boss房图标.prefab";
-        public const string RoomIconGold = "Assets/Prefabs/钱袋图标.prefab";
+        public const string RoomIconBattle = "Assets/Prefabs/地形图标/常规战斗图标.prefab";
+        public const string RoomIconElite = "Assets/Prefabs/地形图标/困难战斗图标.prefab";
+        public const string RoomIconBoss = "Assets/Prefabs/地形图标/Boss房图标.prefab";
+        public const string RoomIconGold = "Assets/Prefabs/地形图标/钱袋图标.prefab";
         public const string RoomIconGoldAlt = "Assets/Prefabs/金钱图标.prefab";
-        public const string RoomIconTreasure = "Assets/Prefabs/宝箱图标.prefab";
-        public const string RoomIconFountain = "Assets/Prefabs/温泉图标.prefab";
-        public const string RoomIconShop = "Assets/Prefabs/商店图标.prefab";
-        public const string RoomIconTavern = "Assets/Prefabs/牌店图标.prefab";
-        public const string RoomIconTavernLegacy = "Assets/Prefabs/酒馆图标.prefab";
-        public const string RoomIconAttribute = "Assets/Prefabs/属性提升图标.prefab";
-        public const string RoomIconLeave = "Assets/Prefabs/离开图标.prefab";
-        public const string RoomIconGoUp = "Assets/Prefabs/上楼图标.prefab";
-        public const string RoomIconGoDown = "Assets/Prefabs/下楼图标.prefab";
+        public const string RoomIconTreasure = "Assets/Prefabs/地形图标/宝箱图标.prefab";
+        public const string RoomIconFountain = "Assets/Prefabs/地形图标/温泉图标.prefab";
+        public const string RoomIconShop = "Assets/Prefabs/地形图标/商店图标.prefab";
+        public const string RoomIconTavern = "Assets/Prefabs/地形图标/牌店图标.prefab";
+        public const string RoomIconTavernLegacy = "Assets/Prefabs/地形图标/酒馆图标.prefab";
+        public const string RoomIconAttribute = "Assets/Prefabs/地形图标/属性提升图标.prefab";
+        public const string RoomIconLeave = "Assets/Prefabs/地形图标/离开图标.prefab";
+        public const string RoomIconGoUp = "Assets/Prefabs/地形图标/上楼图标.prefab";
+        public const string RoomIconGoDown = "Assets/Prefabs/地形图标/下楼图标.prefab";
 
         public const string SlotRegistryAsset = "Assets/Arts/Cards/CardFaceSlotRegistry.asset";
         public const string DescriptionInlineIconStyleAsset =

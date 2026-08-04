@@ -178,6 +178,8 @@ namespace NineGrid.Core.Systems
                             predicate: IsSpecialOfferRoom),
                         2,
                         RoomKind.TreasureReward);
+                case NodeOfferFamily.Boss:
+                    return new[] { RoomKind.Boss };
                 default:
                     return new RoomKind[0];
             }

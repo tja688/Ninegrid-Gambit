@@ -1432,6 +1432,14 @@
   "body": "{\"kind\":\"RuleModifier\",\"ruleModifier\":{\"rule\":\"DoorProtection\",\"target\":\"Self\",\"op\":\"Override\",\"value\":1,\"layer\":\"Persistent\",\"scope\":\"Permanent\"}}"
  },
  {
+  "id": "tpl.trap.magic_immunity",
+  "state": "Implemented",
+  "design_text": "[场上]魔免：不受任何外来「效果」影响（可被选中，效果直接失效）；仍可被玩家交战打死",
+  "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"RuleModifier\",\"ruleModifier\":{\"rule\":\"MagicImmunity\",\"target\":\"Self\",\"op\":\"Override\",\"value\":1,\"layer\":\"Persistent\",\"scope\":\"Permanent\"}}"
+ },
+ {
   "id": "tpl.trap.leave",
   "state": "Implemented",
   "design_text": "[场上]离开：击破本卡时置清关向标志",

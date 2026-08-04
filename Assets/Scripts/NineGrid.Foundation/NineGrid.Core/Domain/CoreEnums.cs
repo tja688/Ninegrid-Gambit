@@ -87,7 +87,12 @@ namespace NineGrid.Core
         /// 门（ADR-0026）：&gt;0 时仅交战中玩家出手可造成伤害；且直接 <c>RemoveCard</c> 无效。
         /// 不挡洗回卡组 / 翻面；Kill 路径仍可经致命伤害走击破。
         /// </summary>
-        DoorProtection
+        DoorProtection,
+        /// <summary>
+        /// 魔免（ADR-0026）：&gt;0 时外来效果以本卡为对象时直接失效（目标可被选中，效果管线过滤掉本卡）。
+        /// 不挡玩家交战伤害；不挡持有者自身效果（门 / 离开 / 魔免挂载）。
+        /// </summary>
+        MagicImmunity
     }
 
     public enum BoardMarkId

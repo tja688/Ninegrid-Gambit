@@ -184,14 +184,21 @@ namespace NineGrid.Core.Systems
             pipeline.Enqueue(new ResetCurrentArmorAction());
             pipeline.Enqueue(new NodeStartedAction());
             pipeline.Enqueue(new ChangePhaseAction(GamePhase.RoomChoice));
-            var navigation = MapNodeProgression.GetScheduleOrDefault(this.GetModel<RunModel>().NodeIndex.Value)
-                .NavigationOffer;
-            if (navigation == NavigationKind.None)
+            var schedule = MapNodeProgression.GetScheduleOrDefault(this.GetModel<RunModel>().NodeIndex.Value);
+            if (schedule.NavigationOffer != NavigationKind.None)
             {
-                navigation = NavigationKind.Leave;
+                pipeline.Enqueue(new OfferNavigationAction(schedule.NavigationOffer));
+            }
+            else if (schedule.PostClearOfferFamily == NodeOfferFamily.Boss)
+            {
+                // 节点 7：层主房图标战前缓冲（ADR-0021）；进房后 AdvanceNode → 节点 8 开战。
+                pipeline.Enqueue(new OfferRoomChoicesAction(new[] { RoomKind.Boss }));
+            }
+            else
+            {
+                pipeline.Enqueue(new OfferNavigationAction(NavigationKind.Leave));
             }
 
-            pipeline.Enqueue(new OfferNavigationAction(navigation));
             return CoreCommandResult.Accept(pipeline.RunToCompletion());
         }
 
@@ -1802,6 +1809,8 @@ namespace NineGrid.Core.Systems
                     return new[] { RoomKind.Shop, RoomKind.Tavern };
                 case NodeOfferFamily.SpecialRooms:
                     return new[] { RoomKind.TreasureReward, RoomKind.ItemReward };
+                case NodeOfferFamily.Boss:
+                    return new[] { RoomKind.Boss };
                 default:
                     return new[] { RoomKind.Gold, RoomKind.Fountain };
             }

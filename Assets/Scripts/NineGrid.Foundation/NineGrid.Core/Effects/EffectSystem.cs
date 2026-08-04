@@ -281,7 +281,71 @@ namespace NineGrid.Core.Effects
         internal IReadOnlyList<GameAction> BuildActionsForMatchedInstance(EffectInstance instance, EffectRuntimeContext runtime)
         {
             var targets = instance.Target.Resolve(runtime);
-            return instance.Action.BuildActions(runtime, targets);
+            var filtered = FilterMagicImmuneTargets(runtime, targets);
+            return instance.Action.BuildActions(runtime, filtered);
+        }
+
+        /// <summary>
+        /// 魔免：外来效果解析到的目标若持 MagicImmunity，从本拍作用列表剔除（可选中、效果直接失效）。
+        /// 持有者自身效果（ownerUid==target）放行，避免拆掉门/离开/魔免。
+        /// 交战伤害走 PhaseSystem 裸 DealDamage，不经此路径。
+        /// </summary>
+        private static IReadOnlyList<int> FilterMagicImmuneTargets(
+            EffectRuntimeContext runtime,
+            IReadOnlyList<int> targets)
+        {
+            if (targets == null || targets.Count == 0 || runtime?.Architecture == null)
+            {
+                return targets ?? Array.Empty<int>();
+            }
+
+            var statSystem = runtime.Architecture.GetSystem<IStatSystem>();
+            if (statSystem == null)
+            {
+                return targets;
+            }
+
+            var ownerUid = runtime.OwnerUid;
+            List<int> filtered = null;
+            for (var i = 0; i < targets.Count; i++)
+            {
+                var uid = targets[i];
+                if (uid == 0 || uid == ownerUid || !HasMagicImmunity(statSystem, runtime.Registry, uid))
+                {
+                    if (filtered != null)
+                    {
+                        filtered.Add(uid);
+                    }
+
+                    continue;
+                }
+
+                if (filtered == null)
+                {
+                    filtered = new List<int>(targets.Count);
+                    for (var j = 0; j < i; j++)
+                    {
+                        filtered.Add(targets[j]);
+                    }
+                }
+            }
+
+            return filtered ?? targets;
+        }
+
+        private static bool HasMagicImmunity(IStatSystem statSystem, CardRegistry registry, int uid)
+        {
+            if (statSystem == null || registry == null || uid == 0)
+            {
+                return false;
+            }
+
+            if (!registry.TryGet(uid, out var card) || card == null)
+            {
+                return false;
+            }
+
+            return statSystem.EvaluateRule(RuleId.MagicImmunity, 0f, statSystem.CreateContext(card)) > 0f;
         }
 
         public void Clear()
@@ -437,7 +501,7 @@ namespace NineGrid.Core.Effects
         {
             instance.Target = AtomRegistry.CreateTarget(instance.Definition.Target);
             var runtime = new EffectRuntimeContext(((IBelongToArchitecture)this).GetArchitecture(), instance, null);
-            var targets = instance.Target.Resolve(runtime);
+            var targets = FilterMagicImmuneTargets(runtime, instance.Target.Resolve(runtime));
             var statSystem = this.GetSystem<IStatSystem>();
             var pipeline = this.GetSystem<IActionPipelineSystem>();
 

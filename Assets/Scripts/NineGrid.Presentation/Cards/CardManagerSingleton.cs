@@ -952,6 +952,19 @@ namespace NineGrid.Cards
                     hand.EnsureHandSorting(card);
                 }
             }
+            else if (mode == CardDisplayMode.CardDeckMode)
+            {
+                var deck = CardEntityLifecycleHook.DeckOrNull();
+                if (deck != null && deck.ContainsUid(card.Uid))
+                {
+                    // 已入槽：走卡组权威序 + Propagate，禁止打回 DisplayMode 默认 -30。
+                    deck.EnsureDeckSorting(card);
+                }
+                else if (!FlightSortingChannel.IsArmed(card.Uid))
+                {
+                    SetSortingOrder(sortingGroup, CardDisplayModeVisuals.GetSortingOrder(mode, card.CoreKind));
+                }
+            }
             else if (!FlightSortingChannel.IsArmed(card.Uid))
             {
                 SetSortingOrder(sortingGroup, CardDisplayModeVisuals.GetSortingOrder(mode, card.CoreKind));

@@ -19,7 +19,9 @@ namespace NineGrid.Core
         ConsumerRooms = 2,
         SpecialRooms = 3,
         Leave = 4,
-        GoDown = 5
+        GoDown = 5,
+        /// <summary>节点 7：固定放出 1 个层主房图标（战前缓冲，进房后推进至节点 8 开战）。</summary>
+        Boss = 6
     }
 
     /// <summary>
@@ -88,7 +90,7 @@ namespace NineGrid.Core
             new MapNodeSchedule(4, NodeRoomSource.PreviousChoice, false, NodeOfferFamily.Leave, false),
             new MapNodeSchedule(5, NodeRoomSource.RandomBattle, true, NodeOfferFamily.BattleRooms, true),
             new MapNodeSchedule(6, NodeRoomSource.PreviousChoice, true, NodeOfferFamily.SpecialRooms, true),
-            new MapNodeSchedule(7, NodeRoomSource.PreviousChoice, false, NodeOfferFamily.Leave, false),
+            new MapNodeSchedule(7, NodeRoomSource.PreviousChoice, false, NodeOfferFamily.Boss, false),
             new MapNodeSchedule(8, NodeRoomSource.Boss, true, NodeOfferFamily.GoDown, false)
         };
 

@@ -83,7 +83,7 @@
     "weight": 10,
     "rewardPoolId": "",
     "shopOfferCount": 0,
-    "iconPrefab": "Assets/Prefabs/属性提升图标.prefab",
+    "iconPrefab": "Assets/Prefabs/地形图标/属性提升图标.prefab",
     "boardSlot": 1,
     "effectAssemblies": [],
     "role": "",

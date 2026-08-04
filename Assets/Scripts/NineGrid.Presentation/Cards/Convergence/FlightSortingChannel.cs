@@ -121,7 +121,7 @@ namespace NineGrid.Cards.Convergence
                 ActiveByUid.Remove(card.Uid);
             }
 
-            ApplySortingOrder(card, ResolveTargetOrder(card));
+            ApplyDomainSorting(card);
         }
 
         /// <summary>EditMode / 取消路径：清掉 uid 上的挂靠，不改 sorting。</summary>
@@ -162,12 +162,46 @@ namespace NineGrid.Cards.Convergence
                 return;
             }
 
-            // 掉回时按就位瞬间的域规则重解析（手牌/卡组槽位序），避免起飞时冻结的 DisplayMode 默认值覆盖净土域规则。
-            ApplySortingOrder(card, ResolveTargetOrder(card));
+            // 掉回时按就位瞬间的域规则重解析（手牌/卡组槽位序 + Propagate），
+            // 避免起飞时冻结的 DisplayMode 默认值覆盖净土域规则。
+            ApplyDomainSorting(card);
         }
 
         private static void RaiseSortingOrder(ManagedCard card, int order) =>
             ApplySortingOrder(card, order);
+
+        /// <summary>
+        /// 手牌/卡组已入槽时委托域权威 ApplySortingOrder（含 layer Propagate）；
+        /// 否则只写 SG order。
+        /// </summary>
+        private static void ApplyDomainSorting(ManagedCard card)
+        {
+            if (card == null)
+            {
+                return;
+            }
+
+            if (card.DisplayMode == CardDisplayMode.HandCardMode)
+            {
+                var hand = CardEntityLifecycleHook.HandOrNull();
+                if (hand != null && hand.ContainsUid(card.Uid))
+                {
+                    hand.EnsureHandSorting(card);
+                    return;
+                }
+            }
+            else if (card.DisplayMode == CardDisplayMode.CardDeckMode)
+            {
+                var deck = CardEntityLifecycleHook.DeckOrNull();
+                if (deck != null && deck.ContainsUid(card.Uid))
+                {
+                    deck.EnsureDeckSorting(card);
+                    return;
+                }
+            }
+
+            ApplySortingOrder(card, ResolveTargetOrder(card));
+        }
 
         private static void ApplySortingOrder(ManagedCard card, int order)
         {
