@@ -1647,6 +1647,13 @@ namespace NineGrid.Core.Systems
                 return 0;
             }
 
+            // ADR-0026：离开机关击破后已清关，禁止再往空位补牌。
+            // 否则牌堆非空时会 Deal 进刚腾出的格，表现层发牌飞行可卡死主线（mainlineBusy）。
+            if (this.GetSystem<IDeckSystem>().IsNodeCleared())
+            {
+                return 0;
+            }
+
             var pipeline = this.GetSystem<IActionPipelineSystem>();
             pipeline.Enqueue(new FillEmptySlotsAction());
             return pipeline.RunToCompletion();
@@ -1659,6 +1666,12 @@ namespace NineGrid.Core.Systems
                 return 0;
             }
 
+            // 已清关：跳过恋战旋转，直接收场清残留（仍由本批投影驱动表现）。
+            if (this.GetSystem<IDeckSystem>().IsNodeCleared())
+            {
+                return CompleteNodeIfCleared();
+            }
+
             var pipeline = this.GetSystem<IActionPipelineSystem>();
             pipeline.Enqueue(new RotateBoardClockwiseAction());
             var resolved = pipeline.RunToCompletion();
@@ -1668,7 +1681,7 @@ namespace NineGrid.Core.Systems
 
         private int ResolveFillEmptySlotsBatchInternal(bool skipFill)
         {
-            if (skipFill || IsTerminalPhase(CurrentPhase))
+            if (skipFill || IsTerminalPhase(CurrentPhase) || this.GetSystem<IDeckSystem>().IsNodeCleared())
             {
                 return 0;
             }

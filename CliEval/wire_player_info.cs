@@ -31,7 +31,7 @@ var bloodSlot = FindChild(root.transform, "血槽");
 var bloodFill = FindChild(root.transform, "真实血量条");
 var curHp = FindChild(root.transform, "血量数值（当前）");
 var maxHp = FindChild(root.transform, "血量数值（最大）");
-var armor = FindChild(root.transform, "防御数值");
+var armor = FindChild(root.transform, "护甲数值");
 var gold = FindChild(root.transform, "金币数值");
 var goldIcon = FindChild(root.transform, "金币图标");
 

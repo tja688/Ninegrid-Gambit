@@ -117,7 +117,7 @@ namespace NineGrid.Presentation.Tests
         [Test]
         public void DisabledSlotCollider_IsNotResolved_Defensive()
         {
-            // 生产路径九框恒开；此测仅锁定「禁用框不参与解析」的防御语义。
+            // 生产路径九框恒开；此测仅锁定「禁用框不参与解析」的防护断言。
             _colliders[5].enabled = false;
             Assert.IsFalse(_surface.TryResolveSlotAtWorld(Vector2.zero, out _));
         }

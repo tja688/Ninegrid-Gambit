@@ -503,7 +503,7 @@ namespace NineGrid.Flow
                     cancellationToken: ct);
                 if (!ok)
                 {
-                    // placeDenied 防御：再清一次幽灵后重试一次。
+                    // placeDenied 兜底：再清一次幽灵后重试一次。
                     if (TryClearGhostOccupantForDeal(fieldManager, deal.Slot, deal.Uid))
                     {
                         (ok, handle) = await deckManager.DealCardByUidWithFlightAsync(

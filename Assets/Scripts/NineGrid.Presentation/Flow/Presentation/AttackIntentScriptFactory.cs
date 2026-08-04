@@ -209,6 +209,23 @@ namespace NineGrid.Flow.Presentation
             // 九宫格互动：击杀路径在补牌前推进互动计数（与 Fill 解耦，#75）。
             // 计数须独立 Dispatcher 开批，否则 OnInteract 效果（潜伏近战脉冲等）落在 Fill 窗之外。
             EnqueueInteractionAdvanceBatch(timeline, boardSlot, "KillInteractionAdvance");
+
+            // ADR-0026：离开机关击破后已清关——跳过补牌/融合/敌方行动，只走旋转批收场，
+            // 避免牌堆补牌发牌飞行卡死主线（mainlineBusy / ProtectedField）。
+            if (mArchitecture.GetSystem<IDeckSystem>().IsNodeCleared())
+            {
+                var clearGate = PresentationSyncBatchGate.FromSync(
+                    sync,
+                    () => ResolveAndProject(
+                        boardSlot,
+                        () => mDispatcher.Send(new ResolvePostKillRotateCommand()),
+                        trackFusion: false),
+                    slice: "LeaveTrapClear");
+                timeline.Enqueue(new ResolveBatchStep(clearGate));
+                timeline.Enqueue(new PresentStep(clearGate, mBoardPresentChannel));
+                return;
+            }
+
             var fillGate = PresentationSyncBatchGate.FromSync(
                 sync,
                 () => ResolveAndProject(

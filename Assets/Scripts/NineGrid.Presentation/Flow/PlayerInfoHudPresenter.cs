@@ -21,7 +21,7 @@ namespace NineGrid.Flow
         private const string BloodFillName = "真实血量条";
         private const string CurrentHpName = "血量数值（当前）";
         private const string MaxHpName = "血量数值（最大）";
-        private const string ArmorValueName = "防御数值";
+        private const string ArmorValueName = "护甲数值";
         private const string GoldValueName = "金币数值";
 
         // 场景默认：血槽 size.x=1.8、血条≈1.48；布局可伸至 3.2 / 2.9（共增约 1.4）。
@@ -55,7 +55,7 @@ namespace NineGrid.Flow
         [Tooltip("最大血量 TMP；默认隐藏，悬停血槽时显示。")]
         [SerializeField] private TMP_Text maxHpText;
 
-        [Tooltip("防御（有效护甲）TMP。")]
+        [Tooltip("护甲（有效护甲）TMP。")]
         [SerializeField] private TMP_Text armorText;
 
         [Tooltip("金币 TMP；增益演出可由 GoldGainFx 接管。")]

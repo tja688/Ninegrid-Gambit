@@ -85,7 +85,7 @@ namespace NineGrid.Flow
                 Kind = ToPresentationKind(card.Kind),
                 Attack = statSystem.GetEffectiveInt(card, StatId.Attack),
                 Hp = statSystem.GetEffectiveInt(card, StatId.Hp),
-                // 卡面护甲 = 当前护甲（本关临时资源）；PlayerInfoText 防御栏走有效护甲。
+                // 卡面护甲 = 当前护甲（本关临时资源）；PlayerInfoText 护甲栏走有效护甲。
                 Armor = StatArmorUtility.GetCurrentArmor(card),
                 DefId = card.DefId ?? string.Empty,
                 FaceUp = card.FaceUp,

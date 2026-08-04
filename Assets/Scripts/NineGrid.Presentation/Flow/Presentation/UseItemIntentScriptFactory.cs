@@ -143,6 +143,22 @@ namespace NineGrid.Flow.Presentation
         private void EnqueueKillAftermath(BattleTimeline timeline, int boardSlot)
         {
             var sync = mArchitecture.GetSystem<IPresentationSyncSystem>();
+
+            // ADR-0026：清关后跳过补牌/融合，只走旋转批收场（与 Attack 路径一致）。
+            if (mArchitecture.GetSystem<IDeckSystem>().IsNodeCleared())
+            {
+                var clearGate = PresentationSyncBatchGate.FromSync(
+                    sync,
+                    () => ResolveAndProject(
+                        boardSlot,
+                        () => mDispatcher.Send(new ResolvePostKillRotateCommand()),
+                        trackFusion: false),
+                    slice: "LeaveTrapClear");
+                timeline.Enqueue(new ResolveBatchStep(clearGate));
+                timeline.Enqueue(new PresentStep(clearGate, mBoardPresentChannel));
+                return;
+            }
+
             var fillGate = PresentationSyncBatchGate.FromSync(
                 sync,
                 () => ResolveAndProject(boardSlot, () => mDispatcher.Send(new ResolvePostKillFillCommand()), trackFusion: true));

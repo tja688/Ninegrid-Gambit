@@ -11,7 +11,7 @@ status: accepted
 1. **报名。** 全场怪物的行动倒计时各 −1；归零者按**进场先后（uid 升序）**排成**行动名单**。名单一经冻结不再增删——阶段中途进场的怪不参与，中途被效果加速的怪不能插队。
 
 2. **逐条结算。** 按名单顺序逐条来。每条在真正出手前**复核开火资格**：本卡仍在场上存活、位置条件满足、未被禁止行动。
-   - 资格通过 → 造成一次**单向打击**：走标准伤害公式（护甲吸收、伤害减免、`DamageMultiplier` / `DamageFlatDelta`），伤害量取怪物的**有效攻击**（含光环、复仇累计等修正），触发 `OnDamageTaken` / `OnFatalDamage` / 免死。**玩家不反击。**
+   - 资格通过 → 造成一次**单向打击**：走 [ADR-0028](0028-damage-formula-armor-and-reduction.md) 标准伤害公式（含护甲吸收、伤害减免、无视护甲分支，以及既有 `DamageMultiplier` / `DamageFlatDelta`），伤害量取怪物的**有效攻击**（含光环、复仇累计等修正），触发 `OnDamageTaken` / `OnFatalDamage` / 免死。**玩家不反击。**
    - 一次打击与它引发的一切反应（反甲、反伤、免死）**视为同时发生**：即使本卡因反伤当场死亡，它这次的伤害仍然成立。
    - 资格不通过 → 取消本次行动，倒计时重置为阈值（见 [ADR-0013](0013-action-countdown-unified.md)）。
    - 玩家死亡 → 阶段立即终止，名单剩余条目不再结算，进入 Defeat。
@@ -73,4 +73,5 @@ status: accepted
 - [ADR-0001](0001-battle-presentation-unified-timeline-batch-ack.md) — 统一时间线 / Batch-ack：每只怪一拍的依据
 - [ADR-0005](0005-card-face-beat-commit.md) — 卡面数值表演锚点提交：倒计时上卡面必须走的通路
 - [ADR-0007](0007-unified-presentation-pipeline.md) — 多处理器统一表现管线
+- [ADR-0028](0028-damage-formula-armor-and-reduction.md) — 标准伤害公式（护甲 / 伤害减免 / 无视护甲）
 - `CONTEXT.md` — 敌方行动阶段、行动名单、盘面冻结、单向打击、九宫格互动

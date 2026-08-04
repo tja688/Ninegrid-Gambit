@@ -102,6 +102,34 @@ namespace NineGrid.Core.Tests
         }
 
         [Test]
+        public void BreakLeaveTrap_WithDrawPile_PostKillFillDoesNotRefillVacatedSlot()
+        {
+            // 回归：清关后若仍 Fill，牌堆非空会 Deal 进刚腾出的格，表现发牌可卡死主线。
+            StartEmptyNode();
+            PrepareAvatar(99, 99, 0);
+            var leaveUid = SpawnLeaveTrap(hp: 1);
+            SpawnMonsterAt(sSlot8, hp: 20);
+            SeedDrawPileMonsters(3);
+
+            var board = mArch.GetModel<BoardModel>();
+            var avatarUid = board.AvatarUid.Value;
+            Assert.IsTrue(mPhase.ApplyCombatHit(avatarUid, leaveUid).Accepted);
+            Assert.IsTrue(mArch.GetModel<BattleContextModel>().IsLeaveTrapBroken);
+            Assert.AreEqual(0, board.GetCardUid(sSlot2), "击破离开机关后该格应空");
+
+            var fillStart = mPipeline.EventLog.Entries.Count;
+            Assert.IsTrue(mPhase.ResolvePostKillFill().Accepted);
+            Assert.AreEqual(0, board.GetCardUid(sSlot2), "清关后 Fill 不得往空位补牌");
+            Assert.IsFalse(
+                ContainsEventSince(fillStart, CoreEventType.CardDealt),
+                "清关后 Fill 批不得产生 CardDealt");
+
+            Assert.IsTrue(mPhase.ResolvePostKillRotate().Accepted);
+            Assert.AreEqual(GamePhase.RoomChoice, mPhase.CurrentPhase);
+            Assert.AreEqual(0, CountBoardNonAvatarCards(), "收场应清空场上残留");
+        }
+
+        [Test]
         public void MarkLeaveTrapBroken_AllowsTryCompleteClearedNode_LikeQuickTestSkip()
         {
             Assert.IsTrue(mPhase.StartNode(CreateSingleMonsterNode(hp: 5, attack: 0)).Accepted);
@@ -176,6 +204,63 @@ namespace NineGrid.Core.Tests
             mPipeline.Enqueue(new SpawnCardAction(
                 "trap.revive_stone", CardKind.Trap, ZoneId.Board, slot, 1, "test"));
             Assert.Greater(mPipeline.RunToCompletion(), 0);
+        }
+
+        private void SeedDrawPileMonsters(int count)
+        {
+            var deck = mArch.GetModel<DeckModel>();
+            var registry = mArch.GetModel<CardRegistry>();
+            var board = mArch.GetModel<BoardModel>();
+            for (var i = 0; i < count; i++)
+            {
+                mPipeline.Enqueue(new SpawnCardAction(
+                    "monster.skull_head", CardKind.Monster, ZoneId.DrawPile, SlotId.None, 1, "test"));
+                Assert.Greater(mPipeline.RunToCompletion(), 0);
+
+                // Spawn 的 OnDeal/OnEnter 可能把实例补上场；强制收回抽牌堆。
+                var uid = FindNewestUid(registry, "monster.skull_head");
+                Assert.Greater(uid, 0);
+                var card = registry.Get(uid);
+                if (card.Zone.Value == ZoneId.Board)
+                {
+                    board.ClearSlot(card.Slot.Value);
+                }
+
+                if (card.Zone.Value != ZoneId.DrawPile)
+                {
+                    deck.AddToDrawPile(card, false);
+                }
+            }
+
+            Assert.GreaterOrEqual(deck.DrawPileUids.Count, count);
+        }
+
+        private static int FindNewestUid(CardRegistry registry, string defId)
+        {
+            var newest = 0;
+            foreach (var pair in registry.Cards)
+            {
+                if (pair.Value.DefId == defId && pair.Key > newest)
+                {
+                    newest = pair.Key;
+                }
+            }
+
+            return newest;
+        }
+
+        private bool ContainsEventSince(int startIndex, CoreEventType type)
+        {
+            var entries = mPipeline.EventLog.Entries;
+            for (var i = startIndex; i < entries.Count; i++)
+            {
+                if (entries[i].Type == type)
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         private void SpawnHelpOnBoard(string defId, SlotId slot)

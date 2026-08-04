@@ -9,7 +9,7 @@ using QFramework;
 namespace NineGrid.Core.Tests
 {
     /// <summary>
-    /// 嘲讽 AttackTargetRestriction：ResolvePlayerAttackTargetUid 与 ApplyCombatHit 防御。
+    /// 嘲讽 AttackTargetRestriction：ResolvePlayerAttackTargetUid 与 ApplyCombatHit 的防护断言。
     /// </summary>
     public sealed class TauntRedirectRegressionTests
     {
