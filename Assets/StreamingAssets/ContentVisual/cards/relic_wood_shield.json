@@ -5,7 +5,7 @@
     "deckId": "deck.relic",
     "role": "Defense",
     "displayName": "木盾",
-    "description": "基础护甲+{value}；木盾套装基础护甲额外+{value}",
+    "description": "基础护甲+1；同时拥有木盾、木剑、木甲时，木盾基础护甲额外+2",
     "faceIntro": "",
     "attackPattern": "",
     "gold": 0,

@@ -4,7 +4,7 @@
     "kind": "Relic",
     "deckId": "deck.relic",
     "displayName": "打盾刀",
-    "description": "",
+    "description": "[击杀怪物时] 获得1点当前护甲",
     "gold": 0,
     "stats": {
         "hp": 0,

@@ -5,7 +5,7 @@
     "deckId": "deck.relic",
     "role": "Utility",
     "displayName": "凤凰羽毛",
-    "description": "血量上限+{delta}；[受到致命伤害时] 恢复50%血量并永久移除本遗物",
+    "description": "血量上限+8；[受到致命伤害时] 恢复50%血量并永久移除本遗物",
     "faceIntro": "",
     "attackPattern": "",
     "gold": 0,

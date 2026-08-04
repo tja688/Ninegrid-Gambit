@@ -5,7 +5,7 @@
     "deckId": "deck.relic",
     "role": "Attack",
     "displayName": "废物发射器",
-    "description": "[使用帮助卡时] 对随机一张怪物卡造成{amount}点伤害",
+    "description": "[使用道具卡时] 对随机一张怪物卡造成2点伤害",
     "faceIntro": "",
     "attackPattern": "",
     "gold": 0,

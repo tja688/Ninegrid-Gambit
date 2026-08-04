@@ -266,10 +266,26 @@
  {
   "id": "tpl.relic.junk_launcher.use",
   "state": "Implemented",
-  "design_text": "[使用帮助卡时] 对随机一张怪物卡造成2点伤害",
+  "design_text": "[使用道具卡时] 对随机一张怪物卡造成2点伤害",
   "requires_json": "[\"NoOwnerEntity\"]",
   "conditions_json": "[]",
-  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnSelfUsed\"},\"target\":{\"atom\":\"RandomMonster\"},\"action\":{\"atom\":\"DealDamage\",\"amount\":\"{{amount}}\",\"actor\":\"Player\"}}"
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnAnyHelpCardUsed\"},\"target\":{\"atom\":\"RandomMonster\"},\"action\":{\"atom\":\"DealDamage\",\"amount\":\"{{amount}}\",\"actor\":\"Player\"}}"
+ },
+ {
+  "id": "tpl.relic.junk_coating.use",
+  "state": "Implemented",
+  "design_text": "[使用道具卡时] 获得1点当前护甲",
+  "requires_json": "[\"NoOwnerEntity\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnAnyHelpCardUsed\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"GainArmor\",\"amount\":\"{{amount}}\"}}"
+ },
+ {
+  "id": "tpl.relic.junk_recycler.use",
+  "state": "Implemented",
+  "design_text": "[使用道具卡时] 恢复2点血量",
+  "requires_json": "[\"NoOwnerEntity\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnAnyHelpCardUsed\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"Heal\",\"amount\":\"{{amount}}\",\"actor\":\"Player\"}}"
  },
  {
   "id": "tpl.relic.junk_launcher.volley",

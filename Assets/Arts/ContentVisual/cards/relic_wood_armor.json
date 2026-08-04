@@ -4,7 +4,7 @@
     "kind": "Relic",
     "deckId": "deck.relic",
     "displayName": "木甲",
-    "description": "",
+    "description": "血量上限+2；同时拥有木盾、木剑、木甲时，木甲血量额外+8",
     "gold": 0,
     "stats": {
         "hp": 0,

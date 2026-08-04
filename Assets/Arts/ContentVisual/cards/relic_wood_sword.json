@@ -5,7 +5,7 @@
     "deckId": "deck.relic",
     "role": "Attack",
     "displayName": "木剑",
-    "description": "攻击+{value}；木剑套装攻击额外+{value}",
+    "description": "攻击+1；同时拥有木盾、木剑、木甲时，木剑攻击额外+2",
     "faceIntro": "",
     "attackPattern": "",
     "gold": 0,

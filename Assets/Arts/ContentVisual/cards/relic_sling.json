@@ -5,7 +5,7 @@
     "deckId": "deck.relic",
     "role": "Attack",
     "displayName": "弹弓",
-    "description": "[击杀怪物时] 对随机一张怪物卡造成{amount}点伤害",
+    "description": "[击杀怪物时] 对随机一张怪物卡造成4点伤害",
     "faceIntro": "",
     "attackPattern": "",
     "gold": 0,

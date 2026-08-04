@@ -4,7 +4,7 @@
     "kind": "Relic",
     "deckId": "deck.relic",
     "displayName": "活力护符",
-    "description": "",
+    "description": "血量上限+6；[每关卡结束时] 恢复6点血量",
     "gold": 0,
     "stats": {
         "hp": 0,

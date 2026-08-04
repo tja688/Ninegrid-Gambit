@@ -5,7 +5,7 @@
     "deckId": "deck.relic",
     "role": "Defense",
     "displayName": "重盔甲",
-    "description": "基础护甲+{value}；[每关卡开始时] 每有两点基础护甲，额外获得1点当前护甲",
+    "description": "基础护甲+1；[每关卡开始时] 每有两点基础护甲，额外获得1点当前护甲",
     "faceIntro": "",
     "attackPattern": "",
     "gold": 0,

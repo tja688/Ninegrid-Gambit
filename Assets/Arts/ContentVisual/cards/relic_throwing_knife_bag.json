@@ -5,7 +5,7 @@
     "deckId": "deck.relic",
     "role": "Attack",
     "displayName": "飞刀袋",
-    "description": "[每关卡开始时] 将{count}张飞刀加入到玩家侧卡组",
+    "description": "[每关卡开始时] 将两张飞刀加入到玩家侧卡组",
     "faceIntro": "",
     "attackPattern": "",
     "gold": 0,

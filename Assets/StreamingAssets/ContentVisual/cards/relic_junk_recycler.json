@@ -4,7 +4,7 @@
     "kind": "Relic",
     "deckId": "deck.relic",
     "displayName": "废物利用机",
-    "description": "",
+    "description": "[使用道具卡时] 恢复2点血量",
     "gold": 0,
     "stats": {
         "hp": 0,
@@ -90,7 +90,7 @@
     "effectAssemblies": [
         {
             "id": "relic.junk_recycler.use",
-            "templateId": "tpl.heal_player_on_use_help_card",
+            "templateId": "tpl.relic.junk_recycler.use",
             "containerType": "Relic",
             "argsJson": "{\"amount\":2}"
         }

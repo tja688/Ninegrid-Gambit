@@ -5,7 +5,7 @@
     "deckId": "deck.relic",
     "role": "Defense",
     "displayName": "龙鳞甲",
-    "description": "基础护甲+{value}；血量上限+{delta}；所有怪物卡的攻击{value}",
+    "description": "基础护甲+1；血量上限+6；所有怪物卡的攻击-1",
     "faceIntro": "",
     "attackPattern": "",
     "gold": 0,

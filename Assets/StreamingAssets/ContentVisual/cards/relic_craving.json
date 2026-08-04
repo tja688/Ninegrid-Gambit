@@ -5,7 +5,7 @@
     "deckId": "deck.relic",
     "role": "Utility",
     "displayName": "渴望",
-    "description": "所有恢复血量效果翻倍",
+    "description": "血量上限+10；所有恢复血量效果翻倍",
     "faceIntro": "",
     "attackPattern": "",
     "gold": 0,
@@ -76,6 +76,12 @@
         "tag.special"
     ],
     "effectAssemblies": [
+        {
+            "id": "relic.craving.max_hp",
+            "templateId": "tpl.shared.5.relic_blood_shockwave_max_hp",
+            "containerType": "Relic",
+            "argsJson": "{\"delta\":10,\"reason\":\"relic.craving.max_hp\"}"
+        },
         {
             "id": "relic.craving.rule",
             "templateId": "tpl.relic.craving.rule",

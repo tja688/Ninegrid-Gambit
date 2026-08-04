@@ -55,6 +55,7 @@
 | `RelicArchiveDeckContractTests` | #115：`deck.relic_archive` 九件错位旧卡不进 common_chest / blood_conversion 展开；Profession/开局不授予归档遗物 |
 | `RelicR1NineProfessionContractTests` | #116：九件新建遗物在役卡组+装配；`relic.rotten_cleave_axe` 为 Red 且不进 W/B/G 宝箱池；Profession 授予顺劈斧且基础护甲 0；样本效果（铁盾伤害减免、超越维度战斗旋转） |
 | `RelicR1AssemblableContractTests` | #117：13 件可拼新建遗物在役卡组+装配；按稀有度进入 common_chest / blood_conversion；样本效果（废物剑击杀回血、血液暴力半血攻、复合盔甲关初换甲） |
+| `RelicR1KeeperAuditContractTests` | #118：20 件名称对齐留用遗物在役+非空描述+装配；渴望 MaxHp+10；幸运硬币仅层主击杀；废物三件 `OnAnyHelpCardUsed` 与利用机回血样本 |
 | `ThemeMonsterDeckContractTests` | #86 / ADR-0022：每层主题卡组不重复绑定、节点按序列 1–5 抽、Reserve 不参与、层主击杀固定 1 金箱+2 金币 |
 | `MonsterLoadoutPresentationValidatorTests` | 过渡卡组 staging 校验绿；交付就绪在怪物仍挂 `deck.transition` 时必须失败 |
 | `MapNodeProgressionContractTests` | #84 / ADR-0021 / #107 / #113：8 节点编排全表（节点 7=层主房图标战前缓冲）、非战斗不进 InteractionLoop、进层主房图标推进至节点 8、清关跳过 help.choice（经离开机关标志）、道具卡格清关不兑不清+清场残留、困难房门槛、第 3 层节点 8 通关 |

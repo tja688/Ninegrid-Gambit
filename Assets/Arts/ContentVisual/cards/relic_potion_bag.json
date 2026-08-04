@@ -4,7 +4,7 @@
     "kind": "Relic",
     "deckId": "deck.relic",
     "displayName": "药水袋",
-    "description": "",
+    "description": "[每关卡开始时] 将两张恢复药水加入到玩家侧卡组",
     "gold": 0,
     "stats": {
         "hp": 0,

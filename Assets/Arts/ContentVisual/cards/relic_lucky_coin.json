@@ -4,7 +4,7 @@
     "kind": "Relic",
     "deckId": "deck.relic",
     "displayName": "幸运硬币",
-    "description": "",
+    "description": "[击杀怪物时] 将一张金币卡加入战斗卡组（仅对等级为层主的怪物卡生效）",
     "gold": 0,
     "stats": {
         "hp": 0,
@@ -88,12 +88,6 @@
     "rewardPoolId": "",
     "shopOfferCount": 0,
     "effectAssemblies": [
-        {
-            "id": "relic.lucky_coin.elite_kill",
-            "templateId": "tpl.relic.lucky_coin.elite_kill",
-            "containerType": "Relic",
-            "argsJson": "{\"count\":1}"
-        },
         {
             "id": "relic.lucky_coin.boss_kill",
             "templateId": "tpl.relic.lucky_coin.boss_kill",

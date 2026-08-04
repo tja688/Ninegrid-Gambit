@@ -4,7 +4,7 @@
     "kind": "Relic",
     "deckId": "deck.relic",
     "displayName": "废物涂层",
-    "description": "",
+    "description": "[使用道具卡时] 获得1点当前护甲",
     "gold": 0,
     "stats": {
         "hp": 0,
@@ -90,7 +90,7 @@
     "effectAssemblies": [
         {
             "id": "relic.junk_coating.use",
-            "templateId": "tpl.gain_armor_on_use_help_card",
+            "templateId": "tpl.relic.junk_coating.use",
             "containerType": "Relic",
             "argsJson": "{\"amount\":1}"
         }
