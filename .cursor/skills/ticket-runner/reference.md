@@ -26,7 +26,11 @@ Bare `plan` / `run` then resolve that Spec’s child task list (starting at the 
 - PS 5.1 `Start-Process -ArgumentList` **array** joins with bare spaces (breaks `Ninegrid Gambit`); always pass **one** pre-quoted argument string.
 - Redirect stdout/stderr to files (no console pipe inherit).
 - When process `ExitCode` is `$null`, accept stream-json `{"type":"result","subtype":"success"}` as finished (avoids false FAIL after a clean land).
-- Poll loop: process exit, file growth (idle), auth/ask/parse heuristics, 30m budget.
+- Auth / ask heuristics: **soft only** (log `soft_signal`, never open escape-hatch). Real Cursor login failures still surface via idle/budget if the worker is actually stuck.
+- Auth text filter (for soft log): Cursor Agent login/token only; ignore Unity Pipeline `401`, thinking, tool stdout.
+- Ask text filter (for soft log): assistant-visible text only.
+- If worker already exited or stream result success, skip escape-hatch entirely.
+- Hard intervention triggers only: stdout idle, ticket budget, stream-json parse errors (≥8).
 - One escape-hatch intervention agent; decisions: `kill_restart` | `continue_wait` | `pause_user`.
 - No recursive intervention; second unhealthy → exit 3 pause for human.
 

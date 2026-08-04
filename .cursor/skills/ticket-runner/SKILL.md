@@ -84,13 +84,15 @@ powershell -NoProfile -ExecutionPolicy Bypass -File ".cursor/skills/ticket-runne
 |------|------|------|
 | 单票硬预算 | 30 min | 不健康 → 一次 escape-hatch |
 | stdout 空闲 | 10 min | 同上 |
-| 登录/token | 日志启发式 | 同上 |
 | stream-json 解析失败 | ≥8 行 | 同上 |
-| Agent 追问 | 启发式 | 同上；headless 提示禁止提问 |
+| 登录/token、Agent 追问 | 收紧启发式 | **仅 soft 日志，不触发介入**（避免 Unity 401 / thinking 假阳性） |
 | 子进程 stdout | 文件重定向 | 避免父进程管道挂起 |
 | 介入 AI | 30 min | `kill_restart` / `continue_wait` / `pause_user` |
 | 介入失败或再恶化 | — | **暂停主流程等用户**（exit 3），不二次介入 |
 | `continue_wait` 宽限 | 15 min | 仍不结束 → pause_user |
+| worker 已结束 | — | 跳过 escape-hatch，直接收尾 |
+
+正常健康落地**不应**触发介入；介入只覆盖卡住 / 预算打满 / 流解析崩坏。
 
 Escape-hatch 会另开一个 one-shot `agent -p`，要求写入 `intervention-decision.json`，**不落地业务**。
 

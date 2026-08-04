@@ -692,8 +692,11 @@ function Start-RedirectedAgent {
         stdoutPath    = $StdoutPath
         stderrPath    = $StderrPath
         scanOffset    = 0L
+        stderrScanOffset = 0L
         streamResultSuccess = $null   # $true / $false / $null when unseen
         streamResultError   = $false
+        softAuthLogged      = $false
+        softAskLogged       = $false
     }
 
     return [pscustomobject]@{
@@ -704,6 +707,17 @@ function Start-RedirectedAgent {
         StdoutPath = $StdoutPath
         StderrPath = $StderrPath
     }
+}
+
+function Test-CursorAgentAuthText {
+    # Real Cursor Agent CLI / account failures only — NOT Unity Pipeline 401,
+    # NOT model thinking that quotes "401 Unauthorized", NOT tool stdout noise.
+    param([string] $Text)
+    if ([string]::IsNullOrWhiteSpace($Text)) { return $false }
+    if ($Text -match '(?i)unity.*(401|unauthorized)|pipeline.*(401|unauthorized)|HTTP\s*401') {
+        return $false
+    }
+    return [bool]($Text -match '(?i)authentication required|not logged in to cursor|please run .*(agent|cursor).*login|invalid (api[_ ]?key|cursor.*token)|CURSOR_API_KEY.*(invalid|missing|expired)|unauthorized.*cursor agent|agent login required')
 }
 
 function Update-AgentLogSignals($Sync) {
@@ -720,68 +734,86 @@ function Update-AgentLogSignals($Sync) {
             $Sync.lastOutputUtc = [DateTime]::UtcNow
         }
 
-        $stdout = [string]$Sync.stdoutPath
-        if (-not (Test-Path -LiteralPath $stdout)) { return }
+        $chunks = @()
+        foreach ($pathKey in @("stdoutPath", "stderrPath")) {
+            $path = [string]$Sync[$pathKey]
+            if ([string]::IsNullOrWhiteSpace($path) -or -not (Test-Path -LiteralPath $path)) { continue }
+            $offsetKey = if ($pathKey -eq "stdoutPath") { "scanOffset" } else { "stderrScanOffset" }
+            if ($null -eq $Sync[$offsetKey]) { $Sync[$offsetKey] = 0L }
+            $fs = [System.IO.File]::Open($path, [System.IO.FileMode]::Open, [System.IO.FileAccess]::Read, [System.IO.FileShare]::ReadWrite)
+            try {
+                if ($fs.Length -lt [int64]$Sync[$offsetKey]) { $Sync[$offsetKey] = 0L }
+                if ($fs.Length -eq [int64]$Sync[$offsetKey]) { continue }
+                $fs.Seek([int64]$Sync[$offsetKey], [System.IO.SeekOrigin]::Begin) | Out-Null
+                $reader = New-Object System.IO.StreamReader($fs, [System.Text.Encoding]::UTF8, $true, 4096, $true)
+                $piece = $reader.ReadToEnd()
+                $Sync[$offsetKey] = $fs.Position
+                $reader.Dispose()
+                if (-not [string]::IsNullOrEmpty($piece)) {
+                    $chunks += [pscustomobject]@{ pathKey = $pathKey; text = $piece }
+                }
+            } finally { $fs.Dispose() }
+        }
 
-        # Read newly appended bytes as UTF-8 text for signal heuristics
-        $fs = [System.IO.File]::Open($stdout, [System.IO.FileMode]::Open, [System.IO.FileAccess]::Read, [System.IO.FileShare]::ReadWrite)
-        try {
-            if ($fs.Length -lt [int64]$Sync.scanOffset) { $Sync.scanOffset = 0L }
-            if ($fs.Length -eq [int64]$Sync.scanOffset) { return }
-            $fs.Seek([int64]$Sync.scanOffset, [System.IO.SeekOrigin]::Begin) | Out-Null
-            $reader = New-Object System.IO.StreamReader($fs, [System.Text.Encoding]::UTF8, $true, 4096, $true)
-            $chunk = $reader.ReadToEnd()
-            $Sync.scanOffset = $fs.Position
-            $reader.Dispose()
-        } finally { $fs.Dispose() }
+        foreach ($chunkInfo in $chunks) {
+            $isStderr = ($chunkInfo.pathKey -eq "stderrPath")
+            foreach ($line in ($chunkInfo.text -split "`r?`n")) {
+                if ([string]::IsNullOrWhiteSpace($line)) { continue }
+                $Sync.lineCount = [int]$Sync.lineCount + 1
 
-        if ([string]::IsNullOrEmpty($chunk)) { return }
-        foreach ($line in ($chunk -split "`r?`n")) {
-            if ([string]::IsNullOrWhiteSpace($line)) { continue }
-            $Sync.lineCount = [int]$Sync.lineCount + 1
-            if ($line -match '(?i)authentication required|not logged in|invalid.*(token|api[_ ]?key)|unauthorized') {
-                $Sync.authSuspected = $true
-            }
-            # Ask heuristic: only assistant-visible text. Thinking deltas like
-            # "Still need clarification" are false positives.
-            $askProbe = $line
-            if ([string]$Sync.outputFormat -eq "stream-json") {
-                $askProbe = $null
-                $tAsk = $line.Trim()
-                if ($tAsk.StartsWith("{") -and $tAsk.EndsWith("}")) {
-                    try {
-                        $askObj = $tAsk | ConvertFrom-Json
-                        if ([string]$askObj.type -eq "assistant") {
-                            $parts = @()
-                            if ($askObj.message -and $askObj.message.content) {
-                                foreach ($c in @($askObj.message.content)) {
-                                    if ($c.type -eq "text" -and $c.text) { $parts += [string]$c.text }
+                if ($isStderr) {
+                    # Agent CLI auth errors usually land on stderr as plain text.
+                    if (Test-CursorAgentAuthText $line) { $Sync.authSuspected = $true }
+                    continue
+                }
+
+                if ([string]$Sync.outputFormat -eq "stream-json") {
+                    $t = $line.Trim()
+                    if ($t.StartsWith("{") -and $t.EndsWith("}")) {
+                        try {
+                            $obj = $t | ConvertFrom-Json
+                            $otype = [string]$obj.type
+
+                            if ($otype -eq "result") {
+                                $isErr = $false
+                                if ($null -ne $obj.is_error) { $isErr = [bool]$obj.is_error }
+                                $Sync.streamResultError = $isErr
+                                $Sync.streamResultSuccess = (-not $isErr -and [string]$obj.subtype -eq "success")
+                                $resText = ""
+                                if ($obj.result) { $resText = [string]$obj.result }
+                                if ($isErr -and (Test-CursorAgentAuthText $resText)) { $Sync.authSuspected = $true }
+                            }
+                            elseif ($otype -eq "system") {
+                                $sysText = ""
+                                if ($obj.message) { $sysText = [string]$obj.message }
+                                elseif ($obj.text) { $sysText = [string]$obj.text }
+                                if (Test-CursorAgentAuthText $sysText) { $Sync.authSuspected = $true }
+                            }
+                            elseif ($otype -eq "assistant") {
+                                $parts = @()
+                                if ($obj.message -and $obj.message.content) {
+                                    foreach ($c in @($obj.message.content)) {
+                                        if ($c.type -eq "text" -and $c.text) { $parts += [string]$c.text }
+                                    }
+                                }
+                                if ($parts.Count -gt 0) {
+                                    $askProbe = ($parts -join "`n")
+                                    if ($askProbe -match '(?i)\b(which (option|approach) should I|do you want me to|please (confirm|choose|answer)|waiting for (your|user) (input|reply)|I need you to (confirm|choose|clarify))\b') {
+                                        $Sync.askSuspected = $true
+                                    }
                                 }
                             }
-                            if ($parts.Count -gt 0) { $askProbe = ($parts -join "`n") }
+                            # intentionally ignore: thinking, tool_call payloads (Unity 401 lives there)
+                        } catch {
+                            $Sync.parseErrors = [int]$Sync.parseErrors + 1
                         }
-                    } catch {}
-                }
-            }
-            if ($askProbe -and ($askProbe -match '(?i)\b(which (option|approach) should I|do you want me to|please (confirm|choose|answer)|waiting for (your|user) (input|reply)|I need you to (confirm|choose|clarify))\b')) {
-                $Sync.askSuspected = $true
-            }
-            if ([string]$Sync.outputFormat -eq "stream-json") {
-                $t = $line.Trim()
-                if ($t.StartsWith("{") -and $t.EndsWith("}")) {
-                    try {
-                        $obj = $t | ConvertFrom-Json
-                        if ([string]$obj.type -eq "result") {
-                            $isErr = $false
-                            if ($null -ne $obj.is_error) { $isErr = [bool]$obj.is_error }
-                            $Sync.streamResultError = $isErr
-                            $Sync.streamResultSuccess = (-not $isErr -and [string]$obj.subtype -eq "success")
-                        }
-                    } catch {
-                        $Sync.parseErrors = [int]$Sync.parseErrors + 1
                     }
-                } elseif ($t.StartsWith("{") -and -not $t.EndsWith("}")) {
-                    # partial line — ignore
+                } else {
+                    # text mode: still avoid bare "unauthorized" / HTTP 401
+                    if (Test-CursorAgentAuthText $line) { $Sync.authSuspected = $true }
+                    if ($line -match '(?i)\b(which (option|approach) should I|do you want me to|please (confirm|choose|answer)|waiting for (your|user) (input|reply)|I need you to (confirm|choose|clarify))\b') {
+                        $Sync.askSuspected = $true
+                    }
                 }
             }
         }
@@ -970,9 +1002,21 @@ function Invoke-SupervisedTicket {
                 $idleSec = ($now - [DateTime]$handle.Sync.lastOutputUtc).TotalSeconds
                 $unhealthyReason = $null
 
-                if ($handle.Sync.authSuspected) { $unhealthyReason = "auth_or_token" }
-                elseif ([int]$handle.Sync.parseErrors -ge 8) { $unhealthyReason = "stream_json_parse_errors" }
-                elseif ($handle.Sync.askSuspected -and -not $continueGraceDeadline) { $unhealthyReason = "agent_asking_questions" }
+                # Soft signals only: log once, do NOT open escape-hatch.
+                # Normal Unity 401 / thinking noise must never burn an intervention.
+                if ($handle.Sync.authSuspected -and -not $handle.Sync.softAuthLogged) {
+                    $handle.Sync.softAuthLogged = $true
+                    Write-MachineEvent $eventsPath "soft_signal" @{ kind = "auth_or_token"; note = "observed only; no intervention" }
+                    Write-Host "[soft] auth_or_token observed (no intervention)" -ForegroundColor DarkGray
+                }
+                if ($handle.Sync.askSuspected -and -not $handle.Sync.softAskLogged) {
+                    $handle.Sync.softAskLogged = $true
+                    Write-MachineEvent $eventsPath "soft_signal" @{ kind = "agent_asking_questions"; note = "observed only; no intervention" }
+                    Write-Host "[soft] agent_asking_questions observed (no intervention)" -ForegroundColor DarkGray
+                }
+
+                # Hard triggers only — expected rare on a healthy ticket.
+                if ([int]$handle.Sync.parseErrors -ge 8) { $unhealthyReason = "stream_json_parse_errors" }
                 elseif ($idleSec -ge ($idleMin * 60)) { $unhealthyReason = "stdout_idle" }
                 elseif ($now -gt $deadline) { $unhealthyReason = "ticket_budget_exceeded" }
                 elseif ($continueGraceDeadline -and $now -gt $continueGraceDeadline) {
@@ -980,6 +1024,18 @@ function Invoke-SupervisedTicket {
                 }
 
                 if ($unhealthyReason) {
+                    # Worker already done → never block the queue on escape-hatch.
+                    try { $handle.Process.Refresh() } catch {}
+                    if ($handle.Process.HasExited -or $handle.Sync.streamResultSuccess -eq $true) {
+                        Write-MachineEvent $eventsPath "unhealthy_ignored_process_done" @{
+                            reason = $unhealthyReason
+                            hasExited = [bool]$handle.Process.HasExited
+                            streamOk = $handle.Sync.streamResultSuccess
+                        }
+                        Write-Host "[unhealthy] $unhealthyReason ignored — worker already finished" -ForegroundColor DarkYellow
+                        break
+                    }
+
                     Write-MachineEvent $eventsPath "unhealthy" @{
                         reason   = $unhealthyReason
                         pid      = $handle.Process.Id
@@ -1012,9 +1068,10 @@ function Invoke-SupervisedTicket {
                         if ($action -eq "continue_wait") {
                             Write-Host "[intervention] continue_wait — grace ${graceMin}m" -ForegroundColor Magenta
                             $continueGraceDeadline = [DateTime]::UtcNow.AddMinutes($graceMin)
-                            # reset idle / ask so we don't immediately re-fire the same signal
+                            # reset idle / ask / auth so we don't immediately re-fire the same signal
                             $handle.Sync.lastOutputUtc = [DateTime]::UtcNow
                             $handle.Sync.askSuspected = $false
+                            $handle.Sync.authSuspected = $false
                             continue
                         }
                         elseif ($action -eq "kill_restart") {
