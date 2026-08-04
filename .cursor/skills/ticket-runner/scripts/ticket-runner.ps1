@@ -68,13 +68,14 @@ Commands:
   doctor    Check gh / Cursor agent / auth / default model
   help      This help
 
-Queue sources (pick one):
-  --parent <n>           Task-list / tracked children of parent issue n
+Queue sources (pick one; else config.defaultParent, else readyLabel):
+  --parent <n>           Task-list / tracked children of parent Spec n
   --issues <a,b,c>       Explicit issue numbers (order preserved)
   --label <name>         Open issues with label (default: ready-for-agent)
+  defaultParent (config) Used when no --parent/--issues/--label is passed
 
 Run options:
-  --once                 Only the first pending ticket
+  --once                 Only the first pending ticket (opt-in; default is full queue)
   --from <n>             Skip until #n (inclusive)
   --model <id>           Batch model override (default: $script:DefaultModel)
   --workspace <path>     Repo root
@@ -95,9 +96,11 @@ Robustness (config defaults):
 
 Examples:
   ticket-runner.ps1 doctor
-  ticket-runner.ps1 plan --parent 114
+  ticket-runner.ps1 plan
+  ticket-runner.ps1 run
+  ticket-runner.ps1 run --parent 114
   ticket-runner.ps1 run --parent 114 --once
-  ticket-runner.ps1 run --parent 114 --model cursor-grok-4.5-high
+  ticket-runner.ps1 run --model cursor-grok-4.5-high
 "@ | Write-Output
 }
 
@@ -193,6 +196,7 @@ function Get-DefaultConfig {
         agentPath                   = ""
         strictClose                 = $false
         readyLabel                  = "ready-for-agent"
+        defaultParent               = $null
         force                       = $true
         trust                       = $true
         outputFormat                = "stream-json"
@@ -293,6 +297,43 @@ function New-MachineRun {
 # ---------------------------------------------------------------------------
 # Cursor agent resolution
 # ---------------------------------------------------------------------------
+
+function Resolve-CursorAgentNodeLaunch {
+    # Prefer node.exe + index.js so Start-Process ArgumentList keeps spaces
+    # (agent.cmd → cmd.exe re-parses and splits paths like "Ninegrid Gambit").
+    param([string] $AgentCmdOrDir)
+    $root = $AgentCmdOrDir
+    if (Test-Path -LiteralPath $root -PathType Leaf) {
+        $root = Split-Path -Parent $root
+    }
+    if (-not $root -or -not (Test-Path -LiteralPath $root)) { return $null }
+
+    $localNode = Join-Path $root "node.exe"
+    $localIndex = Join-Path $root "index.js"
+    if ((Test-Path -LiteralPath $localNode) -and (Test-Path -LiteralPath $localIndex)) {
+        return [pscustomobject]@{
+            FilePath   = (Resolve-Path -LiteralPath $localNode).Path
+            PrefixArgs = @((Resolve-Path -LiteralPath $localIndex).Path)
+        }
+    }
+
+    $versionsRoot = Join-Path $root "versions"
+    if (-not (Test-Path -LiteralPath $versionsRoot)) { return $null }
+    $versionDir = Get-ChildItem -LiteralPath $versionsRoot -Directory -ErrorAction SilentlyContinue |
+        Where-Object { $_.Name -match '^\d{4}\.\d{1,2}\.\d{1,2}(-\d{2}-\d{2}-\d{2})?-[a-f0-9]+$' } |
+        Sort-Object Name -Descending |
+        Select-Object -First 1
+    if (-not $versionDir) { return $null }
+    $nodePath = Join-Path $versionDir.FullName "node.exe"
+    $indexPath = Join-Path $versionDir.FullName "index.js"
+    if ((Test-Path -LiteralPath $nodePath) -and (Test-Path -LiteralPath $indexPath)) {
+        return [pscustomobject]@{
+            FilePath   = (Resolve-Path -LiteralPath $nodePath).Path
+            PrefixArgs = @((Resolve-Path -LiteralPath $indexPath).Path)
+        }
+    }
+    return $null
+}
 
 function Resolve-CursorAgent {
     param([string] $Override)
@@ -560,6 +601,30 @@ function Stop-ProcessTree([int] $ProcessId) {
     }
 }
 
+function Escape-WinProcessArgument {
+    # Windows CreateProcess command-line rules (PS 5.1 joins -ArgumentList arrays
+    # with bare spaces, so we must emit one pre-quoted argument string).
+    param([string] $Value)
+    if ($null -eq $Value) { return '""' }
+    if ($Value -notmatch '[\s"]') { return $Value }
+    $escaped = (($Value -replace '(\\*)"','$1$1\"') -replace '(\\+)$','$1$1')
+    return '"' + $escaped + '"'
+}
+
+function Join-WinProcessArguments {
+    param([string[]] $Arguments)
+    return (($Arguments | ForEach-Object { Escape-WinProcessArgument $_ }) -join ' ')
+}
+
+function Quote-CmdArgument {
+    # Fallback when we must still launch via .cmd (cmd.exe re-tokenize).
+    param([string] $Value)
+    if ($null -eq $Value) { return '""' }
+    if ($Value -notmatch '[\s"]') { return $Value }
+    $escaped = $Value.Replace('"', '""')
+    return "`"$escaped`""
+}
+
 function Start-RedirectedAgent {
     param(
         [string] $AgentPath,
@@ -573,7 +638,16 @@ function Start-RedirectedAgent {
         [string] $StderrPath
     )
 
+    $filePath = $AgentPath
     $argList = New-Object System.Collections.Generic.List[string]
+
+    # Prefer node.exe + index.js (avoids agent.cmd → cmd.exe).
+    $nodeLaunch = Resolve-CursorAgentNodeLaunch -AgentCmdOrDir $AgentPath
+    if ($nodeLaunch) {
+        $filePath = [string]$nodeLaunch.FilePath
+        foreach ($pre in @($nodeLaunch.PrefixArgs)) { $argList.Add([string]$pre) | Out-Null }
+    }
+
     $argList.Add("-p") | Out-Null
     $argList.Add("--workspace") | Out-Null
     $argList.Add($RepoRoot) | Out-Null
@@ -587,13 +661,20 @@ function Start-RedirectedAgent {
     }
     $argList.Add($Prompt) | Out-Null
 
+    # PS 5.1: pass ONE string; array form silently drops required quoting.
+    if ($filePath -match '\.(cmd|bat)$') {
+        $argString = (($argList | ForEach-Object { Quote-CmdArgument $_ }) -join ' ')
+    } else {
+        $argString = Join-WinProcessArguments -Arguments $argList.ToArray()
+    }
+
     # Ensure empty log files (Start-Process refuses to overwrite sometimes inconsistently)
     [System.IO.File]::WriteAllText($StdoutPath, "", [System.Text.UTF8Encoding]::new($false))
     [System.IO.File]::WriteAllText($StderrPath, "", [System.Text.UTF8Encoding]::new($false))
 
     # File redirects: child does NOT inherit parent console pipes → avoids parent hang.
-    $proc = Start-Process -FilePath $AgentPath `
-        -ArgumentList $argList.ToArray() `
+    $proc = Start-Process -FilePath $filePath `
+        -ArgumentList $argString `
         -WorkingDirectory $RepoRoot `
         -WindowStyle Hidden `
         -PassThru `
@@ -611,12 +692,15 @@ function Start-RedirectedAgent {
         stdoutPath    = $StdoutPath
         stderrPath    = $StderrPath
         scanOffset    = 0L
+        streamResultSuccess = $null   # $true / $false / $null when unseen
+        streamResultError   = $false
     }
 
     return [pscustomobject]@{
         Process   = $proc
         Sync      = $sync
-        Arguments = ($argList -join ' ')
+        Arguments = $argString
+        FilePath  = $filePath
         StdoutPath = $StdoutPath
         StderrPath = $StderrPath
     }
@@ -658,13 +742,44 @@ function Update-AgentLogSignals($Sync) {
             if ($line -match '(?i)authentication required|not logged in|invalid.*(token|api[_ ]?key)|unauthorized') {
                 $Sync.authSuspected = $true
             }
-            if ($line -match '(?i)\b(clarif(y|ication)|which (option|approach)|do you want|please (confirm|choose|answer)|waiting for (your|user) (input|reply))\b') {
+            # Ask heuristic: only assistant-visible text. Thinking deltas like
+            # "Still need clarification" are false positives.
+            $askProbe = $line
+            if ([string]$Sync.outputFormat -eq "stream-json") {
+                $askProbe = $null
+                $tAsk = $line.Trim()
+                if ($tAsk.StartsWith("{") -and $tAsk.EndsWith("}")) {
+                    try {
+                        $askObj = $tAsk | ConvertFrom-Json
+                        if ([string]$askObj.type -eq "assistant") {
+                            $parts = @()
+                            if ($askObj.message -and $askObj.message.content) {
+                                foreach ($c in @($askObj.message.content)) {
+                                    if ($c.type -eq "text" -and $c.text) { $parts += [string]$c.text }
+                                }
+                            }
+                            if ($parts.Count -gt 0) { $askProbe = ($parts -join "`n") }
+                        }
+                    } catch {}
+                }
+            }
+            if ($askProbe -and ($askProbe -match '(?i)\b(which (option|approach) should I|do you want me to|please (confirm|choose|answer)|waiting for (your|user) (input|reply)|I need you to (confirm|choose|clarify))\b')) {
                 $Sync.askSuspected = $true
             }
             if ([string]$Sync.outputFormat -eq "stream-json") {
                 $t = $line.Trim()
                 if ($t.StartsWith("{") -and $t.EndsWith("}")) {
-                    try { $null = $t | ConvertFrom-Json } catch { $Sync.parseErrors = [int]$Sync.parseErrors + 1 }
+                    try {
+                        $obj = $t | ConvertFrom-Json
+                        if ([string]$obj.type -eq "result") {
+                            $isErr = $false
+                            if ($null -ne $obj.is_error) { $isErr = [bool]$obj.is_error }
+                            $Sync.streamResultError = $isErr
+                            $Sync.streamResultSuccess = (-not $isErr -and [string]$obj.subtype -eq "success")
+                        }
+                    } catch {
+                        $Sync.parseErrors = [int]$Sync.parseErrors + 1
+                    }
                 } elseif ($t.StartsWith("{") -and -not $t.EndsWith("}")) {
                     # partial line — ignore
                 }
@@ -857,7 +972,7 @@ function Invoke-SupervisedTicket {
 
                 if ($handle.Sync.authSuspected) { $unhealthyReason = "auth_or_token" }
                 elseif ([int]$handle.Sync.parseErrors -ge 8) { $unhealthyReason = "stream_json_parse_errors" }
-                elseif ($handle.Sync.askSuspected) { $unhealthyReason = "agent_asking_questions" }
+                elseif ($handle.Sync.askSuspected -and -not $continueGraceDeadline) { $unhealthyReason = "agent_asking_questions" }
                 elseif ($idleSec -ge ($idleMin * 60)) { $unhealthyReason = "stdout_idle" }
                 elseif ($now -gt $deadline) { $unhealthyReason = "ticket_budget_exceeded" }
                 elseif ($continueGraceDeadline -and $now -gt $continueGraceDeadline) {
@@ -897,8 +1012,9 @@ function Invoke-SupervisedTicket {
                         if ($action -eq "continue_wait") {
                             Write-Host "[intervention] continue_wait — grace ${graceMin}m" -ForegroundColor Magenta
                             $continueGraceDeadline = [DateTime]::UtcNow.AddMinutes($graceMin)
-                            # reset idle clock so we don't immediately re-fire idle
+                            # reset idle / ask so we don't immediately re-fire the same signal
                             $handle.Sync.lastOutputUtc = [DateTime]::UtcNow
+                            $handle.Sync.askSuspected = $false
                             continue
                         }
                         elseif ($action -eq "kill_restart") {
@@ -939,15 +1055,26 @@ function Invoke-SupervisedTicket {
                 try { $handle.Process.Refresh() } catch {}
                 try { $handle.Process.WaitForExit(3000) | Out-Null } catch {}
                 Update-AgentLogSignals -Sync $handle.Sync
-                $code = 1
+                $code = $null
                 try { $code = $handle.Process.ExitCode } catch {}
+                # PS/Start-Process sometimes yields $null ExitCode even after a clean node exit;
+                # trust stream-json {"type":"result","subtype":"success"} when present.
+                if ($null -eq $code) {
+                    if ($handle.Sync.streamResultSuccess -eq $true) { $code = 0 }
+                    elseif ($handle.Sync.streamResultError -eq $true) { $code = 1 }
+                    else { $code = 1 }
+                }
                 if ($handle.Sync.authSuspected -and $code -ne 0) {
                     $result = [pscustomobject]@{ status = "failed"; exitCode = $code; reason = "auth_or_token" }
                 } else {
                     $result = [pscustomobject]@{
                         status   = $(if ($code -eq 0) { "finished" } else { "failed" })
                         exitCode = $code
-                        reason   = "process_exit"
+                        reason   = $(if ($code -eq 0 -and $null -eq $handle.Process.ExitCode -and $handle.Sync.streamResultSuccess) {
+                            "process_exit_stream_ok"
+                        } else {
+                            "process_exit"
+                        })
                     }
                 }
             }
@@ -1248,7 +1375,12 @@ function Main {
     $issues = @(Parse-IssueList $issuesRaw)
 
     if (-not $label -and -not $parent -and $issues.Count -eq 0) {
-        $label = [string]$config.readyLabel
+        $cfgParent = $config.defaultParent
+        if ($null -ne $cfgParent -and "$cfgParent" -ne "" -and [int]$cfgParent -gt 0) {
+            $parent = [int]$cfgParent
+        } else {
+            $label = [string]$config.readyLabel
+        }
     }
     if ($parent -or $issues.Count -gt 0) { $label = $null }
 

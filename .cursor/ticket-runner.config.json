@@ -3,6 +3,7 @@
   "promptTemplate": "/implement #{number}",
   "strictClose": false,
   "readyLabel": "ready-for-agent",
+  "defaultParent": 114,
   "force": true,
   "trust": true,
   "outputFormat": "stream-json",

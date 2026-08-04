@@ -32,7 +32,7 @@ disable-model-invocation: true
 
 1. `gh` 已登录。
 2. Cursor Agent CLI（非 PATH 上的 grok `agent.exe`）已 `login` 或设置 `CURSOR_API_KEY`。
-3. `doctor` → `plan` → `run --once` 试点。
+3. `doctor` →（通过后）`plan` → `run` 全队列串行。仅在用户显式要求时才用 `run --once`。
 
 ## Entry
 
@@ -52,11 +52,14 @@ powershell -NoProfile -ExecutionPolicy Bypass -File ".cursor/skills/ticket-runne
 
 ## Queue sources
 
-| Flag | Behavior |
-|------|----------|
-| `--parent <n>` | 父 issue task list `#N` |
+| Flag / 配置 | Behavior |
+|-------------|----------|
+| `--parent <n>` | 父 Spec 的 task list / tracked children（如 `#114` → `#115`…） |
+| `defaultParent`（项目 config） | 未传 `--parent` / `--issues` / `--label` 时使用 |
 | `--issues a,b,c` | 显式顺序 |
-| `--label <name>` | 默认 `ready-for-agent` |
+| `--label <name>` | 无 parent 时的回退；默认 `ready-for-agent` |
+
+默认队列语义：父 Spec 之后的子票按 task list 序号一路串行（不是跳号猜 issue）。
 
 ## 批次模型
 
@@ -65,10 +68,13 @@ powershell -NoProfile -ExecutionPolicy Bypass -File ".cursor/skills/ticket-runne
 - 优先级：`--model` > 项目 `.cursor/ticket-runner.config.json` > skill `config.example.json` > 内置默认
 
 ```powershell
-# 默认模型批次
+# 默认：读 config.defaultParent，全队列串行
+... ticket-runner.ps1 run
+
+# 显式父 Spec
 ... ticket-runner.ps1 run --parent 114
 
-# 整批指定模型
+# 整批指定模型（仅用户明确要求时）
 ... ticket-runner.ps1 run --parent 114 --model cursor-grok-4.5-high
 ```
 
@@ -97,21 +103,36 @@ Escape-hatch 会另开一个 one-shot `agent -p`，要求写入 `intervention-de
 - **最多保留 3 次 run**；超额删除最旧目录
 - 原子写盘 + 失败只告警，不因日志失败中断业务（本地磁盘，无网络依赖）
 
-## Pilot
+## Default run (no extra user asks)
+
+用户只说 `/ticket-runner`（或等价，且**没有**额外约束）时的默认：
+
+| 项 | 默认 |
+|----|------|
+| 队列 | `config.defaultParent`（或用户给的 `--parent`）的子票 task list，从第一张开票起全队列 |
+| 跑法 | `run` **全队列串行**（不用 `--once`） |
+| 模型 | 配置默认 `cursor-grok-4.5-high` |
+
+**不要追问**队列/跑法/模型，除非出现下列例外之一：
+
+- 用户本轮点名了模型（`--model` / 口述 slug）
+- 用户对落地顺序或范围有特殊要求（`--once`、`--from`、`--issues`、只要某几张等）
+- `doctor` 失败，或 config 无 `defaultParent` 且无法解析队列
 
 ```powershell
 ... doctor
-... plan --parent 114
-... run --parent 114 --once
+... plan          # 或 plan --parent <n>
+... run           # 全队列；仅用户要求时才加 --once
 ```
 
 ## Agent behavior when invoked
 
-1. **先报默认模型**（见上）。
-2. 确认 `plan` / `run --once` / 全队列，以及是否 `--model`。
-3. `doctor`（若未确认）。
-4. `plan`，再执行脚本；回报 exit code 与 `runs/...` 路径。
-5. **禁止**在本 chat 落地业务 issue。
+1. **先报默认模型**（见上）；若用户覆盖了批次模型则一并写明。
+2. `doctor`；失败则停并报告，成功则继续。
+3. 无上述例外时：**直接** `plan` → `run` 全队列（读 `defaultParent` 或用户给的 `--parent`），不多问。
+4. 有例外时：按用户约束组 flag，再 `plan` → `run`。
+5. 回报 exit code 与 `runs/...` 路径。
+6. **禁止**在本 chat 落地业务 issue。
 
 ## Portable install
 

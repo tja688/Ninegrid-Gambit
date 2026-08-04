@@ -15,9 +15,17 @@ Live check (requires CLI login):
 
 `doctor` validates slug format always; when authenticated it tries to find the id in `--list-models`.
 
+## Default queue
+
+Project `.cursor/ticket-runner.config.json` may set `defaultParent` (e.g. `114`).  
+Bare `plan` / `run` then resolve that Spec’s child task list (starting at the first child, typically parent+1) and run the **full** open queue serially. `--once` / `--model` / `--issues` are opt-in overrides only.
+
 ## Supervised worker
 
-- `Start-Process -RedirectStandardOutput/Error` to files (no console pipe inherit).
+- Prefer `node.exe` + `index.js` over `agent.cmd`.
+- PS 5.1 `Start-Process -ArgumentList` **array** joins with bare spaces (breaks `Ninegrid Gambit`); always pass **one** pre-quoted argument string.
+- Redirect stdout/stderr to files (no console pipe inherit).
+- When process `ExitCode` is `$null`, accept stream-json `{"type":"result","subtype":"success"}` as finished (avoids false FAIL after a clean land).
 - Poll loop: process exit, file growth (idle), auth/ask/parse heuristics, 30m budget.
 - One escape-hatch intervention agent; decisions: `kill_restart` | `continue_wait` | `pause_user`.
 - No recursive intervention; second unhealthy → exit 3 pause for human.

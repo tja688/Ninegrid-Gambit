@@ -1,0 +1,467 @@
+[
+  {
+    "id": "relic.craving",
+    "name": "渴望",
+    "desc": "所有恢复血量效果翻倍",
+    "design_attrs": "血量上限+10",
+    "design_effect": "所有恢复血量效果翻倍",
+    "assemblies": [
+      {
+        "templateId": "tpl.relic.craving.rule",
+        "args": {
+          "value": 2
+        },
+        "design_text": "所有恢复血量效果翻倍",
+        "trigger": null
+      }
+    ],
+    "issues": [
+      "MISSING_MAXHP+10"
+    ]
+  },
+  {
+    "id": "relic.dragon_scale_armor",
+    "name": "龙鳞甲",
+    "desc": "基础护甲+{value}；血量上限+{delta}；所有怪物卡的攻击{value}",
+    "design_attrs": "基础护甲+1，血量上限+6",
+    "design_effect": "所有怪物卡的攻击-1",
+    "assemblies": [
+      {
+        "templateId": "tpl.shared.4.relic_dragon_scale_armor_base",
+        "args": {
+          "value": 1
+        },
+        "design_text": "基础护甲+1",
+        "trigger": null
+      },
+      {
+        "templateId": "tpl.shared.5.relic_blood_shockwave_max_hp",
+        "args": {
+          "delta": 6,
+          "reason": "relic.dragon_scale_armor.max_hp"
+        },
+        "design_text": "血量上限+4",
+        "trigger": null
+      },
+      {
+        "templateId": "tpl.relic.dragon_scale_armor.rule",
+        "args": {
+          "value": -1
+        },
+        "design_text": "所有怪物卡的攻击-1",
+        "trigger": null
+      }
+    ],
+    "issues": []
+  },
+  {
+    "id": "relic.gold_armor",
+    "name": "金币盔甲",
+    "desc": "基础护甲+{value}；[受到伤害时] 每5金币抵消{value}点当前护甲伤害",
+    "design_attrs": "基础护甲+1",
+    "design_effect": "[受到伤害时] 每5金币抵消1点当前护甲伤害，金币数不足时再扣除当前护甲（对血量造成伤害时不生效）",
+    "assemblies": [
+      {
+        "templateId": "tpl.shared.4.relic_dragon_scale_armor_base",
+        "args": {
+          "value": 1
+        },
+        "design_text": "基础护甲+1",
+        "trigger": null
+      },
+      {
+        "templateId": "tpl.relic.gold_armor.rule",
+        "args": {
+          "value": 1
+        },
+        "design_text": "[受到伤害时] 每5金币抵消1点当前护甲伤害",
+        "trigger": null
+      }
+    ],
+    "issues": []
+  },
+  {
+    "id": "relic.gold_knife",
+    "name": "打金刀",
+    "desc": "[击杀怪物时] 获得{delta}金币",
+    "design_attrs": "无",
+    "design_effect": "[击杀怪物时] 获得2金币",
+    "assemblies": [
+      {
+        "templateId": "tpl.relic.gold_knife.kill",
+        "args": {
+          "delta": 2,
+          "reason": "goldKnife"
+        },
+        "design_text": "[击杀怪物时] 获得2金币",
+        "trigger": null
+      }
+    ],
+    "issues": []
+  },
+  {
+    "id": "relic.heavy_armor",
+    "name": "重盔甲",
+    "desc": "基础护甲+{value}；[每关卡开始时] 每有两点基础护甲，额外获得1点当前护甲",
+    "design_attrs": "基础护甲+1",
+    "design_effect": "[每关卡开始时] 每有两点基础护甲，额外获得1点当前护甲",
+    "assemblies": [
+      {
+        "templateId": "tpl.shared.4.relic_dragon_scale_armor_base",
+        "args": {
+          "value": 1
+        },
+        "design_text": "基础护甲+1",
+        "trigger": null
+      },
+      {
+        "templateId": "tpl.relic.heavy_armor.node_start",
+        "args": {
+          "source": "Player"
+        },
+        "design_text": "[每关卡开始时] 每有两点基础护甲，额外获得1点当前护甲",
+        "trigger": null
+      }
+    ],
+    "issues": []
+  },
+  {
+    "id": "relic.junk_coating",
+    "name": "废物涂层",
+    "desc": "",
+    "design_attrs": "无",
+    "design_effect": "[使用道具卡时] 获得1点当前护甲",
+    "assemblies": [
+      {
+        "templateId": "tpl.gain_armor_on_use_help_card",
+        "args": {
+          "amount": 1
+        },
+        "design_text": "[使用时] 玩家获得5点护甲",
+        "trigger": "OnSelfUsed"
+      }
+    ],
+    "issues": [
+      "EMPTY_DESC",
+      "TRIGGER_OnSelfUsed:tpl.gain_armor_on_use_help_card"
+    ]
+  },
+  {
+    "id": "relic.junk_launcher",
+    "name": "废物发射器",
+    "desc": "[使用帮助卡时] 对随机一张怪物卡造成{amount}点伤害",
+    "design_attrs": "无",
+    "design_effect": "[使用道具卡时] 对随机一张怪物卡造成2点伤害",
+    "assemblies": [
+      {
+        "templateId": "tpl.relic.junk_launcher.use",
+        "args": {
+          "amount": 2
+        },
+        "design_text": "[使用帮助卡时] 对随机一张怪物卡造成2点伤害",
+        "trigger": "OnSelfUsed"
+      }
+    ],
+    "issues": [
+      "TRIGGER_OnSelfUsed:tpl.relic.junk_launcher.use"
+    ]
+  },
+  {
+    "id": "relic.junk_recycler",
+    "name": "废物利用机",
+    "desc": "",
+    "design_attrs": "无",
+    "design_effect": "[使用道具卡时] 恢复2点血量",
+    "assemblies": [
+      {
+        "templateId": "tpl.heal_player_on_use_help_card",
+        "args": {
+          "amount": 2
+        },
+        "design_text": "[使用时] 恢复10点血量",
+        "trigger": "OnSelfUsed"
+      }
+    ],
+    "issues": [
+      "EMPTY_DESC",
+      "TRIGGER_OnSelfUsed:tpl.heal_player_on_use_help_card"
+    ]
+  },
+  {
+    "id": "relic.lucky_coin",
+    "name": "幸运硬币",
+    "desc": "",
+    "design_attrs": "无",
+    "design_effect": "[击杀怪物时] 将一张 [[游戏开发项目/九宫格登神/03-玩家侧卡牌信息/道具卡|金币卡]] 加入战斗卡组（仅对等级为层主的怪物卡生效）",
+    "assemblies": [
+      {
+        "templateId": "tpl.relic.lucky_coin.elite_kill",
+        "args": {
+          "count": 1
+        },
+        "design_text": "[击杀精英时] 将一张金币卡加入战斗卡组",
+        "trigger": null
+      },
+      {
+        "templateId": "tpl.relic.lucky_coin.boss_kill",
+        "args": {
+          "count": 1
+        },
+        "design_text": "[击杀层主时] 将一张金币卡加入战斗卡组",
+        "trigger": null
+      }
+    ],
+    "issues": [
+      "EMPTY_DESC",
+      "ELITE_KILL_EXTRA_vs_层主"
+    ]
+  },
+  {
+    "id": "relic.phoenix_feather",
+    "name": "凤凰羽毛",
+    "desc": "血量上限+{delta}；[受到致命伤害时] 恢复50%血量并永久移除本遗物",
+    "design_attrs": "血量上限+8",
+    "design_effect": "[受到致命伤害时] 恢复50%血量并永久移除本遗物（一次性免死）",
+    "assemblies": [
+      {
+        "templateId": "tpl.shared.5.relic_blood_shockwave_max_hp",
+        "args": {
+          "delta": 8,
+          "reason": "relic.phoenix_feather.max_hp"
+        },
+        "design_text": "血量上限+4",
+        "trigger": null
+      },
+      {
+        "templateId": "tpl.relic.phoenix_feather.fatal",
+        "args": {
+          "source": "Player"
+        },
+        "design_text": "[受到致命伤害时] 恢复50%血量并永久移除本遗物",
+        "trigger": null
+      }
+    ],
+    "issues": []
+  },
+  {
+    "id": "relic.potion_bag",
+    "name": "药水袋",
+    "desc": "",
+    "design_attrs": "无",
+    "design_effect": "[每关卡开始时] 将两张[[恢复药水]]加入到玩家侧卡组",
+    "assemblies": [
+      {
+        "templateId": "tpl.relic.potion_bag.node_start",
+        "args": {
+          "count": 2
+        },
+        "design_text": "[每关卡开始时] 将两张恢复药水加入到玩家侧卡组",
+        "trigger": null
+      }
+    ],
+    "issues": [
+      "EMPTY_DESC"
+    ]
+  },
+  {
+    "id": "relic.rotation_button",
+    "name": "旋转按钮",
+    "desc": "",
+    "design_attrs": "无",
+    "design_effect": "[每关卡开始时] 将一张旋转轮放入到道具牌格",
+    "assemblies": [
+      {
+        "templateId": "tpl.relic.rotation_button.node_start",
+        "args": {},
+        "design_text": "[每关卡开始时] 将一张旋转轮放入道具牌格",
+        "trigger": null
+      }
+    ],
+    "issues": [
+      "EMPTY_DESC"
+    ]
+  },
+  {
+    "id": "relic.shield_knife",
+    "name": "打盾刀",
+    "desc": "",
+    "design_attrs": "无",
+    "design_effect": "[击杀怪物时] 获得1点当前护甲",
+    "assemblies": [
+      {
+        "templateId": "tpl.relic.shield_knife.kill",
+        "args": {
+          "amount": 1
+        },
+        "design_text": "[击杀怪物时] 获得1点当前护甲",
+        "trigger": null
+      }
+    ],
+    "issues": [
+      "EMPTY_DESC"
+    ]
+  },
+  {
+    "id": "relic.sling",
+    "name": "弹弓",
+    "desc": "[击杀怪物时] 对随机一张怪物卡造成{amount}点伤害",
+    "design_attrs": "无",
+    "design_effect": "[击杀怪物时] 对随机一张怪物卡造成4点伤害",
+    "assemblies": [
+      {
+        "templateId": "tpl.relic.sling.kill",
+        "args": {
+          "amount": 4
+        },
+        "design_text": "[击杀怪物时] 对随机一张怪物卡造成4点伤害",
+        "trigger": null
+      }
+    ],
+    "issues": []
+  },
+  {
+    "id": "relic.swap_button",
+    "name": "交换按钮",
+    "desc": "",
+    "design_attrs": "无",
+    "design_effect": "[每关卡开始时] 将一张交换卡放入到道具牌格",
+    "assemblies": [
+      {
+        "templateId": "tpl.relic.swap_button.node_start",
+        "args": {},
+        "design_text": "[每关卡开始时] 将一张交换卡放入道具牌格",
+        "trigger": null
+      }
+    ],
+    "issues": [
+      "EMPTY_DESC"
+    ]
+  },
+  {
+    "id": "relic.throwing_knife_bag",
+    "name": "飞刀袋",
+    "desc": "[每关卡开始时] 将{count}张飞刀加入到玩家侧卡组",
+    "design_attrs": "无",
+    "design_effect": "[每关卡开始时] 将两张[[飞刀]]加入到玩家侧卡组",
+    "assemblies": [
+      {
+        "templateId": "tpl.relic.throwing_knife_bag.node_start",
+        "args": {
+          "count": 2
+        },
+        "design_text": "[每关卡开始时] 将两张飞刀加入到玩家侧卡组",
+        "trigger": null
+      }
+    ],
+    "issues": []
+  },
+  {
+    "id": "relic.vitality_amulet",
+    "name": "活力护符",
+    "desc": "",
+    "design_attrs": "血量上限+6",
+    "design_effect": "[每关卡结束时] 恢复6点血量",
+    "assemblies": [
+      {
+        "templateId": "tpl.shared.5.relic_blood_shockwave_max_hp",
+        "args": {
+          "delta": 6,
+          "reason": "relic.vitality_amulet.max_hp"
+        },
+        "design_text": "血量上限+4",
+        "trigger": null
+      },
+      {
+        "templateId": "tpl.shared.2.relic_hard_skin_node_end",
+        "args": {
+          "amount": 6
+        },
+        "design_text": "[每关卡结束时] 恢复10点血量",
+        "trigger": null
+      }
+    ],
+    "issues": [
+      "EMPTY_DESC"
+    ]
+  },
+  {
+    "id": "relic.wood_armor",
+    "name": "木甲",
+    "desc": "",
+    "design_attrs": "血量上限+2",
+    "design_effect": "同时拥有木盾、木剑、木甲三件遗物时，木甲血量额外+8",
+    "assemblies": [
+      {
+        "templateId": "tpl.relic.wood_armor.base",
+        "args": {
+          "value": 2
+        },
+        "design_text": "血量上限+2",
+        "trigger": null
+      },
+      {
+        "templateId": "tpl.relic.wood_armor.set",
+        "args": {
+          "value": 8
+        },
+        "design_text": "木甲套装血量额外+8",
+        "trigger": null
+      }
+    ],
+    "issues": [
+      "EMPTY_DESC"
+    ]
+  },
+  {
+    "id": "relic.wood_shield",
+    "name": "木盾",
+    "desc": "基础护甲+{value}；木盾套装基础护甲额外+{value}",
+    "design_attrs": "基础护甲+1",
+    "design_effect": "同时拥有木盾、木剑、木甲三件遗物时，木盾基础护甲额外+2",
+    "assemblies": [
+      {
+        "templateId": "tpl.shared.4.relic_dragon_scale_armor_base",
+        "args": {
+          "value": 1
+        },
+        "design_text": "基础护甲+1",
+        "trigger": null
+      },
+      {
+        "templateId": "tpl.relic.wood_shield.set",
+        "args": {
+          "value": 2
+        },
+        "design_text": "木盾套装基础护甲额外+2",
+        "trigger": null
+      }
+    ],
+    "issues": []
+  },
+  {
+    "id": "relic.wood_sword",
+    "name": "木剑",
+    "desc": "攻击+{value}；木剑套装攻击额外+{value}",
+    "design_attrs": "攻击+1",
+    "design_effect": "同时拥有木盾、木剑、木甲三件遗物时，木剑攻击额外+2",
+    "assemblies": [
+      {
+        "templateId": "tpl.relic.wood_sword.base",
+        "args": {
+          "value": 1
+        },
+        "design_text": "攻击+1",
+        "trigger": null
+      },
+      {
+        "templateId": "tpl.relic.wood_sword.set",
+        "args": {
+          "value": 2
+        },
+        "design_text": "木剑套装攻击额外+2",
+        "trigger": null
+      }
+    ],
+    "issues": []
+  }
+]
