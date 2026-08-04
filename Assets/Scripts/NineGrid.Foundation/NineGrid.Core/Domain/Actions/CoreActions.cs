@@ -29,13 +29,20 @@ namespace NineGrid.Core
             TriggerPoint.OnCumulative
         };
 
-        public DealDamageAction(int actorUid, int targetUid, int amount, string sourceDefId = null, string cause = null)
+        public DealDamageAction(
+            int actorUid,
+            int targetUid,
+            int amount,
+            string sourceDefId = null,
+            string cause = null,
+            bool ignoreArmor = false)
         {
             ActorUid = actorUid;
             TargetUid = targetUid;
             Amount = amount;
             SourceDefId = sourceDefId ?? string.Empty;
             Cause = cause ?? string.Empty;
+            IgnoreArmor = ignoreArmor;
         }
 
         public int ActorUid { get; private set; }
@@ -43,6 +50,8 @@ namespace NineGrid.Core
         public int Amount { get; private set; }
         public string SourceDefId { get; private set; }
         public string Cause { get; private set; }
+        /// <summary>ADR-0028：为真则跳过当前护甲与金甲，全额打血。</summary>
+        public bool IgnoreArmor { get; private set; }
         public override string ActionName { get { return "DealDamage"; } }
 
         public override GameActionResult Apply(GameActionContext context)
@@ -72,10 +81,15 @@ namespace NineGrid.Core
                 return GameActionResult.Empty;
             }
 
+            // ADR-0028：Amount → Multiplier/FlatDelta → 伤害减免 →（无视护甲 ? 直打血 : 甲吸收/金甲/溢出）
             var baseDamage = Math.Max(0, Amount);
             var multipliedDamage = Math.Max(0, (int)Math.Round(statSystem.EvaluateRule(RuleId.DamageMultiplier, baseDamage, statContext)));
             var flatDamage = baseDamage > 0 ? (int)Math.Round(statSystem.EvaluateRule(RuleId.DamageFlatDelta, 0f, statContext)) : 0;
-            var damage = Math.Max(0, multipliedDamage + flatDamage);
+            var afterRules = Math.Max(0, multipliedDamage + flatDamage);
+            var damageReduction = baseDamage > 0
+                ? Math.Max(0, (int)Math.Round(statSystem.EvaluateRule(RuleId.DamageReduction, 0f, statContext)))
+                : 0;
+            var damage = Math.Max(0, afterRules - damageReduction);
             if (baseDamage > 0)
             {
                 var consumed = new List<RuleModifier>();
@@ -85,17 +99,33 @@ namespace NineGrid.Core
 
             var armor = StatArmorUtility.GetCurrentArmor(target);
             var hp = Math.Max(0, (int)Math.Round(target.Stats.GetBase(StatId.Hp)));
-            var armorDamage = Math.Min(armor, damage);
-            var goldAbsorbed = 0;
-            if (target.Kind == CardKind.Avatar && armor > 0 && damage > 0 && statSystem.EvaluateRule(RuleId.GoldArmorAbsorb, 0f, statContext) > 0f)
+            int armorLoss;
+            int goldAbsorbed;
+            int hpLoss;
+            int newArmor;
+            int newHp;
+            if (IgnoreArmor)
             {
-                goldAbsorbed = AbsorbArmorDamageWithGold(context, armorDamage);
+                armorLoss = 0;
+                goldAbsorbed = 0;
+                hpLoss = Math.Min(hp, damage);
+                newArmor = armor;
+                newHp = hp - hpLoss;
             }
+            else
+            {
+                var armorDamage = Math.Min(armor, damage);
+                goldAbsorbed = 0;
+                if (target.Kind == CardKind.Avatar && armor > 0 && damage > 0 && statSystem.EvaluateRule(RuleId.GoldArmorAbsorb, 0f, statContext) > 0f)
+                {
+                    goldAbsorbed = AbsorbArmorDamageWithGold(context, armorDamage);
+                }
 
-            var armorLoss = armorDamage - goldAbsorbed;
-            var hpLoss = Math.Min(hp, Math.Max(0, damage - armor));
-            var newArmor = armor - armorLoss;
-            var newHp = hp - hpLoss;
+                armorLoss = armorDamage - goldAbsorbed;
+                hpLoss = Math.Min(hp, Math.Max(0, damage - armor));
+                newArmor = armor - armorLoss;
+                newHp = hp - hpLoss;
+            }
 
             StatArmorUtility.SetCurrentArmor(target, newArmor);
             target.Stats.SetBase(StatId.Hp, newHp);

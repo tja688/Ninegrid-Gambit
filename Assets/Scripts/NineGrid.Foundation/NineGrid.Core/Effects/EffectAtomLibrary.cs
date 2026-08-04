@@ -2729,12 +2729,14 @@ namespace NineGrid.Core.Effects
         private EffectValueExpression mAmount;
         private string mActorRef = "Player";
         private string mCause = string.Empty;
+        private bool mIgnoreArmor;
 
         public void Configure(EffectDslNode config)
         {
             mAmount = EffectValueExpression.FromActionAmount(config);
             mActorRef = config.Get("actor").AsString("Player");
             mCause = config.Get("cause").AsString(string.Empty);
+            mIgnoreArmor = config.Get("ignoreArmor").AsBool(false);
         }
 
         public IReadOnlyList<GameAction> BuildActions(EffectRuntimeContext context, IReadOnlyList<int> targets)
@@ -2745,7 +2747,13 @@ namespace NineGrid.Core.Effects
             {
                 if (targets[i] != 0)
                 {
-                    result.Add(new DealDamageAction(actorUid, targets[i], mAmount.Evaluate(context, targets[i]), context.SourceDefId, EffectActionSource.CauseOrEffect(context, mCause)));
+                    result.Add(new DealDamageAction(
+                        actorUid,
+                        targets[i],
+                        mAmount.Evaluate(context, targets[i]),
+                        context.SourceDefId,
+                        EffectActionSource.CauseOrEffect(context, mCause),
+                        mIgnoreArmor));
                 }
             }
 

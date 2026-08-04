@@ -66,6 +66,11 @@ namespace NineGrid.Core
         GoldCostOffset,
         DamageMultiplier,
         DamageFlatDelta,
+        /// <summary>
+        /// 伤害减免（ADR-0028）：受击方多源累加；标准公式在乘区/平板之后、护甲吸收之前减去。
+        /// 不是 <see cref="DamageFlatDelta"/>，不上卡面三围 / HUD。
+        /// </summary>
+        DamageReduction,
         FirstStrike,
         GoldArmorAbsorb,
         AttackTargetRestriction,

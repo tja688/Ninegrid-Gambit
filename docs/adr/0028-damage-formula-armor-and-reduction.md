@@ -55,7 +55,7 @@ status: accepted
 ### 实现状态
 
 - 三层护甲、关开始重置、甲吸收、金甲抵甲伤：**已实现**。
-- `RuleId.DamageReduction` 与 `DealDamage` 的 `ignoreArmor`：**Batch 2 落地**（本 ADR 先钉口径）。
+- `RuleId.DamageReduction` 与 `DealDamage` / DSL `ignoreArmor`：**已实现**（落点见后果）。
 - 铁盾等依赖伤害减免的遗物内容：**另票**，本决策不包含。
 
 ## 为什么
@@ -72,7 +72,12 @@ status: accepted
 
 - [ADR-0012](0012-enemy-action-phase-volley.md) 单向打击改为引用本 ADR，不再把「伤害减免」与 `DamageMultiplier`/`DamageFlatDelta` 糊成一串。
 - CONTEXT 增补护甲三层 / 伤害减免 / 无视护甲；功能角色「防御」必须显式消歧。
-- Batch 2：扩展 `DealDamageAction` 与 DSL；EditMode 锁减免与无视甲；**不**在本决策票内改遗物 JSON。
+- 公式层落点：
+  - `RuleId.DamageReduction`（`CoreEnums.cs`）
+  - `DealDamageAction.IgnoreArmor` + 减免减法（`CoreActions.cs`）
+  - DSL `DealDamage.ignoreArmor`（`EffectAtomLibrary.cs`）；`AddRuleModifier` 已可挂新 `RuleId`
+  - EditMode：`DamageFormulaRegressionTests`
+- **不**在本决策票内改遗物 JSON（铁盾等另票）。
 
 ## 相关
 
