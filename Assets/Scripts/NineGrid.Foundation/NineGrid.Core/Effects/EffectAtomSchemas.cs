@@ -480,6 +480,20 @@ namespace NineGrid.Core.Effects
             {
                 result.Add("schema.action.key", path + ".key is required for SetCounter.");
             }
+            else if (Same(atom, "ModifyRelicRunContribution"))
+            {
+                if (!node.Has("stat"))
+                {
+                    result.Add("schema.action.stat", path + ".stat is required for ModifyRelicRunContribution.");
+                }
+
+                if (!node.Has("delta") && !node.Has("value"))
+                {
+                    result.Add(
+                        "schema.action.delta",
+                        path + ".delta or .value is required for ModifyRelicRunContribution.");
+                }
+            }
             else if (Same(atom, "OfferRewardChoice") && !node.Has("poolId"))
             {
                 result.Add("schema.action.poolId", path + ".poolId is required for OfferRewardChoice.");

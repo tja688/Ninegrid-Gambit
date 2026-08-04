@@ -17,6 +17,7 @@ namespace NineGrid.Core
             RegisterModel(new BoardModel());
             RegisterModel(new DeckModel());
             RegisterModel(new PlayerModel());
+            RegisterModel(new RelicRunContributionModel());
             RegisterModel(new RunModel());
             RegisterModel(new BattleContextModel());
             RegisterModel(new PendingChoiceModel());

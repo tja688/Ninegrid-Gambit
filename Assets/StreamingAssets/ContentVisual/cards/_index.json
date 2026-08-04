@@ -138,10 +138,12 @@
         "relic.dragon_scale_armor",
         "relic.easy_road",
         "relic.even_hatred",
+        "relic.forge_tool",
         "relic.gold_armor",
         "relic.gold_blood",
         "relic.gold_knife",
         "relic.golden_coffer",
+        "relic.golden_sword",
         "relic.hard_skin",
         "relic.heavy_armor",
         "relic.iron_shield",
@@ -191,6 +193,8 @@
     "cards": {
         "Relic": [
             "relic.blood_demon",
+            "relic.forge_tool",
+            "relic.golden_sword",
             "relic.junk_body",
             "relic.junk_cycler",
             "relic.punch_card_knife",

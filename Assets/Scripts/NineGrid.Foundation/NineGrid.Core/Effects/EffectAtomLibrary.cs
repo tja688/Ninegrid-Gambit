@@ -3799,6 +3799,52 @@ namespace NineGrid.Core.Effects
         }
     }
 
+    /// <summary>
+    /// #120：改写遗物 run 内攻/甲贡献（Set via value，或 Adjust via delta；默认 floor=0）。
+    /// </summary>
+    [EffectAtom("ModifyRelicRunContribution", EffectAtomKind.Action)]
+    public sealed class ModifyRelicRunContributionEffectAction : IAction
+    {
+        private StatId mStat = StatId.Attack;
+        private int mDelta;
+        private int mAbsoluteValue;
+        private bool mAbsolute;
+        private int mFloor;
+        private string mRelicDefId = string.Empty;
+
+        public void Configure(EffectDslNode config)
+        {
+            mStat = config.Get("stat").AsEnum(StatId.Attack);
+            mFloor = config.Has("floor") ? config.Get("floor").AsInt(0) : 0;
+            mRelicDefId = config.Get("relicDefId").AsString(string.Empty);
+            mAbsolute = config.Has("value");
+            mAbsoluteValue = mAbsolute ? config.Get("value").AsInt(0) : 0;
+            mDelta = config.Get("delta").AsInt(0);
+        }
+
+        public IReadOnlyList<GameAction> BuildActions(EffectRuntimeContext context, IReadOnlyList<int> targets)
+        {
+            var relicDefId = !string.IsNullOrEmpty(mRelicDefId)
+                ? mRelicDefId
+                : (context != null ? context.SourceDefId : string.Empty);
+            if (string.IsNullOrEmpty(relicDefId))
+            {
+                return new GameAction[0];
+            }
+
+            return new GameAction[]
+            {
+                new ModifyRelicRunContributionAction(
+                    relicDefId,
+                    mStat,
+                    mDelta,
+                    mAbsolute,
+                    mAbsoluteValue,
+                    mFloor)
+            };
+        }
+    }
+
     [EffectAtom("MarkLeaveTrapBroken", EffectAtomKind.Action)]
     public sealed class MarkLeaveTrapBrokenEffectAction : IAction
     {

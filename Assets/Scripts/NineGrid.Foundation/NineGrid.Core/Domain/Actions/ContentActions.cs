@@ -190,9 +190,125 @@ namespace NineGrid.Core
             }
 
             context.GetModel<PlayerModel>().RemoveRelic(RelicDefId);
+
+            // #120：丢弃时清掉本遗物 run 贡献，并拆掉汇入 Avatar 的 Persistent modifier。
+            var contributions = context.GetModel<RelicRunContributionModel>();
+            contributions.ClearRelic(RelicDefId);
+            var board = context.GetModel<BoardModel>();
+            var avatarUid = board != null ? board.AvatarUid.Value : 0;
+            CardInstance avatar;
+            if (avatarUid != 0 && context.GetModel<CardRegistry>().TryGet(avatarUid, out avatar))
+            {
+                var stats = context.GetSystem<IStatSystem>();
+                stats.RemoveModifiersBySource(
+                    avatar,
+                    new ModifierSource(RelicRunContributionModel.BuildModifierSourceId(RelicDefId, StatId.Attack)));
+                stats.RemoveModifiersBySource(
+                    avatar,
+                    new ModifierSource(RelicRunContributionModel.BuildModifierSourceId(RelicDefId, StatId.Armor)));
+            }
+
             return new GameActionResult()
                 .AddEvent(new CoreGameEvent(CoreEventType.EffectDeactivated, context.ActionId, ActionName)
                     .WithMessage(RelicDefId));
+        }
+    }
+
+    /// <summary>
+    /// #120：改写遗物 run 内攻/甲贡献，并以 replaceSameSource Persistent modifier 同步到 Avatar 有效属性。
+    /// </summary>
+    public sealed class ModifyRelicRunContributionAction : GameAction
+    {
+        public ModifyRelicRunContributionAction(
+            string relicDefId,
+            StatId stat,
+            int delta,
+            bool absolute,
+            int absoluteValue,
+            int floor)
+        {
+            RelicDefId = relicDefId ?? string.Empty;
+            Stat = stat;
+            Delta = delta;
+            Absolute = absolute;
+            AbsoluteValue = absoluteValue;
+            Floor = floor;
+        }
+
+        public string RelicDefId { get; private set; }
+        public StatId Stat { get; private set; }
+        public int Delta { get; private set; }
+        public bool Absolute { get; private set; }
+        public int AbsoluteValue { get; private set; }
+        public int Floor { get; private set; }
+        public override string ActionName { get { return "ModifyRelicRunContribution"; } }
+
+        public override GameActionResult Apply(GameActionContext context)
+        {
+            if (string.IsNullOrEmpty(RelicDefId)
+                || (Stat != StatId.Attack && Stat != StatId.Armor))
+            {
+                return GameActionResult.Empty;
+            }
+
+            var model = context.GetModel<RelicRunContributionModel>();
+            var next = Absolute
+                ? Math.Max(Floor, AbsoluteValue)
+                : model.Adjust(RelicDefId, Stat, Delta, Floor);
+            if (Absolute)
+            {
+                model.Set(RelicDefId, Stat, next);
+            }
+
+            var board = context.GetModel<BoardModel>();
+            var avatarUid = board != null ? board.AvatarUid.Value : 0;
+            CardInstance avatar;
+            if (avatarUid == 0 || !context.GetModel<CardRegistry>().TryGet(avatarUid, out avatar))
+            {
+                return GameActionResult.Empty;
+            }
+
+            var sourceId = RelicRunContributionModel.BuildModifierSourceId(RelicDefId, Stat);
+            var source = new ModifierSource(sourceId);
+            var stats = context.GetSystem<IStatSystem>();
+            stats.RemoveModifiersBySource(avatar, source);
+            if (next > 0)
+            {
+                stats.AddModifier(
+                    avatar,
+                    new StatModifier(
+                        Stat,
+                        ModifierOp.Add,
+                        next,
+                        ModifierLayer.Persistent,
+                        source,
+                        ModifierScope.Permanent,
+                        null));
+            }
+
+            var result = new GameActionResult()
+                .AddEvent(new CoreGameEvent(CoreEventType.EffectModifierApplied, context.ActionId, ActionName)
+                    .WithCard(avatarUid)
+                    .WithTarget(avatarUid)
+                    .WithAmount((int)Stat)
+                    .WithDelta(next)
+                    .WithMessage(sourceId)
+                    .WithSource(RelicDefId, sourceId)
+                    .WithResultValue(next));
+
+            if (Stat == StatId.Attack)
+            {
+                CardFaceEventValues.AppendPermanentAttackFaceCommit(
+                    result,
+                    context,
+                    avatar,
+                    ActionName,
+                    sourceId,
+                    RelicDefId,
+                    next);
+            }
+
+            return result;
         }
     }
 

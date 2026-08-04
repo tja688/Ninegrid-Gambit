@@ -58,6 +58,7 @@ namespace NineGrid.Core
             var board = architecture.GetModel<BoardModel>();
             var deck = architecture.GetModel<DeckModel>();
             var player = architecture.GetModel<PlayerModel>();
+            var relicContributions = architecture.GetModel<RelicRunContributionModel>();
             var run = architecture.GetModel<RunModel>();
             var pendingChoice = architecture.GetModel<PendingChoiceModel>();
 
@@ -81,6 +82,7 @@ namespace NineGrid.Core
             board.Reset();
             deck.Clear();
             player.Reset();
+            relicContributions.ClearAll();
             run.Reset(options.Seed);
             pendingChoice.Clear();
             architecture.GetModel<BattleContextModel>().Reset();
