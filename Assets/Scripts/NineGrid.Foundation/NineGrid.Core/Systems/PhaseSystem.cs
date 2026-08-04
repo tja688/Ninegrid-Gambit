@@ -154,6 +154,8 @@ namespace NineGrid.Core.Systems
 
             mInRoomRewardContext = false;
             var run = this.GetModel<RunModel>();
+            // #116：清掉上一关 UntilNodeEnds 修正（废物增幅器等）。
+            this.GetSystem<IBattleScopeSystem>().ClearScopedModifiers(ModifierScope.UntilNodeEnds);
             if (!MapNodeProgression.EntersInteractionLoop(run.NodeIndex.Value))
             {
                 return StartNonCombatNode();

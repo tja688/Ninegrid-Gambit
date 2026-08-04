@@ -110,9 +110,12 @@ namespace NineGrid.Core.Tests
         public void Profession_DoesNotGrantArchiveRelic()
         {
             var initial = ProfessionCatalog.Default.InitialRelicDefId;
-            Assert.IsTrue(
-                string.IsNullOrEmpty(initial),
-                "Profession initial relic must stay empty until #116 replacement; was: " + initial);
+            Assert.IsFalse(string.IsNullOrEmpty(initial), "Profession should grant live starter relic");
+            var catalog = ContentCatalogBootstrap.Load();
+            Assert.IsTrue(catalog.Relics.TryGetValue(initial, out var relic), initial);
+            Assert.IsFalse(
+                RelicDecks.IsArchive(relic.DeckId),
+                "Profession initial relic must not be archive-deck: " + initial);
         }
 
         [Test]

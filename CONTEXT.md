@@ -350,7 +350,7 @@ _Avoid_: 用 `Monster`+`trap.*` 前缀伪装、把机关当帮助卡拾取、清
 _Avoid_: 把 Avatar 叫成道具卡、把遗物并进道具卡
 
 **玩家技能（已移除 / 已并入遗物）**：
-历史上的 Player Skill 卡面与被动持有路径；产品上已正式去除，被动效果已吸收为遗物（`relic.*`，默认 Blue）。开局 Profession 初始遗物暂空（#115 将错位旧卡 `relic.easy_road` 迁入归档；#116 再挂腐朽顺劈斧）。怪物技能仍用 `skill.*`。
+历史上的 Player Skill 卡面与被动持有路径；产品上已正式去除，被动效果已吸收为遗物（`relic.*`，默认 Blue）。开局 Profession 初始遗物为 `relic.rotten_cleave_axe`（腐朽顺劈斧，Red），战士基础护甲 0（#116）。错位旧卡在 `deck.relic_archive`（#115）。怪物技能仍用 `skill.*`。
 _Avoid_: 为玩家技能单独做卡面/持有栏/授予原子、在 mapper/Catalog 里继续按 PlayerSkill 分支做新接线
 
 **卡牌表现投影**：

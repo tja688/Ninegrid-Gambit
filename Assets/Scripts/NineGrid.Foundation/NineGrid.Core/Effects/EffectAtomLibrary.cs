@@ -817,10 +817,10 @@ namespace NineGrid.Core.Effects
 
         protected virtual void ConfigureMorphology(EffectDslNode config)
         {
-            mTargetIsSelf = false;
-            mActorIsSelf = false;
-            mTargetIsPlayer = false;
-            mActorIsPlayer = false;
+            mTargetIsSelf = config != null && config.Get("targetIsSelf").AsBool(false);
+            mActorIsSelf = config != null && config.Get("actorIsSelf").AsBool(false);
+            mTargetIsPlayer = config != null && config.Get("targetIsPlayer").AsBool(false);
+            mActorIsPlayer = config != null && config.Get("actorIsPlayer").AsBool(false);
         }
 
         protected void SetSelfArmorLostMorphology()

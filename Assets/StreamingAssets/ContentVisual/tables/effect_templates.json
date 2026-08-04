@@ -1446,5 +1446,93 @@
   "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
   "conditions_json": "[]",
   "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnFatalDamage\",\"target\":\"Self\"},\"target\":{\"atom\":\"Self\"},\"action\":{\"atom\":\"MarkLeaveTrapBroken\"}}"
+ },
+ {
+  "id": "tpl.relic.rotten_cleave_axe.base",
+  "state": "Implemented",
+  "design_text": "攻击+1",
+  "requires_json": "[\"NoOwnerEntity\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Modifier\",\"target\":{\"atom\":\"Player\"},\"modifier\":{\"stat\":\"Attack\",\"op\":\"Add\",\"value\":\"{{value}}\",\"layer\":\"Persistent\",\"scope\":\"Permanent\"}}"
+ },
+ {
+  "id": "tpl.relic.rotten_cleave_axe.cleave",
+  "state": "Implemented",
+  "design_text": "[战斗时] 对目标正交相邻怪物造成1点伤害",
+  "requires_json": "[\"NoOwnerEntity\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnBattle\",\"sourceAction\":\"{{sourceAction}}\",\"targetKind\":\"Monster\",\"maxActionDepth\":0},\"conditions\":[{\"atom\":\"EventFilterActorIsPlayer\",\"eventType\":\"DamageDealt\",\"targetKind\":\"Monster\"}],\"target\":{\"atom\":\"FilteredCards\",\"kind\":\"Monster\",\"zone\":\"Board\",\"adjacentTo\":\"EventTarget\",\"exclude\":[\"EventTarget\"]},\"action\":{\"atom\":\"DealDamage\",\"amount\":\"{{amount}}\",\"actor\":\"Player\"}}"
+ },
+ {
+  "id": "tpl.relic.thorn_mail.reflect",
+  "state": "Implemented",
+  "design_text": "[战斗时] 玩家损失当前护甲时对攻击者造成等量伤害",
+  "requires_json": "[\"NoOwnerEntity\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnBattle\"},\"conditions\":[{\"atom\":\"EventFilter\",\"eventType\":\"ArmorChanged\",\"targetKind\":\"Avatar\",\"maxDelta\":-1}],\"target\":{\"atom\":\"FilteredCards\",\"include\":[\"Actor\"]},\"action\":{\"atom\":\"DealDamage\",\"value\":{\"op\":\"Negate\",\"values\":[{\"source\":\"Event\",\"field\":\"Delta\"}]},\"actor\":\"Player\"}}"
+ },
+ {
+  "id": "tpl.relic.muscle_counter.battle",
+  "state": "Implemented",
+  "design_text": "[战斗时] 按血量上限/10 对目标造成额外伤害",
+  "requires_json": "[\"NoOwnerEntity\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnBattle\",\"sourceAction\":\"{{sourceAction}}\",\"targetKind\":\"Monster\",\"maxActionDepth\":0},\"conditions\":[{\"atom\":\"EventFilterActorIsPlayer\",\"eventType\":\"DamageDealt\",\"targetKind\":\"Monster\"}],\"target\":{\"atom\":\"EventTarget\"},\"action\":{\"atom\":\"DealDamage\",\"value\":{\"op\":\"Floor\",\"values\":[{\"op\":\"Multiply\",\"values\":[{\"source\":\"Player\",\"stat\":\"MaxHp\",\"effective\":true},{\"constant\":0.1}]}]},\"actor\":\"Player\"}}"
+ },
+ {
+  "id": "tpl.relic.golden_coffer.grant",
+  "state": "Implemented",
+  "design_text": "[获得时] 加入两张金色宝箱卡并停用本效果",
+  "requires_json": "[\"NoOwnerEntity\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnActivate\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"Sequence\",\"actions\":[{\"atom\":\"Spawn\",\"defId\":\"help.golden_chest_card\",\"kind\":\"HelpCard\",\"zone\":\"PlayerCardPool\",\"count\":\"{{count}}\"},{\"atom\":\"DeactivateSelfEffect\"}]}}"
+ },
+ {
+  "id": "tpl.relic.junk_amplifier.use",
+  "state": "Implemented",
+  "design_text": "[使用道具卡时] 本关卡攻击+1",
+  "requires_json": "[\"NoOwnerEntity\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnAnyHelpCardUsed\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"AddModifier\",\"stat\":\"Attack\",\"op\":\"Add\",\"value\":\"{{value}}\",\"layer\":\"Temporary\",\"scope\":\"UntilNodeEnds\",\"source\":\"{{source}}\"}}"
+ },
+ {
+  "id": "tpl.relic.iron_shield.reduction",
+  "state": "Implemented",
+  "design_text": "伤害减免+1",
+  "requires_json": "[\"NoOwnerEntity\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"RuleModifier\",\"ruleModifier\":{\"rule\":\"DamageReduction\",\"op\":\"Add\",\"value\":\"{{value}}\",\"layer\":\"Persistent\",\"scope\":\"Permanent\",\"source\":\"{{source}}\"}}"
+ },
+ {
+  "id": "tpl.relic.body_potential.hp_lost",
+  "state": "Implemented",
+  "design_text": "[受到伤害时] 每10点血量伤害洗入随机道具卡",
+  "requires_json": "[\"NoOwnerEntity\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnCumulative\",\"metric\":\"hpLost\",\"threshold\":10,\"targetIsPlayer\":true,\"counterKey\":\"relic.body_potential.hp\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"ShuffleRandomContent\",\"kind\":\"HelpCard\",\"count\":\"{{count}}\",\"top\":false}}"
+ },
+ {
+  "id": "tpl.relic.beyond_dimension.battle",
+  "state": "Implemented",
+  "design_text": "[战斗时] 旋转一次",
+  "requires_json": "[\"NoOwnerEntity\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnBattle\",\"sourceAction\":\"{{sourceAction}}\",\"targetKind\":\"Monster\",\"maxActionDepth\":0},\"conditions\":[{\"atom\":\"EventFilterActorIsPlayer\",\"eventType\":\"DamageDealt\",\"targetKind\":\"Monster\"}],\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"Rotate\",\"count\":\"{{count}}\"}}"
+ },
+ {
+  "id": "tpl.relic.armor_strip_knife.battle",
+  "state": "Implemented",
+  "design_text": "[战斗时] 若目标当前护甲>0，本次战斗攻击+3",
+  "requires_json": "[\"NoOwnerEntity\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnBattle\",\"sourceAction\":\"{{sourceAction}}\",\"targetKind\":\"Monster\",\"maxActionDepth\":0},\"conditions\":[{\"atom\":\"EventFilterActorIsPlayer\",\"eventType\":\"DamageDealt\",\"targetKind\":\"Monster\"},{\"atom\":\"StatAtLeast\",\"target\":\"EventTarget\",\"stat\":\"CurrentArmor\",\"value\":1}],\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"AddModifier\",\"stat\":\"Attack\",\"op\":\"Add\",\"value\":\"{{value}}\",\"layer\":\"Temporary\",\"scope\":\"UntilBattleEnds\",\"source\":\"{{source}}\",\"replaceSameSource\":true}}"
+ },
+ {
+  "id": "tpl.relic.armor_strip_knife.armor_hit",
+  "state": "Implemented",
+  "design_text": "[战斗时] 本次打击造成目标掉甲时，本次战斗攻击+3",
+  "requires_json": "[\"NoOwnerEntity\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnBattle\",\"targetKind\":\"Monster\",\"maxActionDepth\":0},\"conditions\":[{\"atom\":\"EventFilterActorIsPlayer\",\"eventType\":\"ArmorChanged\",\"targetKind\":\"Monster\"},{\"atom\":\"EventFilter\",\"eventType\":\"ArmorChanged\",\"targetKind\":\"Monster\",\"maxDelta\":-1}],\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"AddModifier\",\"stat\":\"Attack\",\"op\":\"Add\",\"value\":\"{{value}}\",\"layer\":\"Temporary\",\"scope\":\"UntilBattleEnds\",\"source\":\"{{source}}\",\"replaceSameSource\":true}}"
  }
 ]

@@ -55,7 +55,9 @@ namespace NineGrid.Core
         Permanent,
         UntilBattleEnds,
         Once,
-        UntilEnemyChanges
+        UntilEnemyChanges,
+        /// <summary>关卡级临时修正；在下一关 StartNode 前清除（#116 废物增幅器等）。</summary>
+        UntilNodeEnds
     }
 
     public enum RuleId
