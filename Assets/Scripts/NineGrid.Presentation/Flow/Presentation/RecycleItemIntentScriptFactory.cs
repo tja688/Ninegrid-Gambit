@@ -1,6 +1,7 @@
 using System;
 using NineGrid.Core;
 using NineGrid.Core.Commands;
+using NineGrid.Core.Systems;
 using QFramework;
 
 namespace NineGrid.Flow.Presentation
@@ -15,6 +16,8 @@ namespace NineGrid.Flow.Presentation
 
     /// <summary>
     /// 回收剧本：ApplyRecycleItemSlotCommand；非 recycleItem kind 不入队。
+    /// Apply 后经 <see cref="BattleBeatFlush"/> 只冲刷 UpdateGold（ADR-0007 / #61），
+    /// 卡离手碎裂仍由 Hand 的 Notify 承接，避免 Remove 指令与碎裂双通道。
     /// </summary>
     public sealed class RecycleItemIntentScriptFactory : IIntentScriptFactory
     {
@@ -65,7 +68,20 @@ namespace NineGrid.Flow.Presentation
                 }
 
                 mDone = true;
+                var pipeline = mArch.GetSystem<IActionPipelineSystem>();
+                var logStart = pipeline?.EventLog?.Entries != null
+                    ? pipeline.EventLog.Entries.Count
+                    : 0;
                 var summary = mArch.SendCommand(new ApplyRecycleItemSlotCommand(mItemUid));
+                if (summary != null && summary.Accepted)
+                {
+                    // ADR-0007：GoldModified → Settled / GoldGainBeatHandler；只冲金币，不扫 Remove。
+                    BattleBeatFlush.PresentEventLogSliceOnly(
+                        mArch,
+                        logStart,
+                        PresentationInstructionKind.UpdateGold);
+                }
+
                 var notify = RecycleItemIntentFlushHook.Notify;
                 if (notify != null)
                 {

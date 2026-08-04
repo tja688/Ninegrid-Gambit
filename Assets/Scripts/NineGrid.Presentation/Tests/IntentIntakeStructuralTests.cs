@@ -253,6 +253,23 @@ namespace NineGrid.Presentation.Tests
             Assert.IsNotNull(typeof(PresentationCompositionRoot));
         }
 
+        /// <summary>
+        /// ADR-0007 / #110：回收 Apply 后须冲刷 UpdateGold，否则 Core 已加金而 HUD 不涨。
+        /// </summary>
+        [Test]
+        public void RecycleItemScript_PresentsUpdateGoldViaBattleBeatFlush()
+        {
+            AssertSourceMentions(
+                "Flow/Presentation/RecycleItemIntentScriptFactory.cs",
+                "PresentEventLogSliceOnly");
+            AssertSourceMentions(
+                "Flow/Presentation/RecycleItemIntentScriptFactory.cs",
+                "PresentationInstructionKind.UpdateGold");
+            AssertSourceMentions(
+                "Commands/SubmitDiscardRelicCommand.cs",
+                "PresentEventLogSliceOnly");
+        }
+
         private static string PresentationRoot()
         {
             return Path.GetFullPath(Path.Combine(Application.dataPath, "Scripts", "NineGrid.Presentation"));

@@ -33,7 +33,7 @@ namespace NineGrid.Flow
         [SerializeField] private float rotationStep = 5f;
 
         [Tooltip("选择判定框全尺寸（容器本地单位）；相对各选项静止中心，不跟随悬停推挤。")]
-        [SerializeField] private Vector2 hitBoxSize = new(1.6f, 2.2f);
+        [SerializeField] private Vector2 hitBoxSize = new(1.9f, 2.5f);
 
         [Header("Hover")]
         [Tooltip("悬停时邻卡水平推开距离。")]

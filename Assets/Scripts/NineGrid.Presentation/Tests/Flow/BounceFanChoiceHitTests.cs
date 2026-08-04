@@ -12,7 +12,7 @@ namespace NineGrid.Presentation.Tests.Flow
     /// </summary>
     public sealed class BounceFanChoiceHitTests
     {
-        private static readonly Vector2 DefaultHitBox = new(1.6f, 2.2f);
+        private static readonly Vector2 DefaultHitBox = new(1.9f, 2.5f);
 
         [Test]
         public void ContainsHitBox_InsideCenter_IsTrue()
@@ -27,11 +27,11 @@ namespace NineGrid.Presentation.Tests.Flow
         public void ContainsHitBox_OutsideEdge_IsFalse()
         {
             Assert.IsFalse(BounceFanChoicePresenter.ContainsHitBox(
-                new Vector2(0.81f, 0f),
+                new Vector2(0.96f, 0f),
                 Vector2.zero,
                 DefaultHitBox));
             Assert.IsFalse(BounceFanChoicePresenter.ContainsHitBox(
-                new Vector2(0f, 1.11f),
+                new Vector2(0f, 1.26f),
                 Vector2.zero,
                 DefaultHitBox));
         }
@@ -40,11 +40,11 @@ namespace NineGrid.Presentation.Tests.Flow
         public void ContainsHitBox_OnEdge_IsTrue()
         {
             Assert.IsTrue(BounceFanChoicePresenter.ContainsHitBox(
-                new Vector2(0.8f, 0f),
+                new Vector2(0.95f, 0f),
                 Vector2.zero,
                 DefaultHitBox));
             Assert.IsTrue(BounceFanChoicePresenter.ContainsHitBox(
-                new Vector2(0f, 1.1f),
+                new Vector2(0f, 1.25f),
                 Vector2.zero,
                 DefaultHitBox));
         }

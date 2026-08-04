@@ -11,6 +11,7 @@ using NineGrid.Flow;
 using NineGrid.Flow.BoardBriefTip;
 using NineGrid.Flow.InRoomBoard;
 using NineGrid.Flow.RoomIcons;
+using NineGrid.Flow.Transitions;
 using NineGrid.Presentation;
 using NineGrid.Presentation.Systems;
 using QFramework;
@@ -100,7 +101,7 @@ namespace NineGrid.Flow.TavernBoard
             mExtras.Clear();
             RoomIconOccupancy.Current.Clear();
             RoomIconOccupancySlotHits.Refresh(mArch);
-            BoardBriefTipPresenter.InstanceOrNull()?.ClearHover();
+            BoardBriefTipPresenter.InstanceOrNull()?.HardClear();
         }
 
         /// <summary>按 PendingChoice 卡店会话刷板；失败返回 false。</summary>
@@ -644,9 +645,10 @@ namespace NineGrid.Flow.TavernBoard
                 return;
             }
 
-            if (TryLeaveOrCancel(out var leftShop))
+            var leaveResult = await TryLeaveWithTransitionAsync();
+            if (leaveResult.Accepted)
             {
-                if (leftShop)
+                if (leaveResult.LeftShop)
                 {
                     mLeaveDwell.MarkSubmitted();
                 }
@@ -655,6 +657,65 @@ namespace NineGrid.Flow.TavernBoard
             {
                 mLeaveDwell.Begin(slot, 0);
                 RunLeaveDwellAsync(slot, parentCt).Forget();
+            }
+        }
+
+        private readonly struct LeaveTransitionResult
+        {
+            public readonly bool Accepted;
+            public readonly bool LeftShop;
+
+            public LeaveTransitionResult(bool accepted, bool leftShop)
+            {
+                Accepted = accepted;
+                LeftShop = leftShop;
+            }
+        }
+
+        private async UniTask<LeaveTransitionResult> TryLeaveWithTransitionAsync()
+        {
+            var arch = mArch ?? NineGridArchitecture.Current;
+            var pending = arch?.GetModel<PendingChoiceModel>();
+            var wasNested = pending != null
+                            && PendingChoiceModel.IsTavernFixItemPool(pending.PoolId.Value);
+
+            // 二级取消不是离店，不要过场。
+            if (wasNested)
+            {
+                var okNested = TryLeaveOrCancel(out var leftNested);
+                return new LeaveTransitionResult(okNested, leftNested);
+            }
+
+            var transition = RunSceneTransitionService.InstanceOrNull;
+            if (transition == null || !transition.IsEnabled)
+            {
+                var okPlain = TryLeaveOrCancel(out var leftPlain);
+                return new LeaveTransitionResult(okPlain, leftPlain);
+            }
+
+            var crossFloor = RunSceneTransitionService.WillCrossFloor(arch);
+            try
+            {
+                await transition.BeginCoverAsync(crossFloor, CancellationToken.None);
+                if (!TryLeaveOrCancel(out var leftShop))
+                {
+                    transition.ForceClearFaders();
+                    return new LeaveTransitionResult(false, false);
+                }
+
+                if (!leftShop)
+                {
+                    transition.ForceClearFaders();
+                    return new LeaveTransitionResult(true, false);
+                }
+
+                await transition.CompleteRevealAsync(CancellationToken.None);
+                return new LeaveTransitionResult(true, true);
+            }
+            catch (OperationCanceledException)
+            {
+                transition.ForceClearFaders();
+                return new LeaveTransitionResult(false, false);
             }
         }
 

@@ -90,24 +90,6 @@ namespace NineGrid.Presentation.Editor
             roundCg.alpha = 0f;
             roundCg.blocksRaycasts = false;
 
-            var roundBgGo = new GameObject(
-                "FaderRoundBackground", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
-            roundBgGo.transform.SetParent(roundGo.transform, false);
-            StretchFull(roundBgGo.GetComponent<RectTransform>());
-            var roundBgImg = roundBgGo.GetComponent<Image>();
-            roundBgImg.color = Color.black;
-            if (bgSprite != null)
-            {
-                roundBgImg.sprite = bgSprite;
-            }
-
-            if (matMasked != null)
-            {
-                roundBgImg.material = matMasked;
-            }
-
-            roundBgImg.raycastTarget = true;
-
             var roundMaskGo = new GameObject(
                 "MMFaderRoundMask", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
             roundMaskGo.transform.SetParent(roundGo.transform, false);
@@ -130,6 +112,25 @@ namespace NineGrid.Presentation.Editor
 
             roundMaskImg.color = Color.white;
             roundMaskImg.raycastTarget = false;
+
+            // Mask 必须先于 Background 绘制（Feel stencil）。
+            var roundBgGo = new GameObject(
+                "FaderRoundBackground", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+            roundBgGo.transform.SetParent(roundGo.transform, false);
+            StretchFull(roundBgGo.GetComponent<RectTransform>());
+            var roundBgImg = roundBgGo.GetComponent<Image>();
+            roundBgImg.color = Color.black;
+            if (bgSprite != null)
+            {
+                roundBgImg.sprite = bgSprite;
+            }
+
+            if (matMasked != null)
+            {
+                roundBgImg.material = matMasked;
+            }
+
+            roundBgImg.raycastTarget = true;
 
             var round = roundGo.GetComponent<MMFaderRound>();
             round.ID = RunSceneTransitionSettingsSO.RoundFaderId;

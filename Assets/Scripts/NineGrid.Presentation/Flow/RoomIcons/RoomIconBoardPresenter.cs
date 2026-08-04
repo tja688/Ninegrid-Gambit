@@ -71,7 +71,7 @@ namespace NineGrid.Flow.RoomIcons
             mSpawned.Clear();
             RoomIconOccupancy.Current.Clear();
             RoomIconOccupancySlotHits.Refresh(mArch);
-            BoardBriefTipPresenter.InstanceOrNull()?.ClearHover();
+            BoardBriefTipPresenter.InstanceOrNull()?.HardClear();
         }
 
         /// <summary>按 PendingChoice 刷出房间/导航图标。</summary>
@@ -296,7 +296,7 @@ namespace NineGrid.Flow.RoomIcons
                 return false;
             }
 
-            var crossFloor = RunSceneTransitionService.WillCrossFloor(arch);
+            var accepted = false;
             var transition = RunSceneTransitionService.InstanceOrNull;
             var useTransition = transition != null && transition.IsEnabled;
 
@@ -305,22 +305,29 @@ namespace NineGrid.Flow.RoomIcons
                 return ExecuteSelectEnterHardCut(arch, optionIndex);
             }
 
-            var accepted = false;
+            var crossFloor = RunSceneTransitionService.WillCrossFloor(arch);
             try
             {
-                // 过场不可绑 dwell CTS：HardCut/DespawnAll 会 CancelDwellWatch，
-                // 若 Cover 后 token 已取消会跳过 FadeOut，黑屏卡死。
-                await transition.PlayCoverRevealAsync(
-                    crossFloor,
-                    _ =>
-                    {
-                        accepted = ExecuteSelectEnterHardCut(arch, optionIndex);
-                        return UniTask.CompletedTask;
-                    },
-                    CancellationToken.None);
+                // 过场不可绑 dwell CTS：HardCut/DespawnAll 会 CancelDwellWatch。
+                await transition.BeginCoverAsync(crossFloor, CancellationToken.None);
+                accepted = ExecuteSelectEnterHardCut(arch, optionIndex);
+                if (!accepted)
+                {
+                    transition.ForceClearFaders();
+                    return false;
+                }
+
+                // 消费房：挂起 Cover，等 Present*Board 刷完货架再 Reveal，避免揭开后跳切。
+                if (RunSceneTransitionService.ShouldDeferRevealForInRoomBoard(arch))
+                {
+                    return true;
+                }
+
+                await transition.CompleteRevealAsync(CancellationToken.None);
             }
             catch (OperationCanceledException)
             {
+                transition.ForceClearFaders();
                 return false;
             }
 

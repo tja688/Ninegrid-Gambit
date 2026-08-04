@@ -13,6 +13,7 @@ using NineGrid.Flow.RewardBoard;
 using NineGrid.Flow.RoomIcons;
 using NineGrid.Flow.ShopBoard;
 using NineGrid.Flow.TavernBoard;
+using NineGrid.Flow.Transitions;
 using NineGrid.Presentation;
 using NineGrid.Presentation.Commands;
 using NineGrid.Presentation.Systems;
@@ -247,7 +248,9 @@ namespace NineGrid.Flow
             RequestSetState(GameFlowShellState.BattleStub);
             var view = mShell.View;
             view?.EnsureViewBindings();
+            view?.HideNotice();
             view?.ShowInRunShell(inBattle: true);
+            BoardBriefTipPresenter.InstanceOrNull()?.HardClear();
 
             var session = ResolveSession();
             if (session == null || !session.IsBound)
@@ -617,6 +620,13 @@ namespace NineGrid.Flow
                 }
             }
 
+            // 若 Cover 仍挂起（未进 Present*Board / Spawn 失败已 ForceClear），此处兜底揭开。
+            var held = RunSceneTransitionService.InstanceOrNull;
+            if (held != null && held.IsCoverHeld)
+            {
+                await held.CompleteRevealAsync(CancellationToken.None);
+            }
+
             view?.HideAllOverlays();
             ResolveSession()?.RefreshPersistentInBattleUi(animate: false);
         }
@@ -629,6 +639,17 @@ namespace NineGrid.Flow
                    && phase.CurrentPhase == GamePhase.RewardItemChoice
                    && pending.Kind.Value == PendingChoiceKind.Reward
                    && PendingChoiceModel.IsConsumerBoardPool(pending.PoolId.Value);
+        }
+
+        private static async UniTask RevealHeldTransitionIfAnyAsync()
+        {
+            var transition = RunSceneTransitionService.InstanceOrNull;
+            if (transition == null || !transition.IsCoverHeld)
+            {
+                return;
+            }
+
+            await transition.CompleteRevealAsync(CancellationToken.None);
         }
 
         private async UniTask PresentShopBoardAsync(CancellationToken ct)
@@ -645,9 +666,12 @@ namespace NineGrid.Flow
             if (!shop.TrySpawnFromPending(arch))
             {
                 Debug.LogError("[GameFlow] 商店货架 Spawn 失败");
+                RunSceneTransitionService.InstanceOrNull?.ForceClearFaders();
                 walk?.SetEnabled(false);
                 return;
             }
+
+            await RevealHeldTransitionIfAnyAsync();
 
             // ADR-0020：房内场地板=受保护场地，勿整段持有 ChoiceOverlay，否则 BoardWalk
             // 以 ProtectedField 提交会 ownerMismatch，离开/空格全点不动。
@@ -701,9 +725,12 @@ namespace NineGrid.Flow
             if (!tavern.TrySpawnFromPending(arch))
             {
                 Debug.LogError("[GameFlow] 卡店服务 Spawn 失败");
+                RunSceneTransitionService.InstanceOrNull?.ForceClearFaders();
                 walk?.SetEnabled(false);
                 return;
             }
+
+            await RevealHeldTransitionIfAnyAsync();
 
             // 同商店：场地即交互面，勿整段 ChoiceOverlay（ADR-0020）。
             Debug.Log(
@@ -755,9 +782,12 @@ namespace NineGrid.Flow
             if (!reward.TrySpawnFromPending(arch))
             {
                 Debug.LogError("[GameFlow] 特殊奖励房 Spawn 失败");
+                RunSceneTransitionService.InstanceOrNull?.ForceClearFaders();
                 walk?.SetEnabled(false);
                 return;
             }
+
+            await RevealHeldTransitionIfAnyAsync();
 
             // 同商店：场地即交互面，勿整段 ChoiceOverlay（ADR-0020）。
             Debug.Log(
