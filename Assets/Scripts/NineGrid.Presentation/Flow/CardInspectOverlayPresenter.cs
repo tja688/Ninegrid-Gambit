@@ -21,13 +21,18 @@ namespace NineGrid.Flow
     /// 右键卡牌详述面板：敌方 / 常规两态，半黑屏挡交互，不暂停主线。
     /// 场景里的「敌人卡模板占位」「道具卡标准模版」只作锚点；成品 mock 图会被关掉，
     /// 运行时在锚点下挂真卡面预制体并 Commit。
+    /// 常规占位按道具卡（卡框本地原点）布局；遗物卡面内容偏左时由
+    /// <see cref="AlignLiveFaceToPlaceholderOrigin"/> 补偿，避免预览溢出面板。
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class CardInspectOverlayPresenter : MonoBehaviour
     {
         private const string InspectLiveFaceName = "__InspectLiveFace";
-        /// <summary>与半黑屏 / 右键面板同层，高于面板底图（order 0）与槽位（1）。</summary>
+        /// <summary>与半黑屏 / 右键面板同层。须高于 BounceFan 选项卡（BaseSortingOrder≈6，悬停可到 ~49）。</summary>
         private const string InspectSortingLayerName = "UI";
+        /// <summary>右键面板根 SortingGroup：整棵子树作为一组压过三选一选项卡。</summary>
+        private const int InspectOverlaySortingOrder = 100;
+        /// <summary>嵌套于面板根 SG 内：高于面板底图 / 文案，低于关闭钮等若另挂更高序。</summary>
         private const int InspectFaceSortingOrder = 5;
 
         private static CardInspectOverlayPresenter s_instance;
@@ -200,6 +205,9 @@ namespace NineGrid.Flow
             {
                 root.SetActive(true);
             }
+
+            // BounceFan 选项在 UI 层 order 6+；面板底图多为 0–3。根 SG 提到 100 才能整组压住三选一。
+            EnsureOverlaySortingGroup();
 
             SetActiveSafe(enemyPanel, isMonster);
             SetActiveSafe(regularPanel, !isMonster);
@@ -478,9 +486,76 @@ namespace NineGrid.Flow
             face.transform.localScale = Vector3.one;
             face.SetActive(true);
 
+            // 常规面板占位按道具卡（卡框在本地原点）布局；遗物卡面内容整体偏在 x≈-1.22。
+            AlignLiveFaceToPlaceholderOrigin(face.transform);
+
             // 真卡面预制体默认在 Main 层，会沉到 UI 面板后面；挂 SG 提到 UI 层。
             ApplyInspectSorting(face);
             return face;
+        }
+
+        /// <summary>
+        /// 将真卡面平移，使「卡框 / 主边框」落到占位本地原点。
+        /// 道具/机关等卡框已在原点时为 no-op；遗物卡标准模版卡框在 (-1.22, …) 时补偿偏左溢出。
+        /// </summary>
+        public static void AlignLiveFaceToPlaceholderOrigin(Transform face)
+        {
+            if (face == null)
+            {
+                return;
+            }
+
+            if (!TryGetInspectFrameLocalCenter(face, out var frameLocal))
+            {
+                face.localPosition = Vector3.zero;
+                return;
+            }
+
+            // face 在占位下 scale=1、旋转恒等：卡框相对占位 = face.localPosition + frameLocal。
+            face.localPosition = -frameLocal;
+        }
+
+        private static bool TryGetInspectFrameLocalCenter(Transform face, out Vector3 localCenter)
+        {
+            localCenter = Vector3.zero;
+            if (face == null)
+            {
+                return false;
+            }
+
+            var frame = FindChild(face, "卡框") ?? FindChild(face, "Card_Border_rectangle_bronze");
+            if (frame == null)
+            {
+                return false;
+            }
+
+            if (frame.parent == face)
+            {
+                localCenter = frame.localPosition;
+                return true;
+            }
+
+            // 嵌套时把世界点折回 face 本地（创建瞬间父子 scale 均为 1）。
+            localCenter = face.InverseTransformPoint(frame.position);
+            return true;
+        }
+
+        private void EnsureOverlaySortingGroup()
+        {
+            var host = root != null ? root : gameObject;
+            if (host == null)
+            {
+                return;
+            }
+
+            var sortingGroup = host.GetComponent<SortingGroup>();
+            if (sortingGroup == null)
+            {
+                sortingGroup = host.AddComponent<SortingGroup>();
+            }
+
+            sortingGroup.sortingLayerName = InspectSortingLayerName;
+            sortingGroup.sortingOrder = InspectOverlaySortingOrder;
         }
 
         private static void ApplyInspectSorting(GameObject face)
@@ -496,6 +571,7 @@ namespace NineGrid.Flow
                 sortingGroup = face.AddComponent<SortingGroup>();
             }
 
+            // 嵌套于面板根 SG：相对序只在覆层内比较；绝对压过 BounceFan 靠根 SG order=100。
             sortingGroup.sortingLayerName = InspectSortingLayerName;
             sortingGroup.sortingOrder = InspectFaceSortingOrder;
             CardMainVisualMaskAnchor.PropagateSortingLayerFromGroup(sortingGroup);
