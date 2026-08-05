@@ -74,22 +74,12 @@
     "extraSlots": [],
     "rarity": "None",
     "tags": [],
-    "effectAssemblies": [
-        {
-            "id": "skill.ranged_weapon.activate",
-            "templateId": "tpl.skill.ranged_weapon.activate",
-            "containerType": "MonsterSkill",
-            "argsJson": "{\"value\":1,\"source\":\"skill.ranged_weapon\"}"
-        },
-        {
-            "id": "skill.rise_up.damage",
-            "templateId": "tpl.skill.rise_up.damage",
-            "containerType": "MonsterSkill",
-            "argsJson": "{\"count\":1}"
-        }
-    ],
+    "effectAssemblies": [],
     "effectIds": [],
-    "skillIds": [],
+    "skillIds": [
+        "skill.ranged_weapon",
+        "skill.rise_up"
+    ],
     "level": "普通",
     "sequence": 2,
     "isElite": false,

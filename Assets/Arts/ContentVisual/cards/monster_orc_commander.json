@@ -74,22 +74,12 @@
     "extraSlots": [],
     "rarity": "None",
     "tags": [],
-    "effectAssemblies": [
-        {
-            "id": "skill.assassin_leader.rule",
-            "templateId": "tpl.skill.assassin_leader.rule",
-            "containerType": "MonsterSkill",
-            "argsJson": "{}"
-        },
-        {
-            "id": "skill.rise_up.damage",
-            "templateId": "tpl.skill.rise_up.damage",
-            "containerType": "MonsterSkill",
-            "argsJson": "{\"count\":1}"
-        }
-    ],
+    "effectAssemblies": [],
     "effectIds": [],
-    "skillIds": [],
+    "skillIds": [
+        "skill.assassin_leader",
+        "skill.rise_up"
+    ],
     "level": "层主",
     "sequence": 5,
     "isElite": false,
