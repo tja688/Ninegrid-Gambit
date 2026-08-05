@@ -74,16 +74,11 @@
     "extraSlots": [],
     "rarity": "None",
     "tags": [],
-    "effectAssemblies": [
-        {
-            "id": "skill.space_mastery.battle",
-            "templateId": "tpl.skill.space_mastery.battle",
-            "containerType": "MonsterSkill",
-            "argsJson": "{\"sourceAction\":\"DealDamage\",\"count\":1}"
-        }
-    ],
+    "effectAssemblies": [],
     "effectIds": [],
-    "skillIds": [],
+    "skillIds": [
+        "skill.space_mastery"
+    ],
     "level": "层主",
     "sequence": 5,
     "isElite": false,

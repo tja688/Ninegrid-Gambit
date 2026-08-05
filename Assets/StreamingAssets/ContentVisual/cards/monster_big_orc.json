@@ -80,7 +80,7 @@
     "sequence": 0,
     "isElite": false,
     "isBoss": false,
-    "isReserve": false,
+    "isReserve": true,
     "containerType": "",
     "deckKind": "",
     "monsterDefIds": [],

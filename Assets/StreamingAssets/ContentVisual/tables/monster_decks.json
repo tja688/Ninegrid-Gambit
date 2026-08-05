@@ -1,7 +1,7 @@
 [
   {
     "deck_id": "deck.transition",
-    "deck_kind": "Unknown",
+    "deck_kind": "Reserve",
     "display_name": "过渡卡组"
   },
   {
@@ -11,32 +11,32 @@
   },
   {
     "deck_id": "deck.stone_legion",
-    "deck_kind": "Reserve",
+    "deck_kind": "Unknown",
     "display_name": "哥布牌组"
   },
   {
     "deck_id": "deck.skeleton_legion",
-    "deck_kind": "Reserve",
+    "deck_kind": "Unknown",
     "display_name": "骷髅牌组"
   },
   {
     "deck_id": "deck.orc_legion",
-    "deck_kind": "Reserve",
+    "deck_kind": "Unknown",
     "display_name": "植物牌组"
   },
   {
     "deck_id": "deck.void",
-    "deck_kind": "Reserve",
+    "deck_kind": "Unknown",
     "display_name": "旅者牌组"
   },
   {
     "deck_id": "deck.dragon",
-    "deck_kind": "Reserve",
+    "deck_kind": "Unknown",
     "display_name": "莱姆牌组"
   },
   {
     "deck_id": "deck.insect",
-    "deck_kind": "Reserve",
+    "deck_kind": "Unknown",
     "display_name": "昆虫卡组"
   },
   {
@@ -46,7 +46,7 @@
   },
   {
     "deck_id": "deck.smallanimal",
-    "deck_kind": "Reserve",
+    "deck_kind": "Unknown",
     "display_name": "小动物卡组"
   }
 ]

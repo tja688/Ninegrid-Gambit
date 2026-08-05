@@ -74,16 +74,11 @@
     "extraSlots": [],
     "rarity": "None",
     "tags": [],
-    "effectAssemblies": [
-        {
-            "id": "skill.delivery.move",
-            "templateId": "tpl.skill.delivery.move",
-            "containerType": "MonsterSkill",
-            "argsJson": "{\"count\":1}"
-        }
-    ],
+    "effectAssemblies": [],
     "effectIds": [],
-    "skillIds": [],
+    "skillIds": [
+        "skill.delivery"
+    ],
     "level": "普通",
     "sequence": 3,
     "isElite": false,

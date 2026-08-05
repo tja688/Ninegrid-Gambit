@@ -74,16 +74,11 @@
     "extraSlots": [],
     "rarity": "None",
     "tags": [],
-    "effectAssemblies": [
-        {
-            "id": "skill.turn_world.enter",
-            "templateId": "tpl.skill.turn_world.enter",
-            "containerType": "MonsterSkill",
-            "argsJson": "{\"count\":1}"
-        }
-    ],
+    "effectAssemblies": [],
     "effectIds": [],
-    "skillIds": [],
+    "skillIds": [
+        "skill.turn_world"
+    ],
     "level": "普通",
     "sequence": 4,
     "isElite": false,

@@ -85,8 +85,8 @@ namespace NineGrid.Core.Tests
             Assert.IsTrue(catalog.Effects.ContainsKey("skill.absorb.remove"));
 
             Assert.IsTrue(catalog.MonsterDecks.TryGetValue("deck.transition", out var transition));
-            Assert.Greater(transition.MonsterDefIds.Count, 0, "过渡卡组应挂有全部还原后的怪物");
-            Assert.AreNotEqual(MonsterDeckKind.Reserve, transition.Kind);
+            Assert.Greater(transition.MonsterDefIds.Count, 0, "过渡卡组应保留全部还原后的怪物（引用其成员的模板仍按 defId 直生）");
+            Assert.AreEqual(MonsterDeckKind.Reserve, transition.Kind, "#134 过渡卡组已归档为 Reserve，不再被 RewardSystem 选中");
 
             Assert.IsTrue(catalog.Rewards.TryGetRoom(RoomKind.Fountain, out var fountain));
             Assert.AreEqual(1, fountain.OpeningInjects.Count);

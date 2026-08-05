@@ -79,7 +79,7 @@
   "level": "层主",
   "isElite": false,
   "isBoss": true,
-  "isReserve": false,
+  "isReserve": true,
   "containerType": "",
   "deckKind": "",
   "monsterDefIds": [],

@@ -66,7 +66,7 @@ namespace NineGrid.Core.Tests
         }
 
         [Test]
-        public void ProductionJson_MappingIsCorrect_ButNotFormallyReachable()
+        public void ProductionJson_MappingIsCorrect_AndFormallyReachable()
         {
             var catalog = ContentCatalogBootstrap.Load();
             Assert.AreEqual(
@@ -78,21 +78,57 @@ namespace NineGrid.Core.Tests
                 ThemeDeckMappingVerifier.VerifyBossFlags(catalog).Count,
                 "映射正确层不得有 Boss 问题");
             var report = ThemeDeckFormalReadiness.Evaluate(catalog);
-            Assert.IsFalse(
+            Assert.IsTrue(
                 report.Reachable,
-                "七套尚未正式启用（全表 Reserve + 过渡组未清空），正式可达性必须为否");
+                "七套已正式启用（#134）：deck_kind 已切 Unknown、槽位卡非 Reserve、过渡组已归档，正式可达性必须为真。\n"
+                + FormatBlockers(report));
         }
 
         [Test]
-        public void FormalReadiness_ReportsCurrentBlockers()
+        public void FormalReadiness_ReportsNoBlockers_AfterArchival()
         {
             var catalog = ContentCatalogBootstrap.Load();
             var report = ThemeDeckFormalReadiness.Evaluate(catalog);
 
-            Assert.IsFalse(report.Reachable);
-            Assert.IsTrue(HasCode(report.Blockers, "deck_reserve"), "应报 deck_reserve（七套全表 Reserve）");
-            Assert.IsTrue(HasCode(report.Blockers, "slot_card_reserve"), "应报 slot_card_reserve（deck.dragon seq2 稳定槽位卡为 Reserve）");
-            Assert.IsTrue(HasCode(report.Blockers, "transition_not_cleared"), "应报 transition_not_cleared（过渡组未清空）");
+            Assert.IsTrue(report.Reachable);
+            Assert.IsFalse(HasCode(report.Blockers, "deck_reserve"), "七套已切 Unknown，不得再报 deck_reserve");
+            Assert.IsFalse(HasCode(report.Blockers, "transition_not_cleared"), "过渡组已归档为 Reserve，不得再报 transition_not_cleared");
+            Assert.IsFalse(HasCode(report.Blockers, "slot_card_reserve"), "#128 已清空七套槽位卡 Reserve，不得再报 slot_card_reserve");
+        }
+
+        [Test]
+        public void ProductionJson_NonReservePool_IsExactlySevenStableDecks()
+        {
+            var catalog = ContentCatalogBootstrap.Load();
+            var nonReserve = new List<string>();
+            foreach (var pair in catalog.MonsterDecks)
+            {
+                if (pair.Value != null && pair.Value.Kind != MonsterDeckKind.Reserve)
+                {
+                    nonReserve.Add(pair.Value.Id);
+                }
+            }
+
+            Assert.AreEqual(
+                ThemeDeckStableMapping.Entries.Count,
+                nonReserve.Count,
+                "正式池应恰好为七套（deck_kind 非 Reserve），不得含 deck.transition 或其它归档组："
+                + string.Join(", ", nonReserve));
+            for (var i = 0; i < ThemeDeckStableMapping.Entries.Count; i++)
+            {
+                CollectionAssert.Contains(
+                    nonReserve,
+                    ThemeDeckStableMapping.Entries[i].DeckId,
+                    "正式池必须覆盖七套稳定契约 deckId");
+            }
+
+            Assert.IsTrue(
+                catalog.MonsterDecks.TryGetValue(ThemeDeckFormalReadiness.TransitionDeckId, out var transition),
+                "deck.transition 表行须保留（引用其成员的效果模板仍按 defId 直生）");
+            Assert.AreEqual(
+                MonsterDeckKind.Reserve,
+                transition.Kind,
+                "#134 过渡卡组已归档为 Reserve，RewardSystem 三层随机绑定不会选中它");
         }
 
         [Test]

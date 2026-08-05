@@ -8,24 +8,28 @@ namespace NineGrid.Presentation.Tests.Cards
     public sealed class MonsterLoadoutPresentationValidatorTests
     {
         [Test]
-        public void StagingValidation_Passes_WithTransitionDeckCoveringSequences()
+        public void StagingValidation_Fails_WhileTransitionArchived()
         {
             var report = MonsterLoadoutPresentationValidator.Validate(
                 MonsterLoadoutPresentationValidator.ValidationMode.Staging);
 
-            Assert.IsTrue(
+            Assert.IsFalse(
                 report.Passed,
-                Format(report));
+                "过渡期已结束（#134）：deck.transition 已归档为 Reserve，过渡期校验应失败。\n"
+                + Format(report));
+            Assert.IsTrue(report.HasErrors);
         }
 
         [Test]
-        public void DeliveryReadyValidation_Fails_WhileMonstersStillInTransition()
+        public void DeliveryReadyValidation_Passes_AfterTransitionArchived()
         {
             var report = MonsterLoadoutPresentationValidator.Validate(
                 MonsterLoadoutPresentationValidator.ValidationMode.DeliveryReady);
 
-            Assert.IsFalse(report.Passed, "过渡期尚未交付，交付就绪应失败");
-            Assert.IsTrue(report.HasErrors);
+            Assert.IsTrue(
+                report.Passed,
+                "七套已正式启用且过渡组已归档，交付就绪必须通过。\n" + Format(report));
+            Assert.IsFalse(report.HasErrors);
         }
 
         private static string Format(MonsterLoadoutPresentationValidator.Report report)

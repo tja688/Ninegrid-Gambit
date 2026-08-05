@@ -5,7 +5,7 @@
   "deckId": "",
   "role": "",
   "displayName": "过渡卡组",
-  "description": "策划暂存：还原后的怪物先挂本组，调好后改所属卡组+序列再交付",
+  "description": "已归档（#134）：还原后的暂存怪物保留在此，全员 isReserve，不再参与正式遭遇抽卡；新怪物改挂正式七套卡组",
   "faceIntro": "",
   "attackPattern": "",
   "gold": 0,

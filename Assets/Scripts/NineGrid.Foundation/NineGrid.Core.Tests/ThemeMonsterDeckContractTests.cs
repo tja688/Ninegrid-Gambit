@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using NineGrid.Content;
 using NineGrid.Core;
 using NineGrid.Core.Content;
 using NineGrid.Core.Systems;
@@ -143,6 +144,51 @@ namespace NineGrid.Core.Tests
 
             Assert.AreEqual(1, counts.ContainsKey("help.golden_chest_card") ? counts["help.golden_chest_card"] : 0);
             Assert.AreEqual(2, counts.ContainsKey("help.gold_card") ? counts["help.gold_card"] : 0);
+        }
+
+        [Test]
+        public void ProductionRun_ThreeFloors_BindDistinctThemes_Node8ContainsFloorBoss()
+        {
+            // #134：正式池=七套后，三层随机绑定不重复主题；节点 8 必含该层 seq5 层主。
+            NineGridArchitecture.ResetForTests();
+            var arch = NineGridArchitecture.Current;
+            arch.GetUtility<IConfigUtility>().Set(ContentConfigKeys.DefaultCatalog, ContentCatalogBootstrap.Load());
+            InitialGameFactory.Create(arch, new InitialGameOptions { Seed = 42UL });
+            var reward = arch.GetSystem<IRewardSystem>();
+            var content = arch.GetSystem<IContentSystem>();
+            var run = arch.GetModel<RunModel>();
+
+            var floors = new List<string>();
+            for (var floor = 1; floor <= 3; floor++)
+            {
+                run.Floor.Value = floor;
+                run.NodeIndex.Value = 0;
+                run.FloorMonsterDeckId.Value = string.Empty;
+                var options = reward.BuildNodeDeckOptions(1, null);
+                Assert.Greater(options.EnemyCards.Count, 0, "第 " + floor + " 层节点 1 必须能抽出怪物");
+                var floorDeck = run.FloorMonsterDeckId.Value;
+                Assert.IsFalse(string.IsNullOrEmpty(floorDeck), "第 " + floor + " 层必须绑定主题卡组");
+                Assert.IsFalse(floors.Contains(floorDeck), "跨层不得重复主题：" + floorDeck);
+                floors.Add(floorDeck);
+
+                var node8 = reward.BuildNodeDeckOptions(8, null);
+                Assert.IsTrue(node8.RequireElite, floorDeck + " 节点 8 应要求层主（Seq5Count=1）");
+                var hasFloorBoss = false;
+                for (var i = 0; i < node8.EnemyCards.Count; i++)
+                {
+                    if (content.Catalog.TryGetCard(node8.EnemyCards[i].DefId, out var card)
+                        && card.IsBoss
+                        && card.Sequence == 5
+                        && string.Equals(card.DeckId, floorDeck, System.StringComparison.OrdinalIgnoreCase))
+                    {
+                        hasFloorBoss = true;
+                    }
+                }
+
+                Assert.IsTrue(hasFloorBoss, "节点 8 必含 " + floorDeck + " 的 seq5 层主");
+            }
+
+            Assert.AreEqual(3, floors.Count);
         }
 
         private static string FirstEnemyDeckId(NodeDeckOptions options)
