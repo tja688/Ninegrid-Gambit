@@ -18,6 +18,7 @@
 | `Flow/` | Flow 侧遗留/切片；**BoardBriefTipCopy / Session**（#89）；**BoardPlacementStructuralTests**（#104+#105 / ADR-0024：生产全集禁 Fit / 禁 parent 到 GroundAnchors / 落格路径禁写 `localScale` / 无 `slotHitBoxSize`）；**ShopBoardSlotResolver**（#92）；**TavernBoardSlotResolver**（#93）；**RewardBoardSlotResolver**（#94）；**InRoomLeaveWatchStructuralTests**（离开监视 Active 顺序 / 扣金 HUD / SoftBlockOnly；选项与真卡均预制体尺度、禁 Fit）；**InRoomItemAcquirePresentationStructuralTests**（ADR-0025：购领须接手 ItemSlots→手牌，禁只碎裂货架）；**BounceFanChoiceHitTests**（固定 AABB 命中 / 禁 OverlapPoint 回流）；**DirectionalBiasPickerTests**（同层过场四向袋洗牌） |
 | `Fixtures/` | EditMode 夹具 |
 | `HostContractStructuralTests.cs` | 结构护栏：禁四大旧宿主名、禁 `CombatHitSink`、禁回流 `new PresentationDirector`、System 不暴露具体 View |
+| `BuildSceneMissingScriptStructuralTests.cs` | 构建护栏（#126 清理）：构建启用场景 + 非 Plugins 预制体禁引用无法解析的 m_Script（Missing Script，含 fileID-only 破坏引用）；防已删除脚本组件残留回流 |
 | `DevTestSceneSerializationStructuralTests.cs` | 构建护栏（#126）：构建启用场景禁序列化 DevTest-only 组件（`#if UNITY_EDITOR||DEVELOPMENT_BUILD`，Release 即 Missing Script）；MainScene 须恰好序列化 `DevTestSceneInstaller`（始终编译的运行时安装宿主） |
 | `RoomChoiceRetirementStructuralTests.cs` | 结构护栏（#90）：无 `RoomChoicePresenter`；`IGameFlowView`/`SelectorManager`/`UiPanelRouter` 无房间浮层 API；无属性三选一 Bounce 入口；BounceFan 仍在 |
 | `InRoomBoardWiringStructuralTests.cs` | 结构护栏：`PlayRoomIconChoiceAsync` 进消费/特殊房后须调用 `PresentInRoomSessionAfterEnterAsync`；无独立 `PlayRoomEventAsync` 二次 Enter |
