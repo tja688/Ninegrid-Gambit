@@ -10,7 +10,7 @@ readOnly: false
 aiMaintained: true
 explicitMaintenanceRules: true
 createdAt: 1784026817107
-updatedAt: 1785502480457
+updatedAt: 1785907965491
 ---
 
 # project-mistake-note
@@ -26,4 +26,7 @@ updatedAt: 1785502480457
 <!-- locus:body:start -->
 - 神圣决斗（skill.holy_duel）的 2 伤惩罚若用裸 `DealDamageAction` 入队，EventLog 不会发 `EffectTriggered` → 持有者不播效果触发脉冲（缩放）。惩罚必须走 `ExecuteEffectAction(instanceId, null, new[]{ DealDamageAction(...) })` 包装（PhaseSystem.ApplyHolyDuelMark）。教训：硬编码在 System 里的技能直伤，要主动补 EffectTriggered 事件，表现层脉冲靠它驱动。
 - 效果触发脉冲链路：Core `EffectTriggered` 事件 → PresentationEventMap `TriggerEffect` → `EffectTriggerPulseBeatHandler` → `CardEffectTriggerPulseSink` → `PlayEffectTriggerPulse`。Core 侧只入队 DealDamage 而不发 EffectTriggered 时，战斗日志里看不到任何脉冲依据。
+- `#if UNITY_EDITOR || DEVELOPMENT_BUILD` 专属的 DevTest 组件只要序列化进构建场景或进正式构建依赖的预制体，Release 就必现 Missing Script（类不编译）。教训（#126）：场景/预制体只序列化「始终编译的安装宿主」（`DevTestSceneInstaller` / `DevTestStandardCardInstaller`），`#if` 块内运行时 AddComponent；发现渠道是 Release 无头冒烟 + 结构测试扫描 GUID。
+- `unity command run_tests` 同步命令有 30s CLI 连接超时，长套件要用 `--async_tests true` 后轮询 `test_status`；已中断的同步 run 会让 pipeline server 挂死（所有命令超时而 Editor 本体正常），只能重启 Editor（先 `ai-workspace gate-restart`）。教训：别用同步 run_tests 跑全量。
+- MainScene 存在既有 Missing Script：已删除脚本 `TableNineSortingKey`（GUID d1f6b4c5…）在 214 个组件槽位（HEAD 即有 107 处 GUID 引用）。发现「Release 报缺失」时要先分清新旧：DEV 构建同样缺失 = 非条件编译问题、属场景卫生另票。
 <!-- locus:body:end -->
