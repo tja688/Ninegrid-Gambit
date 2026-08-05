@@ -321,6 +321,8 @@ namespace NineGrid.Core
         None,
         Reward,
         Room,
-        Navigation
+        Navigation,
+        /// <summary>属性房三选二会话（#136）：候选 3 选 2，选满后结束会话。</summary>
+        AttributePick
     }
 }

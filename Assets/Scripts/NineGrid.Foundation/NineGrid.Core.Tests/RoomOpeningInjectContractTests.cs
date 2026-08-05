@@ -11,6 +11,7 @@ namespace NineGrid.Core.Tests
     /// <summary>
     /// ADR-0022 / #95：战斗房开局注入真正生效（玩家侧 + 困难房怪物侧）。
     /// Seam：<see cref="IRewardSystem.BuildNodeDeckOptions"/> 读取 <see cref="RunModel.Room"/> 的 OpeningInjects。
+    /// #136：属性房改为玩家三选二会话，选择结果注入见 <see cref="AttributePickSessionContractTests"/>。
     /// </summary>
     public sealed class RoomOpeningInjectContractTests
     {
@@ -67,8 +68,12 @@ namespace NineGrid.Core.Tests
             Assert.AreEqual("help.food_card", fountain.PlayerCards[2].DefId);
         }
 
+        /// <summary>
+        /// #136：属性房不再自动随机注入。未走三选二会话（无 RunModel 选择结果）时按无注入处理；
+        /// 会话结果注入由 <see cref="AttributePickSessionContractTests"/> 覆盖。
+        /// </summary>
         [Test]
-        public void AttributeRoom_DrawsTwoFromPool_AllowingDuplicates()
+        public void AttributeRoom_WithoutSessionPicks_DoesNotAutoInject()
         {
             var player = mArch.GetModel<PlayerModel>();
             player.SetItemDeckCapacity(0);
@@ -76,28 +81,8 @@ namespace NineGrid.Core.Tests
             run.Room.Value = RoomKind.Attribute;
             run.NodeIndex.Value = 1;
 
-            var sawDuplicate = false;
-            for (var seed = 1UL; seed <= 80UL; seed++)
-            {
-                ResetWithSeed(seed);
-                player = mArch.GetModel<PlayerModel>();
-                player.SetItemDeckCapacity(0);
-                run = mArch.GetModel<RunModel>();
-                run.Room.Value = RoomKind.Attribute;
-                run.NodeIndex.Value = 1;
-
-                var options = mReward.BuildNodeDeckOptions(2, null);
-                Assert.AreEqual(2, options.PlayerCards.Count);
-                Assert.IsTrue(IsAttributeCard(options.PlayerCards[0].DefId));
-                Assert.IsTrue(IsAttributeCard(options.PlayerCards[1].DefId));
-                if (options.PlayerCards[0].DefId == options.PlayerCards[1].DefId)
-                {
-                    sawDuplicate = true;
-                    break;
-                }
-            }
-
-            Assert.IsTrue(sawDuplicate, "属性房池可重复抽到同一张");
+            var options = mReward.BuildNodeDeckOptions(2, null);
+            Assert.AreEqual(0, options.PlayerCards.Count, "无选择结果时不自动注入");
         }
 
         [Test]
@@ -200,13 +185,6 @@ namespace NineGrid.Core.Tests
             }
 
             return bySeq;
-        }
-
-        private static bool IsAttributeCard(string defId)
-        {
-            return defId == "help.hp_card"
-                || defId == "help.armor_card"
-                || defId == "help.attack_card";
         }
 
         private static bool IsBattleOfferRoom(RoomKind kind)

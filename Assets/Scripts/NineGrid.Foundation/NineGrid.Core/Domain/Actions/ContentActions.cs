@@ -524,6 +524,58 @@ namespace NineGrid.Core
         }
     }
 
+    /// <summary>属性房三选二会话（#136）：进房即 offer 3 个加权候选。</summary>
+    public sealed class OfferAttributePickSessionAction : GameAction
+    {
+        public OfferAttributePickSessionAction(IReadOnlyList<RewardEntry> candidates)
+        {
+            Candidates = candidates;
+        }
+
+        public IReadOnlyList<RewardEntry> Candidates { get; private set; }
+        public override string ActionName { get { return "OfferAttributePickSession"; } }
+
+        public override GameActionResult Apply(GameActionContext context)
+        {
+            var projected = RewardOfferFaceProjection.Project(context, Candidates);
+            context.GetModel<PendingChoiceModel>().OfferAttributePick(projected);
+            return new GameActionResult()
+                .AddEvent(new CoreGameEvent(CoreEventType.RewardOffered, context.ActionId, ActionName)
+                    .WithAmount(projected != null ? projected.Count : 0)
+                    .WithMessage(RewardOfferFaceEncoding.Format(PendingChoiceModel.AttributePickPoolId, projected)));
+        }
+    }
+
+    /// <summary>属性房三选二（#136）：记录一次候选选择并移除该候选实例（不可重复点同实例）。</summary>
+    public sealed class SelectAttributeCandidateAction : GameAction
+    {
+        public SelectAttributeCandidateAction(int optionIndex, string defId)
+        {
+            OptionIndex = optionIndex;
+            DefId = defId ?? string.Empty;
+        }
+
+        public int OptionIndex { get; private set; }
+        public string DefId { get; private set; }
+        public override string ActionName { get { return "SelectAttributeCandidate"; } }
+
+        public override GameActionResult Apply(GameActionContext context)
+        {
+            var pending = context.GetModel<PendingChoiceModel>();
+            if (pending.Kind.Value != PendingChoiceKind.AttributePick)
+            {
+                return GameActionResult.Empty;
+            }
+
+            pending.AddAttributeSelection(DefId);
+            pending.RemoveRewardOptionAt(OptionIndex);
+            return new GameActionResult()
+                .AddEvent(new CoreGameEvent(CoreEventType.RewardSelected, context.ActionId, ActionName)
+                    .WithAmount(OptionIndex)
+                    .WithMessage(DefId));
+        }
+    }
+
     public sealed class GrantRewardChoiceAction : GameAction
     {
         public GrantRewardChoiceAction(RewardEntry entry, int optionIndex)

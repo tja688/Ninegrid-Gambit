@@ -857,7 +857,8 @@ namespace NineGrid.Core.Systems
             }
 
             var pending = this.GetModel<PendingChoiceModel>();
-            if (pending.Kind.Value != PendingChoiceKind.Reward)
+            if (pending.Kind.Value != PendingChoiceKind.Reward
+                && pending.Kind.Value != PendingChoiceKind.AttributePick)
             {
                 return Reject(GameCommandKind.SelectReward, "No pending reward choice.", SlotId.None, 0);
             }
@@ -902,6 +903,12 @@ namespace NineGrid.Core.Systems
             }
 
             var pipeline = this.GetSystem<IActionPipelineSystem>();
+
+            // 属性房三选二：只记候选、不造卡不写道具卡格；选满两张后提交 RunModel 并推进节点。
+            if (PendingChoiceModel.IsAttributePickPool(poolId))
+            {
+                return SelectAttributeCandidate(optionIndex, pipeline);
+            }
 
             // 卡店「道具卡固定」二级确认：扣费 + 写入固定卡 + 回到三项服务面。
             if (PendingChoiceModel.IsTavernFixItemPool(poolId))
@@ -955,6 +962,37 @@ namespace NineGrid.Core.Systems
 
             pipeline.Enqueue(new ClearPendingRewardChoiceAction());
             var resolved = ResolvePostRewardChoiceFlow(pipeline, 0);
+            return CoreCommandResult.Accept(resolved);
+        }
+
+        private CoreCommandResult SelectAttributeCandidate(int optionIndex, IActionPipelineSystem pipeline)
+        {
+            var pending = this.GetModel<PendingChoiceModel>();
+            var entry = pending.RewardOptions[optionIndex];
+            if (entry == null || string.IsNullOrEmpty(entry.DefId))
+            {
+                return Reject(GameCommandKind.SelectReward, "Reward option index is out of range.", SlotId.None, 0);
+            }
+
+            pipeline.Enqueue(new SelectAttributeCandidateAction(optionIndex, entry.DefId));
+            var resolved = pipeline.RunToCompletion();
+
+            // 会话可能在选择途中被外部清掉（防御）；此时不再推进。
+            if (pending.Kind.Value != PendingChoiceKind.AttributePick)
+            {
+                return CoreCommandResult.Accept(resolved);
+            }
+
+            // 第一次选择不结束会话（不提前结算、不推进节点）。
+            if (pending.AttributeSelectedCount < RewardSystem.AttributePickCount)
+            {
+                return CoreCommandResult.Accept(resolved);
+            }
+
+            // 选满两张：提交到 RunModel（本关开局注入源），结束会话并推进节点；只结算一次。
+            this.GetModel<RunModel>().SetAttributePicks(pending.AttributeSelectedDefIds);
+            pipeline.Enqueue(new ClearPendingRewardChoiceAction());
+            resolved = ResolvePostRewardChoiceFlow(pipeline, resolved);
             return CoreCommandResult.Accept(resolved);
         }
 
@@ -1179,6 +1217,15 @@ namespace NineGrid.Core.Systems
                 return CoreCommandResult.Accept(pipelineCancel.RunToCompletion());
             }
 
+            // 属性房三选二离开：放弃未选完的候选（不发跳过金），直接结束会话并推进节点。
+            if (PendingChoiceModel.IsAttributePickPool(poolId))
+            {
+                var pipelineLeave = this.GetSystem<IActionPipelineSystem>();
+                pipelineLeave.Enqueue(new SkipRewardChoiceAction());
+                pipelineLeave.Enqueue(new ClearPendingRewardChoiceAction());
+                return CoreCommandResult.Accept(ResolvePostRewardChoiceFlow(pipelineLeave, 0));
+            }
+
             if (IsRelicRewardPool(poolId))
             {
                 this.GetSystem<IRewardSystem>().RememberUnselectedRelics(pending.RewardOptions, null);
@@ -1364,7 +1411,8 @@ namespace NineGrid.Core.Systems
             var resolved = this.GetSystem<IRewardSystem>().ResolveRoom(room);
             var pipeline = this.GetSystem<IActionPipelineSystem>();
 
-            if (pending.Kind.Value == PendingChoiceKind.Reward)
+            if (pending.Kind.Value == PendingChoiceKind.Reward
+                || pending.Kind.Value == PendingChoiceKind.AttributePick)
             {
                 mInRoomRewardContext = true;
                 pipeline.Enqueue(new ChangePhaseAction(GamePhase.RewardItemChoice));

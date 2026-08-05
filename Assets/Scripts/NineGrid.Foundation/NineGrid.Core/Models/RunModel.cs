@@ -9,6 +9,7 @@ namespace NineGrid.Core
         public const int FinalFloor = 3;
 
         private readonly List<string> mUsedMonsterDeckIds = new List<string>();
+        private readonly List<string> mAttributePickDefIds = new List<string>();
 
         public BindableProperty<int> Floor { get; private set; }
         public BindableProperty<int> NodeIndex { get; private set; }
@@ -22,6 +23,43 @@ namespace NineGrid.Core
         public IReadOnlyList<string> UsedMonsterDeckIds
         {
             get { return mUsedMonsterDeckIds; }
+        }
+
+        /// <summary>
+        /// 属性房三选二（#136）：本属性房战斗开局注入的选择结果（≤2 张）。
+        /// 会话提交后写入，BuildNodeDeckOptions 消费后清空；新 Run 重置。
+        /// </summary>
+        public IReadOnlyList<string> AttributePickDefIds
+        {
+            get { return mAttributePickDefIds; }
+        }
+
+        public void SetAttributePicks(IReadOnlyList<string> defIds)
+        {
+            mAttributePickDefIds.Clear();
+            if (defIds != null)
+            {
+                for (var i = 0; i < defIds.Count; i++)
+                {
+                    if (!string.IsNullOrEmpty(defIds[i]))
+                    {
+                        mAttributePickDefIds.Add(defIds[i]);
+                    }
+                }
+            }
+
+            Touch();
+        }
+
+        public void ClearAttributePicks()
+        {
+            if (mAttributePickDefIds.Count == 0)
+            {
+                return;
+            }
+
+            mAttributePickDefIds.Clear();
+            Touch();
         }
 
         protected override void OnInit()
@@ -47,6 +85,7 @@ namespace NineGrid.Core
             Phase.Value = GamePhase.BuildEnemyPool;
             FloorMonsterDeckId.Value = string.Empty;
             mUsedMonsterDeckIds.Clear();
+            mAttributePickDefIds.Clear();
             Touch();
         }
 

@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using NineGrid.Core.Content;
+using NineGrid.Core.Systems;
 using QFramework;
 
 namespace NineGrid.Core
@@ -8,6 +9,7 @@ namespace NineGrid.Core
     {
         private readonly List<RewardEntry> mRewardOptions = new List<RewardEntry>();
         private readonly List<RoomKind> mRoomOptions = new List<RoomKind>();
+        private readonly List<string> mAttributeSelectedDefIds = new List<string>();
 
         public BindableProperty<PendingChoiceKind> Kind { get; private set; }
         public BindableProperty<string> PoolId { get; private set; }
@@ -27,6 +29,17 @@ namespace NineGrid.Core
         public IReadOnlyList<RoomKind> RoomOptions
         {
             get { return mRoomOptions; }
+        }
+
+        /// <summary>属性房三选二（#136）：本会话已选 defId（选满后提交 RunModel，未满可放弃）。</summary>
+        public IReadOnlyList<string> AttributeSelectedDefIds
+        {
+            get { return mAttributeSelectedDefIds; }
+        }
+
+        public int AttributeSelectedCount
+        {
+            get { return mAttributeSelectedDefIds.Count; }
         }
 
         protected override void OnInit()
@@ -100,6 +113,29 @@ namespace NineGrid.Core
             Touch();
         }
 
+        /// <summary>属性房三选二会话（#136）：3 个加权候选；候选实例选中后移除，不可重复点同实例。</summary>
+        public void OfferAttributePick(IReadOnlyList<RewardEntry> candidates)
+        {
+            OfferRewards(AttributePickPoolId, candidates);
+            mAttributeSelectedDefIds.Clear();
+            Kind.Value = PendingChoiceKind.AttributePick;
+            Touch();
+        }
+
+        /// <summary>记录一次候选选择（候选实例由 RemoveRewardOptionAt 去重；同种 defId 可重复选）。</summary>
+        public void AddAttributeSelection(string defId)
+        {
+            if (Kind.Value != PendingChoiceKind.AttributePick
+                || string.IsNullOrEmpty(defId)
+                || mAttributeSelectedDefIds.Count >= RewardSystem.AttributePickCount)
+            {
+                return;
+            }
+
+            mAttributeSelectedDefIds.Add(defId);
+            Touch();
+        }
+
         public bool RemoveRewardOptionAt(int index)
         {
             if (index < 0 || index >= mRewardOptions.Count)
@@ -115,11 +151,13 @@ namespace NineGrid.Core
         public void ClearRewardChoices()
         {
             mRewardOptions.Clear();
-            if (Kind.Value == PendingChoiceKind.Reward)
+            if (Kind.Value == PendingChoiceKind.Reward
+                || Kind.Value == PendingChoiceKind.AttributePick)
             {
                 Kind.Value = PendingChoiceKind.None;
             }
 
+            mAttributeSelectedDefIds.Clear();
             PoolId.Value = string.Empty;
             ShopRefreshPriceGold.Value = 0;
             Touch();
@@ -130,6 +168,8 @@ namespace NineGrid.Core
         public const string TavernFixItemPoolId = "tavern.fixItem";
         public const string TreasureRewardPoolId = "reward.treasure";
         public const string ItemRewardPoolId = "reward.item";
+        /// <summary>属性房三选二会话（#136）。</summary>
+        public const string AttributePickPoolId = "attribute.pick";
 
         public static bool IsShopPool(string poolId)
         {
@@ -154,6 +194,12 @@ namespace NineGrid.Core
         public static bool IsItemRewardPool(string poolId)
         {
             return string.Equals(poolId, ItemRewardPoolId, System.StringComparison.Ordinal);
+        }
+
+        /// <summary>属性房三选二会话（#136）：只认本池，不属于商店/卡店/特殊房。</summary>
+        public static bool IsAttributePickPool(string poolId)
+        {
+            return string.Equals(poolId, AttributePickPoolId, System.StringComparison.Ordinal);
         }
 
         /// <summary>特殊奖励房（#94）：免费货架，拿后留房。</summary>
@@ -243,6 +289,7 @@ namespace NineGrid.Core
         {
             mRewardOptions.Clear();
             mRoomOptions.Clear();
+            mAttributeSelectedDefIds.Clear();
             Kind.Value = PendingChoiceKind.None;
             PoolId.Value = string.Empty;
             SelectedRoom.Value = RoomKind.None;

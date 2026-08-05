@@ -37,10 +37,13 @@
 | [ADR-0028](../adr/0028-damage-formula-armor-and-reduction.md) | 标准伤害公式：三层护甲、伤害减免、无视护甲（公式层已落地；遗物内容另票） |
 | [ADR-0029](../adr/0029-content-guardrail-stable-theme-deck-mapping.md) | 内容护栏：七套稳定 ID—策划槽位—sequence 映射契约（#127；`ThemeDeckStableMapping` + 映射正确 / 正式可达两层校验 + 禁 displayName 断言） |
 | [ADR-0030](../adr/0030-regular-trap-opening-loadout.md) | 常规机关装填契约（#135）：正式战斗开局随机三张常规机关，`RegularTrapPool` 池过滤/无放回/种子可复现；离开机关与特殊机关不入池；`RewardSystem.BuildNodeDeckOptions` 唯一注入点 |
+| [ADR-0031](../adr/0031-attribute-room-pick-two.md) | 属性房三选二会话（#136）：进房 3 加权候选 → 玩家选 2 → 结果经 `RunModel.AttributePickDefIds` 本关开局注入；自动随机注入退役 |
 
 > ADR-0011–0013 已落地（含卡面倒计时 Commit 与单向打击 Counter 分拍，#81）。落地方案见 `Assets/Notes/怪物攻击模式与敌方行动阶段-落地方案-2026-07-29.md`（过程笔记，非权威）。
 >
 > ADR-0030（#135）：正式战斗开局随机三张常规机关（`RegularTrapPool`：Kind=Trap+稀有度 White 池过滤、无放回、种子可复现；离开机关/特殊机关不入池）。
+>
+> ADR-0031（#136）：属性房改为玩家三选二会话（进房 3 加权候选 → 选 2 → `RunModel.AttributePickDefIds` 本关开局注入，消费后清空）；自动随机注入退役。Core 状态机已落地，表现接线见 #137。
 
 ## 程序集一览
 

@@ -783,6 +783,24 @@ namespace NineGrid.Core.Content
             mPool.Add(new RoomInjectPoolOption(cardDefId, weight));
             return this;
         }
+
+        /// <summary>复制既有池选项（构造临时抽取声明用，不改动原声明）。</summary>
+        public RoomInjectDeclaration AddPoolOptions(IReadOnlyList<RoomInjectPoolOption> options)
+        {
+            if (options != null)
+            {
+                for (var i = 0; i < options.Count; i++)
+                {
+                    var option = options[i];
+                    if (option != null)
+                    {
+                        mPool.Add(new RoomInjectPoolOption(option.CardDefId, option.Weight));
+                    }
+                }
+            }
+
+            return this;
+        }
     }
 
     public sealed class RoomDefinition

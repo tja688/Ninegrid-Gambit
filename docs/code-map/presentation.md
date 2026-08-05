@@ -209,6 +209,12 @@
 - **领取入手牌**：同商店，经 `InRoomItemAcquirePresentation` 把 Core ItemSlots 新卡从货架位接入手牌（ADR-0025）
 - `GameFlowOrchestrator.PresentInRoomSessionAfterEnterAsync`：`IsSpecialRewardPool` 走特殊房场地板；道具奖励房选房图标仍缺（见 #83）
 
+### 属性房三选二会话（#136 · ADR-0031）
+
+- Core：进 `Attribute` → `OfferAttributePickSession` 生成 3 个加权候选（`attribute.pick` 池，`Kind=AttributePick`，策划权重 40/40/20，允许同种重复）；`SelectReward` 按候选实例记录选择并移除该实例（不可重复点同实例）；选满 2 张提交 `RunModel.AttributePickDefIds` 并推进节点；`SkipHelpChoice` 放弃未选完的候选并推进节点（不加 skip 金）
+- 选择结果 **不写道具卡格**：下一战斗节点 `BuildNodeDeckOptions` 消费 `AttributePickDefIds` 注入玩家侧卡组（消费后清空；无选择结果不注入）
+- 表现：候选浮层/点击/动画属 #137，本票仅 Core 状态机；表现层按 `PendingChoiceKind.AttributePick` 渲染三候选并提交两次选择
+
 ### Avatar 跳格（已落地 · ADR-0019 / #88 放宽）
 
 - 意图 `InputIntentKinds.BoardWalk` → IntentIntake → `BoardWalkIntentScriptFactory` → `IAvatarWalkSystem.SetDestination`
@@ -243,14 +249,14 @@
 
 **已删**：`Battle`（随机战斗房从具体战斗房类型抽）、`Event`（由 `Attribute` 承接）。
 
-**开局注入（ADR-0022 / #95）**：`RoomDefinition.OpeningInjects` 声明往玩家侧/怪物侧塞哪些卡；`RewardSystem.BuildNodeDeckOptions` 按 `RunModel.Room` 执行（玩家侧在固定卡之后；怪物侧在节点序列抽卡之后）。携带卡包开局倒空已退役（ADR-0025 / #108）。节点 1/5 `RandomBattle` 开局若尚未是战斗房则现场抽一种（不含困难房）。
+**开局注入（ADR-0022 / #95 / #136）**：`RoomDefinition.OpeningInjects` 声明往玩家侧/怪物侧塞哪些卡；`RewardSystem.BuildNodeDeckOptions` 按 `RunModel.Room` 执行（玩家侧在固定卡之后；怪物侧在节点序列抽卡之后）。**属性房例外**（#136 / ADR-0031）：不自动抽取，只注入玩家三选二会话提交的 `RunModel.AttributePickDefIds`（消费后清空）。携带卡包开局倒空已退役（ADR-0025 / #108）。节点 1/5 `RandomBattle` 开局若尚未是战斗房则现场抽一种（不含困难房）。
 
 **勿与选项卡混淆（设计案对照）**
 
 | 表象 | 设计案实际 | 配置落点 |
 |------|------------|----------|
 | 「回满血」 | **恢复房**开局塞 **食品卡**（HelpCard）；非就地选项卡 | 不建 `HealFull` ChoiceOption |
-| 「血量+2 / 攻击+1 / 护甲+1」 | **属性房**开局从 **血量卡/加攻卡/加甲卡** 中抽进卡组；旧局内 BounceFan `Attack`/`Armor`/`Hp` 三选一 UI 已退役（#90） | HelpCard 真卡；ChoiceOption 内容条目仍在（属性房真实三选二见本 Map #136/#137） |
+| 「血量+2 / 攻击+1 / 护甲+1」 | **属性房**进房生成 3 个加权候选（血量/加甲/加攻 40/40/20，可重复），玩家**三选二**加入本关玩家侧卡组（#136 / ADR-0031，选择结果注入见上「开局注入」段）；旧局内 BounceFan `Attack`/`Armor`/`Hp` 三选一 UI 已退役（#90） | HelpCard 真卡；ChoiceOption 内容条目仍在（属性房真实三选二接线见本 Map #136/#137） |
 | 「给钱」 | **金币房**开局塞 **金币卡** | HelpCard，不建 `GainGold` ChoiceOption |
 | 卡店三项 + 刷新 | 策划消费房明文服务 | `UpgradeItemStats` / `FixItem` / `ExpandItemCapacity` / `RefreshShop` |
 | 商店道具牌格升级 | 商店就地扩容道具卡格（3…5） | `ExpandItemSlots`（勿与卡店 `ExpandItemCapacity` 混淆） |
