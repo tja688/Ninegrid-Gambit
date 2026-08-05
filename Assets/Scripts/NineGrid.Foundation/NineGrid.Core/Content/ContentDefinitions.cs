@@ -333,6 +333,23 @@ namespace NineGrid.Core.Content
         }
     }
 
+    /// <summary>
+    /// 道具卡组约定（#139）：live 进奖池/道具来源池/房间注入；archive 仅保留 JSON 参考。
+    /// 非策划现行道具卡（破击锤/血液转换/倍增塔/盾击教程/属性提升/庇佑/瞭望塔）归归档卡组，
+    /// 不参与奖池展开与职业道具来源池（<see cref="RewardPoolQueryExpander"/> 与 ProfessionCatalog 均按此约定过滤）。
+    /// </summary>
+    public static class HelpCardDecks
+    {
+        public const string Live = "deck.help";
+        public const string Archive = "deck.help_archive";
+
+        public static bool IsArchive(string deckId)
+        {
+            return !string.IsNullOrEmpty(deckId)
+                && string.Equals(deckId, Archive, System.StringComparison.OrdinalIgnoreCase);
+        }
+    }
+
     public sealed class RelicContentDefinition
     {
         private readonly List<string> mTags = new List<string>();
@@ -613,6 +630,16 @@ namespace NineGrid.Core.Content
 
         private static bool MatchesCard(CardContentDefinition card, RewardPoolQueryRule query)
         {
+            if (card == null)
+            {
+                return false;
+            }
+
+            if (card.Kind == CardKind.HelpCard && HelpCardDecks.IsArchive(card.DeckId))
+            {
+                return false;
+            }
+
             if (query.Rarities.Count > 0 && !query.Rarities.Contains(card.Rarity))
             {
                 return false;

@@ -2,7 +2,7 @@
     "schemaVersion": 2,
     "contentId": "help.ward_magic_card",
     "kind": "HelpCard",
-    "deckId": "deck.help",
+    "deckId": "deck.help_archive",
     "role": "Defense",
     "displayName": "庇佑",
     "description": "[使用时] 下一次玩家受到伤害时，该次伤害变为{value}",

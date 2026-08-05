@@ -56,6 +56,7 @@
 | `RewardOfferFaceProjectionContractTests` | #62：`OfferRewardChoice` 把 CreateDraft 攻/甲/血写入 `RewardEntry` 与 `RewardOffered` Message |
 | `RewardPoolQueryContractTests` / `RewardPoolDiversityContractTests` | #71：奖池查询规则展开、role 均衡、稀有度分层抽取 |
 | `RelicArchiveDeckContractTests` | #115：`deck.relic_archive` 九件错位旧卡不进 common_chest / blood_conversion 展开；Profession/开局不授予归档遗物 |
+| `FormalContentReachabilityContractTests` | #139：正式内容可达性终审——策划现行 51 件遗物（白 27/蓝 15/金 8/独特 1）全在役、有效果装配、非独特件至少进一个宝箱池、独特件仅职业授予；9 件归档遗物 0 可达；19 种现行道具卡全在役且每张至少一个正式来源（房间注入/商店固定货架/职业道具来源池/精英池/层主注入），`help.impact_tutorial` 按设计归 `deck.player`；7 张非现行道具卡（破击锤/血液转换/倍增塔/盾击教程/属性提升/庇佑/瞭望塔）归 `deck.help_archive` 且不进奖池/道具来源池；奖池无悬空 ID、无空内容；层主击杀固定洗入 1 金宝箱卡 + 2 金币卡（行为断言） |
 | `RelicR1NineProfessionContractTests` | #116：九件新建遗物在役卡组+装配；`relic.rotten_cleave_axe` 为 Red 且不进 W/B/G 宝箱池；Profession 授予顺劈斧且基础护甲 0；样本效果（铁盾伤害减免、超越维度战斗旋转） |
 | `RelicR1AssemblableContractTests` | #117：13 件可拼新建遗物在役卡组+装配；按稀有度进入 common_chest / blood_conversion；样本效果（废物剑击杀回血、血液暴力半血攻、复合盔甲关初换甲） |
 | `RelicR1KeeperAuditContractTests` | #118：20 件名称对齐留用遗物在役+非空描述+装配；渴望 MaxHp+10；幸运硬币仅层主击杀；废物三件 `OnAnyHelpCardUsed` 与利用机回血样本 |

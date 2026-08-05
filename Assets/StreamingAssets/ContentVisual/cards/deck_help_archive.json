@@ -1,0 +1,56 @@
+{
+    "schemaVersion": 2,
+    "contentId": "deck.help_archive",
+    "kind": "Deck",
+    "deckId": "",
+    "role": "",
+    "displayName": "道具卡归档卡组",
+    "description": "非策划现行道具卡（破击锤/血液转换/倍增塔/盾击教程/属性提升/庇佑/瞭望塔）参考保留；不参与奖池、道具来源池与房间注入接线。",
+    "faceIntro": "",
+    "attackPattern": "",
+    "gold": 0,
+    "stats": {
+        "hp": 0,
+        "armor": 0,
+        "attack": 0,
+        "action": 0,
+        "recovery": 0
+    },
+    "sprites": {
+        "mainIcon": "",
+        "faceBackground": "",
+        "cardFrame": "",
+        "banner": "",
+        "backBorder": "",
+        "backShirt": "",
+        "backLogo": ""
+    },
+    "mainVisual": {
+        "offsetX": 0.0,
+        "offsetY": 0.0,
+        "uniformScale": 1.0
+    },
+    "animations": {
+        "defaultFps": 8.0,
+        "slots": []
+    },
+    "extraSlots": [],
+    "rarity": "",
+    "tags": [],
+    "effectAssemblies": [],
+    "effectIds": [],
+    "skillIds": [],
+    "level": 0,
+    "isElite": false,
+    "isBoss": false,
+    "isReserve": false,
+    "containerType": "",
+    "deckKind": "",
+    "monsterDefIds": [],
+    "weight": 0,
+    "goldDelta": 0,
+    "maxHpDelta": 0,
+    "healToFull": false,
+    "rewardPoolId": "",
+    "shopOfferCount": 0
+}

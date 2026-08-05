@@ -2,7 +2,7 @@
     "schemaVersion": 2,
     "contentId": "help.doubling_tower",
     "kind": "HelpCard",
-    "deckId": "deck.help",
+    "deckId": "deck.help_archive",
     "role": "Utility",
     "displayName": "倍增塔",
     "description": "[场上] 处于格1时，对怪物卡使用的帮助卡触发两次；[道具牌格] 对玩家卡使用的帮助卡生效两次，触发后永久移除本卡",

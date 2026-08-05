@@ -2,7 +2,7 @@
     "schemaVersion": 2,
     "contentId": "help.impact_tutorial",
     "kind": "HelpCard",
-    "deckId": "deck.help",
+    "deckId": "deck.player",
     "displayName": "撞击教程",
     "description": "",
     "gold": 80,

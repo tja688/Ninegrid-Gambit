@@ -2,7 +2,7 @@
     "schemaVersion": 2,
     "contentId": "help.watchtower",
     "kind": "HelpCard",
-    "deckId": "deck.help",
+    "deckId": "deck.help_archive",
     "role": "Attack",
     "displayName": "瞭望塔",
     "description": "[场上] 移动到角格时，对随机怪物造成{amount}点伤害；触发{count}次后移除本卡；[道具牌格] 玩家与怪物战斗时，对随机一张怪物卡造成{amount}点伤害；[使用时] 直接移除本卡，不触发其他效果",

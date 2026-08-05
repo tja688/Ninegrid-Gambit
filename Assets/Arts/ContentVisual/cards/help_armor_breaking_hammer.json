@@ -2,7 +2,7 @@
     "schemaVersion": 2,
     "contentId": "help.armor_breaking_hammer",
     "kind": "HelpCard",
-    "deckId": "deck.help",
+    "deckId": "deck.help_archive",
     "role": "Attack",
     "displayName": "破击锤",
     "description": "[使用时] 将目标怪物卡护甲降低{amount}点",

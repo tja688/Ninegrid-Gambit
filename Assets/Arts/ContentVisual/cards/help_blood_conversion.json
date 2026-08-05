@@ -2,7 +2,7 @@
     "schemaVersion": 2,
     "contentId": "help.blood_conversion",
     "kind": "HelpCard",
-    "deckId": "deck.help",
+    "deckId": "deck.help_archive",
     "role": "Utility",
     "displayName": "血液转换",
     "designSlotName": "",

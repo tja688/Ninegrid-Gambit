@@ -122,6 +122,7 @@ namespace NineGrid.Core
                 if (card == null
                     || card.Kind != CardKind.HelpCard
                     || string.IsNullOrEmpty(card.DefId)
+                    || HelpCardDecks.IsArchive(card.DeckId)
                     || !string.Equals(card.DeckId, deckId, System.StringComparison.OrdinalIgnoreCase))
                 {
                     continue;
