@@ -230,11 +230,11 @@ _Avoid_: 复用右键详述面板讲房间、把简要解释写进卡面槽、�
 _Avoid_: 恢复「描述区与道具卡格互斥」、战斗内隐藏简要解释仅因占位冲突
 
 **主题怪物卡组**：
-一套 5 张、按序列 1–5 排列的怪物卡集合；每层开局随机绑定一套未用过的。`deck.*` 主题英文是历史残留不透明主键（[ADR-0014](docs/adr/0014-theme-ids-are-legacy-opaque.md)），不是玩家叙事阵营。
+一套 5 张、按序列 1–5 排列的怪物卡集合；每层开局随机绑定一套未用过的。`deck.*` 主题英文是历史残留不透明主键（[ADR-0014](docs/adr/0014-theme-ids-are-legacy-opaque.md)），不是玩家叙事阵营。七套正式卡组的稳定槽位契约见 `ThemeDeckStableMapping`（#127 / [ADR-0029](docs/adr/0029-content-guardrail-stable-theme-deck-mapping.md)）：映射正确 ≠ 正式可达。
 _Avoid_: 按强弱分档挑卡组（`MonsterDeckKind` 已降级为仅标 `Reserve`）、同一套卡组在多层复用
 
 **序列**：
-怪物卡在其主题卡组内的梯队位次（1–5），序列 5 即该套的层主。节点规则表按序列规定各抽几张。
+怪物卡在其主题卡组内的梯队位次（1–5），序列 5 即该套的层主。节点规则表按序列规定各抽几张。七套每套五个序列槽位的稳定 contentId 契约见 `ThemeDeckStableMapping`（#127 / ADR-0029）。
 _Avoid_: 等级（`level` 只区分普通 / 层主）、稀有度、用 `level1/2/3_min/max` 表达 5 档
 
 **玩家侧卡组**：

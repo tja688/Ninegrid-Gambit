@@ -35,6 +35,7 @@
 | [ADR-0026](../adr/0026-leave-trap-sole-clear-condition.md) | 离开机关为战斗房唯一清关；门/离开；默认 ⌈N/2⌉ 洗入，层主房改击破开局层主 |
 | [ADR-0027](../adr/0027-relic-drag-recycle-and-rmb-inspect.md) | 遗物栏拖入回收区丢弃 + 右键详述 |
 | [ADR-0028](../adr/0028-damage-formula-armor-and-reduction.md) | 标准伤害公式：三层护甲、伤害减免、无视护甲（公式层已落地；遗物内容另票） |
+| [ADR-0029](../adr/0029-content-guardrail-stable-theme-deck-mapping.md) | 内容护栏：七套稳定 ID—策划槽位—sequence 映射契约（#127；`ThemeDeckStableMapping` + 映射正确 / 正式可达两层校验 + 禁 displayName 断言） |
 
 > ADR-0011–0013 已落地（含卡面倒计时 Commit 与单向打击 Counter 分拍，#81）。落地方案见 `Assets/Notes/怪物攻击模式与敌方行动阶段-落地方案-2026-07-29.md`（过程笔记，非权威）。
 
@@ -43,7 +44,7 @@
 | 程序集 | 路径 | 职责 |
 |--------|------|------|
 | `NineGrid.Core` | `Assets/Scripts/NineGrid.Foundation/NineGrid.Core/` | 规则核（QF） |
-| `NineGrid.Content` | `Assets/Scripts/NineGrid.Foundation/NineGrid.Content/` | Catalog：**schema≥2 一卡一文件 JSON 投影** + **tables JSON**（效果模板 / **奖池查询规则** / 经济 / **节点序列抽卡规则** `node_deck_rules`；卡上 `effectAssemblies` 解析进 `Catalog.Effects`；分类三轴 `deckId`/`role`/`tags`+`rarity`；怪物 `sequence`+`level`(普通/层主)；`ContentCatalogBootstrap.Load` 会 Invalidate 表现/模板静态缓存后重读盘，末尾 `RewardPoolQueryExpander`；业务只消费 `GameContentCatalog`）；`Room` 投影字段为 `weight` / `openingInjects` / `rewardPoolId` / `shopOfferCount`（ADR-0022，无 `GoldDelta`）；`TableNineContentCatalog.CreateDefault` 为小型测试夹具；卡牌表现 JSON + **ContentArt** Resources 根（ADR-0008 / ADR-0009 / #69–#71） |
+| `NineGrid.Content` | `Assets/Scripts/NineGrid.Foundation/NineGrid.Content/` | Catalog：**schema≥2 一卡一文件 JSON 投影** + **tables JSON**（效果模板 / **奖池查询规则** / 经济 / **节点序列抽卡规则** `node_deck_rules`；卡上 `effectAssemblies` 解析进 `Catalog.Effects`；分类三轴 `deckId`/`role`/`tags`+`rarity`；怪物 `sequence`+`level`(普通/层主)；`ContentCatalogBootstrap.Load` 会 Invalidate 表现/模板静态缓存后重读盘，末尾 `RewardPoolQueryExpander`；业务只消费 `GameContentCatalog`）；`Room` 投影字段为 `weight` / `openingInjects` / `rewardPoolId` / `shopOfferCount`（ADR-0022，无 `GoldDelta`）；`TableNineContentCatalog.CreateDefault` 为小型测试夹具；**七套稳定槽位契约** `ThemeDeckStableMapping` + `ThemeDeckMappingVerifier` / `ThemeDeckFormalReadiness`（#127 / ADR-0029：映射正确 / 正式可达两层校验）；卡牌表现 JSON + **ContentArt** Resources 根（ADR-0008 / ADR-0009 / #69–#71） |
 | `NineGrid.Content.Editor` | `…/NineGrid.Content.Editor/` | 卡牌表现编辑器（侧栏 **卡面 / 效果池 / 特效库 / 卡组·卡背**：按 `deckId` 分组卡面（含 `deck.trap`）；卡面 **效果装配**默认只挂本卡种同类模板（道具/遗物/怪物技能/机关技能，可搜索；跨类遗留挂载保留标注）；效果池按四类分组 + 描述词条；**特效库**一级分类+变体二级纯预览（`visual_effects.json`，与 DSL 效果池区分）；**卡组·卡背**页预览+翻转（按 deckId 选五套模板壳，空槽保留模板兜底；卡面页翻转按 `deckId` 回填组背））；`ContentArtBreakLinkValidator` 断链扫描；`VisualEffectsMigrateRunner` 迁 Effects→ContentArt |
 | `NineGrid.Presentation` | `Assets/Scripts/NineGrid.Presentation/` | 表现层（原 Flow+Cards **合并后的单一程序集**） |
 | `NineGrid.Presentation.Tests` | `…/Tests/` | EditMode |

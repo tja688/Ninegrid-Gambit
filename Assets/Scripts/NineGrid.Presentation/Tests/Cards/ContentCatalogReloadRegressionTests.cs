@@ -58,7 +58,10 @@ namespace NineGrid.Presentation.Tests.Cards
                     0,
                     card.EffectIds.Count,
                     "磁盘石虾已无 effectAssemblies 时，Ensure 不得保留陈旧 EffectIds");
-                Assert.AreEqual("石虾", card.DisplayName);
+                Assert.AreEqual(
+                    "deck.transition",
+                    card.DeckId,
+                    "重绑后卡应取磁盘归属（稳定 ID），而非陈旧内存卡");
             }
         }
 
@@ -76,7 +79,7 @@ namespace NineGrid.Presentation.Tests.Cards
 
             var catalog = ContentCatalogBootstrap.Load();
             Assert.IsTrue(catalog.TryGetCard("monster.stone_shrimp", out var card));
-            Assert.AreEqual("石虾", card.DisplayName);
+            Assert.AreEqual("deck.transition", card.DeckId);
             Assert.AreEqual(0, card.SkillIds.Count);
             Assert.AreEqual(0, card.EffectIds.Count);
         }
