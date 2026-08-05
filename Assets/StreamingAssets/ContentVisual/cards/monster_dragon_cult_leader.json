@@ -74,16 +74,11 @@
     "extraSlots": [],
     "rarity": "None",
     "tags": [],
-    "effectAssemblies": [
-        {
-            "id": "skill.offer_fire.remove",
-            "templateId": "tpl.skill.offer_fire.remove",
-            "containerType": "MonsterSkill",
-            "argsJson": "{\"count\":1}"
-        }
-    ],
+    "effectAssemblies": [],
     "effectIds": [],
-    "skillIds": [],
+    "skillIds": [
+        "skill.offer_fire"
+    ],
     "level": "普通",
     "sequence": 1,
     "isElite": false,

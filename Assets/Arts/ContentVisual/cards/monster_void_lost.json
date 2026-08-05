@@ -74,16 +74,11 @@
     "extraSlots": [],
     "rarity": "None",
     "tags": [],
-    "effectAssemblies": [
-        {
-            "id": "skill.call_melee6.interact",
-            "templateId": "tpl.skill.call_melee6.interact",
-            "containerType": "MonsterSkill",
-            "argsJson": "{\"count\":1}"
-        }
-    ],
+    "effectAssemblies": [],
     "effectIds": [],
-    "skillIds": [],
+    "skillIds": [
+        "skill.call_melee6"
+    ],
     "level": "普通",
     "sequence": 3,
     "isElite": false,

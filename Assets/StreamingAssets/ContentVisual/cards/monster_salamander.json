@@ -74,22 +74,12 @@
     "extraSlots": [],
     "rarity": "None",
     "tags": [],
-    "effectAssemblies": [
-        {
-            "id": "skill.ranged_weapon.activate",
-            "templateId": "tpl.skill.ranged_weapon.activate",
-            "containerType": "MonsterSkill",
-            "argsJson": "{\"value\":1,\"source\":\"skill.ranged_weapon\"}"
-        },
-        {
-            "id": "skill.flame_boiling.rule",
-            "templateId": "tpl.skill.flame_boiling.rule",
-            "containerType": "MonsterSkill",
-            "argsJson": "{\"value\":1,\"source\":\"skill.flame_boiling\"}"
-        }
-    ],
+    "effectAssemblies": [],
     "effectIds": [],
-    "skillIds": [],
+    "skillIds": [
+        "skill.ranged_weapon",
+        "skill.flame_boiling"
+    ],
     "level": "普通",
     "sequence": 2,
     "isElite": false,

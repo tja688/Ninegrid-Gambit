@@ -74,22 +74,12 @@
     "extraSlots": [],
     "rarity": "None",
     "tags": [],
-    "effectAssemblies": [
-        {
-            "id": "skill.cloud_breath.interact",
-            "templateId": "tpl.skill.cloud_breath.interact",
-            "containerType": "MonsterSkill",
-            "argsJson": "{\"reason\":\"skill.cloud_breath\"}"
-        },
-        {
-            "id": "skill.endless_flame.remove",
-            "templateId": "tpl.skill.endless_flame.remove",
-            "containerType": "MonsterSkill",
-            "argsJson": "{\"count\":1}"
-        }
-    ],
+    "effectAssemblies": [],
     "effectIds": [],
-    "skillIds": [],
+    "skillIds": [
+        "skill.cloud_breath",
+        "skill.endless_flame"
+    ],
     "level": "层主",
     "sequence": 5,
     "isElite": false,
