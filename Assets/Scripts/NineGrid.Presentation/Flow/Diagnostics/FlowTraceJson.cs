@@ -66,6 +66,10 @@ namespace NineGrid.Flow.Diagnostics
             sb.Append(',');
             AppendString(sb, "loopState", e.loopState);
             sb.Append(',');
+            AppendString(sb, "floor", e.floor);
+            sb.Append(',');
+            AppendString(sb, "nodeIndex", e.nodeIndex);
+            sb.Append(',');
             AppendString(sb, "phaseBefore", e.phaseBefore);
             sb.Append(',');
             AppendString(sb, "phaseAfter", e.phaseAfter);

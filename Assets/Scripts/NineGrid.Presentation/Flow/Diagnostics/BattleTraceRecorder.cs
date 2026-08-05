@@ -168,6 +168,17 @@ namespace NineGrid.Flow.Diagnostics
                     return;
                 }
 
+                // #142：统一最低日志字段——Battle op 自动补齐 Floor/Node 关联。
+                if (string.IsNullOrEmpty(op.floor))
+                {
+                    op.floor = DiagTraceShared.ResolveFloor();
+                }
+
+                if (string.IsNullOrEmpty(op.nodeIndex))
+                {
+                    op.nodeIndex = DiagTraceShared.ResolveNodeIndex();
+                }
+
                 op.opIndex = sSession.ops.Count;
                 sSession.ops.Add(op);
             }

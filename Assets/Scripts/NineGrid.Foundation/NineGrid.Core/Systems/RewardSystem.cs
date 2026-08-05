@@ -286,7 +286,10 @@ namespace NineGrid.Core.Systems
 
             EnsureOpeningRoomAssigned(catalog);
 
-            var rule = FindNodeRule(catalog, nodeIndex);
+            // shell 层把整局全局节点索引（1..FinalFloor*NodesPerFloor）传入；规则表按层内节点定义。
+            // 归一化为层内展示节点，避免层 2/3 落入 fallback（无怪物/无层主）。
+            var floorNodeIndex = ((nodeIndex - 1) % RunModel.NodesPerFloor) + 1;
+            var rule = FindNodeRule(catalog, floorNodeIndex);
             if (rule == null)
             {
                 var fallback = new NodeDeckOptions();

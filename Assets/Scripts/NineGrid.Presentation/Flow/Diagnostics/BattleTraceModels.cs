@@ -5,11 +5,12 @@ namespace NineGrid.Flow.Diagnostics
 {
     /// <summary>
     /// 一局 BattleTrace 会话：统一门禁旁路产出的语义化作战记录。
+    /// schemaVersion 2（#142）：op 新增 floor/nodeIndex 关联字段。
     /// </summary>
     [Serializable]
     public sealed class BattleTraceSession
     {
-        public int schemaVersion = 1;
+        public int schemaVersion = 2;
         public string seed = "0";
         public string sessionId = string.Empty;
         public string runTag = string.Empty;
@@ -19,6 +20,7 @@ namespace NineGrid.Flow.Diagnostics
 
     /// <summary>
     /// 一次结算门记录（优先 ApplyCombatHit；也可为 PostKillBoard / StartNode）。
+    /// floor / nodeIndex 由 Recorder 记录时自动从 RunModel 解析，供 Run-Floor-Node-Battle 关联。
     /// </summary>
     [Serializable]
     public sealed class BattleTraceOp
@@ -29,6 +31,10 @@ namespace NineGrid.Flow.Diagnostics
         public string apiPath = string.Empty;
         public string phaseBefore = string.Empty;
         public string phaseAfter = string.Empty;
+        /// <summary>#142：当前层号（RunModel.Floor，1-based）。</summary>
+        public string floor = string.Empty;
+        /// <summary>#142：当前节点索引（shell NodeIndex 优先，回退 RunModel.NodeIndex）。</summary>
+        public string nodeIndex = string.Empty;
         public BattleTraceCardSnap attacker;
         public BattleTraceCardSnap target;
         public int eventStartIndex;

@@ -69,6 +69,10 @@ namespace NineGrid.Flow.Diagnostics
             sb.Append(',');
             AppendString(sb, "phaseAfter", op.phaseAfter);
             sb.Append(',');
+            AppendString(sb, "floor", op.floor);
+            sb.Append(',');
+            AppendString(sb, "nodeIndex", op.nodeIndex);
+            sb.Append(',');
             sb.Append("\"attacker\":");
             AppendCard(sb, op.attacker);
             sb.Append(',');

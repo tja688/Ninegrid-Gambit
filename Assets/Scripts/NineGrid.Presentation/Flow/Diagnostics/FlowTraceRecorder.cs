@@ -161,6 +161,9 @@ namespace NineGrid.Flow.Diagnostics
                     phaseAfter = phaseAfter ?? string.Empty,
                     accepted = accepted,
                     refBattleOpIndex = refBattleOpIndex,
+                    // #142：统一最低日志字段——Run 关联靠 sessionId/seed/runTag，Floor/Node 逐事件补齐。
+                    floor = DiagTraceShared.ResolveFloor(),
+                    nodeIndex = DiagTraceShared.ResolveNodeIndex(),
                     payload = payload != null
                         ? new Dictionary<string, string>(payload)
                         : new Dictionary<string, string>(),

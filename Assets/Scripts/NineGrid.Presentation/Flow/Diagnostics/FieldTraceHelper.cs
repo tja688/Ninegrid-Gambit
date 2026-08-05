@@ -92,30 +92,8 @@ namespace NineGrid.Flow.Diagnostics
 
         public static string ResolveNodeIndex()
         {
-            try
-            {
-                var arch = NineGridArchitecture.Interface ?? NineGridArchitecture.Current;
-                var shell = arch?.GetSystem<NineGrid.Presentation.Systems.IGameFlowShellSystem>();
-                if (shell != null && shell.NodeIndex > 0)
-                {
-                    return shell.NodeIndex.ToString();
-                }
-
-                if (arch != null)
-                {
-                    var run = arch.GetModel<RunModel>();
-                    if (run?.NodeIndex != null)
-                    {
-                        return run.NodeIndex.Value.ToString();
-                    }
-                }
-            }
-            catch
-            {
-                // ignore
-            }
-
-            return string.Empty;
+            // #142：统一解析入口（shell NodeIndex 优先，回退 RunModel.NodeIndex）。
+            return DiagTraceShared.ResolveNodeIndex();
         }
 
         public static void Record(

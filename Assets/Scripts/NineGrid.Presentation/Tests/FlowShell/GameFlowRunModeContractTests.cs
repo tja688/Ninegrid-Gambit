@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Collections.Generic;
 using System.Reflection;
 using NineGrid.Core;
 using NineGrid.Flow;
@@ -174,6 +175,93 @@ namespace NineGrid.Presentation.Tests.FlowShell
                     preset.TrapContentIds[0],
                     "\\" + code + " 不得定向注入离开机关（离开机关只按清关阈值动态洗入）");
             }
+        }
+
+        [Test]
+        public void Channel0_SequentialQueue_MirrorsFormal24NodeSkeleton()
+        {
+            // #142：\0 镜像必须走与正式一致的 24 节点骨架——Sequential 队列 = 3 层相同段，
+            // 每段恰为本层战斗节点（EntersInteractionLoop 为 true 的展示节点 1,2,3,5,6,8）。
+            using (var arch = PresentationArchitectureFixture.CreateStartedGameWithCatalog(seed: 42UL))
+            {
+                var shell = GameFlowShellSystem.EnsureRegistered(arch.Architecture);
+                shell.Bind(new FakeGameFlowView());
+                LogAssert.Expect(LogType.Error, "[GameFlow] 未绑定 IBattleSessionSystem，无法入场。");
+                LogAssert.Expect(LogType.Error, "[GameFlow] 局内会话未就绪，终止节点循环。");
+                Assert.IsTrue(shell.TryBeginQuickTestFromPickerCode(0));
+
+                var queue = ReadContentNodeQueue(shell);
+                var expectedPerFloor = new List<int>();
+                for (var display = 1; display <= RunModel.NodesPerFloor; display++)
+                {
+                    if (MapNodeProgression.EntersInteractionLoop(display - 1))
+                    {
+                        expectedPerFloor.Add(display);
+                    }
+                }
+
+                Assert.Greater(expectedPerFloor.Count, 0, "每层应有战斗节点");
+                Assert.AreEqual(
+                    RunModel.FinalFloor * expectedPerFloor.Count,
+                    queue.Count,
+                    "Sequential 队列长度应 = 3 层 × 每层战斗节点数（同一 24 节点骨架的战斗段）");
+
+                for (var floor = 0; floor < RunModel.FinalFloor; floor++)
+                {
+                    for (var i = 0; i < expectedPerFloor.Count; i++)
+                    {
+                        Assert.AreEqual(
+                            expectedPerFloor[i],
+                            queue[floor * expectedPerFloor.Count + i],
+                            "第 " + (floor + 1) + " 层第 " + i + " 项应镜像正式战斗节点序");
+                    }
+                }
+            }
+        }
+
+        [Test]
+        public void FormalEntry_HasNoQuickTestSkillOrTrapPayload()
+        {
+            // #142：正式入口不得携带动态 QuickTest 技能 / 定向机关载荷（隔离断言）。
+            var options = GameFlowRunOptions.CreateFormal();
+            Assert.IsNull(options.QuickTest);
+            Assert.IsEmpty(QuickTestSkillIdsOf(options));
+            Assert.IsEmpty(QuickTestTrapIdsOf(options));
+        }
+
+        [Test]
+        public void QuickTestEntry_FormalMirrorHasNoSkillOrTrap_Channel0()
+        {
+            // #142：\0 是带作弊的正式流程镜像——无技能、无定向机关，仅 HP99/ATK5 + RunTag。
+            Assert.IsTrue(QuickTestDeckCatalog.TryResolvePickerCode(0, out var preset));
+            Assert.IsEmpty(preset.SkillIds);
+            Assert.IsEmpty(preset.TrapContentIds);
+            Assert.AreEqual(QuickTestNodeOrderMode.Sequential, preset.NodeOrder);
+        }
+
+        private static IReadOnlyList<int> ReadContentNodeQueue(GameFlowShellSystem shell)
+        {
+            var prop = typeof(GameFlowShellSystem).GetProperty(
+                "QuickTestContentNodeQueue",
+                BindingFlags.Instance | BindingFlags.NonPublic);
+            Assert.IsNotNull(prop, "QuickTestContentNodeQueue");
+            var value = prop.GetValue(shell);
+            if (value == null)
+            {
+                return System.Array.Empty<int>();
+            }
+
+            return (IReadOnlyList<int>)value;
+        }
+
+        private static IReadOnlyList<string> QuickTestSkillIdsOf(GameFlowRunOptions options)
+        {
+            return options.QuickTest?.SkillIds ?? System.Array.Empty<string>();
+        }
+
+        private static IReadOnlyList<string> QuickTestTrapIdsOf(GameFlowRunOptions options)
+        {
+            return options.QuickTest?.TrapContentIds ?? System.Array.Empty<string>();
         }
 
         private static ICollection ReadInternalList(GameFlowShellSystem shell, string propertyName)

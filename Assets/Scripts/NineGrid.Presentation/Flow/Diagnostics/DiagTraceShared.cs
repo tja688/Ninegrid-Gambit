@@ -66,6 +66,56 @@ namespace NineGrid.Flow.Diagnostics
             sExportedThisPlayExit = true;
         }
 
+        /// <summary>
+        /// #142：解析当前层号（RunModel.Floor，1-based）。失败返回空串。
+        /// </summary>
+        public static string ResolveFloor()
+        {
+            try
+            {
+                var arch = NineGridArchitecture.Interface ?? NineGridArchitecture.Current;
+                var run = arch?.GetModel<RunModel>();
+                if (run?.Floor != null)
+                {
+                    return run.Floor.Value.ToString();
+                }
+            }
+            catch
+            {
+                // ignore
+            }
+
+            return string.Empty;
+        }
+
+        /// <summary>
+        /// #142：解析当前节点索引——shell NodeIndex（整局 1..24）优先，回退 RunModel.NodeIndex（层内 0..7）。
+        /// </summary>
+        public static string ResolveNodeIndex()
+        {
+            try
+            {
+                var arch = NineGridArchitecture.Interface ?? NineGridArchitecture.Current;
+                var shell = arch?.GetSystem<NineGrid.Presentation.Systems.IGameFlowShellSystem>();
+                if (shell != null && shell.NodeIndex > 0)
+                {
+                    return shell.NodeIndex.ToString();
+                }
+
+                var run = arch?.GetModel<RunModel>();
+                if (run?.NodeIndex != null)
+                {
+                    return run.NodeIndex.Value.ToString();
+                }
+            }
+            catch
+            {
+                // ignore
+            }
+
+            return string.Empty;
+        }
+
         public static string CurrentSessionId => sSessionId;
 
         public static string CurrentSeed => sSeed;

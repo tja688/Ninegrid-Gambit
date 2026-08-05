@@ -6,11 +6,12 @@ namespace NineGrid.Flow.Diagnostics
     /// <summary>
     /// 一局 CoreLog（FlowTrace）会话：全流程事件时间线，与 Battle/Perf 共享 sessionId/seed。
     /// schemaVersion 3：新增 beatId，落盘目录 Assets/Notes/Logs/CoreLog。
+    /// schemaVersion 4（#142）：事件新增 floor/nodeIndex 关联字段，统一最低日志字段。
     /// </summary>
     [Serializable]
     public sealed class FlowTraceSession
     {
-        public int schemaVersion = 3;
+        public int schemaVersion = 4;
         public string seed = "0";
         public string sessionId = string.Empty;
         public string runTag = string.Empty;
@@ -20,6 +21,7 @@ namespace NineGrid.Flow.Diagnostics
 
     /// <summary>
     /// 一条流程事件（Loop / UI / CoreGate / CombatSummary / Deck / Field / Presentation / Hand）。
+    /// floor / nodeIndex 由 Recorder 记录时自动从 RunModel 解析，供 Run-Floor-Node-Battle 关联。
     /// </summary>
     [Serializable]
     public sealed class FlowTraceEvent
@@ -33,6 +35,10 @@ namespace NineGrid.Flow.Diagnostics
         public string phaseAfter = string.Empty;
         public bool accepted = true;
         public int refBattleOpIndex = -1;
+        /// <summary>#142：当前层号（RunModel.Floor，1-based），日志关联 Floor 用。</summary>
+        public string floor = string.Empty;
+        /// <summary>#142：当前节点索引（shell NodeIndex 优先，回退 RunModel.NodeIndex），日志关联 Node 用。</summary>
+        public string nodeIndex = string.Empty;
         public Dictionary<string, string> payload = new Dictionary<string, string>();
     }
 
