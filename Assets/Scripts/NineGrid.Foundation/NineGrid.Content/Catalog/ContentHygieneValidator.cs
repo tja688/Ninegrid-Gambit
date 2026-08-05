@@ -14,8 +14,11 @@ namespace NineGrid.Content
     /// </summary>
     public static class ContentHygieneValidator
     {
+        // 模板 body 中引用 contentId 的字段键（含条件 DSL 的 source/target/exclude 变体）。
+        private const string DefIdKeys = "defId|sourceDefId|targetDefId|excludeSourceDefId";
+
         private static readonly Regex DefIdInBody =
-            new Regex("\"defId\"\\s*:\\s*\"([^\"]+)\"", RegexOptions.CultureInvariant | RegexOptions.Compiled);
+            new Regex("\"(?:" + DefIdKeys + ")\"\\s*:\\s*\"([^\"]+)\"", RegexOptions.CultureInvariant | RegexOptions.Compiled);
 
         public sealed class Finding
         {

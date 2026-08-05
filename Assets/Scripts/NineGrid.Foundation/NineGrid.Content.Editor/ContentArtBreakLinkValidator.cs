@@ -222,10 +222,53 @@ namespace NineGrid.Content.Editor
                 }
             }
 
+            var catalogFindings = ValidateSkillVisualCatalog();
+            if (catalogFindings.Count > 0)
+            {
+                failures += catalogFindings.Count;
+                Debug.LogError("[ContentHygiene] SkillVisualCatalog dangling entries=" + catalogFindings.Count);
+                for (var i = 0; i < catalogFindings.Count; i++)
+                {
+                    Debug.LogError("[ContentHygiene] " + catalogFindings[i]);
+                }
+            }
+
             if (failures == 0)
             {
                 Debug.Log("[ContentHygiene] OK — authoring cards resolve; index/mirror/skills/templates consistent.");
             }
+        }
+
+        /// <summary>
+        /// 技能视觉目录（SkillVisualCatalog.asset）条目必须对应磁盘上的技能 JSON（#140），
+        /// 防技能删除后编辑器预览残留悬空条目。
+        /// </summary>
+        public static List<string> ValidateSkillVisualCatalog()
+        {
+            var findings = new List<string>();
+            var so = AssetDatabase.LoadAssetAtPath<SkillVisualCatalogSO>(
+                "Assets/Arts/ContentVisual/SkillVisualCatalog.asset");
+            if (so == null)
+            {
+                return findings;
+            }
+
+            for (var i = 0; i < so.Entries.Count; i++)
+            {
+                var entry = so.Entries[i];
+                if (entry == null || string.IsNullOrWhiteSpace(entry.contentId))
+                {
+                    continue;
+                }
+
+                if (!File.Exists(CardPresentationJsonIO.GetAuthoringAbsolutePath(entry.contentId.Trim())))
+                {
+                    findings.Add("SkillVisualCatalog entries[" + i + "] " + entry.contentId
+                                 + " has no authoring JSON");
+                }
+            }
+
+            return findings;
         }
 
         private static string ToAbsolute(string assetPath)

@@ -170,6 +170,95 @@ namespace NineGrid.Core.Tests
             return archived;
         }
 
+        [Test]
+        public void IndexValidator_DetectsDuplicateContentIdsOnDisk()
+        {
+            using (var fixture = new TempCardsFixture())
+            {
+                fixture.WriteCard("alpha.json", "test.duplicate");
+                fixture.WriteCard("beta.json", "test.duplicate");
+
+                var duplicates = CardPresentationIndexIO.FindDuplicateContentIds(fixture.Authoring);
+                Assert.AreEqual(1, duplicates.Length);
+                Assert.AreEqual("test.duplicate", duplicates[0]);
+
+                var issues = CardPresentationIndexIO.ValidateIndexVsDisk(fixture.Authoring, fixture.Streaming);
+                Assert.IsTrue(issues.Exists(i => i.Contains("duplicate contentId on disk test.duplicate")), string.Join("; ", issues));
+            }
+        }
+
+        [Test]
+        public void IndexValidator_DetectsIndexVsDiskDrift()
+        {
+            using (var fixture = new TempCardsFixture())
+            {
+                fixture.WriteCard("test_a.json", "test.a");
+                fixture.WriteCard("test_b.json", "test.b");
+                fixture.WriteIndex("test.a");
+
+                var issues = CardPresentationIndexIO.ValidateIndexVsDisk(fixture.Authoring, fixture.Streaming);
+                Assert.IsTrue(issues.Exists(i => i.Contains("missing entry for test.b")), string.Join("; ", issues));
+            }
+        }
+
+        [Test]
+        public void IndexValidator_DetectsAuthoringStreamingMirrorDrift()
+        {
+            using (var fixture = new TempCardsFixture())
+            {
+                fixture.WriteCard("test_a.json", "test.a");
+                fixture.WriteIndex("test.a");
+
+                var issues = CardPresentationIndexIO.ValidateMirror(fixture.Authoring, fixture.Streaming);
+                Assert.IsTrue(issues.Exists(i => i.Contains("streaming missing test_a.json")), string.Join("; ", issues));
+            }
+        }
+
+        /// <summary>临时卡牌目录夹具：Authoring 有卡、Streaming 空目录；TearDown 自动清理。</summary>
+        private sealed class TempCardsFixture : System.IDisposable
+        {
+            public string Authoring { get; }
+            public string Streaming { get; }
+
+            public TempCardsFixture()
+            {
+                var root = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "ng-hygiene-" + System.Guid.NewGuid().ToString("N"));
+                Authoring = System.IO.Path.Combine(root, "cards");
+                Streaming = System.IO.Path.Combine(root, "stream");
+                System.IO.Directory.CreateDirectory(Authoring);
+                System.IO.Directory.CreateDirectory(Streaming);
+            }
+
+            public void WriteCard(string fileName, string contentId)
+            {
+                var dto = CardPresentationJsonIO.CreateDefault(contentId, "Monster");
+                System.IO.File.WriteAllText(
+                    System.IO.Path.Combine(Authoring, fileName),
+                    CardPresentationJsonIO.ToJson(dto),
+                    new System.Text.UTF8Encoding(false));
+            }
+
+            public void WriteIndex(params string[] ids)
+            {
+                CardPresentationIndexIO.WriteIndex(Authoring, ids, out _);
+                CardPresentationIndexIO.WriteIndex(Streaming, ids, out _);
+            }
+
+            public void Dispose()
+            {
+                try
+                {
+                    System.IO.Directory.Delete(System.IO.Path.GetDirectoryName(Authoring), true);
+                }
+                catch (System.IO.IOException)
+                {
+                }
+                catch (System.UnauthorizedAccessException)
+                {
+                }
+            }
+        }
+
         private static string Format(List<ContentHygieneValidator.Finding> findings)
         {
             if (findings.Count == 0)

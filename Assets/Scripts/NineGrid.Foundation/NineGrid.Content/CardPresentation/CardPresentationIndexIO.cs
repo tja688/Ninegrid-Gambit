@@ -25,12 +25,46 @@ namespace NineGrid.Content.CardPresentation
         /// </summary>
         public static string[] ScanContentIds(string absoluteFolder)
         {
-            if (string.IsNullOrWhiteSpace(absoluteFolder) || !Directory.Exists(absoluteFolder))
+            var distinct = new List<string>();
+            foreach (var id in EnumerateContentIds(absoluteFolder))
             {
-                return Array.Empty<string>();
+                if (!distinct.Contains(id))
+                {
+                    distinct.Add(id);
+                }
             }
 
-            var ids = new List<string>();
+            distinct.Sort(StringComparer.Ordinal);
+            return distinct.ToArray();
+        }
+
+        /// <summary>
+        /// 磁盘上重复的 contentId（多文件同 id 属装配错误，索引无法表达）。升序。
+        /// </summary>
+        public static string[] FindDuplicateContentIds(string absoluteFolder)
+        {
+            var seen = new HashSet<string>(StringComparer.Ordinal);
+            var duplicates = new HashSet<string>(StringComparer.Ordinal);
+            foreach (var id in EnumerateContentIds(absoluteFolder))
+            {
+                if (!seen.Add(id))
+                {
+                    duplicates.Add(id);
+                }
+            }
+
+            var result = new List<string>(duplicates);
+            result.Sort(StringComparer.Ordinal);
+            return result.ToArray();
+        }
+
+        private static IEnumerable<string> EnumerateContentIds(string absoluteFolder)
+        {
+            if (string.IsNullOrWhiteSpace(absoluteFolder) || !Directory.Exists(absoluteFolder))
+            {
+                yield break;
+            }
+
             string[] files;
             try
             {
@@ -39,7 +73,7 @@ namespace NineGrid.Content.CardPresentation
             catch (Exception ex)
             {
                 Debug.LogWarning("[CardPresentationIndexIO] Failed to list " + absoluteFolder + ": " + ex.Message);
-                return Array.Empty<string>();
+                yield break;
             }
 
             for (var i = 0; i < files.Length; i++)
@@ -55,16 +89,11 @@ namespace NineGrid.Content.CardPresentation
                     continue;
                 }
 
-                if (string.IsNullOrWhiteSpace(dto.contentId) || ids.Contains(dto.contentId))
+                if (!string.IsNullOrWhiteSpace(dto.contentId))
                 {
-                    continue;
+                    yield return dto.contentId;
                 }
-
-                ids.Add(dto.contentId);
             }
-
-            ids.Sort(StringComparer.Ordinal);
-            return ids.ToArray();
         }
 
         public static bool TryLoadIndex(string absoluteFolder, out string[] contentIds, out string error)
@@ -131,6 +160,12 @@ namespace NineGrid.Content.CardPresentation
         public static List<string> ValidateIndexVsDisk(string authoringFolder, string streamingFolder)
         {
             var issues = new List<string>();
+            var duplicates = FindDuplicateContentIds(authoringFolder);
+            for (var i = 0; i < duplicates.Length; i++)
+            {
+                issues.Add("index: duplicate contentId on disk " + duplicates[i]);
+            }
+
             var diskIds = ScanContentIds(authoringFolder);
             var diskSet = new HashSet<string>(diskIds, StringComparer.Ordinal);
 
