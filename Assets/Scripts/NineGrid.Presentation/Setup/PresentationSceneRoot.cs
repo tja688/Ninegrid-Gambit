@@ -22,7 +22,6 @@ namespace NineGrid.Presentation.Setup
         [SerializeField] private GameFlowController mainGameLoop;
         [SerializeField] private RelicManagerSingleton relicManager;
         [SerializeField] private SelectorManagerSingleton selectorManager;
-        [SerializeField] private DescriptionManagerSingleton descriptionManager;
         [SerializeField] private DamageNumberManagerSingleton damageNumberManager;
         [SerializeField] private GoldGainFxManagerSingleton goldGainFxManager;
 
@@ -115,10 +114,7 @@ namespace NineGrid.Presentation.Setup
                     mainGameLoop);
             }
 
-            if (mainGameLoop != null)
-            {
-                GameFlowShellSystem.EnsureRegistered().Bind(mainGameLoop);
-            }
+            // 流程壳 View 由 GameFlowController.Awake 自绑定；此处不重复 Bind，避免双入口。
 
             if (cardManager != null || cardHand != null || cardDeck != null)
             {
@@ -156,8 +152,6 @@ namespace NineGrid.Presentation.Setup
             DiagnosticOutputController.EnsureInstalled();
             GoldGainPresentationBinder.EnsureInstalled();
 
-            // DescriptionManagerSingleton / DescriptionOutputController：动态 HUD 描述 TMP 已退役，场景字段可留作序列化兼容。
-
             if (damageNumberManager == null)
             {
                 Debug.LogWarning("[PresentationSceneRoot] damageNumberManager 未绑定。");
@@ -176,7 +170,6 @@ namespace NineGrid.Presentation.Setup
                 mainGameLoop,
                 relicManager,
                 selectorManager,
-                descriptionManager,
                 damageNumberManager,
                 goldGainFxManager,
                 cardManager,

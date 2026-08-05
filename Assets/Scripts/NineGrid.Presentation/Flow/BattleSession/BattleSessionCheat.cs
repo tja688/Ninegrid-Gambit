@@ -48,8 +48,6 @@ namespace NineGrid.Flow
             {
                 CoreCardPresentationMapper.ApplyToManagedCard(view);
             }
-
-            PresentationOutputProjector.UpdateAvatarDebugText();
             Debug.Log($"[BattleSessionCheat] Avatar#{avatarUid} MaxHp/Hp → {hp}");
             return true;
         }
@@ -83,8 +81,6 @@ namespace NineGrid.Flow
             {
                 CoreCardPresentationMapper.ApplyToManagedCard(view);
             }
-
-            PresentationOutputProjector.UpdateAvatarDebugText();
             PlayerInfoHudPresenter.TryGetInstance()?.SyncFromCore(animate: false);
             Debug.Log($"[BattleSessionCheat] Avatar#{avatarUid} Attack → {attack}");
             return true;

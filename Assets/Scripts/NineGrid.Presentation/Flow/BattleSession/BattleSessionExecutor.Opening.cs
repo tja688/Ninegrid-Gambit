@@ -877,7 +877,6 @@ namespace NineGrid.Flow
                 // 开局表演收束：先刷视觉，再经生成类指令（与 Settled 同一 Handler）写卡面数值。
                 CoreCardPresentationMapper.CommitAllSpawnedCards();
                 CardFaceGenerationBootstrap.ApplyFromEventLog(NineGridArchitecture.Current, _nodeEventLogStart);
-                PresentationOutputProjector.UpdateAvatarDebugText();
             }
         }
 

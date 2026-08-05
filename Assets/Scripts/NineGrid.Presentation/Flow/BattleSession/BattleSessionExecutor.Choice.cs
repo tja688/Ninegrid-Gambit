@@ -184,7 +184,6 @@ namespace NineGrid.Flow
                         BoardPlayer.PresentShuffleIntoDeckFromEventLog(startIndex);
                         // 空 delta：对账已提交投影（不直读最新 Core 抢刷卡面）。
                         CoreCardPresentationMapper.SyncAllSpawnedCards();
-                        PresentationOutputProjector.UpdateAvatarDebugText();
                         // #10：空 delta 不再 soft Sync。
                     }
 

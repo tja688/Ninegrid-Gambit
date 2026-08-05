@@ -60,6 +60,18 @@
 
 主线 busy 真相：`PresentationDirector.IsMainlineBusy`（经 `IPresentationRuntimeSystem` / InputState 只读投影）。`BattleBusy` / `FieldBusy` 不作独立输入门禁；`OccupancyDesyncLatched` 仅为诊断断言。
 
+### MainScene 装配卫生（#141）
+
+- 生产装配入口唯一：MainScene 恰好一个 `PresentationSceneRoot`；`PresentationSceneBindings` 只持存活 Host（`DescriptionManagerSingleton` 已删）。
+- 流程壳 View 由 `GameFlowController.Awake` 自绑定 `GameFlowShellSystem`；`PresentationSceneRoot` 不重复 Bind（单入口）。
+- `BattleSessionController` 依赖一律经 `BindSceneHosts` 由 SceneRoot 注入；源码禁 `FindObjectOfType` / `FindDeep` / `GameObject.Find` / `Resources.Find`。
+- `CardManagerSingleton.cardRoot` 显式绑定场景 `Actors/Cards` 节点（#141 起不再运行时自造）。
+- `UiPanelRouter` 无 `inGameInfoText`（目标对象 `TableNine Text Overlay UI/InGameInfoText` 不存在、唯一写入方为 no-op，#141 删除失效查找路径）；玩家数值由 `PlayerInfoHudPresenter` 持续持有，不随面板切换 SetActive。
+- `GameFlowController` 无 `noticeText`（旧 NoticeText 通道退役，ADR-0020）；胜负/房间 stub Notice 一律走简要解释文字框。
+- MainScene 无 `LivingUiContentMarker`（无 `LivingUiDirector` 的静态主菜单不承载 LivingUI 构型；UITestSence 保留其完整 LivingUI 舞台）。
+- `PresentationOutputProjector` 无 `UpdateAvatarDebugText`（no-op 通道 + 隐式 Find 已删；Avatar 血甲 HUD 由 `PlayerInfoHudBeatHandler` 在 Impact 用指令刷新）。
+- 护栏：`Tests/MainSceneHygieneStructuralTests`（类型/场景 YAML/源码模式断言，防上述残留回流）。
+
 ## Controllers（20）
 
 `PresentationController` · `ExploreInputController` · `BoardWalkInputController` · `AttackInputController` · `PickupInputController` · `UseItemInputController` · `RecycleItemInputController` · `GroundFieldGeometryController` · `FieldBattlePresentationController` · `CardEntityLifecycleController` · `ZoneOwnershipQueryController` · `DescriptionOutputController`（**已退役**：动态 HUD 描述 TMP 不再接线） · `DamageNumberOutputController` · `RelicHudController` · `RoomChoiceInputController` · `RewardChoiceInputController` · `GameFlowShellController` · `TriggerPulseOutputController` · `DiagnosticOutputController` · `BattleSessionPresentationController`
@@ -118,7 +130,9 @@
 - Cards：`CardManagerSingleton`（底盘 + Kind→卡面五套：`Avatar`/`Monster`/`HelpCard|Item|PlayerCard`/`Relic`/`Trap`，路径见 `CardChassisPaths`；ADR-0002 / ADR-0017；**运行时 Spawn 不含** `Room` / `ChoiceOption`）、`CardHandManagerSingleton`、`CardDeckManagerSingleton`（局内 NewCard 洗入如离开机关经 `CardDeckAddAnchors`；遗物/技能开局赠牌才走 `AddCardAtFromOrigin` 锚点直飞）
 - 编辑器扩展壳（非运行时五套）：`CardChassisPaths.RoomOptionFacePrefab`（`房间选项标准模板`）+ `ResolveRoomIconPrefab`（`Assets/Prefabs/地形图标/*图标.prefab`）；卡牌表现编辑器侧栏「卡面」下另分 **房间图标** / **房间选项**
 - **怪物遭遇正式配置（#134 起）**：七套正式主题卡组（`ThemeDeckStableMapping`，deckId 为历史不透明主键）在遭遇表 `monster_decks.json` 已切 `Unknown` 正式可选；过渡卡组 `deck.transition` 与池外流浪卡（`deck.wandering_legion` 等）已**归档**——表行 `Reserve` + 成员 `isReserve`，保留 JSON 但不再被 RewardSystem 序列抽卡选中（仍被效果模板 `ShuffleInto` 按 defId 直生，见 ADR-0029）。卡 JSON 保留 `sequence`（1–5）与 `designSlotName`（近战1/远程2…，仅表现、不进 Core）；编辑器可改所属卡组 / 槽位名 / 序列 / 等级。菜单 `NineGrid/Content/校验怪物遭遇配置（过渡期|交付就绪）` 一键校验；交付就绪为正向门禁（ADR-0029）
-- Flow：`DescriptionManagerSingleton`（**已退役**：不再写 Card InfoText / NoticeText；卡面静态描述权威在 `Basic_Description` Commit）、`DamageNumberManagerSingleton`、`GoldGainFxManagerSingleton`、`RelicManagerSingleton`（#69：图标优先一卡一文件 JSON `sprites.mainIcon`；空缺时回退 `RelicVisualCatalog` bootstrap；**#98 / ADR-0027**：装备栏上限 12；**左键拖**遗物图标（抬高排序 + 半透明，槽图标隐藏不改布局）共用道具卡格回收区 → `DiscardRelic` +20 金；**右键** `CardInspectOverlayPresenter.TryOpenByDefId` 详述；满栏 Bounce 拒收「遗物格子已满」且拖弃可穿透半黑屏；宝箱跳过走 `SkipRelicChoiceGold`）、`SelectorManagerSingleton`（卡面主视图锚定为祖先变换无关的局部空间计算，见 [ADR-0015](../adr/0015-card-slot-placement-local-space.md)；BounceFan 不得在 `scale=0` 期间提交卡面，`BuildEntries` 保持 `scale=1`，入场归零只在 `PlayEntryAnimation`；选择命中为容器本地固定 AABB，ChoiceOverlay 下合法悬停可开右键详述且详述打开期间屏蔽点选）
+- Flow：`DamageNumberManagerSingleton`、`GoldGainFxManagerSingleton`、`RelicManagerSingleton`（#69：图标优先一卡一文件 JSON `sprites.mainIcon`；空缺时回退 `RelicVisualCatalog` bootstrap；**#98 / ADR-0027**：装备栏上限 12；**左键拖**遗物图标（抬高排序 + 半透明，槽图标隐藏不改布局）共用道具卡格回收区 → `DiscardRelic` +20 金；**右键** `CardInspectOverlayPresenter.TryOpenByDefId` 详述；满栏 Bounce 拒收「遗物格子已满」且拖弃可穿透半黑屏；宝箱跳过走 `SkipRelicChoiceGold`）、`SelectorManagerSingleton`（卡面主视图锚定为祖先变换无关的局部空间计算，见 [ADR-0015](../adr/0015-card-slot-placement-local-space.md)；BounceFan 不得在 `scale=0` 期间提交卡面，`BuildEntries` 保持 `scale=1`，入场归零只在 `PlayEntryAnimation`；选择命中为容器本地固定 AABB，ChoiceOverlay 下合法悬停可开右键详述且详述打开期间屏蔽点选）
+
+`DescriptionManagerSingleton`（**已删 #141**：动态 HUD 描述 TMP 退役后不再留场景/绑定表序列化兼容，`PresentationSceneRoot` / `PresentationSceneBindings` 同步移除；禁复活）。
 
 `DescriptionDisplayHook` 现为 no-op；Hover/Drag/BoardSelect 动态描述 TMP 管道已砍。**简要解释**（非战斗悬停一句话 + 胜负 Notice）走干净通路 `Flow/BoardBriefTip/` → 场景 `Panels/简要解释文字框`（ADR-0020 / #89），**不得**复活 `DescriptionManagerSingleton`。卡牌运行时持续呈现的描述只走卡面槽 `Basic_Description`（可含 `{param}` 装配实参插值与方括号词条图标）。详情文案由 `CardDetailDescriptionComposer` 合成（概括 + 词条展开）写入 `CardPresentationSnapshot.DetailDescription`。卡面 JSON `faceIntro` 经 Mapper 写入 `CardPresentationSnapshot.FaceIntro`，右键详述面板 `CardInspectOverlayPresenter`（场景 `UI面板/右键描述`）消费：敌方 / 常规两态 BG、**占位锚点隐藏成品 mock 后挂真卡面预制体 Commit**、背景/牌组 TMP；**详细效果信息**由 `CardInspectDetailComposer` 展开效果模板 `design_text`（`[场上]`/`[使用时]` 等分门别类），不重复卡面简要 `description`。**技能列表以局内 `IEffectSystem` 已激活挂载为准**（`EffectOwner.SourceDefId`，含 QuickTest 动态注入与未来运行时加技），按技能装配 `argsJson` 填 `design_text` 数值；无 live 挂载时才回退卡 JSON `skillIds` / `effectAssemblies`。半黑屏 `BattleUiDimmerOverlay`（`UI面板/半黑屏BG`）引用计数挡 `PointerHitRouter` 射线、**不**改 `CurrentOwner` / 不暂停主线，局内奖励 Bounce 也 Acquire 同遮罩。稀有度经 `SetFrameColor` 驱动卡框色；卡背优先读卡组 JSON，单卡 `sprites.back*` 可覆写，否则模板兜底（ADR-0009 / #71）。
 
@@ -173,7 +187,7 @@
 
 - 文案：`BoardBriefTipCopy`（房间 DisplayName+注入摘要 / 导航固定文案 / 楼层提示「楼层·Ⅱ」+ 房间类型「战斗房间」等；另备 `ForOptionOrShelf` 供房内货架·就地选项与候选——商店/卡店/特殊奖励房/属性房主循环已接线 #92/#93/#94/#137，非 M2 待落地）
 - 会话：`BoardBriefTipSession`（悬停与 Notice；Notice 盖悬停；代数清；`HardClear` 双路硬清）
-- 场景：`BoardBriefTipPresenter` → `Panels/简要解释文字框`（`EnsureExists` 优先绑定命名面板，sceneLoaded 再绑，避免无 TMP 孤儿）；`FloorHintPresenter` → `楼层提示`
+- 场景：`BoardBriefTipPresenter`（**#141 起场景序列化**于 `Panels/简要解释文字框`，`panelRoot` 显式指向面板自身；运行时 AddComponent 兜底仅存于未序列化的开发场景）→ 简要解释文字框（`EnsureExists` 优先绑定命名面板，sceneLoaded 再绑，避免无 TMP 孤儿）；`FloorHintPresenter` → 楼层提示
 - 命中：场地图标 `BoardBriefTipHitProxy`；商店 `ShopBoardHitProxy`；卡店 `TavernBoardHitProxy`；特殊房 `RewardBoardHitProxy`；属性房候选 `AttributeBoardHitProxy`；离开图标仍 `BoardBriefTipHitProxy` + 驻留——均**认领格位**、不自建命中盒、不注册 Router（#102）
 - 悬停/点击同源：`GroundFieldHitSurface` 读当前格认领者的 `BriefTipText` / `Activate`
 - 显示：有文案时激活面板并打开底板 `SpriteRenderer`；无悬停/Notice 即隐藏

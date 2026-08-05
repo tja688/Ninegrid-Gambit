@@ -16,8 +16,6 @@ namespace NineGrid.Flow
     /// </summary>
     public static class PresentationOutputProjector
     {
-        private static UiPanelRouter _panelRouter;
-
         public static CombatDamagePopup[] CollectDamagePopups(
             IReadOnlyList<CoreGameEvent> entries,
             int startIndex)
@@ -58,17 +56,6 @@ namespace NineGrid.Flow
         public static void SyncManagedCardPresentation(ManagedCard card)
         {
             CoreCardPresentationMapper.ApplyVisualsPreservingCommittedStats(card);
-        }
-
-        /// <summary>刷新 Avatar 调试文本；面板路由静态缓存，留空则场景查找。</summary>
-        public static void UpdateAvatarDebugText()
-        {
-            if (_panelRouter == null)
-            {
-                _panelRouter = UnityEngine.Object.FindFirstObjectByType<UiPanelRouter>();
-            }
-
-            CoreCardPresentationMapper.UpdateAvatarDebugText(_panelRouter);
         }
 
         public static Vector3? ResolveCardWorldPosition(int cardUid)

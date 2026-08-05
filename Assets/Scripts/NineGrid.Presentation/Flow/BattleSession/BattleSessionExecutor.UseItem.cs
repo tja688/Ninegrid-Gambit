@@ -57,7 +57,6 @@ namespace NineGrid.Flow
         {
             // UseItem Present：只刷已提交投影的视觉；飘字/血甲在 Vacate 前认领，TriggerEffect 留给运动后。
             CoreCardPresentationMapper.RefreshVisualsPreservingCommittedStatsOnAllSpawned();
-            PresentationOutputProjector.UpdateAvatarDebugText();
 
             // ADR-0018：Vacate 前只冲刷非 TriggerEffect 的 Impact（保飘字世界坐标）；
             // TriggerEffect 留在 pending，由后续 Drain 运动落地 Impact（无 delta 则由 PresentStep FlushBeats）消费。

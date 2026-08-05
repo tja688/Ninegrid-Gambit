@@ -38,7 +38,7 @@ namespace NineGrid.Flow
             _livingFormChoiceConsumer = livingFormChoiceTest as IUITestKeyConsumer
                 ?? GetComponent<IUITestKeyConsumer>();
 
-            Debug.Log("[UITestBootstrap] UI 测试模式就绪。数字 1~2/4~7/0 切面板；小键盘 1 切形态选择（3→6→关）。");
+            Debug.Log("[UITestBootstrap] UI 测试模式就绪。数字 1~2/4~6/0 切面板；小键盘 1 切形态选择（3→6→关）。");
         }
 
         private void Start()
@@ -55,7 +55,6 @@ namespace NineGrid.Flow
             if (KeyboardUtility.GetKeyDown(KeyCode.Alpha4)) ToggleRoomEventOverlay();
             if (KeyboardUtility.GetKeyDown(KeyCode.Alpha5)) ToggleInfoOverlay();
             if (KeyboardUtility.GetKeyDown(KeyCode.Alpha6)) ToggleMainBackground();
-            if (KeyboardUtility.GetKeyDown(KeyCode.Alpha7)) ToggleInGameInfoText();
             if (KeyboardUtility.GetKeyDown(KeyCode.Alpha0)) DumpPanelStates();
             if (KeyboardUtility.GetKeyDown(KeyCode.Keypad1)) _livingFormChoiceConsumer?.HandleKeypad1();
         }
@@ -134,19 +133,6 @@ namespace NineGrid.Flow
             }
         }
 
-        [ContextMenu("7. 切换 InGameInfoText")]
-        public void ToggleInGameInfoText()
-        {
-            panelRouter.EnsureBindings();
-            var go = panelRouter.InGameInfoText;
-            if (go != null)
-            {
-                var visible = go.activeSelf;
-                panelRouter.SetInGameInfoTextVisible(!visible);
-                Debug.Log($"[UITestBootstrap] InGameInfoText → {(!visible ? "显示" : "隐藏")}");
-            }
-        }
-
         [ContextMenu("0. 输出面板状态")]
         public void DumpPanelStates()
         {
@@ -158,7 +144,6 @@ namespace NineGrid.Flow
             LogPanelState("RoomEventPanel", panelRouter.RoomEventPanel);
             LogPanelState("InfoPanel", panelRouter.InfoPanel);
             LogPanelState("MainBG", GameObject.Find("Panels/MainBG"));
-            LogPanelState("InGameInfoText", panelRouter.InGameInfoText);
         }
 
         private static void LogPanelState(string label, GameObject go)

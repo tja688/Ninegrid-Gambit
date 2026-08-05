@@ -71,6 +71,8 @@ PresentationSceneRoot (IController)
 
 主场景：`Assets/Scenes/MainScene.unity`、`Assets/Scenes/UITestSence.unity`。
 
+MainScene 装配卫生护栏（#141）：`Tests/MainSceneHygieneStructuralTests` 断言退役绑定 / 失效 Marker / 隐式 Find 不得回流，详见 presentation.md「MainScene 装配卫生」。
+
 ## 维护约定
 
 - 改表现层结构 / 通信范式 → 先改本目录，再改业务。  

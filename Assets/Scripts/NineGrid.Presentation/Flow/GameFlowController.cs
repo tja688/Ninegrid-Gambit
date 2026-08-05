@@ -4,7 +4,6 @@ using NineGrid.Flow.Presentation;
 using NineGrid.Presentation.Commands;
 using NineGrid.Presentation.Systems;
 using QFramework;
-using TMPro;
 using UnityEngine;
 
 #if UNITY_EDITOR
@@ -29,9 +28,6 @@ namespace NineGrid.Flow
 
         [Tooltip("主菜单「退出」按钮；留空则运行时查找 MainPanel/QuitGame。")]
         [SerializeField] private Collider2D quitGameHit;
-
-        [Tooltip("Notice Text；留空则运行时查找 TableNine Text Overlay UI/NoticeText。")]
-        [SerializeField] private TextMeshProUGUI noticeText;
 
         [Tooltip("点选相机；留空则运行时取 Camera.main。")]
         [SerializeField] private Camera worldCamera;
@@ -196,15 +192,6 @@ namespace NineGrid.Flow
                     quitGameHit = quit.GetComponent<Collider2D>();
                 }
             }
-
-            if (noticeText == null)
-            {
-                var noticeGo = FindDeep("NoticeText");
-                if (noticeGo != null)
-                {
-                    noticeText = noticeGo.GetComponent<TextMeshProUGUI>();
-                }
-            }
         }
 
         public void ShowNotice(string message)
@@ -212,23 +199,12 @@ namespace NineGrid.Flow
             EnsureViewBindings();
             var tip = BoardBriefTipPresenter.EnsureExists();
             tip.ShowNotice(message ?? string.Empty);
-
-            // 旧 NoticeText 通道退役：胜负 / 房间 stub 一律走简要解释文字框（ADR-0020）。
-            if (noticeText != null)
-            {
-                noticeText.gameObject.SetActive(false);
-            }
         }
 
         public void HideNotice()
         {
             var tip = BoardBriefTipPresenter.InstanceOrNull();
             tip?.ClearNotice();
-
-            if (noticeText != null)
-            {
-                noticeText.gameObject.SetActive(false);
-            }
         }
 
         public void ShowMainMenuPanels()

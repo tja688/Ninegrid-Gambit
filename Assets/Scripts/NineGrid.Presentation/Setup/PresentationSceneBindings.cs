@@ -13,7 +13,6 @@ namespace NineGrid.Presentation.Setup
         public GameFlowController MainGameLoop { get; }
         public RelicManagerSingleton RelicManager { get; }
         public SelectorManagerSingleton SelectorManager { get; }
-        public DescriptionManagerSingleton DescriptionManager { get; }
         public DamageNumberManagerSingleton DamageNumberManager { get; }
         public GoldGainFxManagerSingleton GoldGainFxManager { get; }
         public CardManagerSingleton CardManager { get; }
@@ -27,7 +26,6 @@ namespace NineGrid.Presentation.Setup
             GameFlowController mainGameLoop,
             RelicManagerSingleton relicManager,
             SelectorManagerSingleton selectorManager,
-            DescriptionManagerSingleton descriptionManager,
             DamageNumberManagerSingleton damageNumberManager,
             GoldGainFxManagerSingleton goldGainFxManager,
             CardManagerSingleton cardManager,
@@ -40,7 +38,6 @@ namespace NineGrid.Presentation.Setup
             MainGameLoop = mainGameLoop;
             RelicManager = relicManager;
             SelectorManager = selectorManager;
-            DescriptionManager = descriptionManager;
             DamageNumberManager = damageNumberManager;
             GoldGainFxManager = goldGainFxManager;
             CardManager = cardManager;

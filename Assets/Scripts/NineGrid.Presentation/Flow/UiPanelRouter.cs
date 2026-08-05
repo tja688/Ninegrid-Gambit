@@ -26,15 +26,11 @@ namespace NineGrid.Flow
         [Tooltip("主菜单背景；留空则运行时按名查找 Panels/MainBG。")]
         [SerializeField] private GameObject mainBackground;
 
-        [Tooltip("局内对战信息文字根；留空则运行时按名查找 TableNine Text Overlay UI/InGameInfoText。局内对战与选择叠层时显示，主菜单隐藏。")]
-        [SerializeField] private GameObject inGameInfoText;
-
         public GameObject MainPanel => mainPanel;
         public GameObject InGamePanels => inGamePanels;
         public GameObject RewardPanel => rewardPanel;
         public GameObject RoomEventPanel => roomEventPanel;
         public GameObject InfoPanel => infoPanel;
-        public GameObject InGameInfoText => inGameInfoText;
 
         public void EnsureBindings()
         {
@@ -44,7 +40,6 @@ namespace NineGrid.Flow
             roomEventPanel ??= FindByPath("Panels/RoomEventPanel");
             infoPanel ??= FindByPath("Panels/InfoPanel");
             mainBackground ??= FindByPath("Panels/MainBG");
-            inGameInfoText ??= FindByPath("TableNine Text Overlay UI/InGameInfoText");
         }
 
         public void ShowMainMenu()
@@ -53,12 +48,11 @@ namespace NineGrid.Flow
             SetActiveSafe(mainBackground, true);
             SetActiveSafe(mainPanel, true);
             SetActiveSafe(inGamePanels, false);
-            SetInGameInfoTextVisible(false);
             HideAllOverlays();
         }
 
         /// <summary>
-        /// 局内壳（对战视角）。InGameInfoText 在局内全程持久显示，叠层靠排序遮挡而非 SetActive 隐藏。
+        /// 局内壳（对战视角）。玩家数值 HUD 由 <see cref="PlayerInfoHudPresenter"/> 持续持有，不随面板切换 SetActive。
         /// <paramref name="inBattle"/> 保留兼容，不再用于隐藏信息栏。
         /// </summary>
         public void ShowInRunShell(bool inBattle = true)
@@ -68,7 +62,6 @@ namespace NineGrid.Flow
             SetActiveSafe(mainBackground, true);
             SetActiveSafe(mainPanel, false);
             SetActiveSafe(inGamePanels, true);
-            SetInGameInfoTextVisible(true);
             HideAllOverlays();
         }
 
@@ -77,8 +70,6 @@ namespace NineGrid.Flow
             EnsureBindings();
             SetActiveSafe(mainPanel, false);
             SetActiveSafe(inGamePanels, true);
-            // 动态描述 TMP 已退役；信息栏仍用于玩家数值等。
-            SetInGameInfoTextVisible(true);
             SetActiveSafe(rewardPanel, true);
             SetActiveSafe(roomEventPanel, false);
             SetActiveSafe(infoPanel, false);
@@ -89,17 +80,9 @@ namespace NineGrid.Flow
             EnsureBindings();
             SetActiveSafe(mainPanel, false);
             SetActiveSafe(inGamePanels, true);
-            // 主流程叠层与玩家信息面板互不影响，保持 InGameInfoText 可见。
-            SetInGameInfoTextVisible(true);
             SetActiveSafe(rewardPanel, false);
             SetActiveSafe(roomEventPanel, true);
             SetActiveSafe(infoPanel, false);
-        }
-
-        public void SetInGameInfoTextVisible(bool visible)
-        {
-            EnsureBindings();
-            SetActiveSafe(inGameInfoText, visible);
         }
 
         public void ShowInfoOverlay(bool visible)

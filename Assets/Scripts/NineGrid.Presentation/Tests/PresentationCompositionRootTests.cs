@@ -70,7 +70,7 @@ namespace NineGrid.Presentation.Tests
                 {
                     var bindings = new PresentationSceneBindings(
                         inBattle,
-                        null, null, null, null, null, null,
+                        null, null, null, null, null,
                         null, null, null, null, null);
                     var root = new PresentationCompositionRoot();
                     var runtime = root.Install(bindings);

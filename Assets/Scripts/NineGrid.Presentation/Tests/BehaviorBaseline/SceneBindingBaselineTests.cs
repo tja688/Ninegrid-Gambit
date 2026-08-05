@@ -29,7 +29,6 @@ namespace NineGrid.Presentation.Tests.BehaviorBaseline
             "mainGameLoop",
             "relicManager",
             "selectorManager",
-            "descriptionManager",
             "damageNumberManager",
             "goldGainFxManager",
             "cardManager",
