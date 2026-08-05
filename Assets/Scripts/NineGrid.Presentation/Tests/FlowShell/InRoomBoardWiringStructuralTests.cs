@@ -73,6 +73,7 @@ namespace NineGrid.Presentation.Tests.FlowShell
                 "PresentShopBoardAsync",
                 "PresentTavernBoardAsync",
                 "PresentRewardBoardAsync",
+                "PresentAttributeBoardAsync",
             };
 
             for (var i = 0; i < methodNames.Length; i++)
@@ -88,6 +89,23 @@ namespace NineGrid.Presentation.Tests.FlowShell
                     body.IndexOf("SetChoiceOverlay(true)", StringComparison.Ordinal) >= 0,
                     name + " 不得整段 SetChoiceOverlay(true)；店内跳格/购买须走 ProtectedField");
             }
+        }
+
+        [Test]
+        public void AttributePickPool_RoutesToAttributeBoardPresenter()
+        {
+            // #137：属性房（PendingChoiceKind.AttributePick + attribute.pick 池）必须接到
+            // AttributeBoardPresenter 场地板，不得落到普通 stub Notice 分支。
+            var text = File.ReadAllText(OrchestratorPath);
+            Assert.IsTrue(
+                text.IndexOf("PresentAttributeBoardAsync", StringComparison.Ordinal) >= 0,
+                "应存在 PresentAttributeBoardAsync 房内场地板入口");
+            Assert.IsTrue(
+                text.IndexOf("AttributeBoardPresenter.Current", StringComparison.Ordinal) >= 0,
+                "PresentAttributeBoardAsync 须使用 AttributeBoardPresenter");
+            Assert.IsTrue(
+                text.IndexOf("PendingChoiceModel.IsAttributePickPool", StringComparison.Ordinal) >= 0,
+                "属性房路由须按 attribute.pick 池判定");
         }
     }
 }

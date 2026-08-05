@@ -33,6 +33,7 @@
 | `ShopBoard/` | 商店货架 + 刷新 + 离开（#92）：任意距离点击购买、驻留离开 |
 | `TavernBoard/` | 卡店三项服务 + 刷新 + 离开（#93）：就地选项；「道具卡固定」二级选择铺空格候选 |
 | `RewardBoard/` | 特殊奖励房真卡 + 离开（#94）：任意距离点击拿走、踩离开放弃 |
+| `AttributeBoard/` | 属性房三选二候选真卡 + 离开（#137）：任意距离点击选择两张、踩离开放弃 |
 | `InRoomBoard/` | 房内共用：`InRoomGoldPresentation`（非战斗扣金→HUD） |
 | `BoardBriefTip/` | 简要解释文字框 + 楼层提示（#89）：文案纯逻辑、悬停命中代理、胜负 Notice 出口 |
 | `Diagnostics/` | Battle/Flow/Perf/Registry Trace Recorder 与 Sink |
@@ -170,10 +171,10 @@
 
 ### 简要解释文字框与楼层提示（#89 · ADR-0020）
 
-- 文案：`BoardBriefTipCopy`（房间 DisplayName+注入摘要 / 导航固定文案 / 楼层提示「楼层·Ⅱ」+ 房间类型「战斗房间」等；另备 `ForOptionOrShelf` 供房内货架·就地选项——商店/卡店/特殊奖励房主循环已接线 #92/#93/#94，非 M2 待落地）
+- 文案：`BoardBriefTipCopy`（房间 DisplayName+注入摘要 / 导航固定文案 / 楼层提示「楼层·Ⅱ」+ 房间类型「战斗房间」等；另备 `ForOptionOrShelf` 供房内货架·就地选项与候选——商店/卡店/特殊奖励房/属性房主循环已接线 #92/#93/#94/#137，非 M2 待落地）
 - 会话：`BoardBriefTipSession`（悬停与 Notice；Notice 盖悬停；代数清；`HardClear` 双路硬清）
 - 场景：`BoardBriefTipPresenter` → `Panels/简要解释文字框`（`EnsureExists` 优先绑定命名面板，sceneLoaded 再绑，避免无 TMP 孤儿）；`FloorHintPresenter` → `楼层提示`
-- 命中：场地图标 `BoardBriefTipHitProxy`；商店 `ShopBoardHitProxy`；卡店 `TavernBoardHitProxy`；特殊房 `RewardBoardHitProxy`；离开图标仍 `BoardBriefTipHitProxy` + 驻留——均**认领格位**、不自建命中盒、不注册 Router（#102）
+- 命中：场地图标 `BoardBriefTipHitProxy`；商店 `ShopBoardHitProxy`；卡店 `TavernBoardHitProxy`；特殊房 `RewardBoardHitProxy`；属性房候选 `AttributeBoardHitProxy`；离开图标仍 `BoardBriefTipHitProxy` + 驻留——均**认领格位**、不自建命中盒、不注册 Router（#102）
 - 悬停/点击同源：`GroundFieldHitSurface` 读当前格认领者的 `BriefTipText` / `Activate`
 - 显示：有文案时激活面板并打开底板 `SpriteRenderer`；无悬停/Notice 即隐藏
 - 清理：场地板 `DespawnAll` 与进战 `StartBattleNode` / `PlayRealBattle` 调用 `HardClear`，避免房内 Notice（如「金币不足」）或悬停粘连进战斗；胜负 Notice 仍由 `HideNotice` 按时收起
@@ -209,11 +210,14 @@
 - **领取入手牌**：同商店，经 `InRoomItemAcquirePresentation` 把 Core ItemSlots 新卡从货架位接入手牌（ADR-0025）
 - `GameFlowOrchestrator.PresentInRoomSessionAfterEnterAsync`：`IsSpecialRewardPool` 走特殊房场地板；道具奖励房选房图标仍缺（见 #83）
 
-### 属性房三选二会话（#136 · ADR-0031）
+### 属性房三选二会话（#136/#137 · ADR-0031）
 
 - Core：进 `Attribute` → `OfferAttributePickSession` 生成 3 个加权候选（`attribute.pick` 池，`Kind=AttributePick`，策划权重 40/40/20，允许同种重复）；`SelectReward` 按候选实例记录选择并移除该实例（不可重复点同实例）；选满 2 张提交 `RunModel.AttributePickDefIds` 并推进节点；`SkipHelpChoice` 放弃未选完的候选并推进节点（不加 skip 金）
 - 选择结果 **不写道具卡格**：下一战斗节点 `BuildNodeDeckOptions` 消费 `AttributePickDefIds` 注入玩家侧卡组（消费后清空；无选择结果不注入）
-- 表现：候选浮层/点击/动画属 #137，本票仅 Core 状态机；表现层按 `PendingChoiceKind.AttributePick` 渲染三候选并提交两次选择
+- 表现（#137）：`AttributeBoardPresenter` 落格 1/3/7 三张候选真卡、8 离开；Avatar 硬切格 5；任意距离点击选择（`AttributeBoardHitProxy`），首次选择金框驻留视觉确认、继续等第二次；选满两张经简要解释 Notice 播报完成并清理候选（房间推进由 Core/过场接续）；离开驻留 1s 放弃未选完候选（`SkipHelpChoice`，不加 skip 金）
+- 候选真卡 `GroundCardMode`（预制体原生尺寸，不 Fit / 不 parent 到锚点，#104 / ADR-0024）；候选 `SoftBlockOnly`，离开 `WalkDestination`；离开监视约定同商店（**不持 ChoiceOverlay**；禁用 `GroundCardHitProxy`）；候选卡面显示当前名称 + 描述 tip（`CardPresentationConfigCatalog`，无价格）
+- 点击经 `RewardChoiceCoreHook.SelectReward`（`RewardChoiceInputController` → IntentIntake → Core `SelectReward`）；视觉候选 → 当前 Pending 索引经 `AttributePickIndexResolver`（Core 移除已选实例后索引前移）；会话变更（Generation/离开）经 `ResyncFromPending` 收尾
+- `GameFlowOrchestrator.PresentInRoomSessionAfterEnterAsync`：`IsAttributePickPool` 走 `PresentAttributeBoardAsync` 属性房场地板；`PhaseSystem` 在 `RewardItemChoice` 为属性房池加 `MoveAvatar`（离开图标需 BoardWalk）
 
 ### Avatar 跳格（已落地 · ADR-0019 / #88 放宽）
 

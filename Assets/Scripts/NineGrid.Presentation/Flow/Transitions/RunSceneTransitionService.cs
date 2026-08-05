@@ -71,7 +71,7 @@ namespace NineGrid.Flow.Transitions
         }
 
         /// <summary>
-        /// 进房后若进入商店/卡店/特殊奖励场地板，应挂起 Cover，等刷板后再 <see cref="CompleteRevealAsync"/>。
+        /// 进房后若进入商店/卡店/特殊奖励/属性房场地板，应挂起 Cover，等刷板后再 <see cref="CompleteRevealAsync"/>。
         /// </summary>
         public static bool ShouldDeferRevealForInRoomBoard(IArchitecture arch)
         {
@@ -82,10 +82,17 @@ namespace NineGrid.Flow.Transitions
 
             var phase = arch.GetSystem<IPhaseSystem>();
             var pending = arch.GetModel<PendingChoiceModel>();
-            return phase != null
-                   && pending != null
-                   && phase.CurrentPhase == GamePhase.RewardItemChoice
-                   && pending.Kind.Value == PendingChoiceKind.Reward
+            if (phase == null || pending == null || phase.CurrentPhase != GamePhase.RewardItemChoice)
+            {
+                return false;
+            }
+
+            if (pending.Kind.Value == PendingChoiceKind.AttributePick)
+            {
+                return PendingChoiceModel.IsAttributePickPool(pending.PoolId.Value);
+            }
+
+            return pending.Kind.Value == PendingChoiceKind.Reward
                    && PendingChoiceModel.IsConsumerBoardPool(pending.PoolId.Value);
         }
 

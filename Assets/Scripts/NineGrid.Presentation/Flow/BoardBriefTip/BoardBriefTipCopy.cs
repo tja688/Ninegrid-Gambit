@@ -13,6 +13,9 @@ namespace NineGrid.Flow.BoardBriefTip
         public const string GoDownTip = "前往下一层";
         public const string GoUpTip = "返回上一层";
 
+        /// <summary>属性房三选二完成 Notice（#137）：选满两张后经简要解释文字框播报。</summary>
+        public const string AttributePickCompleteNotice = "已选择 2 张属性卡";
+
         public static string ForRoom(RoomDefinition room)
         {
             if (room == null || string.IsNullOrWhiteSpace(room.DisplayName))

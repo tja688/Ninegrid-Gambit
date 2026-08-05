@@ -18,6 +18,7 @@ namespace NineGrid.Presentation.Tests.Flow
             Path.Combine("Flow", "ShopBoard", "ShopBoardPresenter.cs"),
             Path.Combine("Flow", "TavernBoard", "TavernBoardPresenter.cs"),
             Path.Combine("Flow", "RewardBoard", "RewardBoardPresenter.cs"),
+            Path.Combine("Flow", "AttributeBoard", "AttributeBoardPresenter.cs"),
             Path.Combine("Flow", "RoomIcons", "RoomIconBoardPresenter.cs"),
         };
 

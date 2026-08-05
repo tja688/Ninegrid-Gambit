@@ -2005,8 +2005,9 @@ namespace NineGrid.Core.Systems
                     mLegalCommands.Add(GameCommandKind.DiscardRelic);
                     mLegalCommands.Add(GameCommandKind.RecycleItemSlot);
                     AppendShopRefreshIfActive();
-                    // 商店离开图标需 BoardWalk；其它奖励覆盖层不走格。
-                    if (PendingChoiceModel.IsConsumerBoardPool(this.GetModel<PendingChoiceModel>().PoolId.Value))
+                    // 商店/属性房离开图标需 BoardWalk；其它奖励覆盖层不走格。
+                    if (PendingChoiceModel.IsConsumerBoardPool(this.GetModel<PendingChoiceModel>().PoolId.Value)
+                        || PendingChoiceModel.IsAttributePickPool(this.GetModel<PendingChoiceModel>().PoolId.Value))
                     {
                         mLegalCommands.Add(GameCommandKind.MoveAvatar);
                     }
@@ -2032,7 +2033,8 @@ namespace NineGrid.Core.Systems
         private void AppendPendingChoiceCommandsWhilePresentationLocked()
         {
             var pending = this.GetModel<PendingChoiceModel>();
-            if (pending.Kind.Value == PendingChoiceKind.Reward)
+            if (pending.Kind.Value == PendingChoiceKind.Reward
+                || pending.Kind.Value == PendingChoiceKind.AttributePick)
             {
                 mLegalCommands.Add(GameCommandKind.SelectReward);
                 mLegalCommands.Add(GameCommandKind.SkipHelpChoice);

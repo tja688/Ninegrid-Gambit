@@ -7,6 +7,7 @@ using NineGrid.Core;
 using NineGrid.Core.Content;
 using NineGrid.Core.Systems;
 using NineGrid.Flow.BoardBriefTip;
+using NineGrid.Flow.AttributeBoard;
 using NineGrid.Flow.Diagnostics;
 using NineGrid.Flow.Presentation;
 using NineGrid.Flow.RewardBoard;
@@ -556,8 +557,10 @@ namespace NineGrid.Flow
             view?.ShowRoomEventOverlay();
             ResolveSession()?.RefreshPersistentInBattleUi(animate: false);
 
-            if (pending.Kind.Value == PendingChoiceKind.Reward
-                && PendingChoiceModel.IsConsumerBoardPool(pending.PoolId.Value))
+            if ((pending.Kind.Value == PendingChoiceKind.Reward
+                 && PendingChoiceModel.IsConsumerBoardPool(pending.PoolId.Value))
+                || (pending.Kind.Value == PendingChoiceKind.AttributePick
+                    && PendingChoiceModel.IsAttributePickPool(pending.PoolId.Value)))
             {
                 try
                 {
@@ -604,6 +607,10 @@ namespace NineGrid.Flow
                 {
                     await PresentRewardBoardAsync(ct);
                 }
+                else if (PendingChoiceModel.IsAttributePickPool(pending.PoolId.Value))
+                {
+                    await PresentAttributeBoardAsync(ct);
+                }
             }
             else
             {
@@ -629,13 +636,25 @@ namespace NineGrid.Flow
             ResolveSession()?.RefreshPersistentInBattleUi(animate: false);
         }
 
-        /// <summary>图标 EnterRoom 后进入消费/特殊房场地板会话。</summary>
+        /// <summary>图标 EnterRoom 后进入消费/特殊/属性房场地板会话。</summary>
         private static bool IsAwaitingInRoomBoard(IPhaseSystem phase, PendingChoiceModel pending)
         {
-            return phase != null
-                   && pending != null
-                   && phase.CurrentPhase == GamePhase.RewardItemChoice
-                   && pending.Kind.Value == PendingChoiceKind.Reward
+            if (phase == null || pending == null)
+            {
+                return false;
+            }
+
+            if (phase.CurrentPhase != GamePhase.RewardItemChoice)
+            {
+                return false;
+            }
+
+            if (pending.Kind.Value == PendingChoiceKind.AttributePick)
+            {
+                return PendingChoiceModel.IsAttributePickPool(pending.PoolId.Value);
+            }
+
+            return pending.Kind.Value == PendingChoiceKind.Reward
                    && PendingChoiceModel.IsConsumerBoardPool(pending.PoolId.Value);
         }
 
@@ -819,6 +838,63 @@ namespace NineGrid.Flow
                 if (reward.IsActive)
                 {
                     reward.DespawnAll();
+                }
+            }
+        }
+
+        private async UniTask PresentAttributeBoardAsync(CancellationToken ct)
+        {
+            var arch = NineGridArchitecture.Current;
+            var phaseSystem = arch.GetSystem<IPhaseSystem>();
+            var walk = AvatarWalkSystem.EnsureRegistered(NineGridArchitecture.Interface);
+            walk?.SetEnabled(true);
+            BoardCardSelectModeController.RequestAbort("mainloop-attribute-board");
+
+            var attribute = AttributeBoardPresenter.Current;
+            attribute.Bind(arch);
+            RoomIconBoardPresenter.Current.HardCutAfterEnter(arch);
+            if (!attribute.TrySpawnFromPending(arch))
+            {
+                Debug.LogError("[GameFlow] 属性房三选二 Spawn 失败");
+                RunSceneTransitionService.InstanceOrNull?.ForceClearFaders();
+                walk?.SetEnabled(false);
+                return;
+            }
+
+            await RevealHeldTransitionIfAnyAsync();
+
+            // 同商店：场地即交互面，勿整段 ChoiceOverlay（ADR-0020）。
+            Debug.Log(
+                "[InRoom] AttributeBoard session begin walkEnabled=true choiceOverlay=false phase="
+                + phaseSystem.CurrentPhase);
+            try
+            {
+                await UniTask.WaitUntil(
+                    () =>
+                    {
+                        if (ct.IsCancellationRequested)
+                        {
+                            return true;
+                        }
+
+                        var p = phaseSystem.CurrentPhase;
+                        return p == GamePhase.NodeCompleted
+                               || p == GamePhase.Victory
+                               || p == GamePhase.Defeat
+                               || phaseSystem.CanExecute(GameCommandKind.StartNode);
+                    },
+                    cancellationToken: ct);
+            }
+            finally
+            {
+                Debug.Log(
+                    "[InRoom] AttributeBoard session end phase=" + phaseSystem.CurrentPhase
+                    + " attributeActive=" + attribute.IsActive);
+                walk?.SetEnabled(false);
+                walk?.Cancel();
+                if (attribute.IsActive)
+                {
+                    attribute.DespawnAll();
                 }
             }
         }

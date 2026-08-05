@@ -16,6 +16,7 @@ namespace NineGrid.Presentation.Tests.Flow
             Path.Combine("Flow", "ShopBoard", "ShopBoardPresenter.cs"),
             Path.Combine("Flow", "TavernBoard", "TavernBoardPresenter.cs"),
             Path.Combine("Flow", "RewardBoard", "RewardBoardPresenter.cs"),
+            Path.Combine("Flow", "AttributeBoard", "AttributeBoardPresenter.cs"),
         };
 
         [Test]
@@ -100,6 +101,7 @@ namespace NineGrid.Presentation.Tests.Flow
                 "Flow"));
             var shop = File.ReadAllText(Path.Combine(root, "ShopBoard", "ShopBoardPresenter.cs"));
             var tavern = File.ReadAllText(Path.Combine(root, "TavernBoard", "TavernBoardPresenter.cs"));
+            var attribute = File.ReadAllText(Path.Combine(root, "AttributeBoard", "AttributeBoardPresenter.cs"));
             Assert.IsTrue(
                 shop.IndexOf("RoomIconWalkRole.SoftBlockOnly", StringComparison.Ordinal) >= 0,
                 "商店货架/刷新须 SoftBlockOnly");
@@ -112,6 +114,12 @@ namespace NineGrid.Presentation.Tests.Flow
             Assert.IsTrue(
                 tavern.IndexOf("RoomIconWalkRole.WalkDestination", StringComparison.Ordinal) >= 0,
                 "卡店离开须 WalkDestination");
+            Assert.IsTrue(
+                attribute.IndexOf("RoomIconWalkRole.SoftBlockOnly", StringComparison.Ordinal) >= 0,
+                "属性房候选须 SoftBlockOnly");
+            Assert.IsTrue(
+                attribute.IndexOf("RoomIconWalkRole.WalkDestination", StringComparison.Ordinal) >= 0,
+                "属性房离开须 WalkDestination");
         }
 
         /// <summary>
@@ -129,10 +137,12 @@ namespace NineGrid.Presentation.Tests.Flow
             var shop = File.ReadAllText(Path.Combine(root, "ShopBoard", "ShopBoardPresenter.cs"));
             var tavern = File.ReadAllText(Path.Combine(root, "TavernBoard", "TavernBoardPresenter.cs"));
             var reward = File.ReadAllText(Path.Combine(root, "RewardBoard", "RewardBoardPresenter.cs"));
+            var attribute = File.ReadAllText(Path.Combine(root, "AttributeBoard", "AttributeBoardPresenter.cs"));
 
             AssertNoFit(shop, "ShopBoardPresenter");
             AssertNoFit(tavern, "TavernBoardPresenter");
             AssertNoFit(reward, "RewardBoardPresenter");
+            AssertNoFit(attribute, "AttributeBoardPresenter");
 
             // 选项（刷新/服务/离开）与真卡货架均走世界对齐，不得再靠 Fit 压尺寸。
             Assert.IsTrue(
@@ -144,6 +154,9 @@ namespace NineGrid.Presentation.Tests.Flow
             Assert.IsTrue(
                 reward.IndexOf("BoardSlotWorldPlacement.TryAlignToSlot", StringComparison.Ordinal) >= 0,
                 "奖励房落格须 BoardSlotWorldPlacement");
+            Assert.IsTrue(
+                attribute.IndexOf("BoardSlotWorldPlacement.TryAlignToSlot", StringComparison.Ordinal) >= 0,
+                "属性房落格须 BoardSlotWorldPlacement");
 
             Assert.IsTrue(
                 Regex.IsMatch(
@@ -163,6 +176,12 @@ namespace NineGrid.Presentation.Tests.Flow
                     @"SpawnPresentationOnly\s*\(\s*entry\.DefId\s*,\s*parent:\s*null",
                     RegexOptions.CultureInvariant),
                 "奖励房真卡须 parent:null（预制体尺度）");
+            Assert.IsTrue(
+                Regex.IsMatch(
+                    attribute,
+                    @"SpawnPresentationOnly\s*\(\s*entry\.DefId\s*,\s*parent:\s*null",
+                    RegexOptions.CultureInvariant),
+                "属性房候选真卡须 parent:null（预制体尺度）");
 
             // 选项 Spawn（刷新/服务/离开）同样 Instantiate(prefab) 无 parent，再 TryAlignToSlot。
             Assert.IsTrue(
@@ -185,7 +204,7 @@ namespace NineGrid.Presentation.Tests.Flow
                 "奖励房离开选项须 Instantiate(prefab) 无 parent");
             Assert.IsFalse(
                 Regex.IsMatch(
-                    shop + "\n" + tavern + "\n" + reward,
+                    shop + "\n" + tavern + "\n" + reward + "\n" + attribute,
                     @"Object\.Instantiate\s*\(\s*prefab\s*,",
                     RegexOptions.CultureInvariant),
                 "房内选项/离开不得 Instantiate(prefab, parent|anchor)");

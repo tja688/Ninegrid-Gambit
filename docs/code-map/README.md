@@ -43,7 +43,7 @@
 >
 > ADR-0030（#135）：正式战斗开局随机三张常规机关（`RegularTrapPool`：Kind=Trap+稀有度 White 池过滤、无放回、种子可复现；离开机关/特殊机关不入池）。
 >
-> ADR-0031（#136）：属性房改为玩家三选二会话（进房 3 加权候选 → 选 2 → `RunModel.AttributePickDefIds` 本关开局注入，消费后清空）；自动随机注入退役。Core 状态机已落地，表现接线见 #137。
+> ADR-0031（#136/#137）：属性房改为玩家三选二会话（进房 3 加权候选 → 选 2 → `RunModel.AttributePickDefIds` 本关开局注入，消费后清空）；自动随机注入退役。Core 状态机（#136）与表现接线（#137：`AttributeBoardPresenter` 三候选真卡 + 离开图标场地板，点击经 `RewardChoiceCoreHook` → IntentIntake → Core）均已落地。
 
 ## 程序集一览
 
