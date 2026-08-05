@@ -9,7 +9,7 @@ commandEnabled: false
 readOnly: false
 inheritAiConfig: true
 createdAt: 1785907952002
-updatedAt: 1785907952003
+updatedAt: 1785909213629
 ---
 
 # devtest-build-gating
@@ -41,7 +41,8 @@ DevTest 组件 Release 构建门禁：运行时安装宿主模式、构建验证
 - **CLI 限制**：`unity command run_tests` 同步命令 CLI 侧 30s 连接超时（`--timeout` 全局选项无法抬高，放在 command 后无效）；长套件必须 `--async_tests true` 后轮询 `unity command test_status`（结果在 `Temp/pipeline_test_status.json`）。已中断的 sync run_tests 会让 pipeline server 挂死（所有命令 30s 超时、Editor 本体正常），需重启 Editor（先 `ai-workspace gate-restart`，再 `unity-automated-launch`）。
 - 全量 EditMode 1258 例有 48 个既有失败（内容 JSON 校验、BattleSessionCheat 旧护栏、Trap/Taunt/Fusion 战斗逻辑），与本票无关，跑全量前先确认受影响套件。
 
-## 既有 Missing Script（另票范围）
+## 既有 Missing Script（#126 已清理）
 
-- MainScene 有 214 处 null 组件槽：已删除脚本 `NineGrid.VisualLook.TableNineSortingKey`（GUID d1f6b4c5…，类在仓库中不存在），HEAD 场景即有 107 处 GUID 引用；Release/Dev 冒烟均报 321 行缺失。属场景卫生，非条件编译问题。
+- MainScene 原有 214 处 Missing Script（已删除脚本 `NineGrid.VisualLook.TableNineSortingKey`，GUID d1f6b4c5…）：107 处 GUID 引用 + 107 处 `m_Script:{fileID:1115186359}` fileID-only 破坏引用 + 1 孤儿文档。**#126 已全部清除（214→0）**，Release/Dev 冒烟缺失行归零（321→0）。
+- fileID-only 破坏引用标准 API 无法删除：`RemoveMonoBehavioursWithMissingScript` 与 `SerializedObject.DeleteArrayElementAtIndex`（拒绝 null 元素）均无效；解法是遍历 m_Component 访问 `objectReferenceInstanceIDValue` 后 `ApplyModifiedPropertiesWithoutUndo`，Unity 会自行丢弃破坏引用（会触发一次场景重载，注意 Editor 可能重连）。
 <!-- locus:body:end -->

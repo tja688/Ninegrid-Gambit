@@ -115,3 +115,7 @@ Thumbs.db
 # Local OpenCode ticket-runner state / agent logs
 .opencode/ticket-runner/runs/
 .opencode/ticket-runner/state.json
+
+
+# Tickets Implementor mirror state
+.opencode/tickets/
