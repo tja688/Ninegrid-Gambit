@@ -74,12 +74,22 @@
     "extraSlots": [],
     "rarity": "None",
     "tags": [],
-    "effectAssemblies": [],
-    "effectIds": [],
-    "skillIds": [
-        "skill.link_attack_bonus",
-        "skill.ranged_weapon"
+    "effectAssemblies": [
+        {
+            "id": "skill.link_attack_bonus.rule",
+            "templateId": "tpl.skill.link_attack_bonus.rule",
+            "containerType": "MonsterSkill",
+            "argsJson": "{\"value\":1,\"source\":\"skill.link_attack_bonus\"}"
+        },
+        {
+            "id": "skill.ranged_weapon.activate",
+            "templateId": "tpl.skill.ranged_weapon.activate",
+            "containerType": "MonsterSkill",
+            "argsJson": "{\"value\":1,\"source\":\"skill.ranged_weapon\"}"
+        }
     ],
+    "effectIds": [],
+    "skillIds": [],
     "level": "普通",
     "sequence": 2,
     "isElite": false,

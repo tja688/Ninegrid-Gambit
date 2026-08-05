@@ -6,7 +6,7 @@
     "role": "",
     "displayName": "近战1",
     "designSlotName": "近战1",
-    "description": "[[普通近战]]",
+    "description": "[[普通近战]][[叠甲]]",
     "faceIntro": "骷髅没有肌肉是怎么举起斧头的，这是个问题",
     "attackPattern": "普通近战",
     "gold": 5,
@@ -74,11 +74,18 @@
     "extraSlots": [],
     "rarity": "None",
     "tags": [],
-    "effectAssemblies": [],
+    "effectAssemblies": [
+        {
+            "id": "fx.b74cd83f",
+            "templateId": "tpl.skill.stack_armor.interact",
+            "containerType": "MonsterSkill",
+            "argsJson": "{\"amount\":6}"
+        }
+    ],
     "effectIds": [],
     "skillIds": [],
     "level": "普通",
-    "sequence": 1,
+    "sequence": 3,
     "isElite": false,
     "isBoss": false,
     "isReserve": false,

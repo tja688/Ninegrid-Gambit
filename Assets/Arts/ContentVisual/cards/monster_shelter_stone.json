@@ -28,7 +28,7 @@
     },
     "mainVisual": {
         "offsetX": 0.0,
-        "offsetY": -0.019999999552965164,
+        "offsetY": -0.019999999552965165,
         "uniformScale": 0.8199999928474426
     },
     "animations": {
@@ -74,12 +74,22 @@
     "extraSlots": [],
     "rarity": "None",
     "tags": [],
-    "effectAssemblies": [],
-    "effectIds": [],
-    "skillIds": [
-        "skill.cloud_breath",
-        "skill.endless_flame"
+    "effectAssemblies": [
+        {
+            "id": "skill.cloud_breath.interact",
+            "templateId": "tpl.skill.cloud_breath.interact",
+            "containerType": "MonsterSkill",
+            "argsJson": "{\"reason\":\"skill.cloud_breath\"}"
+        },
+        {
+            "id": "skill.endless_flame.remove",
+            "templateId": "tpl.skill.endless_flame.remove",
+            "containerType": "MonsterSkill",
+            "argsJson": "{\"count\":1}"
+        }
     ],
+    "effectIds": [],
+    "skillIds": [],
     "level": "层主",
     "sequence": 5,
     "isElite": false,

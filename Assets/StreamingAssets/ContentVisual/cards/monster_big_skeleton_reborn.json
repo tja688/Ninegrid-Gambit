@@ -28,7 +28,7 @@
     },
     "mainVisual": {
         "offsetX": 0.0,
-        "offsetY": -0.15000000596046448,
+        "offsetY": -0.15000000596046449,
         "uniformScale": 0.8999999761581421
     },
     "animations": {
@@ -74,11 +74,16 @@
     "extraSlots": [],
     "rarity": "None",
     "tags": [],
-    "effectAssemblies": [],
-    "effectIds": [],
-    "skillIds": [
-        "skill.ranged_weapon"
+    "effectAssemblies": [
+        {
+            "id": "skill.ranged_weapon.activate",
+            "templateId": "tpl.skill.ranged_weapon.activate",
+            "containerType": "MonsterSkill",
+            "argsJson": "{\"value\":1,\"source\":\"skill.ranged_weapon\"}"
+        }
     ],
+    "effectIds": [],
+    "skillIds": [],
     "level": "普通",
     "sequence": 2,
     "isElite": false,

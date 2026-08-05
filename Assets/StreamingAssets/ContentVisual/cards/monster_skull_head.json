@@ -74,11 +74,16 @@
     "extraSlots": [],
     "rarity": "None",
     "tags": [],
-    "effectAssemblies": [],
-    "effectIds": [],
-    "skillIds": [
-        "skill.sacrifice"
+    "effectAssemblies": [
+        {
+            "id": "skill.sacrifice.remove",
+            "templateId": "tpl.skill.sacrifice.remove",
+            "containerType": "MonsterSkill",
+            "argsJson": "{\"delta\":1,\"reason\":\"skill.sacrifice\"}"
+        }
     ],
+    "effectIds": [],
+    "skillIds": [],
     "level": "普通",
     "sequence": 4,
     "isElite": false,

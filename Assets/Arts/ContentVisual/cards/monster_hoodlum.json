@@ -28,7 +28,7 @@
     },
     "mainVisual": {
         "offsetX": 0.10000000149011612,
-        "offsetY": -0.20000000298023224,
+        "offsetY": -0.20000000298023225,
         "uniformScale": 1.0
     },
     "animations": {
@@ -74,11 +74,16 @@
     "extraSlots": [],
     "rarity": "None",
     "tags": [],
-    "effectAssemblies": [],
-    "effectIds": [],
-    "skillIds": [
-        "skill.world_as_neighbors"
+    "effectAssemblies": [
+        {
+            "id": "skill.world_as_neighbors.rule",
+            "templateId": "tpl.skill.world_as_neighbors.rule",
+            "containerType": "MonsterSkill",
+            "argsJson": "{\"value\":1}"
+        }
     ],
+    "effectIds": [],
+    "skillIds": [],
     "level": "普通",
     "sequence": 3,
     "isElite": false,
