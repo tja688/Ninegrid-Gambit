@@ -7,7 +7,7 @@ namespace NineGrid.Flow
     /// </summary>
     public sealed class GameFlowRunOptions
     {
-        public QuickTestRunOptions QuickTest { get; set; }
+        public QuickTestRunOptions QuickTest { get; private set; }
 
         public bool QuickTestMode => QuickTest != null;
 

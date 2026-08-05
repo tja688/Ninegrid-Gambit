@@ -101,7 +101,7 @@ namespace NineGrid.Presentation.Systems
 
         public void BeginRun(GameFlowRunOptions options)
         {
-            mOrchestrator.Start(options ?? new GameFlowRunOptions());
+            mOrchestrator.Start(options ?? GameFlowRunOptions.CreateFormal());
         }
 
         public void ReturnToMainMenu()
