@@ -7,6 +7,7 @@ using NineGrid.Content.Editor.Ui;
 using NineGrid.Core.Content;
 using NineGrid.Core.Effects;
 using NUnit.Framework;
+using UnityEngine;
 
 namespace NineGrid.Presentation.Tests.Cards
 {
@@ -79,7 +80,7 @@ namespace NineGrid.Presentation.Tests.Cards
                 CardChassisPaths.RoomIconAttribute,
                 CardChassisPaths.ResolveRoomIconPrefab("Attribute", null));
             Assert.AreEqual(
-                string.Empty,
+                CardChassisPaths.RoomIconItemReward,
                 CardChassisPaths.ResolveRoomIconPrefab("ItemReward", null));
             Assert.AreEqual(
                 CardChassisPaths.RoomIconLeave,
@@ -111,6 +112,38 @@ namespace NineGrid.Presentation.Tests.Cards
                 System.IO.File.Exists(CardPresentationJsonIO.GetAuthoringAbsolutePath("HealFull")));
             Assert.IsFalse(
                 System.IO.File.Exists(CardPresentationJsonIO.GetAuthoringAbsolutePath("GainGold")));
+        }
+
+        [Test]
+        public void ItemReward_RoomChoiceIcon_IsConfiguredAndLoads()
+        {
+            // #138：道具奖励房选房图标正式补齐（曾缺图）；默认映射与 JSON 双写一致，
+            // prefab 必须可被 AssetDatabase 加载，保证占格美术与驻留命中不依赖缺图回退。
+            var dtoPath = CardPresentationJsonIO.GetAuthoringAbsolutePath("ItemReward");
+            Assert.IsTrue(System.IO.File.Exists(dtoPath), "ItemReward JSON 存在");
+            Assert.IsTrue(CardPresentationJsonIO.TryLoad(dtoPath, out var dto, out var err), err);
+            Assert.AreEqual("Room", dto.kind);
+            Assert.IsFalse(string.IsNullOrWhiteSpace(dto.iconPrefab), "iconPrefab 已配");
+            Assert.AreEqual(
+                dto.iconPrefab,
+                CardPresentationJsonIO.TryLoad(
+                    CardPresentationJsonIO.GetStreamingAbsolutePath("ItemReward"),
+                    out var streamingDto,
+                    out _)
+                && streamingDto != null
+                    ? streamingDto.iconPrefab
+                    : string.Empty,
+                "Arts 与 StreamingAssets 双写一致");
+            Assert.AreEqual(
+                dto.iconPrefab,
+                CardChassisPaths.ResolveRoomIconPrefab("ItemReward", null),
+                "默认表与 JSON 覆写指向同一 prefab");
+
+#if UNITY_EDITOR
+            var prefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>(dto.iconPrefab);
+            Assert.IsNotNull(prefab, "iconPrefab 资产可加载");
+            Assert.IsNotNull(prefab.GetComponent<SpriteRenderer>(), "图标 prefab 有 SpriteRenderer 美术");
+#endif
         }
 
         [Test]

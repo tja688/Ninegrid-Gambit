@@ -28,6 +28,7 @@ namespace NineGrid.Cards
         public const string RoomIconTavern = "Assets/Prefabs/地形图标/牌店图标.prefab";
         public const string RoomIconTavernLegacy = "Assets/Prefabs/地形图标/酒馆图标.prefab";
         public const string RoomIconAttribute = "Assets/Prefabs/地形图标/属性提升图标.prefab";
+        public const string RoomIconItemReward = "Assets/Prefabs/地形图标/道具奖励图标.prefab";
         public const string RoomIconLeave = "Assets/Prefabs/地形图标/离开图标.prefab";
         public const string RoomIconGoUp = "Assets/Prefabs/地形图标/上楼图标.prefab";
         public const string RoomIconGoDown = "Assets/Prefabs/地形图标/下楼图标.prefab";
@@ -73,8 +74,7 @@ namespace NineGrid.Cards
                 case "Attribute":
                     return RoomIconAttribute;
                 case "ItemReward":
-                    // 缺图：道具奖励房尚无独立预制体，交给人在 JSON iconPrefab 补。
-                    return string.Empty;
+                    return RoomIconItemReward;
                 case "Leave":
                     return RoomIconLeave;
                 case "GoUp":

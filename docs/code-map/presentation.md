@@ -208,7 +208,7 @@
 - 表现：`RewardBoardPresenter` 落格 1/2/3/7/9 真卡、8 离开；Avatar 硬切格 5；任意距离点击拿走；离开驻留 1s；悬停 tip=卡名+效果（无价格）
 - 真卡 `GroundCardMode`（预制体原生尺寸，#104）；货架 `SoftBlockOnly`，离开 `WalkDestination`；离开监视约定同商店（免费拿无需推金；**不持 ChoiceOverlay**；禁用 `GroundCardHitProxy`）
 - **领取入手牌**：同商店，经 `InRoomItemAcquirePresentation` 把 Core ItemSlots 新卡从货架位接入手牌（ADR-0025）
-- `GameFlowOrchestrator.PresentInRoomSessionAfterEnterAsync`：`IsSpecialRewardPool` 走特殊房场地板；道具奖励房选房图标仍缺（见 #83）
+- `GameFlowOrchestrator.PresentInRoomSessionAfterEnterAsync`：`IsSpecialRewardPool` 走特殊房场地板；道具奖励房选房图标 #138 已补齐（`道具奖励图标.prefab`，JSON `iconPrefab` 经编辑器双写）
 
 ### 属性房三选二会话（#136/#137 · ADR-0031）
 
@@ -246,7 +246,7 @@
 | 商店 | `Shop` | `商店图标` | 1 |
 | 卡店 | `Tavern`（显示名「卡店」） | `牌店图标` | 3 |
 | 宝箱奖励房 | `TreasureReward` | `宝箱图标`（暂） | 1 |
-| 道具奖励房 | `ItemReward` | （缺图） | 1 |
+| 道具奖励房 | `ItemReward` | `道具奖励图标` | 1 |
 | 离开 | `Leave`（非 `RoomKind`） | `离开图标` | 2 |
 | 上楼 | `GoUp` | `上楼图标` | 2 |
 | 下楼 | `GoDown` | `下楼图标` | 2 |

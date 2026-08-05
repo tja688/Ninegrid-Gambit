@@ -3,9 +3,12 @@
     "contentId": "ItemReward",
     "kind": "Room",
     "deckId": "",
+    "role": "",
     "displayName": "道具奖励房",
+    "designSlotName": "",
     "description": "房内铺 2 属性道具 + 3 随机道具；点击拿走，离开放弃",
     "faceIntro": "",
+    "attackPattern": "",
     "gold": 0,
     "stats": {
         "hp": 0,
@@ -71,9 +74,11 @@
     "extraSlots": [],
     "rarity": "",
     "tags": [],
+    "effectAssemblies": [],
     "effectIds": [],
     "skillIds": [],
-    "level": 0,
+    "level": "0",
+    "sequence": 0,
     "isElite": false,
     "isBoss": false,
     "isReserve": false,
@@ -83,9 +88,7 @@
     "weight": 20,
     "rewardPoolId": "",
     "shopOfferCount": 0,
-    "iconPrefab": "",
-    "boardSlot": 1,
-    "effectAssemblies": [],
-    "role": "",
-    "openingInjects": []
+    "openingInjects": [],
+    "iconPrefab": "Assets/Prefabs/地形图标/道具奖励图标.prefab",
+    "boardSlot": 1
 }
