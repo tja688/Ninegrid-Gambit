@@ -152,6 +152,30 @@ namespace NineGrid.Presentation.Tests.FlowShell
             }
         }
 
+        [Test]
+        public void Channel0_HasNoDirectedTrapInjection()
+        {
+            // #135：\0 与正式镜像一致——正式三张常规机关由 Core 装填路径注入，
+            // \0 不得再经 QuickTest trapContentIds 额外定向注入。
+            Assert.IsTrue(QuickTestDeckCatalog.TryResolvePickerCode(0, out var preset));
+            Assert.IsEmpty(preset.TrapContentIds, "\\0 不得携带定向机关注入");
+        }
+
+        [Test]
+        public void Channels1to9_EachCarryExactlyOneDirectedTrap_AndNeverLeaveTrap()
+        {
+            // #135：\1–\9 在 Core 三张常规机关之上可额外定向注入恰一张机关；离开机关不得被定向注入。
+            for (var code = 1; code <= QuickTestDeckCatalog.MaxPickerCode; code++)
+            {
+                Assert.IsTrue(QuickTestDeckCatalog.TryResolvePickerCode(code, out var preset), "\\" + code);
+                Assert.AreEqual(1, preset.TrapContentIds.Count, "\\" + code + " 定向注入恰一张机关");
+                Assert.AreNotEqual(
+                    "trap.leave",
+                    preset.TrapContentIds[0],
+                    "\\" + code + " 不得定向注入离开机关（离开机关只按清关阈值动态洗入）");
+            }
+        }
+
         private static ICollection ReadInternalList(GameFlowShellSystem shell, string propertyName)
         {
             var prop = typeof(GameFlowShellSystem).GetProperty(

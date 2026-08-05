@@ -291,6 +291,7 @@ namespace NineGrid.Core.Systems
             {
                 var fallback = new NodeDeckOptions();
                 AddRunPlayerSideCards(catalog, fallback);
+                AppendRegularTrapCards(catalog, fallback);
                 return fallback;
             }
 
@@ -299,6 +300,7 @@ namespace NineGrid.Core.Systems
             {
                 var fallback = new NodeDeckOptions();
                 AddRunPlayerSideCards(catalog, fallback);
+                AppendRegularTrapCards(catalog, fallback);
                 return fallback;
             }
 
@@ -318,6 +320,7 @@ namespace NineGrid.Core.Systems
             }
 
             AppendRoomOpeningInjectMonsterCards(catalog, deck, options);
+            AppendRegularTrapCards(catalog, options);
             return options;
         }
 
@@ -682,6 +685,39 @@ namespace NineGrid.Core.Systems
 
                     options.AddEnemyCard(content.CreateDraft(defIds[j]));
                 }
+            }
+        }
+
+        /// <summary>
+        /// #135：正式战斗开局随机注入三张常规机关（Core 契约 <see cref="RegularTrapPool"/>）。
+        /// 离开机关/特殊机关不入池；不足三张按池量；QuickTest \1–\9 定向注入在此之上叠加。
+        /// </summary>
+        private void AppendRegularTrapCards(GameContentCatalog catalog, NodeDeckOptions options)
+        {
+            if (catalog == null || options == null)
+            {
+                return;
+            }
+
+            var defIds = RegularTrapPool.RollRegularTrapDefIds(
+                catalog,
+                this.GetUtility<IRngUtility>(),
+                RegularTrapPool.PerBattleCount);
+            if (defIds == null || defIds.Count == 0)
+            {
+                return;
+            }
+
+            var content = this.GetSystem<IContentSystem>();
+            for (var i = 0; i < defIds.Count; i++)
+            {
+                var draft = content.CreateDraft(defIds[i]);
+                if (draft == null || draft.Kind != CardKind.Trap)
+                {
+                    continue;
+                }
+
+                options.AddEnemyCard(draft);
             }
         }
 
