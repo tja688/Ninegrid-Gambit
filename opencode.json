@@ -14,7 +14,6 @@
       "mode": "primary",
       "model": "deepseek/deepseek-v4-flash",
       "temperature": 0.1,
-      "steps": 30,
       "permission": {
         "question": "deny",
         "task": "deny",
@@ -35,7 +34,6 @@
       "mode": "primary",
       "model": "alibaba/qwen3.7-max",
       "temperature": 0,
-      "steps": 8,
       "permission": {
         "edit": "deny",
         "bash": "deny",
