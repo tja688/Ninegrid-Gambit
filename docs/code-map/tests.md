@@ -63,6 +63,9 @@
 | `RelicR3FoamContractTests` | #121：泡沫盔甲 +1 基础甲；本关首次甲归零后武装下一击 Once 免疫（归零击不吃盾）；同关不重武装；多段只免第一段；未消耗盾关初清除 |
 | `ThemeMonsterDeckContractTests` | #86 / ADR-0022：每层主题卡组不重复绑定、节点按序列 1–5 抽、Reserve 不参与、层主击杀固定 1 金箱+2 金币 |
 | `ThemeDeckStableMappingTests` | #127 / ADR-0029：七套 × sequence 1–5 稳定槽位契约（`ThemeDeckStableMapping`）与生产 JSON 逐槽比对；重复 sequence / 缺槽 / 槽位错位 / 越界成员 / 错误 Boss / 错误 Reserve 由 `ThemeDeckMappingVerifier` / `ThemeDeckFormalReadiness` 明确报出（含坏夹具用例）；映射正确（绿）与正式可达（当前红）分层 |
+| `ThemeDeckNarrowContractTests` | #128：基础/链接两套窄内容契约（`ThemeDeckNarrowContract`）——槽位映射正确 + Boss + 槽位卡非 Reserve + 牌组登记 + 两套卡面 JSON 与 monster_decks.json 在 Arts/Streaming 双侧字节一致；全局正式轮换仍关闭（deck_reserve / transition_not_cleared 仍在） |
+| `RotationDeckSkillIdsContractTests` | #129：旋转套（deck.orc_legion）怪物技能权威链路——四张带技能卡 `effectAssemblies` 为空、经 `skillIds` 引用 `skill_*.json`（技能文件持有等价效果模板装配）；`big_stone` 无技能、仅靠 attackPattern 斜角近战（不误判为漏技能）；技能效果 id 与迁移前一致；`ValidateCatalog` 绿；五张卡面 JSON Arts/Streaming 双侧字节一致 |
+| `InsectDeckSkillIdsContractTests` | #130：召唤套（deck.insect）怪物技能权威链路——四张带技能卡 `effectAssemblies` 为空、经 `skillIds` 引用 `skill_*.json`（技能文件持有等价效果模板装配：死亡召唤/远程武器+提速/吟唱/死亡之主）；`big_skeleton` 无技能、仅靠 attackPattern 全向近战（不误判为漏技能）；技能效果 id 与迁移前一致；`ValidateCatalog` 绿；五张卡面 JSON Arts/Streaming 双侧字节一致 |
 | `ContentDisplayNameAssertGuardrailTests` | #127 / ADR-0029：结构护栏——测试源码禁断言生产内容 displayName（`string.IsNullOrEmpty` 非空检查豁免；白名单仅限自建夹具与代码常量文件） |
 | `MonsterLoadoutPresentationValidatorTests` | 过渡卡组 staging 校验绿；交付就绪在怪物仍挂 `deck.transition` 时必须失败 |
 | `MapNodeProgressionContractTests` | #84 / ADR-0021 / #107 / #113：8 节点编排全表（节点 7=层主房图标战前缓冲）、非战斗不进 InteractionLoop、进层主房图标推进至节点 8、清关跳过 help.choice（经离开机关标志）、道具卡格清关不兑不清+清场残留、困难房门槛、第 3 层节点 8 通关 |

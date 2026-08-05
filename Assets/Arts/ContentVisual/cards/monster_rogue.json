@@ -74,16 +74,11 @@
     "extraSlots": [],
     "rarity": "None",
     "tags": [],
-    "effectAssemblies": [
-        {
-            "id": "skill.lord_of_death.remove",
-            "templateId": "tpl.skill.lord_of_death.remove",
-            "containerType": "MonsterSkill",
-            "argsJson": "{\"count\":1}"
-        }
-    ],
+    "effectAssemblies": [],
     "effectIds": [],
-    "skillIds": [],
+    "skillIds": [
+        "skill.lord_of_death"
+    ],
     "level": "层主",
     "sequence": 5,
     "isElite": false,

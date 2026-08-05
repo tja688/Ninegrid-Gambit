@@ -74,16 +74,11 @@
     "extraSlots": [],
     "rarity": "None",
     "tags": [],
-    "effectAssemblies": [
-        {
-            "id": "skill.chant.interact",
-            "templateId": "tpl.skill.chant.interact",
-            "containerType": "MonsterSkill",
-            "argsJson": "{\"count\":1}"
-        }
-    ],
+    "effectAssemblies": [],
     "effectIds": [],
-    "skillIds": [],
+    "skillIds": [
+        "skill.chant"
+    ],
     "level": "普通",
     "sequence": 4,
     "isElite": false,
