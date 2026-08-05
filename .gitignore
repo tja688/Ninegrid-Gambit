@@ -111,3 +111,7 @@ Thumbs.db
 
 # Local serial ticket-runner state / agent logs
 .cursor/ticket-runner/
+
+# Local OpenCode ticket-runner state / agent logs
+.opencode/ticket-runner/runs/
+.opencode/ticket-runner/state.json

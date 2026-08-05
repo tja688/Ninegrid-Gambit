@@ -1,0 +1,21 @@
+{
+  "model": "deepseek/deepseek-v4-flash",
+  "fallbackModel": "alibaba/qwen3.7-max",
+  "opencodeAgent": "ticket-implementer",
+  "doctorAgent": "ticket-doctor",
+  "promptTemplate": "Implement GitHub issue #{number}.",
+  "strictClose": false,
+  "readyLabel": "ready-for-agent",
+  "defaultParent": 114,
+  "ticketBudgetMinutes": 30,
+  "stdoutIdleMinutes": 10,
+  "parseErrorLimit": 8,
+  "interventionBudgetMinutes": 30,
+  "interventionGraceMinutes": 15,
+  "pollSeconds": 5,
+  "maxMachineLogRuns": 3,
+  "hooks": {
+    "beforeTicket": "",
+    "afterTicket": ""
+  }
+}
