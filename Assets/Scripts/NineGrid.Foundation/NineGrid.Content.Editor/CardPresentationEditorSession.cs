@@ -155,13 +155,6 @@ namespace NineGrid.Content.Editor
         TrapSkill = 4,
     }
 
-    [Serializable]
-    public sealed class CardPresentationIndexDto
-    {
-        public int schemaVersion = 1;
-        public string[] contentIds = Array.Empty<string>();
-    }
-
     public sealed class CardPresentationEditorSession
     {
         public const string UngroupedDeckId = "(未分组)";
@@ -1570,35 +1563,24 @@ namespace NineGrid.Content.Editor
             try
             {
                 CardPresentationJsonIO.EnsureDirectoriesExist();
-                var ids = faceEntries
-                    .Select(e => e.ContentId)
-                    .Concat(deckEntries.Select(e => e.ContentId))
-                    .Where(id => !string.IsNullOrWhiteSpace(id))
-                    .Distinct(StringComparer.Ordinal)
-                    .OrderBy(id => id, StringComparer.Ordinal)
-                    .ToArray();
+                // 磁盘为权威（#140）：扫盘生成索引，避免 Editor 会话状态与磁盘漂移漏抄
+                // 新增技能/遗物/房间选项；不再依赖 faceEntries/deckEntries。
+                var ids = CardPresentationIndexIO.ScanContentIds(
+                    CardPresentationIndexIO.GetAuthoringFolderAbsolute());
+                var authoringAbs = CardPresentationIndexIO.GetAuthoringFolderAbsolute();
+                var streamingAbs = CardPresentationIndexIO.GetStreamingFolderAbsolute();
 
-                var index = new CardPresentationIndexDto
+                if (!CardPresentationIndexIO.WriteIndex(authoringAbs, ids, out var writeError))
                 {
-                    schemaVersion = 1,
-                    contentIds = ids,
-                };
-                var json = JsonUtility.ToJson(index, true);
-                var authoringAbs = Path.Combine(
-                    Application.dataPath,
-                    "Arts",
-                    "ContentVisual",
-                    "cards",
-                    CardPresentationJsonIO.IndexFileName);
-                var streamingAbs = Path.Combine(
-                    Application.streamingAssetsPath,
-                    "ContentVisual",
-                    "cards",
-                    CardPresentationJsonIO.IndexFileName);
+                    message = "导出索引失败：" + writeError;
+                    return false;
+                }
 
-                File.WriteAllText(authoringAbs, json, new UTF8Encoding(false));
-                Directory.CreateDirectory(Path.GetDirectoryName(streamingAbs) ?? streamingAbs);
-                File.WriteAllText(streamingAbs, json, new UTF8Encoding(false));
+                if (!CardPresentationIndexIO.WriteIndex(streamingAbs, ids, out writeError))
+                {
+                    message = "导出 Streaming 索引失败：" + writeError;
+                    return false;
+                }
 
                 AssetDatabase.ImportAsset(
                     CardPresentationJsonIO.AuthoringFolder + "/" + CardPresentationJsonIO.IndexFileName);

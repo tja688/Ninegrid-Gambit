@@ -40,6 +40,7 @@ status: accepted
 ## 后果
 
 - **必须新建断链校验器。** 路径字符串没有 GUID 保护，改名挪目录 Unity 不会重定向。编辑器里扫全部内容 JSON 的资产路径、报告解析不到的项——这是本决策的强制代价对冲，不是可选项。
+- **`_index.json` 是磁盘快照，导出必须扫盘（#140）。** 索引不得由编辑器会话状态（xlsx 行 + 内存条目）合成——新增技能/遗物/房间选项曾因漏抄而漂移。导出入口（`CardPresentationEditorSession.TryExportIndex` / `CardPresentationIndexIO`）一律以 Authoring 目录的全部 DTO contentId 为准；`ContentHygieneValidator` 守护索引↔磁盘双向一致、Authoring↔Streaming 字节镜像、skillIds→技能 JSON、装配→效果模板、模板 body defId、空壳技能与归档可达性（编辑保存后再漂移即被 EditMode 契约拦下）。
 - **`CardAnimFrameSource` 必须补非 Editor 分支。** 现在 folder / atlas 两个分支整段在 `#if UNITY_EDITOR` 内、`#else` 返回空。迁入 Resources 不会自动修好，需改为 `Resources.LoadAll<Sprite>` + 按名排序保证帧序确定。
 - **21 个「SO 有、内容 JSON 无」的 contentId 要先补文件**（`deck.*`、房间、Fountain/Shop、属性三选一等），否则退休 SO 会丢内容。
 - **约定单一 Resources 根**，禁止散建多个 Resources 目录（命名空间会合并，同名冲突）。

@@ -85,6 +85,7 @@
 | `CarryPackPreserveBootstrapContractTests`（Presentation `BattleSession/`） | #107 / #108：`BootstrapRun(preserveRunInventory)` 道具卡格与容量存活；无 preserve 则清空 |
 | `NodeStartRelicCardGrantTests` | 关卡开始遗物加卡：飞刀进抽牌堆、交换按钮进道具卡格；满格静默丢弃不兑金 |
 | `ContentCatalogValidationTests` | 小型夹具 `ValidateCatalog` 绿；生产 Bootstrap（模板表 + 装配引用解析 + schema≥2 JSON 投影 + 奖池查询展开 + 节点序列规则）校验绿；跨容器共享模板不同实参（#70 / ADR-0009） |
+| `ContentHygieneContractTests` | **#140**：内容卫生终验——`_index.json` 条目与磁盘生产内容双向一致（无缺项/重复，两侧索引字节一致）；Authoring/Streaming 文件集合与内容完全一致；正式内容无悬空 skillId / 装配模板 / 模板 body defId；无空壳技能（Skill 无装配无 effectIds）；归档内容（relic/help_archive）不进入房间注入 / 模板 defId / 奖池展开 / 职业道具来源池等正式 grant 路径；奖池展开与房间注入无悬空 grant ID |
 | `EffectTemplateAssemblyContractTests` | #70：取消 typeTag/verb 门禁；`requires` 解析；装配实参替换与跨容器共享模板 |
 | `EffectSelfDeclarationContractTests` | #72 / ADR-0010：requires 校验（未知 token / mount 错配 / 缺声明）；拒上下文开关旧形；生产卡挂载显式场景声明审计归零；`ValidateCatalog` 绿 |
 | `CardOwnedTriggerScopeGateRegressionTests` / `CardZoneDeckGateRegressionTests` | #73 / ADR-0010 Phase C：外部门禁拆除后自陈等价（无 `EffectOwnerScopeGate` / 区域门禁回流）；帮助卡互不误触、亡语互不误触 |

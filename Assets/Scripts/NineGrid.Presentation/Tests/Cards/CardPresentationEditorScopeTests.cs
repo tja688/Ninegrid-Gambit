@@ -449,9 +449,10 @@ namespace NineGrid.Presentation.Tests.Cards
         {
             CardPresentationConfigCatalog.Invalidate();
             EffectTemplateCatalog.Invalidate();
-            if (!CardPresentationConfigCatalog.TryGet("monster.stone_man", out var dto) || dto == null)
+            // #131/#134 后 stone_man 已归 deck.transition 归档（isReserve），stray_cub 技能装配迁至 skill.stray_cub JSON。
+            if (!CardPresentationConfigCatalog.TryGet("skill.stray_cub", out var dto) || dto == null)
             {
-                Assert.Ignore("monster.stone_man JSON 未加载");
+                Assert.Ignore("skill.stray_cub JSON 未加载");
             }
 
             Assert.IsNotNull(dto.effectAssemblies);
@@ -460,9 +461,9 @@ namespace NineGrid.Presentation.Tests.Cards
             Assert.IsTrue(dto.effectAssemblies[0].argsJson.Contains("2"), dto.effectAssemblies[0].argsJson);
 
             var catalog = ContentCatalogBootstrap.Load();
-            Assert.IsTrue(catalog.TryGetCard("monster.stone_man", out var card));
-            Assert.AreEqual(1, card.EffectIds.Count);
-            Assert.IsTrue(catalog.TryGetEffect(card.EffectIds[0], out var effect));
+            Assert.IsTrue(catalog.Skills.TryGetValue("skill.stray_cub", out var skill));
+            Assert.GreaterOrEqual(skill.EffectIds.Count, 1);
+            Assert.IsTrue(catalog.TryGetEffect(skill.EffectIds[0], out var effect));
             var parsed = EffectJson.Parse(effect.Json);
             Assert.AreEqual(2, parsed.Get("modifier").Get("value").AsInt(0), effect.Json);
         }

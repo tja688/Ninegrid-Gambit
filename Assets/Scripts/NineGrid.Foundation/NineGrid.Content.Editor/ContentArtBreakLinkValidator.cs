@@ -150,6 +150,16 @@ namespace NineGrid.Content.Editor
 
                     return true;
                 }
+                case "prefab":
+                {
+                    if (UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>(entry.Path) == null)
+                    {
+                        reason = "Prefab unresolved.";
+                        return false;
+                    }
+
+                    return true;
+                }
                 default:
                     reason = "Unknown kind: " + kind;
                     return false;
@@ -174,6 +184,47 @@ namespace NineGrid.Content.Editor
                 Debug.LogError(
                     "[ContentArtBreakLink] " + f.ContentId + " " + f.Field + " " + f.Kind + " → " + f.Path
                     + " | " + f.Reason);
+            }
+        }
+
+        /// <summary>
+        /// 内容卫生总校验（#140）：断链 + 索引↔磁盘 + Authoring/Streaming 双写 + skillIds→技能 +
+        /// 装配→模板 + 模板 body 引用 + 空壳技能 + 归档可达性。Editor 汇总入口。
+        /// </summary>
+        [MenuItem("NineGrid/Tools/Validate Content Hygiene (Index/Mirror/Skill/Template)")]
+        public static void ValidateHygieneMenu()
+        {
+            var failures = 0;
+            var breakLinks = ValidateAuthoringCards();
+            if (breakLinks.Count > 0)
+            {
+                failures += breakLinks.Count;
+                Debug.LogError("[ContentHygiene] Break-links=" + breakLinks.Count);
+                var limit = Mathf.Min(breakLinks.Count, 20);
+                for (var i = 0; i < limit; i++)
+                {
+                    var f = breakLinks[i];
+                    Debug.LogError(
+                        "[ContentHygiene] " + f.ContentId + " " + f.Field + " " + f.Kind + " → " + f.Path
+                        + " | " + f.Reason);
+                }
+            }
+
+            var hygiene = ContentHygieneValidator.ValidateAll();
+            if (hygiene.Count > 0)
+            {
+                failures += hygiene.Count;
+                Debug.LogError("[ContentHygiene] Failures=" + hygiene.Count);
+                var limit = Mathf.Min(hygiene.Count, 60);
+                for (var i = 0; i < limit; i++)
+                {
+                    Debug.LogError("[ContentHygiene] " + hygiene[i]);
+                }
+            }
+
+            if (failures == 0)
+            {
+                Debug.Log("[ContentHygiene] OK — authoring cards resolve; index/mirror/skills/templates consistent.");
             }
         }
 

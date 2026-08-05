@@ -115,6 +115,9 @@ namespace NineGrid.Content.CardPresentation
                 AddEntry(into, dto.contentId, "sprites.backLogo", "sprite", dto.sprites.backLogo);
             }
 
+            // 房间图标预制体（#138 / #140）：Editor 校验为 prefab 资产路径。
+            AddEntry(into, dto.contentId, "iconPrefab", "prefab", dto.iconPrefab);
+
             if (dto.animations?.slots != null)
             {
                 for (var i = 0; i < dto.animations.slots.Length; i++)
