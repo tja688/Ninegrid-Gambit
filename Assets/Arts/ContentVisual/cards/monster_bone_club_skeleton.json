@@ -74,16 +74,11 @@
     "extraSlots": [],
     "rarity": "None",
     "tags": [],
-    "effectAssemblies": [
-        {
-            "id": "skill.holy_duel.activate",
-            "templateId": "tpl.skill.holy_duel.activate",
-            "containerType": "MonsterSkill",
-            "argsJson": "{\"value\":1,\"source\":\"skill.holy_duel\"}"
-        }
-    ],
+    "effectAssemblies": [],
     "effectIds": [],
-    "skillIds": [],
+    "skillIds": [
+        "skill.holy_duel"
+    ],
     "level": "普通",
     "sequence": 1,
     "isElite": false,

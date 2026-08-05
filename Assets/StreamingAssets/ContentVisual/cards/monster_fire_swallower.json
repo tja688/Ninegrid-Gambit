@@ -74,22 +74,12 @@
     "extraSlots": [],
     "rarity": "None",
     "tags": [],
-    "effectAssemblies": [
-        {
-            "id": "skill.holy_duel.activate",
-            "templateId": "tpl.skill.holy_duel.activate",
-            "containerType": "MonsterSkill",
-            "argsJson": "{\"value\":1,\"source\":\"skill.holy_duel\"}"
-        },
-        {
-            "id": "skill.taunt.rule",
-            "templateId": "tpl.skill.taunt.rule",
-            "containerType": "MonsterSkill",
-            "argsJson": "{\"value\":0}"
-        }
-    ],
+    "effectAssemblies": [],
     "effectIds": [],
-    "skillIds": [],
+    "skillIds": [
+        "skill.holy_duel",
+        "skill.taunt"
+    ],
     "level": "普通",
     "sequence": 4,
     "isElite": false,

@@ -74,22 +74,12 @@
     "extraSlots": [],
     "rarity": "None",
     "tags": [],
-    "effectAssemblies": [
-        {
-            "id": "skill.holy_duel.activate",
-            "templateId": "tpl.skill.holy_duel.activate",
-            "containerType": "MonsterSkill",
-            "argsJson": "{\"value\":1,\"source\":\"skill.holy_duel\"}"
-        },
-        {
-            "id": "skill.attrition.remove",
-            "templateId": "tpl.skill.attrition.remove",
-            "containerType": "MonsterSkill",
-            "argsJson": "{\"delta\":-1,\"reason\":\"skill.attrition\",\"action_actions_1_delta\":-10}"
-        }
-    ],
+    "effectAssemblies": [],
     "effectIds": [],
-    "skillIds": [],
+    "skillIds": [
+        "skill.holy_duel",
+        "skill.attrition"
+    ],
     "level": "层主",
     "sequence": 5,
     "isElite": false,

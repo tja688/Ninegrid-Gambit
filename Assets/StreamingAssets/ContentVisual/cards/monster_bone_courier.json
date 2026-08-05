@@ -74,22 +74,12 @@
     "extraSlots": [],
     "rarity": "None",
     "tags": [],
-    "effectAssemblies": [
-        {
-            "id": "skill.holy_duel.activate",
-            "templateId": "tpl.skill.holy_duel.activate",
-            "containerType": "MonsterSkill",
-            "argsJson": "{\"value\":1,\"source\":\"skill.holy_duel\"}"
-        },
-        {
-            "id": "skill.evade.battle",
-            "templateId": "tpl.skill.evade.battle",
-            "containerType": "MonsterSkill",
-            "argsJson": "{\"sourceAction\":\"DealDamage\"}"
-        }
-    ],
+    "effectAssemblies": [],
     "effectIds": [],
-    "skillIds": [],
+    "skillIds": [
+        "skill.holy_duel",
+        "skill.evade"
+    ],
     "level": "普通",
     "sequence": 2,
     "isElite": false,
