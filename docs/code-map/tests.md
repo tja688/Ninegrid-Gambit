@@ -98,6 +98,11 @@
 
 全量真实场景 PlayMode 终验是 Spec 级门禁（历史上由 #42 承接），不属于每张实施票的默认门槛。
 
+### Map #122（主流程正式接线）验证边界
+
+- 商店 / 卡店 / 特殊奖励房主循环与节点编排已接线，本 Map 内的验证边界为 **EditMode**：契约测试（`ShopSessionContractTests` / `TavernSessionContractTests` / `SpecialRewardSessionContractTests` / `MapNodeProgressionContractTests` / `InRoomBoardWiringStructuralTests` / 各 `*BoardSlotResolverTests`）覆盖 Core 会话、清关后放图标与房内场地板接线。
+- 完整一局（主菜单开始 → 3 层 × 8 节点 → 胜利/失败）的**真实运行 PlayMode 终验**属本 Map 最终门禁（`#142` 自动烟雾 + `#143` 人工终验），当前未运行前**不得宣称已通过**；tests.md 不写入尚未运行的 PlayMode 结果。
+
 ## 跑测（Unity CLI）
 
 ```bash
