@@ -65,7 +65,6 @@ namespace NineGrid.Flow
         public GameFlowShellState State =>
             ResolveShell()?.State.Value ?? GameFlowShellState.MainMenu;
 
-        public bool IsTestMode => ResolveShell()?.IsTestMode ?? false;
         public bool IsQuickTestMode => ResolveShell()?.IsQuickTestMode ?? false;
         public int NodeIndex => ResolveShell()?.NodeIndex ?? 0;
         public bool CanAcceptQuickTestEntry => ResolveShell()?.CanAcceptQuickTestEntry ?? false;
@@ -118,7 +117,7 @@ namespace NineGrid.Flow
             EnsureViewBindings();
             if (WorldPointerUtility.TryOverlapColliderOnPlane(worldCamera, startRunHit))
             {
-                BeginRun(testMode: true);
+                BeginFormalRun();
                 return;
             }
 
@@ -128,33 +127,15 @@ namespace NineGrid.Flow
             }
         }
 
-        /// <summary>DevTest / 按钮入口：开局（默认测试模式）。真相在 BeginGameFlowRunCommand。</summary>
-        public void BeginRun(bool testMode = true, bool quickTestMode = false)
+        /// <summary>主菜单「开始游戏」：无作弊正式开局。真相在 BeginGameFlowRunCommand。</summary>
+        public void BeginFormalRun()
         {
-            if (quickTestMode)
-            {
-                BeginQuickTestRun(new QuickTestRunOptions
-                {
-                    NodeOrder = QuickTestNodeOrderMode.Shuffled,
-                });
-                return;
-            }
-
-            SendBeginRun(new GameFlowRunOptions
-            {
-                TestMode = testMode,
-                QuickTestMode = false,
-            });
+            SendBeginRun(GameFlowRunOptions.CreateFormal());
         }
 
         public void BeginQuickTestRun(QuickTestRunOptions options)
         {
-            SendBeginRun(new GameFlowRunOptions
-            {
-                TestMode = true,
-                QuickTestMode = true,
-                QuickTest = options ?? new QuickTestRunOptions(),
-            });
+            SendBeginRun(GameFlowRunOptions.CreateQuickTest(options));
         }
 
         public void ReturnToMainMenu()

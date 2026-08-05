@@ -41,9 +41,9 @@ namespace NineGrid.Presentation.Controllers
             this.SendCommand(new SetGameFlowShellStateCommand(next));
         }
 
-        public void HandleBeginRun(bool testMode = true, bool quickTestMode = false)
+        public void HandleBeginRun(GameFlowRunOptions options = null)
         {
-            this.SendCommand(new BeginGameFlowRunCommand(testMode, quickTestMode));
+            this.SendCommand(new BeginGameFlowRunCommand(options));
         }
 
         public void HandleReturnToMainMenu()

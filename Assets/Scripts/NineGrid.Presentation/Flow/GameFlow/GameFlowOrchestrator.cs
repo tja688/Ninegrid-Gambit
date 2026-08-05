@@ -59,11 +59,10 @@ namespace NineGrid.Flow
             NineGridArchitecture.Interface?.GetSystem<IFieldBattlePresentationSystem>()?.CancelBattleWork();
             ResolveSession()?.ClearCardPresentationSurface();
 
-            var testMode = options == null || options.TestMode;
             var quickTestMode = options != null && options.QuickTestMode;
             var quickTestOptions = options?.QuickTest;
 
-            mShell.ApplyRunMode(testMode, quickTestMode);
+            mShell.ApplyRunMode(quickTestMode);
             mShell.ResetNodeProgress();
             // ResetNodeProgress 清 QuickTest 字段；PrepareQuickTest 须在其后。
             mShell.BumpGeneration();
@@ -96,7 +95,6 @@ namespace NineGrid.Flow
                     FlowTraceNames.StartRun,
                     new Dictionary<string, string>
                     {
-                        { "testMode", testMode ? "true" : "false" },
                         { "quickTestMode", quickTestMode ? "true" : "false" },
                         { "runTag", DiagTraceShared.RunTag },
                         { "runTagNote", DiagTraceShared.RunTagNote },

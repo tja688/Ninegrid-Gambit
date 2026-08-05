@@ -16,8 +16,6 @@ namespace NineGrid.Presentation.Systems
 
         bool IsBusy { get; }
 
-        bool IsTestMode { get; }
-
         bool IsQuickTestMode { get; }
 
         int Generation { get; }

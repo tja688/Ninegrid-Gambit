@@ -14,17 +14,7 @@ namespace NineGrid.Presentation.Commands
 
         public BeginGameFlowRunCommand(GameFlowRunOptions options = null)
         {
-            mOptions = options ?? new GameFlowRunOptions();
-        }
-
-        public BeginGameFlowRunCommand(bool testMode, bool quickTestMode = false, QuickTestRunOptions quickTest = null)
-            : this(new GameFlowRunOptions
-            {
-                TestMode = testMode,
-                QuickTestMode = quickTestMode,
-                QuickTest = quickTest,
-            })
-        {
+            mOptions = options ?? GameFlowRunOptions.CreateFormal();
         }
 
         protected override void OnExecute()

@@ -26,7 +26,6 @@ namespace NineGrid.Presentation.Systems
 
         private IGameFlowView mView;
         private bool mIsBusy;
-        private bool mTestMode;
         private bool mQuickTestMode;
         private int mNodeIndex;
         private int mGeneration;
@@ -50,8 +49,6 @@ namespace NineGrid.Presentation.Systems
         public int NodeIndex => mNodeIndex;
 
         public bool IsBusy => mIsBusy;
-
-        public bool IsTestMode => mTestMode;
 
         public bool IsQuickTestMode => mQuickTestMode;
 
@@ -141,18 +138,13 @@ namespace NineGrid.Presentation.Systems
             }
 
             mView?.HideNotice();
-            BeginRun(new GameFlowRunOptions
+            BeginRun(GameFlowRunOptions.CreateQuickTest(new QuickTestRunOptions
             {
-                TestMode = true,
-                QuickTestMode = true,
-                QuickTest = new QuickTestRunOptions
-                {
-                    NodeOrder = preset.NodeOrder,
-                    PinnedFirstBattleDeckId = preset.PinnedFirstBattleDeckId,
-                    SkillIds = preset.SkillIds,
-                    TrapContentIds = preset.TrapContentIds,
-                },
-            });
+                NodeOrder = preset.NodeOrder,
+                PinnedFirstBattleDeckId = preset.PinnedFirstBattleDeckId,
+                SkillIds = preset.SkillIds,
+                TrapContentIds = preset.TrapContentIds,
+            }));
             return true;
         }
 
@@ -163,9 +155,8 @@ namespace NineGrid.Presentation.Systems
             return QuickTestDeckCatalog.BuildPickerMenuText(catalog);
         }
 
-        internal void ApplyRunMode(bool testMode, bool quickTestMode)
+        internal void ApplyRunMode(bool quickTestMode)
         {
-            mTestMode = testMode;
             mQuickTestMode = quickTestMode;
         }
 
@@ -223,7 +214,6 @@ namespace NineGrid.Presentation.Systems
 
         internal void ClearRunSession()
         {
-            mTestMode = false;
             mQuickTestMode = false;
             ClearQuickTest();
             DiagTraceShared.ClearRunTag();

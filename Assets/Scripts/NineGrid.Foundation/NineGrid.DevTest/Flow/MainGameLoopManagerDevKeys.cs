@@ -41,7 +41,7 @@ namespace NineGrid.DevTest.Flow
             var arch = NineGridArchitecture.Interface ?? NineGridArchitecture.Current;
             if (arch != null)
             {
-                arch.SendCommand(new BeginGameFlowRunCommand(testMode: true));
+                arch.SendCommand(new BeginGameFlowRunCommand());
                 return;
             }
 
@@ -51,7 +51,7 @@ namespace NineGrid.DevTest.Flow
                 return;
             }
 
-            manager.BeginRun(testMode: true);
+            manager.BeginFormalRun();
         }
 
         private GameFlowController ResolveManager()

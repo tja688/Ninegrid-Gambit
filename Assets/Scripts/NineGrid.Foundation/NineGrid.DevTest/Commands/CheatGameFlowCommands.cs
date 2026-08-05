@@ -18,12 +18,8 @@ namespace NineGrid.DevTest.Commands
 
         protected override void OnExecute()
         {
-            GameFlowShellSystem.EnsureRegistered().BeginRun(new GameFlowRunOptions
-            {
-                TestMode = true,
-                QuickTestMode = true,
-                QuickTest = mOptions ?? new QuickTestRunOptions(),
-            });
+            GameFlowShellSystem.EnsureRegistered().BeginRun(
+                GameFlowRunOptions.CreateQuickTest(mOptions));
         }
     }
 

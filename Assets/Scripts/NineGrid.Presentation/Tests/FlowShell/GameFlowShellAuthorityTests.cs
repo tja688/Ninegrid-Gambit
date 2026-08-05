@@ -27,7 +27,6 @@ namespace NineGrid.Presentation.Tests.FlowShell
                 Assert.AreEqual(0, shell.NodeIndex);
                 Assert.AreEqual(0, shell.Generation);
                 Assert.IsFalse(shell.IsBusy);
-                Assert.IsFalse(shell.IsTestMode);
                 Assert.IsFalse(shell.IsQuickTestMode);
                 Assert.IsTrue(shell.CanAcceptQuickTestEntry);
             }
@@ -45,16 +44,14 @@ namespace NineGrid.Presentation.Tests.FlowShell
                 LogAssert.Expect(LogType.Error, "[GameFlow] 局内会话未就绪，终止节点循环。");
 
                 NineGridArchitecture.Interface.SendCommand(
-                    new BeginGameFlowRunCommand(testMode: true, quickTestMode: false));
+                    new BeginGameFlowRunCommand(GameFlowRunOptions.CreateFormal()));
 
-                Assert.IsTrue(shell.IsTestMode);
                 Assert.IsFalse(shell.IsQuickTestMode);
                 Assert.AreEqual(1, shell.Generation);
                 Assert.AreEqual(GameFlowShellState.BattleStub, shell.State.Value);
 
                 NineGridArchitecture.Interface.SendCommand(new ReturnToMainMenuCommand());
                 Assert.AreEqual(GameFlowShellState.MainMenu, shell.State.Value);
-                Assert.IsFalse(shell.IsTestMode);
                 Assert.AreEqual(2, shell.Generation);
             }
         }
@@ -94,7 +91,7 @@ namespace NineGrid.Presentation.Tests.FlowShell
                 Assert.IsFalse(shell.CanAcceptQuickTestEntry);
                 var genBefore = shell.Generation;
                 LogAssert.Expect(LogType.Warning, "[GameFlow] 当前循环仍在进行，忽略 BeginRun。");
-                shell.BeginRun(new GameFlowRunOptions { TestMode = true });
+                shell.BeginRun(GameFlowRunOptions.CreateFormal());
                 Assert.AreEqual(genBefore, shell.Generation, "残留 Busy 时应忽略 BeginRun");
                 Assert.AreEqual(GameFlowShellState.BattleStub, shell.State.Value);
 
