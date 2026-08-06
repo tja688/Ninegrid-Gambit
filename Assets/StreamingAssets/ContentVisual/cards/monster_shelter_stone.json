@@ -4,10 +4,10 @@
     "kind": "Monster",
     "deckId": "deck.stone_legion",
     "role": "",
-    "displayName": "boss6",
-    "designSlotName": "boss6",
+    "displayName": "烈焰",
+    "designSlotName": "",
     "description": "[[吞云吐雾]]，[[生生不息]]",
-    "faceIntro": "他说自己还很年轻，大概300岁吧",
+    "faceIntro": "烈焰一族的王者",
     "attackPattern": "无",
     "gold": 5,
     "stats": {
@@ -28,8 +28,8 @@
     },
     "mainVisual": {
         "offsetX": 0.0,
-        "offsetY": -0.019999999552965165,
-        "uniformScale": 0.8199999928474426
+        "offsetY": -0.30000001192092898,
+        "uniformScale": 1.0
     },
     "animations": {
         "defaultFps": 8.0,
@@ -37,7 +37,7 @@
             {
                 "id": "idle",
                 "sourceType": "folder",
-                "path": "Assets/Resources/ContentArt/Png/像素怪物合集/sprites/54tortoise_idle_01",
+                "path": "Assets/Resources/ContentArt/Png/像素怪物合集2/sprites/Map0_Fire_red1",
                 "offsetX": 0.0,
                 "offsetY": 0.0
             },

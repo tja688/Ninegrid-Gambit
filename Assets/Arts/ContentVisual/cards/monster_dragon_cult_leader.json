@@ -4,10 +4,10 @@
     "kind": "Monster",
     "deckId": "deck.stone_legion",
     "role": "",
-    "displayName": "炸弹蜥蜴",
+    "displayName": "蓝焰",
     "designSlotName": "",
     "description": "[[普通近战]]，[[献火]]",
-    "faceIntro": "蜥蜴一族中爱剪指甲的",
+    "faceIntro": "烈焰一族的中坚力量",
     "attackPattern": "普通近战",
     "gold": 5,
     "stats": {
@@ -27,9 +27,9 @@
         "backLogo": ""
     },
     "mainVisual": {
-        "offsetX": -0.10000000149011612,
-        "offsetY": -0.10000000149011612,
-        "uniformScale": 1.0
+        "offsetX": 0.0,
+        "offsetY": -0.30000001192092898,
+        "uniformScale": 0.800000011920929
     },
     "animations": {
         "defaultFps": 8.0,
@@ -37,7 +37,7 @@
             {
                 "id": "idle",
                 "sourceType": "folder",
-                "path": "Assets/Resources/ContentArt/Png/像素怪物合集/sprites/52LizardMan02_idle_01",
+                "path": "Assets/Resources/ContentArt/Png/像素怪物合集2/sprites/Map0_Fire_blue",
                 "offsetX": 0.0,
                 "offsetY": 0.0
             },

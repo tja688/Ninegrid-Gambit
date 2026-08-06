@@ -4,10 +4,10 @@
     "kind": "Monster",
     "deckId": "deck.stone_legion",
     "role": "",
-    "displayName": "特11",
-    "designSlotName": "特11",
+    "displayName": "小火焰",
+    "designSlotName": "",
     "description": "[[普通近战]]，[[呼唤]]",
-    "faceIntro": "",
+    "faceIntro": "烈焰一族的小宝贝",
     "attackPattern": "普通近战",
     "gold": 5,
     "stats": {
@@ -37,7 +37,7 @@
             {
                 "id": "idle",
                 "sourceType": "folder",
-                "path": "Assets/Arts/Images/Png/像素怪物合集/sprites/51LizardMan01_die",
+                "path": "Assets/Resources/ContentArt/Png/像素怪物合集2/sprites/Map0_Fire_red2",
                 "offsetX": 0.0,
                 "offsetY": 0.0
             },

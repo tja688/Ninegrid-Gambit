@@ -27,8 +27,8 @@
         "backLogo": ""
     },
     "mainVisual": {
-        "offsetX": 0.20000000298023225,
-        "offsetY": -0.3700000047683716,
+        "offsetX": -0.10000000149011612,
+        "offsetY": 0.0,
         "uniformScale": 1.0
     },
     "animations": {
@@ -37,7 +37,7 @@
             {
                 "id": "idle",
                 "sourceType": "folder",
-                "path": "Assets/Resources/ContentArt/Png/像素怪物合集/sprites/07goblin_idle_01",
+                "path": "Assets/Resources/ContentArt/Png/像素怪物合集2/sprites/02wildboar_run",
                 "offsetX": 0.0,
                 "offsetY": 0.0
             },

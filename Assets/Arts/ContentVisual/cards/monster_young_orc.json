@@ -18,7 +18,7 @@
         "recovery": 0
     },
     "sprites": {
-        "mainIcon": "Assets/Resources/ContentArt/Multiple/pixel_art_card_pack 1.png",
+        "mainIcon": "Assets/Resources/ContentArt/Png/像素怪物合集2/sprites/Icey_die/Icey_die_10.png",
         "faceBackground": "",
         "cardFrame": "",
         "banner": "",
@@ -27,7 +27,7 @@
         "backLogo": ""
     },
     "mainVisual": {
-        "offsetX": 0.0,
+        "offsetX": 0.699999988079071,
         "offsetY": -0.3499999940395355,
         "uniformScale": 1.0
     },
@@ -37,7 +37,7 @@
             {
                 "id": "idle",
                 "sourceType": "folder",
-                "path": "Assets/Resources/ContentArt/Png/像素怪物合集/sprites/06goblin_idle_01",
+                "path": "",
                 "offsetX": 0.0,
                 "offsetY": 0.0
             },

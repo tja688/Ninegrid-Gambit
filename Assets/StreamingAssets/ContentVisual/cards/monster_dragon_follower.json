@@ -4,10 +4,10 @@
     "kind": "Monster",
     "deckId": "deck.stone_legion",
     "role": "",
-    "displayName": "特12",
-    "designSlotName": "特12",
+    "displayName": "幽灵炎",
+    "designSlotName": "",
     "description": "[[普通近战]]，[[剧烈燃烧]]",
-    "faceIntro": "蜥蜴一族中不喜欢剪指甲的",
+    "faceIntro": "会灼烧灵魂",
     "attackPattern": "普通近战",
     "gold": 5,
     "stats": {
@@ -18,7 +18,7 @@
         "recovery": 0
     },
     "sprites": {
-        "mainIcon": "Assets/Resources/ContentArt/Multiple/pixel_art_card_pack 1.png",
+        "mainIcon": "",
         "faceBackground": "",
         "cardFrame": "",
         "banner": "",
@@ -28,8 +28,8 @@
     },
     "mainVisual": {
         "offsetX": 0.0,
-        "offsetY": -0.10000000149011612,
-        "uniformScale": 1.0
+        "offsetY": -0.20000000298023225,
+        "uniformScale": 0.8999999761581421
     },
     "animations": {
         "defaultFps": 8.0,
@@ -37,7 +37,7 @@
             {
                 "id": "idle",
                 "sourceType": "folder",
-                "path": "Assets/Resources/ContentArt/Png/像素怪物合集/sprites/51LizardMan01_idle_01",
+                "path": "Assets/Resources/ContentArt/Png/像素怪物合集2/sprites/Map0_Fire_blue3",
                 "offsetX": 0.0,
                 "offsetY": 0.0
             },
