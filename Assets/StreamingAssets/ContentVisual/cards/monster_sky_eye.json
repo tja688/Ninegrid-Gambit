@@ -4,7 +4,7 @@
     "kind": "Monster",
     "deckId": "deck.orc_legion",
     "role": "",
-    "displayName": "远程2",
+    "displayName": "大黄蜂",
     "designSlotName": "远程2",
     "description": "[[普通远程]]，[[远程武器]]，[[逃避]]",
     "faceIntro": "能在人身上蜇出一个大洞",
@@ -74,12 +74,22 @@
     "extraSlots": [],
     "rarity": "None",
     "tags": [],
-    "effectAssemblies": [],
-    "effectIds": [],
-    "skillIds": [
-        "skill.ranged_weapon",
-        "skill.evade"
+    "effectAssemblies": [
+        {
+            "id": "skill.ranged_weapon.activate",
+            "templateId": "tpl.skill.ranged_weapon.activate",
+            "containerType": "MonsterSkill",
+            "argsJson": "{\"value\":1,\"source\":\"skill.ranged_weapon\"}"
+        },
+        {
+            "id": "skill.evade.battle",
+            "templateId": "tpl.skill.evade.battle",
+            "containerType": "MonsterSkill",
+            "argsJson": "{\"sourceAction\":\"DealDamage\"}"
+        }
     ],
+    "effectIds": [],
+    "skillIds": [],
     "level": "普通",
     "sequence": 2,
     "isElite": false,

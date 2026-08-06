@@ -4,10 +4,10 @@
     "kind": "Monster",
     "deckId": "deck.void",
     "role": "",
-    "displayName": "近战7",
+    "displayName": "拳击决斗者",
     "designSlotName": "近战7",
     "description": "[[神圣决斗]]",
-    "faceIntro": "会贴住敌人来一场盛大的爆炸",
+    "faceIntro": "绝不打假赛",
     "attackPattern": "无",
     "gold": 5,
     "stats": {
@@ -27,8 +27,8 @@
         "backLogo": ""
     },
     "mainVisual": {
-        "offsetX": -0.10000000149011612,
-        "offsetY": -0.10000000149011612,
+        "offsetX": 0.0,
+        "offsetY": -0.4000000059604645,
         "uniformScale": 1.0
     },
     "animations": {
@@ -74,11 +74,16 @@
     "extraSlots": [],
     "rarity": "None",
     "tags": [],
-    "effectAssemblies": [],
-    "effectIds": [],
-    "skillIds": [
-        "skill.holy_duel"
+    "effectAssemblies": [
+        {
+            "id": "skill.holy_duel.activate",
+            "templateId": "tpl.skill.holy_duel.activate",
+            "containerType": "MonsterSkill",
+            "argsJson": "{\"value\":1,\"source\":\"skill.holy_duel\"}"
+        }
     ],
+    "effectIds": [],
+    "skillIds": [],
     "level": "普通",
     "sequence": 1,
     "isElite": false,

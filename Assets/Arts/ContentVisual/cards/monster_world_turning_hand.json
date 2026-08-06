@@ -4,10 +4,10 @@
     "kind": "Monster",
     "deckId": "deck.insect",
     "role": "",
-    "displayName": "特6",
+    "displayName": "短剑骷髅",
     "designSlotName": "特6",
     "description": "[[普通近战]]，[[吟唱]]",
-    "faceIntro": "超稀有的生物",
+    "faceIntro": "剑是捡的",
     "attackPattern": "普通近战",
     "gold": 5,
     "stats": {
@@ -27,8 +27,8 @@
         "backLogo": ""
     },
     "mainVisual": {
-        "offsetX": 0.14000000059604646,
-        "offsetY": -0.23999999463558198,
+        "offsetX": 0.0,
+        "offsetY": -0.6000000238418579,
         "uniformScale": 1.0
     },
     "animations": {
@@ -37,7 +37,7 @@
             {
                 "id": "idle",
                 "sourceType": "folder",
-                "path": "Assets/Resources/ContentArt/Png/像素怪物合集/sprites/NPC_Dryad_golden_idle",
+                "path": "Assets/Resources/ContentArt/Png/像素怪物合集/sprites/003skull_idle_01",
                 "offsetX": 0.0,
                 "offsetY": 0.0
             },
@@ -74,11 +74,16 @@
     "extraSlots": [],
     "rarity": "None",
     "tags": [],
-    "effectAssemblies": [],
-    "effectIds": [],
-    "skillIds": [
-        "skill.chant"
+    "effectAssemblies": [
+        {
+            "id": "skill.chant.interact",
+            "templateId": "tpl.skill.chant.interact",
+            "containerType": "MonsterSkill",
+            "argsJson": "{\"count\":1}"
+        }
     ],
+    "effectIds": [],
+    "skillIds": [],
     "level": "普通",
     "sequence": 4,
     "isElite": false,

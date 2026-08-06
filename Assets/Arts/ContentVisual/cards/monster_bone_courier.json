@@ -4,10 +4,10 @@
     "kind": "Monster",
     "deckId": "deck.void",
     "role": "",
-    "displayName": "卑劣决斗者",
+    "displayName": "灵巧决斗者",
     "designSlotName": "卑劣决斗者",
     "description": "[[神圣决斗]]，[[逃避]]",
-    "faceIntro": "他坚信自己是刺猬",
+    "faceIntro": "静待时机...",
     "attackPattern": "无",
     "gold": 5,
     "stats": {
@@ -27,8 +27,8 @@
         "backLogo": ""
     },
     "mainVisual": {
-        "offsetX": -0.06499999761581421,
-        "offsetY": -0.07000000029802323,
+        "offsetX": 0.0,
+        "offsetY": -0.4000000059604645,
         "uniformScale": 1.0
     },
     "animations": {
@@ -74,12 +74,22 @@
     "extraSlots": [],
     "rarity": "None",
     "tags": [],
-    "effectAssemblies": [],
-    "effectIds": [],
-    "skillIds": [
-        "skill.holy_duel",
-        "skill.evade"
+    "effectAssemblies": [
+        {
+            "id": "skill.holy_duel.activate",
+            "templateId": "tpl.skill.holy_duel.activate",
+            "containerType": "MonsterSkill",
+            "argsJson": "{\"value\":1,\"source\":\"skill.holy_duel\"}"
+        },
+        {
+            "id": "skill.evade.battle",
+            "templateId": "tpl.skill.evade.battle",
+            "containerType": "MonsterSkill",
+            "argsJson": "{\"sourceAction\":\"DealDamage\"}"
+        }
     ],
+    "effectIds": [],
+    "skillIds": [],
     "level": "普通",
     "sequence": 2,
     "isElite": false,

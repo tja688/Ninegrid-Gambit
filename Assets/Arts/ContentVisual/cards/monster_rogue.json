@@ -4,10 +4,10 @@
     "kind": "Monster",
     "deckId": "deck.insect",
     "role": "",
-    "displayName": "boss3",
+    "displayName": "亡灵法师",
     "designSlotName": "boss3",
     "description": "[[普通近战]]，[[死亡之主]]",
-    "faceIntro": "头上的簪子其实是备用法杖",
+    "faceIntro": "其实亡灵法师也有追求时髦的权利",
     "attackPattern": "普通近战",
     "gold": 5,
     "stats": {
@@ -74,11 +74,16 @@
     "extraSlots": [],
     "rarity": "None",
     "tags": [],
-    "effectAssemblies": [],
-    "effectIds": [],
-    "skillIds": [
-        "skill.lord_of_death"
+    "effectAssemblies": [
+        {
+            "id": "skill.lord_of_death.remove",
+            "templateId": "tpl.skill.lord_of_death.remove",
+            "containerType": "MonsterSkill",
+            "argsJson": "{\"count\":1}"
+        }
     ],
+    "effectIds": [],
+    "skillIds": [],
     "level": "层主",
     "sequence": 5,
     "isElite": false,

@@ -4,10 +4,10 @@
     "kind": "Monster",
     "deckId": "deck.void",
     "role": "",
-    "displayName": "急切决斗者",
+    "displayName": "挥砍决斗者",
     "designSlotName": "急切决斗者",
     "description": "[[神圣决斗]]，[[嘲讽]]",
-    "faceIntro": "田鼠不会挖洞，那是鼹鼠干的事情",
+    "faceIntro": "以前是个伐木工",
     "attackPattern": "无",
     "gold": 5,
     "stats": {
@@ -27,8 +27,8 @@
         "backLogo": ""
     },
     "mainVisual": {
-        "offsetX": -0.15000000596046449,
-        "offsetY": -0.15000000596046449,
+        "offsetX": 0.0,
+        "offsetY": -0.4000000059604645,
         "uniformScale": 1.0
     },
     "animations": {
@@ -74,12 +74,22 @@
     "extraSlots": [],
     "rarity": "None",
     "tags": [],
-    "effectAssemblies": [],
-    "effectIds": [],
-    "skillIds": [
-        "skill.holy_duel",
-        "skill.taunt"
+    "effectAssemblies": [
+        {
+            "id": "skill.holy_duel.activate",
+            "templateId": "tpl.skill.holy_duel.activate",
+            "containerType": "MonsterSkill",
+            "argsJson": "{\"value\":1,\"source\":\"skill.holy_duel\"}"
+        },
+        {
+            "id": "skill.taunt.rule",
+            "templateId": "tpl.skill.taunt.rule",
+            "containerType": "MonsterSkill",
+            "argsJson": "{\"value\":0}"
+        }
     ],
+    "effectIds": [],
+    "skillIds": [],
     "level": "普通",
     "sequence": 4,
     "isElite": false,

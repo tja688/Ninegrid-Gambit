@@ -4,10 +4,10 @@
     "kind": "Monster",
     "deckId": "deck.orc_legion",
     "role": "",
-    "displayName": "特3",
+    "displayName": "莫西干鸟",
     "designSlotName": "特3",
     "description": "[[普通近战]]，[[快递]]",
-    "faceIntro": "他最得意的就是他的发型",
+    "faceIntro": "他的发型是他的生命",
     "attackPattern": "普通近战",
     "gold": 5,
     "stats": {
@@ -74,11 +74,16 @@
     "extraSlots": [],
     "rarity": "None",
     "tags": [],
-    "effectAssemblies": [],
-    "effectIds": [],
-    "skillIds": [
-        "skill.delivery"
+    "effectAssemblies": [
+        {
+            "id": "skill.delivery.move",
+            "templateId": "tpl.skill.delivery.move",
+            "containerType": "MonsterSkill",
+            "argsJson": "{\"count\":1}"
+        }
     ],
+    "effectIds": [],
+    "skillIds": [],
     "level": "普通",
     "sequence": 3,
     "isElite": false,

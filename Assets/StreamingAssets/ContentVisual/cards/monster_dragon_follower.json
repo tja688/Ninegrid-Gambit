@@ -74,11 +74,16 @@
     "extraSlots": [],
     "rarity": "None",
     "tags": [],
-    "effectAssemblies": [],
-    "effectIds": [],
-    "skillIds": [
-        "skill.intense_burning"
+    "effectAssemblies": [
+        {
+            "id": "skill.intense_burning.flame_deal",
+            "templateId": "tpl.skill.intense_burning.flame_deal",
+            "containerType": "MonsterSkill",
+            "argsJson": "{\"count\":1}"
+        }
     ],
+    "effectIds": [],
+    "skillIds": [],
     "level": "普通",
     "sequence": 4,
     "isElite": false,

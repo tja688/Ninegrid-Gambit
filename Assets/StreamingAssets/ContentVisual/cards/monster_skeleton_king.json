@@ -4,10 +4,10 @@
     "kind": "Monster",
     "deckId": "deck.orc_legion",
     "role": "",
-    "displayName": "boss2",
+    "displayName": "紫袍鹰王",
     "designSlotName": "boss2",
     "description": "[[普通近战]]，[[空间掌握]]",
-    "faceIntro": "鹰之王者不会飞是因为太他吃太胖了",
+    "faceIntro": "不会飞是因为太他吃太胖了",
     "attackPattern": "普通近战",
     "gold": 5,
     "stats": {
@@ -74,11 +74,16 @@
     "extraSlots": [],
     "rarity": "None",
     "tags": [],
-    "effectAssemblies": [],
-    "effectIds": [],
-    "skillIds": [
-        "skill.space_mastery"
+    "effectAssemblies": [
+        {
+            "id": "skill.space_mastery.battle",
+            "templateId": "tpl.skill.space_mastery.battle",
+            "containerType": "MonsterSkill",
+            "argsJson": "{\"sourceAction\":\"DealDamage\",\"count\":1}"
+        }
     ],
+    "effectIds": [],
+    "skillIds": [],
     "level": "层主",
     "sequence": 5,
     "isElite": false,

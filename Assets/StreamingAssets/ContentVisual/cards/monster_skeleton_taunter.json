@@ -4,10 +4,10 @@
     "kind": "Monster",
     "deckId": "deck.orc_legion",
     "role": "",
-    "displayName": "特4",
+    "displayName": "独眼蝙蝠",
     "designSlotName": "特4",
     "description": "[[普通近战]]，[[转动]]",
-    "faceIntro": "靠回声定位，眼睛主要起到装饰作用",
+    "faceIntro": "他反复纠正他没有在读研究生",
     "attackPattern": "普通近战",
     "gold": 5,
     "stats": {
@@ -74,11 +74,16 @@
     "extraSlots": [],
     "rarity": "None",
     "tags": [],
-    "effectAssemblies": [],
-    "effectIds": [],
-    "skillIds": [
-        "skill.turn_world"
+    "effectAssemblies": [
+        {
+            "id": "skill.turn_world.enter",
+            "templateId": "tpl.skill.turn_world.enter",
+            "containerType": "MonsterSkill",
+            "argsJson": "{\"count\":1}"
+        }
     ],
+    "effectIds": [],
+    "skillIds": [],
     "level": "普通",
     "sequence": 4,
     "isElite": false,

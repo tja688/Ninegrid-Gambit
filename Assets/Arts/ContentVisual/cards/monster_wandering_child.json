@@ -4,10 +4,10 @@
     "kind": "Monster",
     "deckId": "deck.insect",
     "role": "",
-    "displayName": "近战3",
+    "displayName": "巨斧骷髅",
     "designSlotName": "近战3",
     "description": "[[普通近战]]，[[死亡召唤]]",
-    "faceIntro": "他在等他的另一半",
+    "faceIntro": "骷髅没有肌肉是怎么举起斧头的，这是个问题",
     "attackPattern": "普通近战",
     "gold": 5,
     "stats": {
@@ -27,8 +27,8 @@
         "backLogo": ""
     },
     "mainVisual": {
-        "offsetX": 0.10000000149011612,
-        "offsetY": -0.5,
+        "offsetX": 0.0,
+        "offsetY": -0.6000000238418579,
         "uniformScale": 1.0
     },
     "animations": {
@@ -37,7 +37,7 @@
             {
                 "id": "idle",
                 "sourceType": "folder",
-                "path": "",
+                "path": "Assets/Resources/ContentArt/Png/像素怪物合集/sprites/004skull_idle_01",
                 "offsetX": 0.0,
                 "offsetY": 0.0
             },
@@ -74,11 +74,16 @@
     "extraSlots": [],
     "rarity": "None",
     "tags": [],
-    "effectAssemblies": [],
-    "effectIds": [],
-    "skillIds": [
-        "skill.death_summon"
+    "effectAssemblies": [
+        {
+            "id": "skill.death_summon.remove",
+            "templateId": "tpl.skill.death_summon.remove",
+            "containerType": "MonsterSkill",
+            "argsJson": "{\"count\":1}"
+        }
     ],
+    "effectIds": [],
+    "skillIds": [],
     "level": "普通",
     "sequence": 1,
     "isElite": false,

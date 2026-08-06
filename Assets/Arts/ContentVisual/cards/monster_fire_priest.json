@@ -4,10 +4,10 @@
     "kind": "Monster",
     "deckId": "deck.void",
     "role": "",
-    "displayName": "特13",
+    "displayName": "敲击决斗者",
     "designSlotName": "特13",
     "description": "[[神圣决斗]]，[[历战]]",
-    "faceIntro": "看到他张嘴的都死了",
+    "faceIntro": "以前是个矿工",
     "attackPattern": "无",
     "gold": 5,
     "stats": {
@@ -28,7 +28,7 @@
     },
     "mainVisual": {
         "offsetX": 0.0,
-        "offsetY": 0.0,
+        "offsetY": -0.4000000059604645,
         "uniformScale": 1.0
     },
     "animations": {
@@ -74,12 +74,22 @@
     "extraSlots": [],
     "rarity": "None",
     "tags": [],
-    "effectAssemblies": [],
-    "effectIds": [],
-    "skillIds": [
-        "skill.holy_duel",
-        "skill.battle_hardened"
+    "effectAssemblies": [
+        {
+            "id": "skill.holy_duel.activate",
+            "templateId": "tpl.skill.holy_duel.activate",
+            "containerType": "MonsterSkill",
+            "argsJson": "{\"value\":1,\"source\":\"skill.holy_duel\"}"
+        },
+        {
+            "id": "skill.battle_hardened.damage",
+            "templateId": "tpl.skill.battle_hardened.damage",
+            "containerType": "MonsterSkill",
+            "argsJson": "{\"delta\":1,\"reason\":\"skill.battle_hardened\"}"
+        }
     ],
+    "effectIds": [],
+    "skillIds": [],
     "level": "普通",
     "sequence": 3,
     "isElite": false,

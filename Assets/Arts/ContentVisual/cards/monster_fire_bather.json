@@ -4,10 +4,10 @@
     "kind": "Monster",
     "deckId": "deck.void",
     "role": "",
-    "displayName": "boss7",
+    "displayName": "超频决斗者",
     "designSlotName": "boss7",
     "description": "[[神圣决斗]]，[[损耗]]",
-    "faceIntro": "腿多就是不一样",
+    "faceIntro": "决斗者们的头头",
     "attackPattern": "无",
     "gold": 5,
     "stats": {
@@ -27,8 +27,8 @@
         "backLogo": ""
     },
     "mainVisual": {
-        "offsetX": 0.10000000149011612,
-        "offsetY": 0.0,
+        "offsetX": 0.0,
+        "offsetY": -0.4000000059604645,
         "uniformScale": 1.0
     },
     "animations": {
@@ -74,12 +74,22 @@
     "extraSlots": [],
     "rarity": "None",
     "tags": [],
-    "effectAssemblies": [],
-    "effectIds": [],
-    "skillIds": [
-        "skill.holy_duel",
-        "skill.attrition"
+    "effectAssemblies": [
+        {
+            "id": "skill.holy_duel.activate",
+            "templateId": "tpl.skill.holy_duel.activate",
+            "containerType": "MonsterSkill",
+            "argsJson": "{\"value\":1,\"source\":\"skill.holy_duel\"}"
+        },
+        {
+            "id": "skill.attrition.remove",
+            "templateId": "tpl.skill.attrition.remove",
+            "containerType": "MonsterSkill",
+            "argsJson": "{\"delta\":-1,\"reason\":\"skill.attrition\",\"action_actions_1_delta\":-10}"
+        }
     ],
+    "effectIds": [],
+    "skillIds": [],
     "level": "层主",
     "sequence": 5,
     "isElite": false,
