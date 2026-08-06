@@ -4,10 +4,10 @@
     "kind": "Monster",
     "deckId": "deck.skeleton_legion",
     "role": "",
-    "displayName": "獠牙猪",
+    "displayName": "紫蝎",
     "designSlotName": "",
     "description": "[[潜伏近战]]，[[跳杀]]",
-    "faceIntro": "獠牙猛击！",
+    "faceIntro": "哎，扎死你呀哈哈哈哈",
     "attackPattern": "普通近战",
     "gold": 5,
     "stats": {
@@ -28,8 +28,8 @@
     },
     "mainVisual": {
         "offsetX": -0.10000000149011612,
-        "offsetY": -0.10000000149011612,
-        "uniformScale": 0.800000011920929
+        "offsetY": 0.0,
+        "uniformScale": 1.0
     },
     "animations": {
         "defaultFps": 6.0,
@@ -37,7 +37,7 @@
             {
                 "id": "idle",
                 "sourceType": "folder",
-                "path": "Assets/Resources/ContentArt/Png/像素怪物合集2/sprites/14wildboarBoss_attack_02_M",
+                "path": "Assets/Resources/ContentArt/Png/像素怪物合集/sprites/34scorpion_idle_01",
                 "offsetX": 0.0,
                 "offsetY": 0.0
             },
