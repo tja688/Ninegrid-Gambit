@@ -4,10 +4,10 @@
     "kind": "Monster",
     "deckId": "deck.dragon",
     "role": "",
-    "displayName": "特2",
-    "designSlotName": "特2",
+    "displayName": "负伤莱姆",
+    "designSlotName": "",
     "description": "[[普通近战]]，[[献身]]",
-    "faceIntro": "剑是捡的",
+    "faceIntro": "随时做好奉献自己的准备",
     "attackPattern": "普通近战",
     "gold": 5,
     "stats": {
@@ -28,8 +28,8 @@
     },
     "mainVisual": {
         "offsetX": 0.0,
-        "offsetY": -0.5,
-        "uniformScale": 0.8199999928474426
+        "offsetY": 0.0,
+        "uniformScale": 1.0
     },
     "animations": {
         "defaultFps": 8.0,
@@ -37,7 +37,7 @@
             {
                 "id": "idle",
                 "sourceType": "folder",
-                "path": "Assets/Resources/ContentArt/Png/像素怪物合集/sprites/003skull_idle_01",
+                "path": "Assets/Resources/ContentArt/Png/像素怪物合集/sprites/41slime_idle_01",
                 "offsetX": 0.0,
                 "offsetY": 0.0
             },

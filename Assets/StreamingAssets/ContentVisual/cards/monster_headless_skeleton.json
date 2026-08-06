@@ -4,10 +4,10 @@
     "kind": "Monster",
     "deckId": "deck.dragon",
     "role": "",
-    "displayName": "特1",
-    "designSlotName": "特1",
+    "displayName": "钢铁莱姆",
+    "designSlotName": "",
     "description": "[[普通近战]][[叠甲]]",
-    "faceIntro": "骷髅没有肌肉是怎么举起斧头的，这是个问题",
+    "faceIntro": "很耐揍",
     "attackPattern": "普通近战",
     "gold": 5,
     "stats": {
@@ -27,8 +27,8 @@
         "backLogo": ""
     },
     "mainVisual": {
-        "offsetX": 0.10000000149011612,
-        "offsetY": -0.5,
+        "offsetX": 0.05000000074505806,
+        "offsetY": -0.10000000149011612,
         "uniformScale": 0.8199999928474426
     },
     "animations": {
@@ -37,7 +37,7 @@
             {
                 "id": "idle",
                 "sourceType": "folder",
-                "path": "Assets/Resources/ContentArt/Png/像素怪物合集/sprites/004skull_idle_01",
+                "path": "Assets/Resources/ContentArt/Png/像素怪物合集/sprites/21sandmonster_idle_01",
                 "offsetX": 0.0,
                 "offsetY": 0.0
             },

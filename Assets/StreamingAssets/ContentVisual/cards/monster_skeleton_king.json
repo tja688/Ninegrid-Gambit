@@ -5,9 +5,9 @@
     "deckId": "deck.orc_legion",
     "role": "",
     "displayName": "紫袍鹰王",
-    "designSlotName": "boss2",
+    "designSlotName": "",
     "description": "[[普通近战]]，[[空间掌握]]",
-    "faceIntro": "不会飞是因为太他吃太胖了",
+    "faceIntro": "不会飞是因为吃太胖了",
     "attackPattern": "普通近战",
     "gold": 5,
     "stats": {
@@ -28,8 +28,8 @@
     },
     "mainVisual": {
         "offsetX": 0.0,
-        "offsetY": -0.5299999713897705,
-        "uniformScale": 1.0
+        "offsetY": -0.6200000047683716,
+        "uniformScale": 1.2000000476837159
     },
     "animations": {
         "defaultFps": 8.0,

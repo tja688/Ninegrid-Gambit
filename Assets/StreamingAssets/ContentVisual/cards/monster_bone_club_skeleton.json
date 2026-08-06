@@ -5,7 +5,7 @@
     "deckId": "deck.void",
     "role": "",
     "displayName": "拳击决斗者",
-    "designSlotName": "近战7",
+    "designSlotName": "",
     "description": "[[神圣决斗]]",
     "faceIntro": "绝不打假赛",
     "attackPattern": "无",
@@ -37,7 +37,7 @@
             {
                 "id": "idle",
                 "sourceType": "folder",
-                "path": "Assets/Arts/Images/Png/像素怪物合集/sprites/Eric_attack_01_M",
+                "path": "Assets/Resources/ContentArt/Png/像素怪物合集2/sprites/Eric_attack_01_M",
                 "offsetX": 0.0,
                 "offsetY": 0.0
             },

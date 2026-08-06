@@ -74,12 +74,22 @@
     "extraSlots": [],
     "rarity": "None",
     "tags": [],
-    "effectAssemblies": [],
-    "effectIds": [],
-    "skillIds": [
-        "skill.ambush_melee",
-        "skill.recuperate"
+    "effectAssemblies": [
+        {
+            "id": "skill.ambush_melee.interact",
+            "templateId": "tpl.skill.ambush_melee.interact",
+            "containerType": "MonsterSkill",
+            "argsJson": "{}"
+        },
+        {
+            "id": "skill.recuperate.flip",
+            "templateId": "tpl.skill.recuperate.flip",
+            "containerType": "MonsterSkill",
+            "argsJson": "{\"delta\":1,\"armor\":2,\"reason\":\"skill.recuperate\"}"
+        }
     ],
+    "effectIds": [],
+    "skillIds": [],
     "level": "普通",
     "sequence": 3,
     "isElite": false,

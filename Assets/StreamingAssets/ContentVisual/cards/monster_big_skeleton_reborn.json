@@ -4,10 +4,10 @@
     "kind": "Monster",
     "deckId": "deck.dragon",
     "role": "",
-    "displayName": "远程1",
-    "designSlotName": "远程1",
+    "displayName": "双球莱姆",
+    "designSlotName": "",
     "description": "[[普通远程]]，[[远程武器]]",
-    "faceIntro": "有人问他的箭从哪里来，答案是就地取材",
+    "faceIntro": "偶像是豌豆射手",
     "attackPattern": "普通远程",
     "gold": 5,
     "stats": {
@@ -27,8 +27,8 @@
         "backLogo": ""
     },
     "mainVisual": {
-        "offsetX": 0.0,
-        "offsetY": -0.15000000596046449,
+        "offsetX": -0.05000000074505806,
+        "offsetY": -0.10000000149011612,
         "uniformScale": 0.8999999761581421
     },
     "animations": {
@@ -37,7 +37,7 @@
             {
                 "id": "idle",
                 "sourceType": "folder",
-                "path": "Assets/Resources/ContentArt/Png/像素怪物合集/sprites/005skull_idle_01",
+                "path": "Assets/Resources/ContentArt/Png/像素怪物合集2/sprites/40slime_attack_01_M",
                 "offsetX": 0.0,
                 "offsetY": 0.0
             },

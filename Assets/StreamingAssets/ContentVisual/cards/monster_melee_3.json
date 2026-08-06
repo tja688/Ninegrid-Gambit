@@ -4,10 +4,10 @@
     "kind": "Monster",
     "deckId": "deck.dragon",
     "role": "",
-    "displayName": "近战1",
-    "designSlotName": "近战1",
+    "displayName": "小小莱姆",
+    "designSlotName": "",
     "description": "[[普通近战]]",
-    "faceIntro": "",
+    "faceIntro": "人畜无害",
     "attackPattern": "普通近战",
     "gold": 5,
     "stats": {
@@ -27,8 +27,8 @@
         "backLogo": ""
     },
     "mainVisual": {
-        "offsetX": 0.0,
-        "offsetY": 0.0,
+        "offsetX": 0.05000000074505806,
+        "offsetY": -0.10000000149011612,
         "uniformScale": 1.0
     },
     "animations": {
@@ -36,8 +36,8 @@
         "slots": [
             {
                 "id": "idle",
-                "sourceType": "none",
-                "path": "Assets/Resources/ContentArt/Png/像素怪物合集/sprites/003skull_idle_01",
+                "sourceType": "folder",
+                "path": "Assets/Resources/ContentArt/Png/像素怪物合集/sprites/Map01_monster01_idle_01",
                 "offsetX": 0.0,
                 "offsetY": 0.0
             },

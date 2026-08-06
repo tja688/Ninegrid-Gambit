@@ -5,7 +5,7 @@
     "deckId": "deck.void",
     "role": "",
     "displayName": "灵巧决斗者",
-    "designSlotName": "卑劣决斗者",
+    "designSlotName": "",
     "description": "[[神圣决斗]]，[[逃避]]",
     "faceIntro": "静待时机...",
     "attackPattern": "无",
@@ -29,7 +29,7 @@
     "mainVisual": {
         "offsetX": 0.0,
         "offsetY": -0.4000000059604645,
-        "uniformScale": 1.0
+        "uniformScale": 0.8999999761581421
     },
     "animations": {
         "defaultFps": 8.0,
@@ -37,7 +37,7 @@
             {
                 "id": "idle",
                 "sourceType": "folder",
-                "path": "Assets/Arts/Images/Png/像素怪物合集/sprites/Eric_attack_idle",
+                "path": "Assets/Resources/ContentArt/Png/像素怪物合集2/sprites/Eric_run",
                 "offsetX": 0.0,
                 "offsetY": 0.0
             },

@@ -4,10 +4,10 @@
     "kind": "Monster",
     "deckId": "deck.orc_legion",
     "role": "",
-    "displayName": "猪头蝙蝠",
-    "designSlotName": "近战2",
+    "displayName": "小蜜蜂",
+    "designSlotName": "",
     "description": "[[斜角近战]]",
-    "faceIntro": "是蝙蝠一族中的萝莉",
+    "faceIntro": "是CS高手",
     "attackPattern": "斜角近战",
     "gold": 5,
     "stats": {
@@ -37,7 +37,7 @@
             {
                 "id": "idle",
                 "sourceType": "folder",
-                "path": "Assets/Arts/Images/Png/像素怪物合集/sprites/42bat_idle_01",
+                "path": "Assets/Resources/ContentArt/Png/像素怪物合集2/sprites/buff_bee_idle_01",
                 "offsetX": 0.0,
                 "offsetY": 0.0
             },

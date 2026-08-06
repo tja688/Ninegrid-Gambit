@@ -4,10 +4,10 @@
     "kind": "Monster",
     "deckId": "deck.dragon",
     "role": "",
-    "displayName": "boss1",
-    "designSlotName": "boss1",
+    "displayName": "人面莱姆",
+    "designSlotName": "",
     "description": "[[普通近战]]，[[吸收]]",
-    "faceIntro": "倒也没那么大",
+    "faceIntro": "其实是由六只莱姆组合成的",
     "attackPattern": "普通近战",
     "gold": 5,
     "stats": {
@@ -27,8 +27,8 @@
         "backLogo": ""
     },
     "mainVisual": {
-        "offsetX": 0.20000000298023225,
-        "offsetY": -0.2800000011920929,
+        "offsetX": 0.05000000074505806,
+        "offsetY": -0.10000000149011612,
         "uniformScale": 1.0
     },
     "animations": {
@@ -37,7 +37,7 @@
             {
                 "id": "idle",
                 "sourceType": "folder",
-                "path": "Assets/Resources/ContentArt/Png/像素怪物合集/sprites/Dogge_idle_01",
+                "path": "Assets/Resources/ContentArt/Png/像素怪物合集/sprites/59goldenbigslime_idle_01",
                 "offsetX": 0.0,
                 "offsetY": 0.0
             },

@@ -4,10 +4,10 @@
     "kind": "Monster",
     "deckId": "deck.void",
     "role": "",
-    "displayName": "超频决斗者",
-    "designSlotName": "boss7",
+    "displayName": "爆裂决斗者",
+    "designSlotName": "",
     "description": "[[神圣决斗]]，[[损耗]]",
-    "faceIntro": "决斗者们的头头",
+    "faceIntro": "第40k届决斗者争霸赛冠军",
     "attackPattern": "无",
     "gold": 5,
     "stats": {
@@ -29,7 +29,7 @@
     "mainVisual": {
         "offsetX": 0.0,
         "offsetY": -0.4000000059604645,
-        "uniformScale": 1.0
+        "uniformScale": 1.100000023841858
     },
     "animations": {
         "defaultFps": 8.0,
@@ -37,7 +37,7 @@
             {
                 "id": "idle",
                 "sourceType": "folder",
-                "path": "Assets/Arts/Images/Png/像素怪物合集/sprites/Eric_attack_02_M",
+                "path": "Assets/Resources/ContentArt/Png/像素怪物合集2/sprites/Eric_attack_02_M",
                 "offsetX": 0.0,
                 "offsetY": 0.0
             },

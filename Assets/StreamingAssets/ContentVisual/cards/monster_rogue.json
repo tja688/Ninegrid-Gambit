@@ -5,9 +5,9 @@
     "deckId": "deck.insect",
     "role": "",
     "displayName": "亡灵法师",
-    "designSlotName": "boss3",
+    "designSlotName": "",
     "description": "[[普通近战]]，[[死亡之主]]",
-    "faceIntro": "其实亡灵法师也有追求时髦的权利",
+    "faceIntro": "亡灵法师不总是一个眼冒鬼火的骷髅架子",
     "attackPattern": "普通近战",
     "gold": 5,
     "stats": {
@@ -37,7 +37,7 @@
             {
                 "id": "idle",
                 "sourceType": "folder",
-                "path": "Assets/Resources/ContentArt/Png/像素怪物合集/sprites/Philip_idle_01",
+                "path": "Assets/Resources/ContentArt/Png/像素怪物合集2/sprites/Philip_skill_small_B",
                 "offsetX": 0.0,
                 "offsetY": 0.0
             },

@@ -5,7 +5,7 @@
     "deckId": "deck.insect",
     "role": "",
     "displayName": "巨剑骷髅",
-    "designSlotName": "特5",
+    "designSlotName": "",
     "description": "[[全向近战]]",
     "faceIntro": "蝉联三年最帅骷髅的称号",
     "attackPattern": "全向近战",
@@ -27,9 +27,9 @@
         "backLogo": ""
     },
     "mainVisual": {
-        "offsetX": 0.10000000149011612,
-        "offsetY": -0.6000000238418579,
-        "uniformScale": 0.7900000214576721
+        "offsetX": 0.0,
+        "offsetY": -0.7400000095367432,
+        "uniformScale": 1.0
     },
     "animations": {
         "defaultFps": 8.0,

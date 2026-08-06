@@ -5,9 +5,9 @@
     "deckId": "deck.orc_legion",
     "role": "",
     "displayName": "大黄蜂",
-    "designSlotName": "远程2",
+    "designSlotName": "",
     "description": "[[普通远程]]，[[远程武器]]，[[逃避]]",
-    "faceIntro": "能在人身上蜇出一个大洞",
+    "faceIntro": "不会变形",
     "attackPattern": "普通远程",
     "gold": 5,
     "stats": {

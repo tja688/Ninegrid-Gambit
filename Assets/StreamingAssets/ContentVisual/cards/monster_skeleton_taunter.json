@@ -5,9 +5,9 @@
     "deckId": "deck.orc_legion",
     "role": "",
     "displayName": "独眼蝙蝠",
-    "designSlotName": "特4",
+    "designSlotName": "",
     "description": "[[普通近战]]，[[转动]]",
-    "faceIntro": "他反复纠正他没有在读研究生",
+    "faceIntro": "反复纠正他没有在读研究生",
     "attackPattern": "普通近战",
     "gold": 5,
     "stats": {

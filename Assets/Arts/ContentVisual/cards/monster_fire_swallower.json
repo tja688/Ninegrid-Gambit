@@ -4,10 +4,10 @@
     "kind": "Monster",
     "deckId": "deck.void",
     "role": "",
-    "displayName": "挥砍决斗者",
-    "designSlotName": "急切决斗者",
+    "displayName": "敲击决斗者",
+    "designSlotName": "",
     "description": "[[神圣决斗]]，[[嘲讽]]",
-    "faceIntro": "以前是个伐木工",
+    "faceIntro": "会讲笑话，虽然决斗者们的笑话从来不好笑",
     "attackPattern": "无",
     "gold": 5,
     "stats": {
@@ -29,7 +29,7 @@
     "mainVisual": {
         "offsetX": 0.0,
         "offsetY": -0.4000000059604645,
-        "uniformScale": 1.0
+        "uniformScale": 0.8999999761581421
     },
     "animations": {
         "defaultFps": 8.0,
@@ -37,7 +37,7 @@
             {
                 "id": "idle",
                 "sourceType": "folder",
-                "path": "Assets/Arts/Images/Png/像素怪物合集/sprites/Eric_farm_M",
+                "path": "Assets/Resources/ContentArt/Png/像素怪物合集2/sprites/Eric_mining_M",
                 "offsetX": 0.0,
                 "offsetY": 0.0
             },

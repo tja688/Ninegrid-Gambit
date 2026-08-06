@@ -74,12 +74,22 @@
     "extraSlots": [],
     "rarity": "None",
     "tags": [],
-    "effectAssemblies": [],
-    "effectIds": [],
-    "skillIds": [
-        "skill.ambush_melee",
-        "skill.leap_kill"
+    "effectAssemblies": [
+        {
+            "id": "skill.ambush_melee.interact",
+            "templateId": "tpl.skill.ambush_melee.interact",
+            "containerType": "MonsterSkill",
+            "argsJson": "{}"
+        },
+        {
+            "id": "skill.leap_kill.flip",
+            "templateId": "tpl.skill.leap_kill.flip",
+            "containerType": "MonsterSkill",
+            "argsJson": "{}"
+        }
     ],
+    "effectIds": [],
+    "skillIds": [],
     "level": "普通",
     "sequence": 1,
     "isElite": false,
