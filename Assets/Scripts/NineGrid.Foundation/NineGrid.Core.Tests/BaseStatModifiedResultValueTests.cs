@@ -1,6 +1,7 @@
 using NineGrid.Content;
 using NineGrid.Core;
 using NineGrid.Core.Content;
+using NineGrid.Core.Stats;
 using NineGrid.Core.Systems;
 using NineGrid.Core.Utilities;
 using NUnit.Framework;
@@ -38,7 +39,9 @@ namespace NineGrid.Core.Tests
         public void ModifyBaseStat_Emits_ResultValue_Equal_To_PostSettlement_Absolute()
         {
             var avatar = Avatar();
+            var stats = mArch.GetSystem<IStatSystem>();
             var previous = (int)avatar.Stats.GetBase(StatId.Attack);
+            var effectiveBefore = stats.GetEffectiveInt(avatar, StatId.Attack);
             var startIndex = mPipeline.EventLog.Entries.Count;
 
             mPipeline.Enqueue(new ModifyBaseStatAction(avatar.Uid, StatId.Attack, 1, "test:+1"));
@@ -48,8 +51,11 @@ namespace NineGrid.Core.Tests
             Assert.IsNotNull(evt, "应产出 BaseStatModified");
             Assert.AreEqual((int)StatId.Attack, evt.Amount, "Amount 仍为 StatId，供 DSL EventFilter 使用");
             Assert.AreEqual(1, evt.Delta, "Delta 仍为增量，供事件日志与触发原子读取");
-            Assert.AreEqual(previous + 1, evt.ResultValue, "ResultValue 为结算后绝对值");
-            Assert.AreEqual(previous + 1, (int)Avatar().Stats.GetBase(StatId.Attack));
+            Assert.AreEqual(
+                effectiveBefore + 1,
+                evt.ResultValue,
+                "ResultValue 为结算后有效攻绝对值（含常驻修饰器，与伤害结算一致）");
+            Assert.AreEqual(previous + 1, (int)Avatar().Stats.GetBase(StatId.Attack), "基础值本身仍只 +1");
         }
 
         [Test]
@@ -57,6 +63,7 @@ namespace NineGrid.Core.Tests
         {
             var avatar = Avatar();
             avatar.Stats.SetBase(StatId.Attack, 2);
+            var stats = mArch.GetSystem<IStatSystem>();
             var startIndex = mPipeline.EventLog.Entries.Count;
 
             mPipeline.Enqueue(new ModifyBaseStatAction(avatar.Uid, StatId.Attack, -5, "test:clamp"));
@@ -65,8 +72,48 @@ namespace NineGrid.Core.Tests
             var evt = FindLastBaseStatModified(startIndex);
             Assert.IsNotNull(evt);
             Assert.AreEqual(-5, evt.Delta);
-            Assert.AreEqual(0, evt.ResultValue);
+            Assert.AreEqual(
+                stats.GetEffectiveInt(avatar, StatId.Attack),
+                evt.ResultValue,
+                "钳到 0 后 ResultValue 仍为有效攻（基础 0 + 常驻修饰器）");
             Assert.AreEqual(0, (int)Avatar().Stats.GetBase(StatId.Attack));
+        }
+
+        [Test]
+        public void ModifyBaseStat_Attack_Emits_EffectiveAttack_When_PermanentModifier_Active()
+        {
+            var avatar = Avatar();
+            var stats = mArch.GetSystem<IStatSystem>();
+            stats.AddModifier(
+                avatar,
+                new StatModifier(
+                    StatId.Attack,
+                    ModifierOp.Add,
+                    2,
+                    ModifierLayer.Persistent,
+                    new ModifierSource("test:perm"),
+                    ModifierScope.Permanent,
+                    null));
+            var baseBefore = (int)avatar.Stats.GetBase(StatId.Attack);
+            var effectiveBefore = stats.GetEffectiveInt(avatar, StatId.Attack);
+            Assert.Greater(effectiveBefore, baseBefore, "前置：avatar 应带常驻攻击修饰器（职业初始遗物）");
+            var startIndex = mPipeline.EventLog.Entries.Count;
+
+            mPipeline.Enqueue(new ModifyBaseStatAction(avatar.Uid, StatId.Attack, 1, "test:+1"));
+            mPipeline.RunToCompletion();
+
+            var evt = FindLastBaseStatModified(startIndex);
+            Assert.IsNotNull(evt, "应产出 BaseStatModified");
+            Assert.AreEqual((int)StatId.Attack, evt.Amount);
+            Assert.AreEqual(1, evt.Delta, "Delta 仍为增量，不并入修饰器");
+            Assert.AreEqual(
+                effectiveBefore + 1,
+                evt.ResultValue,
+                "ResultValue 应为含常驻修饰器的有效攻（加攻卡显示须与伤害结算一致）");
+            Assert.AreEqual(
+                baseBefore + 1,
+                (int)Avatar().Stats.GetBase(StatId.Attack),
+                "基础值本身仍只 +1");
         }
 
         [Test]

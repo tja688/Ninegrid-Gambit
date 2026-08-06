@@ -44,12 +44,19 @@ namespace NineGrid.Core
                 card.Stats.SetBase(StatId.Hp, Math.Min(hp, next));
             }
 
+            // 攻按 ADR-0005 Permanent 有效攻旁路：ResultValue 携带含常驻/条件修饰器的有效攻
+            // （与 AppendPermanentAttackFaceCommit 同构），否则加攻卡等路径会提交基础值、
+            // 与伤害结算（有效攻）错位——带遗物/光环时显示落后于真实攻击力。
+            var resultValue = Stat == StatId.Attack
+                ? Math.Max(0, context.GetSystem<IStatSystem>().GetEffectiveInt(card, StatId.Attack))
+                : next;
+
             var evt = new CoreGameEvent(CoreEventType.BaseStatModified, context.ActionId, ActionName)
                 .WithCard(TargetUid)
                 .WithTarget(TargetUid)
                 .WithAmount((int)Stat)
                 .WithDelta(Delta)
-                .WithResultValue(next)
+                .WithResultValue(resultValue)
                 .WithMessage(Reason)
                 .WithSource(SourceDefId, Reason);
 
