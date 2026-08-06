@@ -175,8 +175,9 @@ namespace NineGrid.Cards
 
         public void HandlePointerDown()
         {
-            if (PresentationInputGates.BoardSelectModeActive
-                || PresentationInputGates.BattleUiOverlayActive)
+            // 仅 UI 叠层（半黑屏 / 右键详述）早退；BoardSelect 期间点击必须落到认领者——
+            // 点击与悬停同源（ADR-0023），ActivateClaim 在 BoardSelect 模式转 TryToggleSelection。
+            if (PresentationInputGates.BattleUiOverlayActive)
             {
                 return;
             }

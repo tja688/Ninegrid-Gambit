@@ -1,0 +1,22 @@
+你是被派出的独立 sub agent。工作区是 Unity 6.3 C# 项目 TableNine（九宫牌局），根目录 C:\Users\jinji\Documents\GitHub\Ninegrid Gambit。
+
+任务：查清「效果驱动的卡牌移除/击杀」是否会补牌，以及「节点开局（进入战斗节点）补牌」为什么可能漏。
+
+具体两条线：
+
+线 A（效果侧漏补）：
+- 读 Assets\Scripts\NineGrid.Foundation\NineGrid.Core\Effects\EffectAtomLibrary.cs，找出所有会让场上卡离场的原子（Kill / Remove / Banish / ShuffleBack / Destroy / Transform 等，按实际代码命名）。
+- 对每个这类原子，确认它执行后是否 Enqueue 了 FillEmptySlotsAction，或依赖外部分拍。
+- 重点关注两个玩家可见 case：①「捕熊陷阱」（内容 id trap.bear_trap，JSON 在 Assets/StreamingAssets/ContentVisual/cards/trap_bear_trap.json，效果模板在 tables/effect_templates.json）②「杀够 N 只怪就移除一只怪」的遗物（在 Assets/StreamingAssets/ContentVisual/cards/ 下搜 relic_*.json，找 OnKill 计数 + 移除怪物的那个）。把它们的效果装配（模板 id + 用到的原子）列出来，并判定该效果产生的空格由哪条分拍补、还是完全没人补。
+- 触发点（TriggerPoint）是否影响补牌：如效果在 AfterAction / OnKill / OnBattle 中触发，此时 Core pipeline 是否已过了 Fill 步骤？给出证据。
+
+线 B（节点开局漏补）：
+- 读 PhaseSystem.StartNode（Assets\Scripts\NineGrid.Foundation\NineGrid.Core\Systems\PhaseSystem.cs 约 148-179 行）与 OpeningDealAction、FillEmptySlotsAction（Domain\Actions\BoardDeckActions.cs）。
+- 查清开局发牌的张数上限、玩家侧卡组与敌侧卡组如何进抽牌堆、以及 StartNode 里那一次 FillEmptySlotsAction 之后是否可能仍留空格（例如 fillOrder 只走一圈、DrawPile 当时为空但随后被洗入、Avatar 格占位等）。
+- 表现层：Assets\Scripts\NineGrid.Presentation\ 下搜 StartBattleNode / CaptureOpeningPresentationPlan / OpeningDeal 相关，确认表现层开局是否忠实回放 Core 的空/满盘面，还是有自己的一套发牌视图（可能出现 Core 有牌但视图没画，或 Core 有空格但没人补）。
+- 特别查：节点序列抽卡（RewardSystem.BuildNodeDeckOptions）产出的敌侧卡数量 + 常规机关三张注入，是否可能让「开局盘面卡数 < 8」且抽牌堆非空（这正是用户报告的"第一层节点三进入时有空缺却不补牌"现象）。
+
+- 独立完成，全程不提问；只读代码，禁止修改任何文件（除报告本身）。
+- 不报告中途状态，一次干完再收尾。
+- 完成后把报告写到 C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\.opencode\reports\Refill-EffectAndOpening-report.md（Markdown，UTF-8，目录不存在先创建）。格式：结论先行，关键证据带文件路径+行号，遗留问题列表。
+- 完成时只回一句话：报告路径 + 结论摘要。

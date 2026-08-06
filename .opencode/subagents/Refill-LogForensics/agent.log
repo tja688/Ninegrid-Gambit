@@ -1,0 +1,1749 @@
+
+> Full-Auto · deepseek-v4-flash
+
+→ Read .cursor/skills/table-nine-battlelog-analysis/SKILL.md
+
+$ Get-ChildItem "C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs" -Recurse -File | Select-Object FullName, Length
+...output truncated...
+
+Full output saved to: C:\Users\jinji\.local\share\opencode\tool-output\tool_fd5fac195001sD7Q860m0IdLHh
+
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-20260731-110115-seed1.json.meta      
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-20260731-110127-seed1.json           
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-20260731-110127-seed1.json.meta      
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-20260731-115012-seed1.json           
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-20260731-115012-seed1.json.meta      
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-20260731-210502-seed1.json           
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-20260731-210502-seed1.json.meta      
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-20260731-210706-seed1.json           
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-20260731-210706-seed1.json.meta      
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-20260801-105407-seed1.json           
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-20260801-105407-seed1.json.meta      
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-20260801-105420-seed1.json           
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-20260801-105420-seed1.json.meta      
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-20260801-113539-seed1.json           
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-20260801-113539-seed1.json.meta      
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-20260801-123332-seed1.json           
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-20260801-123332-seed1.json.meta      
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-20260801-123509-seed1.json           
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-20260801-123509-seed1.json.meta      
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-20260801-141235-seed1.json           
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-20260801-141235-seed1.json.meta      
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-20260801-144559-seed1.json           
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-20260801-144559-seed1.json.meta      
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-20260803-111945-seed1.json           
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-20260803-111945-seed1.json.meta      
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-20260804-092431-seed1.json           
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-20260804-092431-seed1.json.meta      
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-20260804-172755-572-seed1.json       
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-20260804-172755-572-seed1.json.meta  
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-20260804-172755-seed1.json           
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-20260804-172755-seed1.json.meta      
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-20260804-225903-850-seed1.json       
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-20260804-225903-850-seed1.json.meta  
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-20260804-225903-seed1.json           
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-20260804-225903-seed1.json.meta      
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-20260804-230014-029-seed1.json       
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-20260804-230014-029-seed1.json.meta  
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-20260804-230014-seed1.json           
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-20260804-230014-seed1.json.meta      
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-20260806-113215-seed1.json           
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-20260806-113215-seed1.json.meta      
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-20260806-113225-seed1.json           
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-20260806-113225-seed1.json.meta      
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-20260806-131533-856-seed1.json       
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-20260806-131533-856-seed1.json.meta  
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-20260806-131533-seed1.json           
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-20260806-131533-seed1.json.meta      
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-20260806-142051-858-seed1.json       
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-20260806-142051-858-seed1.json.meta  
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-20260806-142051-seed1.json           
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-20260806-142051-seed1.json.meta      
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260713-092351-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260713-092351-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260713-095226-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260713-095226-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260713-102748-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260713-102748-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260713-111111-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260713-111111-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260713-113131-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260713-113131-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260713-124002-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260713-124002-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260713-131356-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260713-131356-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260713-132152-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260713-132152-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260713-140248-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260713-140248-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260713-143243-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260713-143243-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260713-160943-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260713-160943-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260713-161528-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260713-161528-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260713-164254-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260713-164254-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260713-170949-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260713-170949-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260713-192621-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260713-192621-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260713-201745-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260713-201745-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260713-215440-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260713-215440-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260714-091334-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260714-091334-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260714-095000-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260714-095000-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260714-095543-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260714-095543-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260714-105132-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260714-105132-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260714-125232-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260714-125232-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260714-153614-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260714-153614-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260714-160826-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260714-160826-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260714-200318-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260714-200318-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260715-212423-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260715-212423-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260715-212812-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260715-212812-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260715-213700-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260715-213700-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260715-214027-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260715-214027-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260716-095007-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260716-095007-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260716-104338-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260716-104338-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260716-111710-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260716-111710-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260716-111903-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260716-111903-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260716-114051-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260716-114051-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260716-125749-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260716-125749-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260716-125928-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260716-125928-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260716-135702-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260716-135702-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260716-151303-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260716-151303-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260716-203336-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260716-203336-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260716-203410-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260716-203410-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260719-205250-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260719-205250-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260719-205356-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260719-205356-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260719-212425-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260719-212425-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260719-212545-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260719-212545-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260719-214616-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260719-214616-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260719-221950-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260719-221950-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260719-223709-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260719-223709-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260719-223810-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260719-223810-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260719-224555-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260719-224555-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260720-110538-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260720-110538-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260720-110815-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260720-110815-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260722-190733-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260722-190733-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260722-190841-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260722-190841-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260723-120618-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260723-120618-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260723-153842-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260723-153842-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260723-160118-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260723-160118-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260723-161336-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260723-161336-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260723-162538-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260723-162538-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260723-162731-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260723-162731-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260723-162910-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260723-162910-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260723-171212-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260723-171212-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260724-073034-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260724-073034-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260724-083840-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260724-083840-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260724-085241-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260724-085241-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260724-150552-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260724-150552-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260726-120610-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260726-120610-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260726-120613-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260726-120613-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260726-120626-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260726-120626-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260727-193158-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260727-193158-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260728-203106-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260728-203106-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260729-105055-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260729-105055-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260729-105156-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260729-105156-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260729-105237-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260729-105237-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260730-190610-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260730-190610-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260730-210745-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260730-210745-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260730-212243-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260730-212243-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260730-212318-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260730-212318-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260730-220901-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260730-220901-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260730-220903-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260730-220903-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260730-220935-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260730-220935-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260730-221351-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260730-221351-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260730-221354-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260730-221354-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260730-221400-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260730-221400-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260730-223048-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260730-223048-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260730-225834-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260730-225834-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260731-102816-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260731-102816-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260731-110042-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260731-110042-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260731-111503-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260731-111503-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260731-120232-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260731-120232-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260731-131212-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260731-131212-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260731-131219-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260731-131219-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260731-133034-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260731-133034-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260731-133911-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260731-133911-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260731-133913-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260731-133913-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260731-134302-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260731-134302-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260731-134938-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260731-134938-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260731-135124-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260731-135124-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260731-135336-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260731-135336-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260731-140652-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260731-140652-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260731-145246-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260731-145246-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260731-145325-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260731-145325-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260731-145411-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260731-145411-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260731-145451-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260731-145451-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260731-145529-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260731-145529-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260731-145531-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260731-145531-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260731-150327-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260731-150327-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260731-150354-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260731-150354-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260731-150417-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260731-150417-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260731-151812-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260731-151812-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260731-154449-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260731-154449-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260731-155320-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260731-155320-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260731-163729-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260731-163729-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260731-163730-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260731-163730-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260731-184247-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260731-184247-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260731-190120-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260731-190120-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260731-191014-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260731-191014-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260731-194242-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260731-194242-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260731-194244-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260731-194244-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260731-202726-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260731-202726-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260731-202848-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260731-202848-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260731-210502-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260731-210502-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260731-210715-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260731-210715-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260731-213808-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260731-213808-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260731-213810-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260731-213810-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260731-215913-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260731-215913-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260801-082828-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260801-082828-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260801-105436-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260801-105436-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260801-110220-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260801-110220-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260801-111539-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260801-111539-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260801-112646-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260801-112646-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260801-112648-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260801-112648-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260801-113550-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260801-113550-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260801-123356-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260801-123356-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260801-123509-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260801-123509-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260801-123906-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260801-123906-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260801-124002-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260801-124002-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260801-140952-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260801-140952-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260801-141032-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260801-141032-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260801-141137-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260801-141137-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260801-141335-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260801-141335-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260801-142640-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260801-142640-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260801-143549-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260801-143549-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260802-115809-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260802-115809-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260802-115811-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260802-115811-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260802-141105-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260802-141105-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260802-230732-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260802-230732-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260803-101556-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260803-101556-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260803-102443-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260803-102443-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260803-104945-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260803-104945-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260803-110757-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260803-110757-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260803-111945-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260803-111945-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260803-114531-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260803-114531-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260803-120659-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260803-120659-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260803-120702-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260803-120702-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260803-151435-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260803-151435-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260803-151439-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260803-151439-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260803-152527-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260803-152527-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260803-164359-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260803-164359-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260803-165558-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260803-165558-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260803-232727-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260803-232727-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260804-083027-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260804-083027-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260804-085356-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260804-085356-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260804-090731-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260804-090731-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260804-095904-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260804-095904-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260804-100427-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260804-100427-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260804-110627-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260804-110627-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260804-145540-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260804-145540-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260804-160916-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260804-160916-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260804-160922-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260804-160922-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260804-163727-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260804-163727-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260804-170633-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260804-170633-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260804-172809-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260804-172809-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260804-230022-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260804-230022-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260804-230025-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260804-230025-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260805-133405-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260805-133405-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260805-133414-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260805-133414-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260805-174644-seed11.json
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260805-174644-seed11.jso��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260805-174736-294-seed11��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260805-174736-294-seed11��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260805-175954-seed11.json
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260805-175954-seed11.jso��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260805-181246-seed11.json
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260805-181246-seed11.jso��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260806-070727-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260806-070727-seed1.json��
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260806-070737-seed1.json 
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260806-070737-seed1.json��
+
+$ Get-Item "Assets\Notes\Logs\CoreLog\corelog-20260806-142051-858-seed1.json", "Assets\Notes\Logs\OtherLog\BattleLog\battlelog-20260806-142051-858-seed1.json", "Assets\Notes\Logs\OtherLog\RegistryLog\registrylog-20260806-142051-858-seed1.json", "Assets\Notes\Logs\PerfLog\perflog-20260806-142051-858-seed1.json", "Assets\Notes\Logs\PerfLog\perflog-20260806-142051-seed1.json" | Select-Object Name, Length
+Name                                         Length
+----                                         ------
+corelog-20260806-142051-858-seed1.json      5255923
+battlelog-20260806-142051-858-seed1.json    1307061
+registrylog-20260806-142051-858-seed1.json  2454065
+perflog-20260806-142051-858-seed1.json     14488687
+perflog-20260806-142051-seed1.json              642
+
+$ $b = Get-Content "Assets\Notes\Logs\OtherLog\BattleLog\battlelog-20260806-142051-858-seed1.json" -Raw | ConvertFrom-Json; $b | Get-Member -MemberType NoteProperty | Select-Object Name; "--- ops[0]:"; $b.ops[0] | ConvertTo-Json -Depth 5; "--- meta:"; $b.meta | ConvertTo-Json -Depth 3
+Name
+----
+ops
+runTag
+runTagNote
+schemaVersion
+seed
+sessionId
+--- ops[0]:
+{
+  "opIndex": 0,
+  "opKind": "StartNode",
+  "reason": "StartNode",
+  "apiPath": "PhaseSystem.StartNode",
+  "phaseBefore": "BuildEnemyPool",
+  "phaseAfter": "InteractionLoop",
+  "floor": "1",
+  "nodeIndex": "1",
+  "attacker": null,
+  "target": {
+    "uid": 1,
+    "defId": "avatar.default",
+    "kind": "Avatar",
+    "atk": 4,
+    "hp": 10,
+    "armor": 0
+  },
+  "eventStartIndex": 0,
+  "eventEndIndex": 64,
+  "events": [],
+  "presentation": {
+    "accepted": true,
+    "damageAmount": 0,
+    "targetKilled": false,
+    "avatarDefeated": false,
+    "nodeClearedOrRewardPhase": false,
+    "rejectReason": ""
+  },
+  "verdictHints": {
+    "avatarDefeated": false,
+    "targetKilled": false,
+    "extraDamageDealtCount": 0,
+    "effectTriggeredIds": []
+  }
+}
+--- meta:
+null
+
+$ $c = Get-Content "Assets\Notes\Logs\CoreLog\corelog-20260806-142051-858-seed1.json" -Raw | ConvertFrom-Json; $c | Get-Member -MemberType NoteProperty | Select-Object Name; "--- first event keys:"; $c.events[0] | ConvertTo-Json -Depth 4
+Name
+----
+events
+runTag
+runTagNote
+schemaVersion
+seed
+sessionId
+--- first event keys:
+{
+  "index": 0,
+  "beatId": 0,
+  "category": "UI",
+  "name": "StartRun",
+  "loopState": "MainMenu",
+  "floor": "1",
+  "nodeIndex": "0",
+  "phaseBefore": "",
+  "phaseAfter": "",
+  "accepted": true,
+  "refBattleOpIndex": -1,
+  "payload": {
+    "quickTestMode": "false",
+    "runTag": "",
+    "runTagNote": "",
+    "quickTestNodeOrder": "",
+    "quickTestNodeOrderMode": "",
+    "quickTestPinnedFirstDeck": ""
+  }
+}
+
+$ $c = Get-Content "Assets\Notes\Logs\CoreLog\corelog-20260806-142051-858-seed1.json" -Raw | ConvertFrom-Json; "total events: $($c.events.Count)"; "runTag='$($c.runTag)' seed=$($c.seed) sessionId=$($c.sessionId)"; "--- name distribution:"; $c.events | Group-Object name | Sort-Object Count -Descending | Select-Object Count, Name | Format-Table -AutoSize | Out-String -Width 200
+total events: 13957
+runTag='' seed=1 sessionId=20260806-142051-858
+--- name distribution:
+
+Count Name
+----- ----
+ 1828 LeaseRelease
+ 1828 CommitmentArrive
+ 1828 LeaseAcquire
+ 1147 OccupancySnapshot
+  905 CardFaceBaseStatCommit
+  780 BoardStepBegin
+  780 BoardStepEnd
+  499 DrainEnd
+  499 DrainBegin
+  454 OccupancyVacate
+  398 RegistryAudit
+  397 DealResult
+  397 DealAttempt
+  247 EffectTriggered
+  236 BeatAlign
+  236 BarrierSatisfied
+  236 BarrierPlace
+  226 BaseStatModified
+  187 OpeningDealProgress
+  165 GoldGained
+  147 HandAcquire
+  131 PickupGate
+  130 PickupAttempt
+   90 PickupSuccess
+   68 SetState
+   24 RewardPresented
+   24 RoomPresented
+   18 GoldSpent
+   18 DrainLegacyFallback
+   18 StartNode
+   12 RewardChosen
+    1 EnterMainMenu
+    1 SessionChoreoSummary
+    1 StartRun
+    1 Victory
+
+$ $b = Get-Content "Assets\Notes\Logs\OtherLog\BattleLog\battlelog-20260806-142051-858-seed1.json" -Raw | ConvertFrom-Json; "ops: $($b.ops.Count)  runTag='$($b.runTag)' sessionId=$($b.sessionId)"; "--- opKind distribution:"; $b.ops | Group-Object opKind | Select-Object Count, Name | Format-Table -AutoSize | Out-String -Width 120; "--- floor/node distribution:"; $b.ops | Group-Object floor, nodeIndex | Select-Object Count, Name | Format-Table -AutoSize | Out-String -Width 120
+ops: 191  runTag='' sessionId=20260806-142051-858
+--- opKind distribution:
+
+Count Name
+----- ----
+  173 CombatHit
+   18 StartNode
+
+
+--- floor/node distribution:
+
+Count Name
+----- ----
+   11 1, 1
+   11 1, 2
+   12 1, 3
+   18 1, 5
+   18 1, 6
+   11 1, 8
+    7 2, 10
+   13 2, 11
+   11 2, 13
+   15 2, 14
+   14 2, 16
+    8 2, 9
+    4 3, 17
+    5 3, 18
+    6 3, 19
+    5 3, 21
+    9 3, 22
+   13 3, 24
+
+$ $c = Get-Content "Assets\Notes\Logs\CoreLog\corelog-20260806-142051-858-seed1.json" -Raw | ConvertFrom-Json; $c.events | Where-Object { $_.name -match 'Error|Exception|Assert|Reject|Desync|Fail' -or ($_.category -match 'Error|Exception|Assert') } | Select-Object index, beatId, category, name, floor, nodeIndex, phaseBefore, phaseAfter | Format-Table -AutoSize | Out-String -Width 200
+
+$ $b = Get-Content "Assets\Notes\Logs\OtherLog\BattleLog\battlelog-20260806-142051-858-seed1.json" -Raw | ConvertFrom-Json; "--- battlelog event name distribution:"; $b.ops | ForEach-Object { $_.events } | Group-Object name | Sort-Object Count -Descending | Select-Object Count, Name | Format-Table -AutoSize | Out-String -Width 160; "--- ops with events count:"; $b.ops | Where-Object { $_.events.Count -gt 0 } | Measure-Object | Select-Object Count
+--- battlelog event name distribution:
+
+Count Name
+----- ----
+ 4655 
+
+
+--- ops with events count:
+
+Count
+-----
+  173
+
+$ $b = Get-Content "Assets\Notes\Logs\OtherLog\BattleLog\battlelog-20260806-142051-858-seed1.json" -Raw | ConvertFrom-Json; "--- sample op events:"; $b.ops[1].events[0] | ConvertTo-Json -Depth 6; "--- event keys across ops:"; $b.ops | ForEach-Object { $_.events } | ForEach-Object { $_.PSObject.Properties.Name } | Sort-Object -Unique
+--- sample op events:
+{
+  "sequence": 115,
+  "type": "ActionStarted",
+  "actionName": "BeginPlayerMonsterEngagement",
+  "actorUid": 0,
+  "targetUid": 0,
+  "cardUid": 0,
+  "amount": 0,
+  "delta": 0,
+  "remainingHp": 0,
+  "remainingArmor": 0,
+  "sourceDefId": "",
+  "cause": "",
+  "summary": "#115 Action started"
+}
+--- event keys across ops:
+actionName
+actorUid
+amount
+cardUid
+cause
+delta
+remainingArmor
+remainingHp
+sequence
+sourceDefId
+summary
+targetUid
+type
+
+$ $c = Get-Content "Assets\Notes\Logs\CoreLog\corelog-20260806-142051-858-seed1.json" -Raw | ConvertFrom-Json; "--- events whose payload contains Error-ish:"; $c.events | Where-Object { ($_.payload | ConvertTo-Json -Depth 8 -Compress) -match 'Error|Exception|Assert' } | Select-Object index, name, floor, nodeIndex | Format-Table -AutoSize | Out-String -Width 160
+--- events whose payload contains Error-ish:
+
+index name                   floor nodeIndex
+----- ----                   ----- ---------
+ 9496 RewardChosen           2     16
+ 9497 CardFaceBaseStatCommit 2     16
+11174 EffectTriggered        3     19
+12086 EffectTriggered        3     21
+13509 EffectTriggered        3     24
+
+$ $c = Get-Content "Assets\Notes\Logs\CoreLog\corelog-20260806-142051-858-seed1.json" -Raw | ConvertFrom-Json; foreach ($i in 9496,9497,11174,12086,13509) { $e = $c.events[$i]; "=== index $i name=$($e.name) node=$($e.nodeIndex)"; ($e.payload | ConvertTo-Json -Depth 10 -Compress) }
+=== index 9496 name=RewardChosen node=16
+{"kind":"select","defId":"relic.terror_mask","index":"2","reason":""}
+=== index 9497 name=CardFaceBaseStatCommit node=16
+{"uid":"1","defId":"avatar.default","stat":"Attack","resultValue":"9","delta":"0","reason":"effect:relic.terror_mask.attack#498","sourceDefId":"","hasView":"1"}
+=== index 11174 name=EffectTriggered node=19
+{"sourceDefId":"relic.terror_mask","cardUid":"0","message":"relic.terror_mask.remove"}
+=== index 12086 name=EffectTriggered node=21
+{"sourceDefId":"relic.terror_mask","cardUid":"0","message":"relic.terror_mask.remove"}
+=== index 13509 name=EffectTriggered node=24
+{"sourceDefId":"relic.terror_mask","cardUid":"0","message":"relic.terror_mask.remove"}
+
+$ $b = Get-Content "Assets\Notes\Logs\OtherLog\BattleLog\battlelog-20260806-142051-858-seed1.json" -Raw | ConvertFrom-Json; "--- battlelog event types:"; $b.ops | ForEach-Object { $_.events } | Group-Object type | Sort-Object Count -Descending | Select-Object Count, Name | Format-Table -AutoSize | Out-String -Width 160; "--- any with Error/Exception/Assert in summary/type:"; $b.ops | ForEach-Object { $_.events } | Where-Object { $_.summary -match 'Error|Exception|Assert|Desync' -or $_.type -match 'Error|Exception|Assert|Desync' } | Select-Object sequence, type, actionName, summary | Format-Table -AutoSize | Out-String -Width 250
+--- battlelog event types:
+
+Count Name
+----- ----
+ 1474 ActionFinished
+ 1474 ActionStarted
+  271 DamageDealt
+  247 EffectTriggered
+  238 HpChanged
+  226 BaseStatModified
+  215 EffectDeactivated
+  128 ArmorChanged
+  128 CardRemoved
+  125 CardKilled
+  105 GoldModified
+   23 CardDealt
+    1 EffectModifierApplied
+
+
+--- any with Error/Exception/Assert in summary/type:
+
+sequence type              actionName             summary
+-------- ----              ----------             -------
+   19225 EffectTriggered   ExecuteEffect          #19225 Effect triggered source=relic.terror_mask cause=relic.terror_mask.remove relic.terror_mask.remove
+   19227 CardRemoved       RemoveCard             #19227 Card removed card=369 source=relic.terror_mask cause=relic.terror_mask relic.terror_mask
+   19232 EffectDeactivated DeactivateOwnerEffects #19232 Effect deactivated card=369 source= cause=remove:relic.terror_mask fx.b74cd83f#567
+   20938 EffectTriggered   ExecuteEffect          #20938 Effect triggered source=relic.terror_mask cause=relic.terror_mask.remove relic.terror_mask.remove
+   20940 CardRemoved       RemoveCard             #20940 Card removed card=398 source=relic.terror_mask cause=relic.terror_mask relic.terror_mask
+   20945 EffectDeactivated DeactivateOwnerEffects #20945 Effect deactivated card=398 source= cause=remove:relic.terror_mask fx.b74cd83f#596
+   23780 EffectTriggered   ExecuteEffect          #23780 Effect triggered source=relic.terror_mask cause=relic.terror_mask.remove relic.terror_mask.remove
+   23782 CardRemoved       RemoveCard             #23782 Card removed card=447 source=relic.terror_mask cause=relic.terror_mask relic.terror_mask
+   23787 EffectDeactivated DeactivateOwnerEffects #23787 Effect deactivated card=447 source= cause=remove:relic.terror_mask skill.ranged_weapon.activate#651
+
+$ Get-Content "Assets\Notes\Logs\PerfLog\perflog-20260806-142051-seed1.json" -Raw
+{"schemaVersion":2,"seed":"1","sessionId":"20260806-142051","runTag":"","runTagNote":"","events":[{"index":0,"beatId":0,"tMs":0,"kind":"DirectorIntentRejected","uid":-1,"site":"Director.Intent","payload":{"path":"director","lane":"mainline","chainId":"0","choreoSeqId":"0","intentKind":"explore","intentSlot":"5","reason":"notLegal phase=Defeat pendingChoice=None"}},{"index":1,"beatId":0,"tMs":809,"kind":"DirectorIntentRejected","uid":-1,"site":"Director.Intent","payload":{"path":"director","lane":"mainline","chainId":"0","choreoSeqId":"0","intentKind":"explore","intentSlot":"5","reason":"notLegal phase=Defeat pendingChoice=None"}}]}
+
+$ $p = Get-Content "Assets\Notes\Logs\PerfLog\perflog-20260806-142051-858-seed1.json" -Raw | ConvertFrom-Json; $p | Get-Member -MemberType NoteProperty | Select-Object Name; "--- size check: total entries:"; if ($p.events) { $p.events.Count } elseif ($p.ops) { $p.ops.Count } else { "unknown structure" }; $p.PSObject.Properties | ForEach-Object { $_.Name }
+Name
+----
+events
+runTag
+runTagNote
+schemaVersion
+seed
+sessionId
+--- size check: total entries:
+58204
+schemaVersion
+seed
+sessionId
+runTag
+runTagNote
+events
+
+$ $r = Get-Content "Assets\Notes\Logs\OtherLog\RegistryLog\registrylog-20260806-142051-858-seed1.json" -Raw | ConvertFrom-Json; $r | Get-Member -MemberType NoteProperty | Select-Object Name; "--- structure:"; $r.events[0] | ConvertTo-Json -Depth 4; "--- kinds:"; $r.events | Group-Object kind | Sort-Object Count -Descending | Select-Object Count, Name | Format-Table -AutoSize | Out-String -Width 160
+Name
+----
+events
+runTag
+runTagNote
+schemaVersion
+seed
+sessionId
+--- structure:
+{
+  "index": 0,
+  "beatId": 0,
+  "tMs": 316,
+  "kind": "RegistryDelta",
+  "uid": 14,
+  "site": "Card.Spawn",
+  "payload": {
+    "op": "add",
+    "countBefore": "0",
+    "countAfter": "1",
+    "reason": "SpawnView",
+    "caller": "",
+    "defId": "monster.smart_orc"
+  }
+}
+--- kinds:
+
+Count Name
+----- ----
+ 2104 FieldVisualAudit
+ 1256 RegistryDelta
+  630 Checkpoint
+  628 Despawn
+  454 Vacate
+  398 RegistryAudit
+  214 Anomaly
+  163 FieldVisualGap
+  162 BoardSnap
+  130 PickupEligibility
+   20 RegistryMiss
+    1 SessionChoreoSummary
+
+$ $p = Get-Content "Assets\Notes\Logs\PerfLog\perflog-20260806-142051-858-seed1.json" -Raw | ConvertFrom-Json; "--- perflog kinds:"; $p.events | Group-Object kind | Sort-Object Count -Descending | Select-Object Count, Name | Format-Table -AutoSize | Out-String -Width 200; "--- perflog error-ish kinds:"; $p.events | Where-Object { $_.kind -match 'Error|Exception|Assert|Reject|Desync|Fail' } | Group-Object kind | Select-Object Count, Name | Format-Table -AutoSize | Out-String -Width 200
+--- perflog kinds:
+
+Count Name
+----- ----
+10426 MotionEnd
+ 8400 MotionBegin
+ 4041 DirectorStepExit
+ 4041 DirectorStepEnter
+ 2686 Anomaly
+ 2594 ExploreTrace
+ 2008 BoardSnap
+ 1828 LeaseRelease
+ 1828 LeaseAcquire
+ 1828 CommitmentArrive
+ 1681 VisChange
+ 1256 RegistryDelta
+ 1144 DirectorBatchOpen
+ 1144 DirectorPresentAck
+ 1144 DirectorPresentBegin
+ 1131 Handoff
+ 1078 DirectorTriggerPulse
+ 1004 BeatOpen
+ 1004 BeatClose
+  708 RingShift
+  630 ChoreoBegin
+  630 ChoreoEnd
+  628 Spawn
+  628 Despawn
+  492 CombatHitFrame
+  454 Vacate
+  430 SkeletonFusion
+  398 RegistryAudit
+  390 DustPlace
+  371 SnapSet
+  366 BusySnapshot
+  314 DirectorIntentAccepted
+  251 BattleBind
+  236 BeatAlign
+  236 BarrierSatisfied
+  236 BarrierPlace
+  125 DirectorPresentStall
+  121 DeathCallback
+   76 DustTrailBudget
+   63 ShuffleIntoDeck
+   36 DirectorIntentHardClear
+   29 DirectorIntentBuffered
+   21 DirectorIntentFlush
+   21 DirectorScriptAborted
+   20 RegistryMiss
+   12 DrainRefill
+    6 ShuffleBurstScatter
+    6 DirectorIntentRejected
+    3 DirectorBatchOpenRejected
+    1 SessionChoreoSummary
+
+
+--- perflog error-ish kinds:
+
+Count Name
+----- ----
+    3 DirectorBatchOpenRejected
+    6 DirectorIntentRejected
+
+$ $r = Get-Content "Assets\Notes\Logs\OtherLog\RegistryLog\registrylog-20260806-142051-858-seed1.json" -Raw | ConvertFrom-Json; "--- Anomaly sample:"; $r.events | Where-Object { $_.kind -eq 'Anomaly' } | Select-Object -First 3 | ConvertTo-Json -Depth 6; "--- FieldVisualGap sample:"; $r.events | Where-Object { $_.kind -eq 'FieldVisualGap' } | Select-Object -First 3 | ConvertTo-Json -Depth 6
+--- Anomaly sample:
+[
+  {
+    "index": 67,
+    "beatId": 1,
+    "tMs": 9181,
+    "kind": "Anomaly",
+    "uid": -1,
+    "site": "Anomaly.Detect",
+    "payload": {
+      "code": "FieldVisualGap",
+      "detail": "missing=1 empty=6",
+      "trigger": "IdleWatch.5s"
+    }
+  },
+  {
+    "index": 128,
+    "beatId": 10,
+    "tMs": 27767,
+    "kind": "Anomaly",
+    "uid": -1,
+    "site": "Anomaly.Detect",
+    "payload": {
+      "code": "FieldVisualGap",
+      "detail": "missing=1 empty=2",
+      "trigger": "BeatClose.CombatHit"
+    }
+  },
+  {
+    "index": 149,
+    "beatId": 18,
+    "tMs": 39644,
+    "kind": "Anomaly",
+    "uid": -1,
+    "site": "Anomaly.Detect",
+    "payload": {
+      "code": "FieldVisualGap",
+      "detail": "missing=1 empty=4",
+      "trigger": "BeatClose.CombatHit"
+    }
+  }
+]
+--- FieldVisualGap sample:
+[
+  {
+    "index": 66,
+    "beatId": 1,
+    "tMs": 9181,
+    "kind": "FieldVisualGap",
+    "uid": -1,
+    "site": "Registry.FieldVisualGap",
+    "payload": {
+      "trigger": "IdleWatch.5s",
+      "baselineVisible": "8",
+      "visibleCount": "7",
+      "occupiedCount": "7",
+      "coreCount": "8",
+      "visualMissing": "1",
+      "emptyVisualSlots": "6",
+      "emptyVisualSlotCount": "1",
+      "hiddenOccupied": "",
+      "offModeOccupied": "",
+      "slotDetail": "1:O14/V14|2:O17/V17|3:O3/V3|4:O2/V2|6:O0/V0|7:O11/V11|8:O4/V4|9:O18/V18",
+      "userInteractionCount": "0",
+      "phase": "InteractionLoop",
+      "beatKind": "",
+      "chainId": "0",
+      "choreoSeqId": "0",
+      "code": "FieldVisualGap",
+      "lastReleaseUid": "-1",
+      "lastReleaseReason": "",
+      "lastReleaseCaller": "",
+      "lastReleaseTMs": "0",
+      "lastVacate": "6@6",
+      "lastVacateTMs": "9043"
+    }
+  },
+  {
+    "index": 127,
+    "beatId": 10,
+    "tMs": 27767,
+    "kind": "FieldVisualGap",
+    "uid": -1,
+    "site": "Registry.FieldVisualGap",
+    "payload": {
+      "trigger": "BeatClose.CombatHit",
+      "baselineVisible": "8",
+      "visibleCount": "7",
+      "occupiedCount": "7",
+      "coreCount": "7",
+      "visualMissing": "1",
+      "emptyVisualSlots": "2",
+      "emptyVisualSlotCount": "1",
+      "hiddenOccupied": "",
+      "offModeOccupied": "",
+      "slotDetail": "1:O2/V2|2:O0/V0|3:O17/V17|4:O11/V11|6:O16/V16|7:O4/V4|8:O18/V18|9:O7/V7",
+      "userInteractionCount": "3",
+      "phase": "InteractionLoop",
+      "beatKind": "CombatHit",
+      "chainId": "3",
+      "choreoSeqId": "0",
+      "code": "FieldVisualGap",
+      "lastReleaseUid": "3",
+      "lastReleaseReason": "Combat.CompleteRemoveVictim",
+      "lastReleaseCaller": "PresentRemovedFieldCardAsync",
+      "lastReleaseTMs": "9834",
+      "lastVacate": "14@2",
+      "lastVacateTMs": "27767"
+    }
+  },
+  {
+    "index": 148,
+    "beatId": 18,
+    "tMs": 39644,
+    "kind": "FieldVisualGap",
+    "uid": -1,
+    "site": "Registry.FieldVisualGap",
+    "payload": {
+      "trigger": "BeatClose.CombatHit",
+      "baselineVisible": "8",
+      "visibleCount": "7",
+      "occupiedCount": "7",
+      "coreCount": "7",
+      "visualMissing": "1",
+      "emptyVisualSlots": "4",
+      "emptyVisualSlotCount": "1",
+      "hiddenOccupied": "",
+      "offModeOccupied": "",
+      "slotDetail": "1:O5/V5|2:O11/V11|3:O2/V2|4:O0/V0|6:O8/V8|7:O7/V7|8:O16/V16|9:O17/V17",
+      "userInteractionCount": "5",
+      "phase": "InteractionLoop",
+      "beatKind": "CombatHit",
+      "chainId": "5",
+      "choreoSeqId": "0",
+      "code": "FieldVisualGap",
+      "lastReleaseUid": "14",
+      "lastReleaseReason": "Combat.FinalizeLethal",
+      "lastReleaseCaller": "FinalizeLethalVictimAsync",
+      "lastReleaseTMs": "27918",
+      "lastVacate": "18@4",
+      "lastVacateTMs": "39644"
+    }
+  }
+]
+
+$ $p = Get-Content "Assets\Notes\Logs\PerfLog\perflog-20260806-142051-858-seed1.json" -Raw | ConvertFrom-Json; "--- DrainRefill:"; $p.events | Where-Object { $_.kind -eq 'DrainRefill' } | ConvertTo-Json -Depth 6; "--- Anomaly sample (perflog):"; $p.events | Where-Object { $_.kind -eq 'Anomaly' } | Select-Object -First 3 | ConvertTo-Json -Depth 6
+--- DrainRefill:
+[
+  {
+    "index": 3619,
+    "beatId": 61,
+    "tMs": 262923,
+    "kind": "DrainRefill",
+    "uid": -1,
+    "site": "RefillBatchBegin",
+    "payload": {
+      "path": "director",
+      "chainId": "18",
+      "choreoSeqId": "0"
+    }
+  },
+  {
+    "index": 3620,
+    "beatId": 61,
+    "tMs": 262923,
+    "kind": "DrainRefill",
+    "uid": -1,
+    "site": "RefillBatchEnd",
+    "payload": {
+      "path": "director",
+      "chainId": "18",
+      "choreoSeqId": "0"
+    }
+  },
+  {
+    "index": 8215,
+    "beatId": 153,
+    "tMs": 659429,
+    "kind": "DrainRefill",
+    "uid": -1,
+    "site": "RefillBatchBegin",
+    "payload": {
+      "path": "director",
+      "chainId": "49",
+      "choreoSeqId": "0"
+    }
+  },
+  {
+    "index": 8216,
+    "beatId": 153,
+    "tMs": 659430,
+    "kind": "DrainRefill",
+    "uid": -1,
+    "site": "RefillBatchEnd",
+    "payload": {
+      "path": "director",
+      "chainId": "49",
+      "choreoSeqId": "0"
+    }
+  },
+  {
+    "index": 26222,
+    "beatId": 477,
+    "tMs": 1496560,
+    "kind": "DrainRefill",
+    "uid": -1,
+    "site": "RefillBatchBegin",
+    "payload": {
+      "path": "director",
+      "chainId": "164",
+      "choreoSeqId": "0"
+    }
+  },
+  {
+    "index": 26223,
+    "beatId": 477,
+    "tMs": 1496560,
+    "kind": "DrainRefill",
+    "uid": -1,
+    "site": "RefillBatchEnd",
+    "payload": {
+      "path": "director",
+      "chainId": "164",
+      "choreoSeqId": "0"
+    }
+  },
+  {
+    "index": 28501,
+    "beatId": 516,
+    "tMs": 1632480,
+    "kind": "DrainRefill",
+    "uid": -1,
+    "site": "RefillBatchBegin",
+    "payload": {
+      "path": "director",
+      "chainId": "177",
+      "choreoSeqId": "0"
+    }
+  },
+  {
+    "index": 28502,
+    "beatId": 516,
+    "tMs": 1632480,
+    "kind": "DrainRefill",
+    "uid": -1,
+    "site": "RefillBatchEnd",
+    "payload": {
+      "path": "director",
+      "chainId": "177",
+      "choreoSeqId": "0"
+    }
+  },
+  {
+    "index": 50372,
+    "beatId": 873,
+    "tMs": 2492503,
+    "kind": "DrainRefill",
+    "uid": -1,
+    "site": "RefillBatchBegin",
+    "payload": {
+      "path": "director",
+      "chainId": "294",
+      "choreoSeqId": "0"
+    }
+  },
+  {
+    "index": 50373,
+    "beatId": 873,
+    "tMs": 2492503,
+    "kind": "DrainRefill",
+    "uid": -1,
+    "site": "RefillBatchEnd",
+    "payload": {
+      "path": "director",
+      "chainId": "294",
+      "choreoSeqId": "0"
+    }
+  },
+  {
+    "index": 55622,
+    "beatId": 951,
+    "tMs": 2602088,
+    "kind": "DrainRefill",
+    "uid": -1,
+    "site": "RefillBatchBegin",
+    "payload": {
+      "path": "director",
+      "chainId": "321",
+      "choreoSeqId": "0"
+    }
+  },
+  {
+    "index": 55623,
+    "beatId": 951,
+    "tMs": 2602088,
+    "kind": "DrainRefill",
+    "uid": -1,
+    "site": "RefillBatchEnd",
+    "payload": {
+      "path": "director",
+      "chainId": "321",
+      "choreoSeqId": "0"
+    }
+  }
+]
+--- Anomaly sample (perflog):
+[
+  {
+    "index": 314,
+    "beatId": 1,
+    "tMs": 3339,
+    "kind": "Anomaly",
+    "uid": 14,
+    "site": "CardEdgeDust.Place",
+    "payload": {
+      "code": "DustBudgetPressure",
+      "detail": "place recycled=32 spawned=32/32 liveBefore=1024 liveAfter=1024 max=1024 hardCap=1696 softOverflow=0",
+      "layer": "Vfx",
+      "verdict": "recycledMove"
+    }
+  },
+  {
+    "index": 315,
+    "beatId": 1,
+    "tMs": 3339,
+    "kind": "Anomaly",
+    "uid": 14,
+    "site": "Anomaly.Detect",
+    "payload": {
+      "code": "DealFlightBudgetExhausted",
+      "detail": "slot=1",
+      "refIndex": "-1"
+    }
+  },
+  {
+    "index": 380,
+    "beatId": 1,
+    "tMs": 3478,
+    "kind": "Anomaly",
+    "uid": 17,
+    "site": "CardEdgeDust.Place",
+    "payload": {
+      "code": "DustBudgetPressure",
+      "detail": "place recycled=32 spawned=32/32 liveBefore=1024 liveAfter=1024 max=1024 hardCap=1696 softOverflow=0",
+      "layer": "Vfx",
+      "verdict": "recycledMove"
+    }
+  }
+]
+
+$ $c = Get-Content "Assets\Notes\Logs\CoreLog\corelog-20260806-142051-858-seed1.json" -Raw | ConvertFrom-Json; "--- corelog categories:"; $c.events | Group-Object category | Select-Object Count, Name | Format-Table -AutoSize | Out-String -Width 120; "--- DrainBegin sample:"; $c.events | Where-Object { $_.name -eq 'DrainBegin' } | Select-Object -First 2 | ConvertTo-Json -Depth 5; "--- DealAttempt sample:"; $c.events | Where-Object { $_.name -eq 'DealAttempt' } | Select-Object -First 2 | ConvertTo-Json -Depth 5; "--- OpeningDealProgress sample:"; $c.events | Where-Object { $_.name -eq 'OpeningDealProgress' } | Select-Object -First 2 | ConvertTo-Json -Depth 5
+--- corelog categories:
+
+Count Name
+----- ----
+  473 CombatSummary
+   78 CoreGate
+  794 Deck
+  183 Economy
+ 1601 Field
+  498 Hand
+   70 Loop
+10259 Presentation
+    1 UI
+
+
+--- DrainBegin sample:
+[
+  {
+    "index": 40,
+    "beatId": 2,
+    "category": "Presentation",
+    "name": "DrainBegin",
+    "loopState": "",
+    "floor": "1",
+    "nodeIndex": "1",
+    "phaseBefore": "",
+    "phaseAfter": "",
+    "accepted": true,
+    "refBattleOpIndex": 0,
+    "payload": {
+      "moves": "4",
+      "deals": "2",
+      "stepCount": "4",
+      "requestId": "12",
+      "drainInFlight": "true",
+      "fieldBusy": "true",
+      "presentationLocked": "true",
+      "nodeIndex": "1",
+      "chainId": "0",
+      "choreoSeqId": "0"
+    }
+  },
+  {
+    "index": 90,
+    "beatId": 11,
+    "category": "Presentation",
+    "name": "DrainBegin",
+    "loopState": "",
+    "floor": "1",
+    "nodeIndex": "1",
+    "phaseBefore": "",
+    "phaseAfter": "",
+    "accepted": true,
+    "refBattleOpIndex": 3,
+    "payload": {
+      "moves": "1",
+      "deals": "1",
+      "stepCount": "1",
+      "requestId": "13",
+      "drainInFlight": "true",
+      "fieldBusy": "true",
+      "presentationLocked": "true",
+      "nodeIndex": "1",
+      "chainId": "3",
+      "choreoSeqId": "0"
+    }
+  }
+]
+--- DealAttempt sample:
+[
+  {
+    "index": 3,
+    "beatId": 1,
+    "category": "Deck",
+    "name": "DealAttempt",
+    "loopState": "",
+    "floor": "1",
+    "nodeIndex": "1",
+    "phaseBefore": "",
+    "phaseAfter": "",
+    "accepted": true,
+    "refBattleOpIndex": 0,
+    "payload": {
+      "uid": "14",
+      "slot": "1",
+      "caller": "TryDealCard",
+      "nodeIndex": "1",
+      "chainId": "0",
+      "choreoSeqId": "0"
+    }
+  },
+  {
+    "index": 6,
+    "beatId": 1,
+    "category": "Deck",
+    "name": "DealAttempt",
+    "loopState": "",
+    "floor": "1",
+    "nodeIndex": "1",
+    "phaseBefore": "",
+    "phaseAfter": "",
+    "accepted": true,
+    "refBattleOpIndex": 0,
+    "payload": {
+      "uid": "17",
+      "slot": "2",
+      "caller": "TryDealCard",
+      "nodeIndex": "1",
+      "chainId": "0",
+      "choreoSeqId": "1"
+    }
+  }
+]
+--- OpeningDealProgress sample:
+[
+  {
+    "index": 5,
+    "beatId": 1,
+    "category": "Presentation",
+    "name": "OpeningDealProgress",
+    "loopState": "",
+    "floor": "1",
+    "nodeIndex": "1",
+    "phaseBefore": "",
+    "phaseAfter": "",
+    "accepted": true,
+    "refBattleOpIndex": 0,
+    "payload": {
+      "uid": "14",
+      "slot": "1",
+      "ok": "true",
+      "ringIndex": "0",
+      "nodeIndex": "1",
+      "chainId": "0",
+      "choreoSeqId": "1"
+    }
+  },
+  {
+    "index": 8,
+    "beatId": 1,
+    "category": "Presentation",
+    "name": "OpeningDealProgress",
+    "loopState": "",
+    "floor": "1",
+    "nodeIndex": "1",
+    "phaseBefore": "",
+    "phaseAfter": "",
+    "accepted": true,
+    "refBattleOpIndex": 0,
+    "payload": {
+      "uid": "17",
+      "slot": "2",
+      "ok": "true",
+      "ringIndex": "1",
+      "nodeIndex": "1",
+      "chainId": "0",
+      "choreoSeqId": "2"
+    }
+  }
+]
+
+$ $c = Get-Content "Assets\Notes\Logs\CoreLog\corelog-20260806-142051-858-seed1.json" -Raw | ConvertFrom-Json; "--- bear_trap hits in corelog:"; $c.events | Where-Object { ($_.name + ($_.payload | ConvertTo-Json -Depth 10 -Compress)) -match 'bear_trap' } | Select-Object index, name, floor, nodeIndex, beatId | Format-Table -AutoSize | Out-String -Width 160
+--- bear_trap hits in corelog:
+
+$ rg -n -o -i "bear[^\"']{0,40}" "Assets\Notes\Logs\OtherLog\BattleLog\battlelog-20260806-142051-858-seed1.json" | Select-Object -First 20; "=== perflog:"; rg -n -o -i "bear[^\"']{0,40}" "Assets\Notes\Logs\PerfLog\perflog-20260806-142051-858-seed1.json" | Select-Object -First 20; "=== registrylog:"; rg -n -o -i "bear[^\"']{0,40}" "Assets\Notes\Logs\OtherLog\RegistryLog\registrylog-20260806-142051-858-seed1.json" | Select-Object -First 20
+rg.exe: A value that is not valid (System.Object) was specified for the outputFormat parameter. Valid values are Text and Xml.
+
+$ rg -n -o "trap\.[a-z_0-9]+" "Assets\Notes\Logs\OtherLog\BattleLog\battlelog-20260806-142051-858-seed1.json" | Sort-Object -Unique | Select-Object -First 30
+1:trap.leave
+1:trap.recovery_totem
+1:trap.rolling_stone
+1:trap.spike
+
+$ Select-String -Path "Assets\Notes\Logs\OtherLog\BattleLog\battlelog-20260806-142051-858-seed1.json", "Assets\Notes\Logs\PerfLog\perflog-20260806-142051-858-seed1.json", "Assets\Notes\Logs\OtherLog\RegistryLog\registrylog-20260806-142051-858-seed1.json", "Assets\Notes\Logs\CoreLog\corelog-20260806-142051-858-seed1.json" -Pattern "bear" | ForEach-Object { $_.Matches.Value } | Sort-Object -Unique
+bear
+
+$ Select-String -Path "Assets\Notes\Logs\OtherLog\BattleLog\battlelog-20260806-142051-858-seed1.json" -Pattern "trap\.\w+" -AllMatches | ForEach-Object { $_.Matches } | ForEach-Object { $_.Value } | Sort-Object -Unique; "=== perflog trap:"; Select-String -Path "Assets\Notes\Logs\PerfLog\perflog-20260806-142051-858-seed1.json" -Pattern "trap\.\w+" -AllMatches | ForEach-Object { $_.Matches } | ForEach-Object { $_.Value } | Sort-Object -Unique; "=== registrylog trap:"; Select-String -Path "Assets\Notes\Logs\OtherLog\RegistryLog\registrylog-20260806-142051-858-seed1.json" -Pattern "trap\.\w+" -AllMatches | ForEach-Object { $_.Matches } | ForEach-Object { $_.Value } | Sort-Object -Unique; "=== corelog trap:"; Select-String -Path "Assets\Notes\Logs\CoreLog\corelog-20260806-142051-858-seed1.json" -Pattern "trap\.\w+" -AllMatches | ForEach-Object { $_.Matches } | ForEach-Object { $_.Value } | Sort-Object -Unique
+Trap.insert
+trap.leave
+trap.recovery_totem
+trap.rolling_stone
+trap.spike
+=== perflog trap:
+trap.armor_totem
+trap.attack_totem
+trap.bear_trap
+trap.leave
+trap.recovery_totem
+trap.rolling_stone
+trap.spike
+=== registrylog trap:
+trap.armor_totem
+trap.attack_totem
+trap.bear_trap
+trap.leave
+trap.recovery_totem
+trap.rolling_stone
+trap.spike
+=== corelog trap:
+trap.attack_totem
+trap.leave
+
+$ $r = Get-Content "Assets\Notes\Logs\OtherLog\RegistryLog\registrylog-20260806-142051-858-seed1.json" -Raw | ConvertFrom-Json; "--- bear_trap in registrylog:"; $r.events | Where-Object { ($_.kind + '|' + $_.site + '|' + ($_.payload | ConvertTo-Json -Depth 10 -Compress)) -match 'bear_trap' } | ForEach-Object { "idx=$($_.index) beat=$($_.beatId) tMs=$($_.tMs) kind=$($_.kind) site=$($_.site) payload=$($_.payload | ConvertTo-Json -Depth 10 -Compress)" }
+--- bear_trap in registrylog:
+idx=16 beat=0 tMs=355 kind=RegistryDelta site=Card.Spawn payload={"op":"add","countBefore":"16","countAfter":"17","reason":"SpawnView","caller":"","defId":"trap.bear_trap"}
+idx=250 beat=46 tMs=69550 kind=RegistryDelta site=Card.Release payload={"op":"remove","countBefore":"6","countAfter":"5","reason":"Combat.CompleteRemoveVictim","caller":"PresentRemovedFieldCardAsync","defId":"trap.bear_trap"}
+idx=272 beat=46 tMs=74281 kind=RegistryDelta site=Card.Spawn payload={"op":"add","countBefore":"8","countAfter":"9","reason":"SpawnView","caller":"","defId":"trap.bear_trap"}
+idx=409 beat=58 tMs=92749 kind=RegistryDelta site=Card.Release payload={"op":"remove","countBefore":"20","countAfter":"19","reason":"Combat.CompleteRemoveVictim","caller":"PresentRemovedFieldCardAsync","defId":"trap.bear_trap"}
+idx=1806 beat=339 tMs=1235496 kind=RegistryDelta site=Card.Spawn payload={"op":"add","countBefore":"22","countAfter":"23","reason":"SpawnView","caller":"","defId":"trap.bear_trap"}
+idx=2047 beat=395 tMs=1309716 kind=RegistryDelta site=Card.Release payload={"op":"remove","countBefore":"26","countAfter":"25","reason":"Combat.CompleteRemoveVictim","caller":"PresentRemovedFieldCardAsync","defId":"trap.bear_trap"}
+idx=2407 beat=444 tMs=1363501 kind=RegistryDelta site=Card.Spawn payload={"op":"add","countBefore":"15","countAfter":"16","reason":"SpawnView","caller":"","defId":"trap.bear_trap"}
+idx=2676 beat=489 tMs=1512640 kind=RegistryDelta site=Card.Release payload={"op":"remove","countBefore":"9","countAfter":"8","reason":"Combat.CompleteRemoveVictim","caller":"PresentRemovedFieldCardAsync","defId":"trap.bear_trap"}
+idx=2712 beat=489 tMs=1598680 kind=RegistryDelta site=Card.Spawn payload={"op":"add","countBefore":"17","countAfter":"18","reason":"SpawnView","caller":"","defId":"trap.bear_trap"}
+idx=2990 beat=546 tMs=1653347 kind=RegistryDelta site=Card.Release payload={"op":"remove","countBefore":"10","countAfter":"9","reason":"Combat.CompleteRemoveVictim","caller":"PresentRemovedFieldCardAsync","defId":"trap.bear_trap"}
+idx=3811 beat=670 tMs=1951081 kind=RegistryDelta site=Card.Spawn payload={"op":"add","countBefore":"17","countAfter":"18","reason":"SpawnView","caller":"","defId":"trap.bear_trap"}
+idx=4015 beat=696 tMs=2007636 kind=RegistryDelta site=Card.Release payload={"op":"remove","countBefore":"20","countAfter":"19","reason":"Combat.CompleteRemoveVictim","caller":"PresentRemovedFieldCardAsync","defId":"trap.bear_trap"}
+idx=4739 beat=806 tMs=2227750 kind=RegistryDelta site=Card.Spawn payload={"op":"add","countBefore":"9","countAfter":"10","reason":"SpawnView","caller":"","defId":"trap.bear_trap"}
+idx=4891 beat=822 tMs=2311328 kind=RegistryDelta site=Card.Release payload={"op":"remove","countBefore":"23","countAfter":"22","reason":"Combat.CompleteRemoveVictim","caller":"PresentRemovedFieldCardAsync","defId":"trap.bear_trap"}
+idx=5113 beat=844 tMs=2427394 kind=RegistryDelta site=Card.Spawn payload={"op":"add","countBefore":"12","countAfter":"13","reason":"SpawnView","caller":"","defId":"trap.bear_trap"}
+idx=5286 beat=863 tMs=2451508 kind=RegistryDelta site=Card.Release payload={"op":"remove","countBefore":"23","countAfter":"22","reason":"Combat.CompleteRemoveVictim","caller":"PresentRemovedFieldCardAsync","defId":"trap.bear_trap"}
+idx=5832 beat=947 tMs=2583953 kind=RegistryDelta site=Card.Spawn payload={"op":"add","countBefore":"17","countAfter":"18","reason":"SpawnView","caller":"","defId":"trap.bear_trap"}
+idx=6066 beat=988 tMs=2627410 kind=RegistryDelta site=Card.Release payload={"op":"remove","countBefore":"22","countAfter":"21","reason":"Combat.CompleteRemoveVictim","caller":"PresentRemovedFieldCardAsync","defId":"trap.bear_trap"}
+
+$ $p = Get-Content "Assets\Notes\Logs\PerfLog\perflog-20260806-142051-858-seed1.json" -Raw | ConvertFrom-Json; "--- bear_trap in perflog:"; $p.events | Where-Object { ($_.kind + '|' + $_.site + '|' + ($_.payload | ConvertTo-Json -Depth 10 -Compress)) -match 'bear_trap' } | ForEach-Object { "idx=$($_.index) beat=$($_.beatId) tMs=$($_.tMs) kind=$($_.kind) site=$($_.site) payload=$($_.payload | ConvertTo-Json -Depth 10 -Compress)" }
+--- bear_trap in perflog:
+idx=64 beat=0 tMs=355 kind=RegistryDelta site=Card.Spawn payload={"op":"add","countBefore":"16","countAfter":"17","reason":"SpawnView","caller":"","defId":"trap.bear_trap"}
+idx=67 beat=0 tMs=355 kind=Spawn site=Card.Spawn payload={"defId":"trap.bear_trap","slot":"","parent":"Cards"}
+idx=2359 beat=46 tMs=69550 kind=RegistryDelta site=Card.Release payload={"op":"remove","countBefore":"6","countAfter":"5","reason":"Combat.CompleteRemoveVictim","caller":"PresentRemovedFieldCardAsync","defId":"trap.bear_trap"}
+idx=2436 beat=46 tMs=74281 kind=RegistryDelta site=Card.Spawn payload={"op":"add","countBefore":"8","countAfter":"9","reason":"SpawnView","caller":"","defId":"trap.bear_trap"}
+idx=2439 beat=46 tMs=74281 kind=Spawn site=Card.Spawn payload={"defId":"trap.bear_trap","slot":"","parent":"Cards"}
+idx=3484 beat=58 tMs=92749 kind=RegistryDelta site=Card.Release payload={"op":"remove","countBefore":"20","countAfter":"19","reason":"Combat.CompleteRemoveVictim","caller":"PresentRemovedFieldCardAsync","defId":"trap.bear_trap"}
+idx=18399 beat=339 tMs=1235496 kind=RegistryDelta site=Card.Spawn payload={"op":"add","countBefore":"22","countAfter":"23","reason":"SpawnView","caller":"","defId":"trap.bear_trap"}
+idx=18402 beat=339 tMs=1235497 kind=Spawn site=Card.Spawn payload={"defId":"trap.bear_trap","slot":"","parent":"Cards"}
+idx=21644 beat=395 tMs=1309716 kind=RegistryDelta site=Card.Release payload={"op":"remove","countBefore":"26","countAfter":"25","reason":"Combat.CompleteRemoveVictim","caller":"PresentRemovedFieldCardAsync","defId":"trap.bear_trap"}
+idx=24286 beat=444 tMs=1363501 kind=RegistryDelta site=Card.Spawn payload={"op":"add","countBefore":"15","countAfter":"16","reason":"SpawnView","caller":"","defId":"trap.bear_trap"}
+idx=24289 beat=444 tMs=1363501 kind=Spawn site=Card.Spawn payload={"defId":"trap.bear_trap","slot":"","parent":"Cards"}
+idx=26690 beat=489 tMs=1512640 kind=RegistryDelta site=Card.Release payload={"op":"remove","countBefore":"9","countAfter":"8","reason":"Combat.CompleteRemoveVictim","caller":"PresentRemovedFieldCardAsync","defId":"trap.bear_trap"}
+idx=26805 beat=489 tMs=1598680 kind=RegistryDelta site=Card.Spawn payload={"op":"add","countBefore":"17","countAfter":"18","reason":"SpawnView","caller":"","defId":"trap.bear_trap"}
+idx=26808 beat=489 tMs=1598680 kind=Spawn site=Card.Spawn payload={"defId":"trap.bear_trap","slot":"","parent":"Cards"}
+idx=29628 beat=546 tMs=1653347 kind=RegistryDelta site=Card.Release payload={"op":"remove","countBefore":"10","countAfter":"9","reason":"Combat.CompleteRemoveVictim","caller":"PresentRemovedFieldCardAsync","defId":"trap.bear_trap"}
+idx=37142 beat=670 tMs=1951081 kind=RegistryDelta site=Card.Spawn payload={"op":"add","countBefore":"17","countAfter":"18","reason":"SpawnView","caller":"","defId":"trap.bear_trap"}
+idx=37145 beat=670 tMs=1951081 kind=Spawn site=Card.Spawn payload={"defId":"trap.bear_trap","slot":"","parent":"Cards"}
+idx=39198 beat=696 tMs=2007636 kind=RegistryDelta site=Card.Release payload={"op":"remove","countBefore":"20","countAfter":"19","reason":"Combat.CompleteRemoveVictim","caller":"PresentRemovedFieldCardAsync","defId":"trap.bear_trap"}
+idx=45236 beat=806 tMs=2227750 kind=RegistryDelta site=Card.Spawn payload={"op":"add","countBefore":"9","countAfter":"10","reason":"SpawnView","caller":"","defId":"trap.bear_trap"}
+idx=45239 beat=806 tMs=2227751 kind=Spawn site=Card.Spawn payload={"defId":"trap.bear_trap","slot":"","parent":"Cards"}
+idx=46669 beat=822 tMs=2311328 kind=RegistryDelta site=Card.Release payload={"op":"remove","countBefore":"23","countAfter":"22","reason":"Combat.CompleteRemoveVictim","caller":"PresentRemovedFieldCardAsync","defId":"trap.bear_trap"}
+idx=48075 beat=844 tMs=2427394 kind=RegistryDelta site=Card.Spawn payload={"op":"add","countBefore":"12","countAfter":"13","reason":"SpawnView","caller":"","defId":"trap.bear_trap"}
+idx=48078 beat=844 tMs=2427394 kind=Spawn site=Card.Spawn payload={"defId":"trap.bear_trap","slot":"","parent":"Cards"}
+idx=49697 beat=863 tMs=2451508 kind=RegistryDelta site=Card.Release payload={"op":"remove","countBefore":"23","countAfter":"22","reason":"Combat.CompleteRemoveVictim","caller":"PresentRemovedFieldCardAsync","defId":"trap.bear_trap"}
+idx=54798 beat=947 tMs=2583953 kind=RegistryDelta site=Card.Spawn payload={"op":"add","countBefore":"17","countAfter":"18","reason":"SpawnView","caller":"","defId":"trap.bear_trap"}
+idx=54801 beat=947 tMs=2583954 kind=Spawn site=Card.Spawn payload={"defId":"trap.bear_trap","slot":"","parent":"Cards"}
+idx=57476 beat=988 tMs=2627410 kind=RegistryDelta site=Card.Release payload={"op":"remove","countBefore":"22","countAfter":"21","reason":"Combat.CompleteRemoveVictim","caller":"PresentRemovedFieldCardAsync","defId":"trap.bear_trap"}
+
+$ $c = Get-Content "Assets\Notes\Logs\CoreLog\corelog-20260806-142051-858-seed1.json" -Raw | ConvertFrom-Json; "--- DealResult sample:"; $c.events | Where-Object { $_.name -eq 'DealResult' } | Select-Object -First 3 | ConvertTo-Json -Depth 6; "--- OccupancyVacate sample:"; $c.events | Where-Object { $_.name -eq 'OccupancyVacate' } | Select-Object -First 3 | ConvertTo-Json -Depth 6; "--- DrainEnd sample:"; $c.events | Where-Object { $_.name -eq 'DrainEnd' } | Select-Object -First 2 | ConvertTo-Json -Depth 6
+--- DealResult sample:
+[
+  {
+    "index": 4,
+    "beatId": 1,
+    "category": "Deck",
+    "name": "DealResult",
+    "loopState": "",
+    "floor": "1",
+    "nodeIndex": "1",
+    "phaseBefore": "",
+    "phaseAfter": "",
+    "accepted": true,
+    "refBattleOpIndex": 0,
+    "payload": {
+      "uid": "14",
+      "slot": "1",
+      "placeable": "true",
+      "ok": "true",
+      "rollback": "false",
+      "caller": "TryDealCard",
+      "reason": "",
+      "nodeIndex": "1",
+      "chainId": "0",
+      "choreoSeqId": "1"
+    }
+  },
+  {
+    "index": 7,
+    "beatId": 1,
+    "category": "Deck",
+    "name": "DealResult",
+    "loopState": "",
+    "floor": "1",
+    "nodeIndex": "1",
+    "phaseBefore": "",
+    "phaseAfter": "",
+    "accepted": true,
+    "refBattleOpIndex": 0,
+    "payload": {
+      "uid": "17",
+      "slot": "2",
+      "placeable": "true",
+      "ok": "true",
+      "rollback": "false",
+      "caller": "TryDealCard",
+      "reason": "",
+      "nodeIndex": "1",
+      "chainId": "0",
+      "choreoSeqId": "2"
+    }
+  },
+  {
+    "index": 10,
+    "beatId": 1,
+    "category": "Deck",
+    "name": "DealResult",
+    "loopState": "",
+    "floor": "1",
+    "nodeIndex": "1",
+    "phaseBefore": "",
+    "phaseAfter": "",
+    "accepted": true,
+    "refBattleOpIndex": 0,
+    "payload": {
+      "uid": "3",
+      "slot": "3",
+      "placeable": "true",
+      "ok": "true",
+      "rollback": "false",
+      "caller": "TryDealCard",
+      "reason": "",
+      "nodeIndex": "1",
+      "chainId": "0",
+      "choreoSeqId": "3"
+    }
+  }
+]
+--- OccupancyVacate sample:
+[
+  {
+    "index": 34,
+    "beatId": 1,
+    "category": "Field",
+    "name": "OccupancyVacate",
+    "loopState": "",
+    "floor": "1",
+    "nodeIndex": "1",
+    "phaseBefore": "",
+    "phaseAfter": "",
+    "accepted": true,
+    "refBattleOpIndex": 0,
+    "payload": {
+      "slot": "6",
+      "uid": "6",
+      "caller": "Unregister",
+      "nodeIndex": "1",
+      "chainId": "0",
+      "choreoSeqId": "0"
+    }
+  },
+  {
+    "index": 74,
+    "beatId": 3,
+    "category": "Field",
+    "name": "OccupancyVacate",
+    "loopState": "",
+    "floor": "1",
+    "nodeIndex": "1",
+    "phaseBefore": "",
+    "phaseAfter": "",
+    "accepted": true,
+    "refBattleOpIndex": 0,
+    "payload": {
+      "slot": "6",
+      "uid": "3",
+      "caller": "Unregister",
+      "nodeIndex": "1",
+      "chainId": "0",
+      "choreoSeqId": "0"
+    }
+  },
+  {
+    "index": 88,
+    "beatId": 10,
+    "category": "Field",
+    "name": "OccupancyVacate",
+    "loopState": "",
+    "floor": "1",
+    "nodeIndex": "1",
+    "phaseBefore": "",
+    "phaseAfter": "",
+    "accepted": true,
+    "refBattleOpIndex": 3,
+    "payload": {
+      "slot": "2",
+      "uid": "14",
+      "caller": "Unregister",
+      "nodeIndex": "1",
+      "chainId": "3",
+      "choreoSeqId": "0"
+    }
+  }
+]
+--- DrainEnd sample:
+[
+  {
+    "index": 81,
+    "beatId": 3,
+    "category": "Presentation",
+    "name": "DrainEnd",
+    "loopState": "",
+    "floor": "1",
+    "nodeIndex": "1",
+    "phaseBefore": "",
+    "phaseAfter": "",
+    "accepted": true,
+    "refBattleOpIndex": 0,
+    "payload": {
+      "moves": "4",
+      "deals": "2",
+      "stepCount": "4",
+      "requestId": "12",
+      "drainInFlight": "true",
+      "fieldBusy": "true",
+      "presentationLocked": "true",
+      "nodeIndex": "1",
+      "chainId": "0",
+      "choreoSeqId": "0"
+    }
+  },
+  {
+    "index": 97,
+    "beatId": 11,
+    "category": "Presentation",
+    "name": "DrainEnd",
+    "loopState": "",
+    "floor": "1",
+    "nodeIndex": "1",
+    "phaseBefore": "",
+    "phaseAfter": "",
+    "accepted": true,
+    "refBattleOpIndex": 3,
+    "payload": {
+      "moves": "1",
+      "deals": "1",
+      "stepCount": "1",
+      "requestId": "13",
+      "drainInFlight": "true",
+      "fieldBusy": "true",
+      "presentationLocked": "true",
+      "nodeIndex": "1",
+      "chainId": "3",
+      "choreoSeqId": "0"
+    }
+  }
+]
+
+$ $c = Get-Content "Assets\Notes\Logs\CoreLog\corelog-20260806-142051-858-seed1.json" -Raw | ConvertFrom-Json; "--- corelog payload hits for FillEmptySlots/Refill:"; $c.events | ForEach-Object { $i = $_.index; $pay = $_ | ConvertTo-Json -Depth 12 -Compress; if ($pay -match 'FillEmptySlots|Refill') { "idx=$i name=$($_.name) floor=$($_.floor) node=$($_.nodeIndex) pay=$pay" } } | Select-Object -First 40
+--- corelog payload hits for FillEmptySlots/Refill:
+
+$ python --version; py --version
+Python 3.11.14
+Python 3.12.10
+
+$ $c = Get-Content "Assets\Notes\Logs\CoreLog\corelog-20260806-142051-858-seed1.json" -Raw | ConvertFrom-Json; $c.events | Where-Object { $_.name -eq 'OccupancySnapshot' } | Select-Object -First 2 | ConvertTo-Json -Depth 8
+[
+  {
+    "index": 27,
+    "beatId": 1,
+    "category": "Field",
+    "name": "OccupancySnapshot",
+    "loopState": "",
+    "floor": "1",
+    "nodeIndex": "1",
+    "phaseBefore": "",
+    "phaseAfter": "",
+    "accepted": true,
+    "refBattleOpIndex": 0,
+    "payload": {
+      "phase": "startNodeAfter",
+      "coreHash": "1:14|2:17|3:3|4:2|6:6|7:11|8:4|9:18",
+      "presHash": "1:14|2:17|3:3|4:2|6:6|7:11|8:4|9:18",
+      "diffSlots": "",
+      "coreOccupantCount": "8",
+      "presOccupantCount": "8",
+      "hasDiff": "false",
+      "sceneTag": "startNode",
+      "nodeIndex": "1",
+      "chainId": "0",
+      "choreoSeqId": "1"
+    }
+  },
+  {
+    "index": 35,
+    "beatId": 1,
+    "category": "Field",
+    "name": "OccupancySnapshot",
+    "loopState": "",
+    "floor": "1",
+    "nodeIndex": "1",
+    "phaseBefore": "",
+    "phaseAfter": "",
+    "accepted": false,
+    "refBattleOpIndex": 0,
+    "payload": {
+      "phase": "pickupClick",
+      "coreHash": "1:2|2:14|3:17|4:11|6:16|7:4|8:18|9:7",
+      "presHash": "1:14|2:17|3:3|4:2|6:0|7:11|8:4|9:18",
+      "diffSlots": "1:C2/P14,2:C14/P17,3:C17/P3,4:C11/P2,6:C16/P0,7:C4/P11,8:C18/P4,9:C7/P18",
+      "coreOccupantCount": "8",
+      "presOccupantCount": "7",
+      "hasDiff": "true",
+      "sceneTag": "pickup",
+      "nodeIndex": "1",
+      "chainId": "0",
+      "choreoSeqId": "0"
+    }
+  }
+]
+
+$ $c = Get-Content "Assets\Notes\Logs\CoreLog\corelog-20260806-142051-858-seed1.json" -Raw | ConvertFrom-Json; "--- StartNode events:"; $c.events | Where-Object { $_.name -eq 'StartNode' } | ForEach-Object { "idx=$($_.index) beat=$($_.beatId) floor=$($_.floor) node=$($_.nodeIndex) refOp=$($_.refBattleOpIndex) phaseBefore=$($_.phaseBefore) phaseAfter=$($_.phaseAfter)" }
+--- StartNode events:
+idx=2 beat=0 floor=1 node=1 refOp=0 phaseBefore=BuildEnemyPool phaseAfter=InteractionLoop
+idx=534 beat=46 floor=1 node=2 refOp=11 phaseBefore=NodeCompleted phaseAfter=InteractionLoop
+idx=1280 beat=107 floor=1 node=3 refOp=22 phaseBefore=NodeCompleted phaseAfter=InteractionLoop
+idx=2274 beat=182 floor=1 node=5 refOp=34 phaseBefore=NodeCompleted phaseAfter=InteractionLoop
+idx=3354 beat=264 floor=1 node=6 refOp=52 phaseBefore=NodeCompleted phaseAfter=InteractionLoop
+idx=4132 beat=339 floor=1 node=8 refOp=70 phaseBefore=NodeCompleted phaseAfter=InteractionLoop
+idx=4896 beat=404 floor=2 node=9 refOp=81 phaseBefore=NodeCompleted phaseAfter=InteractionLoop
+idx=5670 beat=444 floor=2 node=10 refOp=89 phaseBefore=NodeCompleted phaseAfter=InteractionLoop
+idx=6354 beat=489 floor=2 node=11 refOp=96 phaseBefore=NodeCompleted phaseAfter=InteractionLoop
+idx=7086 beat=546 floor=2 node=13 refOp=109 phaseBefore=NodeCompleted phaseAfter=InteractionLoop
+idx=7804 beat=601 floor=2 node=14 refOp=120 phaseBefore=NodeCompleted phaseAfter=InteractionLoop
+idx=8935 beat=670 floor=2 node=16 refOp=135 phaseBefore=NodeCompleted phaseAfter=InteractionLoop
+idx=9886 beat=745 floor=3 node=17 refOp=149 phaseBefore=NodeCompleted phaseAfter=InteractionLoop
+idx=10363 beat=776 floor=3 node=18 refOp=153 phaseBefore=NodeCompleted phaseAfter=InteractionLoop
+idx=10814 beat=806 floor=3 node=19 refOp=158 phaseBefore=NodeCompleted phaseAfter=InteractionLoop
+idx=11472 beat=844 floor=3 node=21 refOp=164 phaseBefore=NodeCompleted phaseAfter=InteractionLoop
+idx=12182 beat=888 floor=3 node=22 refOp=169 phaseBefore=NodeCompleted phaseAfter=InteractionLoop
+idx=13192 beat=947 floor=3 node=24 refOp=178 phaseBefore=NodeCompleted phaseAfter=InteractionLoop
+
+Now I'll write a Python analysis script for the full reconstruction.
+← Write C:/Users/jinji/AppData/Local/Temp/opencode/refill_analysis.py
+Wrote file successfully.
+
+$ python "C:\Users\jinji\AppData\Local\Temp\opencode\refill_analysis.py" > "C:\Users\jinji\AppData\Local\Temp\opencode\node3_dump.txt" 2>&1; (Get-Item "C:\Users\jinji\AppData\Local\Temp\opencode\node3_dump.txt").Length
+726
+
+→ Read C:/Users/jinji/AppData/Local/Temp/opencode/node3_dump.txt
+
+← Edit C:/Users/jinji/AppData/Local/Temp/opencode/refill_analysis.py
+Index: C:\Users\jinji\AppData\Local\Temp\opencode\refill_analysis.py
+===================================================================
+--- C:\Users\jinji\AppData\Local\Temp\opencode\refill_analysis.py
++++ C:\Users\jinji\AppData\Local\Temp\opencode\refill_analysis.py
+@@ -6,12 +6,12 @@
+ BATTLE = os.path.join(BASE, "OtherLog", "BattleLog", "battlelog-20260806-142051-858-seed1.json")
+ REG = os.path.join(BASE, "OtherLog", "RegistryLog", "registrylog-20260806-142051-858-seed1.json")
+ PERF = os.path.join(BASE, "PerfLog", "perflog-20260806-142051-858-seed1.json")
+ 
+-core = json.load(open(CORE, encoding="utf-8"))
+-battle = json.load(open(BATTLE, encoding="utf-8"))
+-reg = json.load(open(REG, encoding="utf-8"))
+-perf = json.load(open(PERF, encoding="utf-8"))
++core = json.load(open(CORE, encoding="utf-8-sig"))
++battle = json.load(open(BATTLE, encoding="utf-8-sig"))
++reg = json.load(open(REG, encoding="utf-8-sig"))
++perf = json.load(open(PERF, encoding="utf-8-sig"))
+ 
+ ce = core["events"]; be = [e for op in battle["ops"] for e in op["events"]]; re_ = reg["events"]; pe = perf["events"]
+ 
+ # --- beat -> node mapping (corelog authoritative; shell nodeIndex) ---
+
+
+$ python "C:\Users\jinji\AppData\Local\Temp\opencode\refill_analysis.py" > "C:\Users\jinji\AppData\Local\Temp\opencode\node3_dump.txt" 2>&1; (Get-Item "C:\Users\jinji\AppData\Local\Temp\opencode\node3_dump.txt").Length
+322385
+

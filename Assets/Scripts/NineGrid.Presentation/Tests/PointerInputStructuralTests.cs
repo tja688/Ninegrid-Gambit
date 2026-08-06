@@ -103,6 +103,24 @@ namespace NineGrid.Presentation.Tests
         }
 
         [Test]
+        public void FieldSurface_DoesNotSwallowClicksDuringBoardSelect()
+        {
+            var root = Path.GetFullPath(Path.Combine(Application.dataPath, "Scripts", "NineGrid.Presentation"));
+            var surface = File.ReadAllText(Path.Combine(root, "Cards", "GroundFieldHitSurface.cs"));
+
+            // 交换等多选卡（BoardSelect）选卡点击须经认领者派发（ADR-0023 悬停与点击同源）。
+            // #102 去 collider 后场卡唯一命中面是场地面；此处早退会把选卡点击整批吞掉。
+            var down = Regex.Match(
+                surface,
+                @"public void HandlePointerDown\(\)\s*\{[\s\S]*?\n        \}",
+                RegexOptions.CultureInvariant);
+            Assert.IsTrue(down.Success, "找不到 HandlePointerDown");
+            Assert.IsFalse(
+                down.Value.Contains("BoardSelectModeActive"),
+                "HandlePointerDown 不得以 BoardSelectModeActive 早退吞掉多选点击（认领者 Activate 内已转 TryToggleSelection）");
+        }
+
+        [Test]
         public void ShuffleIntoNewCard_UsesAddAnchorsPath_NotOriginShortcut()
         {
             var path = Path.GetFullPath(Path.Combine(

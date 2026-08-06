@@ -1,0 +1,206 @@
+
+> Full-Auto · deepseek-v4-flash
+
+$ Test-Path "Assets\Scripts\NineGrid.Foundation\NineGrid.Core\Effects\EffectAtomLibrary.cs"; Test-Path "Assets\Scripts\NineGrid.Foundation\NineGrid.Core\Systems\PhaseSystem.cs"; Test-Path "Assets\Scripts\NineGrid.Foundation\NineGrid.Core\Domain\Actions\BoardDeckActions.cs"; Test-Path ".opencode\reports"
+True
+True
+True
+False
+
+✱ Grep "class (Kill|Remove|Banish|ShuffleBack|Destroy|Transform)\w*" in Assets/Scripts · 6 matches
+→ Read Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Effects/EffectAtomLibrary.cs
+✱ Grep "EffectAtom\("" in Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Effects/EffectAtomLibrary.cs · 100 matches
+The file is large. Let me grep for the key atoms instead of reading it all.
+
+$ rg -o 'EffectAtom\("[^"]+"' "Assets\Scripts\NineGrid.Foundation\NineGrid.Core\Effects\EffectAtomLibrary.cs" | rg -v 'Trigger|Target|Condition' ; echo ---; rg -n 'EffectAtom\("' "Assets\Scripts\NineGrid.Foundation\NineGrid.Core\Effects\EffectAtomLibrary.cs" | tail -40
+EffectAtom("OnBattle"
+EffectAtom("OnKill"
+EffectAtom("OnDeal"
+EffectAtom("OnEvent"
+EffectAtom("OnRemove"
+EffectAtom("OnSelfRemoved"
+EffectAtom("OnAnyCardRemoved"
+EffectAtom("OnUseHelpCard"
+EffectAtom("OnSelfUsed"
+EffectAtom("OnOtherHelpCardUsed"
+EffectAtom("OnAnyHelpCardUsed"
+EffectAtom("OnActivate"
+EffectAtom("OnNodeStart"
+EffectAtom("OnNodeEnd"
+EffectAtom("OnRotate"
+EffectAtom("OnInteract"
+EffectAtom("OnSelfMove"
+EffectAtom("OnMoveToSlot"
+EffectAtom("OnMoveToBoardMark"
+EffectAtom("OnEnter"
+EffectAtom("OnFlip"
+EffectAtom("OnArmorBreak"
+EffectAtom("OnDamageTaken"
+EffectAtom("OnFatalDamage"
+EffectAtom("OnCumulative"
+EffectAtom("OnSelfArmorLostCumulative"
+EffectAtom("OnSelfDamageDealtToPlayerCumulative"
+EffectAtom("OnSelfDamageDealtToPlayer"
+EffectAtom("Self"
+EffectAtom("Player"
+EffectAtom("EventCard"
+EffectAtom("EventCards"
+EffectAtom("MovedEventCards"
+EffectAtom("BoardMarkEventCard"
+EffectAtom("RandomMonster"
+EffectAtom("FilteredCards"
+EffectAtom("AllMonsters"
+EffectAtom("SelectedCards"
+EffectAtom("OrthoAdjacent"
+EffectAtom("SlotCard"
+EffectAtom("Column"
+EffectAtom("AdjacentHasCard"
+EffectAtom("AdjacentCard"
+EffectAtom("AtSlot"
+EffectAtom("Adjacent"
+EffectAtom("CardZone"
+EffectAtom("IsFaceUp"
+EffectAtom("HpBelow"
+EffectAtom("StatAtLeast"
+EffectAtom("HasCard"
+EffectAtom("CardCounter"
+EffectAtom("BoardMarkCount"
+EffectAtom("SelectedOption"
+EffectAtom("EventFilter"
+EffectAtom("EventFilterActorIsPlayer"
+EffectAtom("EventFilterSourcePrefix"
+EffectAtom("EventFilterExcludeCause"
+EffectAtom("ActionSource"
+EffectAtom("OwnsRelicSet"
+EffectAtom("LevelParity"
+EffectAtom("Sequence"
+EffectAtom("WeightedRandom"
+EffectAtom("Repeat"
+EffectAtom("DealDamage"
+EffectAtom("Heal"
+EffectAtom("GainArmor"
+EffectAtom("TransferArmor"
+EffectAtom("ModifyGold"
+EffectAtom("ModifyBaseStat"
+EffectAtom("OfferRewardChoice"
+EffectAtom("GrantRewardFromPool"
+EffectAtom("GrantRelic"
+EffectAtom("Move"
+EffectAtom("Swap"
+EffectAtom("Rotate"
+EffectAtom("Flip"
+EffectAtom("ModifyActionCountdown"
+EffectAtom("ShuffleInto"
+EffectAtom("MoveToDrawPile"
+EffectAtom("Spawn"
+EffectAtom("ShuffleRandomContent"
+EffectAtom("ExchangeWithDrawPile"
+EffectAtom("ForceBattle"
+EffectAtom("AddModifier"
+EffectAtom("AddRuleModifier"
+EffectAtom("ReplayHelpCardEffects"
+EffectAtom("SetBoardMark"
+EffectAtom("RemoveCard"
+EffectAtom("SetCounter"
+EffectAtom("RemoveRuleModifiersBySource"
+EffectAtom("ModifyRelicRunContribution"
+EffectAtom("MarkLeaveTrapBroken"
+EffectAtom("DeactivateSelfEffect"
+---
+tail: The term 'tail' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.
+
+✱ Grep "FillEmptySlotsAction" in Assets/Scripts · 10 matches
+✱ Grep "class (OpeningDealAction|FillEmptySlotsAction|ShuffleIntoAction|MoveToDrawPileAction|RemoveCardAction|KillAction|KillIfDeadAction|SpawnAction|ExchangeWithDrawPileAction|ForceBattleAction|ShuffleRandomContentAction)" in Assets/Scripts · 7 matches
+→ Read Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Domain/Actions/BoardDeckActions.cs
+→ Read Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Systems/PhaseSystem.cs [limit=240]
+→ Read Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Effects/EffectAtomLibrary.cs [offset=3088, limit=850]
+→ Read Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Domain/Actions/CoreActions.cs [limit=300, offset=440]
+→ Read Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Domain/Actions/EffectActions.cs [limit=340]
+→ Read Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Domain/Actions/EffectActions.cs [limit=330, offset=341]
+→ Read Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Systems/PhaseSystem.cs [limit=220, offset=1720]
+→ Read Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Systems/DeckSystem.cs
+→ Read Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Systems/PhaseSystem.cs [limit=330, offset=1400]
+✱ Glob "Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Systems/*Pipeline*.cs" 1 match
+Now let me examine the pipeline system to understand effect trigger execution and follow-up ordering.
+✱ Grep "class ActionPipelineSystem|interface IActionPipelineSystem" in Assets/Scripts · 2 matches
+→ Read Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Systems/ActionPipelineSystem.cs
+✱ Grep "ResolvePostKillFill|ResolvePostKillBoard|ResolveFusionRefill|ResolveDrainRefill|ResolveEnemyActionFinale|AdvanceInteractionCount|ResolvePostKillRotate|RegisterEnemyActionPhase|ResolveNextEnemyAction" in Assets/Scripts/NineGrid.Presentation · 58 matches
+→ Read Assets/Scripts/NineGrid.Presentation/Flow/BattleSession/BattleSessionExecutor.Opening.cs
+✱ Grep "StartBattleNode|CaptureOpeningPresentationPlan|OpeningDealPresentation|class OpeningPlan" in Assets/Scripts · 15 matches
+Now let me look at the deck options builder and trap injection.
+✱ Grep "BuildNodeDeckOptions|class NodeDeckOptions" in Assets/Scripts · 50 matches
+→ Read Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Systems/RewardSystem.cs [limit=180, offset=260]
+→ Read Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Domain/CardDraft.cs [limit=120, offset=100]
+→ Read Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Systems/RewardSystem.cs [limit=220, offset=440]
+→ Read Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Systems/RewardSystem.cs [limit=220, offset=660]
+→ Read Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Content/RegularTrapPool.cs
+✱ Grep "private void AddSequenceCards|private NodeRule|GetSequenceCount|Seq1Count|Seq2Count|Seq3Count|Seq4Count|Seq5Count" in Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Systems/RewardSystem.cs · 2 matches
+✱ Glob "Assets/StreamingAssets/ContentVisual/cards/relic_*.json" 60 matches
+→ Read Assets/StreamingAssets/ContentVisual/cards/trap_bear_trap.json
+✱ Grep "RemoveCard" in Assets/StreamingAssets/ContentVisual/cards · 0 matches
+✱ Grep "tpl\.trap\.bear_trap" in Assets/StreamingAssets/ContentVisual/tables/effect_templates.json · 1 match
+→ Read Assets/StreamingAssets/ContentVisual/tables/effect_templates.json [limit=60, offset=1268]
+✱ Grep "monsterRemoved|OnKill" in Assets/StreamingAssets/ContentVisual/tables/effect_templates.json · 11 matches
+
+$ rg -l 'RemoveCard|KillIfDead|"Kill"' Assets/StreamingAssets/ContentVisual/cards/*.json | Measure-Object -Line; rg -l 'RemoveCard' Assets/StreamingAssets/ContentVisual/cards/*.json
+rg: Assets/StreamingAssets/ContentVisual/cards/*.json: IO error for operation on Assets/StreamingAssets/ContentVisual/cards/*.json: 文件名、目录名或卷标语法不正确。 (os error 123)
+
+rg: Assets/StreamingAssets/ContentVisual/cards/*.json: IO error for operation on Assets/StreamingAssets/ContentVisual/cards/*.json: 文件名、目录名或卷标语法不正确。 (os error 123)
+Lines Words Characters Property
+----- ----- ---------- --------
+    0
+
+$ rg -l 'OnNodeStart' Assets/StreamingAssets/ContentVisual/cards/*.json Assets/StreamingAssets/ContentVisual/tables/effect_templates.json
+rg: Assets/StreamingAssets/ContentVisual/cards/*.json: Assets/StreamingAssets/ContentVisual/tables/effect_templates.json
+文件名、目录名或卷标语法不正确。 (os error 123)
+
+→ Read Assets/StreamingAssets/ContentVisual/cards/relic_terror_mask.json
+
+$ rg -n 'tpl\.relic\.terror_mask|tpl\.relic\.wood_sword\.base' Assets/StreamingAssets/ContentVisual/tables/effect_templates.json
+419:  "id": "tpl.relic.wood_sword.base",
+1675:  "id": "tpl.relic.terror_mask.remove",
+1707:  "id": "tpl.relic.terror_mask.node_start",
+
+→ Read Assets/StreamingAssets/ContentVisual/tables/effect_templates.json [limit=50, offset=415]
+→ Read Assets/StreamingAssets/ContentVisual/tables/effect_templates.json [limit=75, offset=1670]
+✱ Grep "class DealDamageAction|KillIfDeadAction|AddFollowUp" in Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Domain/Actions/EffectActions.cs · 27 matches
+Let me verify DealDamageAction's kill follow-up and NodeStartedAction's trigger points.
+✱ Grep "class NodeStartedAction" in Assets/Scripts · 1 match
+→ Read Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Domain/Actions/PhaseActions.cs [limit=60, offset=77]
+→ Read Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Domain/Actions/CoreActions.cs [limit=200, offset=1]
+→ Read Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Effects/EffectAtomLibrary.cs [limit=120, offset=1899]
+→ Read Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Effects/EffectAtomLibrary.cs [limit=90, offset=2516]
+
+$ rg -l '"atom":"OnNodeStart"' Assets/StreamingAssets/ContentVisual/cards/ 2>$null; echo ===; rg -n 'OnNodeStart' Assets/StreamingAssets/ContentVisual/tables/effect_templates.json | rg -v 'trigger' | head -20
+===
+head: The term 'head' is not recognized as a name of a cmdlet, function, script file, or executable program.
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.
+
+$ rg -l '"atom": *"OnNodeStart"' Assets/StreamingAssets/ContentVisual/cards/; echo ===TEMPLATES===; rg -l '"atom": *"OnNodeStart"' Assets/StreamingAssets/ContentVisual/tables/effect_templates.json
+===TEMPLATES===
+
+$ rg -l 'OnNodeStart' Assets/StreamingAssets/ContentVisual/cards/ Assets/StreamingAssets/ContentVisual/tables/
+Assets/StreamingAssets/ContentVisual/tables/effect_templates.json
+
+$ rg -n 'OnNodeStart' Assets/StreamingAssets/ContentVisual/tables/effect_templates.json
+200:  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnNodeStart\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"Spawn\",\"defId\":\"help.impact_tutorial\",\"kind\":\"HelpCard\",\"zone\":\"ItemSlots\"}}"
+208:  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnNodeStart\"},\"conditions\":[{\"atom\":\"HpBelow\",\"target\":\"Player\",\"pct\":0.5}],\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"Spawn\",\"defId\":\"help.impact_tutorial\",\"kind\":\"HelpCard\",\"zone\":\"ItemSlots\"}}"
+264:  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnNodeStart\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"GainArmor\",\"value\":{\"op\":\"Floor\",\"values\":[{\"op\":\"Multiply\",\"values\":[{\"source\":\"{{source}}\",\"stat\":\"Armor\"},{\"constant\":0.5}]}]}}}"
+336:  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnNodeStart\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"Spawn\",\"defId\":\"help.healing_potion\",\"kind\":\"HelpCard\",\"zone\":\"PlayerCardPool\",\"count\":\"{{count}}\"}}"
+344:  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnNodeStart\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"Spawn\",\"defId\":\"help.rotation_wheel\",\"kind\":\"HelpCard\",\"zone\":\"ItemSlots\"}}"
+368:  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnNodeStart\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"Spawn\",\"defId\":\"help.swap_card\",\"kind\":\"HelpCard\",\"zone\":\"ItemSlots\"}}"
+384:  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnNodeStart\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"Spawn\",\"defId\":\"help.throwing_knife\",\"kind\":\"HelpCard\",\"zone\":\"PlayerCardPool\",\"count\":\"{{count}}\"}}"
+392:  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnNodeStart\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"Spawn\",\"defId\":\"help.doubling_tower\",\"kind\":\"HelpCard\",\"zone\":\"ItemSlots\"}}"
+1560:  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnNodeStart\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"GainArmor\",\"value\":{\"op\":\"Floor\",\"values\":[{\"op\":\"Divide\",\"values\":[{\"source\":\"Player\",\"stat\":\"Attack\",\"effective\":true},{\"constant\":3}]}]}}}"
+1712:  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnNodeStart\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"SetCounter\",\"key\":\"relic.terror_mask.remove\",\"value\":0}}"
+1728:  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnNodeStart\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"Conditional\",\"condition\":{\"atom\":\"StatAtLeast\",\"target\":\"Player\",\"stat\":\"CurrentArmor\",\"value\":\"{{threshold}}\"},\"action\":{\"atom\":\"Sequence\",\"actions\":[{\"atom\":\"TransferArmor\",\"amount\":\"{{amount}}\",\"receiver\":\"None\",\"cause\":\"{{cause}}\"},{\"atom\":\"ModifyRelicRunContribution\",\"stat\":\"Armor\",\"delta\":\"{{delta}}\"}]}}}"
+1768:  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnNodeStart\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"Sequence\",\"actions\":[{\"atom\":\"RemoveRuleModifiersBySource\",\"source\":\"relic.foam_armor\"},{\"atom\":\"SetCounter\",\"key\":\"relic.foam_armor.can_arm\",\"value\":1}]}}"
+
+→ Read Assets/StreamingAssets/ContentVisual/tables/effect_templates.json [limit=100, offset=326]
+✱ Grep "FindNodeRule|class NodeRule|GetSequenceCount|SeqCount|seqCount|BattleRule" in Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Systems/RewardSystem.cs · 3 matches
+
+$ rg -l 'seq1Count|seq1_count|"sequences"|nodeRule' Assets/StreamingAssets/ContentVisual/tables/ 2>$null
+(no output)
+
+→ Read Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Systems/RewardSystem.cs [limit=120, offset=940]

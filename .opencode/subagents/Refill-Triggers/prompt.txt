@@ -1,0 +1,21 @@
+你是被派出的独立 sub agent。工作区是 Unity 6.3 C# 项目 TableNine（九宫牌局），根目录 C:\Users\jinji\Documents\GitHub\Ninegrid Gambit。
+
+任务：全量盘点「场上空格补牌（FillEmptySlots）」的**所有触发路径与守卫条件**，产出一张权威矩阵。
+
+背景（已知事实，供你定位）：
+- Core 规则核在 Assets\Scripts\NineGrid.Foundation\NineGrid.Core\。补牌动作类是 FillEmptySlotsAction（Domain\Actions\BoardDeckActions.cs）。
+- Core 侧对外分拍接口在 Systems\PhaseSystem.cs：ResolvePostKillFill / ResolveFusionRefill / ResolveDrainRefill / ResolveEnemyActionFinale / ResolvePostKillBoard / StartNode，以及内部 ResolvePostKillFillInternal / ResolveFillEmptySlotsBatchInternal。
+- 表现层（导演/时间线）在 Assets\Scripts\NineGrid.Presentation\Flow\Presentation\：AttackIntentScriptFactory、ExploreIntentScriptFactory、UseItemIntentScriptFactory、RevealFaceIntentScriptFactory、EnemyActionPhaseScheduler、FusionRefillScheduler、DrainRefillScheduler、FusionRefillPlanner、FusionRefillAftermath、PresentationDirector。
+- Presentation 侧 Command/Query：Commands\ResolveFusionRefillBatchCommand.cs、Commands\ResolveDrainRefillBatchCommand.cs、Queries\ShouldDrainRefillQuery.cs。
+
+请逐一读源码并回答：
+1. FillEmptySlotsAction.Apply 内部的补牌前提（相位、抽牌堆非空、Avatar 格、fillOrder 顺序、清关判定、每次最多补几张、是否含 OnDeal/OnEnter 触发）——照抄关键条件行并给行号。
+2. 列一张矩阵：每条「可能产生空格的事件」→「是否有补牌分拍跟随」→「跟随由谁排队（哪个类哪个方法）」→「守卫条件（if 判定）」。至少覆盖：玩家交战击杀、探索点空格、主动翻面、使用道具（drain 退场）、融合（Fusion）、敌方行动阶段单向打击致死、效果驱动的 Remove/Kill/放逐（EffectAtomLibrary 里的原子）、机关触发致死、清关。
+3. 明确指出哪些路径**没有**补牌分拍跟随（即"漏点"），以及哪些路径的守卫会让补牌被跳过（例如 ShouldRefill 里 phase != InteractionLoop、DrawPile 为空、IsNodeCleared 等）。
+4. Core 有没有「统一收口」的补牌不变量（例如 pipeline 收尾统一 Fill），还是完全依赖表现层导演在每条剧本末尾手工排队？给出结论与证据。
+
+- 独立完成，全程不提问、不等待人工确认；信息不足自行从工作区查证。
+- 不报告中途状态，一次干完再收尾。
+- 只读代码，禁止修改任何文件（除报告本身）。
+- 完成后把探查报告写到 C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\.opencode\reports\Refill-Triggers-report.md（Markdown，UTF-8，目录不存在先创建）。格式：结论先行，关键证据带文件路径+行号，遗留问题列表。
+- 完成时只回一句话：报告路径 + 结论摘要。

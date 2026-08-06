@@ -1,0 +1,75 @@
+
+> Full-Auto · deepseek-v4-flash
+
+→ Read Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Domain/Actions/BoardDeckActions.cs
+→ Read Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Systems/PhaseSystem.cs
+→ Read Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Systems/PhaseSystem.cs [offset=1212]
+✱ Glob "Assets/Scripts/NineGrid.Presentation/Flow/Presentation/**/*.cs" 76 matches
+✱ Grep "ShouldRefill|ShouldDrainRefill|IsNodeCleared" 42 matches
+→ Read Assets/Scripts/NineGrid.Presentation/Flow/Presentation/AttackIntentScriptFactory.cs
+→ Read Assets/Scripts/NineGrid.Presentation/Flow/Presentation/ExploreIntentScriptFactory.cs
+→ Read Assets/Scripts/NineGrid.Presentation/Flow/Presentation/UseItemIntentScriptFactory.cs
+→ Read Assets/Scripts/NineGrid.Presentation/Flow/Presentation/RevealFaceIntentScriptFactory.cs
+→ Read Assets/Scripts/NineGrid.Presentation/Flow/Presentation/FusionRefillScheduler.cs
+→ Read Assets/Scripts/NineGrid.Presentation/Flow/Presentation/DrainRefillScheduler.cs
+→ Read Assets/Scripts/NineGrid.Presentation/Flow/Presentation/FusionRefillPlanner.cs
+→ Read Assets/Scripts/NineGrid.Presentation/Flow/Presentation/EnemyActionPhaseScheduler.cs
+→ Read Assets/Scripts/NineGrid.Presentation/Flow/Presentation/FusionRefillAftermath.cs
+✱ Glob "Assets/Scripts/NineGrid.Presentation/Commands/*.cs" 29 matches
+→ Read Assets/Scripts/NineGrid.Presentation/Commands/ResolveFusionRefillBatchCommand.cs
+→ Read Assets/Scripts/NineGrid.Presentation/Commands/ResolveDrainRefillBatchCommand.cs
+→ Read Assets/Scripts/NineGrid.Presentation/Queries/ShouldDrainRefillQuery.cs
+✱ Glob "Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Effects/EffectAtomLibrary.cs" 1 match
+✱ Grep "new FillEmptySlotsAction\(\)" 9 matches
+→ Read Assets/Scripts/NineGrid.Presentation/Flow/Presentation/PickupIntentScriptFactory.cs
+→ Read Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Systems/DeckSystem.cs
+→ Read Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Systems/BoardSystem.cs
+✱ Grep "\.FillEmptySlots\(\)|\.SetupNode\(" 0 matches
+✱ Grep "RemoveCardAction|KillCardAction|RemoveAtom|KillAtom|DefeatAtom" in Assets/Scripts/NineGrid.Foundation/NineGrid.Core · 9 matches
+✱ Grep "FillEmptySlots" 30 matches
+✱ Grep ""atom":|atom ==|case EffectAtom|RemoveCardAtom|KillAtom|DrainAtom|FusionAtom" in Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Effects · 8 matches
+✱ Grep "class ClickEmptySlotAction|class RevealFaceAction" in Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Domain/Actions · 2 matches
+✱ Grep "void Apply|class .*Atom|nameof\(" in Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Effects · 1 match
+→ Read Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Domain/Actions/PhaseActions.cs [offset=400, limit=120]
+✱ Grep "SkeletonFusion|CardKilled|Drain|drain" in Assets/Scripts/NineGrid.Foundation/NineGrid.Core · 21 matches
+✱ Grep "public (sealed )?class \w+Atom" in Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Effects · 1 match
+→ Read Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Domain/Actions/CoreActions.cs [offset=470, limit=160]
+✱ Grep "new KillAction|new RemoveCardAction|new DealDamageAction|ExecuteEffectAtom|IAction m|public IAction|RegisterAtom|"Kill"|"RemoveCard"" in Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Effects · 3 matches
+→ Read Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Effects/EffectAtomLibrary.cs [limit=120, offset=2800]
+✱ Grep "\[EffectAtom\("" in Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Effects · 100 matches
+→ Read Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Effects/EffectAtomLibrary.cs [limit=70, offset=3750]
+✱ Grep "fusion|Fusion" in Assets/Scripts/NineGrid.Foundation/NineGrid.Core · 6 matches
+✱ Grep "class DealDamageAction|class ConditionalDealDamageIfAliveAction" in Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Domain/Actions · 1 match
+→ Read Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Domain/Actions/CoreActions.cs [limit=470]
+Now let me check the ADR docs on refill invariants and the PresentationDirector/Routing, plus the SkeletonFusionPresentationScanner.
+✱ Grep "补牌|Fill|refill|Refill|drain|Drain" in docs/adr · 19 matches
+✱ Glob "Assets/Scripts/NineGrid.Presentation/**/SkeletonFusion*.cs" 4 matches
+→ Read docs/adr/0012-enemy-action-phase-volley.md
+→ Read docs/adr/0026-leave-trap-sole-clear-condition.md
+✱ Grep "FusionRefillAftermath|TrySchedule|RoutingIntentScriptFactory|RegisterRouting" in Assets/Scripts/NineGrid.Presentation · 21 matches
+→ Read Assets/Scripts/NineGrid.Presentation/Flow/BattleSession/BoardPresentationPlayer.cs [limit=80, offset=1380]
+→ Read Assets/Scripts/NineGrid.Presentation/Setup/PresentationCompositionRoot.cs [limit=80, offset=110]
+✱ Grep "class SkeletonFusionPresentationScanner" in Assets/Scripts/NineGrid.Presentation/Flow · 1 match
+✱ Grep "class \w+" in Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Domain/Actions · 20 matches
+→ Read Assets/Scripts/NineGrid.Presentation/Flow/SkeletonFusionPresentationScanner.cs [limit=130]
+→ Read Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Domain/Actions/EffectActions.cs [limit=80, offset=1450]
+→ Read Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Domain/Actions/EffectActions.cs [limit=145, offset=794]
+→ Read Assets/Scripts/NineGrid.Presentation/Commands/ApplyPickupItemCommand.cs
+→ Read Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Commands/CoreCommands.cs [limit=80, offset=100]
+✱ Grep "ResolvePostKill|Refill|Fill|BuildScript|OnChainIdle|OnTimelineIdle" in Assets/Scripts/NineGrid.Presentation/Flow/Presentation · 3 matches
+→ Read Assets/Scripts/NineGrid.Presentation/Flow/BattleSession/CoreBatchProjectionCoordinator.cs [limit=90, offset=120]
+→ Read Assets/Scripts/NineGrid.Presentation/Flow/BattleSession/BattleSessionExecutor.Opening.cs [limit=80, offset=200]
+✱ Grep "new ResolvePostKillFillCommand|new ResolveDrainRefillCommand|new ResolveFusionRefillCommand|new ResolvePostKillRotateCommand" in Assets/Scripts/NineGrid.Presentation · 14 matches
+→ Read Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Domain/Actions/EffectActions.cs [limit=60, offset=225]
+→ Read Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Effects/EffectAtomLibrary.cs [limit=30, offset=3270]
+✱ Grep "ContainsCardKilled|class IntentBatchProjection|AvatarDefeated|public .* Deals" in Assets/Scripts/NineGrid.Presentation/Flow/Presentation · 3 matches
+→ Read Assets/Scripts/NineGrid.Presentation/Flow/Presentation/IntentBatchProjection.cs
+I have all the evidence I need. Writing the report now.
+
+$ New-Item -ItemType Directory -Path "C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\.opencode\reports" -Force | Out-Null; Test-Path "C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\.opencode\reports"
+True
+
+← Write .opencode/reports/Refill-Triggers-report.md
+Wrote file successfully.
+
+报告已写入 `.opencode\reports\Refill-Triggers-report.md`。结论摘要：Core 无统一补牌收口（FillEmptySlotsAction 仅 3 个生产入队点，全由表现层导演各剧本手工排队）；矩阵覆盖 10 条路径 + 效果原子/机关归属；发现 3 类漏点（攻击批内非目标死亡/非击杀移除无 DrainRefill 且无敌方参与时不补、Fill 批内 OnDeal/OnEnter 连锁移除不追补、UseItem 路径无互动计数与敌方行动阶段），守卫跳过点集中在 IsNodeCleared（ADR-0026 设计内）、IsTerminalPhase、非 InteractionLoop 相位及牌堆枯竭。
