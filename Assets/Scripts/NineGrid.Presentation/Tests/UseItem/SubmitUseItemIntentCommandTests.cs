@@ -1,6 +1,7 @@
 using NineGrid.Core;
 using NineGrid.Flow.Presentation;
 using NineGrid.Presentation.Commands;
+using NineGrid.Presentation.Systems;
 using NineGrid.Presentation.Tests.Fixtures;
 using NUnit.Framework;
 using QFramework;
@@ -82,6 +83,73 @@ namespace NineGrid.Presentation.Tests.UseItem
         }
 
         [Test]
+        public void Command_BoardSelectSwapCompletion_UsesBoardSelectOwnerAndSwapsCards()
+        {
+            using (var arch = PresentationArchitectureFixture.CreateStartedGameWithCatalog(seed: 42UL))
+            {
+                Assert.IsTrue(arch.Phase.StartNode(CreateTwoMonsterNode()).Accepted);
+
+                var leftUid = 0;
+                var rightUid = 0;
+                var leftSlot = SlotId.None;
+                var rightSlot = SlotId.None;
+                for (var i = SlotId.MinBoardIndex; i <= SlotId.MaxBoardIndex; i++)
+                {
+                    var slot = SlotId.Board(i);
+                    if (slot == arch.Board.AvatarSlot.Value)
+                    {
+                        continue;
+                    }
+
+                    var uid = arch.Board.GetCardUid(slot);
+                    if (uid <= 0)
+                    {
+                        continue;
+                    }
+
+                    if (leftUid == 0)
+                    {
+                        leftUid = uid;
+                        leftSlot = slot;
+                    }
+                    else
+                    {
+                        rightUid = uid;
+                        rightSlot = slot;
+                        break;
+                    }
+                }
+
+                Assert.Greater(leftUid, 0);
+                Assert.Greater(rightUid, 0);
+                var swapUid = SpawnHelpIntoItemSlots(arch, "help.swap_card");
+                var usePresent = new RecordingPresentChannel(ticksUntilComplete: 1);
+                var boardPresent = new RecordingPresentChannel(ticksUntilComplete: 1);
+                var factory = new UseItemIntentScriptFactory(
+                    arch.Architecture,
+                    arch.Dispatcher,
+                    usePresent,
+                    boardPresent);
+
+                using (var runtime = PresentationRuntimeFixture.Install(arch, factory))
+                {
+                    var input = PresentationInputStateSystem.EnsureRegistered(arch.Architecture);
+                    input.SetBoardSelectModeActive(true);
+
+                    Assert.IsTrue(
+                        arch.Architecture.SendCommand(
+                            new SubmitUseItemIntentCommand(swapUid, new[] { leftUid, rightUid }, null)),
+                        "BoardSelect 完成后的交换用牌应以 BoardSelect 所有者提交，不能被 ownerMismatch 拒绝");
+
+                    runtime.TickUntilIdle();
+
+                    Assert.AreEqual(rightUid, arch.Board.GetCardUid(leftSlot));
+                    Assert.AreEqual(leftUid, arch.Board.GetCardUid(rightSlot));
+                }
+            }
+        }
+
+        [Test]
         public void Command_BusyBuffersLatestWinsLegalUseItem_ThirdOverwritesSecond()
         {
             using (var arch = PresentationArchitectureFixture.CreateStartedGame(seed: 42UL))
@@ -131,6 +199,17 @@ namespace NineGrid.Presentation.Tests.UseItem
             var deck = arch.Architecture.GetModel<DeckModel>();
             Assert.Greater(deck.ItemSlotUids.Count, 0);
             return deck.ItemSlotUids[deck.ItemSlotUids.Count - 1];
+        }
+
+        private static NodeDeckOptions CreateTwoMonsterNode()
+        {
+            return new NodeDeckOptions
+            {
+                PlayerOpeningCount = 0,
+                EnemyOpeningCount = 2
+            }
+                .AddEnemyCard(new CardDraft("monster.test.left", CardKind.Monster) { MaxHp = 99, Attack = 0 })
+                .AddEnemyCard(new CardDraft("monster.test.right", CardKind.Monster) { MaxHp = 99, Attack = 0 });
         }
 
         private static NodeDeckOptions CreateSingleMonsterNode(int hp, int attack)

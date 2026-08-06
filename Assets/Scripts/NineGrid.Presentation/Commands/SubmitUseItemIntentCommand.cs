@@ -32,6 +32,11 @@ namespace NineGrid.Presentation.Commands
 
             var intake = this.GetSystem<IIntentIntake>()
                 ?? IntentIntakeSystem.EnsureRegistered();
+            var targetSurface = PresentationInputGates.BoardSelectModeActive
+                                && mSelectedCardUids != null
+                                && mSelectedCardUids.Length > 0
+                ? InputOwner.BoardSelect
+                : InputOwner.ProtectedField;
             bool preview;
             var disposition = intake.Submit(
                 new InputIntent(
@@ -39,7 +44,7 @@ namespace NineGrid.Presentation.Commands
                     mItemUid,
                     mSelectedCardUids,
                     mSelectedOption),
-                InputOwner.ProtectedField,
+                targetSurface,
                 out preview);
 
             if (disposition == IntentDisposition.RouteToBoardSelect)
