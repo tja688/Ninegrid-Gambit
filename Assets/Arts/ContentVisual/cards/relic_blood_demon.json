@@ -6,7 +6,7 @@
     "role": "Utility",
     "displayName": "血魔徽章",
     "designSlotName": "",
-    "description": "[受到伤害时] 每受到5点伤害，获得1点血量上限",
+    "description": "每受到5点伤害，获得{relic.blood_demon.damage.delta}点血量上限",
     "faceIntro": "",
     "attackPattern": "",
     "gold": 0,

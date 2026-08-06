@@ -6,7 +6,7 @@
     "role": "Utility",
     "displayName": "血色项链",
     "designSlotName": "",
-    "description": "血量上限+4；[战斗时] 当前血量低于血量上限的50%时，每次战斗恢复2点血量",
+    "description": "血量上限+{relic.blood_regen.max_hp.value}；低于半血时，恢复：2",
     "faceIntro": "",
     "attackPattern": "",
     "gold": 0,

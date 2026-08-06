@@ -6,7 +6,7 @@
     "role": "Defense",
     "displayName": "头甲",
     "designSlotName": "",
-    "description": "[使用时] 基础护甲+1",
+    "description": "基础护甲+{help.armor_card.use.delta}",
     "faceIntro": "还算有用",
     "attackPattern": "",
     "gold": 50,

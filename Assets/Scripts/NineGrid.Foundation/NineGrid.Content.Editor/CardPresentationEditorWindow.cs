@@ -1777,6 +1777,8 @@ namespace NineGrid.Content.Editor
                     });
                     row.Add(ContentVisualWarmConsoleUi.WrapControlRow("argsJson", argsField, 72f));
 
+                    row.Add(BuildAssemblySendVariableRow(entry, assembly));
+
                     var removeBtn = new Button(() =>
                     {
                         list.RemoveAt(index);
@@ -1837,6 +1839,98 @@ namespace NineGrid.Content.Editor
             {
                 suppressDescriptionCallback = false;
             }
+        }
+
+        /// <summary>
+        /// 每个装配行的「发送自身变量」按钮：显示该装配 argsJson 里可发变量（跳过 reason/source 等不透明键），
+        /// 点击把标准代码 <c>{装配id.键}</c>（无 id 用 templateId）追加到当前卡描述框末尾。
+        /// </summary>
+        private VisualElement BuildAssemblySendVariableRow(
+            CardPresentationEditorEntry entry,
+            EffectAssemblyDto assembly)
+        {
+            var box = new VisualElement();
+            if (entry?.Dto == null || assembly == null || string.IsNullOrWhiteSpace(assembly.argsJson))
+            {
+                return box;
+            }
+
+            var scope = string.IsNullOrWhiteSpace(assembly.id)
+                ? (assembly.templateId ?? string.Empty).Trim()
+                : assembly.id.Trim();
+            if (string.IsNullOrWhiteSpace(scope))
+            {
+                return box;
+            }
+
+            var args = EffectAssemblyResolver.ParseArgsJson(assembly.argsJson);
+            var sendable = new List<string>(args.Count);
+            foreach (var pair in args)
+            {
+                if (string.IsNullOrEmpty(pair.Key)
+                    || EffectDesignTextParameterizer.IsOpaqueArgKey(pair.Key))
+                {
+                    continue;
+                }
+
+                sendable.Add(pair.Key);
+            }
+
+            if (sendable.Count == 0)
+            {
+                return box;
+            }
+
+            box.Add(ContentVisualWarmConsoleUi.CreateDescriptionLabel("发送自身变量（点击追加到描述框末尾）："));
+            var buttonRow = new VisualElement();
+            buttonRow.style.flexDirection = FlexDirection.Row;
+            buttonRow.style.flexWrap = Wrap.Wrap;
+            for (var i = 0; i < sendable.Count; i++)
+            {
+                var key = sendable[i];
+                var token = "{" + scope + "." + key + "}";
+                args.TryGetValue(key, out var rawValue);
+                var valueText = Convert.ToString(rawValue, System.Globalization.CultureInfo.InvariantCulture)
+                                ?? string.Empty;
+                var btn = new Button(() => AppendTokenToDescription(entry, token))
+                {
+                    text = key + "=" + valueText,
+                    tooltip = "把标准代码 " + token + " 追加到当前卡描述框末尾（运行时/预览按该装配实参填值）",
+                };
+                btn.style.marginRight = 4;
+                btn.style.marginBottom = 4;
+                buttonRow.Add(btn);
+            }
+
+            box.Add(buttonRow);
+            return box;
+        }
+
+        private void AppendTokenToDescription(CardPresentationEditorEntry entry, string token)
+        {
+            var dto = entry?.Dto;
+            if (dto == null || string.IsNullOrEmpty(token))
+            {
+                return;
+            }
+
+            var current = dto.description ?? string.Empty;
+            var appended = string.IsNullOrWhiteSpace(current)
+                ? token
+                : current.TrimEnd() + "；" + token;
+            dto.description = appended;
+
+            var auto = session.BuildAutoCardDescription(dto.effectAssemblies);
+            entry.DescriptionCustomLocked = !string.Equals(
+                appended.Trim(),
+                auto.Trim(),
+                StringComparison.Ordinal);
+
+            SetDescriptionFieldValue(appended);
+            RefreshDescriptionModeLabel(entry);
+            session.MarkDirty(dto.contentId);
+            InvalidateAndRefreshPreview(entry);
+            UpdateStatus();
         }
 
         private void RefreshDescriptionModeLabel(CardPresentationEditorEntry entry)

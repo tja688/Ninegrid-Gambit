@@ -6,7 +6,7 @@
     "role": "",
     "displayName": "护甲图腾",
     "designSlotName": "",
-    "description": "正交相邻格对象护甲+1",
+    "description": "[adjacent]对象护甲+{trap.armor_totem.aura.value}",
     "faceIntro": "",
     "attackPattern": "无",
     "gold": 0,

@@ -6,7 +6,7 @@
     "role": "Utility",
     "displayName": "超越维度",
     "designSlotName": "",
-    "description": "攻击+1；[战斗时] 旋转一次",
+    "description": "攻击+{relic.beyond_dimension.base.value}，攻击后旋转{relic.beyond_dimension.battle.count}次",
     "faceIntro": "",
     "attackPattern": "",
     "gold": 0,

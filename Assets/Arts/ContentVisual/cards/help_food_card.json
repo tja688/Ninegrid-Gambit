@@ -6,7 +6,7 @@
     "role": "Utility",
     "displayName": "生日蛋糕",
     "designSlotName": "",
-    "description": "[使用时] 将玩家卡血量回满",
+    "description": "将血量回复到满血",
     "faceIntro": "",
     "attackPattern": "",
     "gold": 50,
@@ -73,7 +73,6 @@
     },
     "extraSlots": [],
     "rarity": "White",
-    "usableOutsideBattle": true,
     "tags": [
         "tag.heal"
     ],
@@ -95,6 +94,7 @@
     "containerType": "",
     "deckKind": "",
     "monsterDefIds": [],
+    "usableOutsideBattle": true,
     "weight": 0,
     "rewardPoolId": "",
     "shopOfferCount": 0,
