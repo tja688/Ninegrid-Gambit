@@ -176,6 +176,12 @@ namespace NineGrid.Content.Editor
             new List<VisualEffectCatalogEditorIO.EditorRow>();
         private readonly List<string> knownSkillIds = new List<string>();
 
+        private static readonly System.Text.RegularExpressions.Regex BriefParamToken =
+            new System.Text.RegularExpressions.Regex(
+                @"\{([A-Za-z_][A-Za-z0-9_.]*)\}",
+                System.Text.RegularExpressions.RegexOptions.CultureInvariant
+                | System.Text.RegularExpressions.RegexOptions.Compiled);
+
         private CardPresentationEditorFocusKind focusKind = CardPresentationEditorFocusKind.None;
         private string focusedContentId = string.Empty;
         private string focusedTemplateId = string.Empty;
@@ -932,6 +938,7 @@ namespace NineGrid.Content.Editor
                 return string.Empty;
             }
 
+            var ambiguousKeys = CollectAmbiguousArgKeys(assemblies);
             var briefs = new List<string>(assemblies.Count);
             for (var i = 0; i < assemblies.Count; i++)
             {
@@ -944,11 +951,99 @@ namespace NineGrid.Content.Editor
                 var brief = GetParameterizedDesignText(assembly.templateId, assembly.argsJson);
                 if (!string.IsNullOrWhiteSpace(brief))
                 {
-                    briefs.Add(brief);
+                    briefs.Add(QualifyAmbiguousTokens(brief, assembly, ambiguousKeys));
                 }
             }
 
             return EffectDesignTextParameterizer.JoinBriefs(briefs);
+        }
+
+        /// <summary>
+        /// 收集本卡「同键跨装配异值」的实参键：运行时简单式 `{key}` 只取第一个含键装配，
+        /// 这类键必须写成限定式 `{装配id.key}` 才有唯一语义。
+        /// </summary>
+        private static HashSet<string> CollectAmbiguousArgKeys(IReadOnlyList<EffectAssemblyDto> assemblies)
+        {
+            var valuesByKey = new Dictionary<string, HashSet<string>>(StringComparer.OrdinalIgnoreCase);
+            for (var i = 0; i < assemblies.Count; i++)
+            {
+                var assembly = assemblies[i];
+                if (assembly == null)
+                {
+                    continue;
+                }
+
+                foreach (var pair in EffectAssemblyResolver.ParseArgsJson(assembly.argsJson))
+                {
+                    if (!valuesByKey.TryGetValue(pair.Key, out var values))
+                    {
+                        values = new HashSet<string>(StringComparer.Ordinal);
+                        valuesByKey[pair.Key] = values;
+                    }
+
+                    values.Add(Convert.ToString(pair.Value, System.Globalization.CultureInfo.InvariantCulture)
+                               ?? string.Empty);
+                }
+            }
+
+            var ambiguous = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            foreach (var pair in valuesByKey)
+            {
+                if (pair.Value.Count > 1)
+                {
+                    ambiguous.Add(pair.Key);
+                }
+            }
+
+            return ambiguous;
+        }
+
+        /// <summary>
+        /// 歧义键的 `{key}` 提升为 `{装配id.key}`（无 id 用 templateId），
+        /// 使运行时/预览按精确装配取该条 brief 自己的实参。
+        /// </summary>
+        private static string QualifyAmbiguousTokens(
+            string brief,
+            EffectAssemblyDto self,
+            HashSet<string> ambiguousKeys)
+        {
+            if (string.IsNullOrEmpty(brief)
+                || ambiguousKeys == null
+                || ambiguousKeys.Count == 0
+                || string.IsNullOrWhiteSpace(self.argsJson))
+            {
+                return brief;
+            }
+
+            var selfArgs = EffectAssemblyResolver.ParseArgsJson(self.argsJson);
+            if (selfArgs.Count == 0)
+            {
+                return brief;
+            }
+
+            var scope = string.IsNullOrWhiteSpace(self.id)
+                ? self.templateId
+                : self.id.Trim();
+            if (string.IsNullOrWhiteSpace(scope))
+            {
+                return brief;
+            }
+
+            return BriefParamToken.Replace(brief, match =>
+            {
+                var key = match.Groups[1].Value;
+                if (key.IndexOf('.') >= 0 || !ambiguousKeys.Contains(key))
+                {
+                    return match.Value;
+                }
+
+                if (!selfArgs.ContainsKey(key))
+                {
+                    return match.Value;
+                }
+
+                return "{" + scope + "." + key + "}";
+            });
         }
 
         /// <summary>

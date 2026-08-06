@@ -525,5 +525,81 @@ namespace NineGrid.Presentation.Tests.Cards
             Assert.IsTrue(SearchableChoiceField.FuzzyMatch("击杀怪物时伤害", "击怪伤"));
             Assert.IsFalse(SearchableChoiceField.FuzzyMatch("击杀怪物时伤害", "xyz"));
         }
+
+        [Test]
+        public void BuildAutoCardDescription_AmbiguousKeyAcrossAssemblies_QualifiesByAssemblyId()
+        {
+            EffectTemplateCatalog.Invalidate();
+            if (!EffectTemplateCatalog.TryGet("tpl.relic.wood_armor.base", out _)
+                || !EffectTemplateCatalog.TryGet("tpl.relic.wood_armor.set", out _))
+            {
+                Assert.Ignore("生产 effect_templates.json 未加载 wood_armor 模板");
+            }
+
+            var session = new CardPresentationEditorSession();
+            session.Reload();
+            if (session.EffectTemplates == null || session.EffectTemplates.Count == 0)
+            {
+                Assert.Ignore("效果模板未加载进 EditorSession");
+            }
+
+            var auto = session.BuildAutoCardDescription(new[]
+            {
+                new EffectAssemblyDto
+                {
+                    id = "relic.wood_armor.base",
+                    templateId = "tpl.relic.wood_armor.base",
+                    argsJson = "{\"value\":2}",
+                },
+                new EffectAssemblyDto
+                {
+                    id = "relic.wood_armor.set",
+                    templateId = "tpl.relic.wood_armor.set",
+                    argsJson = "{\"value\":8}",
+                },
+            });
+
+            // 同键跨装配异值（2/8）：运行时简单式 {value} 会取错装配，自动描述必须写成限定式。
+            StringAssert.Contains("{relic.wood_armor.base.value}", auto);
+            StringAssert.Contains("{relic.wood_armor.set.value}", auto);
+            Assert.IsFalse(auto.Contains("{value}"), auto);
+        }
+
+        [Test]
+        public void BuildAutoCardDescription_UnambiguousKey_KeepsPlainToken()
+        {
+            EffectTemplateCatalog.Invalidate();
+            if (!EffectTemplateCatalog.TryGet("tpl.trap.flame.move", out _))
+            {
+                Assert.Ignore("生产 effect_templates.json 未加载 tpl.trap.flame.move");
+            }
+
+            var session = new CardPresentationEditorSession();
+            session.Reload();
+            if (session.EffectTemplates == null || session.EffectTemplates.Count == 0)
+            {
+                Assert.Ignore("效果模板未加载进 EditorSession");
+            }
+
+            var auto = session.BuildAutoCardDescription(new[]
+            {
+                new EffectAssemblyDto
+                {
+                    id = "trap.flame.move",
+                    templateId = "tpl.trap.flame.move",
+                    argsJson = "{\"amount\":1}",
+                },
+                new EffectAssemblyDto
+                {
+                    id = "trap.flame.remove",
+                    templateId = "tpl.trap.flame.remove",
+                    argsJson = "{\"reason\":\"trap.flame\"}",
+                },
+            });
+
+            // amount 只在单个装配出现，无歧义 → 保持简单式 {amount}。
+            StringAssert.Contains("{amount}", auto);
+            Assert.IsFalse(auto.Contains("{trap.flame.move.amount}"), auto);
+        }
     }
 }

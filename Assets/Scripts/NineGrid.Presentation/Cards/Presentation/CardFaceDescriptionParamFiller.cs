@@ -9,20 +9,44 @@ namespace NineGrid.Cards.Presentation
 {
     /// <summary>
     /// 卡面 `{参数}` 插值：用装配实参填充人手写概括；填初始配置值，不接战中数值管线。
+    /// token 语法：
+    /// - `{value}`：简单式，取「第一个含该键的装配」的值（同键跨装配异值时语义不唯一，仅兼容旧文案）。
+    /// - `{装配id.value}` / `{模板id.value}`：限定式，精确定位某个装配（id 或 templateId 精确匹配）。
+    /// - `{卡defId.value}`：限定式前缀匹配（装配 id / templateId 以 `defId.` 开头）；
+    ///   所有命中装配该键取值一致才填，不一致视为歧义保留字面量（作者应改写成精确装配限定式）。
     /// </summary>
     public static class CardFaceDescriptionParamFiller
     {
         private static readonly Regex ParamToken =
-            new Regex(@"\{([A-Za-z_][A-Za-z0-9_]*)\}", RegexOptions.CultureInvariant | RegexOptions.Compiled);
+            new Regex(@"\{([A-Za-z_][A-Za-z0-9_.]*)\}", RegexOptions.CultureInvariant | RegexOptions.Compiled);
+
+        private readonly struct AssemblyArgs
+        {
+            public AssemblyArgs(string id, string templateId, IReadOnlyDictionary<string, object> args)
+            {
+                Id = id ?? string.Empty;
+                TemplateId = templateId ?? string.Empty;
+                Args = args;
+            }
+
+            public string Id { get; }
+            public string TemplateId { get; }
+            public IReadOnlyDictionary<string, object> Args { get; }
+        }
 
         public static string FillFromAssemblies(string description, EffectAssemblyDto[] assemblies)
         {
-            if (string.IsNullOrEmpty(description) || assemblies == null || assemblies.Length == 0)
+            if (string.IsNullOrEmpty(description))
             {
                 return description ?? string.Empty;
             }
 
-            var args = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
+            if (assemblies == null || assemblies.Length == 0)
+            {
+                return description;
+            }
+
+            var items = new List<AssemblyArgs>(assemblies.Length);
             for (var i = 0; i < assemblies.Length; i++)
             {
                 var assembly = assemblies[i];
@@ -31,16 +55,13 @@ namespace NineGrid.Cards.Presentation
                     continue;
                 }
 
-                foreach (var pair in EffectAssemblyResolver.ParseArgsJson(assembly.argsJson))
-                {
-                    if (!args.ContainsKey(pair.Key))
-                    {
-                        args[pair.Key] = pair.Value;
-                    }
-                }
+                items.Add(new AssemblyArgs(
+                    assembly.id,
+                    assembly.templateId,
+                    EffectAssemblyResolver.ParseArgsJson(assembly.argsJson)));
             }
 
-            return Fill(description, args);
+            return FillFromAssemblyItems(description, items);
         }
 
         public static string Fill(string description, IReadOnlyDictionary<string, object> args)
@@ -52,14 +73,124 @@ namespace NineGrid.Cards.Presentation
 
             return ParamToken.Replace(description, match =>
             {
-                var key = match.Groups[1].Value;
-                if (!args.TryGetValue(key, out var value) || value == null)
+                var token = match.Groups[1].Value;
+                // 限定式（含点）在无装配上下文时一律保留字面量，不拆键兜底。
+                if (token.IndexOf('.') >= 0)
+                {
+                    return match.Value;
+                }
+
+                if (!TryGetArg(args, token, out var value) || value == null)
                 {
                     return match.Value;
                 }
 
                 return Convert.ToString(value, CultureInfo.InvariantCulture) ?? match.Value;
             });
+        }
+
+        private static string FillFromAssemblyItems(string description, IReadOnlyList<AssemblyArgs> items)
+        {
+            return ParamToken.Replace(description, match =>
+            {
+                var token = match.Groups[1].Value;
+                var lastDot = token.LastIndexOf('.');
+                if (lastDot < 0)
+                {
+                    // 简单式（旧行为）：第一个含该键的装配。
+                    for (var i = 0; i < items.Count; i++)
+                    {
+                        var args = items[i].Args;
+                        if (args != null && TryGetArg(args, token, out var value) && value != null)
+                        {
+                            return Convert.ToString(value, CultureInfo.InvariantCulture) ?? match.Value;
+                        }
+                    }
+
+                    return match.Value;
+                }
+
+                var qualifier = token.Substring(0, lastDot);
+                var key = token.Substring(lastDot + 1);
+                if (string.IsNullOrEmpty(qualifier) || string.IsNullOrEmpty(key))
+                {
+                    return match.Value;
+                }
+
+                return ResolveQualified(items, qualifier, key, match.Value);
+            });
+        }
+
+        /// <summary>
+        /// 限定式解析：精确 id / 精确 templateId → 前缀 id / 前缀 templateId 的装配集合。
+        /// 命中装配中「含该键者」的取值必须全部一致，否则视为歧义保留原样。
+        /// </summary>
+        private static string ResolveQualified(
+            IReadOnlyList<AssemblyArgs> items,
+            string qualifier,
+            string key,
+            string fallback)
+        {
+            var prefix = qualifier + ".";
+            string resolved = null;
+            var found = false;
+            var ambiguous = false;
+            for (var i = 0; i < items.Count; i++)
+            {
+                var item = items[i];
+                var matches = string.Equals(item.Id, qualifier, StringComparison.OrdinalIgnoreCase)
+                              || string.Equals(item.TemplateId, qualifier, StringComparison.OrdinalIgnoreCase)
+                              || (!string.IsNullOrEmpty(item.Id)
+                                  && item.Id.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+                              || (!string.IsNullOrEmpty(item.TemplateId)
+                                  && item.TemplateId.StartsWith(prefix, StringComparison.OrdinalIgnoreCase));
+                if (!matches)
+                {
+                    continue;
+                }
+
+                if (item.Args == null || !TryGetArg(item.Args, key, out var value) || value == null)
+                {
+                    continue;
+                }
+
+                var text = Convert.ToString(value, CultureInfo.InvariantCulture) ?? string.Empty;
+                if (!found)
+                {
+                    resolved = text;
+                    found = true;
+                }
+                else if (!string.Equals(resolved, text, StringComparison.Ordinal))
+                {
+                    ambiguous = true;
+                    break;
+                }
+            }
+
+            return found && !ambiguous ? resolved : fallback;
+        }
+
+        private static bool TryGetArg(
+            IReadOnlyDictionary<string, object> args,
+            string key,
+            out object value)
+        {
+            if (args.TryGetValue(key, out value))
+            {
+                return true;
+            }
+
+            foreach (var pair in args)
+            {
+                if (string.Equals(pair.Key, key, StringComparison.OrdinalIgnoreCase))
+                {
+                    value = pair.Value;
+                    return true;
+                }
+            }
+
+            value = null;
+            return false;
         }
     }
 }

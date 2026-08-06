@@ -1222,7 +1222,9 @@ namespace NineGrid.Content.Editor
 
             var descriptionCard = ContentVisualWarmConsoleUi.CreateSectionCard(
                 "描述",
-                "[Code] 词条图标见左侧「效果池 → 描述词条 / 可插入编码」；装配效果时自动写入参数化简要描述；手改后锁定自定义，清空后恢复自动",
+                "[Code] 词条图标见左侧「效果池 → 描述词条 / 可插入编码」；数值占位 {value} 简单式（取首个含键装配），" +
+                "同键异值时用限定式 {装配id.value} / {模板id.value} / {卡defId.value}（如 {trap.attack_totem.value}，" +
+                "命中装配取值不一致则歧义不填，保留字面量）；预览所见即所得，显示 JSON 实参值；手改后锁定自定义，清空后恢复自动",
                 column =>
                 {
                     EnsureDescriptionIconPipeline();
