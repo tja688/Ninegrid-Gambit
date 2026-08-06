@@ -483,6 +483,14 @@ namespace NineGrid.Core
             TriggerPoint.OnCumulative
         };
 
+        // ADR-0026 addendum：清关收场扫描（clearResidualBoard / clearResidualTrap）不是战斗击杀，
+        // 仅 AfterAction Post 触发；不派发 OnRemove / OnCumulative，避免死亡召唤 / 死亡之主等
+        // 在清场拍留下复活石或干扰累计计数。EconomySystem 等系统级清理仍可在 AfterAction 上感知。
+        private static readonly TriggerPoint[] sClearResidualPostTriggers =
+        {
+            TriggerPoint.AfterAction,
+        };
+
         public RemoveCardAction(int cardUid, ZoneId destinationZone, string reason, string sourceDefId = null)
         {
             CardUid = cardUid;
@@ -540,7 +548,10 @@ namespace NineGrid.Core
 
         public override IEnumerable<TriggerPoint> GetPostTriggerPoints(GameActionContext context, IReadOnlyList<CoreGameEvent> events)
         {
-            return sPostTriggers;
+            // ADR-0026 addendum：清关收场扫描不触发 OnRemove / OnCumulative Post 触发器。
+            return Reason == "clearResidualBoard" || Reason == "clearResidualTrap"
+                ? sClearResidualPostTriggers
+                : sPostTriggers;
         }
     }
 

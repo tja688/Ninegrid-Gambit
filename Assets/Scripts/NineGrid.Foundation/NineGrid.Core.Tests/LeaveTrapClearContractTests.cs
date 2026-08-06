@@ -157,6 +157,48 @@ namespace NineGrid.Core.Tests
             Assert.AreEqual(0, CountBoardNonAvatarCards(), "跳关清场须卸掉仍在场的离开机关（门不得挡收场移除）");
         }
 
+        [Test]
+        public void ClearResidual_WithDeathSummonAndLordOfDeathCarriers_ShouldNotLeaveReviveStone()
+        {
+            // 回归 ADR-0026 addendum / #143：清关清场扫描（clearResidualBoard）不是战斗击杀，
+            // 不派发 OnRemove / OnCumulative Post 触发器。死亡召唤（OnSelfRemoved）与死亡之主
+            // （OnAnyCardRemoved）在清场拍不得复活石 / 召唤物，否则会占据场地且不可交互。
+            StartEmptyNode();
+            PrepareAvatar(99, 99, 0);
+            SpawnLeaveTrap(hp: 1);
+            // wandering_child：携带 skill.death_summon（OnSelfRemoved → 生成 trap.revive_stone）。
+            SpawnSpecificMonsterAt("monster.wandering_child", SlotId.Board(3), hp: 5);
+            // rogue：携带 skill.lord_of_death（其他怪 OnRemove → 生成 trap.revive_stone）。
+            SpawnSpecificMonsterAt("monster.rogue", SlotId.Board(5), hp: 5);
+            // skull_head：无死亡召唤技能；用于触发 rogue 的 OnAnyCardRemoved 路径。
+            SpawnSpecificMonsterAt("monster.skull_head", SlotId.Board(8), hp: 5);
+
+            Assert.IsTrue(mPhase.Attack(sSlot2).Accepted);
+
+            Assert.AreEqual(GamePhase.RoomChoice, mPhase.CurrentPhase);
+            Assert.AreEqual(
+                0,
+                CountBoardNonAvatarCards(),
+                "清关清场不得留下任何卡（含复活石 / 被复活石召唤的 special_omni）");
+
+            // 兜底断言：场上任何残留卡都不得是 trap.revive_stone。
+            var board = mArch.GetModel<BoardModel>();
+            var registry = mArch.GetModel<CardRegistry>();
+            foreach (var uid in board.BoardCardUids())
+            {
+                if (uid == 0 || uid == board.AvatarUid.Value)
+                {
+                    continue;
+                }
+
+                var card = registry.Get(uid);
+                Assert.AreNotEqual(
+                    "trap.revive_stone",
+                    card.DefId,
+                    "清关清场扫描不得触发死亡召唤 / 死亡之主留下复活石");
+            }
+        }
+
         private void StartEmptyNode()
         {
             Assert.IsTrue(mPhase.StartNode(new NodeDeckOptions
@@ -190,8 +232,13 @@ namespace NineGrid.Core.Tests
 
         private void SpawnMonsterAt(SlotId slot, int hp)
         {
+            SpawnSpecificMonsterAt("monster.skull_head", slot, hp);
+        }
+
+        private void SpawnSpecificMonsterAt(string defId, SlotId slot, int hp)
+        {
             mPipeline.Enqueue(new SpawnCardAction(
-                "monster.skull_head", CardKind.Monster, ZoneId.Board, slot, 1, "test"));
+                defId, CardKind.Monster, ZoneId.Board, slot, 1, "test"));
             Assert.Greater(mPipeline.RunToCompletion(), 0);
             var card = mArch.GetModel<CardRegistry>().Get(mArch.GetModel<BoardModel>().GetCardUid(slot));
             card.Stats.SetBase(StatId.MaxHp, hp);

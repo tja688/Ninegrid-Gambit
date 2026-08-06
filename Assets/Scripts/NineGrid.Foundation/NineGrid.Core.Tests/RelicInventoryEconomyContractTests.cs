@@ -76,8 +76,10 @@ namespace NineGrid.Core.Tests
         }
 
         [Test]
-        public void SelectReward_RelicChest_WhenFull_RejectsAndKeepsPending()
+        public void UseItem_RelicChest_WhenFull_RejectsUpfrontAndKeepsPendingEmpty()
         {
+            // ADR-0027 addendum / #143：满遗物栏（12/12）时宝箱 UseItem 须前置拒收，
+            // 卡片不消耗、不开 PendingChoice；避免表现层 Bounce while(true) 死循环。
             Assert.IsTrue(mPhase.StartNode(CreateSingleMonsterNode(hp: 5, attack: 0)).Accepted);
             PlaceSoleBoardCardAt(sAdjacentSlot);
 
@@ -85,18 +87,52 @@ namespace NineGrid.Core.Tests
             FillRelicInventory(player);
 
             var chestUid = SpawnHelpIntoItemSlots("help.common_chest_card");
-            Assert.IsTrue(mPhase.ApplyUseItem(chestUid, null, null).Accepted);
+            var use = mPhase.ApplyUseItem(chestUid, null, null);
+            Assert.IsFalse(use.Accepted, "满遗物栏宝箱使用应被拒收");
+            Assert.AreEqual("遗物格子已满", use.Reason);
+
+            var pending = mArch.GetModel<PendingChoiceModel>();
+            Assert.AreEqual(PendingChoiceKind.None, pending.Kind.Value, "不得开 PendingChoice");
+            Assert.AreEqual(0, pending.RewardOptions.Count, "不得生成奖励选项");
+
+            // 卡片未消耗，仍在道具卡格。
+            Assert.AreEqual(PlayerModel.MaxRelicSlots, player.RelicDefIds.Count, "未资助遗物");
+            var deck = mArch.GetModel<DeckModel>();
+            CollectionAssert.Contains(deck.ItemSlotUids, chestUid, "宝箱应回手保留在道具卡格");
+        }
+
+        [Test]
+        public void DiscardRelic_WhilePendingRelicChoice_IsLegalAndFreesSlotForSelect()
+        {
+            // 满栏（12/12）下宝箱已被 UseItem 前置拒收（同上），因此「弃遗物腾空再开宝箱」
+            // 的完整流程：满 → 弃遗物（12→11）→ UseItem 接受 → PendingChoice 开 → 选入遗物（11→12）。
+            Assert.IsTrue(mPhase.StartNode(CreateSingleMonsterNode(hp: 5, attack: 0)).Accepted);
+            PlaceSoleBoardCardAt(sAdjacentSlot);
+
+            var player = mArch.GetModel<PlayerModel>();
+            FillRelicInventory(player);
+            var discardId = player.RelicDefIds[0];
+
+            var chestUid = SpawnHelpIntoItemSlots("help.common_chest_card");
+
+            // 满栏：宝箱先被拒收。
+            Assert.IsFalse(mPhase.ApplyUseItem(chestUid, null, null).Accepted, "满栏宝箱首用应拒");
+
+            // 弃一件腾空（11/12）；DiscardRelic 须合法、给付 +20。
+            Assert.IsTrue(mPhase.CanExecute(GameCommandKind.DiscardRelic));
+            Assert.IsTrue(mPhase.DiscardRelic(discardId).Accepted);
+            Assert.AreEqual(PlayerModel.MaxRelicSlots - 1, player.RelicDefIds.Count);
+
+            // 现在宝箱可解锁：UseItem 接受 → PendingChoice.Reward 开 → 选遗物成功（11→12）。
+            Assert.IsTrue(mPhase.ApplyUseItem(chestUid, null, null).Accepted, "弃遗物后宝箱应可使用");
 
             var pending = mArch.GetModel<PendingChoiceModel>();
             Assert.AreEqual(PendingChoiceKind.Reward, pending.Kind.Value);
-            var optionCount = pending.RewardOptions.Count;
-            Assert.Greater(optionCount, 0);
+            Assert.Greater(pending.RewardOptions.Count, 0);
 
             var select = mPhase.SelectReward(0);
-            Assert.IsFalse(select.Accepted);
-            Assert.AreEqual("遗物格子已满", select.Reason);
-            Assert.AreEqual(PendingChoiceKind.Reward, pending.Kind.Value);
-            Assert.AreEqual(optionCount, pending.RewardOptions.Count);
+            Assert.IsTrue(select.Accepted, select.Reason);
+            Assert.AreEqual(PendingChoiceKind.None, mArch.GetModel<PendingChoiceModel>().Kind.Value);
             Assert.AreEqual(PlayerModel.MaxRelicSlots, player.RelicDefIds.Count);
         }
 
@@ -117,29 +153,6 @@ namespace NineGrid.Core.Tests
             Assert.IsTrue(discard.Accepted, discard.Reason);
             Assert.IsFalse(ContainsRelic(player, "relic.wood_shield"));
             Assert.AreEqual(goldBefore + catalog.Economy.DiscardRelicGold, player.Coins.Value);
-        }
-
-        [Test]
-        public void DiscardRelic_WhilePendingRelicChoice_IsLegalAndFreesSlotForSelect()
-        {
-            Assert.IsTrue(mPhase.StartNode(CreateSingleMonsterNode(hp: 5, attack: 0)).Accepted);
-            PlaceSoleBoardCardAt(sAdjacentSlot);
-
-            var player = mArch.GetModel<PlayerModel>();
-            FillRelicInventory(player);
-            var discardId = player.RelicDefIds[0];
-
-            var chestUid = SpawnHelpIntoItemSlots("help.common_chest_card");
-            Assert.IsTrue(mPhase.ApplyUseItem(chestUid, null, null).Accepted);
-            Assert.IsTrue(mPhase.CanExecute(GameCommandKind.DiscardRelic));
-
-            Assert.IsTrue(mPhase.DiscardRelic(discardId).Accepted);
-            Assert.AreEqual(PlayerModel.MaxRelicSlots - 1, player.RelicDefIds.Count);
-
-            var select = mPhase.SelectReward(0);
-            Assert.IsTrue(select.Accepted, select.Reason);
-            Assert.AreEqual(PendingChoiceKind.None, mArch.GetModel<PendingChoiceModel>().Kind.Value);
-            Assert.AreEqual(PlayerModel.MaxRelicSlots, player.RelicDefIds.Count);
         }
 
         private int SpawnHelpIntoItemSlots(string defId)
