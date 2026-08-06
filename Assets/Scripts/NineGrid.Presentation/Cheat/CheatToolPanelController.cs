@@ -36,6 +36,8 @@ namespace NineGrid.Presentation.Cheat
         private const string CoinsButtonName = "无限金币选项";
         private const string HealButtonName = "作弊选项模板 (3)";
         private const string SecondLayerBlockerName = "第二层命中遮罩";
+        private const string OptionFontAssetPath = "Assets/Arts/Fronts/DeYiHei/SmileySans-Oblique-3 SDF.asset";
+        private const string OptionFontAssetName = "SmileySans-Oblique-3 SDF";
         private const int CoinsPerClick = 999;
         private const float OptionRowHeight = 36f;
         private const int SecondLayerBlockerHitSort = CheatToolPanelButton.HitSort + 1;
@@ -52,6 +54,7 @@ namespace NineGrid.Presentation.Cheat
         private ScrollRect _scrollRect;
         private RectTransform _content;
         private TMP_FontAsset _font;
+        private TMP_FontAsset _optionFont;
 
         private List<CheatToolCardSearchIndex.CardEntry> _entries;
 
@@ -756,11 +759,56 @@ namespace NineGrid.Presentation.Cheat
 
             var text = label.AddComponent<TextMeshProUGUI>();
             text.text = CheatToolCardSearchIndex.BuildOptionLabel(entry);
-            text.font = ResolveFont();
+            text.font = ResolveOptionFont();
             text.fontSize = 16f;
             text.color = Color.white;
             text.alignment = TextAlignmentOptions.MidlineLeft;
             text.raycastTarget = false;
+        }
+
+        /// <summary>
+        /// 二级 ScrollView 候选行字体：固定 SmileySans（与 MainScene 中文 UI 一致）。
+        /// Editor 直读资产路径；Player 从已加载场景 TMP 引用或 FindObjectsOfTypeAll 解析。
+        /// </summary>
+        private TMP_FontAsset ResolveOptionFont()
+        {
+            if (_optionFont != null)
+            {
+                return _optionFont;
+            }
+
+#if UNITY_EDITOR
+            _optionFont = UnityEditor.AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(OptionFontAssetPath);
+            if (_optionFont != null)
+            {
+                return _optionFont;
+            }
+#endif
+
+            var texts = Resources.FindObjectsOfTypeAll<TMP_Text>();
+            for (var i = 0; i < texts.Length; i++)
+            {
+                var font = texts[i] != null ? texts[i].font : null;
+                if (font != null && font.name == OptionFontAssetName)
+                {
+                    _optionFont = font;
+                    return _optionFont;
+                }
+            }
+
+            var fontAssets = Resources.FindObjectsOfTypeAll<TMP_FontAsset>();
+            for (var i = 0; i < fontAssets.Length; i++)
+            {
+                var font = fontAssets[i];
+                if (font != null && font.name == OptionFontAssetName)
+                {
+                    _optionFont = font;
+                    return _optionFont;
+                }
+            }
+
+            _optionFont = ResolveFont();
+            return _optionFont;
         }
 
         private TMP_FontAsset ResolveFont()
