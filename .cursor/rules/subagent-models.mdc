@@ -1,57 +1,12 @@
 ---
-description: Subagent 模型白名单与选型策略（配合 hooks 硬拦截）
+description: 子代理模型建议（软约束，无 hooks 硬拦截）
 alwaysApply: true
 ---
 
-# Subagent 模型策略
+# 子代理模型建议
 
-硬拦截：`.cursor/hooks.json`（`preToolUse` / `subagentStart` 的 **prompt** hook，`failClosed: true`）。
+开子代理（Task 工具）时，**优先选用较为经济实惠的模型**。
 
-| UI 名称 | slug / 用法 |
-|---|---|
-| Cursor Grok 4.5 High | `cursor-grok-4.5-high`；或自定义子代理 `grok-high` |
-| Composer 2.5 | `composer-2.5[fast=false]`；或自定义子代理 `composer-standard` |
-
-`*-fast` slug 虽可被 Task 工具接受，但 **hooks 一律拒绝**（见下方）。非 Fast 失败后不要再开 Fast 子代理，直接由父 agent 完成。
-
-## Cursor Task 内联 `model` 限制（重要）
-
-当前 Task 工具**只接受**这些 Composer/Grok slug（与模型选择器同步）：
-
-- `cursor-grok-4.5-high` ✅
-- `cursor-grok-4.5-high-fast` ✅（会被 hook 拒绝）
-- `composer-2.5-fast` ✅（会被 hook 拒绝）
-- `composer-2.5` / `composer-2.5[fast=false]` ❌ **Task 内联会被拒**
-
-因此 **Composer 2.5 非 Fast** 请走：
-
-1. 自定义子代理 `.cursor/agents/composer-standard.md`（推荐）
-2. 或父 agent 已是 Composer 2.5 非 Fast 时，Task **省略** `model` 继承父模型
-
-## 选型
-
-- **难任务**：`grok-high` 子代理，或 Task + `model: cursor-grok-4.5-high`
-- **简单任务**：`composer-standard` 子代理（非 Fast）
-- 子代理失败 → **停止开 subagent**，父 agent 自己完成（不要改开 `*-fast`）
-
-## 调用 Task 时
-
-- 禁止 Claude / GPT / Opus / Sonnet / Auto 等非白名单模型
-- 禁止 `*-fast`（hooks 会拦）
-- 简单 Composer 任务优先 `composer-standard`，不要硬塞 `model: composer-2.5`
-
-## Hook 运维（Canceled ≠ 白名单拒绝）
-
-| 现象 | 含义 |
-|---|---|
-| hook 明确拒绝（提到 allowlist / fast / Claude/GPT） | 策略拒绝，按提示改用 `grok-high` / `composer-standard` 或父 agent 自办 |
-| `failClosed` + `Canceled`，且无策略说明 | **command** hook 进程被宿主取消（本机 Cursor 上 `type: command` + `failClosed: true` 会整段拦 Task）。硬拦截已改用 **prompt** hook |
-
-其它约定：
-
-- 用户级 `~/.cursor/hooks.json` **不要**再挂一份相同的 Task failClosed 闸门；与项目级叠挂时，command 一挂会两边一起 Canceled。用户级保持空 hooks 即可。
-- 确定性脚本仍保留在 `.cursor/hooks/run-hook.js`（+ `run-hook.cmd` / 绝对 `node.exe`），仅用于 `postToolUseFailure`（`failClosed: false`）等旁路；`node .cursor/hooks/test-subagent-policy.js` 可单测策略库。
-
-## 与 worktree 规则并存
-
-- 禁止 `best-of-n-runner`、worktree、旁路克隆（见 `no-worktrees.mdc`）
+- 简单探索、检索、清单类任务：优先低成本模型
+- 仅当任务确实需要深度推理时，再考虑更强模型
+- 子代理失败时由父 agent 接手，避免反复开子代理

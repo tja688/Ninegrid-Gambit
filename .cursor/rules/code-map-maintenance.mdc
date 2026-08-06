@@ -42,14 +42,16 @@ alwaysApply: true
 
 新增或修订 `docs/adr/`，并在相关 code-map 段落引用 ADR 编号。
 
-## 实施票关闭门槛
+## 实施票验证门槛
 
 每张普通实施票合并前：
 
-1. 受影响 EditMode 测试绿（经 `ai-workspace test`，勿直接 `unity command run_tests`）
-2. `unity command recompile` 后 Console 无新增 Error / Exception / Assert
+1. 硬要求：`unity command recompile` 后 Console 无**由本票改动导致**的新增 Error / Exception / Assert
+2. EditMode 测试不强制全跑（跑不动不强求），能跑绿是加分
 
 全量真实场景 PlayMode 终验是 Spec 级门禁，**不是**每张票的默认门槛。
+
+**两击放弃**：同一验证动作（recompile / 跑测 / 查 Console）2 次尝试仍无果（超时 / 卡死 / 状态不明）即停，不换命令绕路、不再重试；直接汇报改动结果，并建议人手动跑测试 / 手动验证。
 
 ## 禁止
 

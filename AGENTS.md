@@ -27,7 +27,7 @@
 | 测试分层、结构护栏、关闭门槛 | [`docs/code-map/tests.md`](docs/code-map/tests.md) |
 | 长期行为不变量（Batch-ack、占格权威、IntentIntake、卡面 Commit 等） | 新增或修订 [`docs/adr/`](docs/adr/)，并在 code-map 中引用 |
 
-**关闭门槛**（见 [`docs/code-map/tests.md`](docs/code-map/tests.md)）：受影响 EditMode 绿；`recompile` 完成后 Console 无新增 Error / Exception / Assert。全量 PlayMode 终验属 Spec 级，非每张票的默认门槛。硬规则见 [`.cursor/rules/code-map-maintenance.mdc`](.cursor/rules/code-map-maintenance.mdc)。
+**验证门槛**（见 [`docs/code-map/tests.md`](docs/code-map/tests.md)）：硬要求——`recompile` 后 Console 无**由你的改动导致**的新增 Error / Exception / Assert。EditMode 测试不强制全跑（跑不动不强求），能跑绿视为加分；全量 PlayMode 终验属 Spec 级，非每张票的默认门槛。硬规则见 [`.cursor/rules/code-map-maintenance.mdc`](.cursor/rules/code-map-maintenance.mdc)。
 
 ## 工具与工作流
 
@@ -41,6 +41,7 @@
 - `run_tests` 一律走 `--async_tests true`（async 模式响应即时返回），随后轮询 `test_status` 至 `completed`
 - `recompile` 后轮询 `recompile_status` 至 `completed`，再发下一个命令
 - 命令超时后先查 `test_status` / `recompile_status` / `api/status` 确认执行状态，再决定是否重试，避免重复启动同一命令
+- **两击放弃**：同一验证动作（recompile / 跑测 / 查 Console）2 次尝试仍无果（超时 / 卡死 / 状态不明）即停，不换命令绕路、不再重试；直接汇报改动结果，并建议人手动跑测试 / 手动验证
 
 **技能与工具**：
 

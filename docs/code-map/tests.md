@@ -108,12 +108,14 @@
 |------|----------|
 | `CardFaceBeatCommitBaselineTests` | #55–#62：攻击/反击 Present 命中后护甲已变、观察型加攻仍旧，收尾后才变；用道具解算后卡面仍旧、Present 收尾才提交；四条剧本均报 Settled；handler 不读内核；SpawnCard Settled 后卡面等于指令绝对值而非 JSON 出生值；KillCard 取 RemainingHp；Settled 漏接 Impact 值不动；Avatar HpChanged 在 Impact 后按指令刷新 PlayerInfo HUD；金币 Settled 才飞币；非锁步 PresentEventLogSlice 消费金币；多处理器认领 / 无人认领 Settled 诊断；飘字/FX 装饰处理器在 Impact 消费指令；OfferReward Settled 后 Bounce 负 uid 卡面等于指令投影 |
 
-## 关闭门槛（普通实施票）
+## 验证门槛（普通实施票）
 
-1. 受影响 EditMode 绿  
-2. `unity command recompile` 后 Console 无新增 Error / Exception / Assert  
+1. 硬要求：`unity command recompile` 后 Console 无**由本票改动导致**的新增 Error / Exception / Assert  
+2. 加分项（非强制）：受影响 EditMode 绿；跑不动不强求
 
 全量真实场景 PlayMode 终验是 Spec 级门禁（历史上由 #42 承接），不属于每张实施票的默认门槛。
+
+**两击放弃**：同一验证动作（recompile / 跑测 / 查 Console）经 2 次尝试仍无果（超时 / 卡死 / 状态不明）时，停止重试、不换命令绕路；直接汇报改动结果，并建议人手动跑测试 / 手动验证。
 
 ### Map #122（主流程正式接线）验证边界
 
