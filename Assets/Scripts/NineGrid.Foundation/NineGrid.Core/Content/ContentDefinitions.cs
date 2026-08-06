@@ -121,6 +121,8 @@ namespace NineGrid.Core.Content
         public CardKind Kind { get; private set; }
         public ContentRarity Rarity { get; set; }
         public int Price { get; set; }
+        /// <summary>ADR-0032：卡级声明「可在非战斗相位（RoomChoice / RewardItemChoice）被使用」。</summary>
+        public bool UsableOutsideBattle { get; set; }
         /// <summary>怪物击杀金币；0 表示回退 Economy.MonsterRemovedGold。</summary>
         public int KillGold { get; set; }
         /// <summary>运行时 Level Counter 来源；怪物侧与 <see cref="Sequence"/> 对齐。</summary>
@@ -228,6 +230,13 @@ namespace NineGrid.Core.Content
         public CardContentDefinition AsReserve()
         {
             IsReserve = true;
+            return this;
+        }
+
+        /// <summary>ADR-0032：声明可在非战斗相位（RoomChoice / RewardItemChoice）被使用。</summary>
+        public CardContentDefinition AsUsableOutsideBattle()
+        {
+            UsableOutsideBattle = true;
             return this;
         }
 

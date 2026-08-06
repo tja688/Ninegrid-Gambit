@@ -83,7 +83,7 @@
 | `RoomOpeningInjectContractTests` | #95 / ADR-0022：五种战斗房开局注入（固定/权重可重复/不可重复）、困难房怪物侧序列 3+4、注入顺序（固定→房间）、RandomBattle 开局分房；**#136**：属性房无三选二选择结果时不自动注入 |
 | `ItemSlotsDirectGrantContractTests` | #108 / ADR-0025：商店/特殊房直写道具卡格、无携带开局注入、满格拒拾、默认容量 3 |
 | `AttributePickSessionContractTests` | #136 / ADR-0031：属性房三选二——进房 3 加权候选（40/40/20 可重复）、首选不提前结束/移除实例、二选提交 RunModel+推进节点只结算一次、越界/重复选择拒绝、满格不阻断、离开放弃、选择结果注入本关卡组后清空、新 Run 重置 |
-| `ItemSlotsRecycleContractTests` | #110 / ADR-0025：道具卡格回收 +10 金并移除；商店相位合法；Apply 跳过表演锁门禁；**非战斗相位（RoomChoice/RoomEvent/RewardItemChoice）禁 UseItem、仍可回收** |
+| `ItemSlotsRecycleContractTests` | #110 / ADR-0025 / ADR-0032：道具卡格回收 +10 金并移除；商店相位合法；Apply 跳过表演锁门禁；**非战斗相位（RoomChoice/RoomEvent/RewardItemChoice）禁 UseItem，仅 usableOutsideBattle=true 的卡在 RoomChoice/RewardItemChoice 合法**；仍可回收 |
 | `RelicInventoryEconomyContractTests` | #98：遗物栏上限 12、满栏 SelectReward 拒收保留 Pending、DiscardRelic +20、宝箱 SkipRelicChoiceGold +20 |
 | `CarryPackPreserveBootstrapContractTests`（Presentation `BattleSession/`） | #107 / #108：`BootstrapRun(preserveRunInventory)` 道具卡格与容量存活；无 preserve 则清空 |
 | `NodeStartRelicCardGrantTests` | 关卡开始遗物加卡：飞刀进抽牌堆、交换按钮进道具卡格；满格静默丢弃不兑金 |

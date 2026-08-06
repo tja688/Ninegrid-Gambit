@@ -40,6 +40,18 @@ namespace NineGrid.Content
         }
 
         [Serializable]
+        private sealed class TemplateBodyDto
+        {
+            public TemplateTargetDto target;
+        }
+
+        [Serializable]
+        private sealed class TemplateTargetDto
+        {
+            public string atom;
+        }
+
+        [Serializable]
         private sealed class JsonArrayWrapper<T>
         {
             public T[] items;
@@ -55,6 +67,7 @@ namespace NineGrid.Content
             findings.AddRange(ValidateTemplateBodyDefIds());
             findings.AddRange(ValidateEmptyShellSkills());
             findings.AddRange(ValidateArchiveReachability());
+            findings.AddRange(ValidateNonCombatUsableTargets());
             return findings;
         }
 
@@ -358,6 +371,82 @@ namespace NineGrid.Content
                             Category = "archive-grant",
                             ContentId = row.id,
                             Detail = "template body defId references archived " + id,
+                        });
+                    }
+                }
+            }
+
+            return findings;
+        }
+
+        /// <summary>
+        /// ADR-0032：usableOutsideBattle=true 的卡，其全部装配模板目标原子须为 Player
+        /// （免目标 / 无盘面依赖）。目标为 SelectedCards / AllMonsters 等盘面原子的卡不得标注非战斗可用。
+        /// </summary>
+        public static List<Finding> ValidateNonCombatUsableTargets()
+        {
+            var findings = new List<Finding>();
+            var templates = LoadTemplates();
+            var bodies = new Dictionary<string, TemplateBodyDto>(StringComparer.Ordinal);
+            for (var i = 0; i < templates.Count; i++)
+            {
+                var row = templates[i];
+                if (string.IsNullOrWhiteSpace(row.id) || string.IsNullOrWhiteSpace(row.body))
+                {
+                    continue;
+                }
+
+                try
+                {
+                    var body = JsonUtility.FromJson<TemplateBodyDto>(row.body);
+                    if (body != null)
+                    {
+                        bodies[row.id.Trim()] = body;
+                    }
+                }
+                catch
+                {
+                }
+            }
+
+            foreach (var pair in LoadAllDtos())
+            {
+                var dto = pair.Value;
+                if (!dto.usableOutsideBattle)
+                {
+                    continue;
+                }
+
+                if (dto.effectAssemblies == null || dto.effectAssemblies.Length == 0)
+                {
+                    continue;
+                }
+
+                for (var i = 0; i < dto.effectAssemblies.Length; i++)
+                {
+                    var assembly = dto.effectAssemblies[i];
+                    if (assembly == null || string.IsNullOrWhiteSpace(assembly.templateId))
+                    {
+                        continue;
+                    }
+
+                    TemplateBodyDto body;
+                    if (!bodies.TryGetValue(assembly.templateId.Trim(), out body)
+                        || body == null
+                        || body.target == null
+                        || string.IsNullOrWhiteSpace(body.target.atom))
+                    {
+                        continue;
+                    }
+
+                    if (!string.Equals(body.target.atom.Trim(), "Player", StringComparison.Ordinal))
+                    {
+                        findings.Add(new Finding
+                        {
+                            Category = "usable-outside-battle",
+                            ContentId = dto.contentId,
+                            Detail = "usableOutsideBattle=true 但模板 " + assembly.templateId
+                                + " 目标原子 " + body.target.atom + " 依赖盘面",
                         });
                     }
                 }

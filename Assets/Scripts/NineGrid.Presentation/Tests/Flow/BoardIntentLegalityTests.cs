@@ -1,6 +1,8 @@
 using System;
 using NineGrid.Core;
+using NineGrid.Core.Content;
 using NineGrid.Core.Systems;
+using NineGrid.Core.Utilities;
 using NineGrid.Flow.Presentation;
 using NUnit.Framework;
 using QFramework;
@@ -171,21 +173,47 @@ namespace NineGrid.Presentation.Tests
         }
 
         [Test]
-        public void UseItem_InRoomChoice_IsIllegal_WhileRecyclePhaseRemainsLegal()
+        public void UseItem_NonCombatPhase_PhaseAllowsCommand_RecycleStaysLegal()
         {
             Assert.IsTrue(mPhase.StartNode(CreateSingleMonsterNode(hp: 1, attack: 0)).Accepted);
             mArch.GetModel<BattleContextModel>().MarkLeaveTrapBroken();
             Assert.IsTrue(mPhase.TryCompleteClearedNode().Accepted);
             Assert.AreEqual(GamePhase.RoomChoice, mPhase.CurrentPhase);
 
-            string reason;
-            Assert.IsFalse(
-                BoardIntentLegality.TryExplainUseItem(mArch, 1, null, null, out reason),
-                "选房相位不得打出道具卡格");
-            StringAssert.Contains("notLegal", reason);
+            Assert.IsTrue(mPhase.CanExecute(GameCommandKind.UseItem), "ADR-0032：选房相位 UseItem 相位放行");
             Assert.IsTrue(
                 mPhase.CanExecute(GameCommandKind.RecycleItemSlot),
                 "选房相位仍应可回收");
+        }
+
+        [Test]
+        public void UseItem_NonCombatPhase_PerCardEligibility_GatesDrag()
+        {
+            Assert.IsTrue(mPhase.StartNode(CreateSingleMonsterNode(hp: 1, attack: 0)).Accepted);
+            mArch.GetModel<BattleContextModel>().MarkLeaveTrapBroken();
+            Assert.IsTrue(mPhase.TryCompleteClearedNode().Accepted);
+            Assert.AreEqual(GamePhase.RoomChoice, mPhase.CurrentPhase);
+
+            var content = mArch.GetSystem<IContentSystem>();
+            var catalog = new GameContentCatalog();
+            catalog.AddCard(new CardContentDefinition("monster.test", "测试怪", CardKind.Monster));
+            catalog.AddCard(new CardContentDefinition("help.flag_on", "非战斗可用", CardKind.HelpCard)
+                .AsUsableOutsideBattle());
+            catalog.AddCard(new CardContentDefinition("help.flag_off", "战斗限定", CardKind.HelpCard));
+            mArch.GetUtility<IConfigUtility>().Set(ContentConfigKeys.DefaultCatalog, catalog);
+            Assert.IsTrue(content.TryReloadFromConfig(), "DefaultCatalog 装载应成功");
+
+            var flagged = SpawnHelpIntoItemSlots("help.flag_on");
+            var unflagged = SpawnHelpIntoItemSlots("help.flag_off");
+
+            string reason;
+            Assert.IsTrue(
+                BoardIntentLegality.TryExplainUseItem(mArch, flagged, null, null, out reason),
+                reason);
+            Assert.IsFalse(
+                BoardIntentLegality.TryExplainUseItem(mArch, unflagged, null, null, out reason),
+                "未标注 usableOutsideBattle 的卡在非战斗相位应拒绝");
+            StringAssert.Contains("notUsableInPhase", reason);
         }
 
         private static NodeDeckOptions CreateSingleMonsterNode(int hp, int attack)
@@ -195,6 +223,18 @@ namespace NineGrid.Presentation.Tests
                 PlayerOpeningCount = 0,
                 EnemyOpeningCount = 1
             }.AddEnemyCard(new CardDraft("monster.test", CardKind.Monster) { MaxHp = hp, Attack = attack });
+        }
+
+        private int SpawnHelpIntoItemSlots(string defId)
+        {
+            var pipeline = mArch.GetSystem<IActionPipelineSystem>();
+            pipeline.Enqueue(new SpawnCardAction(
+                defId, CardKind.HelpCard, ZoneId.ItemSlots, SlotId.None, 1, "test"));
+            Assert.Greater(pipeline.RunToCompletion(), 0);
+
+            var deck = mArch.GetModel<DeckModel>();
+            Assert.Greater(deck.ItemSlotUids.Count, 0);
+            return deck.ItemSlotUids[deck.ItemSlotUids.Count - 1];
         }
 
         private void PlaceSoleBoardCardAt(SlotId targetSlot)

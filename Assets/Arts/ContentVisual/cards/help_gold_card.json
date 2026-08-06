@@ -72,6 +72,7 @@
     },
     "extraSlots": [],
     "rarity": "Blue",
+    "usableOutsideBattle": true,
     "tags": [
         "tag.economy",
         "tag.kill_boss",

@@ -84,6 +84,14 @@ namespace NineGrid.Core.Tests
         }
 
         [Test]
+        public void ProductionUsableOutsideBattle_AssembliesTargetOnlyPlayer()
+        {
+            // ADR-0032：usableOutsideBattle=true 的卡，其全部装配模板目标原子须为 Player。
+            var findings = ContentHygieneValidator.ValidateNonCombatUsableTargets();
+            Assert.AreEqual(0, findings.Count, Format(findings));
+        }
+
+        [Test]
         public void ProductionRewardPools_NoDanglingGrantIds_NoArchivedMembers()
         {
             var archived = CollectArchivedIds();

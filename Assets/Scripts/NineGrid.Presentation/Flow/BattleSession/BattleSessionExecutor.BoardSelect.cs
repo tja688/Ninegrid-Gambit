@@ -3,6 +3,7 @@ using System.Threading;
 using Cysharp.Threading.Tasks;
 using NineGrid.Cards;
 using NineGrid.Core;
+using NineGrid.Core.Content;
 using NineGrid.Core.Systems;
 using NineGrid.Flow.Presentation;
 using NineGrid.Presentation;
@@ -24,9 +25,16 @@ namespace NineGrid.Flow
                 return false;
             }
 
-            // 非 InteractionLoop（选房 / 房间事件 / 商店等）：手牌拖放只允许回收，ApplyZone 一律回手。
+            // ADR-0032：非战斗相位（RoomChoice / RewardItemChoice）仅 usableOutsideBattle=true 的卡可拖到棋盘使用；
+            // 其余（含 RoomEvent）ApplyZone 一律回手，回收区不受此限。
             var phase = NineGridArchitecture.Current?.GetSystem<IPhaseSystem>();
-            if (phase == null || phase.CurrentPhase != GamePhase.InteractionLoop)
+            if (phase == null)
+            {
+                return false;
+            }
+
+            var inBattle = phase.CurrentPhase == GamePhase.InteractionLoop;
+            if (!inBattle && !ItemUseEligibility.IsUsableInCurrentPhase(NineGridArchitecture.Current, card.DefId))
             {
                 return false;
             }
@@ -38,6 +46,12 @@ namespace NineGrid.Flow
                 card.DefId,
                 out var playKind,
                 out var selectedCardsSpec);
+
+            // ADR-0032：非战斗只放行免目标类（None）；需选目标/多选的战斗卡维持战斗限定。
+            if (!inBattle && playKind != HelpCardPlayKind.None)
+            {
+                return false;
+            }
 
             if (playKind == HelpCardPlayKind.MultiBoardSelect)
             {

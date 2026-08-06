@@ -73,6 +73,7 @@
     },
     "extraSlots": [],
     "rarity": "Blue",
+    "usableOutsideBattle": true,
     "tags": [
         "tag.heal"
     ],

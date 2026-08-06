@@ -87,6 +87,10 @@ namespace NineGrid.Content
             var displayName = ResolveDisplayName(dto);
             card = new CardContentDefinition(dto.contentId.Trim(), displayName, kind)
                 .WithRarity(ParseRarity(dto.rarity));
+            if (dto.usableOutsideBattle)
+            {
+                card.AsUsableOutsideBattle();
+            }
 
             if (kind == CardKind.Monster)
             {

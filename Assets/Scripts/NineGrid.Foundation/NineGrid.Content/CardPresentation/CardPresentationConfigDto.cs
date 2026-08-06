@@ -77,6 +77,11 @@ namespace NineGrid.Content.CardPresentation
         public string deckKind;
         /// <summary>legacy：遭遇成员改由卡面 deckId 归属推导，表现层不再写入。</summary>
         public string[] monsterDefIds;
+        /// <summary>
+        /// ADR-0032：卡级声明「可在非战斗相位（RoomChoice / RewardItemChoice）被使用」；
+        /// 缺省 false = 战斗限定。标 true 的卡其全部装配模板目标须为 Player（卫生校验告警）。
+        /// </summary>
+        public bool usableOutsideBattle;
         /// <summary>房间权重与效果字段；Room schema≥2。</summary>
         public int weight;
         public string rewardPoolId;

@@ -84,6 +84,13 @@ namespace NineGrid.Flow.Presentation
                 return;
             }
 
+            // ADR-0032：非战斗相位使用走 NonCombatUseItemIntentScriptFactory（无交战通道、非锁步冲刷）。
+            var phase = mArchitecture.GetSystem<IPhaseSystem>();
+            if (phase == null || phase.CurrentPhase != GamePhase.InteractionLoop)
+            {
+                return;
+            }
+
             var itemUid = intent.TargetId;
             if (itemUid <= 0)
             {

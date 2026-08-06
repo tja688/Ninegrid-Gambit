@@ -38,6 +38,7 @@
 | [ADR-0029](../adr/0029-content-guardrail-stable-theme-deck-mapping.md) | 内容护栏：七套稳定 ID—策划槽位—sequence 映射契约（#127；`ThemeDeckStableMapping` + 映射正确 / 正式可达两层校验 + 禁 displayName 断言） |
 | [ADR-0030](../adr/0030-regular-trap-opening-loadout.md) | 常规机关装填契约（#135）：正式战斗开局随机三张常规机关，`RegularTrapPool` 池过滤/无放回/种子可复现；离开机关与特殊机关不入池；`RewardSystem.BuildNodeDeckOptions` 唯一注入点 |
 | [ADR-0031](../adr/0031-attribute-room-pick-two.md) | 属性房三选二会话（#136）：进房 3 加权候选 → 玩家选 2 → 结果经 `RunModel.AttributePickDefIds` 本关开局注入；自动随机注入退役 |
+| [ADR-0032](../adr/0032-item-cards-usable-outside-battle.md) | 部分道具卡非战斗可用（`usableOutsideBattle` 卡级声明）：RoomChoice / RewardItemChoice 相位放行，RoomEvent 不放行；首批恢复药水/生日蛋糕/钱袋子；三处相位门禁改卡级裁决 + 非锁步冲刷表演 + 内容卫生告警 |
 
 > ADR-0011–0013 已落地（含卡面倒计时 Commit 与单向打击 Counter 分拍，#81）。落地方案见 `Assets/Notes/怪物攻击模式与敌方行动阶段-落地方案-2026-07-29.md`（过程笔记，非权威）。
 >

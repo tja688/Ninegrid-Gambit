@@ -810,7 +810,47 @@ namespace NineGrid.Core.Systems
                 return Reject(GameCommandKind.UseItem, "Card is not a usable item.", SlotId.None, itemUid);
             }
 
+            // ADR-0032：非战斗相位（RoomChoice / RewardItemChoice）仅 usableOutsideBattle=true 的卡放行；
+            // InteractionLoop 永放行；RoomEvent 等其它相位在 RefreshLegalCommands 已排除。
+            if (!IsCardUsableInCurrentPhase(card))
+            {
+                return Reject(GameCommandKind.UseItem, "Card is not usable in phase " + CurrentPhase, SlotId.None, itemUid);
+            }
+
             return ExecuteUseItem(itemUid, card, selectedCardUids, selectedOption);
+        }
+
+        private bool IsCardUsableInCurrentPhase(CardInstance card)
+        {
+            if (card == null || string.IsNullOrEmpty(card.DefId))
+            {
+                return false;
+            }
+
+            // InteractionLoop 恒放行，不依赖 Catalog（门禁版 UseItem 在无 Catalog 的夹具里仍应放行战斗使用）。
+            if (CurrentPhase == GamePhase.InteractionLoop)
+            {
+                return true;
+            }
+
+            if (CurrentPhase != GamePhase.RoomChoice && CurrentPhase != GamePhase.RewardItemChoice)
+            {
+                return false;
+            }
+
+            var content = this.GetSystem<IContentSystem>();
+            if (content == null || !content.HasCatalog || content.Catalog == null || content.Catalog.Cards == null)
+            {
+                return false;
+            }
+
+            CardContentDefinition def;
+            if (!content.Catalog.Cards.TryGetValue(card.DefId, out def))
+            {
+                return false;
+            }
+
+            return ItemUseEligibility.IsUsableInPhase(CurrentPhase, def);
         }
 
         private CoreCommandResult ExecuteUseItem(
@@ -2102,6 +2142,8 @@ namespace NineGrid.Core.Systems
                     mLegalCommands.Add(GameCommandKind.SkipHelpChoice);
                     mLegalCommands.Add(GameCommandKind.DiscardRelic);
                     mLegalCommands.Add(GameCommandKind.RecycleItemSlot);
+                    // ADR-0032：非战斗可用卡可在房内会话使用；卡级裁决在 UseItem 内。
+                    mLegalCommands.Add(GameCommandKind.UseItem);
                     AppendShopRefreshIfActive();
                     // 商店/属性房离开图标需 BoardWalk；其它奖励覆盖层不走格。
                     if (PendingChoiceModel.IsConsumerBoardPool(this.GetModel<PendingChoiceModel>().PoolId.Value)
@@ -2114,7 +2156,8 @@ namespace NineGrid.Core.Systems
                 case GamePhase.RoomChoice:
                     mLegalCommands.Add(GameCommandKind.SelectRoom);
                     mLegalCommands.Add(GameCommandKind.PickupItem);
-                    // 非战斗选房：道具卡格仅回收，不合法打出（ADR-0025）。
+                    // ADR-0032：非战斗选房仅 usableOutsideBattle=true 的卡可打出；卡级裁决在 UseItem 内。
+                    mLegalCommands.Add(GameCommandKind.UseItem);
                     mLegalCommands.Add(GameCommandKind.MoveAvatar);
                     mLegalCommands.Add(GameCommandKind.DiscardRelic);
                     mLegalCommands.Add(GameCommandKind.RecycleItemSlot);

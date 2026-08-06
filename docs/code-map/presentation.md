@@ -94,7 +94,7 @@
 - **持续持有**：`CaptureOpeningHandDeals` 把非本关授予的 ItemSlots 归入 `HandRestores`；`StartBattleNode` 在 `ResetCardPresentationSurface` + `CaptureOpeningPresentationPlan` 之后立刻 `ApplyOpeningHandRestores`（`TryPlaceInHandImmediate`），须早于 Avatar/环发牌，避免空窗闪烁
 - **本关授予**：仅 `relic.*` / `skill.*` 的 `CardSpawned` 走 `HandDeals` → `DealCardToHandAsync` 从源锚点飞入（仍在 Opening 末尾）
 - **满格**：Core `SpawnCard` / `GrantHelpCardToPlayerSideDeck` 写满即止、多余静默丢弃、不兑金；表现层不会收到被丢弃卡的 spawn
-- **非战斗打出**：`RoomChoice` / `RoomEvent` / `RewardItemChoice` 仅合法 `RecycleItemSlot`，禁 `UseItem`（Core `PhaseSystem` + `BoardIntentLegality`；拖放 ApplyZone 亦要求 `InteractionLoop`）
+- **非战斗打出**：`RoomChoice` / `RewardItemChoice` 相位对 `usableOutsideBattle=true` 的道具卡放行 `UseItem`（拖到棋盘空位，走既有 ApplyZone 链路；Core `PhaseSystem` 门禁版 `UseItem` + `BoardIntentLegality` + `ValidateHandDragApplyAsync` 三处均按卡级裁决）；`RoomEvent` 与未标注卡维持禁止（拖放回手，v1 无提示）。非战斗使用走**非锁步冲刷**（`BattleBeatFlush.PresentEventLogSlice`）驱动 HUD，不复用战斗锁步 Batch-ack（ADR-0032）
 
 ## Systems
 

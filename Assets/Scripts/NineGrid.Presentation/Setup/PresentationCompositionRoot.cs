@@ -150,6 +150,7 @@ namespace NineGrid.Presentation.Setup
                 revealFaceFactory,
                 attackFactory,
                 useItemFactory,
+                new NonCombatUseItemIntentScriptFactory(architecture),
                 new PickupIntentScriptFactory(architecture),
                 new RecycleItemIntentScriptFactory(architecture),
                 new BoardWalkIntentScriptFactory(architecture));

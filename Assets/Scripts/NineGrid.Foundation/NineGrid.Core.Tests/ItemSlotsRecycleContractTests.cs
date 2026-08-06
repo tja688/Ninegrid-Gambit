@@ -90,9 +90,9 @@ namespace NineGrid.Core.Tests
         }
 
         [Test]
-        public void NonCombatPhases_AllowRecycle_ButRejectUseItem()
+        public void NonCombatPhases_UnflaggedUseItem_Rejected_RecycleStillLegal()
         {
-            // RoomChoice（清关后选房）：可回收，不可打出。
+            // RoomChoice（清关后选房）：相位放行 UseItem，卡级（usableOutsideBattle=false）拒绝；回收合法。
             Assert.IsTrue(mPhase.StartNode(CreateSingleMonsterNode(hp: 1, attack: 0)).Accepted);
             var uid = SpawnHelpIntoItemSlots("help.hp_card");
             mArch.GetModel<BattleContextModel>().MarkLeaveTrapBroken();
@@ -100,11 +100,11 @@ namespace NineGrid.Core.Tests
             Assert.AreEqual(GamePhase.RoomChoice, mPhase.CurrentPhase);
 
             Assert.IsTrue(mPhase.CanExecute(GameCommandKind.RecycleItemSlot));
-            Assert.IsFalse(mPhase.CanExecute(GameCommandKind.UseItem));
-            Assert.IsFalse(mPhase.UseItem(uid, null, null).Accepted);
+            Assert.IsTrue(mPhase.CanExecute(GameCommandKind.UseItem), "ADR-0032：选房相位 UseItem 相位放行");
+            Assert.IsFalse(mPhase.UseItem(uid, null, null).Accepted, "未标注 usableOutsideBattle 的卡按卡级拒绝");
             Assert.AreEqual(1, mArch.GetModel<DeckModel>().ItemSlotUids.Count);
 
-            // RoomEvent：同上。
+            // RoomEvent：仍完全非法（相位不放行）。
             mPipeline.Enqueue(new ChangePhaseAction(GamePhase.RoomEvent));
             mPipeline.RunToCompletion();
             Assert.AreEqual(GamePhase.RoomEvent, mPhase.CurrentPhase);
@@ -112,13 +112,39 @@ namespace NineGrid.Core.Tests
             Assert.IsFalse(mPhase.CanExecute(GameCommandKind.UseItem));
             Assert.IsFalse(mPhase.UseItem(uid, null, null).Accepted);
 
-            // RewardItemChoice（商店）：同上（EnterShop 会重开节点，重新写入一张）。
+            // RewardItemChoice（商店）：相位放行，卡级拒绝；回收合法（EnterShop 会重开节点，重新写入一张）。
             EnterShop();
             Assert.AreEqual(GamePhase.RewardItemChoice, mPhase.CurrentPhase);
             var shopUid = SpawnHelpIntoItemSlots("help.hp_card");
             Assert.IsTrue(mPhase.CanExecute(GameCommandKind.RecycleItemSlot));
-            Assert.IsFalse(mPhase.CanExecute(GameCommandKind.UseItem));
-            Assert.IsFalse(mPhase.UseItem(shopUid, null, null).Accepted);
+            Assert.IsTrue(mPhase.CanExecute(GameCommandKind.UseItem), "ADR-0032：房内会话相位 UseItem 相位放行");
+            Assert.IsFalse(mPhase.UseItem(shopUid, null, null).Accepted, "未标注 usableOutsideBattle 的卡按卡级拒绝");
+        }
+
+        [Test]
+        public void NonCombatPhases_FlaggedUseItem_AcceptedAndConsumed()
+        {
+            // RoomChoice：usableOutsideBattle=true 的卡可打出并消耗。
+            Assert.IsTrue(mPhase.StartNode(CreateSingleMonsterNode(hp: 1, attack: 0)).Accepted);
+            var uid = SpawnHelpIntoItemSlots("help.flag_card");
+            mArch.GetModel<BattleContextModel>().MarkLeaveTrapBroken();
+            Assert.IsTrue(mPhase.TryCompleteClearedNode().Accepted);
+            Assert.AreEqual(GamePhase.RoomChoice, mPhase.CurrentPhase);
+
+            var use = mPhase.UseItem(uid, null, null);
+            Assert.IsTrue(use.Accepted, use.Reason);
+            Assert.AreEqual(0, mArch.GetModel<DeckModel>().ItemSlotUids.Count);
+            CardInstance card;
+            Assert.IsTrue(mArch.GetModel<CardRegistry>().TryGet(uid, out card));
+            Assert.AreEqual(ZoneId.Removed, card.Zone.Value);
+
+            // RewardItemChoice（商店）：同上。
+            EnterShop();
+            Assert.AreEqual(GamePhase.RewardItemChoice, mPhase.CurrentPhase);
+            var shopUid = SpawnHelpIntoItemSlots("help.flag_card");
+            var shopUse = mPhase.UseItem(shopUid, null, null);
+            Assert.IsTrue(shopUse.Accepted, shopUse.Reason);
+            Assert.AreEqual(0, mArch.GetModel<DeckModel>().ItemSlotUids.Count);
         }
 
         [Test]
@@ -150,6 +176,10 @@ namespace NineGrid.Core.Tests
 
         private void EnterShop()
         {
+            // 从任意相位重开节点：StartNode 仅在 None/BuildEnemyPool/NodeCompleted 相位合法，
+            // 先切相位再开节点（RoomChoice/RoomEvent 下直接 StartNode 会被 CanExecute 拒绝）。
+            mPipeline.Enqueue(new ChangePhaseAction(GamePhase.NodeCompleted));
+            mPipeline.RunToCompletion();
             Assert.IsTrue(mPhase.StartNode(new NodeDeckOptions
             {
                 PlayerOpeningCount = 0,
@@ -188,6 +218,8 @@ namespace NineGrid.Core.Tests
             var catalog = new GameContentCatalog();
             catalog.Economy.RecycleItemSlotGold = 10;
             catalog.AddCard(new CardContentDefinition("help.hp_card", "血瓶", CardKind.HelpCard));
+            catalog.AddCard(new CardContentDefinition("help.flag_card", "非战斗可用测试卡", CardKind.HelpCard)
+                .AsUsableOutsideBattle());
             catalog.AddCard(new CardContentDefinition("monster.test_fodder", "测试怪", CardKind.Monster));
             catalog.AddCard(new CardContentDefinition(RewardSystem.ShopPotionDefId, "药水", CardKind.HelpCard)
                 .WithPrice(30));

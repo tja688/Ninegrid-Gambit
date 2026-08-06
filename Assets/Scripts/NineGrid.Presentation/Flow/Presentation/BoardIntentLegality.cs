@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using NineGrid.Core;
+using NineGrid.Core.Content;
 using NineGrid.Core.Systems;
 using QFramework;
 
@@ -304,6 +305,15 @@ namespace NineGrid.Flow.Presentation
                 return false;
             }
 
+            // ADR-0032：非战斗相位（RoomChoice / RewardItemChoice）仅 usableOutsideBattle=true 的卡放行；
+            // InteractionLoop 恒放行（helper 内裁决）。
+            if (!ItemUseEligibility.IsUsableInCurrentPhase(arch, card.DefId))
+            {
+                var phase = arch.GetSystem<IPhaseSystem>();
+                rejectReason = "notUsableInPhase phase=" + (phase != null ? phase.CurrentPhase : GamePhase.None);
+                return false;
+            }
+
             // selectedCardUids / selectedOption 的细校验仍由 Resolve/BoardSelect 负责；此处只拦明显非法入队。
             _ = selectedCardUids;
             _ = selectedOption;
@@ -448,16 +458,19 @@ namespace NineGrid.Flow.Presentation
                            || command == GameCommandKind.RevealFace
                            || command == GameCommandKind.RecycleItemSlot;
                 case GamePhase.RoomChoice:
-                    // 与 PhaseSystem 对齐：选房相位禁 UseItem，仅回收/走格/拾取。
+                    // ADR-0032：选房相位 UseItem 按卡级 usableOutsideBattle 裁决（TryExplainUseItem）。
                     return command == GameCommandKind.PickupItem
                            || command == GameCommandKind.MoveAvatar
+                           || command == GameCommandKind.UseItem
                            || command == GameCommandKind.RecycleItemSlot;
                 case GamePhase.RoomEvent:
                     return command == GameCommandKind.MoveAvatar
                            || command == GameCommandKind.EnterRoom
                            || command == GameCommandKind.RecycleItemSlot;
                 case GamePhase.RewardItemChoice:
+                    // ADR-0032：房内会话相位 UseItem 按卡级 usableOutsideBattle 裁决（TryExplainUseItem）。
                     return command == GameCommandKind.MoveAvatar
+                           || command == GameCommandKind.UseItem
                            || command == GameCommandKind.RecycleItemSlot;
                 default:
                     return false;

@@ -204,3 +204,42 @@ $ rg -l 'seq1Count|seq1_count|"sequences"|nodeRule' Assets/StreamingAssets/Conte
 (no output)
 
 → Read Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Systems/RewardSystem.cs [limit=120, offset=940]
+
+$ rg -l 'NodeDeckRule|nodeDeckRules' Assets/StreamingAssets/ 2>$null; echo ===; rg -l 'seq5' Assets/StreamingAssets/ContentVisual/tables/ 2>$null
+===
+Assets/StreamingAssets/ContentVisual/tables/node_deck_rules.json
+
+→ Read Assets/StreamingAssets/ContentVisual/tables/node_deck_rules.json
+✱ Grep "CardZoneTriggerable" in Assets/Scripts · 30 matches
+✱ Glob "Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Systems/*TriggerSystem*.cs" 1 match
+→ Read Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Systems/TriggerSystem.cs
+→ Read Assets/Scripts/NineGrid.Presentation/Flow/Presentation/AttackIntentScriptFactory.cs [limit=130, offset=180]
+→ Read Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Systems/RewardSystem.cs [limit=70, offset=880]
+✱ Grep "ItemDeckCapacity|ItemSlotsCapacity|MaxItemSlotsCapacity" in Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Models/PlayerModel.cs · 23 matches
+✱ Grep "Register\(|class EffectSystem|IEffectSystem" in Assets/Scripts/NineGrid.Foundation/NineGrid.Core · 4 matches
+→ Read Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Effects/EffectSystem.cs [limit=120, offset=440]
+→ Read Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Domain/Actions/EffectActions.cs [limit=180, offset=794]
+→ Read Assets/Scripts/NineGrid.Presentation/Flow/GameFlow/GameFlowOrchestrator.cs [limit=50, offset=265]
+✱ Grep "SetAvatarAction|class SetAvatar|AvatarAppeared" in Assets/Scripts/NineGrid.Foundation/NineGrid.Core · 4 matches
+→ Read Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Domain/Actions/PhaseActions.cs [limit=60, offset=1]
+
+$ rg -n '"trigger":\{"atom":"OnDeal"' Assets/StreamingAssets/ContentVisual/tables/effect_templates.json
+(no output)
+
+$ rg -n 'OnDeal' Assets/StreamingAssets/ContentVisual/tables/effect_templates.json
+808:  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnDeal\"},\"conditions\":[{\"atom\":\"EventFilterExcludeCause\",\"eventType\":\"CardDealt\",\"sourceDefId\":\"trap.flame\",\"cause\":\"skill.intense_burning\"}],\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"ShuffleInto\",\"defId\":\"trap.flame\",\"kind\":\"Trap\",\"count\":\"{{count}}\",\"top\":false}}"
+1280:  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnDeal\"},\"conditions\":[{\"atom\":\"ActionSource\",\"action\":\"FillEmptySlots\"},{\"atom\":\"EventFilter\",\"eventType\":\"CardDealt\"},{\"atom\":\"Adjacent\",\"left\":\"Self\",\"right\":\"EventCard\"}],\"target\":{\"atom\":\"EventCard\"},\"action\":{\"atom\":\"Sequence\",\"actions\":[{\"atom\":\"Conditional\",\"condition\":{\"atom\":\"EventFilter\",\"eventType\":\"CardDealt\",\"targetKind\":\"Monster\"},\"action\":{\"atom\":\"DealDamage\",\"amount\":\"{{amount}}\",\"actor\":\"Self\"},\"elseAction\":{\"atom\":\"Conditional\",\"condition\":{\"atom\":\"EventFilter\",\"eventType\":\"CardDealt\",\"targetKind\":\"HelpCard\"},\"action\":{\"atom\":\"RemoveCard\",\"destination\":\"Removed\",\"reason\":\"{{reason}}\"}}},{\"atom\":\"RemoveCard\",\"target\":{\"atom\":\"Self\"},\"destination\":\"Removed\",\"reason\":\"{{reason}}\"}]}}"
+1408:  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnDeal\"},\"conditions\":[{\"atom\":\"IsFaceUp\",\"target\":\"Self\"},{\"atom\":\"EventFilter\",\"eventType\":\"CardDealt\",\"targetKind\":\"Monster\"}],\"target\":{\"atom\":\"EventCards\",\"eventType\":\"CardDealt\",\"targetKind\":\"Monster\"},\"action\":{\"atom\":\"Flip\"}}"
+
+✱ Grep "GamePhase\.|Phase\.Value" in Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Effects · 0 matches
+✱ Grep "FirstEventCardUid|FirstEventTargetUid" in Assets/Scripts/NineGrid.Foundation/NineGrid.Core · 9 matches
+→ Read Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Effects/EffectRuntimeContext.cs [limit=80, offset=100]
+
+$ New-Item -ItemType Directory -Path ".opencode\reports" -Force | Out-Null; Test-Path ".opencode\reports"
+True
+
+I have all the evidence I need. Now writing the report.
+← Write .opencode/reports/Refill-EffectAndOpening-report.md
+Wrote file successfully.
+
+报告已写入 `.opencode\reports\Refill-EffectAndOpening-report.md`；结论：效果原子从不自补牌，洞由外部分拍补——战中各 intent 的 ResolvePostKillFill/敌方收尾能兜住，但 StartNode 开局批次唯一一次 fill 之后的捕熊陷阱 OnDeal 触发（打怪致死+自移除）产生的洞无人补，且表现层忠实回放 Core 空槽，这正对应「节点三进入有空缺却不补牌」；「盘面<8 且抽牌堆非空」由开局批次内效果移除造成，非张数不足（节点 3 装填约 21~23 张）。
