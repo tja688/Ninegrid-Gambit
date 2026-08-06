@@ -4,10 +4,10 @@
     "kind": "Monster",
     "deckId": "deck.skeleton_legion",
     "role": "",
-    "displayName": "特8",
-    "designSlotName": "特8",
+    "displayName": "沙虫",
+    "designSlotName": "",
     "description": "[[潜伏近战]]，[[盗取]]",
-    "faceIntro": "准头不高，但是射得快",
+    "faceIntro": "悄悄摸摸的咬掉一块肉",
     "attackPattern": "普通近战",
     "gold": 5,
     "stats": {
@@ -27,9 +27,9 @@
         "backLogo": ""
     },
     "mainVisual": {
-        "offsetX": 0.10000000149011612,
-        "offsetY": -0.05000000074505806,
-        "uniformScale": 0.8600000143051148
+        "offsetX": 0.0,
+        "offsetY": -0.07999999821186066,
+        "uniformScale": 0.8999999761581421
     },
     "animations": {
         "defaultFps": 8.0,
@@ -37,7 +37,7 @@
             {
                 "id": "idle",
                 "sourceType": "folder",
-                "path": "Assets/Resources/ContentArt/Png/像素怪物合集2/sprites/Icey_skill_small_F",
+                "path": "Assets/Resources/ContentArt/Png/像素怪物合集2/sprites/18sandworm_attack_01_M",
                 "offsetX": 0.0,
                 "offsetY": 0.0
             },

@@ -4,10 +4,10 @@
     "kind": "Monster",
     "deckId": "deck.smallanimal",
     "role": "",
-    "displayName": "特10",
-    "designSlotName": "特10",
+    "displayName": "小刀哥布",
+    "designSlotName": "",
     "description": "[[链接近战]]，[[链接战术]]",
-    "faceIntro": "虽然白毛会暴露行踪，但是这是个性的表达",
+    "faceIntro": "跑得快，通常兼任传信官",
     "attackPattern": "普通近战",
     "gold": 5,
     "stats": {
@@ -27,8 +27,8 @@
         "backLogo": ""
     },
     "mainVisual": {
-        "offsetX": 0.30000001192092898,
-        "offsetY": -0.3700000047683716,
+        "offsetX": 0.20000000298023225,
+        "offsetY": -0.30000001192092898,
         "uniformScale": 0.8799999952316284
     },
     "animations": {
@@ -37,7 +37,7 @@
             {
                 "id": "idle",
                 "sourceType": "folder",
-                "path": "Assets/Resources/ContentArt/Png/像素怪物合集/sprites/Icey_idle_01",
+                "path": "Assets/Resources/ContentArt/Png/像素怪物合集/sprites/07goblin_idle_01",
                 "offsetX": 0.0,
                 "offsetY": 0.0
             },

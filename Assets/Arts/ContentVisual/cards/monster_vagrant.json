@@ -4,10 +4,10 @@
     "kind": "Monster",
     "deckId": "deck.smallanimal",
     "role": "",
-    "displayName": "boss5",
+    "displayName": "哥布将军",
     "designSlotName": "boss5",
     "description": "[[链接近战]]，[[链接准备]]，[[链接护甲]]",
-    "faceIntro": "虽然右臂做了机械化改装不是很传统，但是德鲁伊也要讲究与时俱进",
+    "faceIntro": "猪是借来的",
     "attackPattern": "普通近战",
     "gold": 5,
     "stats": {
@@ -27,9 +27,9 @@
         "backLogo": ""
     },
     "mainVisual": {
-        "offsetX": 0.0,
+        "offsetX": 0.30000001192092898,
         "offsetY": -0.4000000059604645,
-        "uniformScale": 1.0
+        "uniformScale": 1.2000000476837159
     },
     "animations": {
         "defaultFps": 8.0,
@@ -37,7 +37,7 @@
             {
                 "id": "idle",
                 "sourceType": "folder",
-                "path": "Assets/Resources/ContentArt/Png/像素怪物合集/sprites/Kyle_idle_01",
+                "path": "Assets/Resources/ContentArt/Png/像素怪物合集/sprites/26wildboardknight_idle_01",
                 "offsetX": 0.0,
                 "offsetY": 0.0
             },

@@ -4,10 +4,10 @@
     "kind": "Monster",
     "deckId": "deck.skeleton_legion",
     "role": "",
-    "displayName": "远程4",
-    "designSlotName": "远程4",
+    "displayName": "食人花",
+    "designSlotName": "",
     "description": "[[普通远程]]，[[远程武器]]，[[起来]]",
-    "faceIntro": "他坚称灯光师是剧组最重要的工种之一",
+    "faceIntro": "会躲在密林间发射火球",
     "attackPattern": "普通远程",
     "gold": 5,
     "stats": {
@@ -27,17 +27,17 @@
         "backLogo": ""
     },
     "mainVisual": {
-        "offsetX": -0.10000000149011612,
-        "offsetY": -0.15000000596046449,
-        "uniformScale": 1.0
+        "offsetX": 0.10000000149011612,
+        "offsetY": 0.0,
+        "uniformScale": 0.800000011920929
     },
     "animations": {
-        "defaultFps": 8.0,
+        "defaultFps": 6.0,
         "slots": [
             {
                 "id": "idle",
                 "sourceType": "folder",
-                "path": "Assets/Resources/ContentArt/Png/像素怪物合集2/sprites/Icey_attack_idle",
+                "path": "Assets/Resources/ContentArt/Png/像素怪物合集2/sprites/16walkflower_attack_01_M",
                 "offsetX": 0.0,
                 "offsetY": 0.0
             },

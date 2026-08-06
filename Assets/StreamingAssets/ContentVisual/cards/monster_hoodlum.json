@@ -4,10 +4,10 @@
     "kind": "Monster",
     "deckId": "deck.smallanimal",
     "role": "",
-    "displayName": "特9",
-    "designSlotName": "特9",
+    "displayName": "火把哥布",
+    "designSlotName": "",
     "description": "[[普通近战]]，[[天涯若比邻]]",
-    "faceIntro": "罗斯福十号？会有酒叫这个名字吗？",
+    "faceIntro": "主要起到照明作用",
     "attackPattern": "普通近战",
     "gold": 5,
     "stats": {
@@ -27,8 +27,8 @@
         "backLogo": ""
     },
     "mainVisual": {
-        "offsetX": 0.10000000149011612,
-        "offsetY": -0.20000000298023225,
+        "offsetX": 0.0,
+        "offsetY": -0.17000000178813935,
         "uniformScale": 1.0
     },
     "animations": {
@@ -37,7 +37,7 @@
             {
                 "id": "idle",
                 "sourceType": "folder",
-                "path": "Assets/Resources/ContentArt/Png/像素怪物合集/sprites/NPC_tavern_idle01",
+                "path": "Assets/Resources/ContentArt/Png/像素怪物合集/sprites/08goblin_idle_01",
                 "offsetX": 0.0,
                 "offsetY": 0.0
             },

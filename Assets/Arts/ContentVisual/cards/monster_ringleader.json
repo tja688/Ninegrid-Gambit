@@ -4,10 +4,10 @@
     "kind": "Monster",
     "deckId": "deck.smallanimal",
     "role": "",
-    "displayName": "近战5",
-    "designSlotName": "近战5",
+    "displayName": "巨棒哥布",
+    "designSlotName": "",
     "description": "[[链接近战]]",
-    "faceIntro": "面对疾风吧",
+    "faceIntro": "会狠狠的给对面来上一棍子",
     "attackPattern": "普通近战",
     "gold": 5,
     "stats": {
@@ -27,8 +27,8 @@
         "backLogo": ""
     },
     "mainVisual": {
-        "offsetX": 0.3499999940395355,
-        "offsetY": -0.3400000035762787,
+        "offsetX": 0.0,
+        "offsetY": -0.36000001430511477,
         "uniformScale": 1.0
     },
     "animations": {
@@ -37,7 +37,7 @@
             {
                 "id": "idle",
                 "sourceType": "folder",
-                "path": "Assets/Resources/ContentArt/Png/像素怪物合集/sprites/Musashi_idle_01",
+                "path": "Assets/Resources/ContentArt/Png/像素怪物合集/sprites/06goblin_idle_01",
                 "offsetX": 0.0,
                 "offsetY": 0.0
             },

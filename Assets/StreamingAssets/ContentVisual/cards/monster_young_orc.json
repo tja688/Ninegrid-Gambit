@@ -4,10 +4,10 @@
     "kind": "Monster",
     "deckId": "deck.skeleton_legion",
     "role": "",
-    "displayName": "特7",
-    "designSlotName": "特7",
+    "displayName": "仙人掌",
+    "designSlotName": "",
     "description": "[[潜伏近战]]，[[休养]]",
-    "faceIntro": "头脑简单，四肢发达",
+    "faceIntro": "别碰我",
     "attackPattern": "普通近战",
     "gold": 5,
     "stats": {
@@ -27,8 +27,8 @@
         "backLogo": ""
     },
     "mainVisual": {
-        "offsetX": 0.699999988079071,
-        "offsetY": -0.3499999940395355,
+        "offsetX": 0.05000000074505806,
+        "offsetY": -0.699999988079071,
         "uniformScale": 1.0
     },
     "animations": {
@@ -37,7 +37,7 @@
             {
                 "id": "idle",
                 "sourceType": "folder",
-                "path": "",
+                "path": "Assets/Resources/ContentArt/Png/像素怪物合集/sprites/50ballcactus_idle_01",
                 "offsetX": 0.0,
                 "offsetY": 0.0
             },

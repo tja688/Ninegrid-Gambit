@@ -4,10 +4,10 @@
     "kind": "Monster",
     "deckId": "deck.smallanimal",
     "role": "",
-    "displayName": "远程5",
-    "designSlotName": "远程5",
+    "displayName": "狼骑哥布",
+    "designSlotName": "",
     "description": "[[链接远程]]，[[远程武器]]",
-    "faceIntro": "只是一名八千岁的小萝莉",
+    "faceIntro": "在第三次射箭大赛中完胜轻弓骷髅",
     "attackPattern": "普通远程",
     "gold": 5,
     "stats": {
@@ -27,8 +27,8 @@
         "backLogo": ""
     },
     "mainVisual": {
-        "offsetX": -0.10000000149011612,
-        "offsetY": -0.5,
+        "offsetX": 0.10000000149011612,
+        "offsetY": -0.05400000140070915,
         "uniformScale": 1.0
     },
     "animations": {
@@ -37,7 +37,7 @@
             {
                 "id": "idle",
                 "sourceType": "folder",
-                "path": "Assets/Resources/ContentArt/Png/像素怪物合集/sprites/Layla_idle_01",
+                "path": "Assets/Resources/ContentArt/Png/像素怪物合集/sprites/25WolfGobin_idle_01",
                 "offsetX": 0.0,
                 "offsetY": 0.0
             },

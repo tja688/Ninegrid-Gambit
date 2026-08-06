@@ -4,10 +4,10 @@
     "kind": "Monster",
     "deckId": "deck.skeleton_legion",
     "role": "",
-    "displayName": "boss4",
-    "designSlotName": "boss4",
+    "displayName": "潜水鳄",
+    "designSlotName": "",
     "description": "[[普通近战]]，[[刺客领袖]]，[[起来]]",
-    "faceIntro": "哥布中的指挥官，战术素养极高（对于哥布一族而言）",
+    "faceIntro": "嘘，都给我悄悄的",
     "attackPattern": "普通近战",
     "gold": 5,
     "stats": {
@@ -27,8 +27,8 @@
         "backLogo": ""
     },
     "mainVisual": {
-        "offsetX": 0.30000001192092898,
-        "offsetY": -0.30000001192092898,
+        "offsetX": 0.0,
+        "offsetY": 0.0,
         "uniformScale": 0.949999988079071
     },
     "animations": {
@@ -37,7 +37,7 @@
             {
                 "id": "idle",
                 "sourceType": "folder",
-                "path": "Assets/Resources/ContentArt/Png/像素怪物合集2/sprites/Icey_skill_small_B",
+                "path": "Assets/Resources/ContentArt/Png/像素怪物合集2/sprites/35crocodile_idle_01",
                 "offsetX": 0.0,
                 "offsetY": 0.0
             },

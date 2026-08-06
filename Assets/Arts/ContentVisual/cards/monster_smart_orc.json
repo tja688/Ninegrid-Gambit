@@ -4,10 +4,10 @@
     "kind": "Monster",
     "deckId": "deck.skeleton_legion",
     "role": "",
-    "displayName": "近战4",
-    "designSlotName": "近战4",
+    "displayName": "獠牙猪",
+    "designSlotName": "",
     "description": "[[潜伏近战]]，[[跳杀]]",
-    "faceIntro": "他认为自己的作用比火把哥布大就够了",
+    "faceIntro": "獠牙猛击！",
     "attackPattern": "普通近战",
     "gold": 5,
     "stats": {
@@ -28,16 +28,16 @@
     },
     "mainVisual": {
         "offsetX": -0.10000000149011612,
-        "offsetY": 0.0,
-        "uniformScale": 1.0
+        "offsetY": -0.10000000149011612,
+        "uniformScale": 0.800000011920929
     },
     "animations": {
-        "defaultFps": 8.0,
+        "defaultFps": 6.0,
         "slots": [
             {
                 "id": "idle",
                 "sourceType": "folder",
-                "path": "Assets/Resources/ContentArt/Png/像素怪物合集2/sprites/02wildboar_run",
+                "path": "Assets/Resources/ContentArt/Png/像素怪物合集2/sprites/14wildboarBoss_attack_02_M",
                 "offsetX": 0.0,
                 "offsetY": 0.0
             },
