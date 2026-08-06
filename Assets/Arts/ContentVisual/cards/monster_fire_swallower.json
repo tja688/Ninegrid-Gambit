@@ -28,7 +28,7 @@
     },
     "mainVisual": {
         "offsetX": 0.0,
-        "offsetY": -0.4000000059604645,
+        "offsetY": -0.3499999940395355,
         "uniformScale": 0.8999999761581421
     },
     "animations": {
@@ -98,6 +98,7 @@
     "containerType": "",
     "deckKind": "",
     "monsterDefIds": [],
+    "usableOutsideBattle": false,
     "weight": 0,
     "rewardPoolId": "",
     "shopOfferCount": 0,

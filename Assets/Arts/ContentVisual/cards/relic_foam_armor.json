@@ -5,6 +5,7 @@
     "deckId": "deck.relic",
     "role": "Defense",
     "displayName": "泡沫盔甲",
+    "designSlotName": "",
     "description": "基础护甲+1；[受到伤害时] 每关卡第一次当前护甲归零时，下一次受到伤害变为0（多段只免疫第一段）",
     "faceIntro": "",
     "attackPattern": "",
@@ -17,7 +18,7 @@
         "recovery": 0
     },
     "sprites": {
-        "mainIcon": "",
+        "mainIcon": "Assets/Resources/ContentArt/Multiple/icons_full_32.png#icons_full_32_666",
         "faceBackground": "",
         "cardFrame": "",
         "banner": "",
@@ -111,6 +112,7 @@
     "containerType": "",
     "deckKind": "",
     "monsterDefIds": [],
+    "usableOutsideBattle": false,
     "weight": 0,
     "rewardPoolId": "",
     "shopOfferCount": 0,

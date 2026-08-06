@@ -4,9 +4,10 @@
     "kind": "Relic",
     "deckId": "deck.relic",
     "role": "Attack",
-    "displayName": "弹弓",
+    "displayName": "轻弓",
+    "designSlotName": "",
     "description": "[击杀怪物时] 对随机一张怪物卡造成4点伤害",
-    "faceIntro": "",
+    "faceIntro": "缴获自轻弓骷髅",
     "attackPattern": "",
     "gold": 0,
     "stats": {
@@ -17,7 +18,7 @@
         "recovery": 0
     },
     "sprites": {
-        "mainIcon": "Assets/Resources/ContentArt/Multiple/icons_full_32.png#icons_full_32_545",
+        "mainIcon": "Assets/Resources/ContentArt/Multiple/icons_full_32.png#icons_full_32_528",
         "faceBackground": "",
         "cardFrame": "",
         "banner": "",
@@ -93,6 +94,7 @@
     "containerType": "",
     "deckKind": "",
     "monsterDefIds": [],
+    "usableOutsideBattle": false,
     "weight": 0,
     "rewardPoolId": "",
     "shopOfferCount": 0,

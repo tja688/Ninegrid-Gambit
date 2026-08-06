@@ -6,7 +6,7 @@
     "role": "",
     "displayName": "护甲图腾",
     "designSlotName": "",
-    "description": "[场上]邻接真怪护甲+{value}；离开邻接后失效（上场/发牌时施加）；[场上]邻接真怪护甲+{value}；任意卡移动时刷新；[场上]邻接玩家护甲+{value}；离开邻接后失效（上场/发牌时施加）；[场上]邻接玩家护甲+{value}；任意卡移动时刷新",
+    "description": "正交相邻格对象护甲+1",
     "faceIntro": "",
     "attackPattern": "无",
     "gold": 0,
@@ -18,7 +18,7 @@
         "recovery": 0
     },
     "sprites": {
-        "mainIcon": "Assets/Resources/ContentArt/Multiple/icons_full_32.png#icons_full_32_588",
+        "mainIcon": "Assets/Resources/ContentArt/Multiple/icons_full_32.png#icons_full_32_843",
         "faceBackground": "",
         "cardFrame": "",
         "banner": "",
@@ -115,6 +115,7 @@
     "containerType": "",
     "deckKind": "",
     "monsterDefIds": [],
+    "usableOutsideBattle": false,
     "weight": 0,
     "rewardPoolId": "",
     "shopOfferCount": 0,

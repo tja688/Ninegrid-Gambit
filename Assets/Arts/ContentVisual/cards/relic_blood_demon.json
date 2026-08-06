@@ -4,7 +4,8 @@
     "kind": "Relic",
     "deckId": "deck.relic",
     "role": "Utility",
-    "displayName": "血魔",
+    "displayName": "血魔徽章",
+    "designSlotName": "",
     "description": "[受到伤害时] 每受到5点伤害，获得1点血量上限",
     "faceIntro": "",
     "attackPattern": "",
@@ -17,7 +18,7 @@
         "recovery": 0
     },
     "sprites": {
-        "mainIcon": "",
+        "mainIcon": "Assets/Resources/ContentArt/Multiple/icons_full_32.png#icons_full_32_814",
         "faceBackground": "",
         "cardFrame": "",
         "banner": "",
@@ -93,6 +94,7 @@
     "containerType": "",
     "deckKind": "",
     "monsterDefIds": [],
+    "usableOutsideBattle": false,
     "weight": 0,
     "rewardPoolId": "",
     "shopOfferCount": 0,

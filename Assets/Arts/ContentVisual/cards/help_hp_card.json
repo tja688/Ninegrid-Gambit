@@ -3,8 +3,12 @@
     "contentId": "help.hp_card",
     "kind": "HelpCard",
     "deckId": "deck.help",
-    "displayName": "血量卡",
-    "description": "[使用时] 永久获得2点血量上限",
+    "role": "Defense",
+    "displayName": "金色三叶草",
+    "designSlotName": "",
+    "description": "[使用时] 血量上限+2",
+    "faceIntro": "",
+    "attackPattern": "",
     "gold": 50,
     "stats": {
         "hp": 0,
@@ -14,7 +18,7 @@
         "recovery": 0
     },
     "sprites": {
-        "mainIcon": "Assets/Resources/ContentArt/Multiple/icons_full_32.png#icons_full_32_330",
+        "mainIcon": "Assets/Resources/ContentArt/Multiple/icons_full_32.png#icons_full_32_290",
         "faceBackground": "",
         "cardFrame": "",
         "banner": "",
@@ -72,18 +76,6 @@
     "tags": [
         "tag.stat"
     ],
-    "effectIds": [],
-    "skillIds": [],
-    "level": 0,
-    "isElite": false,
-    "isBoss": false,
-    "isReserve": false,
-    "containerType": "",
-    "deckKind": "",
-    "monsterDefIds": [],
-    "weight": 0,
-    "rewardPoolId": "",
-    "shopOfferCount": 0,
     "effectAssemblies": [
         {
             "id": "help.hp_card.use",
@@ -92,5 +84,21 @@
             "argsJson": "{\"delta\":2,\"reason\":\"help.hp_card\"}"
         }
     ],
-    "role": "Defense"
+    "effectIds": [],
+    "skillIds": [],
+    "level": "0",
+    "sequence": 0,
+    "isElite": false,
+    "isBoss": false,
+    "isReserve": false,
+    "containerType": "",
+    "deckKind": "",
+    "monsterDefIds": [],
+    "usableOutsideBattle": false,
+    "weight": 0,
+    "rewardPoolId": "",
+    "shopOfferCount": 0,
+    "openingInjects": [],
+    "iconPrefab": "",
+    "boardSlot": 0
 }

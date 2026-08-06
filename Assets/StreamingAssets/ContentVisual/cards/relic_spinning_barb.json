@@ -4,7 +4,8 @@
     "kind": "Relic",
     "deckId": "deck.relic",
     "role": "Attack",
-    "displayName": "旋转倒刺",
+    "displayName": "毒鞭",
+    "designSlotName": "",
     "description": "怪物卡每移动一次，受到1点伤害",
     "faceIntro": "",
     "attackPattern": "",
@@ -17,7 +18,7 @@
         "recovery": 0
     },
     "sprites": {
-        "mainIcon": "",
+        "mainIcon": "Assets/Resources/ContentArt/Multiple/icons_full_32.png#icons_full_32_523",
         "faceBackground": "",
         "cardFrame": "",
         "banner": "",
@@ -93,6 +94,7 @@
     "containerType": "",
     "deckKind": "",
     "monsterDefIds": [],
+    "usableOutsideBattle": false,
     "weight": 0,
     "rewardPoolId": "",
     "shopOfferCount": 0,

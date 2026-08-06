@@ -4,7 +4,8 @@
     "kind": "Relic",
     "deckId": "deck.relic",
     "role": "Utility",
-    "displayName": "废物躯体",
+    "displayName": "回收衣物",
+    "designSlotName": "",
     "description": "[使用道具卡时] 每使用3张道具卡，获得1点血量上限",
     "faceIntro": "",
     "attackPattern": "",
@@ -17,7 +18,7 @@
         "recovery": 0
     },
     "sprites": {
-        "mainIcon": "",
+        "mainIcon": "Assets/Resources/ContentArt/Multiple/icons_full_32.png#icons_full_32_609",
         "faceBackground": "",
         "cardFrame": "",
         "banner": "",
@@ -94,6 +95,7 @@
     "containerType": "",
     "deckKind": "",
     "monsterDefIds": [],
+    "usableOutsideBattle": false,
     "weight": 0,
     "rewardPoolId": "",
     "shopOfferCount": 0,

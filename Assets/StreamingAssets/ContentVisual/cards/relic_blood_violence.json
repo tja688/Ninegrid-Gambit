@@ -4,7 +4,8 @@
     "kind": "Relic",
     "deckId": "deck.relic",
     "role": "Attack",
-    "displayName": "血液暴力",
+    "displayName": "血之暴力",
+    "designSlotName": "",
     "description": "血量上限+4；当前血量低于血量上限的50%时，玩家攻击+2",
     "faceIntro": "",
     "attackPattern": "",
@@ -17,7 +18,7 @@
         "recovery": 0
     },
     "sprites": {
-        "mainIcon": "",
+        "mainIcon": "Assets/Resources/ContentArt/Multiple/icons_full_32.png#icons_full_32_561",
         "faceBackground": "",
         "cardFrame": "",
         "banner": "",
@@ -100,6 +101,7 @@
     "containerType": "",
     "deckKind": "",
     "monsterDefIds": [],
+    "usableOutsideBattle": false,
     "weight": 0,
     "rewardPoolId": "",
     "shopOfferCount": 0,

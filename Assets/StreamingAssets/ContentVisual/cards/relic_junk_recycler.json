@@ -3,8 +3,12 @@
     "contentId": "relic.junk_recycler",
     "kind": "Relic",
     "deckId": "deck.relic",
-    "displayName": "废物利用机",
+    "role": "Utility",
+    "displayName": "回收食物",
+    "designSlotName": "",
     "description": "[使用道具卡时] 恢复2点血量",
+    "faceIntro": "",
+    "attackPattern": "",
     "gold": 0,
     "stats": {
         "hp": 0,
@@ -14,7 +18,7 @@
         "recovery": 0
     },
     "sprites": {
-        "mainIcon": "Assets/Resources/ContentArt/Multiple/icons_full_32.png#icons_full_32_209",
+        "mainIcon": "Assets/Resources/ContentArt/Multiple/icons_full_32.png#icons_full_32_326",
         "faceBackground": "",
         "cardFrame": "",
         "banner": "",
@@ -72,21 +76,6 @@
     "tags": [
         "tag.special"
     ],
-    "effectIds": [],
-    "skillIds": [],
-    "level": 0,
-    "isElite": false,
-    "isBoss": false,
-    "isReserve": false,
-    "containerType": "",
-    "deckKind": "",
-    "monsterDefIds": [],
-    "weight": 0,
-    "goldDelta": 0,
-    "maxHpDelta": 0,
-    "healToFull": false,
-    "rewardPoolId": "",
-    "shopOfferCount": 0,
     "effectAssemblies": [
         {
             "id": "relic.junk_recycler.use",
@@ -95,5 +84,21 @@
             "argsJson": "{\"amount\":2}"
         }
     ],
-    "role": "Utility"
+    "effectIds": [],
+    "skillIds": [],
+    "level": "0",
+    "sequence": 0,
+    "isElite": false,
+    "isBoss": false,
+    "isReserve": false,
+    "containerType": "",
+    "deckKind": "",
+    "monsterDefIds": [],
+    "usableOutsideBattle": false,
+    "weight": 0,
+    "rewardPoolId": "",
+    "shopOfferCount": 0,
+    "openingInjects": [],
+    "iconPrefab": "",
+    "boardSlot": 0
 }

@@ -5,6 +5,7 @@
     "deckId": "deck.help",
     "role": "Utility",
     "displayName": "交换",
+    "designSlotName": "",
     "description": "[使用时] 选择除玩家卡外的{count}张卡牌互换所在格子位置",
     "faceIntro": "",
     "attackPattern": "",
@@ -17,7 +18,7 @@
         "recovery": 0
     },
     "sprites": {
-        "mainIcon": "Assets/Resources/ContentArt/Multiple/icons_full_32.png#icons_full_32_241",
+        "mainIcon": "Assets/Resources/ContentArt/Multiple/icons_full_32.png#icons_full_32_41",
         "faceBackground": "",
         "cardFrame": "",
         "banner": "",
@@ -93,6 +94,7 @@
     "containerType": "",
     "deckKind": "",
     "monsterDefIds": [],
+    "usableOutsideBattle": false,
     "weight": 0,
     "rewardPoolId": "",
     "shopOfferCount": 0,

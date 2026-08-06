@@ -4,7 +4,8 @@
     "kind": "Relic",
     "deckId": "deck.relic",
     "role": "Utility",
-    "displayName": "金血",
+    "displayName": "金血圣杯",
+    "designSlotName": "",
     "description": "血量上限+2；[受到伤害时] 每损失1点血量，获得等量金币",
     "faceIntro": "",
     "attackPattern": "",
@@ -17,7 +18,7 @@
         "recovery": 0
     },
     "sprites": {
-        "mainIcon": "",
+        "mainIcon": "Assets/Resources/ContentArt/Multiple/icons_full_32.png#icons_full_32_829",
         "faceBackground": "",
         "cardFrame": "",
         "banner": "",
@@ -99,6 +100,7 @@
     "containerType": "",
     "deckKind": "",
     "monsterDefIds": [],
+    "usableOutsideBattle": false,
     "weight": 0,
     "rewardPoolId": "",
     "shopOfferCount": 0,

@@ -4,7 +4,8 @@
     "kind": "Relic",
     "deckId": "deck.relic",
     "role": "Attack",
-    "displayName": "恐怖面罩",
+    "displayName": "死亡面罩",
+    "designSlotName": "",
     "description": "攻击+1；[击杀怪物时] 本关卡每移除6张怪物卡，随机移除一张九宫格上的普通等级怪物卡",
     "faceIntro": "",
     "attackPattern": "",
@@ -17,7 +18,7 @@
         "recovery": 0
     },
     "sprites": {
-        "mainIcon": "",
+        "mainIcon": "Assets/Resources/ContentArt/Multiple/icons_full_32.png#icons_full_32_893",
         "faceBackground": "",
         "cardFrame": "",
         "banner": "",
@@ -105,6 +106,7 @@
     "containerType": "",
     "deckKind": "",
     "monsterDefIds": [],
+    "usableOutsideBattle": false,
     "weight": 0,
     "rewardPoolId": "",
     "shopOfferCount": 0,

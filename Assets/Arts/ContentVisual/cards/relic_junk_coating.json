@@ -3,8 +3,12 @@
     "contentId": "relic.junk_coating",
     "kind": "Relic",
     "deckId": "deck.relic",
-    "displayName": "废物涂层",
+    "role": "Defense",
+    "displayName": "回收铁背心",
+    "designSlotName": "",
     "description": "[使用道具卡时] 获得1点当前护甲",
+    "faceIntro": "",
+    "attackPattern": "",
     "gold": 0,
     "stats": {
         "hp": 0,
@@ -14,7 +18,7 @@
         "recovery": 0
     },
     "sprites": {
-        "mainIcon": "Assets/Resources/ContentArt/Multiple/icons_full_32.png#icons_full_32_612",
+        "mainIcon": "Assets/Resources/ContentArt/Multiple/icons_full_32.png#icons_full_32_623",
         "faceBackground": "",
         "cardFrame": "",
         "banner": "",
@@ -72,21 +76,6 @@
     "tags": [
         "tag.armor"
     ],
-    "effectIds": [],
-    "skillIds": [],
-    "level": 0,
-    "isElite": false,
-    "isBoss": false,
-    "isReserve": false,
-    "containerType": "",
-    "deckKind": "",
-    "monsterDefIds": [],
-    "weight": 0,
-    "goldDelta": 0,
-    "maxHpDelta": 0,
-    "healToFull": false,
-    "rewardPoolId": "",
-    "shopOfferCount": 0,
     "effectAssemblies": [
         {
             "id": "relic.junk_coating.use",
@@ -95,5 +84,21 @@
             "argsJson": "{\"amount\":1}"
         }
     ],
-    "role": "Defense"
+    "effectIds": [],
+    "skillIds": [],
+    "level": "0",
+    "sequence": 0,
+    "isElite": false,
+    "isBoss": false,
+    "isReserve": false,
+    "containerType": "",
+    "deckKind": "",
+    "monsterDefIds": [],
+    "usableOutsideBattle": false,
+    "weight": 0,
+    "rewardPoolId": "",
+    "shopOfferCount": 0,
+    "openingInjects": [],
+    "iconPrefab": "",
+    "boardSlot": 0
 }

@@ -4,7 +4,8 @@
     "kind": "Relic",
     "deckId": "deck.relic",
     "role": "Attack",
-    "displayName": "锐利长剑",
+    "displayName": "锐利长戟",
+    "designSlotName": "",
     "description": "攻击+1；[击杀怪物时] 本关卡每移除1张怪物卡，玩家攻击+1，离开关卡后攻击复原",
     "faceIntro": "",
     "attackPattern": "",
@@ -17,7 +18,7 @@
         "recovery": 0
     },
     "sprites": {
-        "mainIcon": "",
+        "mainIcon": "Assets/Resources/ContentArt/Multiple/icons_full_32.png#icons_full_32_510",
         "faceBackground": "",
         "cardFrame": "",
         "banner": "",
@@ -99,6 +100,7 @@
     "containerType": "",
     "deckKind": "",
     "monsterDefIds": [],
+    "usableOutsideBattle": false,
     "weight": 0,
     "rewardPoolId": "",
     "shopOfferCount": 0,

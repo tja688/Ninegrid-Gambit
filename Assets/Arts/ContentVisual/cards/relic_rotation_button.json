@@ -3,8 +3,12 @@
     "contentId": "relic.rotation_button",
     "kind": "Relic",
     "deckId": "deck.relic",
-    "displayName": "旋转按钮",
+    "role": "Utility",
+    "displayName": "旋转符文",
+    "designSlotName": "",
     "description": "[每关卡开始时] 将一张旋转轮放入到道具牌格",
+    "faceIntro": "",
+    "attackPattern": "",
     "gold": 0,
     "stats": {
         "hp": 0,
@@ -72,21 +76,6 @@
     "tags": [
         "tag.special"
     ],
-    "effectIds": [],
-    "skillIds": [],
-    "level": 0,
-    "isElite": false,
-    "isBoss": false,
-    "isReserve": false,
-    "containerType": "",
-    "deckKind": "",
-    "monsterDefIds": [],
-    "weight": 0,
-    "goldDelta": 0,
-    "maxHpDelta": 0,
-    "healToFull": false,
-    "rewardPoolId": "",
-    "shopOfferCount": 0,
     "effectAssemblies": [
         {
             "id": "relic.rotation_button.node_start",
@@ -95,5 +84,21 @@
             "argsJson": "{}"
         }
     ],
-    "role": "Utility"
+    "effectIds": [],
+    "skillIds": [],
+    "level": "0",
+    "sequence": 0,
+    "isElite": false,
+    "isBoss": false,
+    "isReserve": false,
+    "containerType": "",
+    "deckKind": "",
+    "monsterDefIds": [],
+    "usableOutsideBattle": false,
+    "weight": 0,
+    "rewardPoolId": "",
+    "shopOfferCount": 0,
+    "openingInjects": [],
+    "iconPrefab": "",
+    "boardSlot": 0
 }

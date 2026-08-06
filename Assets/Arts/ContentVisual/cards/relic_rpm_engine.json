@@ -4,7 +4,8 @@
     "kind": "Relic",
     "deckId": "deck.relic",
     "role": "Utility",
-    "displayName": "转速引擎",
+    "displayName": "转速甲",
+    "designSlotName": "",
     "description": "基础护甲+1；[旋转时] 多旋转一次",
     "faceIntro": "",
     "attackPattern": "",
@@ -17,7 +18,7 @@
         "recovery": 0
     },
     "sprites": {
-        "mainIcon": "",
+        "mainIcon": "Assets/Resources/ContentArt/Multiple/icons_full_32.png#icons_full_32_648",
         "faceBackground": "",
         "cardFrame": "",
         "banner": "",
@@ -99,6 +100,7 @@
     "containerType": "",
     "deckKind": "",
     "monsterDefIds": [],
+    "usableOutsideBattle": false,
     "weight": 0,
     "rewardPoolId": "",
     "shopOfferCount": 0,

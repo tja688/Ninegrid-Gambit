@@ -3,8 +3,12 @@
     "contentId": "help.armor_card",
     "kind": "HelpCard",
     "deckId": "deck.help",
-    "displayName": "加甲卡",
-    "description": "[使用时] 永久获得1点护甲",
+    "role": "Defense",
+    "displayName": "头甲",
+    "designSlotName": "",
+    "description": "[使用时] 基础护甲+1",
+    "faceIntro": "还算有用",
+    "attackPattern": "",
     "gold": 50,
     "stats": {
         "hp": 0,
@@ -14,7 +18,7 @@
         "recovery": 0
     },
     "sprites": {
-        "mainIcon": "Assets/Resources/ContentArt/Multiple/icons_full_32.png#icons_full_32_331",
+        "mainIcon": "Assets/Resources/ContentArt/Multiple/icons_full_32.png#icons_full_32_705",
         "faceBackground": "",
         "cardFrame": "",
         "banner": "",
@@ -72,18 +76,6 @@
     "tags": [
         "tag.stat"
     ],
-    "effectIds": [],
-    "skillIds": [],
-    "level": 0,
-    "isElite": false,
-    "isBoss": false,
-    "isReserve": false,
-    "containerType": "",
-    "deckKind": "",
-    "monsterDefIds": [],
-    "weight": 0,
-    "rewardPoolId": "",
-    "shopOfferCount": 0,
     "effectAssemblies": [
         {
             "id": "help.armor_card.use",
@@ -92,5 +84,21 @@
             "argsJson": "{\"delta\":1,\"reason\":\"help.armor_card\"}"
         }
     ],
-    "role": "Defense"
+    "effectIds": [],
+    "skillIds": [],
+    "level": "0",
+    "sequence": 0,
+    "isElite": false,
+    "isBoss": false,
+    "isReserve": false,
+    "containerType": "",
+    "deckKind": "",
+    "monsterDefIds": [],
+    "usableOutsideBattle": false,
+    "weight": 0,
+    "rewardPoolId": "",
+    "shopOfferCount": 0,
+    "openingInjects": [],
+    "iconPrefab": "",
+    "boardSlot": 0
 }

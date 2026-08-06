@@ -3,8 +3,12 @@
     "contentId": "help.attack_card",
     "kind": "HelpCard",
     "deckId": "deck.help",
-    "displayName": "加攻卡",
-    "description": "[使用时] 永久获得1点攻击",
+    "role": "Attack",
+    "displayName": "皮质手套",
+    "designSlotName": "",
+    "description": "[使用时] 基础攻击+1",
+    "faceIntro": "让你持剑更加顺手",
+    "attackPattern": "",
     "gold": 50,
     "stats": {
         "hp": 0,
@@ -14,7 +18,7 @@
         "recovery": 0
     },
     "sprites": {
-        "mainIcon": "Assets/Resources/ContentArt/Multiple/icons_full_32.png#icons_full_32_332",
+        "mainIcon": "Assets/Resources/ContentArt/Multiple/icons_full_32.png#icons_full_32_739",
         "faceBackground": "",
         "cardFrame": "",
         "banner": "",
@@ -72,18 +76,6 @@
     "tags": [
         "tag.stat"
     ],
-    "effectIds": [],
-    "skillIds": [],
-    "level": 0,
-    "isElite": false,
-    "isBoss": false,
-    "isReserve": false,
-    "containerType": "",
-    "deckKind": "",
-    "monsterDefIds": [],
-    "weight": 0,
-    "rewardPoolId": "",
-    "shopOfferCount": 0,
     "effectAssemblies": [
         {
             "id": "help.attack_card.use",
@@ -92,5 +84,21 @@
             "argsJson": "{\"delta\":1,\"reason\":\"help.attack_card\"}"
         }
     ],
-    "role": "Attack"
+    "effectIds": [],
+    "skillIds": [],
+    "level": "0",
+    "sequence": 0,
+    "isElite": false,
+    "isBoss": false,
+    "isReserve": false,
+    "containerType": "",
+    "deckKind": "",
+    "monsterDefIds": [],
+    "usableOutsideBattle": false,
+    "weight": 0,
+    "rewardPoolId": "",
+    "shopOfferCount": 0,
+    "openingInjects": [],
+    "iconPrefab": "",
+    "boardSlot": 0
 }

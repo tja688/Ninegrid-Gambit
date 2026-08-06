@@ -4,7 +4,8 @@
     "kind": "Relic",
     "deckId": "deck.relic",
     "role": "Utility",
-    "displayName": "金色宝箱",
+    "displayName": "黄金鱼竿",
+    "designSlotName": "",
     "description": "[获得本遗物时] 将两张金色宝箱卡加入玩家侧卡组（仅一次）",
     "faceIntro": "",
     "attackPattern": "",
@@ -17,7 +18,7 @@
         "recovery": 0
     },
     "sprites": {
-        "mainIcon": "",
+        "mainIcon": "Assets/Resources/ContentArt/Multiple/icons_full_32.png#icons_full_32_865",
         "faceBackground": "",
         "cardFrame": "",
         "banner": "",
@@ -93,6 +94,7 @@
     "containerType": "",
     "deckKind": "",
     "monsterDefIds": [],
+    "usableOutsideBattle": false,
     "weight": 0,
     "rewardPoolId": "",
     "shopOfferCount": 0,

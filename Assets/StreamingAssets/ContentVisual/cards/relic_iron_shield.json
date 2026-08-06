@@ -5,6 +5,7 @@
     "deckId": "deck.relic",
     "role": "Defense",
     "displayName": "铁盾",
+    "designSlotName": "",
     "description": "基础护甲+2；伤害减免+1",
     "faceIntro": "",
     "attackPattern": "",
@@ -17,7 +18,7 @@
         "recovery": 0
     },
     "sprites": {
-        "mainIcon": "",
+        "mainIcon": "Assets/Resources/ContentArt/Multiple/icons_full_32.png#icons_full_32_589",
         "faceBackground": "",
         "cardFrame": "",
         "banner": "",
@@ -99,6 +100,7 @@
     "containerType": "",
     "deckKind": "",
     "monsterDefIds": [],
+    "usableOutsideBattle": false,
     "weight": 0,
     "rewardPoolId": "",
     "shopOfferCount": 0,

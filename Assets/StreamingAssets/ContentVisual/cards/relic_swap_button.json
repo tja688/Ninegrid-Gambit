@@ -3,8 +3,12 @@
     "contentId": "relic.swap_button",
     "kind": "Relic",
     "deckId": "deck.relic",
-    "displayName": "交换按钮",
+    "role": "Utility",
+    "displayName": "交换之书",
+    "designSlotName": "",
     "description": "[每关卡开始时] 将一张交换卡放入到道具牌格",
+    "faceIntro": "",
+    "attackPattern": "",
     "gold": 0,
     "stats": {
         "hp": 0,
@@ -14,7 +18,7 @@
         "recovery": 0
     },
     "sprites": {
-        "mainIcon": "Assets/Resources/ContentArt/Multiple/icons_full_32.png#icons_full_32_41",
+        "mainIcon": "Assets/Resources/ContentArt/Multiple/icons_full_32.png#icons_full_32_370",
         "faceBackground": "",
         "cardFrame": "",
         "banner": "",
@@ -72,21 +76,6 @@
     "tags": [
         "tag.special"
     ],
-    "effectIds": [],
-    "skillIds": [],
-    "level": 0,
-    "isElite": false,
-    "isBoss": false,
-    "isReserve": false,
-    "containerType": "",
-    "deckKind": "",
-    "monsterDefIds": [],
-    "weight": 0,
-    "goldDelta": 0,
-    "maxHpDelta": 0,
-    "healToFull": false,
-    "rewardPoolId": "",
-    "shopOfferCount": 0,
     "effectAssemblies": [
         {
             "id": "relic.swap_button.node_start",
@@ -95,5 +84,21 @@
             "argsJson": "{}"
         }
     ],
-    "role": "Utility"
+    "effectIds": [],
+    "skillIds": [],
+    "level": "0",
+    "sequence": 0,
+    "isElite": false,
+    "isBoss": false,
+    "isReserve": false,
+    "containerType": "",
+    "deckKind": "",
+    "monsterDefIds": [],
+    "usableOutsideBattle": false,
+    "weight": 0,
+    "rewardPoolId": "",
+    "shopOfferCount": 0,
+    "openingInjects": [],
+    "iconPrefab": "",
+    "boardSlot": 0
 }

@@ -4,7 +4,8 @@
     "kind": "Relic",
     "deckId": "deck.relic",
     "role": "Defense",
-    "displayName": "金属血液",
+    "displayName": "凝血护甲",
+    "designSlotName": "",
     "description": "[受到伤害时] 损失血量后获得等量的当前护甲",
     "faceIntro": "",
     "attackPattern": "",
@@ -17,7 +18,7 @@
         "recovery": 0
     },
     "sprites": {
-        "mainIcon": "",
+        "mainIcon": "Assets/Resources/ContentArt/Multiple/icons_full_32.png#icons_full_32_670",
         "faceBackground": "",
         "cardFrame": "",
         "banner": "",
@@ -94,6 +95,7 @@
     "containerType": "",
     "deckKind": "",
     "monsterDefIds": [],
+    "usableOutsideBattle": false,
     "weight": 0,
     "rewardPoolId": "",
     "shopOfferCount": 0,

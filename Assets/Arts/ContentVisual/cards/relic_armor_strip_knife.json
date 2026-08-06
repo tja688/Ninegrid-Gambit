@@ -5,6 +5,7 @@
     "deckId": "deck.relic",
     "role": "Attack",
     "displayName": "除甲刀",
+    "designSlotName": "",
     "description": "[战斗时] 若目标当前护甲大于零，则本次战斗攻击+3",
     "faceIntro": "",
     "attackPattern": "",
@@ -17,7 +18,7 @@
         "recovery": 0
     },
     "sprites": {
-        "mainIcon": "",
+        "mainIcon": "Assets/Resources/ContentArt/Multiple/icons_full_32.png#icons_full_32_441",
         "faceBackground": "",
         "cardFrame": "",
         "banner": "",
@@ -99,6 +100,7 @@
     "containerType": "",
     "deckKind": "",
     "monsterDefIds": [],
+    "usableOutsideBattle": false,
     "weight": 0,
     "rewardPoolId": "",
     "shopOfferCount": 0,

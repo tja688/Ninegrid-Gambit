@@ -3,8 +3,12 @@
     "contentId": "relic.shield_knife",
     "kind": "Relic",
     "deckId": "deck.relic",
-    "displayName": "打盾刀",
+    "role": "Attack",
+    "displayName": "双截棍",
+    "designSlotName": "",
     "description": "[击杀怪物时] 获得1点当前护甲",
+    "faceIntro": "可攻可守",
+    "attackPattern": "",
     "gold": 0,
     "stats": {
         "hp": 0,
@@ -14,7 +18,7 @@
         "recovery": 0
     },
     "sprites": {
-        "mainIcon": "Assets/Resources/ContentArt/Multiple/icons_full_32.png#icons_full_32_453",
+        "mainIcon": "Assets/Resources/ContentArt/Multiple/icons_full_32.png#icons_full_32_520",
         "faceBackground": "",
         "cardFrame": "",
         "banner": "",
@@ -72,21 +76,6 @@
     "tags": [
         "tag.attack"
     ],
-    "effectIds": [],
-    "skillIds": [],
-    "level": 0,
-    "isElite": false,
-    "isBoss": false,
-    "isReserve": false,
-    "containerType": "",
-    "deckKind": "",
-    "monsterDefIds": [],
-    "weight": 0,
-    "goldDelta": 0,
-    "maxHpDelta": 0,
-    "healToFull": false,
-    "rewardPoolId": "",
-    "shopOfferCount": 0,
     "effectAssemblies": [
         {
             "id": "relic.shield_knife.kill",
@@ -95,5 +84,21 @@
             "argsJson": "{\"amount\":1}"
         }
     ],
-    "role": "Attack"
+    "effectIds": [],
+    "skillIds": [],
+    "level": "0",
+    "sequence": 0,
+    "isElite": false,
+    "isBoss": false,
+    "isReserve": false,
+    "containerType": "",
+    "deckKind": "",
+    "monsterDefIds": [],
+    "usableOutsideBattle": false,
+    "weight": 0,
+    "rewardPoolId": "",
+    "shopOfferCount": 0,
+    "openingInjects": [],
+    "iconPrefab": "",
+    "boardSlot": 0
 }
