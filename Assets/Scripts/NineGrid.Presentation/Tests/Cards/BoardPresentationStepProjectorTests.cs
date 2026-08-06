@@ -230,7 +230,7 @@ namespace NineGrid.Presentation.Tests
         }
 
         [Test]
-        public void Project_BoardToNonBoardCardDealt_DoesNotEmitDeal()
+        public void Project_ShuffleExisting_NoRemove_OwnedByShuffleChannel()
         {
             var events = new List<CoreGameEvent>
             {
@@ -242,10 +242,10 @@ namespace NineGrid.Presentation.Tests
 
             var result = BoardPresentationStepProjector.Project(events, 0, registry: null);
 
-            Assert.AreEqual(1, result.Steps.Length);
-            Assert.AreEqual(BoardPresentationStepKind.Remove, result.Steps[0].Kind);
+            // shuffleExisting（传送卡）由洗入表演系统接管（场上上飞入组），不得投影 Remove 播碎裂。
+            Assert.AreEqual(0, result.Steps.Length);
+            Assert.AreEqual(0, result.LegacyRemovedUids.Length);
             Assert.AreEqual(0, result.LegacyDeals.Length);
-            CollectionAssert.Contains(result.LegacyRemovedUids, 401);
         }
 
         [Test]

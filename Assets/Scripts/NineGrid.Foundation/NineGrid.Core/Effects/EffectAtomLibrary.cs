@@ -2966,7 +2966,7 @@ namespace NineGrid.Core.Effects
                     result.Add(new TransferArmorAction(
                         targets[i],
                         receiverUid,
-                        mAmount,
+                        mAmount + HelpCardStatBonusUtility.Resolve(context),
                         mAll,
                         context.SourceDefId,
                         EffectActionSource.CauseOrEffect(context, mCause)));
@@ -4412,7 +4412,15 @@ namespace NineGrid.Core.Effects
 
         public int Evaluate(EffectRuntimeContext context, int targetUid)
         {
-            return Math.Max(0, (int)Math.Round(mUseNode ? EvaluateNode(mNode, context, targetUid) : mFallback));
+            var value = mUseNode ? EvaluateNode(mNode, context, targetUid) : mFallback;
+            if (!mUseNode)
+            {
+                // 卡店「道具卡数值强化」：道具卡自有固定数值 +ItemStatBonus。
+                // value 节点（如火球=玩家攻击）为派生数值，道具卡自身无数值，不叠加。
+                value += HelpCardStatBonusUtility.Resolve(context);
+            }
+
+            return Math.Max(0, (int)Math.Round(value));
         }
 
         public float Evaluate(StatEvaluationContext context)

@@ -103,12 +103,13 @@ namespace NineGrid.Flow
                             pendingMoves,
                             ref pendingActionId,
                             multiHopStrategy);
-                        // 盘面→非盘面（exchangeToDraw / shuffleExisting 等）：投影为 Remove，避免幽灵占格。
-                        // 快递交换离场除外：exchangeToDraw 由洗入表演系统接管（场上上飞入组），
-                        // 不再投影 Remove，避免碎裂退场与上飞入组表演冲突。
+                        // 盘面→非盘面：由洗入表演系统接管的事件（exchangeToDraw 快递交换 /
+                        // shuffleExisting 传送洗回）不投影 Remove——两者都经场上上飞入组表演，
+                        // 若再投影 Remove 会先入组后补播碎裂退场（传送卡复现）。
+                        // 其余盘面→非盘面投影为 Remove，避免幽灵占格。
                         if (e.CardUid > 0 && e.FromSlot.IsBoardSlot && !e.ToSlot.IsBoardSlot)
                         {
-                            if (IsExchangeToDrawEvent(e))
+                            if (IsShufflePresentChannelEvent(e))
                             {
                                 break;
                             }
@@ -200,10 +201,21 @@ namespace NineGrid.Flow
             return result;
         }
 
+        private static bool IsShufflePresentChannelEvent(CoreGameEvent e)
+        {
+            return IsExchangeToDrawEvent(e) || IsShuffleExistingEvent(e);
+        }
+
         private static bool IsExchangeToDrawEvent(CoreGameEvent e)
         {
             return string.Equals(e.ActionName, "ExchangeWithDrawPile", StringComparison.Ordinal)
                 && (e.Message ?? string.Empty).StartsWith("exchangeToDraw:", StringComparison.Ordinal);
+        }
+
+        private static bool IsShuffleExistingEvent(CoreGameEvent e)
+        {
+            return string.Equals(e.ActionName, "ShuffleCardIntoDrawPile", StringComparison.Ordinal)
+                && (e.Message ?? string.Empty).StartsWith("shuffleExisting:", StringComparison.Ordinal);
         }
 
         private static void FlushPendingMoveStepIfAny(
