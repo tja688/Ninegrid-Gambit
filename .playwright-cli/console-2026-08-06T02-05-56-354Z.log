@@ -1,0 +1,37 @@
+[    1001ms] [INFO] %c%s line-height: 30px; color: #FF6699 bili-fe-fp: 1.1.4 @ https://s1.hdslb.com/bfs/seed/jinkela/short/user-fingerprint/bili-user-fingerprint.min.js:0
+[    1247ms] [LOG] Chat-Memo: 注入式侧边栏功能已加载 @ chrome-extension://cfmmkmfimmmfikomegalpmgookideojo/js/content_common.js:967
+[    1267ms] [ERROR] Permissions policy violation: unload is not allowed in this document. @ chrome-extension://jaleebmaoohbjjohjlfmihkkopgfibne/0r0akgg.js:1
+[    1269ms] [ERROR] Failed to load resource: net::ERR_BLOCKED_BY_CLIENT @ https://api.bilibili.com/x/internal/gaia-gateway/ExClimbWuzhi:0
+[    1281ms] [INFO] %c bili-fe-mirror %c v2.1.0  padding: 2px 6px; border-radius: 3px 0 0 3px; color: #fff; background: #FF6699; font-weight: bold; padding: 2px 6px; border-radius: 0 3px 3px 0; color: #fff; background: #FF9999; font-weight: bold; @ https://s1.hdslb.com/bfs/seed/jinkela/short/b-mirror/biliMirror.umd.mini.js:1
+[    1281ms] [LOG] 白屏检测是否正常 {status: ok, loop: 0, data: Object} @ https://www.bilibili.com/video/BV1XKNR6sEwn/?buvid=XXD66EBD759D4E85765C153FA9C653E414A5F&from_spmid=tm.recommend.0.0&is_story_h5=false&mid=fr4fqbyP3gP1wrK6h9gZHw%3D%3D&p=1&plat_id=116&share_from=ugc&share_medium=android&share_plat=android&share_session_id=ec18a8bd-9ad9-4d74-a341-03e98b63dcdc&share_source=QQ&share_tag=s_i&spmid=united.player-video-detail.0.0&timestamp=1785981707&unique_k=Qs02F0Y&up_id=3546758944656118:4
+[    1283ms] Uncaught (in promise) undefined
+    at <anonymous> (https://s1.hdslb.com/bfs/seed/log/report/log-reporter.js:1:42777)
+[    1356ms] [LOG] Chat-Memo: 初始化通用功能 @ chrome-extension://cfmmkmfimmmfikomegalpmgookideojo/js/content_common.js:52
+[    1742ms] [LOG] %c
+                     //
+         \\         //
+          \\       //
+    ##DDDDDDDDDDDDDDDDDDDDDD##
+    ## DDDDDDDDDDDDDDDDDDDD ##   ________   ___   ___        ___   ________   ___   ___        ___
+    ## hh                hh ##   |\   __  \ |\  \ |\  \      |\  \ |\   __  \ |\  \ |\  \      |\  \
+    ## hh    //    \\    hh ##   \ \  \|\ /_\ \  \\ \  \     \ \  \\ \  \|\ /_\ \  \\ \  \     \ \  \
+    ## hh   //      \\   hh ##    \ \   __  \\ \  \\ \  \     \ \  \\ \   __  \\ \  \\ \  \     \ \  \
+    ## hh                hh ##     \ \  \|\  \\ \  \\ \  \____ \ \  \\ \  \|\  \\ \  \\ \  \____ \ \  \
+    ## hh      wwww      hh ##      \ \_______\\ \__\\ \_______\\ \__\\ \_______\\ \__\\ \_______\\ \__\
+    ## hh                hh ##       \|_______| \|__| \|_______| \|__| \|_______| \|__| \|_______| \|__|
+    ## MMMMMMMMMMMMMMMMMMMM ##
+    ##MMMMMMMMMMMMMMMMMMMMMM##                                          Release undefined@no release yet
+         \/            \/                                       Powered by @bilibili/jinkela-core@2.8.14 color:#00a1d6 @ https://s1.hdslb.com/bfs/static/jinkela/video/video.c61be82040de3ff4f7e6964beb0db4bed5b50dbf.js:0
+[    1931ms] [INFO] Images loaded lazily and replaced with placeholders. Load events are deferred. See https://go.microsoft.com/fwlink/?linkid=2048113 @ https://www.bilibili.com/video/BV1XKNR6sEwn?buvid=XXD66EBD759D4E85765C153FA9C653E414A5F&from_spmid=tm.recommend.0.0&is_story_h5=false&mid=fr4fqbyP3gP1wrK6h9gZHw%3D%3D&plat_id=116&share_from=ugc&share_medium=android&share_plat=android&share_session_id=ec18a8bd-9ad9-4d74-a341-03e98b63dcdc&share_source=QQ&share_tag=s_i&spmid=united.player-video-detail.0.0&timestamp=1785981707&unique_k=Qs02F0Y&up_id=3546758944656118:0
+[    2037ms] [ERROR] Permissions policy violation: unload is not allowed in this document. @ https://s1.hdslb.com/bfs/static/jinkela/video/video.c61be82040de3ff4f7e6964beb0db4bed5b50dbf.js:145
+[    2127ms] [INFO] This page uses the built-in LanguageDetector feature. To learn more and leave feedback, see https://learn.microsoft.com/microsoft-edge/web-platform/languagedetector-api @ chrome-extension://amkbmndfnliijdhojkpoglbnaaahippg/content_main.js:4916
+[    2180ms] Uncaught TypeError: Cannot read properties of undefined (reading 'addIceCandidate')
+    at I (https://s1.hdslb.com/bfs/static/nc/nc-loader-2.14.0.min.js:1:271746)
+    at <anonymous> (https://s1.hdslb.com/bfs/static/nc/nc-loader-2.14.0.min.js:1:291845)
+    at 565 (https://s1.hdslb.com/bfs/static/nc/nc-loader-2.14.0.min.js:1:292614)
+    at n (https://s1.hdslb.com/bfs/static/nc/nc-loader-2.14.0.min.js:1:389720)
+    at <anonymous> (https://s1.hdslb.com/bfs/static/nc/nc-loader-2.14.0.min.js:1:390279)
+    at <anonymous> (https://s1.hdslb.com/bfs/static/nc/nc-loader-2.14.0.min.js:1:396022)
+    at t (https://s1.hdslb.com/bfs/static/nc/nc-loader-2.14.0.min.js:1:396037)
+    at <anonymous> (https://s1.hdslb.com/bfs/static/nc/nc-loader-2.14.0.min.js:1:396229)
+[    2522ms] [WARNING] [Mirror]: 无法解析的错误: Script error. @ https://s1.hdslb.com/bfs/seed/jinkela/short/b-mirror/biliMirror.umd.mini.js:1

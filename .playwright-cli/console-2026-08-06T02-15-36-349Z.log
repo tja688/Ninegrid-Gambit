@@ -1,0 +1,30 @@
+[     594ms] [INFO] %c bili-fe-mirror %c v2.1.0  padding: 2px 6px; border-radius: 3px 0 0 3px; color: #fff; background: #FF6699; font-weight: bold; padding: 2px 6px; border-radius: 0 3px 3px 0; color: #fff; background: #FF9999; font-weight: bold; @ https://s1.hdslb.com/bfs/seed/jinkela/short/b-mirror/biliMirror.umd.mini.js:1
+[     973ms] [ERROR] Permissions policy violation: unload is not allowed in this document. @ https://s1.hdslb.com/bfs/static/shanks/laputa-home/assets/index-37875958.js:4
+[     974ms] [ERROR] Permissions policy violation: unload is not allowed in this document. @ https://s1.hdslb.com/bfs/static/shanks/laputa-home/assets/index-37875958.js:4
+[    1112ms] [INFO] Images loaded lazily and replaced with placeholders. Load events are deferred. See https://go.microsoft.com/fwlink/?linkid=2048113 @ https://www.bilibili.com/:0
+[    1115ms] [ERROR] Failed to load resource: net::ERR_BLOCKED_BY_CLIENT @ https://cm.bilibili.com/cm/api/receive/content/pc:0
+[    1197ms] [ERROR] Failed to load resource: net::ERR_BLOCKED_BY_CLIENT @ https://cm.bilibili.com/cm/api/receive/content/pc:0
+[    1210ms] [ERROR] Failed to load resource: net::ERR_BLOCKED_BY_CLIENT @ https://cm.bilibili.com/cm/api/receive/content/pc:0
+[    1264ms] [LOG] Chat-Memo: 注入式侧边栏功能已加载 @ chrome-extension://cfmmkmfimmmfikomegalpmgookideojo/js/content_common.js:967
+[    1292ms] [ERROR] Permissions policy violation: unload is not allowed in this document. @ chrome-extension://jaleebmaoohbjjohjlfmihkkopgfibne/0r0akgg.js:1
+[    1369ms] [LOG] Chat-Memo: 初始化通用功能 @ chrome-extension://cfmmkmfimmmfikomegalpmgookideojo/js/content_common.js:52
+[    1464ms] [LOG] 白屏检测是否正常 {status: ok, loop: 0, data: Object} @ https://www.bilibili.com/:159
+[    1631ms] [INFO] This page uses the built-in LanguageDetector feature. To learn more and leave feedback, see https://learn.microsoft.com/microsoft-edge/web-platform/languagedetector-api @ chrome-extension://amkbmndfnliijdhojkpoglbnaaahippg/content_main.js:4916
+[    1975ms] [ERROR] Failed to load resource: net::ERR_BLOCKED_BY_CLIENT @ https://cm.bilibili.com/cm/api/receive/content/pc:0
+[    6978ms] [ERROR] Failed to load resource: net::ERR_BLOCKED_BY_CLIENT @ https://cm.bilibili.com/cm/api/receive/content/pc:0
+[   10977ms] [ERROR] Failed to load resource: net::ERR_BLOCKED_BY_CLIENT @ https://cm.bilibili.com/cm/api/conversion/mobile/v2:0
+[   10977ms] [ERROR] Failed to load resource: net::ERR_BLOCKED_BY_CLIENT @ https://cm.bilibili.com/cm/api/fees/pc:0
+[   11099ms] [ERROR] Failed to load resource: net::ERR_BLOCKED_BY_CLIENT @ https://cm.bilibili.com/cm/api/conversion/mobile/v2:0
+[   11975ms] [ERROR] Failed to load resource: net::ERR_BLOCKED_BY_CLIENT @ https://cm.bilibili.com/cm/api/fees/pc:0
+[   15965ms] [ERROR] Failed to load resource: net::ERR_BLOCKED_BY_CLIENT @ https://cm.bilibili.com/cm/api/receive/content/pc:0
+[   16974ms] [ERROR] Failed to load resource: net::ERR_BLOCKED_BY_CLIENT @ https://cm.bilibili.com/cm/api/receive/content/pc:0
+[   20980ms] [ERROR] Failed to load resource: net::ERR_BLOCKED_BY_CLIENT @ https://cm.bilibili.com/cm/api/receive/content/pc:0
+[   21977ms] [ERROR] Failed to load resource: net::ERR_BLOCKED_BY_CLIENT @ https://cm.bilibili.com/cm/api/receive/content/pc:0
+[   25973ms] [ERROR] Failed to load resource: net::ERR_BLOCKED_BY_CLIENT @ https://cm.bilibili.com/cm/api/receive/content/pc:0
+[   26983ms] [ERROR] Failed to load resource: net::ERR_BLOCKED_BY_CLIENT @ https://cm.bilibili.com/cm/api/receive/content/pc:0
+[   30976ms] [ERROR] Failed to load resource: net::ERR_BLOCKED_BY_CLIENT @ https://cm.bilibili.com/cm/api/receive/content/pc:0
+[   31979ms] [ERROR] Failed to load resource: net::ERR_BLOCKED_BY_CLIENT @ https://cm.bilibili.com/cm/api/receive/content/pc:0
+[   35970ms] [ERROR] Failed to load resource: net::ERR_BLOCKED_BY_CLIENT @ https://cm.bilibili.com/cm/api/receive/content/pc:0
+[   36981ms] [ERROR] Failed to load resource: net::ERR_BLOCKED_BY_CLIENT @ https://cm.bilibili.com/cm/api/receive/content/pc:0
+[   41985ms] [ERROR] Failed to load resource: net::ERR_BLOCKED_BY_CLIENT @ https://cm.bilibili.com/cm/api/receive/content/pc:0
+[  803510ms] [INFO] %c%s line-height: 30px; color: #FF6699 bili-fe-fp: 1.1.4 @ https://s1.hdslb.com/bfs/seed/jinkela/short/user-fingerprint/bili-user-fingerprint.min.js:0
