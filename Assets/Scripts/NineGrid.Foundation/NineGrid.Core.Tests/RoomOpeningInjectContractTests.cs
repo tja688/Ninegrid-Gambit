@@ -201,7 +201,9 @@ namespace NineGrid.Core.Tests
             var catalog = new GameContentCatalog();
             catalog.Economy.UnusedHelpCardGold = 10;
 
-            catalog.AddCard(new CardContentDefinition("help.pool_a", "池A", CardKind.HelpCard).InDeck("deck.help"));
+            catalog.AddCard(new CardContentDefinition("help.pool_a", "池A", CardKind.HelpCard)
+                .InDeck("deck.help")
+                .WithRarity(ContentRarity.White));
             catalog.AddCard(new CardContentDefinition("help.gold_card", "金币卡", CardKind.HelpCard));
             catalog.AddCard(new CardContentDefinition("help.food_card", "食品卡", CardKind.HelpCard));
             catalog.AddCard(new CardContentDefinition("help.common_chest_card", "宝箱卡", CardKind.HelpCard));

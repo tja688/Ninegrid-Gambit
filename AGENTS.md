@@ -35,6 +35,8 @@
 
 **Unity CLI（首选）**：与 Editor 协作一律用 `unity` CLI + `com.unity.pipeline`（`unity command …`）；改场景 / 组件优先走 Pipeline 命令。详见 `docs/agents/unity-cli.md`；硬规则 `.cursor/rules/unity-cli.mdc`。
 
+**场景中文名检索**：`.unity` / `.prefab` YAML 里中文 `m_Name` 常写成 `\uXXXX` 转义（如 `作弊工具BG` → `"\u4F5C\u5F0A\u5DE5\u5177BG"`）。用明文中文 `grep` 会误报「不存在」——应搜 Unicode 转义、在 Editor 里 `FindObjectsOfTypeAll` / Pipeline `find_gameobjects`，或先解码再比。
+
 **Pipeline 长命令纪律**：
 - `run_tests` 一律走 `--async_tests true`（async 模式响应即时返回），随后轮询 `test_status` 至 `completed`
 - `recompile` 后轮询 `recompile_status` 至 `completed`，再发下一个命令

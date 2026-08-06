@@ -19,36 +19,33 @@ using UnityEngine.UI;
 namespace NineGrid.Presentation.Cheat
 {
     /// <summary>
-    /// 作弊工具面板控制器（F12 综合测试后门，运行时全量自举，无需场景预置）。
-    /// 职责：
-    /// 1) 一键清关（对齐 QuickTest「-」的 CheatForceNodeVictory 内部实现）；
-    /// 2) 战斗加卡（二级菜单搜索 + 卡组顶插入，仅战斗中可用，仅真实落地三类卡）；
-    /// 3) 无限金币（+999）；4) 回复满血。
-    /// 面板本身（Canvas / EventSystem / 一级菜单 / 二级菜单输入框与滚动列表）全部在首次打开时
-    /// 运行时创建；若场景已提供同名结构（作弊工具BG 等），则复用并只做接线。
+    /// 作弊工具面板控制器（F12 综合测试后门）。
+    /// 优先接线 MainScene 预置的「作弊工具BG」（SpriteRenderer + BoxCollider2D 世界 UI）；
+    /// 场景完全缺失时才做最小运行时兜底，方便 EditMode 契约测试。
     /// 仅 UNITY_EDITOR / DEVELOPMENT_BUILD 编译，正式包不含。
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class CheatToolPanelController : MonoBehaviour
     {
+        public const string PanelRootName = "作弊工具BG";
         private const string FirstLayerName = "第一层主面板";
         private const string SecondLayerName = "第二层_添加卡菜单";
-        private const string BlockerName = "背景遮罩";
         private const string CloseButtonName = "关闭按钮";
         private const string ClearNodeButtonName = "一键清关选项";
         private const string AddCardButtonName = "战斗加卡选项";
         private const string CoinsButtonName = "无限金币选项";
         private const string HealButtonName = "作弊选项模板 (3)";
+        private const string SecondLayerBlockerName = "第二层命中遮罩";
         private const int CoinsPerClick = 999;
         private const float OptionRowHeight = 36f;
-        private const int RootSortOrder = 1000;
-        private const int SecondLayerSortOrder = 10;
+        private const int SecondLayerBlockerHitSort = CheatToolPanelButton.HitSort + 1;
 
         private static CheatToolPanelController sInstance;
 
         private bool _bound;
         private Transform _firstLayer;
         private Transform _secondLayer;
+        private BoxCollider2D _rootBlocker;
 
         private Canvas _secondCanvas;
         private TMP_InputField _inputField;
@@ -89,7 +86,7 @@ namespace NineGrid.Presentation.Cheat
         }
 
         /// <summary>
-        /// F12 宿主入口：面板未初始化（inactive）时也能找到实例；场景完全没有时运行时创建。
+        /// F12 宿主入口：先找已挂控制器的实例（含失活），再找场景预置「作弊工具BG」，最后才运行时兜底。
         /// </summary>
         public static void TryToggle()
         {
@@ -99,26 +96,45 @@ namespace NineGrid.Presentation.Cheat
                 return;
             }
 
-            var all = Resources.FindObjectsOfTypeAll<CheatToolPanelController>();
-            for (var i = 0; i < all.Length; i++)
+            var controllers = Resources.FindObjectsOfTypeAll<CheatToolPanelController>();
+            for (var i = 0; i < controllers.Length; i++)
             {
-                if (all[i] != null)
+                var controller = controllers[i];
+                if (controller == null || !IsSceneObject(controller.gameObject))
                 {
-                    all[i].Toggle();
-                    return;
+                    continue;
                 }
+
+                controller.Toggle();
+                return;
             }
 
-            var go = new GameObject("作弊工具BG");
-            var controller = go.AddComponent<CheatToolPanelController>();
+            var root = FindScenePanelRoot();
+            if (root != null)
+            {
+                var controller = root.GetComponent<CheatToolPanelController>();
+                if (controller == null)
+                {
+                    controller = root.gameObject.AddComponent<CheatToolPanelController>();
+                }
+
+                controller.Toggle();
+                return;
+            }
+
+            Debug.LogWarning(
+                "[CheatTool] 场景中未找到预置「" + PanelRootName
+                + "」。将创建运行时兜底面板（仅测试用）。");
+
+            var go = new GameObject(PanelRootName);
+            var fallback = go.AddComponent<CheatToolPanelController>();
             go.SetActive(false);
             if (Application.isPlaying)
             {
                 DontDestroyOnLoad(go);
             }
 
-            // 不依赖 sInstance：EditMode 下 AddComponent 不会触发 Awake。
-            controller.Toggle();
+            fallback.Toggle();
         }
 
         public void Toggle()
@@ -156,6 +172,7 @@ namespace NineGrid.Presentation.Cheat
 
         private void ForceClearNode()
         {
+            // 对齐 QuickTest「-」(KeypadMinus) → CheatForceNodeVictoryCommand → TryForceNodeVictory。
             if (!BattleSessionCheat.TryForceNodeVictory())
             {
                 Debug.LogWarning("[CheatTool] 一键清关失败（仅战斗/结算阶段可用）。");
@@ -216,7 +233,15 @@ namespace NineGrid.Presentation.Cheat
                 return;
             }
 
+            if (_firstLayer != null)
+            {
+                // 打开二级时关掉一级，避免 BoxCollider2D 与 WorldSpace UI 抢点。
+                _firstLayer.gameObject.SetActive(false);
+            }
+
             _secondLayer.gameObject.SetActive(true);
+            _entries = null;
+
             if (_inputField != null)
             {
                 _inputField.text = string.Empty;
@@ -227,21 +252,36 @@ namespace NineGrid.Presentation.Cheat
                     EventSystem.current.SetSelectedGameObject(_inputField.gameObject);
                 }
             }
+            else
+            {
+                RefreshResultList();
+            }
         }
 
         public void CloseAddCardMenu()
         {
+            if (_inputField != null)
+            {
+                _inputField.DeactivateInputField();
+                _inputField.text = string.Empty;
+                if (EventSystem.current != null
+                    && EventSystem.current.currentSelectedGameObject == _inputField.gameObject)
+                {
+                    EventSystem.current.SetSelectedGameObject(null);
+                }
+            }
+
+            ClearOptionRows();
+
             if (_secondLayer != null && _secondLayer.gameObject.activeSelf)
             {
                 _secondLayer.gameObject.SetActive(false);
             }
 
-            if (_inputField != null)
+            if (gameObject.activeSelf && _firstLayer != null)
             {
-                _inputField.text = string.Empty;
+                _firstLayer.gameObject.SetActive(true);
             }
-
-            ClearOptionRows();
         }
 
         private void TryAddCardToDeckTop(string defId)
@@ -286,9 +326,10 @@ namespace NineGrid.Presentation.Cheat
             BattleBeatFlush.PresentEventLogSlice(arch, start);
 
             Debug.Log("[CheatTool] 已把「" + def.DisplayName + "」塞入卡组顶（defId=" + defId + "）。");
+            CloseAddCardMenu();
         }
 
-        // ============ 自举 ============
+        // ============ 接线 ============
 
         private void EnsureBindings()
         {
@@ -298,7 +339,9 @@ namespace NineGrid.Presentation.Cheat
             }
 
             _bound = true;
-            EnsurePanelHierarchy();
+            EnsureMinimalHierarchyIfEmpty();
+            EnsureEventSystem();
+            EnsureRootBlocker();
 
             _firstLayer = FindChild(FirstLayerName);
             _secondLayer = FindChild(SecondLayerName);
@@ -307,11 +350,11 @@ namespace NineGrid.Presentation.Cheat
                 Debug.LogWarning("[CheatTool] 未找到「" + FirstLayerName + "」。");
             }
 
-            BindButton(CloseButtonName, "关闭", ClosePanel);
-            BindButton(ClearNodeButtonName, "一键清关（跳过战斗）", ForceClearNode);
-            BindButton(AddCardButtonName, "战斗加卡…", OpenAddCardMenu);
-            BindButton(CoinsButtonName, "无限金币 +999", AddCoins);
-            BindButton(HealButtonName, "回复满血", HealAvatarFull);
+            BindHitButton(CloseButtonName, ClosePanel);
+            BindHitButton(ClearNodeButtonName, ForceClearNode);
+            BindHitButton(AddCardButtonName, OpenAddCardMenu);
+            BindHitButton(CoinsButtonName, AddCoins);
+            BindHitButton(HealButtonName, HealAvatarFull);
 
             if (_secondLayer == null)
             {
@@ -319,12 +362,8 @@ namespace NineGrid.Presentation.Cheat
                 return;
             }
 
-            _secondCanvas = _secondLayer.GetComponent<Canvas>();
-            if (_secondCanvas != null && _secondCanvas.GetComponent<GraphicRaycaster>() == null)
-            {
-                // 场景 Canvas 缺 GraphicRaycaster，鼠标无法选中输入框 / ScrollView —— 运行时补齐。
-                _secondCanvas.gameObject.AddComponent<GraphicRaycaster>();
-            }
+            EnsureSecondLayerUiInteractable();
+            EnsureSecondLayerPointerBlocker();
 
             _inputField = _secondLayer.GetComponentInChildren<TMP_InputField>(true);
             _scrollRect = _secondLayer.GetComponentInChildren<ScrollRect>(true);
@@ -343,297 +382,260 @@ namespace NineGrid.Presentation.Cheat
             {
                 Debug.LogWarning("[CheatTool] 未找到二级菜单输入框（InputField (TMP)）。");
             }
+
+            if (_secondLayer.gameObject.activeSelf)
+            {
+                _secondLayer.gameObject.SetActive(false);
+            }
         }
 
         /// <summary>
-        /// 保证面板结构完整：根 Canvas / EventSystem / 遮罩 / 一层 / 二层 缺则运行时创建。
-        /// 场景已提供同名物体时复用。
+        /// 场景预置结构缺失时（EditMode 空物体），补齐与 MainScene 同名的最小层级，便于契约测试。
         /// </summary>
-        private void EnsurePanelHierarchy()
+        private void EnsureMinimalHierarchyIfEmpty()
         {
-            EnsureRootCanvas();
-            EnsureEventSystem();
+            if (FindChild(FirstLayerName) != null && FindChild(SecondLayerName) != null)
+            {
+                return;
+            }
+
             if (FindChild(FirstLayerName) == null)
             {
-                BuildFirstLayer();
+                var first = new GameObject(FirstLayerName).transform;
+                first.SetParent(transform, false);
+                CreateHitButtonStub(CloseButtonName, first);
+                CreateHitButtonStub(ClearNodeButtonName, first);
+                CreateHitButtonStub(AddCardButtonName, first);
+                CreateHitButtonStub(CoinsButtonName, first);
+                CreateHitButtonStub(HealButtonName, first);
             }
 
             if (FindChild(SecondLayerName) == null)
             {
-                BuildSecondLayer();
+                var secondGo = new GameObject(SecondLayerName, typeof(RectTransform), typeof(Canvas));
+                var second = secondGo.GetComponent<RectTransform>();
+                second.SetParent(transform, false);
+                second.sizeDelta = new Vector2(3f, 3f);
+
+                var canvas = secondGo.GetComponent<Canvas>();
+                canvas.renderMode = RenderMode.WorldSpace;
+                canvas.worldCamera = Camera.main;
+                canvas.sortingOrder = 9999;
+
+                BuildFallbackInputField(second);
+                BuildFallbackScrollView(second);
+                secondGo.SetActive(false);
             }
         }
 
-        private void EnsureRootCanvas()
+        private void EnsureRootBlocker()
         {
-            var canvas = GetComponent<Canvas>();
-            if (canvas == null)
+            _rootBlocker = GetComponent<BoxCollider2D>();
+            if (_rootBlocker == null)
             {
-                canvas = gameObject.AddComponent<Canvas>();
+                _rootBlocker = gameObject.AddComponent<BoxCollider2D>();
             }
 
-            canvas.renderMode = RenderMode.ScreenSpaceOverlay;
-            canvas.sortingOrder = RootSortOrder;
-
-            var scaler = GetComponent<CanvasScaler>();
-            if (scaler == null)
+            var sprite = GetComponent<SpriteRenderer>();
+            if (sprite != null && sprite.sprite != null)
             {
-                scaler = gameObject.AddComponent<CanvasScaler>();
+                _rootBlocker.size = sprite.size;
+                _rootBlocker.offset = Vector2.zero;
+            }
+            else if (_rootBlocker.size == Vector2.zero)
+            {
+                _rootBlocker.size = new Vector2(4.7f, 5f);
             }
 
-            scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
-            scaler.referenceResolution = new Vector2(1920f, 1080f);
-            scaler.matchWidthOrHeight = 0.5f;
+            _rootBlocker.isTrigger = false;
 
-            if (GetComponent<GraphicRaycaster>() == null)
+            var button = GetComponent<CheatToolPanelButton>();
+            if (button == null)
             {
-                gameObject.AddComponent<GraphicRaycaster>();
+                button = gameObject.AddComponent<CheatToolPanelButton>();
             }
 
-            if (FindChild(BlockerName) == null)
+            // 点在面板空白处只吞点击，不关面板（关面板走关闭按钮 / Esc / F12）。
+            button.Bind(() => { }, CheatToolPanelButton.HitSort - 1);
+        }
+
+        private void EnsureSecondLayerUiInteractable()
+        {
+            _secondCanvas = _secondLayer.GetComponent<Canvas>();
+            if (_secondCanvas == null)
             {
-                var blocker = CreateRect(BlockerName, transform);
-                Stretch(blocker);
-                var image = blocker.gameObject.AddComponent<Image>();
-                image.color = new Color(0f, 0f, 0f, 0.55f);
-                image.raycastTarget = true;
+                _secondCanvas = _secondLayer.gameObject.AddComponent<Canvas>();
+                _secondCanvas.renderMode = RenderMode.WorldSpace;
             }
+
+            if (_secondCanvas.renderMode == RenderMode.WorldSpace && _secondCanvas.worldCamera == null)
+            {
+                _secondCanvas.worldCamera = Camera.main;
+            }
+
+            if (_secondCanvas.GetComponent<GraphicRaycaster>() == null)
+            {
+                // 场景预置二级 Canvas 缺 GraphicRaycaster → 鼠标无法点中 InputField / ScrollView。
+                _secondCanvas.gameObject.AddComponent<GraphicRaycaster>();
+            }
+        }
+
+        private void EnsureSecondLayerPointerBlocker()
+        {
+            var existing = FindChildRecursive(_secondLayer, SecondLayerBlockerName);
+            Transform blocker;
+            if (existing != null)
+            {
+                blocker = existing;
+            }
+            else
+            {
+                var go = new GameObject(SecondLayerBlockerName);
+                blocker = go.transform;
+                blocker.SetParent(_secondLayer, false);
+                blocker.SetAsFirstSibling();
+                blocker.localPosition = Vector3.zero;
+                blocker.localScale = Vector3.one;
+            }
+
+            var box = blocker.GetComponent<BoxCollider2D>();
+            if (box == null)
+            {
+                box = blocker.gameObject.AddComponent<BoxCollider2D>();
+            }
+
+            var rect = _secondLayer as RectTransform;
+            if (rect != null)
+            {
+                box.size = rect.sizeDelta;
+            }
+            else if (box.size == Vector2.zero)
+            {
+                box.size = new Vector2(3f, 3f);
+            }
+
+            box.isTrigger = false;
+
+            var button = blocker.GetComponent<CheatToolPanelButton>();
+            if (button == null)
+            {
+                button = blocker.gameObject.AddComponent<CheatToolPanelButton>();
+            }
+
+            // 只吞世界指针，避免点穿到场地；真正关二级靠 Esc。不要在此 Close，
+            // 否则与 InputField 同点会先被 PointerHit 关掉菜单。
+            button.Bind(() => { }, SecondLayerBlockerHitSort);
         }
 
         private void EnsureEventSystem()
         {
-            // EventSystem.current 在 EditMode 下不保证被赋值，按场景搜索判存在。
             if (FindFirstObjectByType<EventSystem>(FindObjectsInactive.Include) != null)
             {
                 return;
             }
 
-            // New Input System only：EventSystem 须配 InputSystemUIInputModule 才能收 uGUI 点击。
             var go = new GameObject("EventSystem");
             go.AddComponent<EventSystem>();
             go.AddComponent<InputSystemUIInputModule>();
         }
 
-        private void BuildFirstLayer()
-        {
-            var layer = CreateRect(FirstLayerName, transform);
-            AnchorCenter(layer, new Vector2(430f, 420f));
-            var image = layer.gameObject.AddComponent<Image>();
-            image.color = new Color(0.10f, 0.10f, 0.13f, 0.96f);
-            image.raycastTarget = true;
-
-            var group = layer.gameObject.AddComponent<VerticalLayoutGroup>();
-            group.spacing = 8f;
-            group.padding = new RectOffset(14, 14, 14, 14);
-            group.childControlWidth = true;
-            group.childControlHeight = true;
-            group.childForceExpandWidth = true;
-            group.childForceExpandHeight = false;
-
-            var fitter = layer.gameObject.AddComponent<ContentSizeFitter>();
-            fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
-            fitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
-
-            var title = CreateLabel("标题", "作弊工具  （F12 开关 / Esc 关闭）", layer);
-            title.fontSize = 20f;
-            title.color = new Color(0.95f, 0.85f, 0.45f);
-            title.alignment = TextAlignmentOptions.Center;
-            title.GetComponent<RectTransform>().sizeDelta = new Vector2(0f, 34f);
-
-            CreateButtonObject(CloseButtonName, "关闭", layer);
-            CreateButtonObject(ClearNodeButtonName, "一键清关（跳过战斗）", layer);
-            CreateButtonObject(AddCardButtonName, "战斗加卡…", layer);
-            CreateButtonObject(CoinsButtonName, "无限金币 +999", layer);
-            CreateButtonObject(HealButtonName, "回复满血", layer);
-        }
-
-        private void BuildSecondLayer()
-        {
-            var layer = CreateRect(SecondLayerName, transform);
-            var canvas = layer.gameObject.AddComponent<Canvas>();
-            canvas.sortingOrder = SecondLayerSortOrder;
-            layer.gameObject.AddComponent<GraphicRaycaster>();
-
-            var dim = CreateRect("第二层遮罩", layer);
-            Stretch(dim);
-            var dimImage = dim.gameObject.AddComponent<Image>();
-            dimImage.color = new Color(0f, 0f, 0f, 0.6f);
-            dimImage.raycastTarget = true;
-
-            var window = CreateRect("窗口", layer);
-            AnchorCenter(window, new Vector2(600f, 720f));
-            var windowImage = window.gameObject.AddComponent<Image>();
-            windowImage.color = new Color(0.09f, 0.09f, 0.11f, 0.97f);
-            windowImage.raycastTarget = true;
-
-            var title = CreateLabel("标题", "战斗加卡（搜索卡名 / 卡组 / 技能）", window);
-            StretchTop(title.rectTransform, 40f, 16f);
-            title.fontSize = 18f;
-            title.color = new Color(0.95f, 0.85f, 0.45f);
-            title.alignment = TextAlignmentOptions.MidlineLeft;
-
-            BuildInputField(window);
-
-            var scrollGo = CreateRect("Scroll View", window);
-            StretchBottom(scrollGo, 16f, 104f);
-            var scroll = scrollGo.gameObject.AddComponent<ScrollRect>();
-            scroll.horizontal = false;
-            scroll.vertical = true;
-            scroll.movementType = ScrollRect.MovementType.Clamped;
-            scroll.scrollSensitivity = 24f;
-
-            var viewport = CreateRect("Viewport", scrollGo);
-            Stretch(viewport);
-            viewport.gameObject.AddComponent<Image>().color = new Color(0.06f, 0.06f, 0.08f, 1f);
-            viewport.gameObject.AddComponent<RectMask2D>();
-            scroll.viewport = viewport;
-
-            var content = CreateRect("Content", viewport);
-            Stretch(content);
-            scroll.content = content;
-        }
-
-        private void BuildInputField(Transform window)
-        {
-            var inputGo = CreateRect("InputField (TMP)", window);
-            StretchTop(inputGo, 48f, 52f);
-            var background = inputGo.gameObject.AddComponent<Image>();
-            background.color = new Color(0.14f, 0.14f, 0.17f, 0.98f);
-            background.raycastTarget = true;
-
-            var textArea = CreateRect("Text Area", inputGo);
-            StretchInset(textArea, 8f);
-            textArea.gameObject.AddComponent<RectMask2D>();
-
-            var placeholder = CreateLabel("Placeholder", "输入卡名 / 卡组 / 技能…", textArea);
-            Stretch(placeholder.rectTransform);
-            placeholder.fontSize = 16f;
-            placeholder.fontStyle = FontStyles.Italic;
-            placeholder.color = new Color(0.6f, 0.6f, 0.65f, 1f);
-            placeholder.alignment = TextAlignmentOptions.MidlineLeft;
-
-            var text = CreateLabel("Text", string.Empty, textArea);
-            Stretch(text.rectTransform);
-            text.fontSize = 16f;
-            text.color = Color.white;
-            text.alignment = TextAlignmentOptions.MidlineLeft;
-
-            var input = inputGo.gameObject.AddComponent<TMP_InputField>();
-            input.targetGraphic = background;
-            input.textViewport = textArea;
-            input.textComponent = text;
-            input.placeholder = placeholder;
-            input.selectionColor = new Color(0.3f, 0.6f, 1f, 0.5f);
-            input.characterLimit = 64;
-        }
-
-        private void BindButton(string objectName, string label, Action onClick)
+        private void BindHitButton(string objectName, Action onClick)
         {
             var target = FindChild(objectName);
             if (target == null)
             {
-                target = CreateButtonObject(
-                    objectName,
-                    label,
-                    _firstLayer != null ? _firstLayer : transform);
+                Debug.LogWarning("[CheatTool] 未找到按钮「" + objectName + "」。");
+                return;
             }
 
-            var button = target.GetComponent<Button>();
+            if (target.GetComponent<BoxCollider2D>() == null)
+            {
+                target.gameObject.AddComponent<BoxCollider2D>().size = new Vector2(2.4f, 0.56f);
+            }
+
+            var button = target.GetComponent<CheatToolPanelButton>();
             if (button == null)
             {
-                var image = target.GetComponent<Image>();
-                if (image == null)
-                {
-                    image = target.gameObject.AddComponent<Image>();
-                    image.color = new Color(0.22f, 0.22f, 0.26f, 1f);
-                }
-
-                button = target.gameObject.AddComponent<Button>();
-                button.targetGraphic = image;
+                button = target.gameObject.AddComponent<CheatToolPanelButton>();
             }
 
-            button.onClick.RemoveAllListeners();
-            button.onClick.AddListener(() => onClick());
+            button.Bind(onClick);
         }
 
-        private Transform CreateButtonObject(string name, string label, Transform parent)
+        private static void CreateHitButtonStub(string name, Transform parent)
         {
-            var row = CreateRect(name, parent);
-            var image = row.gameObject.AddComponent<Image>();
-            image.color = new Color(0.22f, 0.22f, 0.26f, 1f);
-            image.raycastTarget = true;
-            row.gameObject.AddComponent<Button>().targetGraphic = image;
-
-            var text = CreateLabel("标签", label, row);
-            StretchInset(text.rectTransform, 12f);
-            text.fontSize = 18f;
-            text.color = Color.white;
-            text.alignment = TextAlignmentOptions.MidlineLeft;
-
-            var element = row.gameObject.AddComponent<LayoutElement>();
-            element.preferredHeight = 52f;
-            return row;
+            var go = new GameObject(name);
+            go.transform.SetParent(parent, false);
+            var box = go.AddComponent<BoxCollider2D>();
+            box.size = new Vector2(2.4f, 0.56f);
         }
 
-        private TMP_Text CreateLabel(string name, string content, Transform parent)
+        private void BuildFallbackInputField(Transform parent)
         {
-            var go = CreateRect(name, parent);
-            var text = go.gameObject.AddComponent<TextMeshProUGUI>();
-            text.text = content ?? string.Empty;
+            var inputGo = new GameObject("InputField (TMP)", typeof(RectTransform), typeof(Image));
+            var inputRect = inputGo.GetComponent<RectTransform>();
+            inputRect.SetParent(parent, false);
+            inputRect.sizeDelta = new Vector2(160f, 30f);
+            inputRect.anchoredPosition = new Vector2(0f, 1.2f);
+
+            var textArea = new GameObject("Text Area", typeof(RectTransform));
+            var areaRect = textArea.GetComponent<RectTransform>();
+            areaRect.SetParent(inputRect, false);
+            Stretch(areaRect);
+
+            var textGo = new GameObject("Text", typeof(RectTransform));
+            var text = textGo.AddComponent<TextMeshProUGUI>();
+            text.rectTransform.SetParent(areaRect, false);
+            Stretch(text.rectTransform);
             text.font = ResolveFont();
             text.fontSize = 16f;
-            text.color = Color.white;
             text.raycastTarget = false;
-            return text;
+
+            var placeholderGo = new GameObject("Placeholder", typeof(RectTransform));
+            var placeholder = placeholderGo.AddComponent<TextMeshProUGUI>();
+            placeholder.rectTransform.SetParent(areaRect, false);
+            Stretch(placeholder.rectTransform);
+            placeholder.text = "输入卡名 / 卡组 / 技能…";
+            placeholder.font = ResolveFont();
+            placeholder.fontSize = 16f;
+            placeholder.fontStyle = FontStyles.Italic;
+            placeholder.color = new Color(0.6f, 0.6f, 0.65f);
+            placeholder.raycastTarget = false;
+
+            var input = inputGo.AddComponent<TMP_InputField>();
+            input.targetGraphic = inputGo.GetComponent<Image>();
+            input.textViewport = areaRect;
+            input.textComponent = text;
+            input.placeholder = placeholder;
         }
 
-        private RectTransform CreateRect(string name, Transform parent)
+        private void BuildFallbackScrollView(Transform parent)
         {
-            var go = new GameObject(name, typeof(RectTransform));
-            var rect = go.GetComponent<RectTransform>();
-            rect.SetParent(parent, false);
-            return rect;
-        }
+            var scrollGo = new GameObject("Scroll View", typeof(RectTransform), typeof(Image), typeof(ScrollRect));
+            var scrollRect = scrollGo.GetComponent<RectTransform>();
+            scrollRect.SetParent(parent, false);
+            scrollRect.sizeDelta = new Vector2(248f, 248f);
+            scrollRect.anchoredPosition = new Vector2(0f, -0.3f);
 
-        private static void Stretch(RectTransform rect)
-        {
-            rect.anchorMin = Vector2.zero;
-            rect.anchorMax = Vector2.one;
-            rect.offsetMin = Vector2.zero;
-            rect.offsetMax = Vector2.zero;
-        }
+            var scroll = scrollGo.GetComponent<ScrollRect>();
+            scroll.horizontal = false;
+            scroll.vertical = true;
+            scroll.movementType = ScrollRect.MovementType.Clamped;
 
-        private static void StretchInset(RectTransform rect, float inset)
-        {
-            rect.anchorMin = Vector2.zero;
-            rect.anchorMax = Vector2.one;
-            rect.offsetMin = new Vector2(inset, inset);
-            rect.offsetMax = new Vector2(-inset, -inset);
-        }
+            var viewportGo = new GameObject("Viewport", typeof(RectTransform), typeof(Image), typeof(RectMask2D));
+            var viewport = viewportGo.GetComponent<RectTransform>();
+            viewport.SetParent(scrollRect, false);
+            Stretch(viewport);
+            scroll.viewport = viewport;
 
-        private static void StretchTop(RectTransform rect, float height, float topInset)
-        {
-            rect.anchorMin = new Vector2(0f, 1f);
-            rect.anchorMax = new Vector2(1f, 1f);
-            rect.offsetMin = new Vector2(16f, -height - topInset);
-            rect.offsetMax = new Vector2(-16f, -topInset);
-        }
-
-        private static void StretchBottom(RectTransform rect, float inset, float topGap)
-        {
-            rect.anchorMin = Vector2.zero;
-            rect.anchorMax = Vector2.one;
-            rect.offsetMin = new Vector2(16f, 16f + inset);
-            rect.offsetMax = new Vector2(-16f, -topGap);
-        }
-
-        private static void AnchorCenter(RectTransform rect, Vector2 size)
-        {
-            rect.anchorMin = new Vector2(0.5f, 0.5f);
-            rect.anchorMax = new Vector2(0.5f, 0.5f);
-            rect.pivot = new Vector2(0.5f, 0.5f);
-            rect.sizeDelta = size;
-            rect.anchoredPosition = Vector2.zero;
+            var contentGo = new GameObject("Content", typeof(RectTransform));
+            var content = contentGo.GetComponent<RectTransform>();
+            content.SetParent(viewport, false);
+            content.anchorMin = new Vector2(0f, 1f);
+            content.anchorMax = new Vector2(1f, 1f);
+            content.pivot = new Vector2(0.5f, 1f);
+            content.sizeDelta = new Vector2(0f, 300f);
+            scroll.content = content;
         }
 
         private void EnsureContentLayout()
@@ -761,14 +763,16 @@ namespace NineGrid.Presentation.Cheat
             text.raycastTarget = false;
         }
 
-        /// <summary>
-        /// 字体解析链：场景中已有 TMP 文本（通常带中文字体）→ TMP 全局默认 → Resources 兜底。
-        /// 面板是运行时创建，先于任何自有文本，故从场景全局找字体而非自身子级。
-        /// </summary>
         private TMP_FontAsset ResolveFont()
         {
             if (_font != null)
             {
+                return _font;
+            }
+
+            if (_inputField != null && _inputField.textComponent != null && _inputField.textComponent.font != null)
+            {
+                _font = _inputField.textComponent.font;
                 return _font;
             }
 
@@ -812,6 +816,46 @@ namespace NineGrid.Presentation.Cheat
             }
 
             return null;
+        }
+
+        private static Transform FindScenePanelRoot()
+        {
+            var all = Resources.FindObjectsOfTypeAll<Transform>();
+            for (var i = 0; i < all.Length; i++)
+            {
+                var t = all[i];
+                if (t == null || t.name != PanelRootName)
+                {
+                    continue;
+                }
+
+                if (!IsSceneObject(t.gameObject))
+                {
+                    continue;
+                }
+
+                return t;
+            }
+
+            return null;
+        }
+
+        private static bool IsSceneObject(GameObject go)
+        {
+            if (go == null || !go.scene.IsValid())
+            {
+                return false;
+            }
+
+            return (go.hideFlags & HideFlags.HideInHierarchy) == 0;
+        }
+
+        private static void Stretch(RectTransform rect)
+        {
+            rect.anchorMin = Vector2.zero;
+            rect.anchorMax = Vector2.one;
+            rect.offsetMin = Vector2.zero;
+            rect.offsetMax = Vector2.zero;
         }
     }
 }

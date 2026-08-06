@@ -78,6 +78,23 @@ namespace NineGrid.Core.Tests
             "help.watchtower",
         };
 
+        /// <summary>策划常规道具卡 12 种（ADR-0033）：唯一可进玩家侧卡组随机来源池的档位。</summary>
+        private static readonly string[] RegularHelpCardIds =
+        {
+            "help.healing_potion", "help.throwing_knife", "help.fireball",
+            "help.rotation_wheel", "help.brutality_card", "help.bomb",
+            "help.swap_card", "help.sturdy_shield", "help.teleport_card",
+            "help.food_card", "help.kidnapping", "help.impact_tutorial",
+        };
+
+        /// <summary>策划特殊道具卡 7 种（ADR-0033）：仅经定向渠道投放，不进随机来源池。</summary>
+        private static readonly string[] SpecialHelpCardIds =
+        {
+            "help.gold_card", "help.common_chest_card", "help.blue_chest_card",
+            "help.golden_chest_card", "help.attack_card", "help.hp_card",
+            "help.armor_card",
+        };
+
         /// <summary>战士角色卡组归属（设计案 06-玩家角色/03 角色卡组）。</summary>
         private const string WarriorClassCardId = "help.impact_tutorial";
 
@@ -222,7 +239,7 @@ namespace NineGrid.Core.Tests
         }
 
         [Test]
-        public void ProductionJson_ProfessionItemSourcePool_OnlyOfficialHelpCards()
+        public void ProductionJson_ProfessionItemSourcePool_OnlyRegularHelpCards()
         {
             var catalog = Catalog();
             var pool = BuildProfessionItemSourcePool(catalog);
@@ -234,12 +251,20 @@ namespace NineGrid.Core.Tests
                 Assert.IsTrue(catalog.Cards.TryGetValue(id, out var card), "池中悬空 ID: " + id);
                 Assert.IsTrue(HelpCardDecks.IsArchive(card.DeckId) == false,
                     "道具来源池不得含归档卡: " + id);
+                Assert.IsTrue(HelpCardDecks.IsRegularRarity(card.Rarity),
+                    "道具来源池只含常规（White）道具卡（ADR-0033）: " + id);
             }
 
-            for (var i = 0; i < OfficialHelpCardIds.Length; i++)
+            for (var i = 0; i < RegularHelpCardIds.Length; i++)
             {
-                Assert.IsTrue(pool.Contains(OfficialHelpCardIds[i]),
-                    "官方道具卡必须在职业道具来源池中: " + OfficialHelpCardIds[i]);
+                Assert.IsTrue(pool.Contains(RegularHelpCardIds[i]),
+                    "常规道具卡必须在职业道具来源池中: " + RegularHelpCardIds[i]);
+            }
+
+            for (var i = 0; i < SpecialHelpCardIds.Length; i++)
+            {
+                Assert.IsFalse(pool.Contains(SpecialHelpCardIds[i]),
+                    "特殊道具卡不得进职业道具来源池（仅定向渠道投放）: " + SpecialHelpCardIds[i]);
             }
 
             for (var i = 0; i < ArchivedHelpCardIds.Length; i++)
@@ -247,6 +272,37 @@ namespace NineGrid.Core.Tests
                 Assert.IsFalse(pool.Contains(ArchivedHelpCardIds[i]),
                     "归档道具卡不得进职业道具来源池: " + ArchivedHelpCardIds[i]);
             }
+
+            Assert.AreEqual(RegularHelpCardIds.Length, pool.Count,
+                "来源池应恰为 12 张常规道具卡（通用卡组常规 + 战士撞击教程）");
+        }
+
+        [Test]
+        public void ProductionJson_HelpCardRarity_MatchesDesignRegularSpecialTable()
+        {
+            var catalog = Catalog();
+
+            for (var i = 0; i < RegularHelpCardIds.Length; i++)
+            {
+                Assert.IsTrue(catalog.Cards.TryGetValue(RegularHelpCardIds[i], out var card),
+                    "missing " + RegularHelpCardIds[i]);
+                Assert.AreEqual(HelpCardDecks.RegularRarity, card.Rarity,
+                    RegularHelpCardIds[i] + " 策划标「常规」，稀有度应为 White");
+            }
+
+            for (var i = 0; i < SpecialHelpCardIds.Length; i++)
+            {
+                Assert.IsTrue(catalog.Cards.TryGetValue(SpecialHelpCardIds[i], out var card),
+                    "missing " + SpecialHelpCardIds[i]);
+                Assert.AreNotEqual(HelpCardDecks.RegularRarity, card.Rarity,
+                    SpecialHelpCardIds[i] + " 策划标「特殊」，稀有度不得为 White");
+                Assert.AreNotEqual(ContentRarity.None, card.Rarity,
+                    SpecialHelpCardIds[i] + " 特殊卡须落在蓝/金/红档");
+            }
+
+            Assert.AreEqual(RegularHelpCardIds.Length + SpecialHelpCardIds.Length,
+                OfficialHelpCardIds.Length,
+                "常规 + 特殊应恰为现行 19 种道具卡");
         }
 
         [Test]

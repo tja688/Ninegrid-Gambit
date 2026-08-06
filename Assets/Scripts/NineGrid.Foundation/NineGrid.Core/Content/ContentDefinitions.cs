@@ -346,11 +346,22 @@ namespace NineGrid.Core.Content
     /// 道具卡组约定（#139）：live 进奖池/道具来源池/房间注入；archive 仅保留 JSON 参考。
     /// 非策划现行道具卡（破击锤/血液转换/倍增塔/盾击教程/属性提升/庇佑/瞭望塔）归归档卡组，
     /// 不参与奖池展开与职业道具来源池（<see cref="RewardPoolQueryExpander"/> 与 ProfessionCatalog 均按此约定过滤）。
+    /// 稀有度分级（ADR-0033）：白 = 常规（进玩家侧卡组随机来源池）；蓝/金/红 = 特殊（仅经商店/
+    /// 宝箱/精英击杀/层主注入等定向渠道投放，随机装填不得抽取）。
     /// </summary>
     public static class HelpCardDecks
     {
         public const string Live = "deck.help";
         public const string Archive = "deck.help_archive";
+
+        /// <summary>常规稀有度（ADR-0033）：唯一可进玩家侧卡组随机来源池的道具卡档位。</summary>
+        public const ContentRarity RegularRarity = ContentRarity.White;
+
+        /// <summary>该稀有度是否属于常规档（可进玩家侧卡组随机来源池）。</summary>
+        public static bool IsRegularRarity(ContentRarity rarity)
+        {
+            return rarity == RegularRarity;
+        }
 
         public static bool IsArchive(string deckId)
         {

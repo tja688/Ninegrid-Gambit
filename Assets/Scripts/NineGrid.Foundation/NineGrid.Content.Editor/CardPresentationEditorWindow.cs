@@ -2580,6 +2580,25 @@ namespace NineGrid.Content.Editor
             };
         }
 
+        /// <summary>稀有度分级只读展示（白/蓝/金/红）；无概念（空 / None）统一为「无」。</summary>
+        private static string FormatRarityDisplay(string raw)
+        {
+            if (string.IsNullOrWhiteSpace(raw))
+            {
+                return "无";
+            }
+
+            switch (raw.Trim())
+            {
+                case "White": return "白";
+                case "Blue": return "蓝";
+                case "Gold": return "金";
+                case "Red": return "红";
+                case "None": return "无";
+                default: return raw.Trim();
+            }
+        }
+
         private void BuildInstantParams(VisualElement column, CardPresentationEditorEntry entry)
         {
             var dto = entry.Dto;
@@ -2673,6 +2692,13 @@ namespace NineGrid.Content.Editor
                     dto.displayName = v ?? string.Empty;
                     OnDtoEdited(entry);
                 })));
+
+            column.Add(ContentVisualWarmConsoleUi.WrapControlRow(
+                "稀有度",
+                new Label(FormatRarityDisplay(dto.rarity)),
+                72f,
+                "稀有度分级（白/蓝/金/红），只读；「无」= 该卡种暂无稀有度概念。" +
+                "道具卡/常规机关：白 = 常规（进玩家侧卡组随机来源池），蓝/金/红 = 特殊（仅定向渠道投放，ADR-0033）。"));
 
             if (CardPresentationEditorSession.IsRoomKind(dto.kind))
             {

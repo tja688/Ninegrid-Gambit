@@ -19,7 +19,7 @@
 | `Flow/` | ~118 | `NineGrid.Flow*` | 导演/时间线/Channel/Scheduler、局内会话、流程壳、诊断、部分 Presenter |
 | `Cards/` | ~136 | `NineGrid.Cards*` | 卡视图、场地/手牌/牌库、收敛、特效 SO、静态 Hook |
 | `Editor/` | ~22 | `NineGrid.Presentation.Editor` | 编辑器工具；`CardFacePreviewHost` / `VisualEffectPreviewHost`（特效库：左怪物卡参照 + 右精灵表预览；卡组·卡背与卡面页共用 `CardFacePreviewHost`；翻牌预览经 `CardPresentationFlipPreview` 复用 `CardFaceFlipPresenter` 的 Flip.anim 采样；**房间图标** `Room` 预览实例化图标预制体，**房间选项** `ChoiceOption` 挂 `房间选项标准模板`） |
-| `Cheat/` | 3 | `NineGrid.Presentation.Cheat` | **F12 作弊工具面板**（仅 `UNITY_EDITOR / DEVELOPMENT_BUILD`，正式包不含）：`CheatToolHotkeyHost`（常驻自举 + F12 唤起）、`CheatToolPanelController`（**运行时全量自举** Overlay Canvas / EventSystem / 一级菜单四功能 / 二级菜单加卡搜索；场景预置同名结构则复用只接线）、`CheatToolCardSearchIndex`（可加卡候选池：怪物/机关/道具三类、排除归档卡组、按卡名/卡组名/技能名/技能描述搜索，纯逻辑可测）。功能：一键清关（`BattleSessionCheat.TryForceNodeVictory`）、战斗加卡（`ShuffleIntoDrawPileAction` 卡组顶插入，仅战斗中，经 `BattleBeatFlush.PresentEventLogSlice` 走正式翻牌表现）、无限金币 `PlayerModel.AddCoins(+999)`、回复满血（`TrySetAvatarHp` MaxHp）。uGUI 按钮走 EventSystem + InputSystemUIInputModule（New Input System） |
+| `Cheat/` | 4 | `NineGrid.Presentation.Cheat` | **F12 作弊工具面板**（仅 `UNITY_EDITOR / DEVELOPMENT_BUILD`，正式包不含）：接线 MainScene `UI面板/作弊工具BG`（默认失活；SpriteRenderer 世界 UI）。`CheatToolHotkeyHost`（常驻 + F12）、`CheatToolPanelController`（优先按名找场景预置并接线，缺结构才最小兜底）、`CheatToolPanelButton`（`BoxCollider2D` + `PointerHitRouter`，一级五按钮）、`CheatToolCardSearchIndex`（怪物/机关/道具三类、排除归档卡组；卡名/卡组名优先表现层 JSON `displayName`）。功能：一键清关（对齐 QuickTest `-` → `TryForceNodeVictory`）、战斗加卡（二级 WorldSpace Canvas 搜索；运行时补 `GraphicRaycaster`；仅战斗阶段；`ShuffleIntoDrawPileAction` 顶插入 + `PresentEventLogSlice`）、金币 +999、回复满血。二级关闭清空输入；`PointerHitRouter` 在 EventSystem UI 上时让渡点击 |
 | `Tests/` | ~97 | `NineGrid.Presentation.Tests*` | EditMode |
 
 ### `Flow/` 子树

@@ -78,7 +78,8 @@ namespace NineGrid.Core
         }
 
         /// <summary>
-        /// 开局写入生成规则：容量 + 从来源卡组收集道具卡 defId。
+        /// 开局写入生成规则：容量 + 从来源卡组收集**常规稀有度**（White，ADR-0033）道具卡 defId。
+        /// 特殊（蓝/金/红）道具卡不进随机来源池，仅经商店/宝箱/精英击杀/层主注入等定向渠道投放。
         /// </summary>
         public static void SeedItemGenerationRules(
             PlayerModel player,
@@ -123,7 +124,8 @@ namespace NineGrid.Core
                     || card.Kind != CardKind.HelpCard
                     || string.IsNullOrEmpty(card.DefId)
                     || HelpCardDecks.IsArchive(card.DeckId)
-                    || !string.Equals(card.DeckId, deckId, System.StringComparison.OrdinalIgnoreCase))
+                    || !string.Equals(card.DeckId, deckId, System.StringComparison.OrdinalIgnoreCase)
+                    || !HelpCardDecks.IsRegularRarity(card.Rarity))
                 {
                     continue;
                 }

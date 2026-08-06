@@ -224,9 +224,15 @@ namespace NineGrid.Core.Tests
             catalog.Economy.UnusedHelpCardGold = 10;
             catalog.Economy.MonsterRemovedGold = 0;
 
-            catalog.AddCard(new CardContentDefinition("help.pool_a", "池A", CardKind.HelpCard).InDeck("deck.help"));
-            catalog.AddCard(new CardContentDefinition("help.pool_b", "池B", CardKind.HelpCard).InDeck("deck.help"));
-            catalog.AddCard(new CardContentDefinition("help.warrior_only", "战士专属", CardKind.HelpCard).InDeck("deck.player"));
+            catalog.AddCard(new CardContentDefinition("help.pool_a", "池A", CardKind.HelpCard)
+                .InDeck("deck.help")
+                .WithRarity(ContentRarity.White));
+            catalog.AddCard(new CardContentDefinition("help.pool_b", "池B", CardKind.HelpCard)
+                .InDeck("deck.help")
+                .WithRarity(ContentRarity.White));
+            catalog.AddCard(new CardContentDefinition("help.warrior_only", "战士专属", CardKind.HelpCard)
+                .InDeck("deck.player")
+                .WithRarity(ContentRarity.White));
             catalog.AddCard(new CardContentDefinition("help.fixed_card", "固定", CardKind.HelpCard));
             catalog.AddCard(new CardContentDefinition("help.carry_a", "携带A", CardKind.HelpCard));
             catalog.AddCard(new CardContentDefinition("help.carry_b", "携带B", CardKind.HelpCard));

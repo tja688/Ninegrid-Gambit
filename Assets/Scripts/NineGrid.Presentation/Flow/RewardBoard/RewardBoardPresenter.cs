@@ -31,8 +31,11 @@ namespace NineGrid.Flow.RewardBoard
         public static RewardBoardPresenter Current { get; private set; } = new RewardBoardPresenter();
 
         private readonly List<ManagedCard> mShelfCards = new List<ManagedCard>(5);
+        private readonly List<string> mShelfDefIds = new List<string>(5);
         private readonly List<GameObject> mExtras = new List<GameObject>(1);
         private readonly RoomIconDwellSession mLeaveDwell = new RoomIconDwellSession();
+        private GameObject mLeaveGo;
+        private CancellationTokenSource mResyncCts;
         private CancellationTokenSource mWatchCts;
         private IArchitecture mArch;
         private Func<float, CancellationToken, UniTask> mDelayAsync;
@@ -69,6 +72,9 @@ namespace NineGrid.Flow.RewardBoard
             CancelWatch();
             mLeaveDwell.Cancel();
             mActive = false;
+            mResyncCts?.Cancel();
+            mResyncCts?.Dispose();
+            mResyncCts = null;
 
             var cards = CardEntityLifecycleHook.CardsOrNull()
                         ?? UnityEngine.Object.FindFirstObjectByType<CardManagerSingleton>();
@@ -87,6 +93,7 @@ namespace NineGrid.Flow.RewardBoard
             }
 
             mShelfCards.Clear();
+            mShelfDefIds.Clear();
 
             for (var i = 0; i < mExtras.Count; i++)
             {
@@ -97,6 +104,7 @@ namespace NineGrid.Flow.RewardBoard
             }
 
             mExtras.Clear();
+            mLeaveGo = null;
             RoomIconOccupancy.Current.Clear();
             RoomIconOccupancySlotHits.Refresh(mArch);
             BoardBriefTipPresenter.InstanceOrNull()?.HardClear();
@@ -134,7 +142,7 @@ namespace NineGrid.Flow.RewardBoard
             return mActive;
         }
 
-        /// <summary>拿走后按 Pending 重建货架。</summary>
+        /// <summary>拿走后按 Pending 收尾货架（补位走标准跳格，不整板瞬移）。</summary>
         public void ResyncFromPending(IArchitecture arch)
         {
             if (!mActive)
@@ -151,7 +159,148 @@ namespace NineGrid.Flow.RewardBoard
                 return;
             }
 
-            TrySpawnFromPending(arch);
+            RunResyncAsync(arch, pending).Forget();
+        }
+
+        private async UniTaskVoid RunResyncAsync(IArchitecture arch, PendingChoiceModel pending)
+        {
+            mResyncCts?.Cancel();
+            mResyncCts?.Dispose();
+            mResyncCts = new CancellationTokenSource();
+            var ct = mResyncCts.Token;
+            try
+            {
+                RegisterOccupancy(pending);
+                await ResyncShelfAsync(arch, pending, ct);
+                RoomIconOccupancySlotHits.Refresh(arch);
+            }
+            catch (OperationCanceledException)
+            {
+            }
+            finally
+            {
+                mResyncCts?.Dispose();
+                mResyncCts = null;
+            }
+        }
+
+        private void RegisterOccupancy(PendingChoiceModel pending)
+        {
+            RoomIconOccupancy.Current.Clear();
+            var options = pending.RewardOptions;
+            for (var i = 0; i < options.Count; i++)
+            {
+                var entry = options[i];
+                if (entry == null || string.IsNullOrEmpty(entry.DefId))
+                {
+                    continue;
+                }
+
+                RoomIconOccupancy.Current.Register(
+                    RewardBoardSlotResolver.ShelfSlotAt(i),
+                    i,
+                    entry.DefId,
+                    RoomIconWalkRole.SoftBlockOnly);
+            }
+
+            RoomIconOccupancy.Current.Register(
+                RewardBoardSlotResolver.LeaveSlot,
+                -2,
+                RewardBoardSlotResolver.LeaveContentId,
+                RoomIconWalkRole.WalkDestination);
+        }
+
+        /// <summary>
+        /// 货架 diff：保留未拿走货架（换格走标准跳格），新建货架（格上方落下入场），
+        /// 释放已拿走货架——不再整板销毁重建造成瞬移（#94 补位美化）。
+        /// </summary>
+        private async UniTask ResyncShelfAsync(
+            IArchitecture arch,
+            PendingChoiceModel pending,
+            CancellationToken ct)
+        {
+            var geometry = arch.GetSystem<IGroundFieldGeometrySystem>();
+            var content = arch.GetSystem<IContentSystem>();
+            var cards = CardEntityLifecycleHook.CardsOrNull()
+                        ?? UnityEngine.Object.FindFirstObjectByType<CardManagerSingleton>();
+            var newOptions = pending.RewardOptions;
+
+            var oldCards = new List<ManagedCard>(mShelfCards);
+            var oldDefIds = new List<string>(mShelfDefIds);
+            var keptOld = new bool[oldCards.Count];
+
+            var newCards = new List<ManagedCard>(newOptions.Count);
+            var newDefIds = new List<string>(newOptions.Count);
+            var animTasks = new List<UniTask>(newOptions.Count);
+
+            for (var i = 0; i < newOptions.Count; i++)
+            {
+                var entry = newOptions[i];
+                if (entry == null || string.IsNullOrEmpty(entry.DefId))
+                {
+                    newDefIds.Add(null);
+                    newCards.Add(null);
+                    continue;
+                }
+
+                var slot = RewardBoardSlotResolver.ShelfSlotAt(i);
+                var oldIndex = InRoomShelfAnimation.TryMatchOldIndex(oldDefIds, keptOld, entry.DefId, i);
+                if (oldIndex >= 0 && oldIndex < oldCards.Count && oldCards[oldIndex] != null)
+                {
+                    var card = oldCards[oldIndex];
+                    newCards.Add(card);
+                    newDefIds.Add(entry.DefId);
+                    var oldSlot = RewardBoardSlotResolver.ShelfSlotAt(oldIndex);
+                    var tip = BuildShelfTip(entry.DefId, content);
+                    AttachClickProxy(card.View.gameObject, i, tip, slot);
+                    if (oldSlot != slot)
+                    {
+                        animTasks.Add(InRoomShelfAnimation.HopToSlotAsync(card, geometry, slot, ct));
+                    }
+
+                    continue;
+                }
+
+                newDefIds.Add(entry.DefId);
+                ManagedCard managed = null;
+                if (cards != null)
+                {
+                    managed = cards.SpawnPresentationOnly(
+                        entry.DefId,
+                        parent: null,
+                        CardDisplayMode.GroundCardMode,
+                        CardPresentationKind.HelpCard);
+                }
+
+                newCards.Add(managed);
+                if (managed?.View != null)
+                {
+                    BoardSlotWorldPlacement.TryAlignToSlot(managed.View.transform, geometry, slot);
+                    managed.View.transform.rotation = Quaternion.identity;
+                    CoreCardPresentationMapper.ApplyVisualsByDefId(managed, CardPresentationKind.HelpCard);
+                    var tip = BuildShelfTip(entry.DefId, content);
+                    AttachClickProxy(managed.View.gameObject, i, tip, slot);
+                    animTasks.Add(InRoomShelfAnimation.DropInToSlotAsync(managed, geometry, slot, ct));
+                }
+            }
+
+            for (var j = 0; j < oldCards.Count; j++)
+            {
+                if (!keptOld[j] && oldCards[j] != null)
+                {
+                    cards?.Release(oldCards[j], "RewardBoard.ResyncRelease");
+                }
+            }
+
+            mShelfCards.Clear();
+            mShelfCards.AddRange(newCards);
+            mShelfDefIds.Clear();
+            mShelfDefIds.AddRange(newDefIds);
+
+            if (animTasks.Count > 0)
+            {
+                await UniTask.WhenAll(animTasks);
+            }
         }
 
         private void SpawnShelves(
@@ -165,8 +314,10 @@ namespace NineGrid.Flow.RewardBoard
             for (var i = 0; i < options.Count && i < RewardBoardSlotResolver.ShelfSlots.Length; i++)
             {
                 var entry = options[i];
+                mShelfDefIds.Add(entry == null ? null : entry.DefId);
                 if (entry == null || string.IsNullOrEmpty(entry.DefId))
                 {
+                    mShelfCards.Add(null);
                     continue;
                 }
 
@@ -176,6 +327,7 @@ namespace NineGrid.Flow.RewardBoard
 
                 if (cards == null)
                 {
+                    mShelfCards.Add(null);
                     continue;
                 }
 
@@ -187,6 +339,7 @@ namespace NineGrid.Flow.RewardBoard
                     CardPresentationKind.HelpCard);
                 if (managed?.View == null)
                 {
+                    mShelfCards.Add(null);
                     continue;
                 }
 
@@ -218,6 +371,7 @@ namespace NineGrid.Flow.RewardBoard
 
             AttachBriefTipOnly(go, BoardBriefTipCopy.LeaveTip, slot, geometry);
             mExtras.Add(go);
+            mLeaveGo = go;
         }
 
         private static string BuildShelfTip(string defId, IContentSystem content)
@@ -355,6 +509,7 @@ namespace NineGrid.Flow.RewardBoard
                 return;
             }
 
+            InRoomShelfAnimation.PlayConsumeDeath(shelf);
             var cards = CardEntityLifecycleHook.CardsOrNull()
                         ?? UnityEngine.Object.FindFirstObjectByType<CardManagerSingleton>();
             cards?.Release(shelf, "RewardBoard.TakeShatter");

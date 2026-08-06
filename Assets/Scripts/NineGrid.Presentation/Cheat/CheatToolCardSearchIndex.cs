@@ -3,6 +3,7 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+using NineGrid.Content.CardPresentation;
 using NineGrid.Core;
 using NineGrid.Core.Content;
 
@@ -60,13 +61,14 @@ namespace NineGrid.Presentation.Cheat
                     continue;
                 }
 
+                var displayName = ResolveCardDisplayName(card);
                 result.Add(new CardEntry
                 {
                     DefId = card.DefId,
-                    DisplayName = card.DisplayName,
+                    DisplayName = displayName,
                     DeckDisplayName = ResolveDeckDisplayName(catalog, card.DeckId),
                     Kind = card.Kind,
-                    SearchText = BuildSearchText(catalog, card, descriptionProvider),
+                    SearchText = BuildSearchText(catalog, card, displayName, descriptionProvider),
                 });
             }
 
@@ -129,10 +131,11 @@ namespace NineGrid.Presentation.Cheat
         private static string BuildSearchText(
             GameContentCatalog catalog,
             CardContentDefinition card,
+            string displayName,
             Func<string, string> descriptionProvider)
         {
             var builder = new StringBuilder(96);
-            AppendSegment(builder, card.DisplayName);
+            AppendSegment(builder, displayName);
             AppendSegment(builder, card.DefId);
             AppendSegment(builder, ResolveDeckDisplayName(catalog, card.DeckId));
 
@@ -151,6 +154,23 @@ namespace NineGrid.Presentation.Cheat
             }
 
             return builder.ToString().ToLowerInvariant();
+        }
+
+        /// <summary>优先表现层 JSON 自定义 displayName，其次 Catalog 投影名。</summary>
+        private static string ResolveCardDisplayName(CardContentDefinition card)
+        {
+            if (card == null)
+            {
+                return string.Empty;
+            }
+
+            if (CardPresentationAuthority.TryGetOwnedDisplayName(card.DefId, out var owned)
+                && !string.IsNullOrWhiteSpace(owned))
+            {
+                return owned.Trim();
+            }
+
+            return card.DisplayName ?? string.Empty;
         }
 
         private static void AppendSkillSearchText(
@@ -187,6 +207,13 @@ namespace NineGrid.Presentation.Cheat
                 && !string.IsNullOrWhiteSpace(deck.DisplayName))
             {
                 return deck.DisplayName.Trim();
+            }
+
+            // 道具/机关等不在 MonsterDecks：读表现层 JSON 自定义名（如「道具卡组」「机关卡组」）。
+            if (CardPresentationAuthority.TryGetOwnedDisplayName(deckId, out var owned)
+                && !string.IsNullOrWhiteSpace(owned))
+            {
+                return owned.Trim();
             }
 
             return deckId.Trim();

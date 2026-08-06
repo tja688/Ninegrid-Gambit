@@ -33,8 +33,14 @@ namespace NineGrid.Flow.TavernBoard
         public static TavernBoardPresenter Current { get; private set; } = new TavernBoardPresenter();
 
         private readonly List<ManagedCard> mCandidateCards = new List<ManagedCard>(6);
-        private readonly List<GameObject> mExtras = new List<GameObject>(5);
+        private readonly List<string> mCandidateDefIds = new List<string>(6);
+        private readonly List<GameObject> mServiceGos = new List<GameObject>(3);
+        private readonly List<string> mServiceDefIds = new List<string>(3);
+        private readonly List<GameObject> mExtras = new List<GameObject>(2);
         private readonly RoomIconDwellSession mLeaveDwell = new RoomIconDwellSession();
+        private GameObject mRefreshGo;
+        private GameObject mLeaveGo;
+        private CancellationTokenSource mResyncCts;
         private CancellationTokenSource mWatchCts;
         private IArchitecture mArch;
         private Func<float, CancellationToken, UniTask> mDelayAsync;
@@ -71,6 +77,9 @@ namespace NineGrid.Flow.TavernBoard
             CancelWatch();
             mLeaveDwell.Cancel();
             mActive = false;
+            mResyncCts?.Cancel();
+            mResyncCts?.Dispose();
+            mResyncCts = null;
 
             var cards = CardEntityLifecycleHook.CardsOrNull()
                         ?? UnityEngine.Object.FindFirstObjectByType<CardManagerSingleton>();
@@ -89,6 +98,18 @@ namespace NineGrid.Flow.TavernBoard
             }
 
             mCandidateCards.Clear();
+            mCandidateDefIds.Clear();
+
+            for (var i = 0; i < mServiceGos.Count; i++)
+            {
+                if (mServiceGos[i] != null)
+                {
+                    UnityEngine.Object.Destroy(mServiceGos[i]);
+                }
+            }
+
+            mServiceGos.Clear();
+            mServiceDefIds.Clear();
 
             for (var i = 0; i < mExtras.Count; i++)
             {
@@ -99,6 +120,8 @@ namespace NineGrid.Flow.TavernBoard
             }
 
             mExtras.Clear();
+            mRefreshGo = null;
+            mLeaveGo = null;
             RoomIconOccupancy.Current.Clear();
             RoomIconOccupancySlotHits.Refresh(mArch);
             BoardBriefTipPresenter.InstanceOrNull()?.HardClear();
@@ -153,6 +176,7 @@ namespace NineGrid.Flow.TavernBoard
             return mActive;
         }
 
+        /// <summary>会话变更（服务购买 / 二级确认 / 刷新 / 取消）后按 Pending 收尾（补位入场，不整板瞬移）。</summary>
         public void ResyncFromPending(IArchitecture arch)
         {
             if (!mActive)
@@ -171,7 +195,268 @@ namespace NineGrid.Flow.TavernBoard
                 return;
             }
 
-            TrySpawnFromPending(arch);
+            RunResyncAsync(arch, pending).Forget();
+        }
+
+        private async UniTaskVoid RunResyncAsync(IArchitecture arch, PendingChoiceModel pending)
+        {
+            mResyncCts?.Cancel();
+            mResyncCts?.Dispose();
+            mResyncCts = new CancellationTokenSource();
+            var ct = mResyncCts.Token;
+            try
+            {
+                RegisterOccupancy(pending);
+                if (PendingChoiceModel.IsTavernFixItemPool(pending.PoolId.Value))
+                {
+                    await ResyncCandidatesAsync(arch, pending, ct);
+                }
+                else
+                {
+                    await ResyncServicesAsync(arch, pending, ct);
+                    RefreshRefreshTip(pending);
+                }
+
+                RoomIconOccupancySlotHits.Refresh(arch);
+            }
+            catch (OperationCanceledException)
+            {
+            }
+            finally
+            {
+                mResyncCts?.Dispose();
+                mResyncCts = null;
+            }
+        }
+
+        private void RegisterOccupancy(PendingChoiceModel pending)
+        {
+            RoomIconOccupancy.Current.Clear();
+            var options = pending.RewardOptions;
+            var nested = PendingChoiceModel.IsTavernFixItemPool(pending.PoolId.Value);
+            for (var i = 0; i < options.Count; i++)
+            {
+                var entry = options[i];
+                if (entry == null || string.IsNullOrEmpty(entry.DefId))
+                {
+                    continue;
+                }
+
+                var slot = nested
+                    ? TavernBoardSlotResolver.CandidateSlotAt(i)
+                    : TavernBoardSlotResolver.ServiceSlotAt(i);
+                RoomIconOccupancy.Current.Register(
+                    slot,
+                    i,
+                    entry.DefId,
+                    RoomIconWalkRole.SoftBlockOnly);
+            }
+
+            if (!nested)
+            {
+                RoomIconOccupancy.Current.Register(
+                    TavernBoardSlotResolver.RefreshSlot,
+                    -1,
+                    TavernBoardSlotResolver.RefreshContentId,
+                    RoomIconWalkRole.SoftBlockOnly);
+            }
+
+            RoomIconOccupancy.Current.Register(
+                TavernBoardSlotResolver.LeaveSlot,
+                -2,
+                TavernBoardSlotResolver.LeaveContentId,
+                RoomIconWalkRole.WalkDestination);
+        }
+
+        private void RefreshRefreshTip(PendingChoiceModel pending)
+        {
+            if (mRefreshGo == null)
+            {
+                return;
+            }
+
+            var tip = BoardBriefTipCopy.ForOptionOrShelf(
+                "刷新货架",
+                pending.ShopRefreshPriceGold.Value);
+            AttachClickProxy(mRefreshGo, TavernBoardHitKind.Refresh, -1, tip, TavernBoardSlotResolver.RefreshSlot);
+        }
+
+        /// <summary>
+        /// 服务面 diff：保留仍在售服务，重建被购服务（格上方落下入场），释放已离场服务。
+        /// </summary>
+        private async UniTask ResyncServicesAsync(
+            IArchitecture arch,
+            PendingChoiceModel pending,
+            CancellationToken ct)
+        {
+            var geometry = arch.GetSystem<IGroundFieldGeometrySystem>();
+            var content = arch.GetSystem<IContentSystem>();
+            var newOptions = pending.RewardOptions;
+
+            var oldGos = new List<GameObject>(mServiceGos);
+            var oldDefIds = new List<string>(mServiceDefIds);
+            var keptOld = new bool[oldGos.Count];
+
+            var newGos = new List<GameObject>(newOptions.Count);
+            var newDefIds = new List<string>(newOptions.Count);
+            var animTasks = new List<UniTask>(newOptions.Count);
+
+            for (var i = 0; i < newOptions.Count; i++)
+            {
+                var entry = newOptions[i];
+                if (entry == null || string.IsNullOrEmpty(entry.DefId))
+                {
+                    newDefIds.Add(null);
+                    newGos.Add(null);
+                    continue;
+                }
+
+                var slot = TavernBoardSlotResolver.ServiceSlotAt(i);
+                var oldIndex = InRoomShelfAnimation.TryMatchOldIndex(oldDefIds, keptOld, entry.DefId, i);
+                if (oldIndex >= 0 && oldIndex < oldGos.Count && oldGos[oldIndex] != null)
+                {
+                    var go = oldGos[oldIndex];
+                    newGos.Add(go);
+                    newDefIds.Add(entry.DefId);
+                    var tip = BuildServiceTip(entry.DefId, content);
+                    AttachClickProxy(go, TavernBoardHitKind.SelectService, i, tip, slot);
+                    continue;
+                }
+
+                newDefIds.Add(entry.DefId);
+                var fresh = TryInstantiate(
+                    CardChassisPaths.RoomOptionFacePrefab,
+                    geometry,
+                    slot,
+                    entry.DefId);
+                newGos.Add(fresh);
+                if (fresh != null)
+                {
+                    var tip = BuildServiceTip(entry.DefId, content);
+                    AttachClickProxy(fresh, TavernBoardHitKind.SelectService, i, tip, slot);
+                    animTasks.Add(InRoomShelfAnimation.DropOptionGoInAsync(fresh, geometry, slot, ct));
+                }
+            }
+
+            for (var j = 0; j < oldGos.Count; j++)
+            {
+                if (!keptOld[j] && oldGos[j] != null)
+                {
+                    UnityEngine.Object.Destroy(oldGos[j]);
+                }
+            }
+
+            mServiceGos.Clear();
+            mServiceGos.AddRange(newGos);
+            mServiceDefIds.Clear();
+            mServiceDefIds.AddRange(newDefIds);
+
+            if (animTasks.Count > 0)
+            {
+                await UniTask.WhenAll(animTasks);
+            }
+        }
+
+        /// <summary>
+        /// 候选面 diff：保留未确认候选（换格走标准跳格），新建候选入场，释放已确认候选。
+        /// </summary>
+        private async UniTask ResyncCandidatesAsync(
+            IArchitecture arch,
+            PendingChoiceModel pending,
+            CancellationToken ct)
+        {
+            var geometry = arch.GetSystem<IGroundFieldGeometrySystem>();
+            var content = arch.GetSystem<IContentSystem>();
+            var cards = CardEntityLifecycleHook.CardsOrNull()
+                        ?? UnityEngine.Object.FindFirstObjectByType<CardManagerSingleton>();
+            var newOptions = pending.RewardOptions;
+
+            var oldCards = new List<ManagedCard>(mCandidateCards);
+            var oldDefIds = new List<string>(mCandidateDefIds);
+            var keptOld = new bool[oldCards.Count];
+
+            var newCards = new List<ManagedCard>(newOptions.Count);
+            var newDefIds = new List<string>(newOptions.Count);
+            var animTasks = new List<UniTask>(newOptions.Count);
+
+            for (var i = 0; i < newOptions.Count; i++)
+            {
+                var entry = newOptions[i];
+                if (entry == null || string.IsNullOrEmpty(entry.DefId))
+                {
+                    newDefIds.Add(null);
+                    newCards.Add(null);
+                    continue;
+                }
+
+                var slot = TavernBoardSlotResolver.CandidateSlotAt(i);
+                var oldIndex = InRoomShelfAnimation.TryMatchOldIndex(oldDefIds, keptOld, entry.DefId, i);
+                if (oldIndex >= 0 && oldIndex < oldCards.Count && oldCards[oldIndex] != null)
+                {
+                    var card = oldCards[oldIndex];
+                    newCards.Add(card);
+                    newDefIds.Add(entry.DefId);
+                    var oldSlot = TavernBoardSlotResolver.CandidateSlotAt(oldIndex);
+                    var tip = BuildCandidateTip(entry.DefId, content);
+                    AttachClickProxy(
+                        card.View.gameObject,
+                        TavernBoardHitKind.SelectFixCandidate,
+                        i,
+                        tip,
+                        slot);
+                    if (oldSlot != slot)
+                    {
+                        animTasks.Add(InRoomShelfAnimation.HopToSlotAsync(card, geometry, slot, ct));
+                    }
+
+                    continue;
+                }
+
+                newDefIds.Add(entry.DefId);
+                ManagedCard managed = null;
+                if (cards != null)
+                {
+                    managed = cards.SpawnPresentationOnly(
+                        entry.DefId,
+                        parent: null,
+                        CardDisplayMode.GroundCardMode,
+                        CardPresentationKind.HelpCard);
+                }
+
+                newCards.Add(managed);
+                if (managed?.View != null)
+                {
+                    BoardSlotWorldPlacement.TryAlignToSlot(managed.View.transform, geometry, slot);
+                    managed.View.transform.rotation = Quaternion.identity;
+                    CoreCardPresentationMapper.ApplyVisualsByDefId(managed, CardPresentationKind.HelpCard);
+                    var tip = BuildCandidateTip(entry.DefId, content);
+                    AttachClickProxy(
+                        managed.View.gameObject,
+                        TavernBoardHitKind.SelectFixCandidate,
+                        i,
+                        tip,
+                        slot);
+                    animTasks.Add(InRoomShelfAnimation.DropInToSlotAsync(managed, geometry, slot, ct));
+                }
+            }
+
+            for (var j = 0; j < oldCards.Count; j++)
+            {
+                if (!keptOld[j] && oldCards[j] != null)
+                {
+                    cards?.Release(oldCards[j], "TavernBoard.ResyncRelease");
+                }
+            }
+
+            mCandidateCards.Clear();
+            mCandidateCards.AddRange(newCards);
+            mCandidateDefIds.Clear();
+            mCandidateDefIds.AddRange(newDefIds);
+
+            if (animTasks.Count > 0)
+            {
+                await UniTask.WhenAll(animTasks);
+            }
         }
 
         private void SpawnServices(
@@ -183,8 +468,10 @@ namespace NineGrid.Flow.TavernBoard
             for (var i = 0; i < options.Count && i < TavernBoardSlotResolver.ServiceSlots.Length; i++)
             {
                 var entry = options[i];
+                mServiceDefIds.Add(entry == null ? null : entry.DefId);
                 if (entry == null || string.IsNullOrEmpty(entry.DefId))
                 {
+                    mServiceGos.Add(null);
                     continue;
                 }
 
@@ -197,6 +484,7 @@ namespace NineGrid.Flow.TavernBoard
                     geometry,
                     slot,
                     entry.DefId);
+                mServiceGos.Add(go);
                 if (go == null)
                 {
                     continue;
@@ -204,7 +492,6 @@ namespace NineGrid.Flow.TavernBoard
 
                 var tip = BuildServiceTip(entry.DefId, content);
                 AttachClickProxy(go, TavernBoardHitKind.SelectService, i, tip, slot);
-                mExtras.Add(go);
             }
         }
 
@@ -219,8 +506,10 @@ namespace NineGrid.Flow.TavernBoard
             for (var i = 0; i < options.Count && i < TavernBoardSlotResolver.CandidateSlots.Length; i++)
             {
                 var entry = options[i];
+                mCandidateDefIds.Add(entry == null ? null : entry.DefId);
                 if (entry == null || string.IsNullOrEmpty(entry.DefId))
                 {
+                    mCandidateCards.Add(null);
                     continue;
                 }
 
@@ -230,6 +519,7 @@ namespace NineGrid.Flow.TavernBoard
 
                 if (cards == null)
                 {
+                    mCandidateCards.Add(null);
                     continue;
                 }
 
@@ -241,6 +531,7 @@ namespace NineGrid.Flow.TavernBoard
                     CardPresentationKind.HelpCard);
                 if (managed?.View == null)
                 {
+                    mCandidateCards.Add(null);
                     continue;
                 }
 
@@ -281,6 +572,7 @@ namespace NineGrid.Flow.TavernBoard
             var tip = BoardBriefTipCopy.ForOptionOrShelf("刷新货架", refreshPrice);
             AttachClickProxy(go, TavernBoardHitKind.Refresh, -1, tip, TavernBoardSlotResolver.RefreshSlot);
             mExtras.Add(go);
+            mRefreshGo = go;
         }
 
         private void SpawnLeave(IGroundFieldGeometrySystem geometry, bool nested)
@@ -302,6 +594,7 @@ namespace NineGrid.Flow.TavernBoard
             var tip = nested ? CancelNestedTip : BoardBriefTipCopy.LeaveTip;
             AttachBriefTipOnly(go, tip, slot, geometry);
             mExtras.Add(go);
+            mLeaveGo = go;
         }
 
         private static string BuildServiceTip(string defId, IContentSystem content)
@@ -479,7 +772,64 @@ namespace NineGrid.Flow.TavernBoard
             }
 
             InRoomGoldPresentation.PresentGoldChangesSince(arch, logStart);
+            // 消耗表演：服务购买（扩容/强化）与「道具卡固定」确认走标准 Death 碎裂，勿凭空消失。
+            var pending = arch.GetModel<PendingChoiceModel>();
+            if (pending != null && PendingChoiceModel.IsTavernFixItemPool(pending.PoolId.Value))
+            {
+                ConsumeCandidate(optionIndex);
+            }
+            else
+            {
+                ConsumeService(optionIndex);
+            }
+
             ResyncFromPending(arch);
+        }
+
+        private void ConsumeService(int optionIndex)
+        {
+            if (optionIndex < 0 || optionIndex >= mServiceGos.Count)
+            {
+                return;
+            }
+
+            var defId = optionIndex < mServiceDefIds.Count ? mServiceDefIds[optionIndex] : null;
+            var go = mServiceGos[optionIndex];
+            mServiceGos[optionIndex] = null;
+            if (go == null)
+            {
+                return;
+            }
+
+            // 「道具卡固定」是进入二级选择而非消耗，直接退场即可。
+            if (string.Equals(defId, RewardSystem.TavernFixItemDefId, StringComparison.Ordinal))
+            {
+                UnityEngine.Object.Destroy(go);
+                return;
+            }
+
+            InRoomShelfAnimation.PlayConsumeDeath(go.transform);
+            UnityEngine.Object.Destroy(go);
+        }
+
+        private void ConsumeCandidate(int optionIndex)
+        {
+            if (optionIndex < 0 || optionIndex >= mCandidateCards.Count)
+            {
+                return;
+            }
+
+            var card = mCandidateCards[optionIndex];
+            mCandidateCards[optionIndex] = null;
+            if (card == null)
+            {
+                return;
+            }
+
+            InRoomShelfAnimation.PlayConsumeDeath(card);
+            var cards = CardEntityLifecycleHook.CardsOrNull()
+                        ?? UnityEngine.Object.FindFirstObjectByType<CardManagerSingleton>();
+            cards?.Release(card, "TavernBoard.FixConsumed");
         }
 
         private void TryRefresh()

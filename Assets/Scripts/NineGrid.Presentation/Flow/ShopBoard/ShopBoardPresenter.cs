@@ -31,8 +31,13 @@ namespace NineGrid.Flow.ShopBoard
         public static ShopBoardPresenter Current { get; private set; } = new ShopBoardPresenter();
 
         private readonly List<ManagedCard> mShelfCards = new List<ManagedCard>(5);
+        private readonly List<GameObject> mShelfOptionGos = new List<GameObject>(5);
+        private readonly List<string> mShelfDefIds = new List<string>(5);
         private readonly List<GameObject> mExtras = new List<GameObject>(2);
         private readonly RoomIconDwellSession mLeaveDwell = new RoomIconDwellSession();
+        private GameObject mRefreshGo;
+        private GameObject mLeaveGo;
+        private CancellationTokenSource mResyncCts;
         private CancellationTokenSource mWatchCts;
         private IArchitecture mArch;
         private Func<float, CancellationToken, UniTask> mDelayAsync;
@@ -69,6 +74,9 @@ namespace NineGrid.Flow.ShopBoard
             CancelWatch();
             mLeaveDwell.Cancel();
             mActive = false;
+            mResyncCts?.Cancel();
+            mResyncCts?.Dispose();
+            mResyncCts = null;
 
             var cards = CardEntityLifecycleHook.CardsOrNull()
                         ?? UnityEngine.Object.FindFirstObjectByType<CardManagerSingleton>();
@@ -87,6 +95,17 @@ namespace NineGrid.Flow.ShopBoard
             }
 
             mShelfCards.Clear();
+            mShelfDefIds.Clear();
+
+            for (var i = 0; i < mShelfOptionGos.Count; i++)
+            {
+                if (mShelfOptionGos[i] != null)
+                {
+                    UnityEngine.Object.Destroy(mShelfOptionGos[i]);
+                }
+            }
+
+            mShelfOptionGos.Clear();
 
             for (var i = 0; i < mExtras.Count; i++)
             {
@@ -97,6 +116,8 @@ namespace NineGrid.Flow.ShopBoard
             }
 
             mExtras.Clear();
+            mRefreshGo = null;
+            mLeaveGo = null;
             RoomIconOccupancy.Current.Clear();
             RoomIconOccupancySlotHits.Refresh(mArch);
             BoardBriefTipPresenter.InstanceOrNull()?.HardClear();
@@ -142,7 +163,7 @@ namespace NineGrid.Flow.ShopBoard
             return mActive;
         }
 
-        /// <summary>购买/刷新后按 Pending 重建货架与刷新价文案。</summary>
+        /// <summary>购买/刷新后按 Pending 重建货架与刷新价文案（补位走标准跳格，能力卡购买碎裂退场）。</summary>
         public void ResyncFromPending(IArchitecture arch)
         {
             if (!mActive)
@@ -159,8 +180,223 @@ namespace NineGrid.Flow.ShopBoard
                 return;
             }
 
-            // 简化：整板重建，避免索引漂移。
-            TrySpawnFromPending(arch);
+            RunResyncAsync(arch, pending).Forget();
+        }
+
+        private async UniTaskVoid RunResyncAsync(IArchitecture arch, PendingChoiceModel pending)
+        {
+            mResyncCts?.Cancel();
+            mResyncCts?.Dispose();
+            mResyncCts = new CancellationTokenSource();
+            var ct = mResyncCts.Token;
+            try
+            {
+                RegisterOccupancy(pending);
+                await ResyncShelfAsync(arch, pending, ct);
+                RefreshRefreshTip(pending);
+                RoomIconOccupancySlotHits.Refresh(arch);
+            }
+            catch (OperationCanceledException)
+            {
+            }
+            finally
+            {
+                mResyncCts?.Dispose();
+                mResyncCts = null;
+            }
+        }
+
+        private void RegisterOccupancy(PendingChoiceModel pending)
+        {
+            RoomIconOccupancy.Current.Clear();
+            var options = pending.RewardOptions;
+            for (var i = 0; i < options.Count; i++)
+            {
+                var entry = options[i];
+                if (entry == null || string.IsNullOrEmpty(entry.DefId))
+                {
+                    continue;
+                }
+
+                RoomIconOccupancy.Current.Register(
+                    ShopBoardSlotResolver.ShelfSlotAt(i),
+                    i,
+                    entry.DefId,
+                    RoomIconWalkRole.SoftBlockOnly);
+            }
+
+            RoomIconOccupancy.Current.Register(
+                ShopBoardSlotResolver.RefreshSlot,
+                -1,
+                ShopBoardSlotResolver.RefreshContentId,
+                RoomIconWalkRole.SoftBlockOnly);
+            RoomIconOccupancy.Current.Register(
+                ShopBoardSlotResolver.LeaveSlot,
+                -2,
+                ShopBoardSlotResolver.LeaveContentId,
+                RoomIconWalkRole.WalkDestination);
+        }
+
+        private void RefreshRefreshTip(PendingChoiceModel pending)
+        {
+            if (mRefreshGo == null)
+            {
+                return;
+            }
+
+            var tip = BoardBriefTipCopy.ForOptionOrShelf(
+                "刷新货架",
+                pending.ShopRefreshPriceGold.Value);
+            AttachClickProxy(mRefreshGo, ShopBoardHitKind.Refresh, -1, tip, ShopBoardSlotResolver.RefreshSlot);
+        }
+
+        /// <summary>
+        /// 货架 diff：保留仍在售的货架（换格走标准跳格），新建新货架（格上方落下入场），
+        /// 释放已离场货架——不再整板销毁重建造成瞬移（#92 补位美化）。
+        /// </summary>
+        private async UniTask ResyncShelfAsync(
+            IArchitecture arch,
+            PendingChoiceModel pending,
+            CancellationToken ct)
+        {
+            var geometry = arch.GetSystem<IGroundFieldGeometrySystem>();
+            var content = arch.GetSystem<IContentSystem>();
+            var cards = CardEntityLifecycleHook.CardsOrNull()
+                        ?? UnityEngine.Object.FindFirstObjectByType<CardManagerSingleton>();
+            var newOptions = pending.RewardOptions;
+
+            var oldCards = new List<ManagedCard>(mShelfCards);
+            var oldOptionGos = new List<GameObject>(mShelfOptionGos);
+            var oldDefIds = new List<string>(mShelfDefIds);
+            var keptOld = new bool[oldCards.Count];
+
+            var newCards = new List<ManagedCard>(newOptions.Count);
+            var newOptionGos = new List<GameObject>(newOptions.Count);
+            var newDefIds = new List<string>(newOptions.Count);
+            var animTasks = new List<UniTask>(newOptions.Count);
+
+            for (var i = 0; i < newOptions.Count; i++)
+            {
+                var entry = newOptions[i];
+                if (entry == null || string.IsNullOrEmpty(entry.DefId))
+                {
+                    newDefIds.Add(null);
+                    newCards.Add(null);
+                    newOptionGos.Add(null);
+                    continue;
+                }
+
+                var slot = ShopBoardSlotResolver.ShelfSlotAt(i);
+                var oldIndex = InRoomShelfAnimation.TryMatchOldIndex(oldDefIds, keptOld, entry.DefId, i);
+                if (oldIndex >= 0
+                    && oldIndex < oldCards.Count
+                    && (oldCards[oldIndex] != null || oldOptionGos[oldIndex] != null))
+                {
+                    var oldSlot = ShopBoardSlotResolver.ShelfSlotAt(oldIndex);
+                    var tip = BuildShelfTip(entry.DefId, content);
+                    if (oldOptionGos[oldIndex] != null)
+                    {
+                        var go = oldOptionGos[oldIndex];
+                        newOptionGos.Add(go);
+                        newCards.Add(null);
+                        newDefIds.Add(entry.DefId);
+                        AttachClickProxy(go, ShopBoardHitKind.BuyShelf, i, tip, slot);
+                        if (oldSlot != slot)
+                        {
+                            animTasks.Add(
+                                InRoomShelfAnimation.HopOptionGoAsync(go, geometry, slot, ct));
+                        }
+
+                        continue;
+                    }
+
+                    var card = oldCards[oldIndex];
+                    newCards.Add(card);
+                    newOptionGos.Add(null);
+                    newDefIds.Add(entry.DefId);
+                    AttachClickProxy(card.View.gameObject, ShopBoardHitKind.BuyShelf, i, tip, slot);
+                    if (oldSlot != slot)
+                    {
+                        animTasks.Add(InRoomShelfAnimation.HopToSlotAsync(card, geometry, slot, ct));
+                    }
+
+                    continue;
+                }
+
+                // 新建：刷新换货 / 被购能力卡仍在售（重建补位）。
+                newDefIds.Add(entry.DefId);
+                if (IsShopSlotUpgradeOption(entry.DefId))
+                {
+                    var go = TryInstantiate(
+                        CardChassisPaths.RoomOptionFacePrefab,
+                        geometry,
+                        slot,
+                        entry.DefId);
+                    newOptionGos.Add(go);
+                    newCards.Add(null);
+                    if (go != null)
+                    {
+                        var tip = BuildShelfTip(entry.DefId, content);
+                        AttachClickProxy(go, ShopBoardHitKind.BuyShelf, i, tip, slot);
+                        animTasks.Add(InRoomShelfAnimation.DropOptionGoInAsync(go, geometry, slot, ct));
+                    }
+                }
+                else
+                {
+                    newOptionGos.Add(null);
+                    ManagedCard managed = null;
+                    if (cards != null)
+                    {
+                        managed = cards.SpawnPresentationOnly(
+                            entry.DefId,
+                            parent: null,
+                            CardDisplayMode.GroundCardMode,
+                            CardPresentationKind.HelpCard);
+                    }
+
+                    newCards.Add(managed);
+                    if (managed?.View != null)
+                    {
+                        BoardSlotWorldPlacement.TryAlignToSlot(managed.View.transform, geometry, slot);
+                        managed.View.transform.rotation = Quaternion.identity;
+                        CoreCardPresentationMapper.ApplyVisualsByDefId(managed, CardPresentationKind.HelpCard);
+                        var tip = BuildShelfTip(entry.DefId, content);
+                        AttachClickProxy(managed.View.gameObject, ShopBoardHitKind.BuyShelf, i, tip, slot);
+                        animTasks.Add(InRoomShelfAnimation.DropInToSlotAsync(managed, geometry, slot, ct));
+                    }
+                }
+            }
+
+            // 释放未保留的旧货架（购买离场 / 刷新换货）。
+            for (var j = 0; j < oldCards.Count; j++)
+            {
+                if (keptOld[j])
+                {
+                    continue;
+                }
+
+                if (oldCards[j] != null)
+                {
+                    cards?.Release(oldCards[j], "ShopBoard.ResyncRelease");
+                }
+
+                if (oldOptionGos[j] != null)
+                {
+                    UnityEngine.Object.Destroy(oldOptionGos[j]);
+                }
+            }
+
+            mShelfCards.Clear();
+            mShelfCards.AddRange(newCards);
+            mShelfOptionGos.Clear();
+            mShelfOptionGos.AddRange(newOptionGos);
+            mShelfDefIds.Clear();
+            mShelfDefIds.AddRange(newDefIds);
+
+            if (animTasks.Count > 0)
+            {
+                await UniTask.WhenAll(animTasks);
+            }
         }
 
         private void SpawnShelves(
@@ -174,8 +410,11 @@ namespace NineGrid.Flow.ShopBoard
             for (var i = 0; i < options.Count && i < ShopBoardSlotResolver.ShelfSlots.Length; i++)
             {
                 var entry = options[i];
+                mShelfDefIds.Add(entry == null ? null : entry.DefId);
                 if (entry == null || string.IsNullOrEmpty(entry.DefId))
                 {
+                    mShelfCards.Add(null);
+                    mShelfOptionGos.Add(null);
                     continue;
                 }
 
@@ -191,6 +430,7 @@ namespace NineGrid.Flow.ShopBoard
                         geometry,
                         slot,
                         entry.DefId);
+                    mShelfOptionGos.Add(go);
                     if (go == null)
                     {
                         mShelfCards.Add(null);
@@ -198,14 +438,15 @@ namespace NineGrid.Flow.ShopBoard
                     }
 
                     AttachClickProxy(go, ShopBoardHitKind.BuyShelf, i, tip, slot);
-                    mExtras.Add(go);
                     // 占位对齐 Pending 索引，避免 PresentShelfAcquireOrShatter 错位。
                     mShelfCards.Add(null);
                     continue;
                 }
 
+                mShelfOptionGos.Add(null);
                 if (cards == null)
                 {
+                    mShelfCards.Add(null);
                     continue;
                 }
 
@@ -217,6 +458,7 @@ namespace NineGrid.Flow.ShopBoard
                     CardPresentationKind.HelpCard);
                 if (managed?.View == null)
                 {
+                    mShelfCards.Add(null);
                     continue;
                 }
 
@@ -248,6 +490,7 @@ namespace NineGrid.Flow.ShopBoard
             var tip = BoardBriefTipCopy.ForOptionOrShelf("刷新货架", refreshPrice);
             AttachClickProxy(go, ShopBoardHitKind.Refresh, -1, tip, ShopBoardSlotResolver.RefreshSlot);
             mExtras.Add(go);
+            mRefreshGo = go;
         }
 
         private void SpawnLeave(IGroundFieldGeometrySystem geometry)
@@ -268,6 +511,7 @@ namespace NineGrid.Flow.ShopBoard
 
             AttachBriefTipOnly(go, BoardBriefTipCopy.LeaveTip, slot, geometry);
             mExtras.Add(go);
+            mLeaveGo = go;
         }
 
         private static bool IsShopSlotUpgradeOption(string defId)
@@ -437,10 +681,25 @@ namespace NineGrid.Flow.ShopBoard
         private void PresentShelfAcquireOrShatter(int shelfIndex, IArchitecture arch, int logStart)
         {
             ManagedCard shelf = null;
+            GameObject optionGo = null;
             if (shelfIndex >= 0 && shelfIndex < mShelfCards.Count)
             {
                 shelf = mShelfCards[shelfIndex];
                 mShelfCards[shelfIndex] = null;
+            }
+
+            if (shelfIndex >= 0 && shelfIndex < mShelfOptionGos.Count)
+            {
+                optionGo = mShelfOptionGos[shelfIndex];
+                mShelfOptionGos[shelfIndex] = null;
+            }
+
+            if (optionGo != null)
+            {
+                // 能力卡（道具牌格升级）购买：走标准 Death 碎裂退场，勿凭空消失。
+                InRoomShelfAnimation.PlayConsumeDeath(optionGo.transform);
+                UnityEngine.Object.Destroy(optionGo);
+                return;
             }
 
             if (InRoomItemAcquirePresentation.TryAcquireShelfHelpCardToHand(arch, logStart, shelf))
@@ -448,12 +707,13 @@ namespace NineGrid.Flow.ShopBoard
                 return;
             }
 
-            // 无 ItemSlots 授予（如牌格升级）或接手失败：退回碎裂释放。
+            // 无 ItemSlots 授予或接手失败：退回碎裂释放。
             if (shelf == null)
             {
                 return;
             }
 
+            InRoomShelfAnimation.PlayConsumeDeath(shelf);
             var cards = CardEntityLifecycleHook.CardsOrNull()
                         ?? UnityEngine.Object.FindFirstObjectByType<CardManagerSingleton>();
             cards?.Release(shelf, "ShopBoard.BuyShatter");

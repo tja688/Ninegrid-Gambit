@@ -8,10 +8,8 @@ using UnityEngine.UI;
 namespace NineGrid.Presentation.Tests.Cheat
 {
     /// <summary>
-    /// 作弊面板运行时自举结构契约：
-    /// 场景完全没有预置结构时，OpenPanel / TryToggle 须生成完整面板层级
-    /// （根 Overlay Canvas + GraphicRaycaster + EventSystem + 一层五按钮 + 二层输入框/滚动列表），
-    /// 且二层初始关闭；按钮一律走 uGUI Button（物理命中路径不适用于 Overlay UI）。
+    /// 作弊面板接线契约：对齐 MainScene「作弊工具BG」
+    /// （Sprite + BoxCollider2D 一级按钮；二级 WorldSpace Canvas + TMP_InputField + ScrollRect）。
     /// </summary>
     public sealed class CheatToolPanelBootstrapTests
     {
@@ -33,9 +31,9 @@ namespace NineGrid.Presentation.Tests.Cheat
             if (_panel != null)
             {
                 Object.DestroyImmediate(_panel);
+                _panel = null;
             }
 
-            // 自举可能在测试中新建了 EventSystem（独立根物体，不随面板销毁）。
             if (_preExistingEventSystem == null)
             {
                 var created = Object.FindFirstObjectByType<EventSystem>(FindObjectsInactive.Include);
@@ -46,12 +44,62 @@ namespace NineGrid.Presentation.Tests.Cheat
             }
         }
 
-        private CheatToolPanelController CreatePanel()
+        private CheatToolPanelController CreateEmptyPanelAndOpen()
         {
-            _panel = new GameObject("作弊工具BG");
+            _panel = new GameObject(CheatToolPanelController.PanelRootName);
             var controller = _panel.AddComponent<CheatToolPanelController>();
             controller.OpenPanel();
             return controller;
+        }
+
+        private CheatToolPanelController CreateSceneLikePanelAndOpen()
+        {
+            _panel = new GameObject(CheatToolPanelController.PanelRootName);
+            _panel.AddComponent<SpriteRenderer>();
+            _panel.SetActive(false);
+
+            var first = new GameObject(FirstLayerName);
+            first.transform.SetParent(_panel.transform, false);
+            CreateHitStub("关闭按钮", first.transform);
+            CreateHitStub("一键清关选项", first.transform);
+            CreateHitStub("战斗加卡选项", first.transform);
+            CreateHitStub("无限金币选项", first.transform);
+            CreateHitStub("作弊选项模板 (3)", first.transform);
+
+            var second = new GameObject(SecondLayerName, typeof(RectTransform), typeof(Canvas));
+            second.transform.SetParent(_panel.transform, false);
+            second.GetComponent<Canvas>().renderMode = RenderMode.WorldSpace;
+            second.SetActive(false);
+
+            var inputGo = new GameObject("InputField (TMP)", typeof(RectTransform), typeof(Image), typeof(TMP_InputField));
+            inputGo.transform.SetParent(second.transform, false);
+            var input = inputGo.GetComponent<TMP_InputField>();
+            var textGo = new GameObject("Text", typeof(RectTransform));
+            textGo.transform.SetParent(inputGo.transform, false);
+            var text = textGo.AddComponent<TextMeshProUGUI>();
+            input.textComponent = text;
+            input.targetGraphic = inputGo.GetComponent<Image>();
+
+            var scrollGo = new GameObject("Scroll View", typeof(RectTransform), typeof(Image), typeof(ScrollRect));
+            scrollGo.transform.SetParent(second.transform, false);
+            var scroll = scrollGo.GetComponent<ScrollRect>();
+            var viewport = new GameObject("Viewport", typeof(RectTransform));
+            viewport.transform.SetParent(scrollGo.transform, false);
+            var content = new GameObject("Content", typeof(RectTransform));
+            content.transform.SetParent(viewport.transform, false);
+            scroll.viewport = viewport.GetComponent<RectTransform>();
+            scroll.content = content.GetComponent<RectTransform>();
+
+            var controller = _panel.AddComponent<CheatToolPanelController>();
+            controller.OpenPanel();
+            return controller;
+        }
+
+        private static void CreateHitStub(string name, Transform parent)
+        {
+            var go = new GameObject(name);
+            go.transform.SetParent(parent, false);
+            go.AddComponent<BoxCollider2D>().size = new Vector2(2.4f, 0.56f);
         }
 
         private Transform FindChild(string name)
@@ -82,38 +130,16 @@ namespace NineGrid.Presentation.Tests.Cheat
         [Test]
         public void OpenPanel_BootstrapsBothLayers_WhenSceneHasNothing()
         {
-            CreatePanel();
+            CreateEmptyPanelAndOpen();
 
             Assert.IsNotNull(FindChild(FirstLayerName), "一级菜单须被自举");
             Assert.IsNotNull(FindChild(SecondLayerName), "二级菜单须被自举");
         }
 
         [Test]
-        public void Bootstrap_RootIsOverlayCanvasWithGraphicRaycaster()
+        public void Bootstrap_FirstLayerButtons_UsePointerHitProxy()
         {
-            CreatePanel();
-
-            var canvas = _panel.GetComponent<Canvas>();
-            Assert.IsNotNull(canvas, "根须有 Canvas");
-            Assert.AreEqual(RenderMode.ScreenSpaceOverlay, canvas.renderMode);
-            Assert.IsNotNull(_panel.GetComponent<GraphicRaycaster>(), "根 Canvas 须有 GraphicRaycaster");
-            Assert.IsNotNull(_panel.GetComponent<CanvasScaler>(), "根 Canvas 须有 CanvasScaler");
-        }
-
-        [Test]
-        public void Bootstrap_EnsuresEventSystemWhenMissing()
-        {
-            Assume.That(_preExistingEventSystem == null, "本用例要求环境中原本无 EventSystem");
-            CreatePanel();
-            Assert.IsNotNull(
-                Object.FindFirstObjectByType<EventSystem>(FindObjectsInactive.Include),
-                "缺 EventSystem 时须运行时创建");
-        }
-
-        [Test]
-        public void Bootstrap_FirstLayerHasFiveNamedButtons_AsUGuiButtons()
-        {
-            CreatePanel();
+            CreateSceneLikePanelAndOpen();
             var firstLayer = FindChild(FirstLayerName);
             Assert.IsNotNull(firstLayer);
 
@@ -130,23 +156,45 @@ namespace NineGrid.Presentation.Tests.Cheat
             {
                 var button = FindChildRecursive(firstLayer, names[i]);
                 Assert.IsNotNull(button, "缺少按钮「" + names[i] + "」");
-                Assert.IsNotNull(button.GetComponent<Button>(), "按钮「" + names[i] + "」须是 uGUI Button");
-                Assert.IsNotNull(button.GetComponent<Image>(), "按钮「" + names[i] + "」须有 Image 作 targetGraphic");
+                Assert.IsNotNull(
+                    button.GetComponent<BoxCollider2D>(),
+                    "按钮「" + names[i] + "」须有 BoxCollider2D");
+                Assert.IsNotNull(
+                    button.GetComponent<CheatToolPanelButton>(),
+                    "按钮「" + names[i] + "」须挂 CheatToolPanelButton（物理命中）");
+                Assert.IsNull(
+                    button.GetComponent<Button>(),
+                    "场景一级按钮不应被改成 uGUI Button");
             }
         }
 
         [Test]
-        public void Bootstrap_SecondLayerHasInputFieldAndScrollRect_AndStartsInactive()
+        public void Bootstrap_EnsuresEventSystemWhenMissing()
         {
-            CreatePanel();
+            Assume.That(_preExistingEventSystem == null, "本用例要求环境中原本无 EventSystem");
+            CreateEmptyPanelAndOpen();
+            Assert.IsNotNull(
+                Object.FindFirstObjectByType<EventSystem>(FindObjectsInactive.Include),
+                "缺 EventSystem 时须运行时创建");
+        }
+
+        [Test]
+        public void Bootstrap_SecondLayerGetsGraphicRaycaster_AndStartsInactive()
+        {
+            CreateSceneLikePanelAndOpen();
             var secondLayer = FindChild(SecondLayerName);
             Assert.IsNotNull(secondLayer);
 
             Assert.IsFalse(secondLayer.gameObject.activeSelf, "打开面板后二级菜单应保持关闭");
 
+            var canvas = secondLayer.GetComponent<Canvas>();
+            Assert.IsNotNull(canvas, "二级菜单须有 Canvas");
+            Assert.IsNotNull(
+                canvas.GetComponent<GraphicRaycaster>(),
+                "二级 Canvas 须补 GraphicRaycaster，否则 InputField/ScrollView 点不中");
+
             var input = secondLayer.GetComponentInChildren<TMP_InputField>(true);
             Assert.IsNotNull(input, "二级菜单须有 TMP_InputField");
-            Assert.IsNotNull(input.textComponent, "输入框须绑定文本组件");
 
             var scroll = secondLayer.GetComponentInChildren<ScrollRect>(true);
             Assert.IsNotNull(scroll, "二级菜单须有 ScrollRect");
@@ -155,17 +203,35 @@ namespace NineGrid.Presentation.Tests.Cheat
         }
 
         [Test]
-        public void TryToggle_CreatesPanelAtRuntime_WhenSceneHasNone()
+        public void OpenAddCardMenu_ClearsInput_AndCloseCleansUp()
         {
-            var existing = Object.FindFirstObjectByType<CheatToolPanelController>();
-            Assume.That(existing == null, "本用例要求场景中原本无面板");
+            var controller = CreateSceneLikePanelAndOpen();
+            controller.OpenAddCardMenu();
+
+            var second = FindChild(SecondLayerName);
+            Assert.IsTrue(second.gameObject.activeSelf);
+            var input = second.GetComponentInChildren<TMP_InputField>(true);
+            Assert.IsNotNull(input);
+            input.text = "残留搜索";
+
+            controller.CloseAddCardMenu();
+            Assert.IsFalse(second.gameObject.activeSelf);
+            Assert.AreEqual(string.Empty, input.text, "关闭二级菜单须清空输入");
+        }
+
+        [Test]
+        public void TryToggle_FindsInactiveScenePanel_ByName()
+        {
+            _panel = new GameObject(CheatToolPanelController.PanelRootName);
+            _panel.SetActive(false);
+            // 模拟场景失活预置：尚无 Controller。
+            Assume.That(
+                Object.FindFirstObjectByType<CheatToolPanelController>(FindObjectsInactive.Include) == null);
 
             CheatToolPanelController.TryToggle();
 
-            _panel = GameObject.Find("作弊工具BG");
-            Assert.IsNotNull(_panel, "TryToggle 应运行时创建面板");
-            Assert.IsTrue(_panel.activeSelf, "TryToggle 创建后应直接打开面板");
-            Assert.IsNotNull(FindChild(FirstLayerName), "创建的面板须完成自举");
+            Assert.IsTrue(_panel.activeSelf, "TryToggle 应打开场景失活面板");
+            Assert.IsNotNull(_panel.GetComponent<CheatToolPanelController>());
         }
     }
 }

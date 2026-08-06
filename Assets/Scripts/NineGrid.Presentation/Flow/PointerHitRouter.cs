@@ -1,6 +1,7 @@
 using NineGrid.Cards;
 using NineGrid.Presentation;
 using UnityEngine;
+using UnityEngine.EventSystems;
 
 namespace NineGrid.Flow
 {
@@ -40,6 +41,14 @@ namespace NineGrid.Flow
         {
             var cam = ResolveCamera();
             if (cam == null || !WorldPointerUtility.TryGetPointerScreen(out var screen))
+            {
+                ClearHover();
+                return;
+            }
+
+            // WorldSpace uGUI（作弊二级菜单 InputField / ScrollView）与物理命中并行时，
+            // 指针已在 EventSystem UI 上则把世界命中让给 UI，避免抢焦点 / 点穿。
+            if (IsPointerOverUi())
             {
                 ClearHover();
                 return;
@@ -221,6 +230,12 @@ namespace NineGrid.Flow
 
             _camera = Camera.main;
             return _camera;
+        }
+
+        private static bool IsPointerOverUi()
+        {
+            var es = EventSystem.current;
+            return es != null && es.IsPointerOverGameObject();
         }
 
         private static IPointerHitTarget ResolveBestTarget(Camera camera, Vector2 screen)
