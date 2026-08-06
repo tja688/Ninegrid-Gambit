@@ -701,3 +701,4 @@
 [ 4592889ms] [ERROR] Failed to load resource: net::ERR_BLOCKED_BY_CLIENT @ https://api.github.com/_private/browser/stats:0
 [ 4596911ms] [ERROR] Failed to load resource: net::ERR_BLOCKED_BY_CLIENT @ https://collector.github.com/github/collect:0
 [ 4597909ms] [ERROR] Failed to load resource: net::ERR_BLOCKED_BY_CLIENT @ https://api.github.com/_private/browser/stats:0
+[ 4630063ms] [ERROR] Failed to load resource: net::ERR_BLOCKED_BY_CLIENT @ https://collector.github.com/github/collect:0
