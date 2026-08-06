@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using NineGrid.Cards;
 using NineGrid.Core;
 using NineGrid.Core.Commands;
@@ -9,7 +8,8 @@ using QFramework;
 namespace NineGrid.Flow.Presentation
 {
     /// <summary>
-    /// 攻击垂直切片剧本：CombatHit → Present →（击杀）Fill → Present → Rotate → Present →（融合）Refill；
+    /// 攻击垂直切片剧本：CombatHit → Present → 互动计数 → 盘面稳定化；
+    /// 目标击杀时再 Rotate → 盘面稳定化，最后进入敌方行动。
     /// 未击杀 → 反击 CombatHit → Present（主线续写，非 Forget 旁路）。
     /// 怪物先攻时：先 Counter（怪→玩家），Avatar 未败再 Hit（玩家→怪），击杀则走 Fill/Rotate。
     /// </summary>
@@ -25,13 +25,11 @@ namespace NineGrid.Flow.Presentation
         private readonly Action<int, int, PostKillBoardPresentationResult> mOnBoardBatchProjected;
         /// <summary>startIndex, attackerBoardSlot, attackerUid, projection</summary>
         private readonly Action<int, int, int, PostKillBoardPresentationResult> mOnCounterBatchProjected;
-        private readonly FusionRefillScheduler mFusionRefill;
+        private readonly BoardStabilizationScheduler mStabilization;
         private readonly EnemyActionPhaseScheduler mEnemyAction;
         private bool mLastHitKilledTarget;
         private bool mLastAvatarDefeated;
-        private bool mLastRotateHadFusion;
         private int mLastResolvedCombatUid;
-        private readonly List<int> mFusionExcludeResultUids = new List<int>(2);
 
         public AttackIntentScriptFactory(
             IArchitecture architecture,
@@ -42,7 +40,7 @@ namespace NineGrid.Flow.Presentation
             Action<int, int, int, PostKillBoardPresentationResult> onHitBatchProjected = null,
             Action<int, int, PostKillBoardPresentationResult> onBoardBatchProjected = null,
             Action<int, int, int, PostKillBoardPresentationResult> onCounterBatchProjected = null,
-            FusionRefillScheduler fusionRefill = null,
+            BoardStabilizationScheduler stabilization = null,
             EnemyActionPhaseScheduler enemyAction = null)
         {
             if (architecture == null)
@@ -73,7 +71,7 @@ namespace NineGrid.Flow.Presentation
             mOnHitBatchProjected = onHitBatchProjected;
             mOnBoardBatchProjected = onBoardBatchProjected;
             mOnCounterBatchProjected = onCounterBatchProjected;
-            mFusionRefill = fusionRefill ?? new FusionRefillScheduler();
+            mStabilization = stabilization ?? new BoardStabilizationScheduler();
             mEnemyAction = enemyAction ?? new EnemyActionPhaseScheduler();
         }
 
@@ -109,9 +107,7 @@ namespace NineGrid.Flow.Presentation
             var sync = mArchitecture.GetSystem<IPresentationSyncSystem>();
             mLastHitKilledTarget = false;
             mLastAvatarDefeated = false;
-            mLastRotateHadFusion = false;
             mLastResolvedCombatUid = 0;
-            mFusionExcludeResultUids.Clear();
 
             if (phase.MonsterStrikesFirst(attackerUid, targetUid))
             {
@@ -219,49 +215,55 @@ namespace NineGrid.Flow.Presentation
                     () => ResolveAndProject(
                         boardSlot,
                         () => mDispatcher.Send(new ResolvePostKillRotateCommand()),
-                        trackFusion: false),
+                        project: true),
                     slice: "LeaveTrapClear");
                 timeline.Enqueue(new ResolveBatchStep(clearGate));
                 timeline.Enqueue(new PresentStep(clearGate, mBoardPresentChannel));
                 return;
             }
 
-            var fillGate = PresentationSyncBatchGate.FromSync(
+            mStabilization.Append(
+                timeline,
+                mArchitecture,
+                mDispatcher,
+                mBoardPresentChannel,
+                boardSlot,
+                mOnBoardBatchProjected,
+                t => EnqueueRotateThenSettle(t, boardSlot));
+        }
+
+        private void EnqueueRotateThenSettle(BattleTimeline timeline, int boardSlot)
+        {
+            var sync = mArchitecture.GetSystem<IPresentationSyncSystem>();
+            var rotateGate = PresentationSyncBatchGate.FromSync(
                 sync,
                 () => ResolveAndProject(
                     boardSlot,
-                    () => mDispatcher.Send(new ResolvePostKillFillCommand()),
-                    trackFusion: true));
-            var rotateGate = PresentationSyncBatchGate.FromSync(
-                sync,
-                () => ResolveAndProject(boardSlot, () => mDispatcher.Send(new ResolvePostKillRotateCommand()), trackFusion: true));
-
-            timeline.Enqueue(new ResolveBatchStep(fillGate));
-            timeline.Enqueue(new PresentStep(fillGate, mBoardPresentChannel));
+                    () => mDispatcher.Send(new ResolvePostKillRotateCommand()),
+                    project: true));
             timeline.Enqueue(new ResolveBatchStep(rotateGate));
             timeline.Enqueue(new PresentStep(rotateGate, mBoardPresentChannel));
-            mFusionRefill.AppendAfterRotatePresent(
+            mStabilization.Append(
                 timeline,
-                () => mLastRotateHadFusion,
-                t =>
-                {
-                    mFusionRefill.EnqueueRefillBatches(
-                        t,
-                        mArchitecture,
-                        mDispatcher,
-                        mBoardPresentChannel,
-                        boardSlot,
-                        mFusionExcludeResultUids,
-                        mOnBoardBatchProjected);
-                    AppendEnemyActionPhase(t, boardSlot);
-                },
+                mArchitecture,
+                mDispatcher,
+                mBoardPresentChannel,
+                boardSlot,
+                mOnBoardBatchProjected,
                 t => AppendEnemyActionPhase(t, boardSlot));
         }
 
         private void EnqueueNonKillInteractionAdvance(BattleTimeline timeline, int boardSlot)
         {
             EnqueueInteractionAdvanceBatch(timeline, boardSlot, "AttackInteractionAdvance");
-            AppendEnemyActionPhase(timeline, boardSlot);
+            mStabilization.Append(
+                timeline,
+                mArchitecture,
+                mDispatcher,
+                mBoardPresentChannel,
+                boardSlot,
+                mOnBoardBatchProjected,
+                t => AppendEnemyActionPhase(t, boardSlot));
         }
 
         private void EnqueueInteractionAdvanceBatch(BattleTimeline timeline, int boardSlot, string slice)
@@ -282,7 +284,7 @@ namespace NineGrid.Flow.Presentation
                 () => ResolveAndProject(
                     boardSlot,
                     () => mDispatcher.Send(new AdvanceInteractionCountCommand()),
-                    trackFusion: false),
+                    project: true),
                 slice: slice);
             timeline.Enqueue(new ResolveBatchStep(advanceGate));
             timeline.Enqueue(new PresentStep(advanceGate, mBoardPresentChannel));
@@ -452,7 +454,7 @@ namespace NineGrid.Flow.Presentation
         private CoreCommandDispatchResult ResolveAndProject(
             int boardSlot,
             Func<CoreCommandDispatchResult> resolve,
-            bool trackFusion)
+            bool project)
         {
             var pipeline = mArchitecture.GetSystem<IActionPipelineSystem>();
             var startIndex = pipeline.EventLog.Entries.Count;
@@ -462,20 +464,7 @@ namespace NineGrid.Flow.Presentation
                 return dispatch;
             }
 
-            if (trackFusion)
-            {
-                // Fill/Rotate 共用 exclude：追加收集，OR 进 flag，避免后一次 Clear 掉前一次融合。
-                if (FusionRefillPlanner.TryCollectResultUids(
-                        pipeline.EventLog.Entries,
-                        startIndex,
-                        mFusionExcludeResultUids,
-                        clearInto: false))
-                {
-                    mLastRotateHadFusion = true;
-                }
-            }
-
-            if (mOnBoardBatchProjected != null)
+            if (project && mOnBoardBatchProjected != null)
             {
                 mOnBoardBatchProjected(startIndex, boardSlot, IntentBatchProjection.Build(mArchitecture, pipeline, startIndex));
             }

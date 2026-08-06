@@ -13,10 +13,16 @@ namespace NineGrid.Flow.Presentation
     /// </summary>
     public sealed class EnemyActionPhaseScheduler
     {
+        private readonly BoardStabilizationScheduler mStabilization;
         private bool mLastStrikeHadDamage;
         private bool mLastAvatarDefeated;
         private int mLastStrikerUid;
         private int mLastStrikerSlot;
+
+        public EnemyActionPhaseScheduler(BoardStabilizationScheduler stabilization = null)
+        {
+            mStabilization = stabilization ?? new BoardStabilizationScheduler();
+        }
 
         public void Append(
             BattleTimeline timeline,
@@ -50,6 +56,13 @@ namespace NineGrid.Flow.Presentation
 
             if (!HasParticipatingEnemy(architecture))
             {
+                mStabilization.Append(
+                    timeline,
+                    architecture,
+                    dispatcher,
+                    boardPresentChannel,
+                    boardSlotHint,
+                    onBoardBatchProjected);
                 return;
             }
 
@@ -215,6 +228,13 @@ namespace NineGrid.Flow.Presentation
                 slice: "EnemyActionFinale");
             timeline.Enqueue(new ResolveBatchStep(finaleGate));
             timeline.Enqueue(new PresentStep(finaleGate, boardPresentChannel, "EnemyActionFinale"));
+            mStabilization.Append(
+                timeline,
+                architecture,
+                dispatcher,
+                boardPresentChannel,
+                boardSlotHint,
+                onBoardBatchProjected);
         }
 
         private CoreCommandDispatchResult ResolveNextAndProject(

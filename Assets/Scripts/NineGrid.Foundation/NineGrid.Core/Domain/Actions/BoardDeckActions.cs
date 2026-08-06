@@ -338,6 +338,19 @@ namespace NineGrid.Core
 
     public sealed class FillEmptySlotsAction : GameAction
     {
+        private static readonly SlotId[] sFillOrder =
+        {
+            SlotId.Board(1),
+            SlotId.Board(2),
+            SlotId.Board(3),
+            SlotId.Board(6),
+            SlotId.Board(9),
+            SlotId.Board(8),
+            SlotId.Board(7),
+            SlotId.Board(4),
+            SlotId.Board(5)
+        };
+
         private static readonly TriggerPoint[] sPostTriggers =
         {
             TriggerPoint.AfterAction,
@@ -347,6 +360,8 @@ namespace NineGrid.Core
 
         public override string ActionName { get { return "FillEmptySlots"; } }
 
+        public static IReadOnlyList<SlotId> FillOrder { get { return sFillOrder; } }
+
         public override GameActionResult Apply(GameActionContext context)
         {
             var registry = context.GetModel<CardRegistry>();
@@ -355,7 +370,7 @@ namespace NineGrid.Core
             var run = context.GetModel<RunModel>();
             var result = new GameActionResult();
             var filled = 0;
-            IReadOnlyList<SlotId> fillOrder = RotateBoardClockwiseAction.ClockwisePath;
+            IReadOnlyList<SlotId> fillOrder = sFillOrder;
 
             if (run.Phase.Value == GamePhase.DealOpeningCards && board.AvatarUid.Value > 0)
             {

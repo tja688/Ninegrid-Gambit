@@ -77,13 +77,13 @@ namespace NineGrid.Core.Commands
     }
 
     /// <summary>
-    /// 击杀后分拍：仅补牌。不含交互计数。
+    /// 盘面稳定化分拍：Core 判定是否欠补位；每次至多执行一轮 Fill。
     /// </summary>
-    public sealed class ResolvePostKillFillCommand : AbstractCommand<CoreCommandResult>
+    public sealed class ResolveBoardStabilizationCommand : AbstractCommand<CoreCommandResult>
     {
         protected override CoreCommandResult OnExecute()
         {
-            return this.GetSystem<IPhaseSystem>().ResolvePostKillFill();
+            return this.GetSystem<IPhaseSystem>().ResolveBoardStabilization();
         }
     }
 
@@ -128,42 +128,6 @@ namespace NineGrid.Core.Commands
         protected override CoreCommandResult OnExecute()
         {
             return this.GetSystem<IPhaseSystem>().ResolveEnemyActionFinale();
-        }
-    }
-
-    /// <summary>
-    /// 融合伴随补牌分拍：仅 FillEmptySlots（不含交互计数）。skipFill 用于打开空批 ack。
-    /// </summary>
-    public sealed class ResolveFusionRefillCommand : AbstractCommand<CoreCommandResult>
-    {
-        private readonly bool mSkipFill;
-
-        public ResolveFusionRefillCommand(bool skipFill = false)
-        {
-            mSkipFill = skipFill;
-        }
-
-        protected override CoreCommandResult OnExecute()
-        {
-            return this.GetSystem<IPhaseSystem>().ResolveFusionRefill(mSkipFill);
-        }
-    }
-
-    /// <summary>
-    /// drain 退场补牌分拍：仅 FillEmptySlots（不含交互计数）。skipFill 用于打开空批 ack。
-    /// </summary>
-    public sealed class ResolveDrainRefillCommand : AbstractCommand<CoreCommandResult>
-    {
-        private readonly bool mSkipFill;
-
-        public ResolveDrainRefillCommand(bool skipFill = false)
-        {
-            mSkipFill = skipFill;
-        }
-
-        protected override CoreCommandResult OnExecute()
-        {
-            return this.GetSystem<IPhaseSystem>().ResolveDrainRefill(mSkipFill);
         }
     }
 

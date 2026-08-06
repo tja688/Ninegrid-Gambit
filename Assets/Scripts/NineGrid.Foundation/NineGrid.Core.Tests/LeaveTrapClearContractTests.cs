@@ -102,7 +102,7 @@ namespace NineGrid.Core.Tests
         }
 
         [Test]
-        public void BreakLeaveTrap_WithDrawPile_PostKillFillDoesNotRefillVacatedSlot()
+        public void BreakLeaveTrap_WithDrawPile_StabilizationDoesNotRefillVacatedSlot()
         {
             // 回归：清关后若仍 Fill，牌堆非空会 Deal 进刚腾出的格，表现发牌可卡死主线。
             StartEmptyNode();
@@ -118,7 +118,7 @@ namespace NineGrid.Core.Tests
             Assert.AreEqual(0, board.GetCardUid(sSlot2), "击破离开机关后该格应空");
 
             var fillStart = mPipeline.EventLog.Entries.Count;
-            Assert.IsTrue(mPhase.ResolvePostKillFill().Accepted);
+            Assert.IsTrue(mPhase.ResolveBoardStabilization().Accepted);
             Assert.AreEqual(0, board.GetCardUid(sSlot2), "清关后 Fill 不得往空位补牌");
             Assert.IsFalse(
                 ContainsEventSince(fillStart, CoreEventType.CardDealt),

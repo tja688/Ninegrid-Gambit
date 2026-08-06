@@ -46,7 +46,7 @@ namespace NineGrid.Presentation.Tests
         }
 
         [Test]
-        public void AttackIntent_Kill_Lockstep_HitThenFillThenRotate_AcksBetweenBatches()
+        public void AttackIntent_Kill_Lockstep_HitThenStabilizeThenRotate_AcksBetweenBatches()
         {
             Assert.IsTrue(mPhase.StartNode(CreateSingleMonsterNode(hp: 1, attack: 0)).Accepted);
             PlaceSoleBoardCardAt(sAdjacentSlot);
@@ -92,8 +92,10 @@ namespace NineGrid.Presentation.Tests
             Assert.AreEqual(0, mSync.ActiveBatchId);
             Assert.AreEqual(1, boardPresent.BeginCount);
 
-            // Resolve Fill
+            // Stable-state check schedules the first refill slice without resolving ahead.
             var fillStart = mPipeline.EventLog.Entries.Count;
+            director.Tick(0.016f);
+            Assert.AreEqual(0, mSync.ActiveBatchId);
             director.Tick(0.016f);
             Assert.AreEqual(3, mSync.ActiveBatchId);
             Assert.IsTrue(ContainsTypeSince(fillStart, CoreEventType.SlotsFilled));
@@ -103,8 +105,10 @@ namespace NineGrid.Presentation.Tests
             Assert.AreEqual(0, mSync.ActiveBatchId);
             Assert.AreEqual(2, boardPresent.BeginCount);
 
-            // Resolve Rotate
+            // Stable check closes pre-rotate stabilization, then Rotate resolves.
             var rotateStart = mPipeline.EventLog.Entries.Count;
+            director.Tick(0.016f);
+            Assert.AreEqual(0, mSync.ActiveBatchId);
             director.Tick(0.016f);
             Assert.AreEqual(4, mSync.ActiveBatchId);
             Assert.IsTrue(ContainsTypeSince(rotateStart, CoreEventType.BoardRotated));
@@ -114,8 +118,10 @@ namespace NineGrid.Presentation.Tests
             Assert.AreEqual(0, mSync.ActiveBatchId);
             Assert.AreEqual(3, boardPresent.BeginCount);
 
-            // Fusion aftermath branch（无融合则空过）→ idle
-            director.Tick(0.016f);
+            for (var i = 0; i < 4 && director.IsMainlineBusy; i++)
+            {
+                director.Tick(0.016f);
+            }
             Assert.IsFalse(director.IsMainlineBusy);
         }
 
@@ -214,8 +220,13 @@ namespace NineGrid.Presentation.Tests
             Assert.AreEqual(0, mSync.ActiveBatchId);
             Assert.AreEqual(1, counterPresent.BeginCount);
             director.Tick(0.016f); // branch after counter → enqueue interaction advance
-            director.Tick(0.016f); // silent Advance interaction count
+            for (var i = 0; i < 6 && director.IsMainlineBusy; i++)
+            {
+                director.Tick(0.016f);
+            }
             Assert.IsFalse(director.IsMainlineBusy);
+            Assert.IsFalse(ContainsTypeSince(hitStart, CoreEventType.SlotsFilled));
+            Assert.IsFalse(ContainsTypeSince(hitStart, CoreEventType.BoardRotated));
         }
 
         [Test]
@@ -265,7 +276,10 @@ namespace NineGrid.Presentation.Tests
             director.Tick(0.016f); // branch → 远程武器跳过反击批，直接入队互动推进
             Assert.IsFalse(counterProjected, "远程武器怪不得入队反击批");
             Assert.AreEqual(0, counterPresent.BeginCount);
-            director.Tick(0.016f); // silent Advance interaction count
+            for (var i = 0; i < 6 && director.IsMainlineBusy; i++)
+            {
+                director.Tick(0.016f);
+            }
             Assert.IsFalse(director.IsMainlineBusy);
             Assert.AreEqual(1, mArch.GetModel<PlayerModel>().InteractionCount.Value);
             Assert.AreEqual(avatarHpBefore, (int)avatar.Stats.GetBase(StatId.Hp), "远程武器怪反击段不得伤玩家");
@@ -318,7 +332,14 @@ namespace NineGrid.Presentation.Tests
             director.Tick(0.016f); // branch after counter → enqueue advance
             Assert.IsTrue(director.IsMainlineBusy, "计数推进仍占主线，缓冲尚未冲刷");
             Assert.IsTrue(director.HasBufferedIntent);
-            director.Tick(0.016f); // silent advance interaction count → flush buffered
+            director.Tick(0.016f); // resolve interaction count
+            Assert.IsTrue(director.HasBufferedIntent, "互动计数批尚未 Present，不得提前 flush");
+            director.Tick(0.016f); // present interaction count
+            Assert.IsTrue(director.HasBufferedIntent, "稳定化检查尚在主线，不得提前 flush");
+            for (var i = 0; i < 5 && director.HasBufferedIntent; i++)
+            {
+                director.Tick(0.016f);
+            }
             Assert.IsFalse(director.HasBufferedIntent);
         }
 

@@ -917,7 +917,7 @@
   "design_text": "相邻无头骷髅时移除双方并洗入重组大骷髅（不持有散架）",
   "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
   "conditions_json": "[\"AdjacentHasCard\"]",
-  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnSelfMove\",\"every\":1},\"conditions\":[{\"atom\":\"AdjacentHasCard\",\"origin\":\"Self\",\"defId\":\"monster.headless_skeleton\"}],\"target\":{\"atom\":\"Self\"},\"action\":{\"atom\":\"Sequence\",\"actions\":[{\"atom\":\"RemoveCard\"},{\"atom\":\"RemoveCard\",\"target\":{\"atom\":\"AdjacentCard\",\"origin\":\"Self\",\"defId\":\"monster.headless_skeleton\"}},{\"atom\":\"ShuffleInto\",\"defId\":\"monster.big_skeleton_reborn\",\"kind\":\"Monster\",\"count\":\"{{count}}\",\"top\":true}]}}"
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnSelfMove\",\"every\":1},\"conditions\":[{\"atom\":\"AdjacentHasCard\",\"origin\":\"Self\",\"defId\":\"monster.headless_skeleton\"}],\"target\":{\"atom\":\"Self\"},\"action\":{\"atom\":\"Sequence\",\"actions\":[{\"atom\":\"RemoveCard\"},{\"atom\":\"RemoveCard\",\"target\":{\"atom\":\"AdjacentCard\",\"origin\":\"Self\",\"defId\":\"monster.headless_skeleton\"}},{\"atom\":\"ShuffleInto\",\"defId\":\"monster.big_skeleton_reborn\",\"kind\":\"Monster\",\"count\":\"{{count}}\",\"top\":true,\"deferRefill\":true}]}}"
  },
  {
   "id": "tpl.skill.recombine_head.move",
@@ -925,7 +925,7 @@
   "design_text": "相邻骷髅头时移除双方并洗入重组大骷髅（不持有散架）",
   "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
   "conditions_json": "[\"AdjacentHasCard\"]",
-  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnSelfMove\",\"every\":1},\"conditions\":[{\"atom\":\"AdjacentHasCard\",\"origin\":\"Self\",\"defId\":\"monster.skull_head\"}],\"target\":{\"atom\":\"Self\"},\"action\":{\"atom\":\"Sequence\",\"actions\":[{\"atom\":\"RemoveCard\"},{\"atom\":\"RemoveCard\",\"target\":{\"atom\":\"AdjacentCard\",\"origin\":\"Self\",\"defId\":\"monster.skull_head\"}},{\"atom\":\"ShuffleInto\",\"defId\":\"monster.big_skeleton_reborn\",\"kind\":\"Monster\",\"count\":\"{{count}}\",\"top\":true}]}}"
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnSelfMove\",\"every\":1},\"conditions\":[{\"atom\":\"AdjacentHasCard\",\"origin\":\"Self\",\"defId\":\"monster.skull_head\"}],\"target\":{\"atom\":\"Self\"},\"action\":{\"atom\":\"Sequence\",\"actions\":[{\"atom\":\"RemoveCard\"},{\"atom\":\"RemoveCard\",\"target\":{\"atom\":\"AdjacentCard\",\"origin\":\"Self\",\"defId\":\"monster.skull_head\"}},{\"atom\":\"ShuffleInto\",\"defId\":\"monster.big_skeleton_reborn\",\"kind\":\"Monster\",\"count\":\"{{count}}\",\"top\":true,\"deferRefill\":true}]}}"
  },
  {
   "id": "tpl.skill.relentless_chase.move",
@@ -1085,7 +1085,7 @@
   "design_text": "[场上] 每移动1次，若正交相邻有两张怪物，则移除本卡与两张怪物并洗入巨大骷髅",
   "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
   "conditions_json": "[\"TargetCount\"]",
-  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnSelfMove\",\"every\":1},\"conditions\":[{\"atom\":\"TargetCount\",\"min\":2,\"target\":{\"atom\":\"FilteredCards\",\"kind\":\"Monster\",\"zone\":\"Board\",\"adjacentTo\":\"Self\",\"exclude\":[\"Self\"]}}],\"target\":{\"atom\":\"Self\"},\"action\":{\"atom\":\"Sequence\",\"actions\":[{\"atom\":\"RemoveCard\",\"destination\":\"Removed\",\"reason\":\"{{reason}}\"},{\"atom\":\"RemoveCard\",\"destination\":\"Removed\",\"reason\":\"{{action_actions_1_reason}}\",\"target\":{\"atom\":\"FilteredCards\",\"kind\":\"Monster\",\"zone\":\"Board\",\"adjacentTo\":\"Self\",\"exclude\":[\"Self\"],\"count\":\"{{count}}\"}},{\"atom\":\"ShuffleInto\",\"defId\":\"monster.giant_skeleton\",\"kind\":\"Monster\",\"count\":\"{{action_actions_2_count}}\",\"top\":true}]}}"
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnSelfMove\",\"every\":1},\"conditions\":[{\"atom\":\"TargetCount\",\"min\":2,\"target\":{\"atom\":\"FilteredCards\",\"kind\":\"Monster\",\"zone\":\"Board\",\"adjacentTo\":\"Self\",\"exclude\":[\"Self\"]}}],\"target\":{\"atom\":\"Self\"},\"action\":{\"atom\":\"Sequence\",\"actions\":[{\"atom\":\"RemoveCard\",\"destination\":\"Removed\",\"reason\":\"{{reason}}\"},{\"atom\":\"RemoveCard\",\"destination\":\"Removed\",\"reason\":\"{{action_actions_1_reason}}\",\"target\":{\"atom\":\"FilteredCards\",\"kind\":\"Monster\",\"zone\":\"Board\",\"adjacentTo\":\"Self\",\"exclude\":[\"Self\"],\"count\":\"{{count}}\"}},{\"atom\":\"ShuffleInto\",\"defId\":\"monster.giant_skeleton\",\"kind\":\"Monster\",\"count\":\"{{action_actions_2_count}}\",\"top\":true,\"deferRefill\":true}]}}"
  },
  {
   "id": "tpl.skill.survival_wisdom.battle",

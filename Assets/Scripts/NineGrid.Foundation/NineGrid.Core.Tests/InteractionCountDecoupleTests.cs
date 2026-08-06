@@ -139,7 +139,7 @@ namespace NineGrid.Core.Tests
 
             Assert.IsTrue(
                 mPhase.ApplyUseItem(knifeUid, new List<int> { targetUid }, null).Accepted);
-            Assert.IsTrue(mPhase.ResolvePostKillFill().Accepted);
+            Assert.IsTrue(mPhase.ResolveBoardStabilization().Accepted);
             Assert.IsTrue(mPhase.ResolvePostKillRotate().Accepted);
 
             Assert.AreEqual(
@@ -168,7 +168,7 @@ namespace NineGrid.Core.Tests
             Assert.IsFalse(ContainsType(SliceEvents(countStart), CoreEventType.BoardRotated));
 
             var fillStart = mPipeline.EventLog.Entries.Count;
-            Assert.IsTrue(mPhase.ResolvePostKillFill().Accepted);
+            Assert.IsTrue(mPhase.ResolveBoardStabilization().Accepted);
             var fillEvents = SliceEvents(fillStart);
             Assert.IsTrue(ContainsType(fillEvents, CoreEventType.SlotsFilled));
             Assert.IsFalse(ContainsType(fillEvents, CoreEventType.InteractionChanged));

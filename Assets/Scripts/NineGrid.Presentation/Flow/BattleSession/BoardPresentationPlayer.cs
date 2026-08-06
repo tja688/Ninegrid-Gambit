@@ -1281,16 +1281,6 @@ namespace NineGrid.Flow
                 payload["choreoSeqId"] = ChoreoTraceContext.CurrentSeqId.ToString();
             }
 
-            if (!payload.ContainsKey("refillScheduled"))
-            {
-                payload["refillScheduled"] = FusionRefillScheduler.IsRefillScheduled ? "1" : "0";
-            }
-
-            if (!payload.ContainsKey("refillGateArmed"))
-            {
-                payload["refillGateArmed"] = FusionRefillScheduler.IsRefillGateArmed ? "1" : "0";
-            }
-
             PerfTraceRecorder.Record("SkeletonFusion", uid, site, payload);
             if (payload.Count == 0)
             {
@@ -1400,29 +1390,14 @@ namespace NineGrid.Flow
                 request,
                 onFusionStarted: null,
                 ct);
-            var gateArmed = FusionRefillScheduler.IsRefillGateArmed;
-            var alreadyScheduled = FusionRefillScheduler.IsRefillScheduled;
             RecordSkeletonFusionTrace(
                 "PresentEnd",
                 uid,
                 new Dictionary<string, string>
                 {
                     ["skillId"] = fusion.SkillId,
-                    ["refillDeferredToDirector"] = PresentationInputGates.MainlineBusy ? "1" : "0",
-                    // refillScheduled 只信真实入队标记；gateArmed 仅表示剧本挂了分支，不等于已补牌。
-                    ["refillScheduled"] = alreadyScheduled ? "1" : "0",
-                    ["refillGateArmed"] = gateArmed ? "1" : "0",
+                    ["refillOwnedByCoreStabilization"] = "1",
                 });
-            if (!alreadyScheduled)
-            {
-                var exclude = new List<int>(1);
-                if (fusion.ResultUid > 0)
-                {
-                    exclude.Add(fusion.ResultUid);
-                }
-
-                FusionRefillAftermath.TrySchedule(exclude);
-            }
 
             return true;
         }

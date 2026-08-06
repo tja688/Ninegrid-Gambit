@@ -33,6 +33,7 @@ namespace NineGrid.Core
             RegisterSystem<IActionPipelineSystem>(new ActionPipelineSystem());
             RegisterSystem<IBoardSystem>(new BoardSystem());
             RegisterSystem<IDeckSystem>(new DeckSystem());
+            RegisterSystem<IBoardStabilizationSystem>(new BoardStabilizationSystem());
             RegisterSystem<IPhaseSystem>(new PhaseSystem());
         }
 

@@ -62,7 +62,6 @@ namespace NineGrid.Flow.Diagnostics
             sNextChainId = 1;
             sOpenRejectReason = string.Empty;
             sAckRejectLogged = false;
-            FusionRefillScheduler.ResetScheduleMarks();
         }
 
         /// <summary>由 PresentationDirector.Tick / 意图变更时刷新 BusySnapshot 字段。</summary>
@@ -99,7 +98,6 @@ namespace NineGrid.Flow.Diagnostics
         public static void ClearChain()
         {
             sCurrentChainId = 0;
-            FusionRefillScheduler.ResetScheduleMarks();
         }
 
         public static void AppendBusyFields(Dictionary<string, string> payload)

@@ -48,7 +48,7 @@ namespace NineGrid.Presentation.Tests
         }
 
         [Test]
-        public void UseItemIntent_Kill_Lockstep_UseThenFillThenRotate_AcksBetweenBatches()
+        public void UseItemIntent_Kill_Lockstep_UseThenStabilizeThenRotate_AcksBetweenBatches()
         {
             Assert.IsTrue(mPhase.StartNode(CreateSingleMonsterNode(hp: 1, attack: 0)).Accepted);
             PlaceSoleBoardCardAt(sAdjacentSlot);
@@ -86,17 +86,12 @@ namespace NineGrid.Presentation.Tests
             Assert.AreEqual(0, mSync.ActiveBatchId);
             Assert.AreEqual(0, boardPresent.BeginCount);
 
-            // Use-batch FusionRefill 门（击杀路径 predicate 为 false，空过）
+            // Stable-state check schedules the due refill slice.
             director.Tick(0.016f);
             Assert.AreEqual(0, mSync.ActiveBatchId);
             Assert.AreEqual(0, boardPresent.BeginCount);
 
-            // Drain refill branch（击杀路径 needsDrainRefill=false，空过）
-            director.Tick(0.016f);
-            Assert.AreEqual(0, mSync.ActiveBatchId);
-            Assert.AreEqual(0, boardPresent.BeginCount);
-
-            // Resolve Fill
+            // Resolve stabilization slice.
             var fillStart = mPipeline.EventLog.Entries.Count;
             director.Tick(0.016f);
             Assert.AreEqual(2, mSync.ActiveBatchId);
@@ -107,8 +102,10 @@ namespace NineGrid.Presentation.Tests
             Assert.AreEqual(0, mSync.ActiveBatchId);
             Assert.AreEqual(1, boardPresent.BeginCount);
 
-            // Resolve Rotate
+            // Stable check closes pre-rotate stabilization, then Rotate resolves.
             var rotateStart = mPipeline.EventLog.Entries.Count;
+            director.Tick(0.016f);
+            Assert.AreEqual(0, mSync.ActiveBatchId);
             director.Tick(0.016f);
             Assert.AreEqual(3, mSync.ActiveBatchId);
             Assert.IsTrue(ContainsTypeSince(rotateStart, CoreEventType.BoardRotated));
@@ -118,8 +115,10 @@ namespace NineGrid.Presentation.Tests
             Assert.AreEqual(0, mSync.ActiveBatchId);
             Assert.AreEqual(2, boardPresent.BeginCount);
 
-            // Fusion aftermath branch（无融合则空过）→ idle
-            director.Tick(0.016f);
+            for (var i = 0; i < 2 && director.IsMainlineBusy; i++)
+            {
+                director.Tick(0.016f);
+            }
             Assert.IsFalse(director.IsMainlineBusy);
         }
 
@@ -153,8 +152,7 @@ namespace NineGrid.Presentation.Tests
             director.Tick(0.016f); // resolve use
             director.Tick(0.016f); // present use
             director.Tick(0.016f); // kill branch → without kill
-            director.Tick(0.016f); // use-fusion refill 门空过
-            director.Tick(0.016f); // drain refill branch（无空位则空过）
+            director.Tick(0.016f); // Core stable-state check（无空位则空过）
 
             Assert.IsTrue(resolvedWithoutKill);
             Assert.AreEqual(0, boardPresent.BeginCount);

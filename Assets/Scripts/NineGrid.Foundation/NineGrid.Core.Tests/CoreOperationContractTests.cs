@@ -80,7 +80,7 @@ namespace NineGrid.Core.Tests
         }
 
         [Test]
-        public void ResolvePostKillFill_ThenRotate_SplitBatches_R1()
+        public void ResolveBoardStabilization_ThenRotate_SplitBatches_R1()
         {
             Assert.IsTrue(mPhase.StartNode(CreateSingleMonsterNode(hp: 1, attack: 0)).Accepted);
             PlaceSoleBoardCardAt(sAdjacentSlot);
@@ -91,7 +91,7 @@ namespace NineGrid.Core.Tests
             Assert.IsTrue(mPhase.ApplyCombatHit(board.AvatarUid.Value, targetUid).Accepted);
 
             var fillStart = mPipeline.EventLog.Entries.Count;
-            Assert.IsTrue(mPhase.ResolvePostKillFill().Accepted);
+            Assert.IsTrue(mPhase.ResolveBoardStabilization().Accepted);
             var fillEvents = SliceEvents(fillStart);
             Assert.IsTrue(ContainsType(fillEvents, CoreEventType.SlotsFilled));
             Assert.IsFalse(ContainsType(fillEvents, CoreEventType.InteractionChanged));
@@ -133,7 +133,7 @@ namespace NineGrid.Core.Tests
             Assert.IsFalse(ContainsType(useEvents, CoreEventType.SlotsFilled));
 
             var fillStart = mPipeline.EventLog.Entries.Count;
-            Assert.IsTrue(mPhase.ResolvePostKillFill().Accepted);
+            Assert.IsTrue(mPhase.ResolveBoardStabilization().Accepted);
             Assert.IsTrue(ContainsType(SliceEvents(fillStart), CoreEventType.SlotsFilled));
 
             var rotateStart = mPipeline.EventLog.Entries.Count;
@@ -165,6 +165,14 @@ namespace NineGrid.Core.Tests
             Assert.IsTrue(mPhase.StartNode(CreateSingleMonsterNode(hp: 1, attack: 0)).Accepted);
             PlaceSoleBoardCardAt(sFarCornerSlot);
             Assert.IsTrue(mArch.GetModel<BoardModel>().IsEmpty(sAdjacentSlot));
+            mPipeline.Enqueue(new SpawnCardAction(
+                "help.bomb",
+                CardKind.HelpCard,
+                ZoneId.DrawPile,
+                SlotId.None,
+                1,
+                "test"));
+            Assert.Greater(mPipeline.RunToCompletion(), 0);
 
             Assert.IsTrue(mPhase.ClickEmpty(sAdjacentSlot).Accepted);
             var startIndex = mPipeline.EventLog.Entries.Count;

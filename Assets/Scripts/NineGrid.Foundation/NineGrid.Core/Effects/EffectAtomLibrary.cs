@@ -3253,6 +3253,7 @@ namespace NineGrid.Core.Effects
         private int mCount = 1;
         private bool mTop;
         private bool mPerTarget;
+        private bool mDeferRefill;
 
         public void Configure(EffectDslNode config)
         {
@@ -3261,12 +3262,22 @@ namespace NineGrid.Core.Effects
             mCount = Math.Max(0, config.Get("count").AsInt(1));
             mTop = config.Get("top").AsBool(false);
             mPerTarget = config.Get("perTarget").AsBool(false);
+            mDeferRefill = config.Get("deferRefill").AsBool(false);
         }
 
         public IReadOnlyList<GameAction> BuildActions(EffectRuntimeContext context, IReadOnlyList<int> targets)
         {
             var count = mPerTarget ? mCount * targets.Count : mCount;
-            return new[] { new ShuffleIntoDrawPileAction(mDefId, mKind, count, mTop, context.SourceDefId) };
+            return new[]
+            {
+                new ShuffleIntoDrawPileAction(
+                    mDefId,
+                    mKind,
+                    count,
+                    mTop,
+                    context.SourceDefId,
+                    mDeferRefill)
+            };
         }
     }
 

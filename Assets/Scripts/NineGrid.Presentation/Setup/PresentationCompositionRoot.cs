@@ -136,15 +136,6 @@ namespace NineGrid.Presentation.Setup
 
             TriggerPulseOutputHook.RequestConfigureProduction();
 
-            FusionRefillAftermath.Register(
-                FusionRefillAftermath.CreateProductionScheduler(
-                    architecture,
-                    dispatcher,
-                    () => (IPresentChannel)explorePresentChannel
-                        ?? useItemBoardPresentChannel
-                        ?? attackBoardPresentChannel,
-                    session.OnExploreBatchProjected));
-
             var scriptFactory = new RoutingIntentScriptFactory(
                 exploreFactory,
                 revealFaceFactory,
@@ -170,7 +161,6 @@ namespace NineGrid.Presentation.Setup
                 return;
             }
 
-            FusionRefillAftermath.Unregister();
             TeardownBattleBeatScheduler();
 
             if (mBindings != null)

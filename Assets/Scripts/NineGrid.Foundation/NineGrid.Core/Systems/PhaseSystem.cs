@@ -34,9 +34,9 @@ namespace NineGrid.Core.Systems
             /// </summary>
             CoreCommandResult AdvanceInteractionCount();
             /// <summary>
-            /// 击杀后分拍：仅补牌（Fill）。不含交互计数、不旋转。
+            /// 稳定化分拍：Core 判定是否欠补位；每次至多执行一轮 Fill。
             /// </summary>
-            CoreCommandResult ResolvePostKillFill();
+            CoreCommandResult ResolveBoardStabilization();
             /// <summary>
             /// 击杀后分拍：顺时针旋转 + 清场判定。
             /// </summary>
@@ -54,19 +54,11 @@ namespace NineGrid.Core.Systems
             /// </summary>
             CoreCommandResult ResolveNextEnemyAction();
             /// <summary>
-            /// 敌方行动阶段收尾：补牌 + 通关检查，不旋转。
+            /// 敌方行动阶段收尾：关闭名单 + 通关检查，不补牌、不旋转。
             /// </summary>
             CoreCommandResult ResolveEnemyActionFinale();
             /// <summary>当前冻结行动名单中尚未结算的 uid（升序快照的后缀）。</summary>
             IReadOnlyList<int> PendingEnemyActionUids { get; }
-            /// <summary>
-            /// 融合伴随补牌分拍：仅 FillEmptySlots。skipFill 时不写 Core，仅供导演打开空批。
-            /// </summary>
-            CoreCommandResult ResolveFusionRefill(bool skipFill = false);
-            /// <summary>
-            /// drain 退场补牌分拍：仅 FillEmptySlots。skipFill 时不写 Core，仅供导演打开空批。
-            /// </summary>
-            CoreCommandResult ResolveDrainRefill(bool skipFill = false);
             CoreCommandResult PickupItem(SlotId targetSlot);
             /// <summary>
             /// 表现层可信拾取：无相邻门禁；InteractionLoop 下仍会旋转补牌。
@@ -166,6 +158,10 @@ namespace NineGrid.Core.Systems
             pipeline.Enqueue(new ClearPendingChoicesAction());
             pipeline.Enqueue(new ChangePhaseAction(GamePhase.BuildEnemyPool));
             pipeline.Enqueue(new SetupNodeDeckAction(options));
+            if (this.GetModel<BoardModel>().AvatarSlot.Value != SlotId.Board(5))
+            {
+                pipeline.Enqueue(new MoveAvatarAction(SlotId.Board(5)));
+            }
             pipeline.Enqueue(new ChangePhaseAction(GamePhase.ResetNode));
             pipeline.Enqueue(new ChangePhaseAction(GamePhase.DealOpeningCards));
             pipeline.Enqueue(new OpeningDealAction(options));
@@ -175,6 +171,7 @@ namespace NineGrid.Core.Systems
             pipeline.Enqueue(new ChangePhaseAction(GamePhase.InteractionLoop));
             var resolved = pipeline.RunToCompletion();
             resolved += CompleteNodeIfCleared();
+            resolved += this.GetSystem<IBoardStabilizationSystem>().ResolveUntilStable();
             return CoreCommandResult.Accept(resolved);
         }
 
@@ -273,10 +270,12 @@ namespace NineGrid.Core.Systems
 
             // 九宫格互动：交战无论是否击杀都推进互动计数（ADR-0012 / #75）。
             resolved += AdvanceInteractionCountInternal();
-            if (ContainsEventSince(startIndex, CoreEventType.CardKilled, targetUid))
+            var killedTarget = ContainsEventSince(startIndex, CoreEventType.CardKilled, targetUid);
+            resolved += this.GetSystem<IBoardStabilizationSystem>().ResolveUntilStable();
+            if (killedTarget)
             {
-                resolved += ResolvePostKillFillInternal();
                 resolved += ResolvePostKillRotateInternal();
+                resolved += this.GetSystem<IBoardStabilizationSystem>().ResolveUntilStable();
             }
 
             resolved += RunEnemyActionPhaseInternal();
@@ -502,9 +501,9 @@ namespace NineGrid.Core.Systems
             return CoreCommandResult.Accept(AdvanceInteractionCountInternal());
         }
 
-        public CoreCommandResult ResolvePostKillFill()
+        public CoreCommandResult ResolveBoardStabilization()
         {
-            return CoreCommandResult.Accept(ResolvePostKillFillInternal());
+            return this.GetSystem<IBoardStabilizationSystem>().ResolveNextSlice();
         }
 
         public CoreCommandResult ResolvePostKillRotate()
@@ -530,16 +529,6 @@ namespace NineGrid.Core.Systems
         public CoreCommandResult ResolveEnemyActionFinale()
         {
             return CoreCommandResult.Accept(ResolveEnemyActionFinaleInternal());
-        }
-
-        public CoreCommandResult ResolveFusionRefill(bool skipFill = false)
-        {
-            return CoreCommandResult.Accept(ResolveFillEmptySlotsBatchInternal(skipFill));
-        }
-
-        public CoreCommandResult ResolveDrainRefill(bool skipFill = false)
-        {
-            return CoreCommandResult.Accept(ResolveFillEmptySlotsBatchInternal(skipFill));
         }
 
         // 九宫格互动范围：当前 = Avatar 槽正交邻接（IBoardSystem.AreAdjacent）。
@@ -874,7 +863,7 @@ namespace NineGrid.Core.Systems
             var resolved = pipeline.RunToCompletion();
             resolved += ConsumeUsedItemIfStillInItemSlots(itemUid, card.DefId);
 
-            // 击杀后补牌/旋转/清场留给导演 ResolvePostKillFill / ResolvePostKillRotate。
+            // 击杀后稳定化/旋转/清场留给导演 ResolveBoardStabilization / ResolvePostKillRotate。
             // 非击杀路径仍可立即 CompleteNodeIfCleared（宝箱等只写 PendingChoice，本调用通常 no-op）。
             if (!ContainsAnyEventSince(startIndex, CoreEventType.CardKilled))
             {
@@ -1596,12 +1585,13 @@ namespace NineGrid.Core.Systems
                 return 0;
             }
 
-            // 旧整拍入口（Pickup / ResolvePostKillBoard）：计数 + 补牌 + 旋转 + 敌方行动。
-            // 导演分拍请用 AdvanceInteractionCount / ResolvePostKillFill / ResolvePostKillRotate /
+            // 旧整拍入口（Pickup / ResolvePostKillBoard）：计数 + 稳定化 + 旋转 + 敌方行动。
+            // 导演分拍请用 AdvanceInteractionCount / ResolveBoardStabilization / ResolvePostKillRotate /
             // RegisterEnemyActionPhase / ResolveNextEnemyAction / ResolveEnemyActionFinale。
             var resolved = AdvanceInteractionCountInternal();
-            resolved += ResolvePostKillFillInternal();
+            resolved += this.GetSystem<IBoardStabilizationSystem>().ResolveUntilStable();
             resolved += ResolvePostKillRotateInternal();
+            resolved += this.GetSystem<IBoardStabilizationSystem>().ResolveUntilStable();
             resolved += RunEnemyActionPhaseInternal();
             return resolved;
         }
@@ -1615,6 +1605,7 @@ namespace NineGrid.Core.Systems
             }
 
             resolved += ResolveEnemyActionFinaleInternal();
+            resolved += this.GetSystem<IBoardStabilizationSystem>().ResolveUntilStable();
             return resolved;
         }
 
@@ -1759,10 +1750,8 @@ namespace NineGrid.Core.Systems
                 return 0;
             }
 
-            // 收尾：补牌 + 通关检查，不旋转（ADR-0012）。
-            var resolved = ResolvePostKillFillInternal();
-            resolved += CompleteNodeIfCleared();
-            return resolved;
+            // 收尾只关闭齐射并做通关检查；补位由统一稳定化边界逐批推进。
+            return CompleteNodeIfCleared();
         }
 
         private static int EnqueueResetAttackPatternCountdown(
@@ -1835,25 +1824,6 @@ namespace NineGrid.Core.Systems
             return pipeline.RunToCompletion();
         }
 
-        private int ResolvePostKillFillInternal()
-        {
-            if (IsTerminalPhase(CurrentPhase))
-            {
-                return 0;
-            }
-
-            // ADR-0026：离开机关击破后已清关，禁止再往空位补牌。
-            // 否则牌堆非空时会 Deal 进刚腾出的格，表现层发牌飞行可卡死主线（mainlineBusy）。
-            if (this.GetSystem<IDeckSystem>().IsNodeCleared())
-            {
-                return 0;
-            }
-
-            var pipeline = this.GetSystem<IActionPipelineSystem>();
-            pipeline.Enqueue(new FillEmptySlotsAction());
-            return pipeline.RunToCompletion();
-        }
-
         private int ResolvePostKillRotateInternal()
         {
             if (IsTerminalPhase(CurrentPhase))
@@ -1872,18 +1842,6 @@ namespace NineGrid.Core.Systems
             var resolved = pipeline.RunToCompletion();
             resolved += CompleteNodeIfCleared();
             return resolved;
-        }
-
-        private int ResolveFillEmptySlotsBatchInternal(bool skipFill)
-        {
-            if (skipFill || IsTerminalPhase(CurrentPhase) || this.GetSystem<IDeckSystem>().IsNodeCleared())
-            {
-                return 0;
-            }
-
-            var pipeline = this.GetSystem<IActionPipelineSystem>();
-            pipeline.Enqueue(new FillEmptySlotsAction());
-            return pipeline.RunToCompletion();
         }
 
         private int CompleteNodeIfCleared()

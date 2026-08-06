@@ -331,13 +331,20 @@ namespace NineGrid.Core
             TriggerPoint.OnDeal
         };
 
-        public ShuffleIntoDrawPileAction(string defId, CardKind kind, int count, bool top, string cause = null)
+        public ShuffleIntoDrawPileAction(
+            string defId,
+            CardKind kind,
+            int count,
+            bool top,
+            string cause = null,
+            bool deferDuringBoardStabilization = false)
         {
             DefId = defId ?? string.Empty;
             Kind = kind;
             Count = Math.Max(0, count);
             Top = top;
             Cause = cause ?? string.Empty;
+            DeferDuringBoardStabilization = deferDuringBoardStabilization;
         }
 
         public string DefId { get; private set; }
@@ -345,6 +352,7 @@ namespace NineGrid.Core
         public int Count { get; private set; }
         public bool Top { get; private set; }
         public string Cause { get; private set; }
+        public bool DeferDuringBoardStabilization { get; private set; }
         public override string ActionName { get { return "ShuffleIntoDrawPile"; } }
 
         public override GameActionResult Apply(GameActionContext context)
@@ -357,6 +365,10 @@ namespace NineGrid.Core
             {
                 var card = CreateConfiguredCard(context, registry, DefId, Kind);
                 deck.AddToDrawPile(card, Top);
+                if (DeferDuringBoardStabilization)
+                {
+                    context.GetSystem<IBoardStabilizationSystem>().DeferDrawUid(card.Uid, Top);
+                }
                 result.AddWithFaceAbsolutes(
                     context,
                     card,

@@ -45,7 +45,7 @@ namespace NineGrid.Presentation.Tests
         }
 
         [Test]
-        public void ExploreIntent_Lockstep_ClickEmptyThenFillThenRotate_AcksBetweenBatches()
+        public void ExploreIntent_Lockstep_ClickEmptyThenStabilizeThenRotate_AcksBetweenBatches()
         {
             Assert.IsTrue(mPhase.StartNode(CreateSingleMonsterNode(hp: 1, attack: 0)).Accepted);
             PlaceSoleBoardCardAt(sFarCornerSlot);
@@ -86,8 +86,13 @@ namespace NineGrid.Presentation.Tests
             Assert.AreEqual(0, mSync.ActiveBatchId);
             Assert.AreEqual(2, present.BeginCount);
 
-            // Resolve Fill
+            // Core stable-state check only schedules the due slice; it does not resolve ahead of ack.
             var fillStart = mPipeline.EventLog.Entries.Count;
+            director.Tick(0.016f);
+            Assert.AreEqual(0, mSync.ActiveBatchId);
+            Assert.IsFalse(ContainsEventTypeSince(fillStart, CoreEventType.SlotsFilled));
+
+            // Resolve first stabilization slice.
             director.Tick(0.016f);
             Assert.AreEqual(3, mSync.ActiveBatchId);
             Assert.AreEqual(2, present.BeginCount);
@@ -98,8 +103,10 @@ namespace NineGrid.Presentation.Tests
             Assert.AreEqual(0, mSync.ActiveBatchId);
             Assert.AreEqual(3, present.BeginCount);
 
-            // Resolve Rotate
+            // Stable check closes pre-rotate stabilization, then Rotate resolves.
             var rotateStart = mPipeline.EventLog.Entries.Count;
+            director.Tick(0.016f);
+            Assert.AreEqual(0, mSync.ActiveBatchId);
             director.Tick(0.016f);
             Assert.AreEqual(4, mSync.ActiveBatchId);
             Assert.IsTrue(ContainsEventTypeSince(rotateStart, CoreEventType.BoardRotated));
@@ -110,8 +117,11 @@ namespace NineGrid.Presentation.Tests
             Assert.AreEqual(4, present.BeginCount);
             Assert.AreEqual(4, present.PresentedBatchIds[3]);
 
-            // Fusion aftermath branch（无融合则空过）→ idle
-            director.Tick(0.016f);
+            // Post-rotate stabilization and no-enemy checks are empty Core-owned checks.
+            for (var i = 0; i < 4 && director.IsMainlineBusy; i++)
+            {
+                director.Tick(0.016f);
+            }
             Assert.IsFalse(director.IsMainlineBusy);
             Assert.AreEqual(
                 0,
