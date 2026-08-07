@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using NineGrid.Cards;
 using NineGrid.Cards.Presentation;
 using NineGrid.Core;
@@ -102,7 +103,23 @@ namespace NineGrid.Flow.Presentation
                 DetailDescription = source.DetailDescription,
                 FaceIntro = source.FaceIntro,
                 FrameColor = source.FrameColor,
+                CommittedCountdownRemaining = CopyCommittedRemaining(source.CommittedCountdownRemaining),
             };
+        }
+
+        private static Dictionary<string, string> CopyCommittedRemaining(
+            IReadOnlyDictionary<string, string> source)
+        {
+            var copy = new Dictionary<string, string>(System.StringComparer.OrdinalIgnoreCase);
+            if (source != null)
+            {
+                foreach (var pair in source)
+                {
+                    copy[pair.Key] = pair.Value;
+                }
+            }
+
+            return copy;
         }
     }
 }

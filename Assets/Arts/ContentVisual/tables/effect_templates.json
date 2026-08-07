@@ -1293,7 +1293,7 @@
   "design_text": "[场上]本卡移动满3次后移除本卡",
   "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
   "conditions_json": "[]",
-  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnSelfMove\",\"every\":3},\"target\":{\"atom\":\"Self\"},\"action\":{\"atom\":\"RemoveCard\",\"destination\":\"Removed\",\"reason\":\"{{reason}}\"}}"
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnSelfMove\",\"every\":\"{{every}}\",\"projectKey\":\"{{projectKey}}\"},\"target\":{\"atom\":\"Self\"},\"action\":{\"atom\":\"RemoveCard\",\"destination\":\"Removed\",\"reason\":\"{{reason}}\"}}"
  },
  {
   "id": "tpl.trap.attack_totem.aura_player",

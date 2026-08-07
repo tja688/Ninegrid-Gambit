@@ -196,6 +196,7 @@ namespace NineGrid.Core
         BoardMarked,
         ContentLoaded,
         ActionCountdownChanged,
+        EffectCountdownChanged,
         CardFaceChanged,
         AvatarMoved
     }
@@ -265,6 +266,7 @@ namespace NineGrid.Core
         MarkBoard,
         LoadContent,
         UpdateActionCount,
+        UpdateCountdownRemaining,
         UpdateFaceUp,
         MoveAvatar
     }

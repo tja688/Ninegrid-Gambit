@@ -25,6 +25,24 @@ namespace NineGrid.Core.Effects
         int FireCount { get; }
     }
 
+    /// <summary>
+    /// 倒计时投影触发契约（ADR-0035）：带 every/threshold 的倒计时触发在 <see cref="ITrigger.Matches"/>
+    /// 推进计数器后，由 <see cref="EffectSystem"/> 生成 <see cref="CommitEffectCountdownRemainingAction"/>，
+    /// 把剩余次数作为结算指令广播到表现层（View 禁止直读 Core 计数器）。
+    /// 模板经 DSL <c>projectKey</c> 声明投影令牌键（完整「装配id.键」）；空 = 不投影。
+    /// </summary>
+    public interface ICountdownProjectionTrigger : ITrigger
+    {
+        /// <summary>投影令牌键（如 <c>trap.flame.remove.every</c>）；空 = 本触发不投影。</summary>
+        string CountdownProjectionKey { get; }
+
+        /// <summary>本次 Matches 实际用于计数的 Core 计数器键（存放剩余次数）。</summary>
+        string CountdownCounterKey { get; }
+
+        /// <summary>本次 Matches 是否推进了倒计时计数器（剩余发生变化）。</summary>
+        bool CountdownAdvanced { get; }
+    }
+
     public interface ICondition : IEffectAtom
     {
         bool IsMet(EffectRuntimeContext context);

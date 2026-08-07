@@ -81,6 +81,8 @@ namespace NineGrid.Content.CardPresentation
         /// 单卡校验（ADR-0035 静态通路契约，#154 / #155）。范围外卡（非机关/遗物/道具，或归档卡组）恒返回空；
         /// 范围内卡报告：装配缺稳定 id、简单式 / defId 前缀式 / templateId 限定式令牌、令牌键不存在、
         /// 检查描述 / 局内模板 / 介绍超 26 格。
+        /// 倒计时投影契约（#156）：装配实参 <c>projectKey</c>（投影令牌键）必须等于「本装配id.键」限定式，
+        /// 且局内模板必须引用该令牌（否则 Settled 剩余永远无法上卡面）。
         /// </summary>
         public static List<string> ValidateCard(CardPresentationConfigDto dto)
         {
@@ -91,6 +93,7 @@ namespace NineGrid.Content.CardPresentation
             }
 
             var assemblies = dto.effectAssemblies;
+            var projectKeys = new List<string>();
             if (assemblies != null)
             {
                 for (var i = 0; i < assemblies.Length; i++)
@@ -99,14 +102,71 @@ namespace NineGrid.Content.CardPresentation
                     if (assembly == null || string.IsNullOrWhiteSpace(assembly.id))
                     {
                         errors.Add("assembly[" + i + "] missing id（描述契约要求装配有稳定 id）");
+                        continue;
                     }
+
+                    ValidateProjectKey(errors, projectKeys, "assembly[" + i + "]", assembly);
                 }
             }
 
             ValidateText(errors, "description", dto.description, assemblies);
             ValidateText(errors, "liveTemplate", dto.liveTemplate, assemblies);
             ValidateText(errors, "faceIntro", dto.faceIntro, assemblies);
+            if (projectKeys.Count > 0 && string.IsNullOrWhiteSpace(dto.liveTemplate))
+            {
+                errors.Add("liveTemplate 为空：含 projectKey 的倒计时装配必须作者局内模板（ADR-0035）");
+            }
+            else
+            {
+                for (var i = 0; i < projectKeys.Count; i++)
+                {
+                    var token = "{" + projectKeys[i] + "}";
+                    if (dto.liveTemplate == null || dto.liveTemplate.IndexOf(token, StringComparison.Ordinal) < 0)
+                    {
+                        errors.Add("liveTemplate 未引用投影令牌 " + token + "（Settled 剩余无法上卡面）");
+                    }
+                }
+            }
+
             return errors;
+        }
+
+        /// <summary>
+        /// 装配实参 projectKey 契约：非空时必须等于「本装配id.键」限定式；合法键登记供局内模板引用校验。
+        /// </summary>
+        private static void ValidateProjectKey(
+            List<string> errors,
+            List<string> projectKeys,
+            string prefix,
+            EffectAssemblyDto assembly)
+        {
+            var args = EffectAssemblyResolver.ParseArgsJson(assembly.argsJson);
+            if (!args.TryGetValue("projectKey", out var raw) || raw == null)
+            {
+                return;
+            }
+
+            var projectKey = Convert.ToString(raw).Trim();
+            if (projectKey.Length == 0)
+            {
+                return;
+            }
+
+            var lastDot = projectKey.LastIndexOf('.');
+            if (lastDot <= 0 || lastDot >= projectKey.Length - 1)
+            {
+                errors.Add(prefix + " projectKey 必须为「装配id.键」限定式，实际 {" + projectKey + "}");
+                return;
+            }
+
+            var qualifier = projectKey.Substring(0, lastDot);
+            if (!string.Equals(qualifier, assembly.id.Trim(), StringComparison.OrdinalIgnoreCase))
+            {
+                errors.Add(prefix + " projectKey 限定符必须等于本装配 id（{" + projectKey + "} ≠ " + assembly.id + "）");
+                return;
+            }
+
+            projectKeys.Add(projectKey);
         }
 
         private static void ValidateText(

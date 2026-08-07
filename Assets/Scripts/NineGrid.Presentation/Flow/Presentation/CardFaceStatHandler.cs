@@ -30,6 +30,9 @@ namespace NineGrid.Flow.Presentation
                 case PresentationInstructionKind.UpdateActionCount:
                     ApplyActionCount(instruction.Event);
                     return true;
+                case PresentationInstructionKind.UpdateCountdownRemaining:
+                    ApplyCountdownRemaining(instruction.Event);
+                    return true;
                 case PresentationInstructionKind.ModifyBaseStat:
                     ApplyBaseStat(instruction.Event);
                     return true;
@@ -88,6 +91,29 @@ namespace NineGrid.Flow.Presentation
                 armor: null,
                 hp: null,
                 actionCount: Mathf.Max(0, gameEvent.ResultValue));
+        }
+
+        /// <summary>
+        /// 效果倒计时剩余提交（ADR-0035）：事件 Message 为完整「装配id.键」投影令牌键，
+        /// ResultValue 为剩余次数；写入卡面已提交剩余并重投影局内描述（Instance 模式）。
+        /// 剩余只经本 Settled 指令到达，View 不直读 Core 计数器。
+        /// </summary>
+        private static void ApplyCountdownRemaining(CoreGameEvent gameEvent)
+        {
+            if (gameEvent == null || string.IsNullOrEmpty(gameEvent.Message))
+            {
+                return;
+            }
+
+            if (!TryResolveCard(gameEvent, out var card))
+            {
+                return;
+            }
+
+            CoreCardPresentationMapper.CommitCountdownRemaining(
+                card,
+                gameEvent.Message,
+                Mathf.Max(0, gameEvent.ResultValue).ToString());
         }
 
         private static void ApplyBaseStat(CoreGameEvent gameEvent)
@@ -345,7 +371,23 @@ namespace NineGrid.Flow.Presentation
                 DetailDescription = source.DetailDescription ?? string.Empty,
                 FaceIntro = source.FaceIntro ?? string.Empty,
                 FrameColor = source.FrameColor,
+                CommittedCountdownRemaining = CopyCommittedRemaining(source.CommittedCountdownRemaining),
             };
+        }
+
+        private static Dictionary<string, string> CopyCommittedRemaining(
+            IReadOnlyDictionary<string, string> source)
+        {
+            var copy = new Dictionary<string, string>(System.StringComparer.OrdinalIgnoreCase);
+            if (source != null)
+            {
+                foreach (var pair in source)
+                {
+                    copy[pair.Key] = pair.Value;
+                }
+            }
+
+            return copy;
         }
     }
 }

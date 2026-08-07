@@ -80,6 +80,48 @@ namespace NineGrid.Core
         }
     }
 
+    /// <summary>
+    /// 效果倒计时剩余提交（ADR-0035）：读取效果触发器的倒计时计数器当前值，
+    /// 以 <see cref="CoreEventType.EffectCountdownChanged"/> 结算指令广播到表现层
+    /// （Settled 消费，键为完整「装配id.键」）。剩余只经本指令投影，禁止 View 直读 Core 计数器。
+    /// </summary>
+    public sealed class CommitEffectCountdownRemainingAction : GameAction
+    {
+        public CommitEffectCountdownRemainingAction(int cardUid, string projectionKey, string counterKey)
+        {
+            CardUid = cardUid;
+            ProjectionKey = projectionKey ?? string.Empty;
+            CounterKey = counterKey ?? string.Empty;
+        }
+
+        public int CardUid { get; private set; }
+        public string ProjectionKey { get; private set; }
+        public string CounterKey { get; private set; }
+        public override string ActionName { get { return "CommitEffectCountdownRemaining"; } }
+
+        public override GameActionResult Apply(GameActionContext context)
+        {
+            if (string.IsNullOrEmpty(ProjectionKey) || string.IsNullOrEmpty(CounterKey))
+            {
+                return GameActionResult.Empty;
+            }
+
+            CardInstance card;
+            if (!context.GetModel<CardRegistry>().TryGet(CardUid, out card) || card == null)
+            {
+                return GameActionResult.Empty;
+            }
+
+            var remaining = Math.Max(0, card.Counters.Get(CounterKey));
+            return new GameActionResult()
+                .AddEvent(new CoreGameEvent(CoreEventType.EffectCountdownChanged, context.ActionId, ActionName)
+                    .WithCard(card.Uid)
+                    .WithResultValue(remaining)
+                    .WithMessage(ProjectionKey)
+                    .WithSource(card.DefId ?? string.Empty, ActionName));
+        }
+    }
+
     public sealed class KillIfDeadAction : GameAction
     {
         public KillIfDeadAction(int killerUid, int targetUid)

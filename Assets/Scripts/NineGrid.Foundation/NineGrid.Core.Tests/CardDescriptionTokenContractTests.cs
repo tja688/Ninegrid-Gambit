@@ -295,6 +295,119 @@ namespace NineGrid.Core.Tests
             Assert.AreEqual(0, CardDescriptionTokenRules.ValidateCard(dto).Count);
         }
 
+        [Test]
+        public void ValidateCard_ProjectKey_OwnAssemblyIdToken_IsClean()
+        {
+            // #156 倒计时投影契约：projectKey = 本装配id.键 且局内模板引用该令牌 → 干净。
+            var dto = CountdownCard(
+                "trap.flame",
+                "每移动1次，{trap.flame.remove.every}次后[death]",
+                "每移动1次；剩余{trap.flame.remove.every}次移动后[death]",
+                new EffectAssemblyDto
+                {
+                    id = "trap.flame.remove",
+                    argsJson = "{\"every\":3,\"projectKey\":\"trap.flame.remove.every\"}",
+                });
+
+            Assert.AreEqual(0, CardDescriptionTokenRules.ValidateCard(dto).Count);
+        }
+
+        [Test]
+        public void ValidateCard_ProjectKey_QualifierMismatch_Fails()
+        {
+            var dto = CountdownCard(
+                "trap.flame",
+                "每移动1次，{trap.flame.remove.every}次后[death]",
+                "每移动1次；剩余{trap.flame.remove.every}次移动后[death]",
+                new EffectAssemblyDto
+                {
+                    id = "trap.flame.remove",
+                    argsJson = "{\"every\":3,\"projectKey\":\"trap.other.every\"}",
+                });
+
+            var errors = CardDescriptionTokenRules.ValidateCard(dto);
+            Assert.AreEqual(1, errors.Count);
+            StringAssert.Contains("projectKey", errors[0]);
+            StringAssert.Contains("trap.other.every", errors[0]);
+        }
+
+        [Test]
+        public void ValidateCard_ProjectKey_BadForm_Fails()
+        {
+            var dto = CountdownCard(
+                "trap.flame",
+                "每移动1次，{trap.flame.remove.every}次后[death]",
+                "每移动1次；剩余{trap.flame.remove.every}次移动后[death]",
+                new EffectAssemblyDto
+                {
+                    id = "trap.flame.remove",
+                    argsJson = "{\"every\":3,\"projectKey\":\"trap.flame.remove\"}",
+                });
+
+            var errors = CardDescriptionTokenRules.ValidateCard(dto);
+            Assert.AreEqual(1, errors.Count);
+            StringAssert.Contains("projectKey", errors[0]);
+        }
+
+        [Test]
+        public void ValidateCard_ProjectKey_WithoutLiveTemplate_Fails()
+        {
+            // 含 projectKey 的倒计时装配必须作者局内模板（ADR-0035 #4 / #156）。
+            var dto = CountdownCard(
+                "trap.flame",
+                "每移动1次，{trap.flame.remove.every}次后[death]",
+                null,
+                new EffectAssemblyDto
+                {
+                    id = "trap.flame.remove",
+                    argsJson = "{\"every\":3,\"projectKey\":\"trap.flame.remove.every\"}",
+                });
+
+            var errors = CardDescriptionTokenRules.ValidateCard(dto);
+            Assert.AreEqual(1, errors.Count);
+            StringAssert.Contains("liveTemplate", errors[0]);
+        }
+
+        [Test]
+        public void ValidateCard_ProjectKey_NotReferencedInLiveTemplate_Fails()
+        {
+            // 局内模板未引用投影令牌 → Settled 剩余无法上卡面，须报错。
+            var dto = CountdownCard(
+                "trap.flame",
+                "每移动1次，{trap.flame.remove.every}次后[death]",
+                "每移动1次；剩余3次移动后[death]",
+                new EffectAssemblyDto
+                {
+                    id = "trap.flame.remove",
+                    argsJson = "{\"every\":3,\"projectKey\":\"trap.flame.remove.every\"}",
+                });
+
+            var errors = CardDescriptionTokenRules.ValidateCard(dto);
+            Assert.AreEqual(1, errors.Count);
+            StringAssert.Contains("liveTemplate", errors[0]);
+            StringAssert.Contains("{trap.flame.remove.every}", errors[0]);
+        }
+
+        private static CardPresentationConfigDto CountdownCard(
+            string contentId,
+            string description,
+            string liveTemplate,
+            params EffectAssemblyDto[] assemblies)
+        {
+            var dto = new CardPresentationConfigDto
+            {
+                schemaVersion = 2,
+                contentId = contentId,
+                kind = "Trap",
+                deckId = "deck.trap",
+                description = description,
+                faceIntro = string.Empty,
+                liveTemplate = liveTemplate,
+                effectAssemblies = assemblies ?? new EffectAssemblyDto[0],
+            };
+            return dto;
+        }
+
         private static CardPresentationConfigDto InScopeCard(
             string contentId,
             string kind,
