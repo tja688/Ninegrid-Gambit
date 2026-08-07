@@ -10,6 +10,7 @@ namespace NineGrid.Presentation.Tests.BattleSession
     /// <summary>
     /// #107 / #108 / ADR-0025：道具卡格跨 <see cref="IBattleSessionSystem.BootstrapRun"/> preserve 存活。
     /// Seam：BootstrapRun(preserveRunInventory: true) ↔ DeckModel.ItemSlotUids / ItemSlotsCapacity。
+    /// 另含 #159 牌店「道具强化」加成（PlayerModel.ItemStatBonus）跨 preserve 存活护栏。
     /// </summary>
     public sealed class CarryPackPreserveBootstrapContractTests
     {
@@ -65,6 +66,24 @@ namespace NineGrid.Presentation.Tests.BattleSession
 
                 player = arch.Architecture.GetModel<PlayerModel>();
                 Assert.AreEqual(4, player.ItemSlotsCapacity);
+            }
+        }
+
+        [Test]
+        public void BootstrapRun_Preserve_RestoresItemStatBonus()
+        {
+            using (var arch = PresentationArchitectureFixture.CreateStartedGameWithCatalog(seed: 7UL))
+            {
+                var player = arch.Architecture.GetModel<PlayerModel>();
+                player.AddItemStatBonus(6);
+
+                var session = BattleSessionSystem.EnsureRegistered(arch.Architecture);
+                session.BootstrapRun(
+                    new InitialGameOptions { Seed = 7UL },
+                    preserveRunInventory: true);
+
+                player = arch.Architecture.GetModel<PlayerModel>();
+                Assert.AreEqual(6, player.ItemStatBonus, "牌店「道具强化」加成须跨 preserve 存活");
             }
         }
 

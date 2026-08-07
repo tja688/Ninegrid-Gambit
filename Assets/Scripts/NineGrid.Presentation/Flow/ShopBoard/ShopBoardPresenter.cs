@@ -949,6 +949,8 @@ namespace NineGrid.Flow.ShopBoard
 
             var go = UnityEngine.Object.Instantiate(prefab);
             go.name = "ShopBoard_" + contentId + "_@" + slot;
+            // 特色选项（道具牌格升级/刷新）按 defId 应用 JSON 主图标，勿恒显模板默认图标。
+            RoomOptionFaceVisuals.ApplyMainIcon(contentId, go);
             BoardSlotWorldPlacement.TryAlignToSlot(go.transform, geometry, slot);
 
             var sorting = go.GetComponent<SortingGroup>();

@@ -35,7 +35,7 @@
 | `TavernBoard/` | 卡店三项服务 + 刷新 + 离开（#93）：就地选项；「道具卡固定」二级选择铺空格候选 |
 | `RewardBoard/` | 特殊奖励房真卡 + 离开（#94）：任意距离点击拿走、踩离开放弃 |
 | `AttributeBoard/` | 属性房三选二候选真卡 + 离开（#137）：任意距离点击选择两张、踩离开放弃 |
-| `InRoomBoard/` | 房内共用：`InRoomGoldPresentation`（非战斗扣金→HUD） |
+| `InRoomBoard/` | 房内共用：`InRoomGoldPresentation`（非战斗扣金→HUD）、`RoomOptionFaceVisuals`（商店/卡店特色选项面按 defId 应用 JSON 主图标，修复恒显模板默认图标） |
 | `BoardBriefTip/` | 简要解释文字框 + 楼层提示（#89）：文案纯逻辑、悬停命中代理、胜负 Notice 出口 |
 | `Diagnostics/` | Battle/Flow/Perf/Registry Trace Recorder 与 Sink |
 | （根下） | `BattleSessionController`、`GameFlowController`、若干 `*ManagerSingleton`（Presenter 壳名）；**指针缝** `WorldPointerUtility`、**命中路由** `PointerHitRouter` / `IPointerHitTarget` / `PointerHitRegistry`（替代 OnMouse*，ADR-0006）；**开局选项** `GameFlowRunOptions`（`CreateFormal` 正式无作弊 / `CreateQuickTest` QuickTest；`QuickTestMode` 由载荷推导，`TestMode` 布尔已删，#125）；**QuickTest 通道** `QuickTestDeckCatalog` / `QuickTestRunOptions`（主菜单 `\0`=流程测试 Sequential 空技能；`\1`–`\9`：`skillIds` 一怪一技挂载 + **`trapContentIds` 经 `AddEnemyCard` 注入敌池**；正式开局不挂怪技能/不注机关；挂载经 `BattleSessionCheat.TryAttachSkillsToBoardMonsters`：**一怪一技**按格号升序，不够则 Spawn 白板宿主 + 至少一只无技能同伴）。**批1** `CardKind.Trap` / 双桶 / 五套卡面（ADR-0017）；**批2** 滚石/捕熊/烈焰迁 Trap + QT `\1`/`\6`/`\8`/`\9` 机关注入；**批3** 倒刺/三图腾/治疗泉 + QT `\1`–`\9` 九机关齐全（`help.healing_spring` 已删）；**#111** 离开机关 `trap.leave` + `tpl.trap.door`/`tpl.trap.magic_immunity`/`tpl.trap.leave`（可注入）；**#112** 默认 ⌈N/2⌉ 真怪击破后洗入；层主房改击破开局层主（`DeckSystem` OnKill → `ShuffleIntoDrawPile`，经补牌上场）；**#113** `IsNodeCleared`=`IsLeaveTrapBroken`（真怪清零不清关；击破离开机关清关；清场不兑金；QT 跳关置标志；**清关后禁止 PostKill Fill 补牌**） |

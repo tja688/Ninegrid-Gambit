@@ -341,6 +341,7 @@ namespace NineGrid.Flow
             public int Coins;
             public int InteractionCount;
             public string ProfessionId;
+            public int ItemStatBonus;
             public int Floor;
             public int NodeIndex;
             public ulong Seed;
@@ -381,6 +382,7 @@ namespace NineGrid.Flow
                 Coins = player.Coins.Value,
                 InteractionCount = player.InteractionCount.Value,
                 ProfessionId = player.ProfessionId.Value ?? string.Empty,
+                ItemStatBonus = player.ItemStatBonus,
                 Floor = run.Floor.Value,
                 NodeIndex = run.NodeIndex.Value,
                 Seed = run.Seed.Value,
@@ -431,6 +433,7 @@ namespace NineGrid.Flow
 
             player.ReplaceItemSourcePool(inventory.ItemSourcePoolDefIds);
             player.ReplaceFixedItemCards(inventory.FixedItemCardDefIds);
+            player.SetItemStatBonus(inventory.ItemStatBonus);
 
             if (inventory.RelicDefIds != null)
             {
