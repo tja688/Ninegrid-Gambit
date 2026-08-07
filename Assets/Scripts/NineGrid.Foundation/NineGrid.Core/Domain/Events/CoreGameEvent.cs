@@ -35,6 +35,10 @@ namespace NineGrid.Core
         public int ResultValue { get; private set; }
         public int RemainingHp { get; private set; }
         public int RemainingArmor { get; private set; }
+        /// <summary>仅 DamageDealt：被护甲吸收的伤害（含金甲代偿部分；IgnoreArmor 时为 0）。</summary>
+        public int ArmorDamage { get; private set; }
+        /// <summary>仅 DamageDealt：实际扣除血量的伤害（溢出部分）。</summary>
+        public int HpDamage { get; private set; }
         public int RemovedAttack { get; private set; }
         public int RemovedArmor { get; private set; }
         public string SourceDefId { get; private set; }
@@ -88,6 +92,16 @@ namespace NineGrid.Core
         {
             RemainingHp = hp;
             RemainingArmor = armor;
+            return this;
+        }
+
+        /// <summary>
+        /// 仅 DamageDealt：写入护甲/血量伤害拆分量（甲吸收 + 溢出血伤）。
+        /// </summary>
+        public CoreGameEvent WithDamageSplit(int armorDamage, int hpDamage)
+        {
+            ArmorDamage = Math.Max(0, armorDamage);
+            HpDamage = Math.Max(0, hpDamage);
             return this;
         }
 

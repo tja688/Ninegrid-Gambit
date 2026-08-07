@@ -107,7 +107,7 @@
 
 | 测试 | 保护什么 |
 |------|----------|
-| `CardFaceBeatCommitBaselineTests` | #55–#62：攻击/反击 Present 命中后护甲已变、观察型加攻仍旧，收尾后才变；用道具解算后卡面仍旧、Present 收尾才提交；四条剧本均报 Settled；handler 不读内核；SpawnCard Settled 后卡面等于指令绝对值而非 JSON 出生值；KillCard 取 RemainingHp；Settled 漏接 Impact 值不动；Avatar HpChanged 在 Impact 后按指令刷新 PlayerInfo HUD；金币 Settled 才飞币；非锁步 PresentEventLogSlice 消费金币；多处理器认领 / 无人认领 Settled 诊断；飘字/FX 装饰处理器在 Impact 消费指令；OfferReward Settled 后 Bounce 负 uid 卡面等于指令投影 |
+| `CardFaceBeatCommitBaselineTests` | #55–#62：攻击/反击 Present 命中后护甲已变、观察型加攻仍旧，收尾后才变；用道具解算后卡面仍旧、Present 收尾才提交；四条剧本均报 Settled；handler 不读内核；SpawnCard Settled 后卡面等于指令绝对值而非 JSON 出生值；KillCard 取 RemainingHp；Settled 漏接 Impact 值不动；Avatar HpChanged 在 Impact 后按指令刷新 PlayerInfo HUD；金币 Settled 才飞币；非锁步 PresentEventLogSlice 消费金币；多处理器认领 / 无人认领 Settled 诊断；飘字/FX 装饰处理器在 Impact 消费指令；拆分模式按 `WithDamageSplit` 血/甲各飘一条；OfferReward Settled 后 Bounce 负 uid 卡面等于指令投影 |
 
 ## 验证门槛（普通实施票）
 

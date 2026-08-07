@@ -99,6 +99,7 @@ namespace NineGrid.Core
 
             var armor = StatArmorUtility.GetCurrentArmor(target);
             var hp = Math.Max(0, (int)Math.Round(target.Stats.GetBase(StatId.Hp)));
+            int armorDamage = 0;
             int armorLoss;
             int goldAbsorbed;
             int hpLoss;
@@ -114,7 +115,7 @@ namespace NineGrid.Core
             }
             else
             {
-                var armorDamage = Math.Min(armor, damage);
+                armorDamage = Math.Min(armor, damage);
                 goldAbsorbed = 0;
                 if (target.Kind == CardKind.Avatar && armor > 0 && damage > 0 && statSystem.EvaluateRule(RuleId.GoldArmorAbsorb, 0f, statContext) > 0f)
                 {
@@ -171,6 +172,7 @@ namespace NineGrid.Core
                 .WithCard(TargetUid)
                 .WithAmount(damage)
                 .WithDelta(armorLoss + hpLoss)
+                .WithDamageSplit(armorDamage, hpLoss)
                 .WithRemaining(newHp, newArmor)
                 .WithSource(SourceDefId, Cause));
 
