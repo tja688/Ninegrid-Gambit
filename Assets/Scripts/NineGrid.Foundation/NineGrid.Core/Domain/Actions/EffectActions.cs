@@ -122,6 +122,97 @@ namespace NineGrid.Core
         }
     }
 
+    /// <summary>
+    /// 效果倒计时投影清除（ADR-0035 / #157）：效果被卸载（Deactivate）或持有者离开战斗时，
+    /// 广播清除指令让表现层移除该投影键的已提交剩余（回退静态/初始），
+    /// 避免失效效果继续投影「剩余N次」。键为完整「装配id.键」。
+    /// </summary>
+    public sealed class ClearEffectCountdownRemainingAction : GameAction
+    {
+        public ClearEffectCountdownRemainingAction(int cardUid, string projectionKey)
+        {
+            CardUid = cardUid;
+            ProjectionKey = projectionKey ?? string.Empty;
+        }
+
+        public int CardUid { get; private set; }
+        public string ProjectionKey { get; private set; }
+        public override string ActionName { get { return "ClearEffectCountdownRemaining"; } }
+
+        public override GameActionResult Apply(GameActionContext context)
+        {
+            if (string.IsNullOrEmpty(ProjectionKey))
+            {
+                return GameActionResult.Empty;
+            }
+
+            CardInstance card;
+            if (!context.GetModel<CardRegistry>().TryGet(CardUid, out card) || card == null)
+            {
+                return GameActionResult.Empty;
+            }
+
+            return new GameActionResult()
+                .AddEvent(new CoreGameEvent(CoreEventType.EffectCountdownCleared, context.ActionId, ActionName)
+                    .WithCard(card.Uid)
+                    .WithMessage(ProjectionKey)
+                    .WithSource(card.DefId ?? string.Empty, ActionName));
+        }
+    }
+
+    /// <summary>
+    /// 离开战斗时重置 Battle 作用域倒计时（ADR-0035 / #157）：遍历激活的效果实例，
+    /// 对 <see cref="ICountdownProjectionTrigger"/> 且作用域为 Battle 的倒计时，
+    /// 把持有者计数器复位到阈值（period）并广播剩余提交（投影同步回阈值）。
+    /// Run 作用域不动（跨战斗忠实剩余）。作用域标记仅作者/系统可见，绝不进入玩家文本。
+    /// </summary>
+    public sealed class ResetBattleScopedCountdownsAction : GameAction
+    {
+        public override string ActionName { get { return "ResetBattleScopedCountdowns"; } }
+
+        public override GameActionResult Apply(GameActionContext context)
+        {
+            var result = new GameActionResult();
+            var effectSystem = context.GetSystem<IEffectSystem>();
+            var registry = context.GetModel<CardRegistry>();
+            var instances = effectSystem.Instances;
+            for (var i = 0; i < instances.Count; i++)
+            {
+                var instance = instances[i];
+                if (instance == null || instance.Trigger == null)
+                {
+                    continue;
+                }
+
+                var countdown = instance.Trigger as ICountdownProjectionTrigger;
+                if (countdown == null
+                    || countdown.Scope != CountdownScope.Battle
+                    || string.IsNullOrEmpty(countdown.CountdownProjectionKey)
+                    || instance.Owner == null)
+                {
+                    continue;
+                }
+
+                CardInstance owner;
+                if (instance.Owner.OwnerUid <= 0
+                    || !registry.TryGet(instance.Owner.OwnerUid, out owner)
+                    || owner == null)
+                {
+                    continue;
+                }
+
+                var counterKey = countdown.ResolveCounterKey(instance.InstanceId);
+                owner.Counters.Set(counterKey, Math.Max(1, countdown.CountdownPeriod));
+                result.AddFollowUp(new CommitEffectCountdownRemainingAction(
+                    owner.Uid,
+                    countdown.CountdownProjectionKey,
+                    counterKey));
+            }
+
+            return result;
+        }
+    }
+
     public sealed class KillIfDeadAction : GameAction
     {
         public KillIfDeadAction(int killerUid, int targetUid)
@@ -1408,6 +1499,11 @@ namespace NineGrid.Core
                 return GameActionResult.Empty;
             }
 
+            // #157：效果卸载时若其倒计时投影键已提交过剩余，广播清除，避免失效效果继续投影。
+            var countdown = instance.Trigger as ICountdownProjectionTrigger;
+            var projectionKey = countdown != null ? countdown.CountdownProjectionKey : string.Empty;
+            var ownerUid = instance.Owner != null ? instance.Owner.OwnerUid : 0;
+
             if (instance.Owner != null
                 && instance.Owner.ContainerType == EffectContainerType.Relic)
             {
@@ -1415,9 +1511,16 @@ namespace NineGrid.Core
             }
 
             effectSystem.Deactivate(InstanceId);
-            return new GameActionResult()
+            var result = new GameActionResult()
                 .AddEvent(new CoreGameEvent(CoreEventType.EffectDeactivated, context.ActionId, ActionName)
                     .WithMessage(InstanceId));
+
+            if (!string.IsNullOrEmpty(projectionKey) && ownerUid > 0)
+            {
+                result.AddFollowUp(new ClearEffectCountdownRemainingAction(ownerUid, projectionKey));
+            }
+
+            return result;
         }
     }
 

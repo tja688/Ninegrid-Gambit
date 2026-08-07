@@ -309,6 +309,7 @@ namespace NineGrid.Core.Effects
         private string mProjectKey = string.Empty;
         private string mResolvedCounterKey = string.Empty;
         private bool mCountdownAdvanced;
+        private CountdownScope mScope = CountdownScope.Battle;
 
         public override TriggerPoint Point { get { return TriggerPoint.OnInteract; } }
 
@@ -319,11 +320,24 @@ namespace NineGrid.Core.Effects
             mCounterKey = config.Get("counterKey").AsString(string.Empty);
             // ADR-0035：倒计时投影令牌键（完整「装配id.键」）；空 = 不投影。
             mProjectKey = config.Get("projectKey").AsString(string.Empty);
+            // #157：作用域标记（Battle 默认 / Run），仅作者/系统可见，绝不进入玩家文本。
+            mScope = string.Equals(config.Get("scope").AsString("battle"), "run", StringComparison.OrdinalIgnoreCase)
+                ? CountdownScope.Run
+                : CountdownScope.Battle;
         }
 
         public string CountdownProjectionKey { get { return mProjectKey; } }
         public string CountdownCounterKey { get { return mResolvedCounterKey; } }
         public bool CountdownAdvanced { get { return mCountdownAdvanced; } }
+        public CountdownScope Scope { get { return mScope; } }
+        public int CountdownPeriod { get { return mEvery; } }
+
+        public string ResolveCounterKey(string instanceId)
+        {
+            return string.IsNullOrEmpty(mCounterKey)
+                ? CoreCounterKeys.EffectCounterPrefix + instanceId + ".interact"
+                : mCounterKey;
+        }
 
         public override bool Matches(EffectRuntimeContext context)
         {
@@ -345,9 +359,7 @@ namespace NineGrid.Core.Effects
                 return false;
             }
 
-            var key = string.IsNullOrEmpty(mCounterKey)
-                ? CoreCounterKeys.EffectCounterPrefix + context.Instance.InstanceId + ".interact"
-                : mCounterKey;
+            var key = ResolveCounterKey(context.Instance.InstanceId);
             mResolvedCounterKey = key;
             var fired = ActionCountdown.TickOnce(owner.Counters, key, mEvery);
             mCountdownAdvanced = !string.IsNullOrEmpty(mProjectKey);
@@ -367,6 +379,7 @@ namespace NineGrid.Core.Effects
         private string mProjectKey = string.Empty;
         private string mResolvedCounterKey = string.Empty;
         private bool mCountdownAdvanced;
+        private CountdownScope mScope = CountdownScope.Battle;
 
         public override TriggerPoint Point { get { return TriggerPoint.OnMove; } }
 
@@ -381,11 +394,24 @@ namespace NineGrid.Core.Effects
             mSourcePrefix = config.Get("sourcePrefix").AsString(string.Empty);
             // ADR-0035：倒计时投影令牌键（完整「装配id.键」）；空 = 不投影。
             mProjectKey = config.Get("projectKey").AsString(string.Empty);
+            // #157：作用域标记（Battle 默认 / Run），仅作者/系统可见，绝不进入玩家文本。
+            mScope = string.Equals(config.Get("scope").AsString("battle"), "run", StringComparison.OrdinalIgnoreCase)
+                ? CountdownScope.Run
+                : CountdownScope.Battle;
         }
 
         public string CountdownProjectionKey { get { return mProjectKey; } }
         public string CountdownCounterKey { get { return mResolvedCounterKey; } }
         public bool CountdownAdvanced { get { return mCountdownAdvanced; } }
+        public CountdownScope Scope { get { return mScope; } }
+        public int CountdownPeriod { get { return mEvery; } }
+
+        public string ResolveCounterKey(string instanceId)
+        {
+            return string.IsNullOrEmpty(mCounterKey)
+                ? CoreCounterKeys.EffectCounterPrefix + instanceId + ".selfMove"
+                : mCounterKey;
+        }
 
         public override bool Matches(EffectRuntimeContext context)
         {
@@ -425,9 +451,7 @@ namespace NineGrid.Core.Effects
                     return false;
                 }
 
-                var key = string.IsNullOrEmpty(mCounterKey)
-                    ? CoreCounterKeys.EffectCounterPrefix + context.Instance.InstanceId + ".selfMove"
-                    : mCounterKey;
+                var key = ResolveCounterKey(context.Instance.InstanceId);
                 mResolvedCounterKey = key;
                 var fired = ActionCountdown.TickOnce(owner.Counters, key, mEvery);
                 mCountdownAdvanced = !string.IsNullOrEmpty(mProjectKey);
@@ -837,12 +861,22 @@ namespace NineGrid.Core.Effects
         private bool mTargetIsPlayer;
         private bool mActorIsPlayer;
         private int mFireCount;
+        private CountdownScope mScope = CountdownScope.Battle;
 
         public int FireCount { get { return mFireCount; } }
 
         public string CountdownProjectionKey { get { return mProjectKey; } }
         public string CountdownCounterKey { get { return mResolvedCounterKey; } }
         public bool CountdownAdvanced { get { return mCountdownAdvanced; } }
+        public CountdownScope Scope { get { return mScope; } }
+        public int CountdownPeriod { get { return mThreshold; } }
+
+        public string ResolveCounterKey(string instanceId)
+        {
+            return string.IsNullOrEmpty(mCounterKey)
+                ? CoreCounterKeys.EffectCounterPrefix + instanceId + ".cumulative." + mMetric
+                : mCounterKey;
+        }
 
         public override TriggerPoint Point { get { return TriggerPoint.OnCumulative; } }
 
@@ -859,6 +893,10 @@ namespace NineGrid.Core.Effects
             mCause = config.Get("cause").AsString(string.Empty);
             // ADR-0035：倒计时投影令牌键（完整「装配id.键」）；空 = 不投影。
             mProjectKey = config.Get("projectKey").AsString(string.Empty);
+            // #157：作用域标记（Battle 默认 / Run），仅作者/系统可见，绝不进入玩家文本。
+            mScope = string.Equals(config.Get("scope").AsString("battle"), "run", StringComparison.OrdinalIgnoreCase)
+                ? CountdownScope.Run
+                : CountdownScope.Battle;
             ConfigureMorphology(config);
         }
 
@@ -905,9 +943,7 @@ namespace NineGrid.Core.Effects
                 return false;
             }
 
-            var key = string.IsNullOrEmpty(mCounterKey)
-                ? CoreCounterKeys.EffectCounterPrefix + context.Instance.InstanceId + ".cumulative." + mMetric
-                : mCounterKey;
+            var key = ResolveCounterKey(context.Instance.InstanceId);
             mResolvedCounterKey = key;
             mFireCount = ActionCountdown.TickCount(owner.Counters, key, mThreshold, delta);
             mCountdownAdvanced = !string.IsNullOrEmpty(mProjectKey);

@@ -1860,6 +1860,8 @@ namespace NineGrid.Core.Systems
             pipeline.Enqueue(new ChangePhaseAction(GamePhase.ClearCheck));
             pipeline.Enqueue(new ChangePhaseAction(GamePhase.NodeCompleted));
             pipeline.Enqueue(new NodeCompletedAction());
+            // ADR-0035 / #157：离开战斗（清关）重置 Battle 作用域倒计时为阈值（authority + projection）。
+            pipeline.Enqueue(new ResetBattleScopedCountdownsAction());
             var resolved = pipeline.RunToCompletion();
             // ADR-0026 / #113：清关清场残留（帮助/怪/机关）不兑金；道具卡格保留；不再走 help.choice。
             resolved += this.GetSystem<IEconomySystem>().SettleUnusedHelpCards();

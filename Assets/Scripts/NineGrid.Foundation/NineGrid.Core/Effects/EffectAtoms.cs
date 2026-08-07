@@ -26,6 +26,20 @@ namespace NineGrid.Core.Effects
     }
 
     /// <summary>
+    /// 倒计时计数器作用域标记（ADR-0035 / #157）：Battle 作用域在离开战斗时真重置为阈值
+    /// （authority + projection，教玩家"不跨场"）；Run 作用域跨战斗忠实保留剩余。
+    /// 标记仅作者/系统可见——只出现在 DSL 配置里，绝不进入投影键或玩家可见字符串。
+    /// </summary>
+    public enum CountdownScope
+    {
+        /// <summary>默认：本战斗生命周期；离战重置为阈值。</summary>
+        Battle,
+
+        /// <summary>整趟跑图生命周期；离战保留剩余。</summary>
+        Run,
+    }
+
+    /// <summary>
     /// 倒计时投影触发契约（ADR-0035）：带 every/threshold 的倒计时触发在 <see cref="ITrigger.Matches"/>
     /// 推进计数器后，由 <see cref="EffectSystem"/> 生成 <see cref="CommitEffectCountdownRemainingAction"/>，
     /// 把剩余次数作为结算指令广播到表现层（View 禁止直读 Core 计数器）。
@@ -41,6 +55,21 @@ namespace NineGrid.Core.Effects
 
         /// <summary>本次 Matches 是否推进了倒计时计数器（剩余发生变化）。</summary>
         bool CountdownAdvanced { get; }
+
+        /// <summary>
+        /// 作用域标记（Battle 默认 / Run，DSL <c>scope</c> 配置，仅作者/系统可见）。
+        /// Battle 作用域由离战重置动作复位为 <see cref="CountdownPeriod"/>；Run 作用域不重置。
+        /// </summary>
+        CountdownScope Scope { get; }
+
+        /// <summary>倒计时周期（every / threshold）：Battle 离战重置的目标阈值。</summary>
+        int CountdownPeriod { get; }
+
+        /// <summary>
+        /// 确定性计数器键（离战重置用，不依赖 Matches 解析）：显式 <c>counterKey</c> 或
+        /// 按实例 id 推导的自动键（<c>effect.&lt;instanceId&gt;.&lt;suffix&gt;</c>）。
+        /// </summary>
+        string ResolveCounterKey(string instanceId);
     }
 
     public interface ICondition : IEffectAtom

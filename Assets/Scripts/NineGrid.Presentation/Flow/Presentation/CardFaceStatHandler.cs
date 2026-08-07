@@ -33,6 +33,9 @@ namespace NineGrid.Flow.Presentation
                 case PresentationInstructionKind.UpdateCountdownRemaining:
                     ApplyCountdownRemaining(instruction.Event);
                     return true;
+                case PresentationInstructionKind.ClearCountdownRemaining:
+                    ApplyCountdownCleared(instruction.Event);
+                    return true;
                 case PresentationInstructionKind.ModifyBaseStat:
                     ApplyBaseStat(instruction.Event);
                     return true;
@@ -114,6 +117,25 @@ namespace NineGrid.Flow.Presentation
                 card,
                 gameEvent.Message,
                 Mathf.Max(0, gameEvent.ResultValue).ToString());
+        }
+
+        /// <summary>
+        /// 效果倒计时投影清除（ADR-0035 / #157）：效果卸载/离战重置后移除已提交剩余键并重投影，
+        /// 回退静态/初始（Instance 模式）。剩余只经本 Settled 指令到达，View 不直读 Core 计数器。
+        /// </summary>
+        private static void ApplyCountdownCleared(CoreGameEvent gameEvent)
+        {
+            if (gameEvent == null || string.IsNullOrEmpty(gameEvent.Message))
+            {
+                return;
+            }
+
+            if (!TryResolveCard(gameEvent, out var card))
+            {
+                return;
+            }
+
+            CoreCardPresentationMapper.ClearCountdownRemaining(card, gameEvent.Message);
         }
 
         private static void ApplyBaseStat(CoreGameEvent gameEvent)

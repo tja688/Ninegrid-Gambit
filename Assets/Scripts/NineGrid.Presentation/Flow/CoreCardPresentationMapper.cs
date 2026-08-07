@@ -215,6 +215,75 @@ namespace NineGrid.Flow
             card.CommitPresentation(snapshot);
         }
 
+        /// <summary>
+        /// Settled 倒计时投影清除（ADR-0035 / #157）：效果卸载或离战重置后移除该投影键的
+        /// 已提交剩余并重投影局内描述（Instance 模式）。键不命中则 no-op；
+        /// 剩余只经结算指令到达本出口，禁止 View 直读 Core 计数器；检查侧（Inspect）不消费。
+        /// </summary>
+        public static void ClearCountdownRemaining(ManagedCard card, string tokenKey)
+        {
+            if (card?.View == null || string.IsNullOrWhiteSpace(tokenKey))
+            {
+                return;
+            }
+
+            var previous = card.CommittedPresentation;
+            if (previous == null || previous.CommittedCountdownRemaining == null)
+            {
+                return;
+            }
+
+            var committed = CopyCommittedRemaining(previous.CommittedCountdownRemaining);
+            if (!committed.Remove(tokenKey) && !RemoveCaseInsensitive(committed, tokenKey))
+            {
+                return;
+            }
+
+            var snapshot = CloneForCountdownCommit(previous);
+            snapshot.CommittedCountdownRemaining = committed;
+
+            if (CardPresentationConfigCatalog.TryGet(card.DefId, out var dto) && dto != null)
+            {
+                var projected = CardFaceDescriptionProjector.Project(
+                    CardDescriptionProjectionMode.Instance,
+                    dto.description,
+                    dto.liveTemplate,
+                    dto.effectAssemblies,
+                    snapshot.CommittedCountdownRemaining);
+                if (!string.IsNullOrWhiteSpace(projected))
+                {
+                    snapshot.BasicDescription = projected;
+                }
+
+                snapshot.DetailDescription = CardDetailDescriptionComposer.Compose(
+                    snapshot.BasicDescription,
+                    CardFacePresentationBinder.PeekDescriptionIconCatalog());
+            }
+
+            card.CommitPresentation(snapshot);
+        }
+
+        private static bool RemoveCaseInsensitive(Dictionary<string, string> committed, string tokenKey)
+        {
+            string found = null;
+            foreach (var pair in committed)
+            {
+                if (string.Equals(pair.Key, tokenKey, System.StringComparison.OrdinalIgnoreCase))
+                {
+                    found = pair.Key;
+                    break;
+                }
+            }
+
+            if (found == null)
+            {
+                return false;
+            }
+
+            committed.Remove(found);
+            return true;
+        }
+
         private static CardPresentationSnapshot CloneForCountdownCommit(CardPresentationSnapshot source)
         {
             return new CardPresentationSnapshot
