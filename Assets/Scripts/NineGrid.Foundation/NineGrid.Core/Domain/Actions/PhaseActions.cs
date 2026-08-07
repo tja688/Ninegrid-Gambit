@@ -170,7 +170,10 @@ namespace NineGrid.Core
                 return GameActionResult.Empty;
             }
 
-            return new GameActionResult().AddFollowUp(new ChangePhaseAction(GamePhase.Defeat));
+            // ADR-0035 / #157：战败离战同样重置 Battle 作用域倒计时（authority + projection）。
+            return new GameActionResult()
+                .AddFollowUp(new ResetBattleScopedCountdownsAction())
+                .AddFollowUp(new ChangePhaseAction(GamePhase.Defeat));
         }
     }
 

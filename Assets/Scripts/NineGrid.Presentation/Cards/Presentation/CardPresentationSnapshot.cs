@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace NineGrid.Cards.Presentation
@@ -52,5 +53,12 @@ namespace NineGrid.Cards.Presentation
 
         /// <summary>稀有度驱动的卡框染色；a=0 表示未接线（Binder/底盘不改色）。</summary>
         public Color FrameColor = new Color(0f, 0f, 0f, 0f);
+
+        /// <summary>
+        /// 已提交倒计时投影值（ADR-0035）：键为完整「装配id.键」（如 <c>trap.flame.remove.every</c>），
+        /// 只经 Settled 结算指令（<c>UpdateCountdownRemaining</c>）写入；null = 无已提交剩余。
+        /// 仅实例/预览表面消费；Inspect 模式由投影缝恒忽略。
+        /// </summary>
+        public IReadOnlyDictionary<string, string> CommittedCountdownRemaining;
     }
 }

@@ -38,6 +38,14 @@ namespace NineGrid.Core.Tests
                 PresentationBeat.Settled,
                 PresentationEventMap.Get(CoreEventType.ActionCountdownChanged).Beat,
                 "行动倒计时须在 Settled 经指令 Commit 到 ActionCount");
+            Assert.AreEqual(
+                PresentationBeat.Settled,
+                PresentationEventMap.Get(CoreEventType.EffectCountdownChanged).Beat,
+                "效果倒计时剩余须在 Settled 经指令 Commit 到卡面投影（ADR-0035）");
+            Assert.AreEqual(
+                PresentationBeat.Settled,
+                PresentationEventMap.Get(CoreEventType.EffectCountdownCleared).Beat,
+                "效果倒计时清除须在 Settled 经指令移除卡面投影（ADR-0035 / #157）");
         }
 
         [Test]

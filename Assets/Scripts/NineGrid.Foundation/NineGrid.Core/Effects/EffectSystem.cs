@@ -254,10 +254,57 @@ namespace NineGrid.Core.Effects
             var runtime = new EffectRuntimeContext(((IBelongToArchitecture)this).GetArchitecture(), instance, triggerContext);
             if (!CanTrigger(instance, runtime))
             {
-                return new GameAction[0];
+                // 倒计时推进但本次未触发：仍广播剩余（如「还剩N次」逐次递减），
+                // 由 CommitEffectCountdownRemainingAction 承担（ADR-0035）。
+                return BuildCountdownOnlyActions(instance, runtime);
             }
 
             return BuildActionsForMatchedInstance(instance, runtime);
+        }
+
+        /// <summary>
+        /// 倒计时推进但未触发时的投影提交动作；无投影契约则空。
+        /// </summary>
+        private static IReadOnlyList<GameAction> BuildCountdownOnlyActions(
+            EffectInstance instance,
+            EffectRuntimeContext runtime)
+        {
+            var countdown = instance.Trigger as ICountdownProjectionTrigger;
+            if (countdown == null
+                || !countdown.CountdownAdvanced
+                || string.IsNullOrEmpty(countdown.CountdownProjectionKey))
+            {
+                return new GameAction[0];
+            }
+
+            return new GameAction[]
+            {
+                new CommitEffectCountdownRemainingAction(
+                    runtime.OwnerUid,
+                    countdown.CountdownProjectionKey,
+                    countdown.CountdownCounterKey),
+            };
+        }
+
+        /// <summary>
+        /// 生成一次触发的投影提交动作；无投影契约则空。
+        /// </summary>
+        private static GameAction BuildCountdownCommitAction(
+            EffectInstance instance,
+            EffectRuntimeContext runtime)
+        {
+            var countdown = instance.Trigger as ICountdownProjectionTrigger;
+            if (countdown == null
+                || !countdown.CountdownAdvanced
+                || string.IsNullOrEmpty(countdown.CountdownProjectionKey))
+            {
+                return null;
+            }
+
+            return new CommitEffectCountdownRemainingAction(
+                runtime.OwnerUid,
+                countdown.CountdownProjectionKey,
+                countdown.CountdownCounterKey);
         }
 
         public EffectNonTriggerProbeResult ProbeWhyNotTriggered(string instanceId, TriggerContext triggerContext)
@@ -293,6 +340,13 @@ namespace NineGrid.Core.Effects
             }
 
             var actions = new List<GameAction>();
+            // ADR-0035：倒计时剩余提交先于效果自身动作入批，保证同批结算里剩余投影先到表现层。
+            var countdownCommit = BuildCountdownCommitAction(instance, runtime);
+            if (countdownCommit != null)
+            {
+                actions.Add(countdownCommit);
+            }
+
             for (var i = 0; i < fireCount; i++)
             {
                 var targets = instance.Target.Resolve(runtime);
@@ -782,7 +836,8 @@ namespace NineGrid.Core.Effects
                 var runtime = new EffectRuntimeContext(((IBelongToArchitecture)mSystem).GetArchitecture(), instance, context);
                 if (!mSystem.CanTrigger(instance, runtime))
                 {
-                    return null;
+                    // 倒计时推进但本次未触发：仍广播剩余投影（「还剩N次」逐次递减，ADR-0035）。
+                    return EffectSystem.BuildCountdownOnlyActions(instance, runtime);
                 }
 
                 return new[] { new ExecuteEffectAction(mInstanceId, context, mSystem.BuildActionsForMatchedInstance(instance, runtime)) };

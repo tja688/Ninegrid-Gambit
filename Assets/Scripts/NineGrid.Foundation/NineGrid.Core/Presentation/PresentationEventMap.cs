@@ -88,6 +88,8 @@ namespace NineGrid.Core
             Entry(CoreEventType.BoardMarked, PresentationInstructionKind.MarkBoard, PresentationEventCategory.Board, true, true, PresentationBeat.None, "Board marked", "Board mark VFX — no card-face stats"),
             Entry(CoreEventType.ContentLoaded, PresentationInstructionKind.LoadContent, PresentationEventCategory.Content, true, false, PresentationBeat.None, "Content loaded", "Content bootstrap — no card-face stats"),
             Entry(CoreEventType.ActionCountdownChanged, PresentationInstructionKind.UpdateActionCount, PresentationEventCategory.Stat, true, true, PresentationBeat.Settled, "Action countdown changed"),
+            Entry(CoreEventType.EffectCountdownChanged, PresentationInstructionKind.UpdateCountdownRemaining, PresentationEventCategory.Stat, true, true, PresentationBeat.Settled, "Effect countdown remaining changed"),
+            Entry(CoreEventType.EffectCountdownCleared, PresentationInstructionKind.ClearCountdownRemaining, PresentationEventCategory.Stat, true, true, PresentationBeat.Settled, "Effect countdown remaining cleared"),
             Entry(CoreEventType.CardFaceChanged, PresentationInstructionKind.UpdateFaceUp, PresentationEventCategory.Stat, true, true, PresentationBeat.Settled, "Card face orientation changed"),
             // Avatar 跳格由 AvatarWalkRunner 直接 hop；事件仅作规则痕迹，不经盘面批播放。
             Entry(CoreEventType.AvatarMoved, PresentationInstructionKind.MoveAvatar, PresentationEventCategory.Move, false, false, PresentationBeat.None, "Avatar moved", "Board walk hop owned by AvatarWalkRunner — no batch playback")
