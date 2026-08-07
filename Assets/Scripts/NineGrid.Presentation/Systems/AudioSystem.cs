@@ -175,6 +175,7 @@ namespace NineGrid.Presentation.Systems
         public AudioCueResult RequestCue(AudioCueRequest request)
         {
             var requestedAt = mClock.UnscaledTime;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
             AddHistory(new AudioHistoryRecord
             {
                 Outcome = AudioHistoryOutcome.Requested,
@@ -182,6 +183,7 @@ namespace NineGrid.Presentation.Systems
                 DiagnosticSource = request.DiagnosticSource,
                 Time = requestedAt,
             });
+#endif
             RecordTrace(
                 PerfTraceKinds.AudioCueRequest,
                 request,
@@ -208,6 +210,7 @@ namespace NineGrid.Presentation.Systems
                 && now >= lastPlayedAt
                 && now - lastPlayedAt < binding.MinimumIntervalSeconds)
             {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
                 AddHistory(new AudioHistoryRecord
                 {
                     Outcome = AudioHistoryOutcome.Cooldown,
@@ -217,6 +220,7 @@ namespace NineGrid.Presentation.Systems
                     FailureReason = "minimum interval",
                     Time = now,
                 });
+#endif
                 RecordTrace(
                     PerfTraceKinds.AudioCueCooldown,
                     request,
@@ -254,6 +258,7 @@ namespace NineGrid.Presentation.Systems
 
             if (!backend.Succeeded)
             {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
                 AddHistory(new AudioHistoryRecord
                 {
                     Outcome = AudioHistoryOutcome.BackendFailure,
@@ -264,6 +269,7 @@ namespace NineGrid.Presentation.Systems
                     FailureReason = backend.FailureReason,
                     Time = now,
                 });
+#endif
                 RecordTrace(
                     PerfTraceKinds.AudioCueBackendFailure,
                     request,
@@ -286,6 +292,7 @@ namespace NineGrid.Presentation.Systems
                 ? binding.ClipKey
                 : backend.ActualClipKey;
             mLastPlayedAt[binding] = now;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
             AddHistory(new AudioHistoryRecord
             {
                 Outcome = AudioHistoryOutcome.Played,
@@ -295,6 +302,7 @@ namespace NineGrid.Presentation.Systems
                 ActualClipKey = actualClipKey,
                 Time = now,
             });
+#endif
             RecordTrace(
                 PerfTraceKinds.AudioCuePlayed,
                 request,
@@ -318,6 +326,7 @@ namespace NineGrid.Presentation.Systems
 
         private AudioCueResult RecordUnbound(AudioCueRequest request, string reason)
         {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
             AddHistory(new AudioHistoryRecord
             {
                 Outcome = AudioHistoryOutcome.Unbound,
@@ -326,6 +335,7 @@ namespace NineGrid.Presentation.Systems
                 FailureReason = reason,
                 Time = mClock.UnscaledTime,
             });
+#endif
             RecordTrace(
                 PerfTraceKinds.AudioCueUnbound,
                 request,
@@ -401,6 +411,8 @@ namespace NineGrid.Presentation.Systems
                 }
 
                 DirectorTrace.AppendBusyFields(payload);
+                payload["batchId"] = DirectorTrace.ActiveBatchId.ToString(
+                    System.Globalization.CultureInfo.InvariantCulture);
                 payload["sessionId"] = DiagTraceShared.CurrentSessionId;
                 payload["runTag"] = DiagTraceShared.RunTag;
                 PerfTraceRecorder.Record(kind, uid: -1, PerfTraceSites.AudioSystemCue, payload);
@@ -411,17 +423,17 @@ namespace NineGrid.Presentation.Systems
             }
         }
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
         private void AddHistory(AudioHistoryRecord record)
         {
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
             if (mHistory.Count >= mHistoryCapacity)
             {
                 mHistory.RemoveAt(0);
             }
 
             mHistory.Add(record);
-#endif
         }
+#endif
 
         private static float DecibelsToLinear(float decibels)
         {
