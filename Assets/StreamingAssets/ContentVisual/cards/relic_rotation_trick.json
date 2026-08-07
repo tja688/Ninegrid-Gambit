@@ -6,8 +6,8 @@
     "role": "Utility",
     "displayName": "旋转之源",
     "designSlotName": "",
-    "description": " 每击杀6张怪物卡，添加1张旋转轮到卡组",
-    "faceIntro": "",
+    "description": "每击杀{relic.rotation_trick.remove.threshold}张怪物卡，添加{relic.rotation_trick.remove.count}张旋转轮到卡组",
+    "faceIntro": "六杀一转，好戏开场",
     "attackPattern": "",
     "gold": 0,
     "stats": {
@@ -81,7 +81,7 @@
             "id": "relic.rotation_trick.remove",
             "templateId": "tpl.relic.rotation_trick.remove",
             "containerType": "Relic",
-            "argsJson": "{\"count\":1}"
+            "argsJson": "{\"count\":1,\"threshold\":6}"
         }
     ],
     "effectIds": [],

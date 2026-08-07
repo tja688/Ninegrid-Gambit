@@ -6,8 +6,8 @@
     "role": "Attack",
     "displayName": "血之暴力",
     "designSlotName": "",
-    "description": "[MHP]+4；当[HP]低于[MHP]的50%时，玩家[attack]+2",
-    "faceIntro": "",
+    "description": "[MHP]+{relic.blood_violence.max_hp.value}；当[HP]低于[MHP]的{relic.blood_violence.atk.pct}%时，玩家[attack]+{relic.blood_violence.atk.value}",
+    "faceIntro": "垂死反扑，越险越狂",
     "attackPattern": "",
     "gold": 0,
     "stats": {
@@ -88,7 +88,7 @@
             "id": "relic.blood_violence.atk",
             "templateId": "tpl.relic.blood_violence.atk",
             "containerType": "Relic",
-            "argsJson": "{\"value\":2,\"source\":\"relic.blood_violence\"}"
+            "argsJson": "{\"value\":2,\"source\":\"relic.blood_violence\",\"pct\":50}"
         }
     ],
     "effectIds": [],

@@ -6,8 +6,8 @@
     "role": "Utility",
     "displayName": "凤凰羽毛",
     "designSlotName": "",
-    "description": "[MHP]+8，[HP]小于等于0时，恢复50%[HP]并[death]",
-    "faceIntro": "",
+    "description": "[MHP]+{relic.phoenix_feather.max_hp.delta}，[HP]小于等于{relic.phoenix_feather.fatal.hp}时，恢复{relic.phoenix_feather.fatal.pct}%[HP]并[death]",
+    "faceIntro": "浴火重生，不死鸟",
     "attackPattern": "",
     "gold": 0,
     "stats": {
@@ -87,7 +87,7 @@
             "id": "relic.phoenix_feather.fatal",
             "templateId": "tpl.relic.phoenix_feather.fatal",
             "containerType": "Relic",
-            "argsJson": "{\"source\":\"Player\"}"
+            "argsJson": "{\"source\":\"Player\",\"hp\":0,\"pct\":50}"
         }
     ],
     "effectIds": [],

@@ -6,8 +6,8 @@
     "role": "Utility",
     "displayName": "血魔徽章",
     "designSlotName": "",
-    "description": "每受到5点伤害，获得{relic.blood_demon.damage.delta}点[MHP]",
-    "faceIntro": "",
+    "description": "每受到{relic.blood_demon.damage.threshold}点伤害，获得{relic.blood_demon.damage.delta}点[MHP]",
+    "faceIntro": "流血越多，命越长",
     "attackPattern": "",
     "gold": 0,
     "stats": {
@@ -81,7 +81,7 @@
             "id": "relic.blood_demon.damage",
             "templateId": "tpl.relic.blood_demon.damage",
             "containerType": "Relic",
-            "argsJson": "{\"delta\":1,\"reason\":\"relic.blood_demon\"}"
+            "argsJson": "{\"delta\":1,\"reason\":\"relic.blood_demon\",\"threshold\":5}"
         }
     ],
     "effectIds": [],

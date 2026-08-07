@@ -6,8 +6,8 @@
     "role": "Utility",
     "displayName": "金血圣杯",
     "designSlotName": "",
-    "description": "[MHP]+2，每损失1点[HP]，获得等量[money]",
-    "faceIntro": "",
+    "description": "[MHP]+{relic.gold_blood.max_hp.value}，每损失{relic.gold_blood.taken.every}点[HP]，获得等量[money]",
+    "faceIntro": "流血也流金",
     "attackPattern": "",
     "gold": 0,
     "stats": {
@@ -87,7 +87,7 @@
             "id": "relic.gold_blood.taken",
             "templateId": "tpl.relic.gold_blood.taken",
             "containerType": "Relic",
-            "argsJson": "{\"reason\":\"goldBlood\"}"
+            "argsJson": "{\"reason\":\"goldBlood\",\"every\":1}"
         }
     ],
     "effectIds": [],

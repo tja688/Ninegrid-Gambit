@@ -6,8 +6,8 @@
     "role": "Defense",
     "displayName": "复合盔甲",
     "designSlotName": "",
-    "description": "每关卡开始时，每有3点[attack]，获得1点[armor]",
-    "faceIntro": "",
+    "description": "每关卡开始时，每有{relic.composite_armor.node_start.every}点[attack]，获得{relic.composite_armor.node_start.gain}点[armor]",
+    "faceIntro": "力大，壳也厚",
     "attackPattern": "",
     "gold": 0,
     "stats": {
@@ -82,7 +82,7 @@
             "id": "relic.composite_armor.node_start",
             "templateId": "tpl.relic.composite_armor.node_start",
             "containerType": "Relic",
-            "argsJson": "{}"
+            "argsJson": "{\"every\":3,\"gain\":1}"
         }
     ],
     "effectIds": [],

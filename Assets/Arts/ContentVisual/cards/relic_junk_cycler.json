@@ -6,8 +6,8 @@
     "role": "Utility",
     "displayName": "回收手链",
     "designSlotName": "",
-    "description": "每使用9张道具卡，添加1张道具卡到卡组",
-    "faceIntro": "",
+    "description": "每使用{relic.junk_cycler.use.threshold}张道具卡，添加{relic.junk_cycler.use.count}张道具卡到卡组",
+    "faceIntro": "九次循环，一件新货",
     "attackPattern": "",
     "gold": 0,
     "stats": {
@@ -81,7 +81,7 @@
             "id": "relic.junk_cycler.use",
             "templateId": "tpl.relic.junk_cycler.use",
             "containerType": "Relic",
-            "argsJson": "{\"count\":1}"
+            "argsJson": "{\"count\":1,\"threshold\":9}"
         }
     ],
     "effectIds": [],

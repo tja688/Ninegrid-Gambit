@@ -6,8 +6,8 @@
     "role": "Utility",
     "displayName": "回收衣物",
     "designSlotName": "",
-    "description": "每使用3张道具卡，获得1点[MHP]",
-    "faceIntro": "",
+    "description": "每使用{relic.junk_body.use.threshold}张道具卡，获得{relic.junk_body.use.delta}点[MHP]",
+    "faceIntro": "垃圾吃多了，命也长了",
     "attackPattern": "",
     "gold": 0,
     "stats": {
@@ -82,7 +82,7 @@
             "id": "relic.junk_body.use",
             "templateId": "tpl.relic.junk_body.use",
             "containerType": "Relic",
-            "argsJson": "{\"delta\":1,\"reason\":\"relic.junk_body\"}"
+            "argsJson": "{\"delta\":1,\"reason\":\"relic.junk_body\",\"threshold\":3}"
         }
     ],
     "effectIds": [],

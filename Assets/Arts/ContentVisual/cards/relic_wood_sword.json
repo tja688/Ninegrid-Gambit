@@ -6,8 +6,8 @@
     "role": "Attack",
     "displayName": "木剑",
     "designSlotName": "",
-    "description": "[attack]+1，木质套装：[attack]额外+2",
-    "faceIntro": "",
+    "description": "[attack]+{relic.wood_sword.base.value}，木质套装：[attack]额外+{relic.wood_sword.set.value}",
+    "faceIntro": "木剑虽钝，套装锋利",
     "attackPattern": "",
     "gold": 0,
     "stats": {

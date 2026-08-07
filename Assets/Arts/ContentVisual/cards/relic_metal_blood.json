@@ -7,7 +7,7 @@
     "displayName": "凝血护甲",
     "designSlotName": "",
     "description": "受到伤害时，将损失的[HP]转换为等量的[armor]",
-    "faceIntro": "",
+    "faceIntro": "伤化为甲，越打越硬",
     "attackPattern": "",
     "gold": 0,
     "stats": {

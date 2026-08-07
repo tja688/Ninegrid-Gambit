@@ -6,8 +6,8 @@
     "role": "Defense",
     "displayName": "锻造器具",
     "designSlotName": "",
-    "description": "基础[armor]+2，进入战斗时吞噬5点[armor]使基础[armor]永久+1",
-    "faceIntro": "",
+    "description": "基础[armor]+{relic.forge_tool.init.value}，进入战斗时吞噬{relic.forge_tool.node_start.threshold}点[armor]使基础[armor]永久+{relic.forge_tool.node_start.delta}",
+    "faceIntro": "吃护甲，长护甲",
     "attackPattern": "",
     "gold": 0,
     "stats": {

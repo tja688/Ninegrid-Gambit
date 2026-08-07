@@ -7,7 +7,7 @@
     "displayName": "狂战",
     "designSlotName": "",
     "description": "攻击+{relic.berserker_axe.base.value}，血量低于一半时玩家攻击翻倍",
-    "faceIntro": "",
+    "faceIntro": "血越少，斧越狠",
     "attackPattern": "",
     "gold": 0,
     "stats": {

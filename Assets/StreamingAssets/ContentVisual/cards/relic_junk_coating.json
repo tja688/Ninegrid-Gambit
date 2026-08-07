@@ -6,8 +6,8 @@
     "role": "Defense",
     "displayName": "回收铁背心",
     "designSlotName": "",
-    "description": "每使用1张道具卡，获得1点[armor]",
-    "faceIntro": "",
+    "description": "每使用{relic.junk_coating.use.every}张道具卡，获得{relic.junk_coating.use.amount}点[armor]",
+    "faceIntro": "糊上一层，也是一层",
     "attackPattern": "",
     "gold": 0,
     "stats": {
@@ -81,7 +81,7 @@
             "id": "relic.junk_coating.use",
             "templateId": "tpl.relic.junk_coating.use",
             "containerType": "Relic",
-            "argsJson": "{\"amount\":1}"
+            "argsJson": "{\"amount\":1,\"every\":1}"
         }
     ],
     "effectIds": [],

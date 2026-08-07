@@ -6,8 +6,8 @@
     "role": "Attack",
     "displayName": "毒鞭",
     "designSlotName": "",
-    "description": "怪物每移动1次，受到1点伤害",
-    "faceIntro": "",
+    "description": "怪物每移动{relic.spinning_barb.move.every}次，受到{relic.spinning_barb.move.amount}点伤害",
+    "faceIntro": "走一步，扎一下",
     "attackPattern": "",
     "gold": 0,
     "stats": {
@@ -81,7 +81,7 @@
             "id": "relic.spinning_barb.move",
             "templateId": "tpl.relic.spinning_barb.move",
             "containerType": "Relic",
-            "argsJson": "{\"amount\":1}"
+            "argsJson": "{\"amount\":1,\"every\":1}"
         }
     ],
     "effectIds": [],

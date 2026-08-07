@@ -6,8 +6,8 @@
     "role": "Attack",
     "displayName": "回收棒槌",
     "designSlotName": "",
-    "description": "[attack]+2,每使用1张道具卡，恢复2点[HP]",
-    "faceIntro": "",
+    "description": "[attack]+{relic.junk_sword.base.value},击杀时恢复{relic.junk_sword.kill.amount}点[HP]",
+    "faceIntro": "钝剑也斩，废料也回",
     "attackPattern": "",
     "gold": 0,
     "stats": {

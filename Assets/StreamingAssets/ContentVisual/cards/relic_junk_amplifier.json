@@ -6,8 +6,8 @@
     "role": "Attack",
     "displayName": "回收腰带",
     "designSlotName": "",
-    "description": "每使用1张道具卡，本场战斗[attack]+1",
-    "faceIntro": "",
+    "description": "每使用{relic.junk_amplifier.use.every}张道具卡，本场战斗[attack]+{relic.junk_amplifier.use.value}",
+    "faceIntro": "用道具，涨攻势",
     "attackPattern": "",
     "gold": 0,
     "stats": {
@@ -81,7 +81,7 @@
             "id": "relic.junk_amplifier.use",
             "templateId": "tpl.relic.junk_amplifier.use",
             "containerType": "Relic",
-            "argsJson": "{\"value\":1,\"source\":\"relic.junk_amplifier\"}"
+            "argsJson": "{\"value\":1,\"source\":\"relic.junk_amplifier\",\"every\":1}"
         }
     ],
     "effectIds": [],

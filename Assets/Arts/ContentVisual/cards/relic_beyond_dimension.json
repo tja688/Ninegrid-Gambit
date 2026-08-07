@@ -7,7 +7,7 @@
     "displayName": "超越维度",
     "designSlotName": "",
     "description": "攻击+{relic.beyond_dimension.base.value}，攻击后旋转{relic.beyond_dimension.battle.count}次",
-    "faceIntro": "",
+    "faceIntro": "打完就转，转到就打",
     "attackPattern": "",
     "gold": 0,
     "stats": {

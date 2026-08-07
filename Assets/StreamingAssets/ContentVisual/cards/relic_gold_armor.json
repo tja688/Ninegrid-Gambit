@@ -6,8 +6,8 @@
     "role": "Defense",
     "displayName": "金币盔甲",
     "designSlotName": "",
-    "description": "基础[armor]+{relic.gold_armor.base.value}，每5点[money]视作{relic.gold_armor.rule.value}点[armor]",
-    "faceIntro": "",
+    "description": "基础[armor]+{relic.gold_armor.base.value}，每{relic.gold_armor.rule.every}点[money]视作{relic.gold_armor.rule.value}点[armor]",
+    "faceIntro": "钱就是甲",
     "attackPattern": "",
     "gold": 0,
     "stats": {
@@ -87,7 +87,7 @@
             "id": "relic.gold_armor.rule",
             "templateId": "tpl.relic.gold_armor.rule",
             "containerType": "Relic",
-            "argsJson": "{\"value\":1}"
+            "argsJson": "{\"value\":1,\"every\":5}"
         }
     ],
     "effectIds": [],

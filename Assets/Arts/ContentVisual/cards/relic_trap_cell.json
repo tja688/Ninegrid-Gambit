@@ -6,8 +6,8 @@
     "role": "Attack",
     "displayName": "暗器",
     "designSlotName": "",
-    "description": "当怪物移动到格1时，对该怪物造成4点伤害",
-    "faceIntro": "",
+    "description": "当怪物移动到格{relic.trap_cell.move.slot}时，对该怪物造成{relic.trap_cell.move.amount}点伤害",
+    "faceIntro": "踩上格一，吃我一记",
     "attackPattern": "",
     "gold": 0,
     "stats": {
@@ -81,7 +81,7 @@
             "id": "relic.trap_cell.move",
             "templateId": "tpl.relic.trap_cell.move",
             "containerType": "Relic",
-            "argsJson": "{\"amount\":4}"
+            "argsJson": "{\"amount\":4,\"slot\":1}"
         }
     ],
     "effectIds": [],

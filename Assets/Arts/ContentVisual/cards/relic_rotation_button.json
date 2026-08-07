@@ -6,8 +6,8 @@
     "role": "Utility",
     "displayName": "旋转符文",
     "designSlotName": "",
-    "description": "进入战斗时将1张旋转轮置入到手牌",
-    "faceIntro": "",
+    "description": "进入战斗时将{relic.rotation_button.node_start.count}张旋转轮置入到手牌",
+    "faceIntro": "开局一转，转到手牌",
     "attackPattern": "",
     "gold": 0,
     "stats": {
@@ -81,7 +81,7 @@
             "id": "relic.rotation_button.node_start",
             "templateId": "tpl.relic.rotation_button.node_start",
             "containerType": "Relic",
-            "argsJson": "{}"
+            "argsJson": "{\"count\":1}"
         }
     ],
     "effectIds": [],

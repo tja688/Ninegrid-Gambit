@@ -6,8 +6,8 @@
     "role": "Utility",
     "displayName": "悬赏令",
     "designSlotName": "",
-    "description": "击杀层主时将一张金币卡添加到卡组",
-    "faceIntro": "",
+    "description": "击杀层主时将{relic.lucky_coin.boss_kill.count}张金币卡添加到卡组",
+    "faceIntro": "头目倒地，金币入袋",
     "attackPattern": "",
     "gold": 0,
     "stats": {

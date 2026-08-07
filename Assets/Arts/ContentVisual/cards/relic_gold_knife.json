@@ -6,8 +6,8 @@
     "role": "Attack",
     "displayName": "打金刀",
     "designSlotName": "",
-    "description": "击杀怪物时，获得2[money]",
-    "faceIntro": "",
+    "description": "击杀怪物时，获得{relic.gold_knife.kill.delta}[money]",
+    "faceIntro": "刀起金落",
     "attackPattern": "",
     "gold": 0,
     "stats": {

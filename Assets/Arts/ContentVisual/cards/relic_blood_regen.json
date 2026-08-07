@@ -6,8 +6,8 @@
     "role": "Utility",
     "displayName": "血色项链",
     "designSlotName": "",
-    "description": "[MHP]+{relic.blood_regen.max_hp.value}；低于半血时，恢复2[HP]",
-    "faceIntro": "",
+    "description": "[MHP]+{relic.blood_regen.max_hp.value}；低于半血时，恢复{relic.blood_regen.battle.amount}[HP]",
+    "faceIntro": "半血之下，快速回春",
     "attackPattern": "",
     "gold": 0,
     "stats": {

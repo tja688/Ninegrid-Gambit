@@ -6,8 +6,8 @@
     "role": "Utility",
     "displayName": "渴望",
     "designSlotName": "",
-    "description": "[MHP]+10，所有恢复血量的效果翻倍",
-    "faceIntro": "",
+    "description": "[MHP]+{relic.craving.max_hp.delta}，所有恢复血量的效果翻倍",
+    "faceIntro": "贪吃回血，多多益善",
     "attackPattern": "",
     "gold": 0,
     "stats": {

@@ -6,7 +6,7 @@
     "role": "Attack",
     "displayName": "轻弓",
     "designSlotName": "",
-    "description": "击杀时对随机1只怪物造成4点伤害",
+    "description": "击杀时对随机{relic.sling.kill.random}只怪物造成{relic.sling.kill.amount}点伤害",
     "faceIntro": "缴获自轻弓骷髅",
     "attackPattern": "",
     "gold": 0,
@@ -81,7 +81,7 @@
             "id": "relic.sling.kill",
             "templateId": "tpl.relic.sling.kill",
             "containerType": "Relic",
-            "argsJson": "{\"amount\":4}"
+            "argsJson": "{\"amount\":4,\"random\":1}"
         }
     ],
     "effectIds": [],

@@ -6,8 +6,8 @@
     "role": "Defense",
     "displayName": "重盔甲",
     "designSlotName": "",
-    "description": "基础[armor]+1，进入战斗时每有2点基础[armor]就获得1点[armor]",
-    "faceIntro": "",
+    "description": "基础[armor]+{relic.heavy_armor.base.value}，进入战斗时每有{relic.heavy_armor.node_start.every}点基础[armor]就获得{relic.heavy_armor.node_start.gain}点[armor]",
+    "faceIntro": "甲厚一分，人稳一分",
     "attackPattern": "",
     "gold": 0,
     "stats": {
@@ -87,7 +87,7 @@
             "id": "relic.heavy_armor.node_start",
             "templateId": "tpl.relic.heavy_armor.node_start",
             "containerType": "Relic",
-            "argsJson": "{\"source\":\"Player\"}"
+            "argsJson": "{\"source\":\"Player\",\"every\":2,\"gain\":1}"
         }
     ],
     "effectIds": [],

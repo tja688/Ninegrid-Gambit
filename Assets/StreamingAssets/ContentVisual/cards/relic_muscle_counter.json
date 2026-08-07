@@ -6,8 +6,8 @@
     "role": "Attack",
     "displayName": "狼牙棒",
     "designSlotName": "",
-    "description": "[MHP]+2；每拥有10点[MHP]，对怪物多造成1点伤害",
-    "faceIntro": "",
+    "description": "[MHP]+{relic.muscle_counter.max_hp.value}；每拥有{relic.muscle_counter.battle.every}点[MHP]，对怪物多造成{relic.muscle_counter.battle.gain}点伤害",
+    "faceIntro": "块头大，拳头疼",
     "attackPattern": "",
     "gold": 0,
     "stats": {
@@ -87,7 +87,7 @@
             "id": "relic.muscle_counter.battle",
             "templateId": "tpl.relic.muscle_counter.battle",
             "containerType": "Relic",
-            "argsJson": "{\"sourceAction\":\"DealDamage\"}"
+            "argsJson": "{\"sourceAction\":\"DealDamage\",\"every\":10,\"gain\":1}"
         }
     ],
     "effectIds": [],

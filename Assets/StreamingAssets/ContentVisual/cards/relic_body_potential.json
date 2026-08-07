@@ -6,8 +6,8 @@
     "role": "Utility",
     "displayName": "大力腰带",
     "designSlotName": "",
-    "description": "[MHP]+{relic.body_potential.max_hp.value}；[HP]每累计减少10点，添加{relic.body_potential.hp_lost.count}张道具到卡组",
-    "faceIntro": "",
+    "description": "[MHP]+{relic.body_potential.max_hp.value}；[HP]每累计减少{relic.body_potential.hp_lost.threshold}点，添加{relic.body_potential.hp_lost.count}张道具到卡组",
+    "faceIntro": "痛得越多，潜力越深",
     "attackPattern": "",
     "gold": 0,
     "stats": {
@@ -87,7 +87,7 @@
             "id": "relic.body_potential.hp_lost",
             "templateId": "tpl.relic.body_potential.hp_lost",
             "containerType": "Relic",
-            "argsJson": "{\"count\":1}"
+            "argsJson": "{\"count\":1,\"threshold\":10}"
         }
     ],
     "effectIds": [],

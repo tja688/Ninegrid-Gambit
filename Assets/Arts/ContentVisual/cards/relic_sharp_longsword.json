@@ -6,8 +6,8 @@
     "role": "Attack",
     "displayName": "黑暗长戟",
     "designSlotName": "",
-    "description": "[attack]+1；每次击杀玩家[attack]+1，维持到战斗结束",
-    "faceIntro": "",
+    "description": "[attack]+{relic.sharp_longsword.base.value}；每次击杀玩家[attack]+{relic.sharp_longsword.kill.value}，维持到战斗结束",
+    "faceIntro": "越杀越利，越利越杀",
     "attackPattern": "",
     "gold": 0,
     "stats": {

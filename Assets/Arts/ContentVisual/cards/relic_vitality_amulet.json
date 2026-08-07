@@ -6,8 +6,8 @@
     "role": "Utility",
     "displayName": "活力探险帽",
     "designSlotName": "",
-    "description": "[MHP]+6；每场战斗结束时恢复6点[HP]",
-    "faceIntro": "",
+    "description": "[MHP]+{relic.vitality_amulet.max_hp.delta}；每场战斗结束时恢复{relic.vitality_amulet.node_end.amount}点[HP]",
+    "faceIntro": "血厚六分，战后回春",
     "attackPattern": "",
     "gold": 0,
     "stats": {

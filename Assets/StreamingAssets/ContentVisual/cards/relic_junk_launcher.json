@@ -6,8 +6,8 @@
     "role": "Attack",
     "displayName": "回收弹弓",
     "designSlotName": "",
-    "description": "每使用1张道具卡，对随机1张怪物造成2点伤害",
-    "faceIntro": "",
+    "description": "每使用{relic.junk_launcher.use.every}张道具卡，对随机{relic.junk_launcher.use.random}张怪物造成{relic.junk_launcher.use.amount}点伤害",
+    "faceIntro": "捡到什么，砸什么",
     "attackPattern": "",
     "gold": 0,
     "stats": {
@@ -81,7 +81,7 @@
             "id": "relic.junk_launcher.use",
             "templateId": "tpl.relic.junk_launcher.use",
             "containerType": "Relic",
-            "argsJson": "{\"amount\":2}"
+            "argsJson": "{\"amount\":2,\"every\":1,\"random\":1}"
         }
     ],
     "effectIds": [],

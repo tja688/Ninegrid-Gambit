@@ -6,8 +6,8 @@
     "role": "Utility",
     "displayName": "交换之书",
     "designSlotName": "",
-    "description": "进入战斗时将1张交换置入手牌",
-    "faceIntro": "",
+    "description": "进入战斗时将{relic.swap_button.node_start.count}张交换置入手牌",
+    "faceIntro": "开局一换，换出新局",
     "attackPattern": "",
     "gold": 0,
     "stats": {
@@ -81,7 +81,7 @@
             "id": "relic.swap_button.node_start",
             "templateId": "tpl.relic.swap_button.node_start",
             "containerType": "Relic",
-            "argsJson": "{}"
+            "argsJson": "{\"count\":1}"
         }
     ],
     "effectIds": [],

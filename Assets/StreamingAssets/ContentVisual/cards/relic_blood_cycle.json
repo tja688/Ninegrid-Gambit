@@ -6,8 +6,8 @@
     "role": "Utility",
     "displayName": "血圣杯",
     "designSlotName": "",
-    "description": "血量上限+{relic.blood_cycle.max_hp.value}，受到伤害时恢复2点血量",
-    "faceIntro": "",
+    "description": "血量上限+{relic.blood_cycle.max_hp.value}，受到伤害时恢复{relic.blood_cycle.taken.amount}点血量",
+    "faceIntro": "受的伤，都会愈合",
     "attackPattern": "",
     "gold": 0,
     "stats": {
