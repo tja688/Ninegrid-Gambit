@@ -1095,6 +1095,8 @@ namespace NineGrid.Flow.TavernBoard
 
             var go = UnityEngine.Object.Instantiate(prefab);
             go.name = "TavernBoard_" + contentId + "_@" + slot;
+            // 三项服务/刷新选项按 defId 应用 JSON 主图标，勿恒显模板默认图标。
+            RoomOptionFaceVisuals.ApplyMainIcon(contentId, go);
             BoardSlotWorldPlacement.TryAlignToSlot(go.transform, geometry, slot);
 
             var sorting = go.GetComponent<SortingGroup>();
