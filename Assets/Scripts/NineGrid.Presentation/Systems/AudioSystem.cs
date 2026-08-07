@@ -177,12 +177,19 @@ namespace NineGrid.Presentation.Systems
         public AudioCueResult RequestCue(AudioCueRequest request)
         {
             var requestedAt = mClock.UnscaledTime;
+            AudioBinding resolvedBinding = null;
+            var hasResolvedBinding = !string.IsNullOrWhiteSpace(request.CueId)
+                && mCatalog.TryResolve(request, out resolvedBinding)
+                && resolvedBinding != null;
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
             AddHistory(new AudioHistoryRecord
             {
                 Outcome = AudioHistoryOutcome.Requested,
                 CueId = request.CueId,
+                CueNote = hasResolvedBinding ? resolvedBinding.Note : null,
+                BindingKey = hasResolvedBinding ? resolvedBinding.BindingKey : null,
                 DiagnosticSource = request.DiagnosticSource,
+                ActualClipKey = hasResolvedBinding ? resolvedBinding.ClipKey : null,
                 Time = requestedAt,
             });
 #endif
@@ -191,15 +198,13 @@ namespace NineGrid.Presentation.Systems
                 request,
                 AudioHistoryOutcome.Requested,
                 requestedAt,
-                clipKey: null,
-                note: null,
+                clipKey: hasResolvedBinding ? resolvedBinding.ClipKey : null,
+                note: hasResolvedBinding ? resolvedBinding.Note : null,
                 reason: null);
 
-            if (string.IsNullOrWhiteSpace(request.CueId)
-                || !mCatalog.TryResolve(request, out var binding)
-                || binding == null
-                || !binding.Enabled
-                || string.IsNullOrWhiteSpace(binding.ClipKey))
+            if (!hasResolvedBinding
+                || !resolvedBinding.Enabled
+                || string.IsNullOrWhiteSpace(resolvedBinding.ClipKey))
             {
                 return RecordUnbound(request, string.IsNullOrWhiteSpace(request.CueId)
                     ? "cue ID 为空。"
@@ -207,18 +212,18 @@ namespace NineGrid.Presentation.Systems
             }
 
             var now = mClock.UnscaledTime;
-            if (binding.MinimumIntervalSeconds > 0f
-                && mLastPlayedAt.TryGetValue(binding, out var lastPlayedAt)
+            if (resolvedBinding.MinimumIntervalSeconds > 0f
+                && mLastPlayedAt.TryGetValue(resolvedBinding, out var lastPlayedAt)
                 && now >= lastPlayedAt
-                && now - lastPlayedAt < binding.MinimumIntervalSeconds)
+                && now - lastPlayedAt < resolvedBinding.MinimumIntervalSeconds)
             {
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
                 AddHistory(new AudioHistoryRecord
                 {
                     Outcome = AudioHistoryOutcome.Cooldown,
                     CueId = request.CueId,
-                    CueNote = binding.Note,
-                    BindingKey = binding.BindingKey,
+                    CueNote = resolvedBinding.Note,
+                    BindingKey = resolvedBinding.BindingKey,
                     DiagnosticSource = request.DiagnosticSource,
                     FailureReason = "minimum interval",
                     Time = now,
@@ -229,26 +234,26 @@ namespace NineGrid.Presentation.Systems
                     request,
                     AudioHistoryOutcome.Cooldown,
                     now,
-                    binding.ClipKey,
-                    binding.Note,
+                    resolvedBinding.ClipKey,
+                    resolvedBinding.Note,
                     "minimum interval");
                 return new AudioCueResult
                 {
                     Outcome = AudioCueOutcome.Cooldown,
                     CueId = request.CueId,
-                    CueNote = binding.Note,
-                    BindingKey = binding.BindingKey,
+                    CueNote = resolvedBinding.Note,
+                    BindingKey = resolvedBinding.BindingKey,
                     FailureReason = "minimum interval",
                 };
             }
 
             var playbackRequest = new AudioPlaybackRequest(
                 request.CueId,
-                binding.Note,
-                binding.ClipKey,
-                DecibelsToLinear(binding.VolumeDb),
-                Math.Max(0f, binding.StartOffsetSeconds),
-                Math.Max(0f, binding.BindingDelaySeconds));
+                resolvedBinding.Note,
+                resolvedBinding.ClipKey,
+                DecibelsToLinear(resolvedBinding.VolumeDb),
+                Math.Max(0f, resolvedBinding.StartOffsetSeconds),
+                Math.Max(0f, resolvedBinding.BindingDelaySeconds));
 
             AudioBackendResult backend;
             try
@@ -267,10 +272,10 @@ namespace NineGrid.Presentation.Systems
                 {
                     Outcome = AudioHistoryOutcome.BackendFailure,
                     CueId = request.CueId,
-                    CueNote = binding.Note,
-                    BindingKey = binding.BindingKey,
+                    CueNote = resolvedBinding.Note,
+                    BindingKey = resolvedBinding.BindingKey,
                     DiagnosticSource = request.DiagnosticSource,
-                    ActualClipKey = binding.ClipKey,
+                    ActualClipKey = resolvedBinding.ClipKey,
                     FailureReason = backend.FailureReason,
                     Time = now,
                 });
@@ -280,31 +285,31 @@ namespace NineGrid.Presentation.Systems
                     request,
                     AudioHistoryOutcome.BackendFailure,
                     now,
-                    binding.ClipKey,
-                    binding.Note,
+                    resolvedBinding.ClipKey,
+                    resolvedBinding.Note,
                     backend.FailureReason);
                 return new AudioCueResult
                 {
                     Outcome = AudioCueOutcome.BackendFailure,
                     CueId = request.CueId,
-                    CueNote = binding.Note,
-                    BindingKey = binding.BindingKey,
-                    ActualClipKey = binding.ClipKey,
+                    CueNote = resolvedBinding.Note,
+                    BindingKey = resolvedBinding.BindingKey,
+                    ActualClipKey = resolvedBinding.ClipKey,
                     FailureReason = backend.FailureReason,
                 };
             }
 
             var actualClipKey = string.IsNullOrEmpty(backend.ActualClipKey)
-                ? binding.ClipKey
+                ? resolvedBinding.ClipKey
                 : backend.ActualClipKey;
-            mLastPlayedAt[binding] = now;
+            mLastPlayedAt[resolvedBinding] = now;
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
             AddHistory(new AudioHistoryRecord
             {
                 Outcome = AudioHistoryOutcome.Played,
                 CueId = request.CueId,
-                CueNote = binding.Note,
-                BindingKey = binding.BindingKey,
+                CueNote = resolvedBinding.Note,
+                BindingKey = resolvedBinding.BindingKey,
                 DiagnosticSource = request.DiagnosticSource,
                 ActualClipKey = actualClipKey,
                 Time = now,
@@ -316,14 +321,14 @@ namespace NineGrid.Presentation.Systems
                 AudioHistoryOutcome.Played,
                 now,
                 actualClipKey,
-                binding.Note,
+                resolvedBinding.Note,
                 null);
             return new AudioCueResult
             {
                 Outcome = AudioCueOutcome.Played,
                 CueId = request.CueId,
-                CueNote = binding.Note,
-                BindingKey = binding.BindingKey,
+                CueNote = resolvedBinding.Note,
+                BindingKey = resolvedBinding.BindingKey,
                 ActualClipKey = actualClipKey,
             };
         }

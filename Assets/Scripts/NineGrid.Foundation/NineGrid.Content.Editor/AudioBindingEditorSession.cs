@@ -47,8 +47,9 @@ namespace NineGrid.Content.Editor
         private readonly string declaredNote;
         private readonly string declaredModule;
         private readonly string authoritativeEmitter;
+        private readonly HashSet<string> historicalBindingKeys =
+            new HashSet<string>(StringComparer.Ordinal);
         private AudioBindingDto savedDto;
-        private string savedBindingKey;
 
         internal AudioBindingEditorEntry(
             AudioBindingDto dto,
@@ -57,7 +58,7 @@ namespace NineGrid.Content.Editor
         {
             Dto = dto;
             this.savedDto = AudioBindingEditorSession.CloneDto(savedDto);
-            savedBindingKey = AudioBindingEditorSession.ComputeBindingKey(savedDto);
+            AddHistoricalBindingKey(AudioBindingEditorSession.ComputeBindingKey(savedDto));
             declaredCueId = dto?.cueId ?? declaration?.CueId ?? string.Empty;
             declaredNote = declaration?.Note ?? string.Empty;
             declaredModule = declaration?.Module ?? string.Empty;
@@ -103,9 +104,14 @@ namespace NineGrid.Content.Editor
 
         public bool IsBroken(IReadOnlyCollection<string> knownClipKeys)
         {
-            if (Dto == null || string.IsNullOrWhiteSpace(Dto.clipKey))
+            if (Dto == null)
             {
-                return Dto != null;
+                return false;
+            }
+
+            if (string.IsNullOrWhiteSpace(Dto.clipKey))
+            {
+                return true;
             }
 
             return knownClipKeys != null
@@ -120,8 +126,9 @@ namespace NineGrid.Content.Editor
 
         internal void MarkSaved()
         {
+            AddHistoricalBindingKey(AudioBindingEditorSession.ComputeBindingKey(savedDto));
             savedDto = AudioBindingEditorSession.CloneDto(Dto);
-            savedBindingKey = AudioBindingEditorSession.ComputeBindingKey(savedDto);
+            AddHistoricalBindingKey(AudioBindingEditorSession.ComputeBindingKey(savedDto));
         }
 
         internal AudioBindingDto GetSavedDto()
@@ -129,9 +136,17 @@ namespace NineGrid.Content.Editor
             return AudioBindingEditorSession.CloneDto(savedDto);
         }
 
-        internal bool MatchesSavedBindingKey(string key)
+        internal bool MatchesHistoricalBindingKey(string key)
         {
-            return string.Equals(savedBindingKey, key ?? string.Empty, StringComparison.Ordinal);
+            return !string.IsNullOrEmpty(key) && historicalBindingKeys.Contains(key);
+        }
+
+        private void AddHistoricalBindingKey(string key)
+        {
+            if (!string.IsNullOrEmpty(key))
+            {
+                historicalBindingKeys.Add(key);
+            }
         }
     }
 
@@ -211,11 +226,13 @@ namespace NineGrid.Content.Editor
             {
                 foreach (var option in clipOptions)
                 {
-                    if (option != null && !string.IsNullOrWhiteSpace(option.ResourcesKey))
+                    if (option == null || string.IsNullOrWhiteSpace(option.ResourcesKey))
                     {
-                        this.clipOptions.Add(option);
-                        knownClipKeys.Add(option.ResourcesKey);
+                        continue;
                     }
+
+                    this.clipOptions.Add(option);
+                    knownClipKeys.Add(option.ResourcesKey);
                 }
             }
 
@@ -314,13 +331,17 @@ namespace NineGrid.Content.Editor
 
             if (!string.IsNullOrEmpty(record.BindingKey))
             {
-                var byKey = entries.FirstOrDefault(entry => string.Equals(
-                    entry.BindingKey,
-                    record.BindingKey,
-                    StringComparison.Ordinal));
-                if (byKey != null)
+                var current = entries.FirstOrDefault(entry =>
+                    string.Equals(entry.BindingKey, record.BindingKey, StringComparison.Ordinal));
+                if (current != null)
                 {
-                    return byKey;
+                    return current;
+                }
+
+                var historical = entries.FirstOrDefault(entry => entry.MatchesHistoricalBindingKey(record.BindingKey));
+                if (historical != null)
+                {
+                    return historical;
                 }
             }
 
@@ -344,7 +365,8 @@ namespace NineGrid.Content.Editor
             }
 
             var rows = BuildRowsForSave(entry);
-            if (!TryWriteCatalog(rows, out var json, out error))
+            if (!ValidateBindingKeys(rows, out error)
+                || !TryWriteCatalog(rows, out var json, out error))
             {
                 return false;
             }
@@ -364,7 +386,8 @@ namespace NineGrid.Content.Editor
             }
 
             var rows = BuildRowsForSave(null);
-            if (!TryWriteCatalog(rows, out var json, out error))
+            if (!ValidateBindingKeys(rows, out error)
+                || !TryWriteCatalog(rows, out var json, out error))
             {
                 return false;
             }
@@ -419,7 +442,8 @@ namespace NineGrid.Content.Editor
                 }
 
                 if (!string.IsNullOrEmpty(record.BindingKey)
-                    && string.Equals(record.BindingKey, entry.BindingKey, StringComparison.Ordinal))
+                    && (string.Equals(record.BindingKey, entry.BindingKey, StringComparison.Ordinal)
+                        || entry.MatchesHistoricalBindingKey(record.BindingKey)))
                 {
                     return true;
                 }
@@ -503,8 +527,7 @@ namespace NineGrid.Content.Editor
             var savedByKey = new Dictionary<string, AudioBindingDto>(StringComparer.Ordinal);
             for (var i = 0; i < entries.Count; i++)
             {
-                var entry = entries[i];
-                var saved = entry.GetSavedDto();
+                var saved = entries[i].GetSavedDto();
                 if (saved != null)
                 {
                     savedByKey[ComputeBindingKey(saved)] = saved;
@@ -522,17 +545,15 @@ namespace NineGrid.Content.Editor
                     continue;
                 }
 
-                var key = ComputeBindingKey(source);
-                var matching = entries.FirstOrDefault(entry =>
-                    string.Equals(entry.BindingKey, key, StringComparison.Ordinal)
-                    || entry.MatchesSavedBindingKey(key));
+                var sourceKey = ComputeBindingKey(source);
+                var matching = entries.FirstOrDefault(entry => entry.MatchesHistoricalBindingKey(sourceKey));
                 var useCurrent = selected == null || ReferenceEquals(matching, selected);
                 AudioBindingDto row;
                 if (useCurrent && matching != null && matching.Dto != null)
                 {
                     row = matching.Dto;
                 }
-                else if (savedByKey.TryGetValue(key, out var saved))
+                else if (savedByKey.TryGetValue(sourceKey, out var saved))
                 {
                     row = saved;
                 }
@@ -564,6 +585,25 @@ namespace NineGrid.Content.Editor
             }
 
             return rows.ToArray();
+        }
+
+        private static bool ValidateBindingKeys(AudioBindingDto[] rows, out string error)
+        {
+            error = null;
+            var keys = new HashSet<string>(StringComparer.Ordinal);
+            for (var i = 0; i < (rows?.Length ?? 0); i++)
+            {
+                var key = ComputeBindingKey(rows[i]);
+                if (string.IsNullOrEmpty(key) || keys.Add(key))
+                {
+                    continue;
+                }
+
+                error = "保存失败：多个声音绑定使用相同的 cue/内容选择器。请先修正重复选择器。";
+                return false;
+            }
+
+            return true;
         }
 
         private bool TryWriteCatalog(AudioBindingDto[] rows, out string json, out string error)

@@ -446,6 +446,12 @@ namespace NineGrid.Content.Editor
                 entry.CueId + " · " + (string.IsNullOrEmpty(entry.Module) ? "未声明模块" : entry.Module)
                 + (string.IsNullOrEmpty(entry.AuthoritativeEmitter) ? string.Empty : " · " + entry.AuthoritativeEmitter)));
 
+            if (Application.isPlaying)
+            {
+                contentRoot.Add(BuildRuntimeBindingSection(entry));
+                return;
+            }
+
             var actions = new List<Button>();
             if (entry.IsUnbound)
             {
@@ -488,6 +494,24 @@ namespace NineGrid.Content.Editor
             contentRoot.Add(BuildAuthoringSection(entry));
             contentRoot.Add(BuildTechnicalSection(entry));
         }
+
+        private VisualElement BuildRuntimeBindingSection(AudioBindingEditorEntry entry)
+        {
+            var dto = entry.Dto;
+            return ContentVisualWarmConsoleUi.CreateSectionCard(
+                "运行时绑定（只读）",
+                "Play Mode 只用于观察最近声音请求和定位解析结果。作者编辑、试听、保存与回撤在退出 Play Mode 后进行，避免运行时继续使用旧 Catalog。",
+                column =>
+                {
+                    column.Add(ContentVisualWarmConsoleUi.WrapControlRow("cue ID", new Label(entry.CueId), 140f));
+                    column.Add(ContentVisualWarmConsoleUi.WrapControlRow("音效说明", new Label(entry.Note), 140f));
+                    column.Add(ContentVisualWarmConsoleUi.WrapControlRow("素材", new Label(dto?.clipKey ?? "（未绑定）"), 140f));
+                    column.Add(ContentVisualWarmConsoleUi.WrapControlRow("BindingKey", new Label(entry.BindingKey), 140f));
+                    column.Add(ContentVisualWarmConsoleUi.WrapControlRow("内容 ID", new Label(dto?.selectorContentId ?? string.Empty), 140f));
+                    column.Add(ContentVisualWarmConsoleUi.WrapControlRow("绑定状态", new Label(entry.IsUnbound ? "未绑定" : entry.IsDisabled ? "已禁用" : "已绑定"), 140f));
+                });
+        }
+
 
         private VisualElement BuildAuthoringSection(AudioBindingEditorEntry entry)
         {

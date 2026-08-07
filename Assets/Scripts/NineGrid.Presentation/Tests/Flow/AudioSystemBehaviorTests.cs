@@ -37,6 +37,9 @@ namespace NineGrid.Presentation.Tests
             Assert.AreEqual(AudioHistoryOutcome.Played, system.History[1].Outcome);
             Assert.AreEqual("主菜单开始游戏点击", system.History[1].CueNote);
             Assert.AreEqual("audio/SFX/按钮点击", system.History[1].ActualClipKey);
+            Assert.AreEqual("主菜单开始游戏点击", system.History[0].CueNote);
+            Assert.IsNotEmpty(system.History[0].BindingKey);
+            Assert.AreEqual("audio/SFX/按钮点击", system.History[0].ActualClipKey);
         }
 
         [Test]

@@ -1,8 +1,8 @@
 #if UNITY_EDITOR
 using System;
 using System.Collections.Generic;
-using NineGrid.Content.Audio;
 using System.Linq;
+using NineGrid.Content.Audio;
 using NineGrid.Content.Editor;
 using NineGrid.Presentation.Systems;
 using NUnit.Framework;
@@ -64,28 +64,99 @@ namespace NineGrid.Presentation.Tests
         }
 
         [Test]
-        public void RevertAllDirty_RestoresSavedSnapshot_AndPreservesPlaybackHistory()
+        public void SaveAllAndSingleRevert_PersistTuningFields_AndRestoreWorkingCopy()
         {
             var entry = _session.Entries.Single(item =>
-                item.CueId == "ui.click" && string.IsNullOrEmpty(item.Dto.selectorContentId));
-            entry.Dto.clipKey = "audio/SFX/chest";
-            var adapter = new RecordingAudioPlaybackAdapter();
+                item.CueId == "ui.click" && item.Dto != null && item.Dto.selectorContentId == "chest.open");
+            entry.Dto.volumeDb = -9f;
+            entry.Dto.startOffsetSeconds = 0.3f;
+            entry.Dto.bindingDelaySeconds = 0.25f;
+            entry.Dto.minimumIntervalSeconds = 0.75f;
+            entry.Dto.enabled = false;
+
+            Assert.IsTrue(_session.TrySaveAll(out var error), error);
+            var saved = JsonUtility.FromJson<AudioBindingCatalogDto>(_session.SavedJson);
+            var savedEntry = saved.bindings.Single(item => item.selectorContentId == "chest.open");
+            Assert.AreEqual(-9f, savedEntry.volumeDb, 0.0001f);
+            Assert.AreEqual(0.3f, savedEntry.startOffsetSeconds, 0.0001f);
+            Assert.AreEqual(0.25f, savedEntry.bindingDelaySeconds, 0.0001f);
+            Assert.AreEqual(0.75f, savedEntry.minimumIntervalSeconds, 0.0001f);
+            Assert.IsFalse(savedEntry.enabled);
+            Assert.AreEqual(0, _session.DirtyCount);
+
+            entry.Dto.volumeDb = -1f;
+            _session.Revert(entry);
+            Assert.AreEqual(-9f, entry.Dto.volumeDb, 0.0001f);
+            Assert.AreEqual(0, _session.DirtyCount);
+        }
+
+        [Test]
+        public void SaveRejectsDuplicateSelectorKeys()
+        {
+            var baseEntry = _session.Entries.Single(item =>
+                item.CueId == "ui.click" && item.Dto != null && string.IsNullOrEmpty(item.Dto.selectorContentId));
+            baseEntry.Dto.selectorContentId = "chest.open";
+
+            Assert.IsFalse(_session.TrySave(baseEntry, out var error));
+            StringAssert.Contains("相同", error);
+            Assert.Greater(_session.DirtyCount, 0);
+        }
+
+        [Test]
+        public void RequestedHistory_LocatesResolvedContentBinding()
+        {
+            var contentEntry = _session.Entries.Single(item =>
+                item.Dto != null && item.Dto.selectorContentId == "chest.open");
             var audio = new AudioSystem(
                 AudioBindingCatalog.FromJson(CatalogJson),
-                adapter,
+                new RecordingAudioPlaybackAdapter(),
                 new FixedAudioClock());
-            audio.RequestCue(AudioCueRequest.Simple("ui.click", "test.editor-history"));
+            audio.RequestCue(new AudioCueRequest(
+                "ui.click",
+                "test.requested",
+                string.Empty,
+                string.Empty,
+                string.Empty,
+                string.Empty,
+                "chest.open"));
+
+            var requested = audio.History[0];
+            Assert.AreEqual(AudioHistoryOutcome.Requested, requested.Outcome);
+            Assert.AreEqual(contentEntry.BindingKey, requested.BindingKey);
+            Assert.AreSame(contentEntry, _session.FindEntryForHistory(requested));
+        }
+
+
+
+        [Test]
+        public void FailedFilter_UsesBackendFailureHistory()
+        {
+            var audio = new AudioSystem(
+                AudioBindingCatalog.FromJson(CatalogJson),
+                new FailingAudioPlaybackAdapter(),
+                new FixedAudioClock());
+            audio.RequestCue(AudioCueRequest.Simple("ui.click", "test.failure"));
             _session.SetPlaybackHistory(audio.History);
+            _session.FilterFailedOnly = true;
 
-            Assert.AreEqual(1, _session.PlaybackHistory.Count(item => item.Outcome == AudioHistoryOutcome.Played));
-            Assert.Greater(_session.DirtyCount, 0);
+            var filtered = _session.GetFilteredEntries().ToList();
+            Assert.AreEqual(1, filtered.Count);
+            Assert.IsTrue(filtered[0].Dto != null && string.IsNullOrEmpty(filtered[0].Dto.selectorContentId));
+        }
 
-            _session.RevertAllDirty();
-            var reverted = _session.Entries.Single(item =>
-                item.CueId == "ui.click" && string.IsNullOrEmpty(item.Dto.selectorContentId));
-            Assert.AreEqual(0, _session.DirtyCount);
-            Assert.AreEqual("audio/SFX/click", reverted.Dto.clipKey);
-            Assert.IsNotNull(_session.FindEntryForHistory(_session.PlaybackHistory[1]));
+        [Test]
+        public void HistoryLocate_UsesSavedBindingKeyAfterSelectorEdit()
+        {
+            var entry = _session.Entries.Single(item =>
+                item.CueId == "ui.click" && item.Dto != null && string.IsNullOrEmpty(item.Dto.selectorContentId));
+            var audio = new AudioSystem(
+                AudioBindingCatalog.FromJson(CatalogJson),
+                new RecordingAudioPlaybackAdapter(),
+                new FixedAudioClock());
+            audio.RequestCue(AudioCueRequest.Simple("ui.click", "test.locate"));
+            entry.Dto.selectorContentId = "edited.content";
+
+            Assert.AreSame(entry, _session.FindEntryForHistory(audio.History[1]));
         }
 
         [Test]
@@ -127,6 +198,14 @@ namespace NineGrid.Presentation.Tests
             public AudioBackendResult Play(AudioPlaybackRequest request)
             {
                 return AudioBackendResult.Success(request.ClipKey);
+            }
+        }
+
+        private sealed class FailingAudioPlaybackAdapter : IAudioPlaybackAdapter
+        {
+            public AudioBackendResult Play(AudioPlaybackRequest request)
+            {
+                return AudioBackendResult.Failure("test failure");
             }
         }
     }
