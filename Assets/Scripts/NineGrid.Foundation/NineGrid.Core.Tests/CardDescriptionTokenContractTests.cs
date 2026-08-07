@@ -4,9 +4,10 @@ using NUnit.Framework;
 namespace NineGrid.Core.Tests
 {
     /// <summary>
-    /// ADR-0035 / #154：描述投影静态通路契约——描述格计数（字符 / {…} / […] 各 1 格，硬上限 26）、
+    /// ADR-0035 / #154 / #155：描述投影静态通路契约——描述格计数（字符 / {…} / […] 各 1 格，硬上限 26）、
     /// 装配 id 必填、简单式与 defId 前缀式令牌在范围内卡（机关/遗物/道具，归档除外）上失败、
-    /// 令牌限定符必须精确等于装配 id 且键真实存在于实参。
+    /// 令牌限定符必须精确等于装配 id 且键真实存在于实参；检查描述 / 局内模板（liveTemplate）/
+    /// 卡面介绍同受约束，局内模板可空。
     /// 纯函数测试（无磁盘），与内容卫生校验共用 <see cref="CardDescriptionTokenRules"/>。
     /// </summary>
     public sealed class CardDescriptionTokenContractTests
@@ -237,6 +238,59 @@ namespace NineGrid.Core.Tests
                 "攻击+{value}",
                 null,
                 new EffectAssemblyDto { id = null, argsJson = "{\"value\":2}" });
+
+            Assert.AreEqual(0, CardDescriptionTokenRules.ValidateCard(dto).Count);
+        }
+
+        [Test]
+        public void ValidateCard_LiveTemplate_SimpleToken_Fails()
+        {
+            // ADR-0035 / #155：局内模板同受 {装配id.键} 契约约束，简单式报错。
+            var dto = InScopeCard(
+                "trap.rock",
+                "Trap",
+                "deck.trap",
+                "每移动3次后触发",
+                null,
+                new EffectAssemblyDto { id = "trap.rock.trigger", argsJson = "{\"count\":3}" });
+            dto.liveTemplate = "还剩{count}次后触发";
+
+            var errors = CardDescriptionTokenRules.ValidateCard(dto);
+            Assert.AreEqual(1, errors.Count);
+            StringAssert.Contains("liveTemplate", errors[0]);
+            StringAssert.Contains("{count}", errors[0]);
+        }
+
+        [Test]
+        public void ValidateCard_LiveTemplate_Over26Units_Fails()
+        {
+            var dto = InScopeCard(
+                "trap.rock",
+                "Trap",
+                "deck.trap",
+                "每移动3次后触发",
+                null,
+                new EffectAssemblyDto { id = "trap.rock.trigger", argsJson = "{\"count\":3}" });
+            dto.liveTemplate = new string('甲', 27);
+
+            var errors = CardDescriptionTokenRules.ValidateCard(dto);
+            Assert.AreEqual(1, errors.Count);
+            StringAssert.Contains("liveTemplate", errors[0]);
+            StringAssert.Contains("超描述格 26", errors[0]);
+        }
+
+        [Test]
+        public void ValidateCard_LiveTemplate_EmptyOrNull_IsClean()
+        {
+            // 空局内模板合法：投影与检查描述同文（ADR-0035 #3）。
+            var dto = InScopeCard(
+                "help.potion",
+                "HelpCard",
+                "deck.help",
+                "恢复{help.potion.use.amount}点[HP]",
+                null,
+                new EffectAssemblyDto { id = "help.potion.use", argsJson = "{\"amount\":10}" });
+            dto.liveTemplate = string.Empty;
 
             Assert.AreEqual(0, CardDescriptionTokenRules.ValidateCard(dto).Count);
         }

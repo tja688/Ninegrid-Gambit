@@ -384,8 +384,12 @@ namespace NineGrid.Flow
                 ApplyJsonSprite(ref snapshot.Banner, dto.sprites.banner);
             }
 
-            var filledDescription = CardFaceDescriptionParamFiller.FillFromAssemblies(
+            // ADR-0035 投影缝：实例/预览表面走统一投影层；无局内模板时与检查描述同文。
+            // 右键检查侧不消费本出口（见 CardInspectOverlayPresenter 的 Inspect 再投影）。
+            var filledDescription = CardFaceDescriptionProjector.Project(
+                CardDescriptionProjectionMode.Instance,
                 dto.description,
+                dto.liveTemplate,
                 dto.effectAssemblies);
             if (!string.IsNullOrWhiteSpace(filledDescription))
             {

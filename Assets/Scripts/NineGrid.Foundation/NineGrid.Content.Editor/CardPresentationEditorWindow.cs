@@ -1221,7 +1221,8 @@ namespace NineGrid.Content.Editor
             contentRoot.Add(bottomRow);
 
             var descriptionCard = ContentVisualWarmConsoleUi.CreateSectionCard(
-                "描述",
+                "检查描述（卡面基础描述）",
+                "三词分立（ADR-0035）：**检查描述**（本框，右键检查永远展示的静态规则概括）≠ **局内描述投影**（下方模板，实例/预览渲染层）≠ **卡面介绍**（风味短句）。" +
                 "[Code] 词条图标见左侧「效果池 → 描述词条 / 可插入编码」；数值占位 {value} 简单式（取首个含键装配），" +
                 "同键异值时用限定式 {装配id.value} / {模板id.value} / {卡defId.value}（如 {trap.attack_totem.value}，" +
                 "命中装配取值不一致则歧义不填，保留字面量）；预览所见即所得，显示 JSON 实参值；手改后锁定自定义，清空后恢复自动",
@@ -1278,6 +1279,31 @@ namespace NineGrid.Content.Editor
                         UpdateStatus();
                     });
                     column.Add(descriptionField);
+
+                    if (CardDescriptionTokenRules.IsInScopeKind(dto.kind))
+                    {
+                        var liveTemplateField = new TextField
+                        {
+                            multiline = true,
+                            value = dto.liveTemplate ?? string.Empty,
+                        };
+                        liveTemplateField.style.minHeight = 56;
+                        liveTemplateField.style.maxHeight = 96;
+                        liveTemplateField.tooltip =
+                            "局内描述投影模板（ADR-0035）：实例可见表面（场上/手牌/道具格/遗物栏）与店/奖/鉴预览的体感句，" +
+                            "可含 {装配id.键}；空 = 无动态，与检查描述同文。右键检查永不展示本框。倒计时/耐久卡必填。描述格 ≤26。";
+                        liveTemplateField.RegisterValueChangedCallback(evt =>
+                        {
+                            dto.liveTemplate = evt.newValue ?? string.Empty;
+                            session.MarkDirty(dto.contentId);
+                            InvalidateAndRefreshPreview(entry);
+                            UpdateStatus();
+                        });
+                        column.Add(ContentVisualWarmConsoleUi.WrapControl(
+                            "局内描述投影",
+                            "实例/预览渲染层；空则与检查描述同文；右键检查不展示",
+                            liveTemplateField));
+                    }
                 });
             descriptionCard.style.flexGrow = 1;
             descriptionCard.style.flexBasis = 0;
@@ -3062,7 +3088,7 @@ namespace NineGrid.Content.Editor
             });
             column.Add(ContentVisualWarmConsoleUi.WrapControl(
                 "卡面介绍",
-                "右键详述用人手写介绍；空则回退卡面基础描述",
+                "风味短句（ADR-0035 三分立）；右键详述「背景介绍」用；空则回退检查描述；描述格 ≤26",
                 faceIntroField));
         }
 
@@ -3586,8 +3612,10 @@ namespace NineGrid.Content.Editor
                     : dto.displayName,
                 BasicDescription = isDeckEntry
                     ? string.Empty
-                    : CardFaceDescriptionParamFiller.FillFromAssemblies(
+                    : CardFaceDescriptionProjector.Project(
+                        CardDescriptionProjectionMode.Instance,
                         dto.description ?? string.Empty,
+                        dto.liveTemplate,
                         dto.effectAssemblies),
                 RoomIconPrefabPath = dto.iconPrefab ?? string.Empty,
                 MainIcon = isDeckEntry
@@ -3673,6 +3701,7 @@ namespace NineGrid.Content.Editor
                 dto.deckId,
                 dto.displayName,
                 dto.description,
+                dto.liveTemplate,
                 assemblyFp,
                 dto.gold,
                 stats.hp,

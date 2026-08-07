@@ -6,9 +6,10 @@ using NineGrid.Content;
 namespace NineGrid.Content.CardPresentation
 {
     /// <summary>
-    /// ADR-0035：卡面描述投影的令牌契约与描述格计量（静态通路 / #154）。
-    /// 检查描述与卡面介绍里的玩家可见数值一律 <c>{装配id.键}</c>（限定符必须精确等于某条装配的 id）；
-    /// 简单式 <c>{value}</c>/<c>{amount}</c> 与 <c>{卡defId.键}</c> 前缀式在范围内卡（机关 / 遗物 / 道具）上为错误。
+    /// ADR-0035：卡面描述投影的令牌契约与描述格计量（静态通路 / #154，#155 起含局内模板）。
+    /// 检查描述、局内描述投影模板与卡面介绍里的玩家可见数值一律 <c>{装配id.键}</c>
+    /// （限定符必须精确等于某条装配的 id）；简单式 <c>{value}</c>/<c>{amount}</c> 与
+    /// <c>{卡defId.键}</c> 前缀式在范围内卡（机关 / 遗物 / 道具）上为错误。
     /// 描述格：普通字符、每个 <c>{…}</c>、每个 <c>[…]</c> 各算 1 格；硬上限 26。
     /// 校验是纯函数，供内容卫生校验（磁盘）与 EditMode 边界测试共用。
     /// </summary>
@@ -77,9 +78,9 @@ namespace NineGrid.Content.CardPresentation
         }
 
         /// <summary>
-        /// 单卡校验（ADR-0035 静态通路契约，#154）。范围外卡（非机关/遗物/道具，或归档卡组）恒返回空；
+        /// 单卡校验（ADR-0035 静态通路契约，#154 / #155）。范围外卡（非机关/遗物/道具，或归档卡组）恒返回空；
         /// 范围内卡报告：装配缺稳定 id、简单式 / defId 前缀式 / templateId 限定式令牌、令牌键不存在、
-        /// 描述或介绍超 26 格。
+        /// 检查描述 / 局内模板 / 介绍超 26 格。
         /// </summary>
         public static List<string> ValidateCard(CardPresentationConfigDto dto)
         {
@@ -103,6 +104,7 @@ namespace NineGrid.Content.CardPresentation
             }
 
             ValidateText(errors, "description", dto.description, assemblies);
+            ValidateText(errors, "liveTemplate", dto.liveTemplate, assemblies);
             ValidateText(errors, "faceIntro", dto.faceIntro, assemblies);
             return errors;
         }

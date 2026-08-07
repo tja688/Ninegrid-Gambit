@@ -36,6 +36,19 @@ namespace NineGrid.Cards.Presentation
 
         public static string FillFromAssemblies(string description, EffectAssemblyDto[] assemblies)
         {
+            return FillFromAssemblies(description, assemblies, remainingOverrides: null);
+        }
+
+        /// <summary>
+        /// 投影缝填充（ADR-0035 / #155）：装配实参填初始配置值；<paramref name="remainingOverrides"/>
+        /// 是已提交的卡面投影值（Settled 倒计时剩余，键为完整 <c>装配id.键</c>），命中时优先于初始实参。
+        /// 键不命中的令牌仍回退装配初始实参。
+        /// </summary>
+        public static string FillFromAssemblies(
+            string description,
+            EffectAssemblyDto[] assemblies,
+            IReadOnlyDictionary<string, string> remainingOverrides)
+        {
             if (string.IsNullOrEmpty(description))
             {
                 return description ?? string.Empty;
@@ -61,7 +74,7 @@ namespace NineGrid.Cards.Presentation
                     EffectAssemblyResolver.ParseArgsJson(assembly.argsJson)));
             }
 
-            return FillFromAssemblyItems(description, items);
+            return FillFromAssemblyItems(description, items, remainingOverrides);
         }
 
         public static string Fill(string description, IReadOnlyDictionary<string, object> args)
@@ -89,7 +102,10 @@ namespace NineGrid.Cards.Presentation
             });
         }
 
-        private static string FillFromAssemblyItems(string description, IReadOnlyList<AssemblyArgs> items)
+        private static string FillFromAssemblyItems(
+            string description,
+            IReadOnlyList<AssemblyArgs> items,
+            IReadOnlyDictionary<string, string> remainingOverrides)
         {
             return ParamToken.Replace(description, match =>
             {
@@ -117,8 +133,40 @@ namespace NineGrid.Cards.Presentation
                     return match.Value;
                 }
 
+                // 已提交投影值（Settled 倒计时剩余）优先于初始装配实参；键为完整「装配id.键」。
+                if (TryGetRemaining(remainingOverrides, token, out var remaining))
+                {
+                    return remaining;
+                }
+
                 return ResolveQualified(items, qualifier, key, match.Value);
             });
+        }
+
+        private static bool TryGetRemaining(
+            IReadOnlyDictionary<string, string> remainingOverrides,
+            string fullToken,
+            out string value)
+        {
+            if (remainingOverrides != null && remainingOverrides.TryGetValue(fullToken, out value))
+            {
+                return true;
+            }
+
+            if (remainingOverrides != null)
+            {
+                foreach (var pair in remainingOverrides)
+                {
+                    if (string.Equals(pair.Key, fullToken, StringComparison.OrdinalIgnoreCase))
+                    {
+                        value = pair.Value;
+                        return true;
+                    }
+                }
+            }
+
+            value = null;
+            return false;
         }
 
         /// <summary>

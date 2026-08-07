@@ -349,5 +349,171 @@ namespace NineGrid.Presentation.Tests.Cards
             Assert.AreEqual(1, errors.Count);
             StringAssert.Contains("{trap.attack_totem.value}", errors[0]);
         }
+
+        [Test]
+        public void Projection_InspectMode_UsesCheckDescription_IgnoresLiveTemplate()
+        {
+            // ADR-0035 / #155：检查模式恒输出检查描述，局内模板永不泄漏进检查面板。
+            var assemblies = new[]
+            {
+                new EffectAssemblyDto { id = "trap.rock.trigger", argsJson = "{\"count\":3}" },
+            };
+            var remaining = new Dictionary<string, string>
+            {
+                { "trap.rock.trigger.count", "1" },
+            };
+
+            var output = CardFaceDescriptionProjector.Project(
+                CardDescriptionProjectionMode.Inspect,
+                "每移动3次后触发",
+                "还剩{trap.rock.trigger.count}次后触发",
+                assemblies,
+                remaining);
+
+            Assert.AreEqual("每移动3次后触发", output);
+            StringAssert.DoesNotContain("还剩", output);
+            StringAssert.DoesNotContain("1", output);
+        }
+
+        [Test]
+        public void Projection_InspectMode_IgnoresCommittedRemaining()
+        {
+            // 检查面板即使拿到已提交剩余也忽略：模式选择是缝的职责，不是调用方纪律。
+            var assemblies = new[]
+            {
+                new EffectAssemblyDto { id = "trap.rock.trigger", argsJson = "{\"count\":3}" },
+            };
+            var remaining = new Dictionary<string, string>
+            {
+                { "trap.rock.trigger.count", "1" },
+            };
+
+            var output = CardFaceDescriptionProjector.Project(
+                CardDescriptionProjectionMode.Inspect,
+                "每{trap.rock.trigger.count}次后触发",
+                "还剩{trap.rock.trigger.count}次后触发",
+                assemblies,
+                remaining);
+
+            Assert.AreEqual("每3次后触发", output);
+        }
+
+        [Test]
+        public void Projection_InstanceMode_EmptyLiveTemplate_IdenticalToCheckDescription()
+        {
+            // 无动态（无局内模板）时：实例/预览投影与检查描述同文（ADR-0035 #3）。
+            var assemblies = new[]
+            {
+                new EffectAssemblyDto { id = "help.potion.use", argsJson = "{\"amount\":10}" },
+            };
+
+            var inspect = CardFaceDescriptionProjector.Project(
+                CardDescriptionProjectionMode.Inspect,
+                "恢复{help.potion.use.amount}点[HP]",
+                null,
+                assemblies);
+            var instance = CardFaceDescriptionProjector.Project(
+                CardDescriptionProjectionMode.Instance,
+                "恢复{help.potion.use.amount}点[HP]",
+                null,
+                assemblies);
+
+            Assert.AreEqual(inspect, instance);
+            Assert.AreEqual("恢复10点[HP]", instance);
+        }
+
+        [Test]
+        public void Projection_InstanceMode_UsesLiveTemplate_WhenAuthored()
+        {
+            // 有局内模板时实例/预览走模板，检查仍走检查描述。
+            var assemblies = new[]
+            {
+                new EffectAssemblyDto { id = "trap.rock.trigger", argsJson = "{\"count\":3}" },
+            };
+
+            var inspect = CardFaceDescriptionProjector.Project(
+                CardDescriptionProjectionMode.Inspect,
+                "每移动3次后触发",
+                "还剩{trap.rock.trigger.count}次后触发",
+                assemblies);
+            var instance = CardFaceDescriptionProjector.Project(
+                CardDescriptionProjectionMode.Instance,
+                "每移动3次后触发",
+                "还剩{trap.rock.trigger.count}次后触发",
+                assemblies);
+
+            Assert.AreEqual("每移动3次后触发", inspect);
+            Assert.AreEqual("还剩3次后触发", instance);
+        }
+
+        [Test]
+        public void Projection_InstanceMode_CommittedRemaining_OverridesAssemblyArg()
+        {
+            // 倒计时剩余只消费已提交投影值（Settled 写入），命中时盖过初始装配实参。
+            var assemblies = new[]
+            {
+                new EffectAssemblyDto { id = "trap.rock.trigger", argsJson = "{\"count\":3}" },
+            };
+            var remaining = new Dictionary<string, string>
+            {
+                { "trap.rock.trigger.count", "1" },
+            };
+
+            var output = CardFaceDescriptionProjector.Project(
+                CardDescriptionProjectionMode.Instance,
+                "每3次后触发",
+                "还剩{trap.rock.trigger.count}次后触发",
+                assemblies,
+                remaining);
+
+            Assert.AreEqual("还剩1次后触发", output);
+        }
+
+        [Test]
+        public void Projection_InstanceMode_MissingRemaining_FallsBackToInitialArg()
+        {
+            // 未提交剩余（首次渲染）回退装配初始实参，不吞掉令牌。
+            var assemblies = new[]
+            {
+                new EffectAssemblyDto { id = "trap.rock.trigger", argsJson = "{\"count\":3}" },
+            };
+
+            var output = CardFaceDescriptionProjector.Project(
+                CardDescriptionProjectionMode.Instance,
+                "每3次后触发",
+                "还剩{trap.rock.trigger.count}次后触发",
+                assemblies,
+                new Dictionary<string, string>());
+
+            Assert.AreEqual("还剩3次后触发", output);
+        }
+
+        [Test]
+        public void Projection_LiveTemplate_UsesQualifiedTokens_AndValidatesClean()
+        {
+            // 局内模板的令牌走同一 {装配id.键} 契约；契约校验须干净。
+            var dto = new CardPresentationConfigDto
+            {
+                schemaVersion = 2,
+                contentId = "trap.rock",
+                kind = "Trap",
+                deckId = "deck.trap",
+                description = "每移动3次后触发",
+                liveTemplate = "还剩{trap.rock.trigger.count}次后触发",
+                effectAssemblies = new[]
+                {
+                    new EffectAssemblyDto { id = "trap.rock.trigger", argsJson = "{\"count\":3}" },
+                },
+            };
+
+            var output = CardFaceDescriptionProjector.Project(
+                CardDescriptionProjectionMode.Instance,
+                dto.description,
+                dto.liveTemplate,
+                dto.effectAssemblies);
+
+            Assert.AreEqual("还剩3次后触发", output);
+            Assert.AreEqual(0, CardDescriptionTokenRules.ValidateCard(dto).Count);
+        }
     }
 }

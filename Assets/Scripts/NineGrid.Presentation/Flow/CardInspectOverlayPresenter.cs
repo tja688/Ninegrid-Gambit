@@ -1,6 +1,7 @@
 using NineGrid.Cards;
 using NineGrid.Cards.Anim;
 using NineGrid.Cards.Presentation;
+using NineGrid.Content.CardPresentation;
 using NineGrid.Core;
 using NineGrid.Core.Effects;
 using NineGrid.Core.Systems;
@@ -199,6 +200,8 @@ namespace NineGrid.Flow
 
             var isMonster = card.CoreKind == CardPresentationKind.Monster;
             var snapshot = CloneForInspect(card.CommittedPresentation, card);
+            // ADR-0035：检查永远静态检查描述（初始装配实参），不展示局内模板/已提交剩余。
+            snapshot.BasicDescription = ResolveInspectBasicDescription(card.DefId, snapshot.BasicDescription);
             var arch = NineGridArchitecture.Interface;
             var catalog = arch?.GetSystem<IContentSystem>()?.Catalog;
             var liveMounts = CollectLiveEffectMounts(arch, card.Uid);
@@ -222,6 +225,8 @@ namespace NineGrid.Flow
                 ? kindHint
                 : CoreCardPresentationMapper.ResolvePresentationKindFromDefId(defId);
             var snapshot = CoreCardPresentationMapper.BuildVisualSnapshotFromDefId(defId, kind);
+            // ADR-0035：检查面板永不展示局内模板/已提交剩余，重新按检查模式投影。
+            snapshot.BasicDescription = ResolveInspectBasicDescription(defId, snapshot.BasicDescription);
             var arch = NineGridArchitecture.Interface;
             var catalog = arch?.GetSystem<IContentSystem>()?.Catalog;
             var texts = CardInspectDetailComposer.Compose(defId, snapshot, catalog, liveMounts: null);
@@ -679,6 +684,26 @@ namespace NineGrid.Flow
 #else
             return null;
 #endif
+        }
+
+        /// <summary>
+        /// ADR-0035 / #155：检查面板描述恒为静态检查描述（检查模式投影，初始装配实参插值）。
+        /// 有 JSON 时按 <c>description</c> 重投影；无 JSON（如 QuickTest 动态卡）回退原值。
+        /// </summary>
+        private static string ResolveInspectBasicDescription(string defId, string fallback)
+        {
+            if (!string.IsNullOrWhiteSpace(defId)
+                && CardPresentationConfigCatalog.TryGet(defId.Trim(), out var dto)
+                && dto != null)
+            {
+                return CardFaceDescriptionProjector.Project(
+                    CardDescriptionProjectionMode.Inspect,
+                    dto.description,
+                    dto.liveTemplate,
+                    dto.effectAssemblies);
+            }
+
+            return fallback ?? string.Empty;
         }
 
         private static CardPresentationSnapshot CloneForInspect(

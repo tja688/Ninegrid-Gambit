@@ -183,6 +183,7 @@ namespace NineGrid.Content.CardPresentation
                 displayName = string.Empty,
                 description = string.Empty,
                 faceIntro = string.Empty,
+                liveTemplate = string.Empty,
                 gold = 0,
                 stats = new CardPresentationStatsDto(),
                 sprites = new CardPresentationSpritesDto(),
