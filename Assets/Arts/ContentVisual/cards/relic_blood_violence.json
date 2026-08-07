@@ -6,7 +6,7 @@
     "role": "Attack",
     "displayName": "血之暴力",
     "designSlotName": "",
-    "description": "血量上限+4；当前血量低于血量上限的50%时，玩家攻击+2",
+    "description": "[MHP]+4；当[HP]低于[MHP]的50%时，玩家[attack]+2",
     "faceIntro": "",
     "attackPattern": "",
     "gold": 0,

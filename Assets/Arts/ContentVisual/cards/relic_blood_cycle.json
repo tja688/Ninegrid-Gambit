@@ -4,7 +4,7 @@
     "kind": "Relic",
     "deckId": "deck.relic",
     "role": "Utility",
-    "displayName": "血的圣杯",
+    "displayName": "血圣杯",
     "designSlotName": "",
     "description": "血量上限+{relic.blood_cycle.max_hp.value}，受到伤害时恢复2点血量",
     "faceIntro": "",

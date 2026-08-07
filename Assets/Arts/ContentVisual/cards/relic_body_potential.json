@@ -6,7 +6,7 @@
     "role": "Utility",
     "displayName": "大力腰带",
     "designSlotName": "",
-    "description": "血量上限+2；[受到伤害时] 每受到10点血量伤害，随机洗入一张道具卡到战斗卡组",
+    "description": "[MHP]+{relic.body_potential.max_hp.value}；[HP]每累计减少10点，添加{relic.body_potential.hp_lost.count}张道具到卡组",
     "faceIntro": "",
     "attackPattern": "",
     "gold": 0,
