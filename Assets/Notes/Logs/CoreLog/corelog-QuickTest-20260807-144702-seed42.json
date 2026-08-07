@@ -1,0 +1,1 @@
+﻿{"schemaVersion":3,"seed":"42","sessionId":"20260807-144702","runTag":"","runTagNote":"","events":[{"index":0,"beatId":0,"category":"CoreGate","name":"StartNode","loopState":"","floor":"2","nodeIndex":"3","phaseBefore":"","phaseAfter":"","accepted":true,"refBattleOpIndex":-1,"payload":{"probe":"1"}}]}
