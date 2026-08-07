@@ -6,7 +6,7 @@
     "role": "Defense",
     "displayName": "锻造器具",
     "designSlotName": "",
-    "description": "基础护甲+2；[每关卡开始时] 若当前护甲≥5，扣除5点当前护甲并使本遗物基础护甲永久+1",
+    "description": "基础[armor]+2，进入战斗时吞噬5点[armor]使基础[armor]永久+1",
     "faceIntro": "",
     "attackPattern": "",
     "gold": 0,

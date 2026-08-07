@@ -6,7 +6,7 @@
     "role": "Utility",
     "displayName": "旋转符文",
     "designSlotName": "",
-    "description": "[每关卡开始时] 将一张旋转轮放入到道具牌格",
+    "description": "进入战斗时将1张旋转轮置入到手牌",
     "faceIntro": "",
     "attackPattern": "",
     "gold": 0,

@@ -6,7 +6,7 @@
     "role": "Attack",
     "displayName": "毒鞭",
     "designSlotName": "",
-    "description": "怪物卡每移动一次，受到1点伤害",
+    "description": "怪物每移动1次，受到1点伤害",
     "faceIntro": "",
     "attackPattern": "",
     "gold": 0,

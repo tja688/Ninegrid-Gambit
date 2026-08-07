@@ -6,7 +6,7 @@
     "role": "Utility",
     "displayName": "交换之书",
     "designSlotName": "",
-    "description": "[每关卡开始时] 将一张交换卡放入到道具牌格",
+    "description": "进入战斗时将1张交换置入手牌",
     "faceIntro": "",
     "attackPattern": "",
     "gold": 0,
@@ -27,7 +27,7 @@
         "backLogo": ""
     },
     "mainVisual": {
-        "offsetX": 0.0,
+        "offsetX": -0.10000000149011612,
         "offsetY": 0.0,
         "uniformScale": 1.0
     },

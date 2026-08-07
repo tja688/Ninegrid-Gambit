@@ -6,7 +6,7 @@
     "role": "Attack",
     "displayName": "双截棍",
     "designSlotName": "",
-    "description": "[击杀怪物时] 获得1点当前护甲",
+    "description": "击杀时获得1点[armor]",
     "faceIntro": "可攻可守",
     "attackPattern": "",
     "gold": 0,

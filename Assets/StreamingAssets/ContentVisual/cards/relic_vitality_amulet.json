@@ -6,7 +6,7 @@
     "role": "Utility",
     "displayName": "活力探险帽",
     "designSlotName": "",
-    "description": "血量上限+6；[每关卡结束时] 恢复6点血量",
+    "description": "[MHP]+6；每场战斗结束时恢复6点[HP]",
     "faceIntro": "",
     "attackPattern": "",
     "gold": 0,
