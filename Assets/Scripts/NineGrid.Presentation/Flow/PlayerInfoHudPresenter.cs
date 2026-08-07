@@ -9,8 +9,9 @@ using UnityEngine;
 namespace NineGrid.Flow
 {
     /// <summary>
-    /// 局内「玩家信息」HUD：血槽血管 + 当前/最大血量、有效护甲、金币。
-    /// 血槽长度随 MaxHp 相对基础上限伸长（每点 +0.019），总宽封顶 3.2；最大血量文案仅悬停血槽时显示。
+    /// 局内「玩家信息」HUD：血槽血管 + 当前/最大血量、基础护甲、金币。
+    /// 血槽长度随 MaxHp 相对基础上限伸长（每点 +0.019），总宽封顶 3.2；
+    /// 默认显示当前血量（图标+数值），悬停血条时切换为血量上限（图标+数值）。
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class PlayerInfoHudPresenter : MonoBehaviour
@@ -20,7 +21,10 @@ namespace NineGrid.Flow
         private const string BloodSlotName = "血槽";
         private const string BloodFillName = "真实血量条";
         private const string CurrentHpName = "血量数值（当前）";
-        private const string MaxHpName = "血量数值（最大）";
+        private const string CurrentHpIconName = "血量图标（当前）";
+        private const string MaxHpName = "血量数值（满血）";
+        private const string MaxHpIconName = "血量图标（满血）";
+        private const string ArmorRootName = "基础护甲";
         private const string ArmorValueName = "护甲数值";
         private const string GoldValueName = "金币数值";
 
@@ -52,10 +56,16 @@ namespace NineGrid.Flow
         [Tooltip("当前血量 TMP（世界空间 TextMeshPro）。")]
         [SerializeField] private TMP_Text currentHpText;
 
-        [Tooltip("最大血量 TMP；默认隐藏，悬停血槽时显示。")]
+        [Tooltip("当前血量图标 SpriteRenderer；默认显示，悬停血条时隐藏。")]
+        [SerializeField] private SpriteRenderer currentHpIcon;
+
+        [Tooltip("最大血量 TMP；默认隐藏，悬停血条时显示。")]
         [SerializeField] private TMP_Text maxHpText;
 
-        [Tooltip("护甲（有效护甲）TMP。")]
+        [Tooltip("满血图标 SpriteRenderer；默认隐藏，悬停血条时与最大血量数值一同显示。")]
+        [SerializeField] private SpriteRenderer maxHpIcon;
+
+        [Tooltip("基础护甲（挂给玩家的基础护甲）TMP；与玩家卡面显示的真实护甲值区分。")]
         [SerializeField] private TMP_Text armorText;
 
         [Tooltip("金币 TMP；增益演出可由 GoldGainFx 接管。")]
@@ -74,11 +84,14 @@ namespace NineGrid.Flow
         [Tooltip("编辑器现状对应的基础血量上限；血槽现状宽度即此上限下的基础长度。")]
         [SerializeField] private float baseMaxHp = DefaultBaseMaxHp;
 
-        [Tooltip("血槽悬停检测用 Collider2D；留空则运行时在血槽上补 BoxCollider2D。")]
+        [Tooltip("血条悬停检测用 Collider2D；优先取血条根上已配置的碰撞盒（不改写尺寸），未配置才运行时在血槽上补 BoxCollider2D 并随槽宽同步。")]
         [SerializeField] private Collider2D bloodSlotCollider;
 
         private readonly StatSlot _armor = new();
         private readonly StatSlot _gold = new();
+
+        /// <summary>悬停碰撞盒是否为运行时在血槽上自建的（自建的才随槽宽改写尺寸）。</summary>
+        private bool _autoHoverCollider;
 
         private bool _hasSnapshot;
         private bool _wasAtMaxHp;
@@ -273,20 +286,32 @@ namespace NineGrid.Flow
             bloodSlot ??= FindChild(playerInfoRoot, BloodSlotName)?.GetComponent<SpriteRenderer>();
             bloodFill ??= FindChild(playerInfoRoot, BloodFillName)?.GetComponent<SpriteRenderer>();
             currentHpText ??= FindTmp(playerInfoRoot, CurrentHpName);
+            currentHpIcon ??= FindChild(playerInfoRoot, CurrentHpIconName)?.GetComponent<SpriteRenderer>();
             maxHpText ??= FindTmp(playerInfoRoot, MaxHpName);
+            maxHpIcon ??= FindChild(playerInfoRoot, MaxHpIconName)?.GetComponent<SpriteRenderer>();
             armorText ??= FindTmp(playerInfoRoot, ArmorValueName);
+            if (armorText == null)
+            {
+                var armorRoot = FindChild(playerInfoRoot, ArmorRootName);
+                armorText = FindTmp(armorRoot, "数值");
+            }
+
             goldText ??= FindTmp(playerInfoRoot, GoldValueName);
 
-            if (bloodSlot != null && bloodSlotCollider == null)
+            // 悬停碰撞盒：优先用血条根上已配置的（场景布局大热区，绝不覆写尺寸）；
+            // 没有才运行时在血槽上补一个并随槽宽同步。
+            if (bloodSlotCollider == null && bloodBarRoot != null)
             {
-                bloodSlotCollider = bloodSlot.GetComponent<Collider2D>();
-                if (bloodSlotCollider == null)
-                {
-                    var box = bloodSlot.gameObject.AddComponent<BoxCollider2D>();
-                    box.isTrigger = true;
-                    SyncColliderToSlot(box);
-                    bloodSlotCollider = box;
-                }
+                bloodSlotCollider = bloodBarRoot.GetComponent<Collider2D>();
+            }
+
+            if (bloodSlotCollider == null && bloodSlot != null)
+            {
+                var box = bloodSlot.gameObject.AddComponent<BoxCollider2D>();
+                box.isTrigger = true;
+                SyncColliderToSlot(box);
+                bloodSlotCollider = box;
+                _autoHoverCollider = true;
             }
 
             if (maxHpText != null && !_hasMaxHpBaseColor)
@@ -358,7 +383,7 @@ namespace NineGrid.Flow
 
             if (maxHpText != null)
             {
-                maxHpText.text = "MAX:" + maxHp;
+                maxHpText.text = maxHp.ToString();
             }
 
             if (!animate || bloodSlot == null || bloodFill == null)
@@ -511,7 +536,12 @@ namespace NineGrid.Flow
             var size = bloodSlot.size;
             size.x = width;
             bloodSlot.size = size;
-            SyncColliderToSlot(bloodSlotCollider as BoxCollider2D);
+
+            // 只同步自建碰撞盒；场景里配置的悬停碰撞盒保持布局原样。
+            if (_autoHoverCollider)
+            {
+                SyncColliderToSlot(bloodSlotCollider as BoxCollider2D);
+            }
         }
 
         private void ApplyFillWidth(float width)
@@ -654,6 +684,9 @@ namespace NineGrid.Flow
             SetMaxHpVisible(hovering, instant: false);
         }
 
+        /// <summary>
+        /// 血量显示双模切换：默认当前血量（图标+数值）；悬停血条时切换为血量上限（图标+数值）。
+        /// </summary>
         private void SetMaxHpVisible(bool visible, bool instant)
         {
             if (maxHpText == null)
@@ -674,6 +707,21 @@ namespace NineGrid.Flow
             if (!visible)
             {
                 target.a = 0f;
+            }
+
+            if (currentHpIcon != null)
+            {
+                currentHpIcon.enabled = !visible;
+            }
+
+            if (maxHpIcon != null)
+            {
+                maxHpIcon.enabled = visible;
+            }
+
+            if (currentHpText != null)
+            {
+                currentHpText.enabled = !visible;
             }
 
             if (instant)
@@ -858,7 +906,9 @@ namespace NineGrid.Flow
             var stats = arch.GetSystem<IStatSystem>();
             hp = Mathf.Max(0, stats.GetEffectiveInt(avatar, StatId.Hp));
             maxHp = Mathf.Max(hp, stats.GetEffectiveInt(avatar, StatId.MaxHp));
-            armor = StatArmorUtility.GetEffectiveArmor(stats, avatar);
+            // 基础护甲 HUD 只显示静态基础护甲（每回合进入战斗时挂给玩家的量），
+            // 与玩家卡面显示的真实护甲（当前护甲）区分。
+            armor = StatArmorUtility.GetBaseArmor(avatar);
             return true;
         }
 

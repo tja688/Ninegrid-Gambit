@@ -81,7 +81,7 @@ namespace NineGrid.Presentation.Tests.Output
                     Assert.IsTrue(received.HasValue);
                     Assert.AreEqual(pos, received.Value.WorldPosition);
                     Assert.AreEqual(5, received.Value.Amount);
-                    Assert.IsTrue(received.Value.IsHeal, "治疗飘字应标记 IsHeal");
+                    Assert.AreEqual(DamageNumberKind.Heal, received.Value.Kind, "治疗飘字应标记 Heal");
                 }
                 finally
                 {
@@ -105,7 +105,7 @@ namespace NineGrid.Presentation.Tests.Output
                     DamageNumberHook.RequestSpawn(Vector3.zero, 7);
 
                     Assert.IsTrue(received.HasValue);
-                    Assert.IsFalse(received.Value.IsHeal, "普通伤害飘字不应标记 IsHeal");
+                    Assert.AreEqual(DamageNumberKind.Damage, received.Value.Kind, "普通伤害飘字应标记 Damage");
                 }
                 finally
                 {

@@ -914,9 +914,11 @@ namespace NineGrid.Presentation.Tests.BehaviorBaseline
         [Test]
         public void DamageFloaterHandler_AtImpact_SpawnsFromInstruction_NotProjectionBypass()
         {
-            var spawned = new System.Collections.Generic.List<(Vector3 pos, int amount, bool isHeal)>();
+            var spawned = new System.Collections.Generic.List<(Vector3 pos, int amount, DamageNumberKind kind)>();
             var previousSpawn = DamageNumberHook.Spawn;
-            DamageNumberHook.Spawn = (pos, amount, isHeal) => spawned.Add((pos, amount, isHeal));
+            var previousMode = DamageFloaterBeatHandler.DisplayMode;
+            DamageNumberHook.Spawn = (pos, amount, kind) => spawned.Add((pos, amount, kind));
+            DamageFloaterBeatHandler.DisplayMode = DamageFloaterDisplayMode.TotalDamage;
             try
             {
                 var face = mCardManager.SpawnView(
@@ -956,22 +958,23 @@ namespace NineGrid.Presentation.Tests.BehaviorBaseline
                 Assert.AreEqual(1, spawned.Count, "Impact 后应有一条飘字");
                 Assert.AreEqual(5, spawned[0].amount);
                 Assert.AreEqual(new Vector3(3f, 4f, 0f), spawned[0].pos);
-                Assert.IsFalse(spawned[0].isHeal, "普通伤害飘字不应标记治疗");
+                Assert.AreEqual(DamageNumberKind.Damage, spawned[0].kind, "总伤害模式应飘白色总伤害");
 
                 scheduler.ReportBeat(PresentationBeat.Settled);
             }
             finally
             {
                 DamageNumberHook.Spawn = previousSpawn;
+                DamageFloaterBeatHandler.DisplayMode = previousMode;
             }
         }
 
         [Test]
         public void DamageFloaterHandler_AtImpact_HealSpawnsGreenMarked_WithoutClaimingUpdateHp()
         {
-            var spawned = new System.Collections.Generic.List<(Vector3 pos, int amount, bool isHeal)>();
+            var spawned = new System.Collections.Generic.List<(Vector3 pos, int amount, DamageNumberKind kind)>();
             var previousSpawn = DamageNumberHook.Spawn;
-            DamageNumberHook.Spawn = (pos, amount, isHeal) => spawned.Add((pos, amount, isHeal));
+            DamageNumberHook.Spawn = (pos, amount, kind) => spawned.Add((pos, amount, kind));
             try
             {
                 var face = mCardManager.SpawnView(
@@ -1010,7 +1013,7 @@ namespace NineGrid.Presentation.Tests.BehaviorBaseline
                 scheduler.ReportBeat(PresentationBeat.Impact);
                 Assert.AreEqual(1, spawned.Count, "Healed 应在 Impact 飘绿色治疗字");
                 Assert.AreEqual(5, spawned[0].amount, "治疗飘字应取 Delta（实际生效量）");
-                Assert.IsTrue(spawned[0].isHeal, "治疗飘字应标记 IsHeal");
+                Assert.AreEqual(DamageNumberKind.Heal, spawned[0].kind, "治疗飘字应标记 Heal");
                 Assert.AreEqual(new Vector3(-3f, 2f, 0f), spawned[0].pos);
                 Assert.AreEqual(10, face.CommittedPresentation.Hp, "Floater 旁路不得吞掉 UpdateHp，卡面应已提交");
 
@@ -1019,6 +1022,71 @@ namespace NineGrid.Presentation.Tests.BehaviorBaseline
             finally
             {
                 DamageNumberHook.Spawn = previousSpawn;
+            }
+        }
+
+        [Test]
+        public void DamageFloaterHandler_SplitDamageMode_SpawnsHpAndArmorNumbers_FromDamageSplit()
+        {
+            var spawned = new System.Collections.Generic.List<(Vector3 pos, int amount, DamageNumberKind kind)>();
+            var previousSpawn = DamageNumberHook.Spawn;
+            var previousMode = DamageFloaterBeatHandler.DisplayMode;
+            DamageNumberHook.Spawn = (pos, amount, kind) => spawned.Add((pos, amount, kind));
+            DamageFloaterBeatHandler.DisplayMode = DamageFloaterDisplayMode.SplitDamage;
+            try
+            {
+                var face = mCardManager.SpawnView(
+                    79,
+                    defId: "monster.test",
+                    kind: CardPresentationKind.Monster);
+                face.Transform.position = new Vector3(5f, -1f, 0f);
+
+                var map = new PresentationEventMapEntry(
+                    CoreEventType.DamageDealt,
+                    PresentationInstructionKind.ShowDamage,
+                    PresentationEventCategory.Damage,
+                    requiresPlayback: true,
+                    locksInput: true,
+                    beat: PresentationBeat.Impact,
+                    label: "Damage");
+                var batch = new PresentationBatch(
+                    72,
+                    new[]
+                    {
+                        new PresentationInstruction(
+                            new CoreGameEvent(CoreEventType.DamageDealt, 1, "test")
+                                .WithTarget(79)
+                                .WithAmount(7)
+                                .WithDamageSplit(3, 4),
+                            map),
+                    },
+                    snapshot: null);
+
+                var scheduler = new BattleBeatScheduler(
+                    new CardFaceStatHandler(),
+                    new DamageFloaterBeatHandler(),
+                    new EffectTriggerPulseBeatHandler());
+                scheduler.OnBatchOpened(batch);
+
+                Assert.AreEqual(0, spawned.Count, "Impact 前不得飘字");
+                scheduler.ReportBeat(PresentationBeat.Impact);
+
+                Assert.AreEqual(2, spawned.Count, "拆分模式应按血/甲各飘一条");
+                var hpSpawns = spawned.FindAll(s => s.kind == DamageNumberKind.HpDamage);
+                var armorSpawns = spawned.FindAll(s => s.kind == DamageNumberKind.ArmorDamage);
+                Assert.AreEqual(1, hpSpawns.Count, "应有血量伤害红字");
+                Assert.AreEqual(1, armorSpawns.Count, "应有护甲伤害绿灰字");
+                Assert.AreEqual(4, hpSpawns[0].amount, "血字取拆分量 HpDamage");
+                Assert.AreEqual(3, armorSpawns[0].amount, "甲字取拆分量 ArmorDamage");
+                Assert.AreEqual(new Vector3(5f, -1f, 0f), hpSpawns[0].pos, "血字沿用目标卡坐标");
+                Assert.AreEqual(new Vector3(5f, -1f, 0f), armorSpawns[0].pos, "甲字沿用目标卡坐标");
+
+                scheduler.ReportBeat(PresentationBeat.Settled);
+            }
+            finally
+            {
+                DamageNumberHook.Spawn = previousSpawn;
+                DamageFloaterBeatHandler.DisplayMode = previousMode;
             }
         }
 

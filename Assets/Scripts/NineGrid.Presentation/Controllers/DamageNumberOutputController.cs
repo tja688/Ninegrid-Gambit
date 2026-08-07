@@ -1,4 +1,5 @@
 using NineGrid.Cards;
+using NineGrid.Flow.Presentation;
 using NineGrid.Presentation.Commands;
 using QFramework;
 using UnityEngine;
@@ -58,9 +59,9 @@ namespace NineGrid.Presentation.Controllers
             }
         }
 
-        private void HandleSpawn(Vector3 worldPosition, int amount, bool isHeal)
+        private void HandleSpawn(Vector3 worldPosition, int amount, DamageNumberKind kind)
         {
-            this.SendCommand(new RequestDamageNumberCommand(worldPosition, amount, isHeal));
+            this.SendCommand(new RequestDamageNumberCommand(worldPosition, amount, kind));
         }
     }
 }

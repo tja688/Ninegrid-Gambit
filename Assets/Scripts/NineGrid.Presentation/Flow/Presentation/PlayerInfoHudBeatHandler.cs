@@ -8,6 +8,7 @@ namespace NineGrid.Flow.Presentation
     /// <summary>
     /// Avatar 血/甲 HUD：在 Impact（及 MaxHp 的 Settled）用指令绝对值刷新，不直读内核。
     /// 对 UpdateHp/UpdateArmor/ModifyBaseStat 只旁路写 HUD 并返回 false，留给卡面处理器认领。
+    /// 护甲写入仅限「基础护甲」（ModifyBaseStat Armor）；战斗中当前护甲变动只走卡面，不刷基础护甲 HUD。
     /// </summary>
     public sealed class PlayerInfoHudBeatHandler : IBattleBeatHandler
     {
@@ -35,7 +36,7 @@ namespace NineGrid.Flow.Presentation
                     hud.ApplyHp(instruction.Event.RemainingHp, animate: true);
                     return false;
                 case PresentationInstructionKind.UpdateArmor:
-                    hud.ApplyArmor(instruction.Event.RemainingArmor, animate: true);
+                    // 战斗中当前护甲（真实护甲）只走卡面，基础护甲 HUD 不动。
                     return false;
                 case PresentationInstructionKind.ModifyBaseStat:
                     ApplyBaseStat(hud, instruction.Event);
@@ -59,7 +60,7 @@ namespace NineGrid.Flow.Presentation
                     hud.ApplyHpAndMaxHp(gameEvent.RemainingHp, value, animate: true);
                     break;
                 case StatId.Armor:
-                case StatId.CurrentArmor:
+                    // 基础护甲被遗物 / 效果永久修改：刷新基础护甲 HUD（战斗当前护甲改动不在此列）。
                     hud.ApplyArmor(value, animate: true);
                     break;
             }

@@ -11,13 +11,16 @@ namespace NineGrid.Presentation.Commands
     {
         private readonly Vector3 mWorldPosition;
         private readonly int mAmount;
-        private readonly bool mIsHeal;
+        private readonly DamageNumberKind mKind;
 
-        public RequestDamageNumberCommand(Vector3 worldPosition, int amount, bool isHeal = false)
+        public RequestDamageNumberCommand(
+            Vector3 worldPosition,
+            int amount,
+            DamageNumberKind kind = DamageNumberKind.Damage)
         {
             mWorldPosition = worldPosition;
             mAmount = amount;
-            mIsHeal = isHeal;
+            mKind = kind;
         }
 
         protected override void OnExecute()
@@ -26,7 +29,7 @@ namespace NineGrid.Presentation.Commands
             {
                 WorldPosition = mWorldPosition,
                 Amount = mAmount,
-                IsHeal = mIsHeal
+                Kind = mKind
             });
         }
     }
