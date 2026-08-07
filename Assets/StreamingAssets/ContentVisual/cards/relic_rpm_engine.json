@@ -6,7 +6,7 @@
     "role": "Utility",
     "displayName": "转速甲",
     "designSlotName": "",
-    "description": "基础护甲+1；[旋转时] 多旋转一次",
+    "description": "基础[armor]+1，旋转时多旋转1次",
     "faceIntro": "",
     "attackPattern": "",
     "gold": 0,

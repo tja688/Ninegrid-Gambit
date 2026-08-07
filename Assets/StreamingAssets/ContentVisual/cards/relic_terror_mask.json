@@ -6,7 +6,7 @@
     "role": "Attack",
     "displayName": "死亡面罩",
     "designSlotName": "",
-    "description": "攻击+1；[击杀怪物时] 本关卡每移除6张怪物卡，随机移除一张九宫格上的普通等级怪物卡",
+    "description": "[attack]+{value}，本场战斗每击杀6，随机破坏1只常规怪物",
     "faceIntro": "",
     "attackPattern": "",
     "gold": 0,

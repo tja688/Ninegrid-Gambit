@@ -6,7 +6,7 @@
     "role": "Defense",
     "displayName": "尖刺",
     "designSlotName": "",
-    "description": "基础护甲+2；[战斗时] 玩家损失当前护甲时，对攻击者造成等量伤害",
+    "description": "基础[armor]+2，玩家损失[armor]时，对攻击者造成等量伤害",
     "faceIntro": "",
     "attackPattern": "",
     "gold": 0,

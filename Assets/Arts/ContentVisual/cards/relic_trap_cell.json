@@ -6,7 +6,7 @@
     "role": "Attack",
     "displayName": "暗器",
     "designSlotName": "",
-    "description": "当怪物卡移动到格1时，对该怪物卡造成4点伤害",
+    "description": "当怪物移动到格1时，对该怪物造成4点伤害",
     "faceIntro": "",
     "attackPattern": "",
     "gold": 0,

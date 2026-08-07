@@ -6,7 +6,7 @@
     "role": "Attack",
     "displayName": "造物之镰",
     "designSlotName": "",
-    "description": "攻击+1；[击杀怪物时] 每移除5张怪物卡，随机洗入一张常规道具卡到战斗卡组",
+    "description": "[attack]+1，每击杀5只怪物，添加1张常规道具卡到卡组",
     "faceIntro": "",
     "attackPattern": "",
     "gold": 0,

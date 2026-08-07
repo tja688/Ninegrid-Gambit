@@ -6,7 +6,7 @@
     "role": "Defense",
     "displayName": "金币盔甲",
     "designSlotName": "",
-    "description": "基础护甲+1；[受到伤害时] 每5金币抵消1点当前护甲伤害，金币不足时再扣当前护甲（对血量伤害不生效）",
+    "description": "基础[armor]+{relic.gold_armor.base.value}，每5点[money]视作{relic.gold_armor.rule.value}点[armor]",
     "faceIntro": "",
     "attackPattern": "",
     "gold": 0,

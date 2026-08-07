@@ -6,7 +6,7 @@
     "role": "Attack",
     "displayName": "回收棒槌",
     "designSlotName": "",
-    "description": "攻击+2；[击杀怪物时] 恢复2点血量",
+    "description": "[attack]+2,每使用1张道具卡，恢复2点[HP]",
     "faceIntro": "",
     "attackPattern": "",
     "gold": 0,

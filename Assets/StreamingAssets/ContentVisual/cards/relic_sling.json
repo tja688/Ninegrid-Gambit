@@ -6,7 +6,7 @@
     "role": "Attack",
     "displayName": "轻弓",
     "designSlotName": "",
-    "description": "[击杀怪物时] 对随机一张怪物卡造成4点伤害",
+    "description": "击杀时对随机1只怪物造成4点伤害",
     "faceIntro": "缴获自轻弓骷髅",
     "attackPattern": "",
     "gold": 0,

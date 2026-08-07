@@ -6,7 +6,7 @@
     "role": "Attack",
     "displayName": "顺劈斧",
     "designSlotName": "",
-    "description": "攻击+1；[战斗时] 对目标正交相邻格上的怪物造成1点伤害",
+    "description": "[attack]+1，普通攻击改为对目标[adjacent]范围造成1点伤害",
     "faceIntro": "",
     "attackPattern": "",
     "gold": 0,

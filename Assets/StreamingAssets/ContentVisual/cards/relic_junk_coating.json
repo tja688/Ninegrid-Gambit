@@ -6,7 +6,7 @@
     "role": "Defense",
     "displayName": "回收铁背心",
     "designSlotName": "",
-    "description": "[使用道具卡时] 获得1点当前护甲",
+    "description": "每使用1张道具卡，获得1点[armor]",
     "faceIntro": "",
     "attackPattern": "",
     "gold": 0,

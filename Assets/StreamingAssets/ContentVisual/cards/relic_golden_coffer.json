@@ -6,7 +6,7 @@
     "role": "Utility",
     "displayName": "黄金鱼竿",
     "designSlotName": "",
-    "description": "[获得本遗物时] 将两张金色宝箱卡加入玩家侧卡组（仅一次）",
+    "description": "获得本遗物时，将两张金色宝箱卡加入卡组",
     "faceIntro": "",
     "attackPattern": "",
     "gold": 0,

@@ -6,7 +6,7 @@
     "role": "Attack",
     "displayName": "狼牙棒",
     "designSlotName": "",
-    "description": "血量上限+2；[战斗时] 每拥有10点血量上限，对怪物多造成1点伤害",
+    "description": "[MHP]+2；每拥有10点[MHP]，对怪物多造成1点伤害",
     "faceIntro": "",
     "attackPattern": "",
     "gold": 0,

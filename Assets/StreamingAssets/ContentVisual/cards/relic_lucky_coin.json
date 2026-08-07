@@ -3,8 +3,12 @@
     "contentId": "relic.lucky_coin",
     "kind": "Relic",
     "deckId": "deck.relic",
-    "displayName": "幸运硬币",
-    "description": "[击杀怪物时] 将一张金币卡加入战斗卡组（仅对等级为层主的怪物卡生效）",
+    "role": "Utility",
+    "displayName": "悬赏令",
+    "designSlotName": "",
+    "description": "击杀层主时将一张金币卡添加到卡组",
+    "faceIntro": "",
+    "attackPattern": "",
     "gold": 0,
     "stats": {
         "hp": 0,
@@ -14,7 +18,7 @@
         "recovery": 0
     },
     "sprites": {
-        "mainIcon": "Assets/Resources/ContentArt/Multiple/icons_full_32.png#icons_full_32_9",
+        "mainIcon": "Assets/Resources/ContentArt/Multiple/icons_full_32.png#icons_full_32_388",
         "faceBackground": "",
         "cardFrame": "",
         "banner": "",
@@ -72,21 +76,6 @@
     "tags": [
         "tag.special"
     ],
-    "effectIds": [],
-    "skillIds": [],
-    "level": 0,
-    "isElite": false,
-    "isBoss": false,
-    "isReserve": false,
-    "containerType": "",
-    "deckKind": "",
-    "monsterDefIds": [],
-    "weight": 0,
-    "goldDelta": 0,
-    "maxHpDelta": 0,
-    "healToFull": false,
-    "rewardPoolId": "",
-    "shopOfferCount": 0,
     "effectAssemblies": [
         {
             "id": "relic.lucky_coin.boss_kill",
@@ -95,5 +84,21 @@
             "argsJson": "{\"count\":1}"
         }
     ],
-    "role": "Utility"
+    "effectIds": [],
+    "skillIds": [],
+    "level": "0",
+    "sequence": 0,
+    "isElite": false,
+    "isBoss": false,
+    "isReserve": false,
+    "containerType": "",
+    "deckKind": "",
+    "monsterDefIds": [],
+    "usableOutsideBattle": false,
+    "weight": 0,
+    "rewardPoolId": "",
+    "shopOfferCount": 0,
+    "openingInjects": [],
+    "iconPrefab": "",
+    "boardSlot": 0
 }

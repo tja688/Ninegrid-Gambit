@@ -6,7 +6,7 @@
     "role": "Attack",
     "displayName": "回收弹弓",
     "designSlotName": "",
-    "description": "[使用道具卡时] 对随机一张怪物卡造成2点伤害",
+    "description": "每使用1张道具卡，对随机1张怪物造成2点伤害",
     "faceIntro": "",
     "attackPattern": "",
     "gold": 0,

@@ -6,7 +6,7 @@
     "role": "Utility",
     "displayName": "金血圣杯",
     "designSlotName": "",
-    "description": "血量上限+2；[受到伤害时] 每损失1点血量，获得等量金币",
+    "description": "[MHP]+2，每损失1点[HP]，获得等量[money]",
     "faceIntro": "",
     "attackPattern": "",
     "gold": 0,

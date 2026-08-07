@@ -6,7 +6,7 @@
     "role": "Defense",
     "displayName": "复合盔甲",
     "designSlotName": "",
-    "description": "[每关卡开始时] 每有三点攻击，获得1点当前护甲",
+    "description": "每关卡开始时，每有3点[attack]，获得1点[armor]",
     "faceIntro": "",
     "attackPattern": "",
     "gold": 0,
