@@ -295,5 +295,59 @@ namespace NineGrid.Presentation.Tests.Cards
                 "攻击+5",
                 CardFaceDescriptionParamFiller.Fill("攻击+{value}", args));
         }
+
+        [Test]
+        public void Seam_ExactAssemblyIdToken_FillsAndPassesTokenContract()
+        {
+            // ADR-0035 / #154：投影缝（初始装配实参填充）与令牌契约在边界上一致——
+            // 缝能填的 {装配id.键} 令牌，契约校验必须干净。
+            var dto = new CardPresentationConfigDto
+            {
+                schemaVersion = 2,
+                contentId = "help.healing_potion",
+                kind = "HelpCard",
+                deckId = "deck.help",
+                description = "恢复{help.healing_potion.use.amount}点[HP]",
+                effectAssemblies = new[]
+                {
+                    new EffectAssemblyDto { id = "help.healing_potion.use", argsJson = "{\"amount\":10}" },
+                },
+            };
+
+            var filled = CardFaceDescriptionParamFiller.FillFromAssemblies(
+                dto.description,
+                dto.effectAssemblies);
+
+            Assert.AreEqual("恢复10点[HP]", filled);
+            Assert.AreEqual(0, CardDescriptionTokenRules.ValidateCard(dto).Count);
+        }
+
+        [Test]
+        public void Seam_DefIdPrefixToken_KeepsLiteralAndFailsTokenContract()
+        {
+            // defId 前缀式在范围内机关卡上退役：缝对歧义前缀保持字面量（防错线），契约校验必须报错。
+            var dto = new CardPresentationConfigDto
+            {
+                schemaVersion = 2,
+                contentId = "trap.attack_totem",
+                kind = "Trap",
+                deckId = "deck.trap",
+                description = "攻击+{trap.attack_totem.value}",
+                effectAssemblies = new[]
+                {
+                    new EffectAssemblyDto { id = "trap.attack_totem.aura", argsJson = "{\"value\":1}" },
+                    new EffectAssemblyDto { id = "trap.attack_totem.refresh", argsJson = "{\"value\":8}" },
+                },
+            };
+
+            var filled = CardFaceDescriptionParamFiller.FillFromAssemblies(
+                dto.description,
+                dto.effectAssemblies);
+
+            Assert.AreEqual("攻击+{trap.attack_totem.value}", filled);
+            var errors = CardDescriptionTokenRules.ValidateCard(dto);
+            Assert.AreEqual(1, errors.Count);
+            StringAssert.Contains("{trap.attack_totem.value}", errors[0]);
+        }
     }
 }

@@ -68,6 +68,7 @@ namespace NineGrid.Content
             findings.AddRange(ValidateEmptyShellSkills());
             findings.AddRange(ValidateArchiveReachability());
             findings.AddRange(ValidateNonCombatUsableTargets());
+            findings.AddRange(ValidateDescriptionTokenContract());
             return findings;
         }
 
@@ -449,6 +450,32 @@ namespace NineGrid.Content
                                 + " 目标原子 " + body.target.atom + " 依赖盘面",
                         });
                     }
+                }
+            }
+
+            return findings;
+        }
+
+        /// <summary>
+        /// ADR-0035 描述投影静态通路契约（#154）：范围内卡（机关/遗物/道具，归档除外）——
+        /// 装配须有稳定 id；描述与介绍数值只许 <c>{装配id.键}</c>（简单式 / defId 前缀式 / templateId
+        /// 限定式报错，令牌键须真实存在于该装配实参）；描述格 ≤26。
+        /// </summary>
+        public static List<Finding> ValidateDescriptionTokenContract()
+        {
+            var findings = new List<Finding>();
+            foreach (var pair in LoadAllDtos())
+            {
+                var dto = pair.Value;
+                var errors = CardDescriptionTokenRules.ValidateCard(dto);
+                for (var i = 0; i < errors.Count; i++)
+                {
+                    findings.Add(new Finding
+                    {
+                        Category = "description-contract",
+                        ContentId = dto.contentId,
+                        Detail = errors[i],
+                    });
                 }
             }
 

@@ -1843,7 +1843,8 @@ namespace NineGrid.Content.Editor
 
         /// <summary>
         /// 每个装配行的「发送自身变量」按钮：显示该装配 argsJson 里可发变量（跳过 reason/source 等不透明键），
-        /// 点击把标准代码 <c>{装配id.键}</c>（无 id 用 templateId）追加到当前卡描述框末尾。
+        /// 点击把标准代码 <c>{装配id.键}</c> 追加到当前卡描述框末尾。
+        /// 只发 <c>{装配id.键}</c>（ADR-0035 / #154）：装配缺稳定 id 时不兜底 templateId，直接不显示该行。
         /// </summary>
         private VisualElement BuildAssemblySendVariableRow(
             CardPresentationEditorEntry entry,
@@ -1855,9 +1856,12 @@ namespace NineGrid.Content.Editor
                 return box;
             }
 
-            var scope = string.IsNullOrWhiteSpace(assembly.id)
-                ? (assembly.templateId ?? string.Empty).Trim()
-                : assembly.id.Trim();
+            if (string.IsNullOrWhiteSpace(assembly.id))
+            {
+                return box;
+            }
+
+            var scope = assembly.id.Trim();
             if (string.IsNullOrWhiteSpace(scope))
             {
                 return box;
