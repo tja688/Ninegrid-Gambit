@@ -3,9 +3,13 @@
     "contentId": "help.impact_tutorial",
     "kind": "HelpCard",
     "deckId": "deck.player",
-    "displayName": "撞击教程",
-    "description": "",
-    "faceIntro": "撞击，最朴素的问候",
+    "role": "Attack",
+    "displayName": "撞击",
+    "designSlotName": "",
+    "description": "对目标怪物造成等同于玩家当前[HP]的伤害",
+    "faceIntro": "传说有人可以靠肚皮来撞死敌人",
+    "liveTemplate": "",
+    "attackPattern": "",
     "gold": 80,
     "stats": {
         "hp": 0,
@@ -73,21 +77,6 @@
     "tags": [
         "tag.hp_scaling"
     ],
-    "effectIds": [],
-    "skillIds": [],
-    "level": 0,
-    "isElite": false,
-    "isBoss": false,
-    "isReserve": false,
-    "containerType": "",
-    "deckKind": "",
-    "monsterDefIds": [],
-    "weight": 0,
-    "goldDelta": 0,
-    "maxHpDelta": 0,
-    "healToFull": false,
-    "rewardPoolId": "",
-    "shopOfferCount": 0,
     "effectAssemblies": [
         {
             "id": "help.impact_tutorial.use",
@@ -96,5 +85,21 @@
             "argsJson": "{\"count\":1,\"source\":\"Player\"}"
         }
     ],
-    "role": "Attack"
+    "effectIds": [],
+    "skillIds": [],
+    "level": "0",
+    "sequence": 0,
+    "isElite": false,
+    "isBoss": false,
+    "isReserve": false,
+    "containerType": "",
+    "deckKind": "",
+    "monsterDefIds": [],
+    "usableOutsideBattle": false,
+    "weight": 0,
+    "rewardPoolId": "",
+    "shopOfferCount": 0,
+    "openingInjects": [],
+    "iconPrefab": "",
+    "boardSlot": 0
 }
