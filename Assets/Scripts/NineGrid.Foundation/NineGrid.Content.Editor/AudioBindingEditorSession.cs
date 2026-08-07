@@ -49,8 +49,9 @@ namespace NineGrid.Content.Editor
         private readonly string authoritativeEmitter;
         private readonly HashSet<string> historicalBindingKeys =
             new HashSet<string>(StringComparer.Ordinal);
+        private string rowKey = string.Empty;
+        private bool isRowKeyAssigned;
         private AudioBindingDto savedDto;
-
         internal AudioBindingEditorEntry(
             AudioBindingDto dto,
             AudioBindingDto savedDto,
@@ -59,6 +60,11 @@ namespace NineGrid.Content.Editor
             Dto = dto;
             this.savedDto = AudioBindingEditorSession.CloneDto(savedDto);
             AddHistoricalBindingKey(AudioBindingEditorSession.ComputeBindingKey(savedDto));
+            if (savedDto != null)
+            {
+                rowKey = AudioBindingEditorSession.ComputeBindingKey(savedDto);
+                isRowKeyAssigned = true;
+            }
             declaredCueId = dto?.cueId ?? declaration?.CueId ?? string.Empty;
             declaredNote = declaration?.Note ?? string.Empty;
             declaredModule = declaration?.Module ?? string.Empty;
@@ -130,12 +136,30 @@ namespace NineGrid.Content.Editor
             savedDto = AudioBindingEditorSession.CloneDto(Dto);
             AddHistoricalBindingKey(AudioBindingEditorSession.ComputeBindingKey(savedDto));
         }
-
         internal AudioBindingDto GetSavedDto()
         {
             return AudioBindingEditorSession.CloneDto(savedDto);
         }
 
+
+
+        internal void AssignRowKey(string key)
+        {
+            if (isRowKeyAssigned)
+            {
+                return;
+            }
+
+            rowKey = key ?? string.Empty;
+            isRowKeyAssigned = true;
+        }
+
+        internal bool MatchesRowKey(string key)
+        {
+            return isRowKeyAssigned && string.Equals(rowKey, key ?? string.Empty, StringComparison.Ordinal);
+        }
+
+        internal bool HasAssignedRowKey => isRowKeyAssigned;
         internal bool MatchesHistoricalBindingKey(string key)
         {
             return !string.IsNullOrEmpty(key) && historicalBindingKeys.Contains(key);
@@ -524,16 +548,6 @@ namespace NineGrid.Content.Editor
 
         private AudioBindingDto[] BuildRowsForSave(AudioBindingEditorEntry selected)
         {
-            var savedByKey = new Dictionary<string, AudioBindingDto>(StringComparer.Ordinal);
-            for (var i = 0; i < entries.Count; i++)
-            {
-                var saved = entries[i].GetSavedDto();
-                if (saved != null)
-                {
-                    savedByKey[ComputeBindingKey(saved)] = saved;
-                }
-            }
-
             var sourceRows = diskCatalog?.bindings ?? Array.Empty<AudioBindingDto>();
             var rows = new List<AudioBindingDto>(sourceRows.Length + entries.Count);
             var emittedKeys = new HashSet<string>(StringComparer.Ordinal);
@@ -546,22 +560,24 @@ namespace NineGrid.Content.Editor
                 }
 
                 var sourceKey = ComputeBindingKey(source);
-                var matching = entries.FirstOrDefault(entry => entry.MatchesHistoricalBindingKey(sourceKey));
-                var useCurrent = selected == null || ReferenceEquals(matching, selected);
-                AudioBindingDto row;
-                if (useCurrent && matching != null && matching.Dto != null)
+                var matching = entries.FirstOrDefault(entry =>
+                    entry.MatchesRowKey(sourceKey)
+                    || (!string.IsNullOrEmpty(sourceKey)
+                        && string.Equals(entry.BindingKey, sourceKey, StringComparison.Ordinal)));
+                if (matching == null)
                 {
-                    row = matching.Dto;
-                }
-                else if (savedByKey.TryGetValue(sourceKey, out var saved))
-                {
-                    row = saved;
-                }
-                else
-                {
-                    row = source;
+                    rows.Add(CloneDto(source));
+                    emittedKeys.Add(sourceKey);
+                    continue;
                 }
 
+                if (!matching.HasAssignedRowKey)
+                {
+                    matching.AssignRowKey(sourceKey);
+                }
+
+                var useCurrent = selected == null || ReferenceEquals(matching, selected);
+                var row = useCurrent && matching.Dto != null ? matching.Dto : matching.GetSavedDto() ?? source;
                 rows.Add(CloneDto(row));
                 emittedKeys.Add(ComputeBindingKey(row));
             }
@@ -569,7 +585,7 @@ namespace NineGrid.Content.Editor
             for (var i = 0; i < entries.Count; i++)
             {
                 var entry = entries[i];
-                if (entry.Dto == null || entry.GetSavedDto() != null)
+                if (entry.Dto == null || entry.GetSavedDto() != null || entry.HasAssignedRowKey)
                 {
                     continue;
                 }
@@ -579,6 +595,7 @@ namespace NineGrid.Content.Editor
                     var key = entry.BindingKey;
                     if (emittedKeys.Add(key))
                     {
+                        entry.AssignRowKey(key);
                         rows.Add(CloneDto(entry.Dto));
                     }
                 }

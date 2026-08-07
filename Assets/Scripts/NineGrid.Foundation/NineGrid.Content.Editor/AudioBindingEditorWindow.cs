@@ -182,6 +182,7 @@ namespace NineGrid.Content.Editor
             RefreshLiveHistory();
             RefreshList();
             RefreshContent();
+            UpdateToolbarEnabledState();
         }
 
         private void BuildShell()
@@ -197,12 +198,26 @@ namespace NineGrid.Content.Editor
                 ("回撤全部脏改动", RevertAll, "恢复最近一次成功保存的磁盘快照，不清除播放历史"),
                 ("从磁盘重载", ReloadFromDisk, "丢弃未保存工作副本并重新读取正式 JSON"),
                 ("停止试听", StopPreview, "停止当前编辑器素材试听")));
+            UpdateToolbarEnabledState();
 
             var split = new TwoPaneSplitView(0, 320f, TwoPaneSplitViewOrientation.Horizontal);
             split.style.flexGrow = 1;
             rootVisualElement.Add(split);
             split.Add(BuildSidebar());
             split.Add(BuildContentPane());
+        }
+
+        private void UpdateToolbarEnabledState()
+        {
+            var editMode = !Application.isPlaying;
+            for (var i = 0; i < rootVisualElement.childCount; i++)
+            {
+                if (rootVisualElement[i] is UnityEngine.UIElements.VisualElement element
+                    && element.ClassListContains("unity-toolbar"))
+                {
+                    element.SetEnabled(editMode);
+                }
+            }
         }
 
         private VisualElement BuildSidebar()

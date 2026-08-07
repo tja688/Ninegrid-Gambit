@@ -126,7 +126,27 @@ namespace NineGrid.Presentation.Tests
             Assert.AreSame(contentEntry, _session.FindEntryForHistory(requested));
         }
 
+        [Test]
+        public void ChainedSelectorRetarget_SaveAllKeepsDistinctRows()
+        {
+            var baseEntry = _session.Entries.Single(item =>
+                item.Dto != null && string.IsNullOrEmpty(item.Dto.selectorContentId));
+            var contentEntry = _session.Entries.Single(item =>
+                item.Dto != null && item.Dto.selectorContentId == "chest.open");
 
+            baseEntry.Dto.selectorContentId = "first.target";
+            Assert.IsTrue(_session.TrySaveAll(out var error), error);
+            contentEntry.Dto.selectorContentId = "second.target";
+            Assert.IsTrue(_session.TrySaveAll(out error), error);
+            baseEntry.Dto.selectorContentId = "second.target";
+
+            Assert.IsTrue(_session.TrySaveAll(out error), error);
+            var saved = JsonUtility.FromJson<AudioBindingCatalogDto>(_session.SavedJson);
+            Assert.AreEqual(2, saved.bindings.Length);
+            CollectionAssert.AreEquivalent(
+                new[] { "first.target", "second.target" },
+                saved.bindings.Select(item => item.selectorContentId).ToArray());
+        }
 
         [Test]
         public void FailedFilter_UsesBackendFailureHistory()
