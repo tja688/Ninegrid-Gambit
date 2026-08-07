@@ -15,12 +15,12 @@
 | `Controllers/` | ~21 | `NineGrid.Presentation.Controllers` | QF `PresentationController` 场景入口 |
 | `Commands/` | 25 | `NineGrid.Presentation.Commands` | 写意图 |
 | `Queries/` | 11 | `NineGrid.Presentation.Queries` | 读裁决（合法性等） |
-| `Systems/` | 18 | `NineGrid.Presentation.Systems` | QF System / 窄能力接口 |
+| `Systems/` | ~19 | `NineGrid.Presentation.Systems` | QF System / 窄能力接口（含 `IAudioSystem` / `AudioSystem` 与 `MMSoundManagerAudioPlaybackAdapter`） |
 | `Flow/` | ~118 | `NineGrid.Flow*` | 导演/时间线/Channel/Scheduler（含 `BoardStabilizationScheduler`）、局内会话、流程壳、诊断、部分 Presenter |
 | `Cards/` | ~136 | `NineGrid.Cards*` | 卡视图、场地/手牌/牌库、收敛、特效 SO、静态 Hook |
-| `Editor/` | ~22 | `NineGrid.Presentation.Editor` | 编辑器工具；`CardFacePreviewHost` / `VisualEffectPreviewHost`（特效库：左怪物卡参照 + 右精灵表预览；卡组·卡背与卡面页共用 `CardFacePreviewHost`；翻牌预览经 `CardPresentationFlipPreview` 复用 `CardFaceFlipPresenter` 的 Flip.anim 采样；**房间图标** `Room` 预览实例化图标预制体，**房间选项** `ChoiceOption` 挂 `房间选项标准模板`） |
+| `Editor/` | ~24 | `NineGrid.Presentation.Editor` | 编辑器工具；`CardFacePreviewHost` / `VisualEffectPreviewHost`（特效库：左怪物卡参照 + 右精灵表预览；卡组·卡背与卡面页共用 `CardFacePreviewHost`；翻牌预览经 `CardPresentationFlipPreview` 复用 `CardFaceFlipPresenter` 的 Flip.anim 采样；**房间图标** `Room` 预览实例化图标预制体，**房间选项** `ChoiceOption` 挂 `房间选项标准模板`） |
 | `Cheat/` | 4 | `NineGrid.Presentation.Cheat` | **F12 作弊工具面板**（仅 `UNITY_EDITOR / DEVELOPMENT_BUILD`，正式包不含）：接线 MainScene `UI面板/作弊工具BG`（默认失活；SpriteRenderer 世界 UI）。`CheatToolHotkeyHost`（常驻 + F12）、`CheatToolPanelController`（优先按名找场景预置并接线，缺结构才最小兜底）、`CheatToolPanelButton`（`BoxCollider2D` + `PointerHitRouter`，一级五按钮）、`CheatToolCardSearchIndex`（怪物/机关/道具三类、排除归档卡组；卡名/卡组名优先表现层 JSON `displayName`）。功能：一键清关（对齐 QuickTest `-` → `TryForceNodeVictory`）、战斗加卡（二级 WorldSpace Canvas 搜索；运行时补 `GraphicRaycaster`；仅战斗阶段；`ShuffleIntoDrawPileAction` 顶插入 + `PresentEventLogSlice`）、金币 +999、回复满血。二级关闭清空输入；`PointerHitRouter` 在 EventSystem UI 上时让渡点击 |
-| `Tests/` | ~97 | `NineGrid.Presentation.Tests*` | EditMode |
+| `Tests/` | ~100 | `NineGrid.Presentation.Tests*` | EditMode（含 #168 音频 System / cue 扫描 / 播放结构护栏测试） |
 
 ### `Flow/` 子树
 
@@ -124,12 +124,12 @@
 
 **禁止**新增业务静态 Sink（跨层读写规则状态）。新交互优先走 Command / Query / Event / System。
 
-### 现有音效脉冲缝（实现占位）
-
 - `TriggerPulseHub` 是既有 FX / audio 双通道装配缝；脉冲发即完成、可降级，异常与禁用经 `DirectorTrace.TriggerPulse` 记录。
-- 生产装配由 `TriggerPulseOutputController` 完成：FX 接 `CardEffectTriggerPulseSink`；audio 接 `DebouncingTriggerPulseSink(AudioTriggerPulseSink, 0.05s)`。
-- `AudioTriggerPulseSink` 当前为空实现，仅保留 `triggerId` 接口；`EffectTriggerPulseBeatHandler` 仍会发动态 `sfx.effect.<CardUid>`，尚无稳定声音提示词汇、素材绑定、音乐状态或调音工具。
-- 已接受的目标不变量见 [ADR-0036](../adr/0036-audio-cue-binding-and-music-ownership.md)；其目标 System / Controller / EditorWindow **尚未落地，不计入本 Code Map 现状**。
+- 生产装配由 `TriggerPulseOutputController` 完成：FX 接 `CardEffectTriggerPulseSink`；audio 接 `DebouncingTriggerPulseSink(AudioTriggerPulseSink, 0.05s)`。`PresentationSceneRoot.WireHosts` 在主菜单阶段即完成该装配。
+- `AudioCueAttribute` + `AudioCueDeclarationScanner` 维护稳定 cue ID、中文音效说明、模块、权威发射者与允许上下文；`GameFlowController.BeginFormalRun` 声明并发射 `ui.main_menu.start`。
+- `IAudioSystem` / `AudioSystem` 是 QFramework 音频深模块：从 `Resources/audio/audio_bindings.json` 解析绑定，记录 Requested / Played / Unbound / BackendFailure 历史，未绑定静默；`AudioTriggerPulseSink` 将类型化 `AudioCueRequest` 转入该 System，同时保留字符串入口。
+- `MMSoundManagerAudioPlaybackAdapter` 是唯一项目自有播放 Adapter：按正式 `Resources` 键加载 AudioClip，以 MMSoundManager Sfx 轨实际播放；业务 / 表现代码不得直接使用 AudioKit 或 MMSoundManager。
+- 目标 BGM / 完整调音窗口 / 全量 cue 埋点尚未落地，不计入本纵切现状。
 
 ## 仍名 `*ManagerSingleton` 的壳（8）
 

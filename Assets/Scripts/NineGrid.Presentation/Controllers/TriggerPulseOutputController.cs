@@ -1,5 +1,6 @@
 using NineGrid.Cards;
 using NineGrid.Flow.Presentation;
+using NineGrid.Presentation.Systems;
 using UnityEngine;
 
 namespace NineGrid.Presentation.Controllers
@@ -49,10 +50,11 @@ namespace NineGrid.Presentation.Controllers
 
         public void ConfigureProductionDefaults()
         {
+            var audio = AudioSystem.EnsureRegistered();
             TriggerPulseHub.Configure(
                 new CardEffectTriggerPulseSink(),
                 new DebouncingTriggerPulseSink(
-                    new AudioTriggerPulseSink(),
+                    new AudioTriggerPulseSink(audio),
                     TriggerPulseHub.DefaultAudioDebounceSeconds));
             mConfigured = true;
         }

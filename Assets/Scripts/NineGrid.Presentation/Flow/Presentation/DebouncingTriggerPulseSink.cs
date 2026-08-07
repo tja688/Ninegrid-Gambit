@@ -1,14 +1,15 @@
 using System;
 using System.Collections.Generic;
+using NineGrid.Content.Audio;
 using UnityEngine;
 
 namespace NineGrid.Flow.Presentation
 {
     /// <summary>
-    /// 统一音效/触发脉冲 debounce：同 triggerId 在窗口内只放行首次。
+    /// 统一音效/触发脉冲 debounce：同 cue ID 在窗口内只放行首次。
     /// EditMode 可注入 nowSeconds；默认墙钟 realtimeSinceStartup。
     /// </summary>
-    public sealed class DebouncingTriggerPulseSink : ITriggerPulseSink
+    public sealed class DebouncingTriggerPulseSink : ITriggerPulseSink, IAudioCuePulseSink
     {
         private readonly ITriggerPulseSink mInner;
         private readonly float mWindowSeconds;
@@ -37,20 +38,41 @@ namespace NineGrid.Flow.Presentation
 
         public void Pulse(string triggerId)
         {
+            TryPulse(triggerId, () => mInner.Pulse(triggerId));
+        }
+
+        public void Pulse(AudioCueRequest request)
+        {
+            TryPulse(request.CueId, () =>
+            {
+                var typedInner = mInner as IAudioCuePulseSink;
+                if (typedInner != null)
+                {
+                    typedInner.Pulse(request);
+                }
+                else
+                {
+                    mInner.Pulse(request.CueId);
+                }
+            });
+        }
+
+        private void TryPulse(string triggerId, Action pulse)
+        {
             if (string.IsNullOrEmpty(triggerId))
             {
                 return;
             }
 
             var now = mNowSeconds();
-            float last;
-            if (mLastPulseAt.TryGetValue(triggerId, out last) && now - last < mWindowSeconds)
+            if (mLastPulseAt.TryGetValue(triggerId, out var last)
+                && now - last < mWindowSeconds)
             {
                 return;
             }
 
             mLastPulseAt[triggerId] = now;
-            mInner.Pulse(triggerId);
+            pulse();
         }
     }
 }

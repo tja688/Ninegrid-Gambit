@@ -148,7 +148,8 @@ namespace NineGrid.Presentation.Setup
             RelicHudHook.RequestWire();
 
             DamageNumberOutputController.EnsureInstalled();
-            TriggerPulseOutputController.EnsureInstalled();
+            var triggerPulse = TriggerPulseOutputController.EnsureInstalled();
+            triggerPulse.ConfigureProductionDefaults();
             DiagnosticOutputController.EnsureInstalled();
             GoldGainPresentationBinder.EnsureInstalled();
 
