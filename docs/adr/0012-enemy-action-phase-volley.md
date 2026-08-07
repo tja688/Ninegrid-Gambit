@@ -57,7 +57,7 @@ status: accepted
 
 ## 后果
 
-- **`PhaseSystem` 的分拍入口需要扩张。** `ResolveInteractiveRotation` 拆成「计数」「补牌」「旋转」三件独立事，并新增敌方行动阶段的报名 / 逐条结算 / 收尾入口。既有 `ResolvePostKillFill` / `ResolvePostKillRotate` 的分拍风格是模板。
+- **`PhaseSystem` 的分拍入口需要扩张。** `ResolveInteractiveRotation` 拆成「计数」「盘面稳定化」「旋转」三件独立事，并新增敌方行动阶段的报名 / 逐条结算 / 收尾入口。既有 `ResolveBoardStabilization` / `ResolvePostKillRotate` 的分拍风格是模板。
 - **表现层新增一段时间线编排，但不新增通道语义。** 单向打击是「怪打玩家」，可直接复用现成的 Counter 通道（`Battle_Counter_Default` / `Battle_Counter_Lethal_Default`）。
 - **行动倒计时上卡面需要一条完整新链路。** 按 [ADR-0005](0005-card-face-beat-commit.md)，卡面数值只能经表演锚点上的结算指令赋值，不得在队列外直读 Core。因此需要新增 Core 事件类型 → `PresentationInstructionKind` → `PresentationEventMap` 里的 Beat 归属，不能在 View 上自己算倒计时。
 - **依赖互动计数的现有内容触发会变勤。** 「未击杀不计数」修复后，`OnInteract` 类遗物/技能的触发频率上升到设计值。这是修正漏计，但属可观测的平衡变化，需要过一遍相关内容。

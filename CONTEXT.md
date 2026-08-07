@@ -106,6 +106,10 @@ _Avoid_: RunToCompletion 一口气把整局逻辑算在表演之前、核先行
 一个批次的表演播完后、通知时间线可前进的信号。
 _Avoid_: 靠阈值/预算/超时间接判定完成
 
+**盘面稳定化（Board stabilization）**：
+交互相位的稳定边界由 Core `IBoardStabilizationSystem` 权威判断：存在非 Avatar 空格且抽牌堆仍有牌时才欠补位；每次 `ResolveNextSlice` 最多执行一轮 `FillEmptySlotsAction`。表现侧 `BoardStabilizationScheduler` 只在上一轮 Present ack 后再次检查，逐轮推进 `Resolve → Present → ack` 直到稳定。融合/重组结果的延后抽牌排除由 Core 管理，表现层不得临时改牌堆。
+_Avoid_: 每条剧本自带补牌布尔、固定 Tick 数推断完成、Present 未 ack 先解算下一轮、表现层维护融合牌堆例外
+
 **输入意图（InputIntent）**：
 玩家输入转成的、可在忙时缓冲的请求；不直接改状态。
 _Avoid_: 输入回调直接写 Core/改 Transform、忙时直接吞掉点击

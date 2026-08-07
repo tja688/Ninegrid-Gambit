@@ -16,7 +16,7 @@
 | `Commands/` | 25 | `NineGrid.Presentation.Commands` | 写意图 |
 | `Queries/` | 11 | `NineGrid.Presentation.Queries` | 读裁决（合法性等） |
 | `Systems/` | 18 | `NineGrid.Presentation.Systems` | QF System / 窄能力接口 |
-| `Flow/` | ~118 | `NineGrid.Flow*` | 导演/时间线/Channel/Scheduler、局内会话、流程壳、诊断、部分 Presenter |
+| `Flow/` | ~118 | `NineGrid.Flow*` | 导演/时间线/Channel/Scheduler（含 `BoardStabilizationScheduler`）、局内会话、流程壳、诊断、部分 Presenter |
 | `Cards/` | ~136 | `NineGrid.Cards*` | 卡视图、场地/手牌/牌库、收敛、特效 SO、静态 Hook |
 | `Editor/` | ~22 | `NineGrid.Presentation.Editor` | 编辑器工具；`CardFacePreviewHost` / `VisualEffectPreviewHost`（特效库：左怪物卡参照 + 右精灵表预览；卡组·卡背与卡面页共用 `CardFacePreviewHost`；翻牌预览经 `CardPresentationFlipPreview` 复用 `CardFaceFlipPresenter` 的 Flip.anim 采样；**房间图标** `Room` 预览实例化图标预制体，**房间选项** `ChoiceOption` 挂 `房间选项标准模板`） |
 | `Cheat/` | 4 | `NineGrid.Presentation.Cheat` | **F12 作弊工具面板**（仅 `UNITY_EDITOR / DEVELOPMENT_BUILD`，正式包不含）：接线 MainScene `UI面板/作弊工具BG`（默认失活；SpriteRenderer 世界 UI）。`CheatToolHotkeyHost`（常驻 + F12）、`CheatToolPanelController`（优先按名找场景预置并接线，缺结构才最小兜底）、`CheatToolPanelButton`（`BoxCollider2D` + `PointerHitRouter`，一级五按钮）、`CheatToolCardSearchIndex`（怪物/机关/道具三类、排除归档卡组；卡名/卡组名优先表现层 JSON `displayName`）。功能：一键清关（对齐 QuickTest `-` → `TryForceNodeVictory`）、战斗加卡（二级 WorldSpace Canvas 搜索；运行时补 `GraphicRaycaster`；仅战斗阶段；`ShuffleIntoDrawPileAction` 顶插入 + `PresentEventLogSlice`）、金币 +999、回复满血。二级关闭清空输入；`PointerHitRouter` 在 EventSystem UI 上时让渡点击 |
@@ -147,7 +147,8 @@
 - **编排** → `PresentationDirector` / `BattleTimeline` / `IPresentChannel`（普通 C# 深模块，由 System 持有）
 - **先手还击** → `AttackIntentScriptFactory` 入队前经 `IPhaseSystem.MonsterStrikesFirst`（或 `MonsterStrikesFirstQuery`）裁决；Present 通道按攻方角色选择（Hit=玩家打怪，Counter=怪打玩家），先手还击只交换入队顺序，不改通道语义。**反击批入队前另查 `RuleId.CounterAttackBanned`**（远程武器：不先手也不反击，反击动作整批跳过；齐射走 `EnemyActionPhaseScheduler` 不受影响）
 - **命中批盘面 delta** → `FieldBattlePresentationExecutor` 在 lunge 后、Vacate 前必须 `Drain` 同批 OnBattle 步骤（如逃避 `Swap`）；主目标尸体 Remove 经 `BoardPresentationMerge.ForHitPresentDrain` 剥离，仍走 Vacate/FinalizeLethal。Fill/Rotate 仍属击杀后剧本。漏 Drain 会导致 Core/表现占格分叉（`OccupancyDesyncLatched`）
-- **九宫格互动计数** → `IPhaseSystem.AdvanceInteractionCount` 与补牌/旋转分步；攻击/探索剧本在补牌前推进计数，用道具路径不调用（ADR-0012 / #75）
+- **九宫格互动计数** → `IPhaseSystem.AdvanceInteractionCount` 与盘面稳定化/旋转分步；攻击/探索剧本在稳定化前推进计数，用道具路径不调用（ADR-0012 / #75）
+- **盘面稳定化 / 补牌** → Core `IBoardStabilizationSystem` 的 `NeedsRefill` 与 `ResolveNextSlice` 是唯一欠补位/补牌裁决；Flow `BoardStabilizationScheduler` 在每轮 Present ack 后重新检查并逐轮推进。融合/重组结果的 `deferRefill` 由 Core 临时排除并在稳定后恢复，旧 `DrainRefill` / `FusionRefill` 专用表现路径已删除。
 - **敌方行动阶段** → `RegisterEnemyActionPhase` / `ResolveNextEnemyAction` / `ResolveEnemyActionFinale` 分拍；同步 `Attack` / `ResolvePostKillBoard` 在玩家侧结算后整段跑完；导演由 `EnemyActionPhaseScheduler` 挂在攻击/探索剧本末尾（每怪一拍；单向打击复用 Counter 通道；`ActionCountdownChanged` → Settled → `UpdateActionCount`）（ADR-0012 / #81）
 - **行动倒计时上卡面** → Core `ActionCountdownChanged`（`ResultValue`=剩余）经 `PresentationEventMap` Settled → `CardFaceStatHandler` Commit `ActionCount`；禁止 View 队列外直读 Counters（ADR-0005 / #81）。`Action_Icon` 首版用预制体模板默认图兜底（无五套区分素材）
 

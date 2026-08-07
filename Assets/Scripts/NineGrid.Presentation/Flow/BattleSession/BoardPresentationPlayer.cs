@@ -977,7 +977,7 @@ namespace NineGrid.Flow
             {
                 if (cardManager.TryGet(entry.Uid, out var existing) && existing != null)
                 {
-                    // 必须 await settle（对齐 BurstScatter）：传送后 DrainRefill 可能立刻
+                    // 必须 await settle（对齐 BurstScatter）：传送后盘面稳定化可能立刻
                     // Deal 同一 uid；fire-and-forget 会让 ReturnInFlight 与发牌抢跑，卡死主线。
                     if (!deckManager.LaunchReturnFieldCardToDeck(existing))
                     {

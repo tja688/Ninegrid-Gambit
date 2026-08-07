@@ -117,7 +117,7 @@ namespace NineGrid.Flow.Presentation
             PublishBusy();
         }
 
-        /// <summary>向主线追加多步（如 FusionRefill Resolve+Present）。</summary>
+        /// <summary>向主线追加多步（如 BoardStabilization Resolve+Present）。</summary>
         public void MutateMainline(Action<BattleTimeline> mutate)
         {
             if (mutate == null)

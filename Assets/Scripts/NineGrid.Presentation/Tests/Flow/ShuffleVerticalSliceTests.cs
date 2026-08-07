@@ -110,7 +110,7 @@ namespace NineGrid.Presentation.Tests
             Assert.AreEqual(1, useInner.BeginCount);
             Assert.AreEqual(1, mSync.ActiveBatchId);
 
-            // Present tick3：内层完成 → ack → 非击杀分支；传送留空位时 #9 再入队 DrainRefill
+            // Present tick3：内层完成 → ack → 非击杀分支；传送留空位时再走盘面稳定化
             director.Tick(0.016f);
             Assert.AreEqual(0, mSync.ActiveBatchId);
             director.Tick(0.016f); // without-kill branch

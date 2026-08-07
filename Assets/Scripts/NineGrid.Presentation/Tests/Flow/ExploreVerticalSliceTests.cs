@@ -11,7 +11,7 @@ using NineGrid.Cards;
 namespace NineGrid.Presentation.Tests
 {
     /// <summary>
-    /// #4 空格 explore 垂直切片：导演缝上 ClickEmpty → Present → Fill → Present → Rotate → Present 批次锁步。
+    /// #4 空格 explore 垂直切片：导演缝上 ClickEmpty → Present → 盘面稳定化 → Rotate → Present 批次锁步。
     /// </summary>
     public sealed class ExploreVerticalSliceTests
     {
@@ -50,6 +50,14 @@ namespace NineGrid.Presentation.Tests
             Assert.IsTrue(mPhase.StartNode(CreateSingleMonsterNode(hp: 1, attack: 0)).Accepted);
             PlaceSoleBoardCardAt(sFarCornerSlot);
             Assert.IsTrue(mArch.GetModel<BoardModel>().IsEmpty(sAdjacentSlot));
+            mPipeline.Enqueue(new SpawnCardAction(
+                "help.bomb",
+                CardKind.HelpCard,
+                ZoneId.DrawPile,
+                SlotId.None,
+                1,
+                "test"));
+            Assert.Greater(mPipeline.RunToCompletion(), 0);
 
             var present = new RecordingPresentChannel(ticksUntilComplete: 1);
             var factory = new ExploreIntentScriptFactory(mArch, mDispatcher, present);

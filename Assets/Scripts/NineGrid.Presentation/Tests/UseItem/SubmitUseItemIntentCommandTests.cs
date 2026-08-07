@@ -16,7 +16,7 @@ namespace NineGrid.Presentation.Tests.UseItem
         private static readonly SlotId sAdjacentSlot = SlotId.Board(2);
 
         [Test]
-        public void Command_LegalUseItem_Kill_Lockstep_UseThenFillRotate()
+        public void Command_LegalUseItem_Kill_Lockstep_UseThenStabilizeRotate()
         {
             using (var arch = PresentationArchitectureFixture.CreateStartedGame(seed: 42UL))
             {

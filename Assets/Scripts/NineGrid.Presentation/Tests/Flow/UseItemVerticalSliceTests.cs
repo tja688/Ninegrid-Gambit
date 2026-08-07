@@ -14,7 +14,7 @@ using NineGrid.Cards;
 namespace NineGrid.Presentation.Tests
 {
     /// <summary>
-    /// #6 用牌/帮助卡：ApplyUseItem → Present → Fill → Present → Rotate → Present 批次锁步。
+    /// #6 用牌/帮助卡：ApplyUseItem → Present → 盘面稳定化 → Rotate → Present 批次锁步。
     /// </summary>
     public sealed class UseItemVerticalSliceTests
     {

@@ -10,12 +10,11 @@ using NineGrid.Flow.Presentation;
 using NUnit.Framework;
 using QFramework;
 using NineGrid.Flow;
-using NineGrid.Cards;
 
 namespace NineGrid.Presentation.Tests
 {
     /// <summary>
-    /// #5 攻击→击杀补牌旋转：CombatHit → Present → Fill → Present → Rotate → Present 批次锁步。
+    /// #5 攻击→击杀盘面稳定化与旋转：CombatHit → Present → 稳定化 → Rotate → Present 批次锁步。
     /// </summary>
     public sealed class AttackVerticalSliceTests
     {

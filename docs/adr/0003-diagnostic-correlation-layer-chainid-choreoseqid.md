@@ -8,7 +8,7 @@ status: proposed
 
 表演/编排诊断的关联机制收敛为**两级关联键**，取代当前三套互不相认的 ID 与一个全局可变批标签：
 
-- **`chainId`（连锁根）**：绑一次 `InputIntent` 脚本的生命周期（一条 `BattleTimeline` 从 `BuildScript` 到跑空且无缓冲 intent）。它罩住这次操作引发的**所有独立 batch**——融合、伴随补牌（已证实是 separate batch）、发牌、入组。分配点在 `PresentationDirector` 受理 intent 时；清除点在 `HardClearIntents` 与主线 idle 且无缓冲 intent 时。
+- **`chainId`（连锁根）**：绑一次 `InputIntent` 脚本的生命周期（一条 `BattleTimeline` 从 `BuildScript` 到跑空且无缓冲 intent）。它罩住这次操作引发的**所有独立 batch**——融合、盘面稳定化补牌、发牌、入组。分配点在 `PresentationDirector` 受理 intent 时；清除点在 `HardClearIntents` 与主线 idle 且无缓冲 intent 时。
 - **`choreoSeqId`（动作内展开，复用现有）**：`ChoreoTraceContext` 的栈式序号，管**单个动作内部**的父子层级、begin/end 配对、耗时、settle 端。
 
 约束（硬性）：Cards 层与 Flow 层所有表演诊断埋点**必须**在 payload 同时带 `chainId` 与 `choreoSeqId`。废除 `FlowFieldTraceSink.CurrentBatchTag` 全局可变字符串——它是并行动作 log 污染的根源。九套 recorder（Perf/Flow/Battle/Registry/Director/Choreo…）作为输出汇保留，但**关联键统一为这一套**。
@@ -20,7 +20,7 @@ status: proposed
 核心诉求是"一条绝对清晰、无断联的 log 线，能按内核投影看出每步做了什么"。排查后确认，log 拼不起来的机械根因**不在架构纯不纯，而在关联键**：
 
 - **三套 ID 各说各话**：`DirectorTrace.batchId`（扁平 int）、`ChoreoTraceContext.choreoSeqId`（栈式 int）、`FlowFieldTraceSink.CurrentBatchTag`（全局可变 string）。融合那步记 `batchId=42`，发牌那步记 `CurrentBatchTag="opening"`，两者无共同键可 join。
-- **连锁是"延迟兄弟"而非"嵌套"**：`BoardPresentationPlayer` 以 `onFusionStarted: null` 调融合，补牌被 `refillDeferredToDirector` 推迟为 Director 主线上的**独立 batch**（测试 `FusionRefillIsSeparateBatchAfterRotatePresent` 坐实）。因此栈式 `choreoSeqId` 单独用会在每个兄弟 batch 断开，`batchId` 单用也罩不住整条连锁——只有绑 intent 生命周期的 `chainId` 是语义正确的连锁边界。
+- **连锁是"延迟兄弟"而非"嵌套"**：融合产生的盘面稳定化补牌由 `BoardStabilizationScheduler` 推迟为 Director 主线上的**独立 batch**。因此栈式 `choreoSeqId` 单独用会在每个兄弟 batch 断开，`batchId` 单用也罩不住整条连锁——只有绑 intent 生命周期的 `chainId` 是语义正确的连锁边界。
 - **全局 string tag 并行必污染**：`SetBatchTag("pickup")` / `ClearBatchTag()` 是全局 set/clear，pickup 撞 deckReturn 时互相覆盖，该段 log 直接串味。
 - **`.Forget()` 无 settle 端**：发牌 `MoveRippleAsync(...).Forget()` 只有"发起" log，无"落位/被打断" log，异步空档不可追。
 
@@ -35,7 +35,7 @@ status: proposed
 
 ## 后果
 
-- 新增 `chainId` 需在 `PresentationDirector` 分配/清除，并在 defer 补牌（`FusionRefillScheduler.AppendAfterRotatePresent`）跨 batch 传递不丢——这是本轮唯一需触碰调度层的改动，属加法。
+- 新增 `chainId` 需在 `PresentationDirector` 分配/清除，并在 `BoardStabilizationScheduler` 的 defer 补牌跨 batch 传递不丢——这是本轮唯一需触碰调度层的改动，属加法。
 - `FlowFieldTraceSink.CurrentBatchTag` / `SetBatchTag` / `ClearBatchTag` 退场；调用点（`CardHandManagerSingleton` pickup 路径、`BoardPresentationPlayer`、`BattleSessionExecutor.Opening`）改为不再写全局 tag，关联键由当前 `chainId`+`choreoSeqId` 上下文提供。
 - 骷髅融合 `PresentFusionAsync` 需套根 choreo 作用域（`finally` 兜底 `ForceCloseOpenChoreos`），连锁各段（补牌/入组/发牌）各 push 子 choreo。
 - 发牌 `.Forget()` 补 settle 端埋点（飞牌 settle 回调 `RecordExploreTrace(uid,"deal.settled")`，带 choreoSeqId），实现"发起→落位"配对。

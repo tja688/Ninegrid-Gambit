@@ -132,7 +132,7 @@ namespace NineGrid.Presentation.Tests
             var channel = new FakePresentChannel(ticksUntilComplete: 2);
             gate.Open(11);
 
-            var step = new PresentStep(gate, channel, channelName: "FusionRefill", choreoKind: "Refill");
+            var step = new PresentStep(gate, channel, channelName: "BoardStabilization", choreoKind: "Refill");
             Assert.AreEqual(0, ChoreoTraceContext.OpenChoreoCount);
 
             Assert.AreEqual(TimelineStepStatus.Continue, step.Tick(0.016f));
