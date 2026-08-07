@@ -38,6 +38,25 @@ namespace NineGrid.Flow
         [Tooltip("SpawnRandomAtScreenCenter 时的随机伤害上限（含）。")]
         [SerializeField] private int randomMax = 999;
 
+        [Header("数值动态缩放（1x~2x）")]
+        [Tooltip("缩放区间下界：飘字数值 ≤ 此值显示 1 倍。")]
+        [SerializeField] private float scaleFromNumber = 1f;
+
+        [Tooltip("缩放区间上界：飘字数值 ≥ 此值显示 2 倍（满倍封顶）。")]
+        [SerializeField] private float scaleToNumber = 25f;
+
+        [Tooltip("最小数字（1 倍）的可见时长（秒）。")]
+        [SerializeField] private float baseLifetime = 0.8f;
+
+        [Tooltip("满倍数字（2 倍）的可见时长（秒），随倍率线性插值。")]
+        [SerializeField] private float maxLifetime = 1.6f;
+
+        [Tooltip("治疗飘字颜色。")]
+        [SerializeField] private Color healColor = new Color(0.35f, 1f, 0.4f, 1f);
+
+        [Tooltip("伤害飘字颜色：每次生成显式重设，防止治疗色经对象池残留。")]
+        [SerializeField] private Color damageColor = Color.white;
+
         private void Awake()
         {
             ResolveCamera();
@@ -75,13 +94,15 @@ namespace NineGrid.Flow
                 return;
             }
 
-            SpawnAtWorldPosition(e.WorldPosition, e.Amount);
+            SpawnAtWorldPosition(e.WorldPosition, e.Amount, e.IsHeal);
         }
 
         /// <summary>
-        /// 在指定世界坐标弹出伤害数字。
+        /// 在指定世界坐标弹出伤害数字，并按数值应用动态缩放（1x~2x）与可见时长。
+        /// 区间依据内容数值分布设定（见 <see cref="scaleToNumber"/>）：日常单发伤害/治疗集中在 1~10，
+        /// 精英/Boss 与成长叠伤后可达 15~25，故 25 封顶 2 倍，确保一局内可触达满倍。
         /// </summary>
-        public DamageNumber SpawnAtWorldPosition(Vector3 worldPosition, float number)
+        public DamageNumber SpawnAtWorldPosition(Vector3 worldPosition, float number, bool isHeal = false)
         {
             if (!TryResolvePrefab(out var prefab))
             {
@@ -90,6 +111,7 @@ namespace NineGrid.Flow
 
             worldPosition.z = spawnWorldZ;
             var popup = prefab.Spawn(worldPosition, number);
+            ApplyDynamicPresentation(popup, number, isHeal);
             ApplySorting(popup);
             return popup;
         }
@@ -147,6 +169,37 @@ namespace NineGrid.Flow
 
             Debug.LogWarning("[DamageNumberManager] 未配置 defaultPrefab，无法生成伤害数字。");
             return false;
+        }
+
+        /// <summary>
+        /// 应用动态表现：数值在 [scaleFromNumber, scaleToNumber] 内线性映射 1x~2x，
+        /// 可见时长同步线性插值 [baseLifetime, maxLifetime]，并显式重设颜色（防池残留）。
+        /// Spawn 返回后同步设置即生效：插件在下一帧 Restart()/Start() 才把 lifetime 拷入
+        /// currentLifetime，UpdateText 每帧按 number 重算 numberScale（DamageNumbersPro 约定）。
+        /// </summary>
+        private void ApplyDynamicPresentation(DamageNumber popup, float number, bool isHeal)
+        {
+            if (popup == null)
+            {
+                return;
+            }
+
+            var span = Mathf.Max(0f, scaleToNumber - scaleFromNumber);
+            var normalized = span > 0f
+                ? Mathf.Clamp01((number - scaleFromNumber) / span)
+                : 1f;
+
+            popup.enableScaleByNumber = true;
+            popup.scaleByNumberSettings = new ScaleByNumberSettings
+            {
+                fromNumber = scaleFromNumber,
+                toNumber = scaleToNumber,
+                fromScale = 1f,
+                toScale = 2f
+            };
+
+            popup.lifetime = Mathf.Lerp(baseLifetime, maxLifetime, normalized);
+            popup.SetColor(isHeal ? healColor : damageColor);
         }
 
         private void ResolveCamera()

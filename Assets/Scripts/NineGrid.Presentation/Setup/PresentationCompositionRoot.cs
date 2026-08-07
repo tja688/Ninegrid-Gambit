@@ -222,11 +222,13 @@ namespace NineGrid.Presentation.Setup
             TeardownBattleBeatScheduler();
             // 装饰处理器（飘字 / FX / 金币 / Avatar HUD）不占主线 ack；OfferReward 由 CardFaceStatHandler 消费。
             // PlayerInfoHud 对 Avatar 血甲只旁路写 HUD 并 return false，留给 CardFace 认领。
+            // DamageFloater 须在 CardFaceStat 之前：Healed 的 UpdateHp 由其旁路飘绿字（return false），
+            // 否则 UpdateHp 已被 CardFaceStat 认领，治疗飘字将永远收不到指令。
             mBeatScheduler = new BattleBeatScheduler(
                 new PlayerInfoHudBeatHandler(),
+                new DamageFloaterBeatHandler(),
                 new CardFaceStatHandler(),
                 new CardFaceFlipBeatHandler(),
-                new DamageFloaterBeatHandler(),
                 new EffectTriggerPulseBeatHandler(),
                 new GoldGainBeatHandler());
             FlipPlaybackCoordinator.Reset();

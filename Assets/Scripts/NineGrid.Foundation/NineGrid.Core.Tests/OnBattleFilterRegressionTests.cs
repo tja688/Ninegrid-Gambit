@@ -139,6 +139,15 @@ namespace NineGrid.Core.Tests
             Assert.AreEqual(10, damage, "5 攻 × 暴力卡翻倍应对怪物造成 10 点战斗伤害");
             Assert.AreEqual(hpBefore - 10, (int)monster.Stats.GetBase(StatId.Hp));
             Assert.AreEqual(0, CountBrutalityOnceRules(), "战斗伤害后 Once 翻倍应被消耗");
+
+            var secondStartIndex = mPipeline.EventLog.Entries.Count;
+            var secondHit = mPhase.ApplyCombatHit(board.AvatarUid.Value, monsterUid);
+            Assert.IsTrue(secondHit.Accepted, secondHit.Reason);
+
+            var secondDamage = FindPrimaryDamageTo(secondStartIndex, monsterUid);
+            Assert.AreEqual(5, secondDamage, "暴力卡只应强化下一次战斗伤害，第二次应恢复基础攻击伤害");
+            Assert.AreEqual(hpBefore - 15, (int)monster.Stats.GetBase(StatId.Hp));
+            Assert.AreEqual(0, CountBrutalityOnceRules(), "第二次战斗伤害后不应残留暴力卡 Once 规则");
         }
 
         private void ActivateBattleHardened()

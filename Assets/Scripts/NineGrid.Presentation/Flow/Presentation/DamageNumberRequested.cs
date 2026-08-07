@@ -7,5 +7,8 @@ namespace NineGrid.Flow.Presentation
     {
         public Vector3 WorldPosition;
         public int Amount;
+
+        /// <summary>为真时按治疗飘字表现（绿色 + 同一动态大小/时长区间）。</summary>
+        public bool IsHeal;
     }
 }

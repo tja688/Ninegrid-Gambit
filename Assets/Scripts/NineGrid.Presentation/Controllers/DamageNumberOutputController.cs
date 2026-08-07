@@ -58,9 +58,9 @@ namespace NineGrid.Presentation.Controllers
             }
         }
 
-        private void HandleSpawn(Vector3 worldPosition, int amount)
+        private void HandleSpawn(Vector3 worldPosition, int amount, bool isHeal)
         {
-            this.SendCommand(new RequestDamageNumberCommand(worldPosition, amount));
+            this.SendCommand(new RequestDamageNumberCommand(worldPosition, amount, isHeal));
         }
     }
 }

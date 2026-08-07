@@ -6,7 +6,7 @@
     "role": "Attack",
     "displayName": "破甲",
     "designSlotName": "",
-    "description": "攻击时若目标当前护甲大于零，攻击伤害+{relic.armor_strip_knife.battle.value}",
+    "description": "攻击时若目标当前[armor]大于0，攻击伤害+{relic.armor_strip_knife.battle.value}",
     "faceIntro": "",
     "attackPattern": "",
     "gold": 0,
@@ -81,7 +81,7 @@
             "id": "relic.armor_strip_knife.battle",
             "templateId": "tpl.relic.armor_strip_knife.battle",
             "containerType": "Relic",
-            "argsJson": "{\"sourceAction\":\"DealDamage\",\"value\":3,\"source\":\"relic.armor_strip_knife\"}"
+            "argsJson": "{\"sourceAction\":\"DealDamage\",\"value\":0,\"source\":\"relic.armor_strip_knife\"}"
         },
         {
             "id": "relic.armor_strip_knife.armor_hit",

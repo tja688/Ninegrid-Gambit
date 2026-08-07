@@ -6,7 +6,7 @@
     "role": "Defense",
     "displayName": "耐用盾牌",
     "designSlotName": "",
-    "description": "玩家获得{amount}点护甲",
+    "description": "玩家获得{amount}点[armor]",
     "faceIntro": "",
     "attackPattern": "",
     "gold": 50,

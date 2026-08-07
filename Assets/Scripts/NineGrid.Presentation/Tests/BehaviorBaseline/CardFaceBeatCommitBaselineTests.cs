@@ -914,9 +914,9 @@ namespace NineGrid.Presentation.Tests.BehaviorBaseline
         [Test]
         public void DamageFloaterHandler_AtImpact_SpawnsFromInstruction_NotProjectionBypass()
         {
-            var spawned = new System.Collections.Generic.List<(Vector3 pos, int amount)>();
+            var spawned = new System.Collections.Generic.List<(Vector3 pos, int amount, bool isHeal)>();
             var previousSpawn = DamageNumberHook.Spawn;
-            DamageNumberHook.Spawn = (pos, amount) => spawned.Add((pos, amount));
+            DamageNumberHook.Spawn = (pos, amount, isHeal) => spawned.Add((pos, amount, isHeal));
             try
             {
                 var face = mCardManager.SpawnView(
@@ -956,6 +956,63 @@ namespace NineGrid.Presentation.Tests.BehaviorBaseline
                 Assert.AreEqual(1, spawned.Count, "Impact 后应有一条飘字");
                 Assert.AreEqual(5, spawned[0].amount);
                 Assert.AreEqual(new Vector3(3f, 4f, 0f), spawned[0].pos);
+                Assert.IsFalse(spawned[0].isHeal, "普通伤害飘字不应标记治疗");
+
+                scheduler.ReportBeat(PresentationBeat.Settled);
+            }
+            finally
+            {
+                DamageNumberHook.Spawn = previousSpawn;
+            }
+        }
+
+        [Test]
+        public void DamageFloaterHandler_AtImpact_HealSpawnsGreenMarked_WithoutClaimingUpdateHp()
+        {
+            var spawned = new System.Collections.Generic.List<(Vector3 pos, int amount, bool isHeal)>();
+            var previousSpawn = DamageNumberHook.Spawn;
+            DamageNumberHook.Spawn = (pos, amount, isHeal) => spawned.Add((pos, amount, isHeal));
+            try
+            {
+                var face = mCardManager.SpawnView(
+                    78,
+                    defId: "monster.test",
+                    kind: CardPresentationKind.Monster);
+                face.Transform.position = new Vector3(-3f, 2f, 0f);
+
+                var map = new PresentationEventMapEntry(
+                    CoreEventType.Healed,
+                    PresentationInstructionKind.UpdateHp,
+                    PresentationEventCategory.Stat,
+                    requiresPlayback: true,
+                    locksInput: true,
+                    beat: PresentationBeat.Impact,
+                    label: "Healed");
+                var batch = new PresentationBatch(
+                    71,
+                    new[]
+                    {
+                        new PresentationInstruction(
+                            new CoreGameEvent(CoreEventType.Healed, 1, "test")
+                                .WithTarget(78)
+                                .WithAmount(8)
+                                .WithDelta(5)
+                                .WithRemaining(10, 0),
+                            map),
+                    },
+                    snapshot: null);
+
+                var scheduler = new BattleBeatScheduler(
+                    new DamageFloaterBeatHandler(),
+                    new CardFaceStatHandler());
+                scheduler.OnBatchOpened(batch);
+
+                scheduler.ReportBeat(PresentationBeat.Impact);
+                Assert.AreEqual(1, spawned.Count, "Healed 应在 Impact 飘绿色治疗字");
+                Assert.AreEqual(5, spawned[0].amount, "治疗飘字应取 Delta（实际生效量）");
+                Assert.IsTrue(spawned[0].isHeal, "治疗飘字应标记 IsHeal");
+                Assert.AreEqual(new Vector3(-3f, 2f, 0f), spawned[0].pos);
+                Assert.AreEqual(10, face.CommittedPresentation.Hp, "Floater 旁路不得吞掉 UpdateHp，卡面应已提交");
 
                 scheduler.ReportBeat(PresentationBeat.Settled);
             }

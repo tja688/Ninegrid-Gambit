@@ -6,7 +6,7 @@
     "role": "Attack",
     "displayName": "爆弹",
     "designSlotName": "",
-    "description": "对所有怪物卡造成{amount}点伤害",
+    "description": "对所有怪物造成{amount}点伤害",
     "faceIntro": "",
     "attackPattern": "",
     "gold": 50,

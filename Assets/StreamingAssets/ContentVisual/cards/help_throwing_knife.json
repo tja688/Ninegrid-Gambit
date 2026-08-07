@@ -6,7 +6,7 @@
     "role": "Attack",
     "displayName": "飞刀",
     "designSlotName": "",
-    "description": "对目标怪物卡造成{help.throwing_knife.use.amount}点伤害",
+    "description": "对目标怪物造成{help.throwing_knife.use.amount}点伤害",
     "faceIntro": "",
     "attackPattern": "",
     "gold": 20,

@@ -6,7 +6,7 @@
     "role": "",
     "displayName": "刺藤",
     "designSlotName": "",
-    "description": "每次移动后，[adjacent]的怪物和玩家各受到1点伤害",
+    "description": "每移动{trap.spike.move.amount}次，[adjacent]的怪物和玩家各受到1点伤害",
     "faceIntro": "",
     "attackPattern": "无",
     "gold": 0,

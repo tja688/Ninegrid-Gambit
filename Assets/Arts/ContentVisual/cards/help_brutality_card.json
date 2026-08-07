@@ -6,7 +6,7 @@
     "role": "Attack",
     "displayName": "暴力",
     "designSlotName": "",
-    "description": "玩家下{value}次对怪物造成的普通攻击伤害翻倍",
+    "description": "玩家下一次对怪物造成的普通攻击伤害翻倍",
     "faceIntro": "",
     "attackPattern": "",
     "gold": 30,

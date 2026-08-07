@@ -6,7 +6,7 @@
     "role": "Defense",
     "displayName": "金色三叶草",
     "designSlotName": "",
-    "description": "血量上限+2",
+    "description": "[MHP]+{help.hp_card.use.delta}",
     "faceIntro": "",
     "attackPattern": "",
     "gold": 50,

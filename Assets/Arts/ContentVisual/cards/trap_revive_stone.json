@@ -6,7 +6,7 @@
     "role": "",
     "displayName": "复活石",
     "designSlotName": "",
-    "description": "[action]6次后，移除本卡，将{count}张巨剑骷髅打出到同格",
+    "description": "[action]6次后[death]，将{count}张巨剑骷髅打出到同格",
     "faceIntro": "",
     "attackPattern": "无",
     "gold": 5,

@@ -98,7 +98,7 @@
 | `ActionCountdownSemanticsTests` | #76 / ADR-0013：OnSelfMove / OnCumulative 倒计时拍序；OnInteract.every；外部加减不永久错相；`AttackPatternPrefix` 与 `effect.` 隔离 |
 | `SlotIdDiagonalAdjacencyTests` | #77 / ADR-0011：对角相邻谓词；正交 `IsAdjacentTo` 语义不变 |
 | `AttackPatternDataPlaneTests` | #77/#82/#86 / ADR-0011：五取值与频率；缺省报错；显式「无」通过；进场倒计时初始化；生产 Catalog 按主题序列回填后的攻击模式赋模 |
-| `OnBattleEngagementScopeTests` | #78 / ADR-0012：OnBattle 仅交战作用域；非交战 DealDamage 不触发、不洗 UntilBattleEnds；「每战斗」只数交战 |
+| `OnBattleEngagementScopeTests` / `OnBattleFilterRegressionTests` | #78 / ADR-0012：OnBattle 仅交战作用域；非交战 DealDamage 不触发、不洗 UntilBattleEnds；「每战斗」只数交战；暴力卡的 help.* 直伤过滤、首次战斗伤害 Once 翻倍与第二次恢复基础伤害 |
 | `DamageFormulaRegressionTests` | ADR-0028：伤害减免在乘区/平板之后减去；无视护甲跳过甲与金甲；减免+无视甲组合；金甲仅抵甲伤段；FlatDelta→减免顺序 |
 | `EnemyActionPhaseTests` | #79/#80 / ADR-0011–0012：敌方行动报名/逐条/收尾；四开火模式位置×频率；窗口错过重置；Avatar 偏心真对角；盘面冻结；玩家死亡终止；名单冻结；反伤致死伤害仍成立；「无」不开火 |
 | `EnemyActionVolleyIntentTests` / `CardPresentationCommitTests`（ActionCount / Action_Icon） | #81：倒计时事件→指令 Commit；Action_Icon 模板兜底；导演单向打击走 Counter 分拍 |

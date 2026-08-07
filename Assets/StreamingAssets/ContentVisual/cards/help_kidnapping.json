@@ -6,7 +6,7 @@
     "role": "Defense",
     "displayName": "绑票",
     "designSlotName": "",
-    "description": "移除{count}张常规怪物，并获得等同于其当前护甲的护甲",
+    "description": "破坏{count}张常规怪物，并偷取其[armor]",
     "faceIntro": "",
     "attackPattern": "",
     "gold": 100,

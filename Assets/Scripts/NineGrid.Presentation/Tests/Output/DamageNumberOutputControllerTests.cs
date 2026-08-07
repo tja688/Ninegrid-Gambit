@@ -52,8 +52,60 @@ namespace NineGrid.Presentation.Tests.Output
                 {
                     DamageNumberHook.RequestSpawn(Vector3.zero, 0);
                     DamageNumberHook.RequestSpawn(Vector3.zero, -3);
+                    DamageNumberHook.RequestSpawnHeal(Vector3.zero, 0);
 
                     Assert.AreEqual(0, count);
+                }
+                finally
+                {
+                    unreg.UnRegister();
+                    UnityEngine.Object.DestroyImmediate(controller.gameObject);
+                }
+            }
+        }
+
+        [Test]
+        public void Controller_RequestSpawnHeal_SendsHealMarkedEvent()
+        {
+            using (var arch = PresentationArchitectureFixture.CreateStartedGame(seed: 42UL))
+            {
+                DamageNumberRequested? received = null;
+                var unreg = arch.Architecture.RegisterEvent<DamageNumberRequested>(e => received = e);
+
+                var controller = DamageNumberOutputController.EnsureInstalled();
+                try
+                {
+                    var pos = new Vector3(-2f, 1f, 0f);
+                    DamageNumberHook.RequestSpawnHeal(pos, 5);
+
+                    Assert.IsTrue(received.HasValue);
+                    Assert.AreEqual(pos, received.Value.WorldPosition);
+                    Assert.AreEqual(5, received.Value.Amount);
+                    Assert.IsTrue(received.Value.IsHeal, "治疗飘字应标记 IsHeal");
+                }
+                finally
+                {
+                    unreg.UnRegister();
+                    UnityEngine.Object.DestroyImmediate(controller.gameObject);
+                }
+            }
+        }
+
+        [Test]
+        public void Controller_RequestSpawn_SendsNonHealEvent()
+        {
+            using (var arch = PresentationArchitectureFixture.CreateStartedGame(seed: 42UL))
+            {
+                DamageNumberRequested? received = null;
+                var unreg = arch.Architecture.RegisterEvent<DamageNumberRequested>(e => received = e);
+
+                var controller = DamageNumberOutputController.EnsureInstalled();
+                try
+                {
+                    DamageNumberHook.RequestSpawn(Vector3.zero, 7);
+
+                    Assert.IsTrue(received.HasValue);
+                    Assert.IsFalse(received.Value.IsHeal, "普通伤害飘字不应标记 IsHeal");
                 }
                 finally
                 {

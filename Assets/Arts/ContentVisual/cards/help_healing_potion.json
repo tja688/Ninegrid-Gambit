@@ -6,7 +6,7 @@
     "role": "Utility",
     "displayName": "恢复药水",
     "designSlotName": "",
-    "description": "恢复{amount}点血量",
+    "description": "恢复{amount}点[HP]",
     "faceIntro": "",
     "attackPattern": "",
     "gold": 30,

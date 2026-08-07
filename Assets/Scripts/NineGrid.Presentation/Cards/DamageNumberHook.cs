@@ -11,9 +11,19 @@ namespace NineGrid.Cards
         /// <summary>由 Presentation Controller 注册，确保 Hook→Event 接线已安装。</summary>
         public static Action EnsureWired;
 
-        public static Action<Vector3, int> Spawn;
+        public static Action<Vector3, int, bool> Spawn;
 
         public static void RequestSpawn(Vector3 worldPosition, int amount)
+        {
+            RequestSpawnInternal(worldPosition, amount, isHeal: false);
+        }
+
+        public static void RequestSpawnHeal(Vector3 worldPosition, int amount)
+        {
+            RequestSpawnInternal(worldPosition, amount, isHeal: true);
+        }
+
+        private static void RequestSpawnInternal(Vector3 worldPosition, int amount, bool isHeal)
         {
             EnsureWired?.Invoke();
             if (amount <= 0)
@@ -21,7 +31,7 @@ namespace NineGrid.Cards
                 return;
             }
 
-            Spawn?.Invoke(worldPosition, amount);
+            Spawn?.Invoke(worldPosition, amount, isHeal);
         }
     }
 }

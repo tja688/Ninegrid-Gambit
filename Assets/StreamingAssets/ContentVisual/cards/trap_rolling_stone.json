@@ -6,7 +6,7 @@
     "role": "",
     "displayName": "滚石",
     "designSlotName": "",
-    "description": "移动到格3时，移除格6上的卡牌",
+    "description": "移动到格3时，破坏格6上的常规怪物/道具/机关",
     "faceIntro": "",
     "attackPattern": "无",
     "gold": 0,

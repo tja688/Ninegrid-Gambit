@@ -6,7 +6,7 @@
     "role": "",
     "displayName": "离开机关",
     "designSlotName": "",
-    "description": "魔免，破坏后离开房间",
+    "description": "魔免，[death]后离开房间",
     "faceIntro": "",
     "attackPattern": "无",
     "gold": 0,

@@ -6,7 +6,7 @@
     "role": "",
     "displayName": "疗愈之光",
     "designSlotName": "",
-    "description": "每移动1次，若玩家在[adjacent]则为玩家恢复{amount}点血量",
+    "description": "每移动1次，若玩家在[adjacent]则恢复{amount}点血量",
     "faceIntro": "",
     "attackPattern": "无",
     "gold": 0,
