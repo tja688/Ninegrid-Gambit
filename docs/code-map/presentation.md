@@ -124,6 +124,13 @@
 
 **禁止**新增业务静态 Sink（跨层读写规则状态）。新交互优先走 Command / Query / Event / System。
 
+### 现有音效脉冲缝（实现占位）
+
+- `TriggerPulseHub` 是既有 FX / audio 双通道装配缝；脉冲发即完成、可降级，异常与禁用经 `DirectorTrace.TriggerPulse` 记录。
+- 生产装配由 `TriggerPulseOutputController` 完成：FX 接 `CardEffectTriggerPulseSink`；audio 接 `DebouncingTriggerPulseSink(AudioTriggerPulseSink, 0.05s)`。
+- `AudioTriggerPulseSink` 当前为空实现，仅保留 `triggerId` 接口；`EffectTriggerPulseBeatHandler` 仍会发动态 `sfx.effect.<CardUid>`，尚无稳定声音提示词汇、素材绑定、音乐状态或调音工具。
+- 已接受的目标不变量见 [ADR-0036](../adr/0036-audio-cue-binding-and-music-ownership.md)；其目标 System / Controller / EditorWindow **尚未落地，不计入本 Code Map 现状**。
+
 ## 仍名 `*ManagerSingleton` 的壳（8）
 
 这些是 **Presenter / 管理器壳**，不是旧四大巨型宿主（已改名为 `BattleSessionController` / `GroundFieldView` / `FieldBattleView` / `GameFlowController`）：
