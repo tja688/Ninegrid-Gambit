@@ -6,9 +6,9 @@
     "role": "",
     "displayName": "复活石",
     "designSlotName": "",
-    "description": "[action]{trap.revive_stone.interact.every}次后[death]，将{trap.revive_stone.remove.count}张巨剑骷髅打出到同格",
+    "description": "[action]{trap.revive_stone.interact.every}次后[death]，将{trap.revive_stone.remove.count}张重生骷髅打出到同格",
     "faceIntro": "待机六次，替身归来",
-    "liveTemplate": "剩余{trap.revive_stone.interact.every}次互动后[death]，将{trap.revive_stone.remove.count}张巨剑骷髅打出到同格",
+    "liveTemplate": "剩余{trap.revive_stone.interact.every}次互动后[death]，将{trap.revive_stone.remove.count}张重生骷髅打出到同格",
     "attackPattern": "无",
     "gold": 5,
     "stats": {

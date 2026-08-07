@@ -6,8 +6,8 @@
     "role": "",
     "displayName": "烈焰",
     "designSlotName": "",
-    "description": "每移动{trap.flame.move.amount}次，对[adjacent]的玩家造成{trap.flame.move.amount}点伤害，{trap.flame.remove.every}次后[death]",
-    "faceIntro": "",
+    "description": "每移动{trap.flame.move.every}次，对[adjacent]的玩家造成{trap.flame.move.amount}点伤害，{trap.flame.remove.every}次后[death]",
+    "faceIntro": "燃尽三次，灰烬退场",
     "liveTemplate": "每移动对[adjacent]的玩家造成{trap.flame.move.amount}点伤害；剩余{trap.flame.remove.every}次移动后[death]",
     "attackPattern": "无",
     "gold": 0,
@@ -80,7 +80,7 @@
             "id": "trap.flame.move",
             "templateId": "tpl.trap.flame.move",
             "containerType": "Trap",
-            "argsJson": "{\"amount\":1}"
+            "argsJson": "{\"amount\":1,\"every\":1}"
         },
         {
             "id": "trap.flame.remove",

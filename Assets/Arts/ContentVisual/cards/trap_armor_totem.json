@@ -7,7 +7,7 @@
     "displayName": "护甲图腾",
     "designSlotName": "",
     "description": "[adjacent]的怪物和玩家[armor]+{trap.armor_totem.aura.value}",
-    "faceIntro": "",
+    "faceIntro": "铁甲图腾，护你周全",
     "attackPattern": "无",
     "gold": 0,
     "stats": {

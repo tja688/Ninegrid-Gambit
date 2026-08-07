@@ -92,7 +92,7 @@ namespace NineGrid.Presentation.Tests.Cards
                 dto.liveTemplate,
                 dto.effectAssemblies);
 
-            Assert.AreEqual("剩余6次互动后[death]，将1张巨剑骷髅打出到同格", output);
+            Assert.AreEqual("剩余6次互动后[death]，将1张重生骷髅打出到同格", output);
         }
 
         [Test]
@@ -112,7 +112,7 @@ namespace NineGrid.Presentation.Tests.Cards
                 dto.effectAssemblies,
                 remaining);
 
-            Assert.AreEqual("剩余2次互动后[death]，将1张巨剑骷髅打出到同格", output);
+            Assert.AreEqual("剩余2次互动后[death]，将1张重生骷髅打出到同格", output);
         }
 
         [Test]
@@ -132,7 +132,7 @@ namespace NineGrid.Presentation.Tests.Cards
                 dto.effectAssemblies,
                 remaining);
 
-            Assert.AreEqual("[action]6次后[death]，将1张巨剑骷髅打出到同格", output);
+            Assert.AreEqual("[action]6次后[death]，将1张重生骷髅打出到同格", output);
         }
 
         [Test]

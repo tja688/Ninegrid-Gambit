@@ -6,8 +6,8 @@
     "role": "",
     "displayName": "滚石",
     "designSlotName": "",
-    "description": "移动到格3时，破坏格6上的常规怪物/道具/机关",
-    "faceIntro": "",
+    "description": "移动到格{trap.rolling_stone.slot3.slot}时，移除格{trap.rolling_stone.slot3.targetSlot}上的常规怪物/道具/机关",
+    "faceIntro": "轰隆而过，前路清空",
     "attackPattern": "无",
     "gold": 0,
     "stats": {
@@ -79,7 +79,7 @@
             "id": "trap.rolling_stone.slot3",
             "templateId": "tpl.trap.rolling_stone.slot3",
             "containerType": "Trap",
-            "argsJson": "{\"reason\":\"trap.rolling_stone\"}"
+            "argsJson": "{\"reason\":\"trap.rolling_stone\",\"slot\":3,\"targetSlot\":6}"
         }
     ],
     "effectIds": [

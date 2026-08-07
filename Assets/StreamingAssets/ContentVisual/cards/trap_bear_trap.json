@@ -6,8 +6,8 @@
     "role": "",
     "displayName": "捕熊陷阱",
     "designSlotName": "",
-    "description": "对下张[adjacent]的怪物/道具造成10点伤害/移除，触发后[death]",
-    "faceIntro": "",
+    "description": "对下张[adjacent]的怪物/道具造成{trap.bear_trap.fill.amount}点伤害/移除，触发后[death]",
+    "faceIntro": "咔哒一声，猎物落网",
     "attackPattern": "无",
     "gold": 0,
     "stats": {

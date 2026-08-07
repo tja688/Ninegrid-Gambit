@@ -6,8 +6,8 @@
     "role": "",
     "displayName": "刺藤",
     "designSlotName": "",
-    "description": "每移动{trap.spike.move.amount}次，[adjacent]的怪物和玩家各受到1点伤害",
-    "faceIntro": "",
+    "description": "每移动{trap.spike.move.every}次，[adjacent]的怪物和玩家各受到{trap.spike.move.amount}点伤害",
+    "faceIntro": "荆棘遍野，寸步难行",
     "attackPattern": "无",
     "gold": 0,
     "stats": {
@@ -79,7 +79,7 @@
             "id": "trap.spike.move",
             "templateId": "tpl.trap.spike.move",
             "containerType": "Trap",
-            "argsJson": "{\"amount\":1}"
+            "argsJson": "{\"amount\":1,\"every\":1}"
         },
         {
             "id": "trap.spike.move_player",
