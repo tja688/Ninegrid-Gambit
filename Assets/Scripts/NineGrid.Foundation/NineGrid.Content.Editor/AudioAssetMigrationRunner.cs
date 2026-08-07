@@ -282,7 +282,7 @@ namespace NineGrid.Content.Editor
                 {
                     guid = AssetDatabase.AssetPathToGUID(path),
                     assetPath = path,
-                    resourcesKey = ToResourcesKey(path),
+                    resourcesKey = AudioAssetManifestLoader.NormalizeKey(path),
                     sha256 = AudioAssetHygieneValidator.ComputeSha256(ToAbsolute(path)),
                     sizeBytes = new FileInfo(ToAbsolute(path)).Length,
                     kind = kind,
@@ -334,20 +334,6 @@ namespace NineGrid.Content.Editor
             }
         }
 
-        private static string ToResourcesKey(string assetPath)
-        {
-            var normalized = assetPath.Replace('\\', '/');
-            const string prefix = "Assets/Resources/";
-            if (normalized.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
-            {
-                normalized = normalized.Substring(prefix.Length);
-            }
-
-            var extension = Path.GetExtension(normalized);
-            return string.IsNullOrEmpty(extension)
-                ? normalized
-                : normalized.Substring(0, normalized.Length - extension.Length);
-        }
 
         private static void DeleteEmptyLegacyFolders()
         {
