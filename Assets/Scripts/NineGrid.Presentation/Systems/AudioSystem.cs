@@ -90,6 +90,7 @@ namespace NineGrid.Presentation.Systems
         public AudioCueOutcome Outcome { get; internal set; }
         public string CueId { get; internal set; }
         public string CueNote { get; internal set; }
+        public string BindingKey { get; internal set; }
         public string ActualClipKey { get; internal set; }
         public string FailureReason { get; internal set; }
     }
@@ -99,6 +100,7 @@ namespace NineGrid.Presentation.Systems
         public AudioHistoryOutcome Outcome { get; internal set; }
         public string CueId { get; internal set; }
         public string CueNote { get; internal set; }
+        public string BindingKey { get; internal set; }
         public string DiagnosticSource { get; internal set; }
         public string ActualClipKey { get; internal set; }
         public string FailureReason { get; internal set; }
@@ -187,7 +189,7 @@ namespace NineGrid.Presentation.Systems
             RecordTrace(
                 PerfTraceKinds.AudioCueRequest,
                 request,
-                outcome: AudioHistoryOutcome.Requested,
+                AudioHistoryOutcome.Requested,
                 requestedAt,
                 clipKey: null,
                 note: null,
@@ -216,6 +218,7 @@ namespace NineGrid.Presentation.Systems
                     Outcome = AudioHistoryOutcome.Cooldown,
                     CueId = request.CueId,
                     CueNote = binding.Note,
+                    BindingKey = binding.BindingKey,
                     DiagnosticSource = request.DiagnosticSource,
                     FailureReason = "minimum interval",
                     Time = now,
@@ -234,6 +237,7 @@ namespace NineGrid.Presentation.Systems
                     Outcome = AudioCueOutcome.Cooldown,
                     CueId = request.CueId,
                     CueNote = binding.Note,
+                    BindingKey = binding.BindingKey,
                     FailureReason = "minimum interval",
                 };
             }
@@ -264,6 +268,7 @@ namespace NineGrid.Presentation.Systems
                     Outcome = AudioHistoryOutcome.BackendFailure,
                     CueId = request.CueId,
                     CueNote = binding.Note,
+                    BindingKey = binding.BindingKey,
                     DiagnosticSource = request.DiagnosticSource,
                     ActualClipKey = binding.ClipKey,
                     FailureReason = backend.FailureReason,
@@ -283,6 +288,7 @@ namespace NineGrid.Presentation.Systems
                     Outcome = AudioCueOutcome.BackendFailure,
                     CueId = request.CueId,
                     CueNote = binding.Note,
+                    BindingKey = binding.BindingKey,
                     ActualClipKey = binding.ClipKey,
                     FailureReason = backend.FailureReason,
                 };
@@ -298,6 +304,7 @@ namespace NineGrid.Presentation.Systems
                 Outcome = AudioHistoryOutcome.Played,
                 CueId = request.CueId,
                 CueNote = binding.Note,
+                BindingKey = binding.BindingKey,
                 DiagnosticSource = request.DiagnosticSource,
                 ActualClipKey = actualClipKey,
                 Time = now,
@@ -316,6 +323,7 @@ namespace NineGrid.Presentation.Systems
                 Outcome = AudioCueOutcome.Played,
                 CueId = request.CueId,
                 CueNote = binding.Note,
+                BindingKey = binding.BindingKey,
                 ActualClipKey = actualClipKey,
             };
         }

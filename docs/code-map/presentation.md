@@ -15,12 +15,12 @@
 | `Controllers/` | ~21 | `NineGrid.Presentation.Controllers` | QF `PresentationController` 场景入口 |
 | `Commands/` | 25 | `NineGrid.Presentation.Commands` | 写意图 |
 | `Queries/` | 11 | `NineGrid.Presentation.Queries` | 读裁决（合法性等） |
-| `Systems/` | ~19 | `NineGrid.Presentation.Systems` | QF System / 窄能力接口（含 `IAudioSystem` / `AudioSystem` 与 `MMSoundManagerAudioPlaybackAdapter`） |
+| `Systems/` | ~19 | `NineGrid.Presentation.Systems` | QF System / 窄能力接口（含 `IAudioSystem` / `AudioSystem` 与 `MMSoundManagerAudioPlaybackAdapter`；音频历史提供稳定 `BindingKey` 供 Editor 定位） |
 | `Flow/` | ~118 | `NineGrid.Flow*` | 导演/时间线/Channel/Scheduler（含 `BoardStabilizationScheduler`）、局内会话、流程壳、诊断、部分 Presenter |
 | `Cards/` | ~136 | `NineGrid.Cards*` | 卡视图、场地/手牌/牌库、收敛、特效 SO、静态 Hook |
-| `Editor/` | ~24 | `NineGrid.Presentation.Editor` | 编辑器工具；`CardFacePreviewHost` / `VisualEffectPreviewHost`（特效库：左怪物卡参照 + 右精灵表预览；卡组·卡背与卡面页共用 `CardFacePreviewHost`；翻牌预览经 `CardPresentationFlipPreview` 复用 `CardFaceFlipPresenter` 的 Flip.anim 采样；**房间图标** `Room` 预览实例化图标预制体，**房间选项** `ChoiceOption` 挂 `房间选项标准模板`） |
+| `Editor/` | ~26 | `NineGrid.Presentation.Editor` | 编辑器工具；`CardFacePreviewHost` / `VisualEffectPreviewHost`（特效库：左怪物卡参照 + 右精灵表预览；卡组·卡背与卡面页共用 `CardFacePreviewHost`；翻牌预览经 `CardPresentationFlipPreview` 复用 `CardFaceFlipPresenter` 的 Flip.anim 采样；**房间图标** `Room` 预览实例化图标预制体，**房间选项** `ChoiceOption` 挂 `房间选项标准模板`） |
 | `Cheat/` | 4 | `NineGrid.Presentation.Cheat` | **F12 作弊工具面板**（仅 `UNITY_EDITOR / DEVELOPMENT_BUILD`，正式包不含）：接线 MainScene `UI面板/作弊工具BG`（默认失活；SpriteRenderer 世界 UI）。`CheatToolHotkeyHost`（常驻 + F12）、`CheatToolPanelController`（优先按名找场景预置并接线，缺结构才最小兜底）、`CheatToolPanelButton`（`BoxCollider2D` + `PointerHitRouter`，一级五按钮）、`CheatToolCardSearchIndex`（怪物/机关/道具三类、排除归档卡组；卡名/卡组名优先表现层 JSON `displayName`）。功能：一键清关（对齐 QuickTest `-` → `TryForceNodeVictory`）、战斗加卡（二级 WorldSpace Canvas 搜索；运行时补 `GraphicRaycaster`；仅战斗阶段；`ShuffleIntoDrawPileAction` 顶插入 + `PresentEventLogSlice`）、金币 +999、回复满血。二级关闭清空输入；`PointerHitRouter` 在 EventSystem UI 上时让渡点击 |
-| `Tests/` | ~100 | `NineGrid.Presentation.Tests*` | EditMode（含 #168 音频 System / cue 扫描 / 播放结构护栏测试） |
+| `Tests/` | ~104 | `NineGrid.Presentation.Tests*` | EditMode（含 #168 音频 System / cue 扫描 / 播放结构护栏测试；#169 音频绑定 Editor Session 保存/回撤/筛选/历史定位测试） |
 
 ### `Flow/` 子树
 
@@ -129,7 +129,8 @@
 - `AudioCueAttribute` + `AudioCueDeclarationScanner` 维护稳定 cue ID、中文音效说明、模块、权威发射者与允许上下文；`GameFlowController.BeginFormalRun` 声明并发射 `ui.main_menu.start`。
 - `IAudioSystem` / `AudioSystem` 是 QFramework 音频深模块：从 `Resources/audio/audio_bindings.json` 解析绑定，未绑定静默；关键音频事件并入既有 PerfTrace 会话（`AudioCue*` kinds + `Audio.System.Cue` site，带 sessionId/runTag/chainId/batchId）；完整实时历史只保留在 Editor/Development（`UNITY_EDITOR || DEVELOPMENT_BUILD` 固定容量环形缓冲，Release 不分配）。`AudioTriggerPulseSink` 将类型化 `AudioCueRequest` 转入该 System，同时保留字符串入口。
 - `MMSoundManagerAudioPlaybackAdapter` 是唯一项目自有播放 Adapter：按正式 `Resources` 键加载 AudioClip，以 MMSoundManager Sfx 轨实际播放；业务 / 表现代码不得直接使用 AudioKit 或 MMSoundManager。
-- 目标 BGM / 完整调音窗口 / 全量 cue 埋点尚未落地，不计入本纵切现状。
+- #169 `NineGrid/音频/声音绑定调音工作台`（`NineGrid.Content.Editor`）以 `AudioBindingEditorSession` 持有磁盘快照与工作副本：按 cue ID / 音效说明 / 内容 ID / 素材名 / 绑定状态搜索，过滤未保存/未绑定/断链/失败，编辑作者音量、素材内部起播点、绑定延迟、最短播放间隔和启用状态；支持单条/全部保存与回撤、正式 JSON 输出、Editor 素材试听、Play Mode 历史按 `BindingKey` 定位。退出 Play Mode、程序集重载或关闭窗口存在脏条目时明确提示；Revert All Dirty 不清播放历史。
+- 目标 BGM / 音乐状态窗口仍未落地；#169 落地的是 SFX 声音绑定调音工作台，不把玩家 Master/BGM/SFX 本地偏好写回作者 JSON。
 
 ## 仍名 `*ManagerSingleton` 的壳（8）
 

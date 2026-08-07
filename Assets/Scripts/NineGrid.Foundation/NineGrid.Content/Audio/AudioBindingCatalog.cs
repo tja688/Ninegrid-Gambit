@@ -63,6 +63,13 @@ namespace NineGrid.Content.Audio
             SelectorRoomId = selectorRoomId ?? string.Empty;
             SelectorItemDefId = selectorItemDefId ?? string.Empty;
             SelectorContentId = selectorContentId ?? string.Empty;
+            BindingKey = AudioBindingKey.Compose(
+                CueId,
+                SelectorCardDefId,
+                SelectorSkillId,
+                SelectorRoomId,
+                SelectorItemDefId,
+                SelectorContentId);
         }
 
         public string CueId { get; }
@@ -79,6 +86,7 @@ namespace NineGrid.Content.Audio
         public string SelectorRoomId { get; }
         public string SelectorItemDefId { get; }
         public string SelectorContentId { get; }
+        public string BindingKey { get; }
 
         public bool IsBaseBinding => string.IsNullOrEmpty(SelectorCardDefId)
             && string.IsNullOrEmpty(SelectorSkillId)
@@ -111,6 +119,28 @@ namespace NineGrid.Content.Audio
         private static int CountNonEmpty(string value)
         {
             return string.IsNullOrEmpty(value) ? 0 : 1;
+        }
+    }
+    public static class AudioBindingKey
+    {
+        private const char Separator = '\u001f';
+
+        public static string Compose(
+            string cueId,
+            string selectorCardDefId,
+            string selectorSkillId,
+            string selectorRoomId,
+            string selectorItemDefId,
+            string selectorContentId)
+        {
+            return string.Join(
+                Separator.ToString(),
+                cueId ?? string.Empty,
+                selectorCardDefId ?? string.Empty,
+                selectorSkillId ?? string.Empty,
+                selectorRoomId ?? string.Empty,
+                selectorItemDefId ?? string.Empty,
+                selectorContentId ?? string.Empty);
         }
     }
 
