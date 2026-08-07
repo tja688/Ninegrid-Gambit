@@ -4,6 +4,7 @@
   "small_model": "alibaba/qwen3.7-max",
   "autoupdate": false,
   "snapshot": false,
+  "permission": "allow",
   "instructions": [
     "AGENTS.md",
     ".cursor/rules/*.md"
@@ -14,19 +15,6 @@
       "mode": "primary",
       "model": "deepseek/deepseek-v4-flash",
       "temperature": 0.1,
-      "permission": {
-        "question": "deny",
-        "task": "deny",
-        "webfetch": "deny",
-        "websearch": "deny",
-        "edit": "allow",
-        "bash": {
-          "*": "allow",
-          "git push*": "deny",
-          "git reset --hard*": "deny",
-          "git clean*": "deny"
-        }
-      },
       "prompt": "You are the implementation worker for one supervised ticket. Load the ticket-runner skill only when needed. Do not ask questions or start subagents. Follow AGENTS.md and report the required TICKET_STATUS line."
     },
     "ticket-doctor": {
@@ -34,15 +22,6 @@
       "mode": "primary",
       "model": "alibaba/qwen3.7-max",
       "temperature": 0,
-      "permission": {
-        "edit": "deny",
-        "bash": "deny",
-        "task": "deny",
-        "question": "deny",
-        "webfetch": "deny",
-        "websearch": "deny",
-        "skill": "deny"
-      },
       "prompt": "You are a read-only ticket doctor. Inspect only the supplied local logs. Return exactly the requested DOCTOR_ACTION JSON line. Never edit files, implement code, or ask questions."
     }
   }
