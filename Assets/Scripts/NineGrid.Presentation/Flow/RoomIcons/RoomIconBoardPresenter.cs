@@ -15,9 +15,6 @@ using NineGrid.Presentation;
 using NineGrid.Presentation.Systems;
 using QFramework;
 using UnityEngine;
-#if UNITY_EDITOR
-using UnityEditor;
-#endif
 
 namespace NineGrid.Flow.RoomIcons
 {
@@ -436,16 +433,7 @@ namespace NineGrid.Flow.RoomIcons
 
         private static GameObject LoadPrefab(string path)
         {
-            if (string.IsNullOrWhiteSpace(path))
-            {
-                return null;
-            }
-
-#if UNITY_EDITOR
-            return AssetDatabase.LoadAssetAtPath<GameObject>(path);
-#else
-            return null;
-#endif
+            return CardChassisPaths.LoadGameObject(path);
         }
 
         private static void SnapAvatarView(IArchitecture arch, int slot)

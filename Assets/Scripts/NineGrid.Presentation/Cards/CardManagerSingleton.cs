@@ -130,7 +130,7 @@ namespace NineGrid.Cards
         private Transform cardRoot;
 
         [SerializeField]
-        [Tooltip("卡牌底盘预制体（变换塔 / SortingGroup / HitProxy / Effect）。主 Spawn 路径 Instantiate 此底盘后再挂 Kind 卡面。留空时编辑器 Awake 尝试加载 Assets/Prefabs/老Standard Card.prefab；仍空则 Spawn 失败并打 Error。")]
+        [Tooltip("卡牌底盘预制体（变换塔 / SortingGroup / HitProxy / Effect）。主 Spawn 路径 Instantiate 此底盘后再挂 Kind 卡面。留空时编辑器 Awake 尝试加载 Assets/Resources/Prefabs/老Standard Card.prefab；仍空则 Spawn 失败并打 Error。")]
         private GameObject standardCardPrefab;
 
         [SerializeField]

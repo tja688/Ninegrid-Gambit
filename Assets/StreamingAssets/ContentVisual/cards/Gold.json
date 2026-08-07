@@ -83,7 +83,7 @@
     "weight": 20,
     "rewardPoolId": "",
     "shopOfferCount": 0,
-    "iconPrefab": "Assets/Prefabs/地形图标/钱袋图标.prefab",
+    "iconPrefab": "Assets/Resources/Prefabs/地形图标/钱袋图标.prefab",
     "boardSlot": 3,
     "effectAssemblies": [],
     "role": "",

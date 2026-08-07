@@ -88,7 +88,7 @@
     "healToFull": false,
     "rewardPoolId": "",
     "shopOfferCount": 0,
-    "iconPrefab": "Assets/Prefabs/地形图标/离开图标.prefab",
+    "iconPrefab": "Assets/Resources/Prefabs/地形图标/离开图标.prefab",
     "boardSlot": 2,
     "effectAssemblies": [],
     "role": "Navigation"

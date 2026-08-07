@@ -89,6 +89,6 @@
     "rewardPoolId": "",
     "shopOfferCount": 0,
     "openingInjects": [],
-    "iconPrefab": "Assets/Prefabs/地形图标/道具奖励图标.prefab",
+    "iconPrefab": "Assets/Resources/Prefabs/地形图标/道具奖励图标.prefab",
     "boardSlot": 1
 }

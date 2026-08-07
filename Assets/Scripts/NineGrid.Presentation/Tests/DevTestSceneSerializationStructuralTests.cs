@@ -81,7 +81,7 @@ namespace NineGrid.Presentation.Tests
         [Test]
         public void StandardCardChassisPrefab_SerializesRuntimeInstallerNotDevKeys()
         {
-            const string chassis = "Assets/Prefabs/老Standard Card.prefab";
+            const string chassis = "Assets/Resources/Prefabs/老Standard Card.prefab";
             var yaml = ReadProjectText(chassis);
             var devKeysGuid = ReadScriptGuid(DevTestFolder + "/Cards/StandardCardViewDevKeys.cs");
             Assert.AreEqual(

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Threading;
 using Cysharp.Threading.Tasks;
@@ -17,9 +17,6 @@ using NineGrid.Presentation.Systems;
 using QFramework;
 using UnityEngine;
 using UnityEngine.Rendering;
-#if UNITY_EDITOR
-using UnityEditor;
-#endif
 
 namespace NineGrid.Flow.RewardBoard
 {
@@ -710,16 +707,7 @@ namespace NineGrid.Flow.RewardBoard
 
         private static GameObject LoadPrefab(string path)
         {
-            if (string.IsNullOrEmpty(path))
-            {
-                return null;
-            }
-
-#if UNITY_EDITOR
-            return AssetDatabase.LoadAssetAtPath<GameObject>(path);
-#else
-            return null;
-#endif
+            return CardChassisPaths.LoadGameObject(path);
         }
     }
 }

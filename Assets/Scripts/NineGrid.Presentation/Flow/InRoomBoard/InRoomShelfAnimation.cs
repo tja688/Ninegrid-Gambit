@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Threading;
 using Cysharp.Threading.Tasks;
@@ -7,9 +7,6 @@ using NineGrid.Cards;
 using NineGrid.Cards.Convergence;
 using NineGrid.Presentation.Systems;
 using UnityEngine;
-#if UNITY_EDITOR
-using UnityEditor;
-#endif
 
 namespace NineGrid.Flow.InRoomBoard
 {
@@ -21,7 +18,7 @@ namespace NineGrid.Flow.InRoomBoard
     public static class InRoomShelfAnimation
     {
         public const string StandardDeathFxAssetPath =
-            "Assets/Scripts/NineGrid.Presentation/Cards/Effects/Defaults/CardDeathBurnExitEffect.asset";
+            "Assets/Resources/Cards/Effects/Defaults/CardDeathBurnExitEffect.asset";
 
         /// <summary>与 Avatar 跳格同演出时长/质感（GroundMotionExecutor 默认 moveDuration / hop 强度）。</summary>
         public const float HopDuration = 0.35f;
@@ -42,10 +39,8 @@ namespace NineGrid.Flow.InRoomBoard
                 return sStandardDeathFx;
             }
 
-#if UNITY_EDITOR
-            sStandardDeathFx = AssetDatabase.LoadAssetAtPath<CardSpriteSheetBurnExitEffectSO>(
+            sStandardDeathFx = CardChassisPaths.LoadAsset<CardSpriteSheetBurnExitEffectSO>(
                 StandardDeathFxAssetPath);
-#endif
             return sStandardDeathFx;
         }
 

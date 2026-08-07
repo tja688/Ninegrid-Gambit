@@ -96,7 +96,7 @@ namespace NineGrid.Content.CardPresentation
         /// <summary>房间开局注入声明（ADR-0022）；空/缺省 = 显式无注入。</summary>
         public RoomOpeningInjectDto[] openingInjects;
         /// <summary>
-        /// Room 场地图标预制体 Asset 路径（如 Assets/Prefabs/商店图标.prefab）。
+        /// Room 场地图标预制体 Asset 路径（如 Assets/Resources/Prefabs/地形图标/商店图标.prefab）。
         /// 空则编辑器/后续投放回退 <c>CardChassisPaths.ResolveRoomIconPrefab</c>。
         /// </summary>
         public string iconPrefab;

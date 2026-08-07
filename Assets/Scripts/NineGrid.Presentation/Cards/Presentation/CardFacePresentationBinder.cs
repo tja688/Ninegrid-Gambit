@@ -388,10 +388,8 @@ namespace NineGrid.Cards.Presentation
                 return _cachedInlineIconStyle;
             }
 
-#if UNITY_EDITOR
-            _cachedInlineIconStyle = UnityEditor.AssetDatabase.LoadAssetAtPath<CardFaceDescriptionInlineIconStyleSO>(
+            _cachedInlineIconStyle = CardChassisPaths.LoadAsset<CardFaceDescriptionInlineIconStyleSO>(
                 CardChassisPaths.DescriptionInlineIconStyleAsset);
-#endif
             return _cachedInlineIconStyle;
         }
 
@@ -407,10 +405,8 @@ namespace NineGrid.Cards.Presentation
                 return _cachedIconCatalog;
             }
 
-#if UNITY_EDITOR
-            _cachedIconCatalog = UnityEditor.AssetDatabase.LoadAssetAtPath<CardFaceDescriptionIconCatalogSO>(
+            _cachedIconCatalog = CardChassisPaths.LoadAsset<CardFaceDescriptionIconCatalogSO>(
                 CardChassisPaths.DescriptionIconCatalogAsset);
-#endif
             return _cachedIconCatalog;
         }
 

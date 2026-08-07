@@ -12,10 +12,6 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.Rendering;
 
-#if UNITY_EDITOR
-using UnityEditor;
-#endif
-
 namespace NineGrid.Flow
 {
     /// <summary>
@@ -655,7 +651,6 @@ namespace NineGrid.Flow
 
         private static GameObject LoadFacePrefab(CardPresentationKind kind)
         {
-#if UNITY_EDITOR
             string path;
             switch (kind)
             {
@@ -680,10 +675,7 @@ namespace NineGrid.Flow
                     return null;
             }
 
-            return AssetDatabase.LoadAssetAtPath<GameObject>(path);
-#else
-            return null;
-#endif
+            return CardChassisPaths.LoadGameObject(path);
         }
 
         /// <summary>

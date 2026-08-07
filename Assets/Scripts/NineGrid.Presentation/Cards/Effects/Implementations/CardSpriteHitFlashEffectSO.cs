@@ -9,7 +9,7 @@ namespace NineGrid.Cards
     public sealed class CardSpriteHitFlashEffectSO : CardEffectSO
     {
         private const string DefaultHitFlashMaterialPath =
-            "Assets/Arts/VisualProfiles/TableNineSpriteHitFlash.mat";
+            "Assets/Resources/Arts/VisualProfiles/TableNineSpriteHitFlash.mat";
 
         [Header("Material")]
         [Tooltip("HitFlash 材质模板（TableNine/SpriteHitFlash）；留空时编辑器下从默认路径加载。")]
@@ -79,11 +79,7 @@ namespace NineGrid.Cards
                 return hitFlashMaterialTemplate;
             }
 
-#if UNITY_EDITOR
-            return UnityEditor.AssetDatabase.LoadAssetAtPath<Material>(DefaultHitFlashMaterialPath);
-#else
-            return null;
-#endif
+            return CardChassisPaths.LoadAsset<Material>(DefaultHitFlashMaterialPath);
         }
 
         private void OnValidate()

@@ -83,7 +83,7 @@
     "weight": 0,
     "rewardPoolId": "",
     "shopOfferCount": 0,
-    "iconPrefab": "Assets/Prefabs/地形图标/Boss房图标.prefab",
+    "iconPrefab": "Assets/Resources/Prefabs/地形图标/Boss房图标.prefab",
     "boardSlot": 3,
     "effectAssemblies": [],
     "role": "",

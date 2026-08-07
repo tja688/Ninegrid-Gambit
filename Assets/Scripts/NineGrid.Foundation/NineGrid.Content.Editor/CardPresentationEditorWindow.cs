@@ -2835,7 +2835,7 @@ namespace NineGrid.Content.Editor
                         dto.iconPrefab = v ?? string.Empty;
                         OnDtoEdited(entry);
                     }),
-                    tooltip: "Assets/Prefabs/xxx图标.prefab；空则按 contentId 默认映射。"));
+                    tooltip: "Assets/Resources/Prefabs/地形图标/xxx图标.prefab；空则按 contentId 默认映射。"));
                 column.Add(ContentVisualWarmConsoleUi.WrapControlRow(
                     "格位",
                     BindInt(dto.boardSlot, v =>
