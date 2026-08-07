@@ -791,7 +791,7 @@ namespace NineGrid.Core.Effects
     }
 
     [EffectAtom("OnCumulative", EffectAtomKind.Trigger)]
-    public class OnCumulativeTrigger : TriggerAtomBase
+    public class OnCumulativeTrigger : TriggerAtomBase, ITriggerFireCount
     {
         private string mMetric = "armorLost";
         private int mThreshold = 1;
@@ -805,6 +805,9 @@ namespace NineGrid.Core.Effects
         private bool mActorIsSelf;
         private bool mTargetIsPlayer;
         private bool mActorIsPlayer;
+        private int mFireCount;
+
+        public int FireCount { get { return mFireCount; } }
 
         public override TriggerPoint Point { get { return TriggerPoint.OnCumulative; } }
 
@@ -845,6 +848,7 @@ namespace NineGrid.Core.Effects
 
         public override bool Matches(EffectRuntimeContext context)
         {
+            mFireCount = 0;
             if (!base.Matches(context))
             {
                 return false;
@@ -865,7 +869,8 @@ namespace NineGrid.Core.Effects
             var key = string.IsNullOrEmpty(mCounterKey)
                 ? CoreCounterKeys.EffectCounterPrefix + context.Instance.InstanceId + ".cumulative." + mMetric
                 : mCounterKey;
-            return ActionCountdown.Tick(owner.Counters, key, mThreshold, delta);
+            mFireCount = ActionCountdown.TickCount(owner.Counters, key, mThreshold, delta);
+            return mFireCount > 0;
         }
 
         private int MeasureDelta(EffectRuntimeContext context)

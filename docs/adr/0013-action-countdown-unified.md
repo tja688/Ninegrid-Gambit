@@ -10,7 +10,7 @@ status: accepted
 2. **开火窗口是一次性的。** 倒计时归零的那一拍就是窗口；若开火资格不通过（位置条件不满足 / 被禁止行动），**取消本次行动并把倒计时重置为 N**，不保留蓄力、不停在 0 等下一拍。
 3. **攻击模式与效果各用独立命名的计数器。** 攻击模式用保留 key；DSL 效果沿用 `CoreCounterKeys.EffectCounterPrefix + instanceId + …`。共享的是计数设施（`CardInstance.Counters`）与语义，**不是同一个计数值**。
 4. **`OnInteract` 补 `every` 参数**，使技能可以复用互动计数。
-5. **`OnSelfMove` 的 `every` 从「累计 % N == 0」迁移为倒计时**；`OnCumulative` 的按量累计表达为「倒计时减去 delta，≤ 0 则触发并加回 N」。
+5. **`OnSelfMove` 的 `every` 从「累计 % N == 0」迁移为倒计时**；`OnCumulative` 的按量累计表达为「倒计时减去 delta，每跨过一个 N 阈值产生一次逻辑触发，并保留跨阈值后的余量」。
 6. **倒计时可被效果加减速**；攻击模式本身不可被改写（[ADR-0011](0011-monster-attack-pattern-intrinsic.md)）。
 
 ## 为什么
@@ -49,6 +49,8 @@ status: accepted
 
 - **现有 `every` 内容行为等价但需回归。** 受影响的是 `OnSelfMove` 系模板：`tpl.skill.flame_breath.move`（每移动 4 次）、`tpl.skill.stroll.move`（每移动 1 次）、`tpl.skill.strong_combo.move`（每移动 1 次）等。无外部干预时倒计时与模运算完全等价（第 N、2N、3N… 次触发），`every: 1` 亦等价（每次都触发），但迁移必须由 EditMode 覆盖。
 - **`OnCumulative` 的 `counterKey` 存储含义反转**（从「已累计量」变成「剩余量」），跨存档兼容性需确认。
+- **`OnCumulative` 严格消费按量 delta。** 一次事件若跨过多个阈值，按跨过的阈值数生成多个逻辑触发，不能只开火一次后吞掉余量。
+- **累计效果的计数器不按战斗/节点清除。** 生产中的固定 `counterKey` 写在持久 Avatar 的 `CounterBag` 上；`SetupNodeDeck` / `NodeStarted` 只重置战斗内容，不得清除该累计值。新 run 由 Avatar 生命周期自然重置。
 - **`CoreCounterKeys` 需要一个攻击模式专用的保留前缀**，并与 `EffectCounterPrefix` 明确隔离。
 - **倒计时上卡面必须走结算指令链路**，不能在 View 上自己减（见 ADR-0012 后果）。
 - **「每战斗 N 次」只数交战。** 与 [ADR-0012](0012-enemy-action-phase-volley.md) 定案一致：`OnBattle` 仅在交战作用域内 raise，单向打击不计（#78）。

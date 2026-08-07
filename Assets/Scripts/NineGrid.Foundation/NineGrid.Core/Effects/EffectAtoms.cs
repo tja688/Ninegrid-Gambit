@@ -17,6 +17,14 @@ namespace NineGrid.Core.Effects
         bool Matches(EffectRuntimeContext context);
     }
 
+    /// <summary>
+    /// Optional trigger contract for one context that consumes multiple logical firings.
+    /// </summary>
+    public interface ITriggerFireCount
+    {
+        int FireCount { get; }
+    }
+
     public interface ICondition : IEffectAtom
     {
         bool IsMet(EffectRuntimeContext context);

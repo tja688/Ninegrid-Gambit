@@ -64,7 +64,7 @@
 | `RelicR1NineProfessionContractTests` | #116：九件新建遗物在役卡组+装配；`relic.rotten_cleave_axe` 为 Red 且不进 W/B/G 宝箱池；Profession 授予顺劈斧且基础护甲 0；样本效果（铁盾伤害减免、超越维度战斗旋转） |
 | `RelicR1AssemblableContractTests` | #117：13 件可拼新建遗物在役卡组+装配；按稀有度进入 common_chest / blood_conversion；样本效果（废物剑击杀回血、血液暴力半血攻、复合盔甲关初换甲） |
 | `RelicR1KeeperAuditContractTests` | #118：20 件名称对齐留用遗物在役+非空描述+装配；渴望 MaxHp+10；幸运硬币仅层主击杀；废物三件 `OnAnyHelpCardUsed` 与利用机回血样本 |
-| `RelicR2CumulativeContractTests` | #119：OnCumulative 扩展 `monsterRemoved` / `helpCardUsed` / `damageTaken`（含甲吸收）；六件累计遗物在役+奖池+装配；恐怖面罩只移普通等级怪；血魔承伤涨上限 |
+| `RelicR2CumulativeContractTests` | #119：OnCumulative 扩展 `monsterRemoved` / `helpCardUsed` / `damageTaken`（含甲吸收）；六件累计遗物在役+奖池+装配；恐怖面罩只移普通等级怪；血魔承伤涨上限；身体潜力一次跨多个 10 点阈值逐档触发且累计值跨节点保留 |
 | `RelicR3GrowthContractTests` | #120：`RelicRunContribution` run 内成长；锻造器具关初扣甲成长；金剑战斗衰减/击杀成长/下限 0；新 run 清空；丢弃清贡献 |
 | `RelicR3FoamContractTests` | #121：泡沫盔甲 +1 基础甲；本关首次甲归零后武装下一击 Once 免疫（归零击不吃盾）；同关不重武装；多段只免第一段；未消耗盾关初清除 |
 | `ThemeMonsterDeckContractTests` | #86 / ADR-0022：每层主题卡组不重复绑定、节点按序列 1–5 抽、Reserve 不参与、层主击杀固定 1 金箱+2 金币 |

@@ -166,6 +166,64 @@ namespace NineGrid.Core.Tests
         }
 
         [Test]
+        public void BodyPotential_LargeHpLoss_TriggersOncePerThreshold_AndPreservesRemainder()
+        {
+            Assert.IsTrue(mPhase.StartNode(CreateEmptyEnemyNode()).Accepted);
+            mArch.GetSystem<IContentSystem>().ActivateRelic("relic.body_potential");
+
+            var board = mArch.GetModel<BoardModel>();
+            var registry = mArch.GetModel<CardRegistry>();
+            var deck = mArch.GetModel<DeckModel>();
+            var avatar = registry.Get(board.AvatarUid.Value);
+            avatar.Stats.SetBase(StatId.MaxHp, 99);
+            avatar.Stats.SetBase(StatId.Hp, 99);
+            StatArmorUtility.SetCurrentArmor(avatar, 0);
+
+            mPipeline.Enqueue(new DealDamageAction(
+                0,
+                avatar.Uid,
+                25,
+                "test.body_potential",
+                null,
+                ignoreArmor: true));
+            mPipeline.RunToCompletion();
+
+            Assert.AreEqual(2, deck.DrawPileUids.Count, "25 点实际掉血应跨过两个 10 点阈值");
+            Assert.AreEqual(5, avatar.Counters.Get("relic.body_potential.hp"), "应保留跨阈值后的 5 点余量");
+        }
+
+        [Test]
+        public void BodyPotential_HpLossCounter_PersistsAcrossNodeSetup()
+        {
+            Assert.IsTrue(mPhase.StartNode(CreateEmptyEnemyNode()).Accepted);
+            mArch.GetSystem<IContentSystem>().ActivateRelic("relic.body_potential");
+
+            var board = mArch.GetModel<BoardModel>();
+            var registry = mArch.GetModel<CardRegistry>();
+            var deck = mArch.GetModel<DeckModel>();
+            var avatar = registry.Get(board.AvatarUid.Value);
+            avatar.Stats.SetBase(StatId.MaxHp, 99);
+            avatar.Stats.SetBase(StatId.Hp, 99);
+            StatArmorUtility.SetCurrentArmor(avatar, 0);
+
+            mPipeline.Enqueue(new DealDamageAction(0, avatar.Uid, 6, "test.body_potential", null, true));
+            mPipeline.RunToCompletion();
+            Assert.AreEqual(0, deck.DrawPileUids.Count, "累计 6 点时不应加牌");
+            Assert.AreEqual(4, avatar.Counters.Get("relic.body_potential.hp"));
+
+            mPipeline.Enqueue(new SetupNodeDeckAction(CreateEmptyEnemyNode()));
+            mPipeline.Enqueue(new NodeStartedAction());
+            mPipeline.RunToCompletion();
+            Assert.AreEqual(4, avatar.Counters.Get("relic.body_potential.hp"), "战斗/节点切换不得清除累计值");
+
+            mPipeline.Enqueue(new DealDamageAction(0, avatar.Uid, 4, "test.body_potential", null, true));
+            mPipeline.RunToCompletion();
+
+            Assert.AreEqual(1, deck.DrawPileUids.Count, "跨节点补足 10 点后应加 1 张牌");
+            Assert.AreEqual(10, avatar.Counters.Get("relic.body_potential.hp"));
+        }
+
+        [Test]
         public void Bootstrap_SixCumulativeRelics_ExistPoolEligible_WithAssemblies()
         {
             var catalog = ContentCatalogBootstrap.Load();

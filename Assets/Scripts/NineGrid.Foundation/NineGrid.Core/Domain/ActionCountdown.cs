@@ -11,14 +11,23 @@ namespace NineGrid.Core
         /// </summary>
         public static bool Tick(CounterBag counters, string key, int period, int delta)
         {
+            return TickCount(counters, key, period, delta) > 0;
+        }
+
+        /// <summary>
+        /// 按 delta 推进倒计时并返回本次跨过的阈值数。
+        /// 保留跨过阈值后的余量，避免一次大 delta 吞掉多个逻辑触发。
+        /// </summary>
+        public static int TickCount(CounterBag counters, string key, int period, int delta)
+        {
             if (counters == null || string.IsNullOrEmpty(key) || delta <= 0)
             {
-                return false;
+                return 0;
             }
 
             if (period <= 1)
             {
-                return true;
+                return delta;
             }
 
             var remaining = counters.Get(key);
@@ -27,15 +36,17 @@ namespace NineGrid.Core
                 remaining = period;
             }
 
-            remaining -= delta;
-            if (remaining > 0)
+            var after = (long)remaining - delta;
+            if (after > 0)
             {
-                counters.Set(key, remaining);
-                return false;
+                counters.Set(key, (int)after);
+                return 0;
             }
 
-            counters.Set(key, remaining + period);
-            return true;
+            var fireCount = (int)((-after) / period) + 1;
+            var next = after + (long)fireCount * period;
+            counters.Set(key, (int)next);
+            return fireCount;
         }
 
         public static bool TickOnce(CounterBag counters, string key, int period)

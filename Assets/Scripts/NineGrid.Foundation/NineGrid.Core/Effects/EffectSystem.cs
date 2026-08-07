@@ -280,9 +280,39 @@ namespace NineGrid.Core.Effects
 
         internal IReadOnlyList<GameAction> BuildActionsForMatchedInstance(EffectInstance instance, EffectRuntimeContext runtime)
         {
-            var targets = instance.Target.Resolve(runtime);
-            var filtered = FilterMagicImmuneTargets(runtime, targets);
-            return instance.Action.BuildActions(runtime, filtered);
+            var fireCount = 1;
+            var countedTrigger = instance.Trigger as ITriggerFireCount;
+            if (countedTrigger != null)
+            {
+                fireCount = countedTrigger.FireCount;
+            }
+
+            if (fireCount <= 0)
+            {
+                return new GameAction[0];
+            }
+
+            var actions = new List<GameAction>();
+            for (var i = 0; i < fireCount; i++)
+            {
+                var targets = instance.Target.Resolve(runtime);
+                var filtered = FilterMagicImmuneTargets(runtime, targets);
+                var built = instance.Action.BuildActions(runtime, filtered);
+                if (built == null)
+                {
+                    continue;
+                }
+
+                for (var j = 0; j < built.Count; j++)
+                {
+                    if (built[j] != null)
+                    {
+                        actions.Add(built[j]);
+                    }
+                }
+            }
+
+            return actions;
         }
 
         /// <summary>
