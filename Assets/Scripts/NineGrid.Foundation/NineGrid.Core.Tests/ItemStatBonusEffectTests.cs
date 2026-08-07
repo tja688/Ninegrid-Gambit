@@ -52,6 +52,33 @@ namespace NineGrid.Core.Tests
         }
 
         [Test]
+        public void Bomb_WithoutBonus_DealsBase4()
+        {
+            // #158：爆弹伤害 4 是装配实参（help.bomb.use.amount），kernel 消费为基础伤害。
+            var monsterUid = StartBattleWithSingleMonster(20);
+            var bombUid = SpawnIntoItemSlots("help.bomb");
+
+            var use = mPhase.ApplyUseItem(bombUid, new List<int> { monsterUid }, null);
+            Assert.IsTrue(use.Accepted, use.Reason);
+
+            Assert.AreEqual(16, CurrentHp(monsterUid), "爆弹基础伤害 4");
+        }
+
+        [Test]
+        public void Bomb_WithStatBonus3_Deals7()
+        {
+            // #158：爆弹伤害 4 是牌店可升级数值——数值强化后 4+3=7。
+            var monsterUid = StartBattleWithSingleMonster(20);
+            mArch.GetModel<PlayerModel>().AddItemStatBonus(3);
+            var bombUid = SpawnIntoItemSlots("help.bomb");
+
+            var use = mPhase.ApplyUseItem(bombUid, new List<int> { monsterUid }, null);
+            Assert.IsTrue(use.Accepted, use.Reason);
+
+            Assert.AreEqual(13, CurrentHp(monsterUid), "数值强化后爆弹伤害 4+3=7");
+        }
+
+        [Test]
         public void ThrowingKnife_WithStatBonus3_Deals9()
         {
             var monsterUid = StartBattleWithSingleMonster(20);

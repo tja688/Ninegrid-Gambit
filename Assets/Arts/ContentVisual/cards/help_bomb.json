@@ -6,8 +6,8 @@
     "role": "Attack",
     "displayName": "爆弹",
     "designSlotName": "",
-    "description": "对所有怪物造成{amount}点伤害",
-    "faceIntro": "",
+    "description": "对所有怪物造成{help.bomb.use.amount}点伤害",
+    "faceIntro": "轰的一声，烦恼全消",
     "attackPattern": "",
     "gold": 50,
     "stats": {

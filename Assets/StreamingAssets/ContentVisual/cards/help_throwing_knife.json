@@ -7,7 +7,7 @@
     "displayName": "飞刀",
     "designSlotName": "",
     "description": "对目标怪物造成{help.throwing_knife.use.amount}点伤害",
-    "faceIntro": "",
+    "faceIntro": "刀快话少，绝不空回",
     "attackPattern": "",
     "gold": 20,
     "stats": {

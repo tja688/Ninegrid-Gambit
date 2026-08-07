@@ -41,7 +41,7 @@
 | [ADR-0032](../adr/0032-item-cards-usable-outside-battle.md) | 部分道具卡非战斗可用（`usableOutsideBattle` 卡级声明）：RoomChoice / RewardItemChoice 相位放行，RoomEvent 不放行；首批恢复药水/生日蛋糕/钱袋子；三处相位门禁改卡级裁决 + 非锁步冲刷表演 + 内容卫生告警 |
 | [ADR-0033](../adr/0033-help-card-rarity-distribution-control.md) | 道具卡稀有度分级投放：常规 White 进入随机来源池，特殊卡走定向来源 |
 | [ADR-0034](../adr/0034-board-stabilization-refill-batch-ack.md) | 盘面稳定化归 Core；补牌按独立切片与 Present ack 锁步推进；融合结果由 Core 管理延后抽牌 |
-| [ADR-0035](../adr/0035-dual-description-projection-and-assembly-param-refs.md) | 装配参数引用唯一化（`{装配id.键}`）；检查描述 vs 局内描述投影双套；倒计时 Settled 提交（#156：`EffectCountdownChanged` → `CommittedCountdownRemaining` 快照重投影；#157：Battle/Run 作用域 + 离战真重置）；描述格 26；范围限机关/遗物/道具 |
+| [ADR-0035](../adr/0035-dual-description-projection-and-assembly-param-refs.md) | 装配参数引用唯一化（`{装配id.键}`）；检查描述 vs 局内描述投影双套；倒计时 Settled 提交（#156：`EffectCountdownChanged` → `CommittedCountdownRemaining` 快照重投影；#157：Battle/Run 作用域 + 离战真重置）；描述格 26；范围限机关/遗物/道具；**#158 首批牌店可升级伤害升格**（help.bomb/help.throwing_knife：伤害为装配实参 + 描述限定令牌 + faceIntro 草稿 ≤26，双侧镜像） |
 
 > ADR-0011–0013 已落地（含卡面倒计时 Commit 与单向打击 Counter 分拍，#81）。落地方案见 `Assets/Notes/怪物攻击模式与敌方行动阶段-落地方案-2026-07-29.md`（过程笔记，非权威）。
 >
