@@ -7,7 +7,7 @@
     "displayName": "金色三叶草",
     "designSlotName": "",
     "description": "[MHP]+{help.hp_card.use.delta}",
-    "faceIntro": "",
+    "faceIntro": "三叶一摇，血上限变高",
     "attackPattern": "",
     "gold": 50,
     "stats": {

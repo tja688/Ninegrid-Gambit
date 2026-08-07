@@ -6,8 +6,8 @@
     "role": "Defense",
     "displayName": "绑票",
     "designSlotName": "",
-    "description": "破坏{count}张常规怪物，并偷取其[armor]",
-    "faceIntro": "",
+    "description": "破坏{help.kidnapping.use.count}张常规怪物，并偷取其[armor]",
+    "faceIntro": "绑走一张，顺走护甲",
     "attackPattern": "",
     "gold": 100,
     "stats": {

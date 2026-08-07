@@ -6,8 +6,8 @@
     "role": "Defense",
     "displayName": "耐用盾牌",
     "designSlotName": "",
-    "description": "玩家获得{amount}点[armor]",
-    "faceIntro": "",
+    "description": "玩家获得{help.sturdy_shield.use.amount}点[armor]",
+    "faceIntro": "盾厚，不怕挨打",
     "attackPattern": "",
     "gold": 50,
     "stats": {

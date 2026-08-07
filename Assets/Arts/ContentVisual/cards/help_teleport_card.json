@@ -6,8 +6,8 @@
     "role": "Utility",
     "displayName": "传送",
     "designSlotName": "",
-    "description": "选择除玩家外的{count}张卡牌洗回卡组",
-    "faceIntro": "",
+    "description": "选择除玩家外的{help.teleport_card.use.count}张卡牌洗回卡组",
+    "faceIntro": "一步到位，人卡两安",
     "attackPattern": "",
     "gold": 30,
     "stats": {

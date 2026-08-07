@@ -5,6 +5,7 @@
     "deckId": "deck.player",
     "displayName": "撞击教程",
     "description": "",
+    "faceIntro": "撞击，最朴素的问候",
     "gold": 80,
     "stats": {
         "hp": 0,

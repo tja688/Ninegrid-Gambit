@@ -7,7 +7,7 @@
     "displayName": "旋转轮",
     "designSlotName": "",
     "description": "逆时针旋转一次",
-    "faceIntro": "",
+    "faceIntro": "转一圈，换个方向再来",
     "attackPattern": "",
     "gold": 20,
     "stats": {
