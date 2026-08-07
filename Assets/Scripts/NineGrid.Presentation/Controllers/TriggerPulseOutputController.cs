@@ -29,6 +29,26 @@ namespace NineGrid.Presentation.Controllers
                     TriggerPulseHub.ResetToNull();
                 }
             };
+            TriggerPulseOutputHook.ResetFxToNull = () =>
+            {
+                var existing = UnityEngine.Object.FindObjectOfType<TriggerPulseOutputController>();
+                if (existing != null)
+                {
+                    existing.ResetHubFx();
+                }
+                else
+                {
+                    TriggerPulseHub.ResetFxToNull();
+                }
+            };
+        }
+
+        public void ResetHubFx()
+        {
+            if (mConfigured)
+            {
+                TriggerPulseHub.ResetFxToNull();
+            }
         }
 
         public static TriggerPulseOutputController EnsureInstalled()

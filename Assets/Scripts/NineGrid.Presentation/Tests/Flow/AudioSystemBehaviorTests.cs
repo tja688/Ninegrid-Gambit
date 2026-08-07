@@ -59,7 +59,7 @@ namespace NineGrid.Presentation.Tests
         }
 
         [Test]
-        public void AudioSystem_BackendFailure_IsObservableAndDoesNotThrow()
+        public void AudioSystem_BackendFailure_IsObservable_RecordsAttemptedClip_AndDoesNotThrow()
         {
             var system = new AudioSystem(
                 AudioBindingCatalog.FromJson(CatalogJson),
@@ -72,12 +72,96 @@ namespace NineGrid.Presentation.Tests
                 "test.backend")));
 
             Assert.AreEqual(AudioCueOutcome.BackendFailure, result.Outcome);
+            Assert.AreEqual("audio/SFX/按钮点击", result.ActualClipKey);
             Assert.AreEqual(AudioHistoryOutcome.BackendFailure, system.History[1].Outcome);
+            Assert.AreEqual("audio/SFX/按钮点击", system.History[1].ActualClipKey);
             Assert.AreEqual("backend unavailable", system.History[1].FailureReason);
         }
 
         [Test]
-        public void TriggerPulseHub_TypedRequest_ReachesIAudioSystem_AndSimpleEntryRemainsAvailable()
+        public void TriggerPulseHub_TypedRequest_ReachesIAudioSystem_ThroughProductionDebounce_AndSimpleEntryRemainsAvailable()
+        {
+            var adapter = new RecordingAudioPlaybackAdapter();
+            var system = new AudioSystem(
+                AudioBindingCatalog.FromJson(CatalogJson),
+                adapter,
+                new FakeAudioClock());
+            var clock = 0f;
+            TriggerPulseHub.Configure(
+                NullTriggerPulseSink.Instance,
+                new DebouncingTriggerPulseSink(
+                    new AudioTriggerPulseSink(system),
+                    windowSeconds: 1f,
+                    nowSeconds: () => clock));
+
+            try
+            {
+                TriggerPulseHub.PulseAudio(new AudioCueRequest(
+                    "ui.main_menu.start",
+                    "GameFlowController",
+                    cardDefId: "",
+                    skillId: "",
+                    roomId: "",
+                    itemDefId: "",
+                    contentId: ""));
+                clock += 2f;
+                TriggerPulseHub.PulseAudio("ui.main_menu.start");
+
+                Assert.AreEqual(2, CountPlayed(system));
+                Assert.AreEqual(2, adapter.PlayedClipKeys.Count);
+            }
+            finally
+            {
+                TriggerPulseHub.ResetToNull();
+            }
+        }
+
+        [Test]
+        public void TypedRequest_ThroughDebounce_PreservesStableContext()
+        {
+            const string json =
+                "{\"schemaVersion\":1,\"bindings\":["
+                + "{\"cueId\":\"skill.cast\",\"note\":\"基础\",\"enabled\":true,"
+                + "\"clipKey\":\"audio/SFX/界面点击\"},"
+                + "{\"cueId\":\"skill.cast\",\"note\":\"内容专属\",\"enabled\":true,"
+                + "\"clipKey\":\"audio/SFX/施法增强\",\"selectorSkillId\":\"skill.fire\"}]}";
+
+            var adapter = new RecordingAudioPlaybackAdapter();
+            var system = new AudioSystem(
+                AudioBindingCatalog.FromJson(json),
+                adapter,
+                new FakeAudioClock());
+            var clock = 0f;
+            TriggerPulseHub.Configure(
+                NullTriggerPulseSink.Instance,
+                new DebouncingTriggerPulseSink(
+                    new AudioTriggerPulseSink(system),
+                    windowSeconds: 1f,
+                    nowSeconds: () => clock));
+
+            try
+            {
+                TriggerPulseHub.PulseAudio(new AudioCueRequest(
+                    "skill.cast",
+                    "test.debounce",
+                    cardDefId: "",
+                    skillId: "skill.fire",
+                    roomId: "",
+                    itemDefId: "",
+                    contentId: ""));
+
+                Assert.AreEqual(1, adapter.PlayedClipKeys.Count);
+                Assert.AreEqual("audio/SFX/施法增强", adapter.PlayedClipKeys[0]);
+                Assert.AreEqual("内容专属", system.History[system.History.Count - 1].CueNote);
+            }
+            finally
+            {
+                TriggerPulseHub.ResetToNull();
+            }
+        }
+
+        [Test]
+        public void ResetFxToNull_KeepsAudioSinkConfigured()
         {
             var adapter = new RecordingAudioPlaybackAdapter();
             var system = new AudioSystem(
@@ -90,18 +174,11 @@ namespace NineGrid.Presentation.Tests
 
             try
             {
-                TriggerPulseHub.PulseAudio(new AudioCueRequest(
-                    "ui.main_menu.start",
-                    "GameFlowController",
-                    cardDefId: "",
-                    skillId: "",
-                    roomId: "",
-                    itemDefId: "",
-                    contentId: ""));
+                TriggerPulseHub.ResetFxToNull();
                 TriggerPulseHub.PulseAudio("ui.main_menu.start");
 
-                Assert.AreEqual(2, CountPlayed(system));
-                Assert.AreEqual(2, adapter.PlayedClipKeys.Count);
+                Assert.AreEqual(1, adapter.PlayedClipKeys.Count);
+                Assert.AreEqual(1, CountPlayed(system));
             }
             finally
             {

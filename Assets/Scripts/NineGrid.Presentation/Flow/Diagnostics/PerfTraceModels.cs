@@ -124,6 +124,16 @@ namespace NineGrid.Flow.Diagnostics
         public const string DirectorBypassStart = "DirectorBypassStart";
         /// <summary>FX/音效 Trigger 脉冲（发即完成；可 degraded）。</summary>
         public const string DirectorTriggerPulse = "DirectorTriggerPulse";
+        /// <summary>音频提示请求被受理（IAudioSystem 入口）。</summary>
+        public const string AudioCueRequest = "AudioCueRequest";
+        /// <summary>音频绑定解析后实际播放。</summary>
+        public const string AudioCuePlayed = "AudioCuePlayed";
+        /// <summary>音频提示未绑定/禁用/缺素材，静默返回。</summary>
+        public const string AudioCueUnbound = "AudioCueUnbound";
+        /// <summary>最短播放间隔抑制。</summary>
+        public const string AudioCueCooldown = "AudioCueCooldown";
+        /// <summary>MMSoundManager Adapter 播放失败。</summary>
+        public const string AudioCueBackendFailure = "AudioCueBackendFailure";
 
         /// <summary>卡牌边沿尘雾 Place 喷发。</summary>
         public const string DustPlace = "DustPlace";
@@ -170,6 +180,7 @@ namespace NineGrid.Flow.Diagnostics
         public const string DirectorBypass = "Director.Bypass";
         public const string CardEdgeDustPlace = "CardEdgeDust.Place";
         public const string CardEdgeDustTrail = "CardEdgeDust.Trail";
+        public const string AudioSystemCue = "Audio.System.Cue";
     }
 
     public static class PerfTraceAnomalyCodes

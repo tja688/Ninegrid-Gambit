@@ -124,10 +124,10 @@
 
 **禁止**新增业务静态 Sink（跨层读写规则状态）。新交互优先走 Command / Query / Event / System。
 
-- `TriggerPulseHub` 是既有 FX / audio 双通道装配缝；脉冲发即完成、可降级，异常与禁用经 `DirectorTrace.TriggerPulse` 记录。
+- `TriggerPulseHub` 是既有 FX / audio 双通道装配缝；脉冲发即完成、可降级，异常与禁用经 `DirectorTrace.TriggerPulse` 记录。局内战斗装配关闭只重置 FX 通道（`ResetFxToNull` / `TriggerPulseOutputHook.RequestResetFx`），音频通道保持主菜单到跑图结束的应用会话（ADR-0036）。
 - 生产装配由 `TriggerPulseOutputController` 完成：FX 接 `CardEffectTriggerPulseSink`；audio 接 `DebouncingTriggerPulseSink(AudioTriggerPulseSink, 0.05s)`。`PresentationSceneRoot.WireHosts` 在主菜单阶段即完成该装配。
 - `AudioCueAttribute` + `AudioCueDeclarationScanner` 维护稳定 cue ID、中文音效说明、模块、权威发射者与允许上下文；`GameFlowController.BeginFormalRun` 声明并发射 `ui.main_menu.start`。
-- `IAudioSystem` / `AudioSystem` 是 QFramework 音频深模块：从 `Resources/audio/audio_bindings.json` 解析绑定，记录 Requested / Played / Unbound / BackendFailure 历史，未绑定静默；`AudioTriggerPulseSink` 将类型化 `AudioCueRequest` 转入该 System，同时保留字符串入口。
+- `IAudioSystem` / `AudioSystem` 是 QFramework 音频深模块：从 `Resources/audio/audio_bindings.json` 解析绑定，未绑定静默；关键音频事件并入既有 PerfTrace 会话（`AudioCue*` kinds + `Audio.System.Cue` site，带 sessionId/runTag/chainId/batchId）；完整实时历史只保留在 Editor/Development（`UNITY_EDITOR || DEVELOPMENT_BUILD` 固定容量环形缓冲，Release 不分配）。`AudioTriggerPulseSink` 将类型化 `AudioCueRequest` 转入该 System，同时保留字符串入口。
 - `MMSoundManagerAudioPlaybackAdapter` 是唯一项目自有播放 Adapter：按正式 `Resources` 键加载 AudioClip，以 MMSoundManager Sfx 轨实际播放；业务 / 表现代码不得直接使用 AudioKit 或 MMSoundManager。
 - 目标 BGM / 完整调音窗口 / 全量 cue 埋点尚未落地，不计入本纵切现状。
 

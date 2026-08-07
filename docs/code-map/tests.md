@@ -95,7 +95,7 @@
 | `CardDescriptionTokenContractTests` | **ADR-0035 / #154 / #155**：描述格计数（字符 / `{…}` / `[…]` 各 1 格，硬上限 26）；范围内卡（机关/遗物/道具，归档除外）装配缺稳定 id 失败；简单式 `{value}`/`{amount}`、defId 前缀式、templateId 限定式令牌失败；令牌限定符须精确等于装配 id 且键真实存在；faceIntro 与局内模板（liveTemplate，可空）同受约束（纯函数 `CardDescriptionTokenRules`，磁盘校验共用）；**#156 倒计时投影契约**：装配实参 `projectKey` 必须为「本装配id.键」限定式、含 projectKey 的倒计时装配必须作者局内模板、局内模板必须引用该投影令牌（否则 Settled 剩余无法上卡面） |
 | `EffectCountdownProjectionTests` | **ADR-0035 / #156**：效果倒计时剩余经 `EffectCountdownChanged` 结算指令广播（`ResultValue`=剩余、`Message`=完整「装配id.键」投影令牌键）——烈焰每盘面移动广播 2→1、满 3 次触发自移除并复位广播 3；无 `projectKey` 的倒计时不广播（旧行为不变）；首张倒计时卡（trap.flame）内容契约：检查描述走 `{装配id.键}`、局内模板必填、描述格 ≤26、`every` 为装配实参且 `projectKey`=装配id.键、`ValidateCard` 干净 |
 | `AudioAssetPolicyTests` | **#167**：正式音频唯一 `Resources/audio` 根与 SFX/BGM 路径常量、固定 manifest 键规范化（`audio/...` 前缀不剥离）、隔离区路径判定、音频扩展名策略（Core.Tests 纯常量契约；编辑器卫生校验 `AudioAssetHygieneValidator` 见 README 程序集一览） |
-| `AudioSystemBehaviorTests` | **#168**：`IAudioSystem` 与 `TriggerPulseHub` 最高 seam 的 Requested → Played、内容覆盖、Unbound 静默、BackendFailure 不抛与类型化请求链路 |
+| `AudioSystemBehaviorTests` | **#168**：`IAudioSystem` 与 `TriggerPulseHub` 最高 seam 的 Requested → Played、内容覆盖、Unbound 静默、BackendFailure 不抛且记录尝试素材、类型化请求经生产 debounce 保留稳定上下文、`ResetFxToNull` 不清音频通道 |
 | `AudioCueDeclarationScannerTests` | **#168**：编辑器机械扫描稳定 cue 声明，并报告重复 cue ID / 空中文音效说明 |
 | `AudioPlaybackStructuralTests` | **#168**：项目业务源码禁止绕过音频入口直接调用 AudioKit / MMSoundManager；SFX 播放仅允许落在 Adapter |
 

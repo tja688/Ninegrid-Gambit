@@ -10,6 +10,8 @@ namespace NineGrid.Cards
     {
         public static Action ConfigureProduction;
         public static Action ResetToNull;
+        /// <summary>仅重置 FX 通道（局内战斗装配关闭时使用，音频保持应用会话）。</summary>
+        public static Action ResetFxToNull;
 
         public static void RequestConfigureProduction()
         {
@@ -19,6 +21,11 @@ namespace NineGrid.Cards
         public static void RequestReset()
         {
             ResetToNull?.Invoke();
+        }
+
+        public static void RequestResetFx()
+        {
+            ResetFxToNull?.Invoke();
         }
     }
 }

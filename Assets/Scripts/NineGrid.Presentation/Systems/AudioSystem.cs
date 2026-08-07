@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using NineGrid.Content.Audio;
 using NineGrid.Core;
+using NineGrid.Flow.Diagnostics;
 using QFramework;
 using UnityEngine;
 
@@ -106,7 +107,9 @@ namespace NineGrid.Presentation.Systems
 
     public interface IAudioSystem : ISystem
     {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
         IReadOnlyList<AudioHistoryRecord> History { get; }
+#endif
         AudioCueResult RequestCue(AudioCueRequest request);
     }
 
@@ -117,8 +120,10 @@ namespace NineGrid.Presentation.Systems
         private readonly AudioBindingCatalog mCatalog;
         private readonly IAudioPlaybackAdapter mPlayback;
         private readonly IAudioClock mClock;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
         private readonly int mHistoryCapacity;
         private readonly List<AudioHistoryRecord> mHistory;
+#endif
         private readonly Dictionary<AudioBinding, double> mLastPlayedAt =
             new Dictionary<AudioBinding, double>();
 
@@ -131,8 +136,10 @@ namespace NineGrid.Presentation.Systems
             mCatalog = catalog ?? AudioBindingCatalog.FromJson(string.Empty);
             mPlayback = playback ?? new NullAudioPlaybackAdapter();
             mClock = clock ?? new RealtimeAudioClock();
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
             mHistoryCapacity = Math.Max(1, historyCapacity);
             mHistory = new List<AudioHistoryRecord>(mHistoryCapacity);
+#endif
         }
 
         public static IAudioSystem EnsureRegistered(
@@ -161,17 +168,28 @@ namespace NineGrid.Presentation.Systems
             return created;
         }
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
         public IReadOnlyList<AudioHistoryRecord> History => mHistory;
+#endif
 
         public AudioCueResult RequestCue(AudioCueRequest request)
         {
+            var requestedAt = mClock.UnscaledTime;
             AddHistory(new AudioHistoryRecord
             {
                 Outcome = AudioHistoryOutcome.Requested,
                 CueId = request.CueId,
                 DiagnosticSource = request.DiagnosticSource,
-                Time = mClock.UnscaledTime,
+                Time = requestedAt,
             });
+            RecordTrace(
+                PerfTraceKinds.AudioCueRequest,
+                request,
+                outcome: AudioHistoryOutcome.Requested,
+                requestedAt,
+                clipKey: null,
+                note: null,
+                reason: null);
 
             if (string.IsNullOrWhiteSpace(request.CueId)
                 || !mCatalog.TryResolve(request, out var binding)
@@ -199,6 +217,14 @@ namespace NineGrid.Presentation.Systems
                     FailureReason = "minimum interval",
                     Time = now,
                 });
+                RecordTrace(
+                    PerfTraceKinds.AudioCueCooldown,
+                    request,
+                    AudioHistoryOutcome.Cooldown,
+                    now,
+                    binding.ClipKey,
+                    binding.Note,
+                    "minimum interval");
                 return new AudioCueResult
                 {
                     Outcome = AudioCueOutcome.Cooldown,
@@ -234,14 +260,24 @@ namespace NineGrid.Presentation.Systems
                     CueId = request.CueId,
                     CueNote = binding.Note,
                     DiagnosticSource = request.DiagnosticSource,
+                    ActualClipKey = binding.ClipKey,
                     FailureReason = backend.FailureReason,
                     Time = now,
                 });
+                RecordTrace(
+                    PerfTraceKinds.AudioCueBackendFailure,
+                    request,
+                    AudioHistoryOutcome.BackendFailure,
+                    now,
+                    binding.ClipKey,
+                    binding.Note,
+                    backend.FailureReason);
                 return new AudioCueResult
                 {
                     Outcome = AudioCueOutcome.BackendFailure,
                     CueId = request.CueId,
                     CueNote = binding.Note,
+                    ActualClipKey = binding.ClipKey,
                     FailureReason = backend.FailureReason,
                 };
             }
@@ -259,6 +295,14 @@ namespace NineGrid.Presentation.Systems
                 ActualClipKey = actualClipKey,
                 Time = now,
             });
+            RecordTrace(
+                PerfTraceKinds.AudioCuePlayed,
+                request,
+                AudioHistoryOutcome.Played,
+                now,
+                actualClipKey,
+                binding.Note,
+                null);
             return new AudioCueResult
             {
                 Outcome = AudioCueOutcome.Played,
@@ -282,6 +326,14 @@ namespace NineGrid.Presentation.Systems
                 FailureReason = reason,
                 Time = mClock.UnscaledTime,
             });
+            RecordTrace(
+                PerfTraceKinds.AudioCueUnbound,
+                request,
+                AudioHistoryOutcome.Unbound,
+                mClock.UnscaledTime,
+                clipKey: null,
+                note: null,
+                reason);
             return new AudioCueResult
             {
                 Outcome = AudioCueOutcome.Unbound,
@@ -290,14 +342,85 @@ namespace NineGrid.Presentation.Systems
             };
         }
 
+        private static void RecordTrace(
+            string kind,
+            AudioCueRequest request,
+            AudioHistoryOutcome outcome,
+            double time,
+            string clipKey,
+            string note,
+            string reason)
+        {
+            try
+            {
+                var payload = new Dictionary<string, string>
+                {
+                    ["outcome"] = outcome.ToString(),
+                    ["cueId"] = request.CueId ?? string.Empty,
+                    ["diagnosticSource"] = request.DiagnosticSource ?? string.Empty,
+                    ["time"] = time.ToString("R", System.Globalization.CultureInfo.InvariantCulture),
+                };
+                if (!string.IsNullOrEmpty(clipKey))
+                {
+                    payload["clipKey"] = clipKey;
+                }
+
+                if (!string.IsNullOrEmpty(note))
+                {
+                    payload["note"] = note;
+                }
+
+                if (!string.IsNullOrEmpty(reason))
+                {
+                    payload["reason"] = reason;
+                }
+
+                if (!string.IsNullOrEmpty(request.CardDefId))
+                {
+                    payload["cardDefId"] = request.CardDefId;
+                }
+
+                if (!string.IsNullOrEmpty(request.SkillId))
+                {
+                    payload["skillId"] = request.SkillId;
+                }
+
+                if (!string.IsNullOrEmpty(request.RoomId))
+                {
+                    payload["roomId"] = request.RoomId;
+                }
+
+                if (!string.IsNullOrEmpty(request.ItemDefId))
+                {
+                    payload["itemDefId"] = request.ItemDefId;
+                }
+
+                if (!string.IsNullOrEmpty(request.ContentId))
+                {
+                    payload["contentId"] = request.ContentId;
+                }
+
+                DirectorTrace.AppendBusyFields(payload);
+                payload["sessionId"] = DiagTraceShared.CurrentSessionId;
+                payload["runTag"] = DiagTraceShared.RunTag;
+                PerfTraceRecorder.Record(kind, uid: -1, PerfTraceSites.AudioSystemCue, payload);
+            }
+            catch (Exception)
+            {
+                // 音频打点失败不干扰玩法路径。
+            }
+        }
+
         private void AddHistory(AudioHistoryRecord record)
         {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
             if (mHistory.Count >= mHistoryCapacity)
             {
                 mHistory.RemoveAt(0);
             }
 
             mHistory.Add(record);
+#endif
         }
 
         private static float DecibelsToLinear(float decibels)

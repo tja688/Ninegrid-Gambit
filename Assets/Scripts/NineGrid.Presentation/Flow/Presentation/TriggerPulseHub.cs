@@ -53,6 +53,16 @@ namespace NineGrid.Flow.Presentation
             sAudioEnabled = true;
         }
 
+        /// <summary>
+        /// 仅重置 FX 通道（战斗间清理）。音频通道属于主菜单到跑图结束的应用会话，
+        /// 不随局内战斗装配启停（ADR-0036）。
+        /// </summary>
+        public static void ResetFxToNull()
+        {
+            sFx = NullTriggerPulseSink.Instance;
+            sFxEnabled = true;
+        }
+
         public static void PulseFx(string triggerId)
         {
             if (!sFxEnabled)
