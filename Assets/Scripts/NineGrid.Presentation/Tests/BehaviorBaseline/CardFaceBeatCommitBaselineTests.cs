@@ -916,7 +916,9 @@ namespace NineGrid.Presentation.Tests.BehaviorBaseline
         {
             var spawned = new System.Collections.Generic.List<(Vector3 pos, int amount, DamageNumberKind kind)>();
             var previousSpawn = DamageNumberHook.Spawn;
+            var previousMode = DamageFloaterBeatHandler.DisplayMode;
             DamageNumberHook.Spawn = (pos, amount, kind) => spawned.Add((pos, amount, kind));
+            DamageFloaterBeatHandler.DisplayMode = DamageFloaterDisplayMode.TotalDamage;
             try
             {
                 var face = mCardManager.SpawnView(
@@ -963,6 +965,7 @@ namespace NineGrid.Presentation.Tests.BehaviorBaseline
             finally
             {
                 DamageNumberHook.Spawn = previousSpawn;
+                DamageFloaterBeatHandler.DisplayMode = previousMode;
             }
         }
 

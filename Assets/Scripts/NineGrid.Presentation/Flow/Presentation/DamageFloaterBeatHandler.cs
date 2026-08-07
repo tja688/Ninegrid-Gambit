@@ -5,10 +5,10 @@ using NineGrid.Flow;
 
 namespace NineGrid.Flow.Presentation
 {
-    /// <summary>飘字显示模式（内部切换，后续接线 UI；默认保持白色总伤害旧表现）。</summary>
+    /// <summary>飘字显示模式（内部切换，后续接线 UI；默认拆分血/甲双飘字）。</summary>
     public enum DamageFloaterDisplayMode
     {
-        /// <summary>白色总伤害单飘字（旧逻辑）。</summary>
+        /// <summary>白色总伤害单飘字（旧逻辑，切回用）。</summary>
         TotalDamage,
 
         /// <summary>拆分：血量伤害红字 + 护甲伤害绿灰字，同一命中双飘字。</summary>
@@ -23,9 +23,10 @@ namespace NineGrid.Flow.Presentation
     public sealed class DamageFloaterBeatHandler : IBattleBeatHandler
     {
         /// <summary>
-        /// 显示模式切换（内部维护，后续可由 UI 接线）。
+        /// 显示模式切换（内部维护，后续可由 UI 接线）。默认拆分：血伤红字 + 甲伤绿灰字；
+        /// 切回 <see cref="DamageFloaterDisplayMode.TotalDamage"/> 即恢复白色总伤害旧表现。
         /// </summary>
-        public static DamageFloaterDisplayMode DisplayMode { get; set; } = DamageFloaterDisplayMode.TotalDamage;
+        public static DamageFloaterDisplayMode DisplayMode { get; set; } = DamageFloaterDisplayMode.SplitDamage;
 
         public bool TryApply(PresentationInstruction instruction)
         {
