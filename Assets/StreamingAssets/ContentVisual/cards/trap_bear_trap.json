@@ -6,7 +6,7 @@
     "role": "",
     "displayName": "捕熊陷阱",
     "designSlotName": "",
-    "description": "对下一张[adjacent]的怪物造成10点伤害或移除道具后移除本卡",
+    "description": "对下张[adjacent]的怪物或道具造成10点伤害或移除，移除本卡",
     "faceIntro": "",
     "attackPattern": "无",
     "gold": 0,

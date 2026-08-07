@@ -6,7 +6,7 @@
     "role": "",
     "displayName": "攻击图腾",
     "designSlotName": "",
-    "description": "[adjacent]对象攻击+{trap.attack_totem.aura.value}",
+    "description": "[adjacent]的怪物和玩家[attack]+{trap.attack_totem.aura.value}",
     "faceIntro": "",
     "attackPattern": "无",
     "gold": 0,

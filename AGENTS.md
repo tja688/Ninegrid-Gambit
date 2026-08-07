@@ -33,7 +33,7 @@
 
 **严禁 worktree**：禁止 `git worktree add`、旁路克隆、best-of-n 第二目录；所有改动只在本仓库根目录进行。
 
-**Unity CLI（首选）**：与 Editor 协作一律用 `unity` CLI + `com.unity.pipeline`（`unity command …`）；改场景 / 组件优先走 Pipeline 命令。详见 `docs/agents/unity-cli.md`；硬规则 `.cursor/rules/unity-cli.mdc`。
+**Unity MCP（首选）**：与 Editor 协作优先用 Unity MCP（`mcpforunity://` 资源 + `manage_*` 工具）。不可用、缺能力或出问题卡死时，回退 `unity` CLI + `com.unity.pipeline`（`unity command …`）。详见 `docs/agents/unity-cli.md`；硬规则 `.cursor/rules/unity-cli.mdc`。
 
 **场景中文名检索**：`.unity` / `.prefab` YAML 里中文 `m_Name` 常写成 `\uXXXX` 转义（如 `作弊工具BG` → `"\u4F5C\u5F0A\u5DE5\u5177BG"`）。用明文中文 `grep` 会误报「不存在」——应搜 Unicode 转义、在 Editor 里 `FindObjectsOfTypeAll` / Pipeline `find_gameobjects`，或先解码再比。
 
