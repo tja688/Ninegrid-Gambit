@@ -128,9 +128,10 @@
 - 生产装配由 `TriggerPulseOutputController` 完成：FX 接 `CardEffectTriggerPulseSink`；audio 接 `DebouncingTriggerPulseSink(AudioTriggerPulseSink, 0.05s)`。`PresentationSceneRoot.WireHosts` 在主菜单阶段即完成该装配。
 - `AudioCueAttribute` + `AudioCueDeclarationScanner` 维护稳定 cue ID、中文音效说明、模块、权威发射者与允许上下文；`GameFlowController.BeginFormalRun` 声明并发射 `ui.main_menu.start`。
 - `IAudioSystem` / `AudioSystem` 是 QFramework 音频深模块：从 `Resources/audio/audio_bindings.json` 解析绑定，未绑定静默；关键音频事件并入既有 PerfTrace 会话（`AudioCue*` kinds + `Audio.System.Cue` site，带 sessionId/runTag/chainId/batchId）；完整实时历史只保留在 Editor/Development（`UNITY_EDITOR || DEVELOPMENT_BUILD` 固定容量环形缓冲，Release 不分配）。`AudioTriggerPulseSink` 将类型化 `AudioCueRequest` 转入该 System，同时保留字符串入口。
-- `MMSoundManagerAudioPlaybackAdapter` 是唯一项目自有播放 Adapter：按正式 `Resources` 键加载 AudioClip，以 MMSoundManager Sfx 轨实际播放；业务 / 表现代码不得直接使用 AudioKit 或 MMSoundManager。
+- `IMusicSystem` / `MusicSystem` 是唯一期望音乐状态解析与切换模块：从正式 `Resources/audio/audio_music.json` 解析 `MainMenu`、`RunExploration`、`Battle`、`BossBattle`、`Victory`、`Defeat`；流程层提交必填稳定 source，模块记录请求/解析/播放/淡出/收口及代数，并对同状态或同 Clip 请求 no-op。
+- `MMSoundManagerAudioPlaybackAdapter` 是唯一项目自有播放 Adapter：SFX 按正式 `Resources` 键加载，以 MMSoundManager Sfx 轨实际播放；BGM 由 `IMusicSystem` 委托该 Adapter 走 MMSoundManager Music 轨并使用作者音量/循环/淡出；业务 / 表现代码不得直接使用 AudioKit 或 MMSoundManager。
 - #169 `NineGrid/音频/声音绑定调音工作台`（`NineGrid.Content.Editor`）以 `AudioBindingEditorSession` 持有磁盘快照与工作副本：按 cue ID / 音效说明 / 内容 ID / 素材名 / 绑定状态搜索，过滤未保存/未绑定/断链/失败，编辑作者音量、素材内部起播点、绑定延迟、最短播放间隔和启用状态；支持单条/全部保存与回撤、正式 JSON 输出、Editor 素材试听、Play Mode 历史按 `BindingKey` 定位。退出 Play Mode、程序集重载或关闭窗口存在脏条目时明确提示；Revert All Dirty 不清播放历史。
-- 目标 BGM / 音乐状态窗口仍未落地；#169 落地的是 SFX 声音绑定调音工作台，不把玩家 Master/BGM/SFX 本地偏好写回作者 JSON。
+- 音乐状态只由流程层提交：`GameFlowShellSystem.Bind` 提交主菜单、`SetGameFlowShellStateCommand` 在相位变更时提交对应状态（探索→`RunExploration`、战斗→`Battle`/`BossBattle`、胜负 Notice→`Victory`/`Defeat`），均带稳定 source；`MusicSystem` 只认领一个当前来源和一个淡出来源，新切歌先释放更老淡出来源，旧代数回调不得改写当前状态。
 
 ## 仍名 `*ManagerSingleton` 的壳（8）
 

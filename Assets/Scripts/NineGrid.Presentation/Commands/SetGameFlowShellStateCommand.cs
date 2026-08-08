@@ -27,6 +27,7 @@ namespace NineGrid.Presentation.Commands
             }
 
             shell.ApplyState(mNext);
+            shell.SubmitMusicForShellState(mNext, "SetGameFlowShellStateCommand:" + mNext);
             this.SendEvent(new GameFlowShellStateChangedEvent
             {
                 From = from,

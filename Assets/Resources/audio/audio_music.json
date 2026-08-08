@@ -1,0 +1,66 @@
+{
+    "schemaVersion": 1,
+    "ticket": "#170",
+    "bindings": [
+        {
+            "state": "MainMenu",
+            "enabled": true,
+            "clipKey": "audio/BGM/MainMenuTheme",
+            "volumeDb": -6,
+            "startOffsetSeconds": 0,
+            "fadeInSeconds": 0.15,
+            "fadeOutSeconds": 0.2,
+            "loop": true
+        },
+        {
+            "state": "RunExploration",
+            "enabled": true,
+            "clipKey": "audio/BGM/ExplorationTheme",
+            "volumeDb": -6,
+            "startOffsetSeconds": 0,
+            "fadeInSeconds": 0.15,
+            "fadeOutSeconds": 0.2,
+            "loop": true
+        },
+        {
+            "state": "Battle",
+            "enabled": true,
+            "clipKey": "audio/BGM/BattleTheme",
+            "volumeDb": -6,
+            "startOffsetSeconds": 0,
+            "fadeInSeconds": 0.15,
+            "fadeOutSeconds": 0.2,
+            "loop": true
+        },
+        {
+            "state": "BossBattle",
+            "enabled": true,
+            "clipKey": "audio/BGM/BossBattleTheme",
+            "volumeDb": -6,
+            "startOffsetSeconds": 0,
+            "fadeInSeconds": 0.15,
+            "fadeOutSeconds": 0.2,
+            "loop": true
+        },
+        {
+            "state": "Victory",
+            "enabled": true,
+            "clipKey": "audio/BGM/VictoryTheme",
+            "volumeDb": -6,
+            "startOffsetSeconds": 0,
+            "fadeInSeconds": 0.05,
+            "fadeOutSeconds": 0.2,
+            "loop": true
+        },
+        {
+            "state": "Defeat",
+            "enabled": true,
+            "clipKey": "audio/BGM/DefeatTheme",
+            "volumeDb": -6,
+            "startOffsetSeconds": 0,
+            "fadeInSeconds": 0.05,
+            "fadeOutSeconds": 0.2,
+            "loop": true
+        }
+    ]
+}

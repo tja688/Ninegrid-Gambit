@@ -194,6 +194,7 @@ namespace NineGrid.Presentation.Setup
             ChoicePresentationSystem.EnsureRegistered(architecture);
             BoardSelectionSystem.EnsureRegistered(architecture);
             GameFlowShellSystem.EnsureRegistered(architecture);
+            MusicSystem.EnsureRegistered(architecture);
             AvatarWalkSystem.EnsureRegistered(architecture);
             InstallBattleBeatScheduler(architecture);
 

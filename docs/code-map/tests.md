@@ -97,8 +97,9 @@
 | `AudioAssetPolicyTests` | **#167**：正式音频唯一 `Resources/audio` 根与 SFX/BGM 路径常量、固定 manifest 键规范化（`audio/...` 前缀不剥离）、隔离区路径判定、音频扩展名策略（Core.Tests 纯常量契约；编辑器卫生校验 `AudioAssetHygieneValidator` 见 README 程序集一览） |
 | `AudioSystemBehaviorTests` | **#168**：`IAudioSystem` 与 `TriggerPulseHub` 最高 seam 的 Requested → Played、内容覆盖、Unbound 静默、BackendFailure 不抛且记录尝试素材、类型化请求经生产 debounce 保留稳定上下文、`ResetFxToNull` 不清音频通道；播放与结果带稳定 `BindingKey` |
 | `AudioCueDeclarationScannerTests` | **#168**：编辑器机械扫描稳定 cue 声明，并报告重复 cue ID / 空中文音效说明 |
-| `AudioPlaybackStructuralTests` | **#168**：项目业务源码禁止绕过音频入口直接调用 AudioKit / MMSoundManager；SFX 播放仅允许落在 Adapter |
+| `AudioPlaybackStructuralTests` | **#168/#170**：项目业务源码禁止绕过音频入口直接调用 AudioKit / MMSoundManager；SFX/BGM 轨选择只允许落在唯一 Adapter；BGM 状态由流程提交 |
 | `AudioBindingEditorSessionTests` | **#169**：Editor Session 以 JSON 磁盘快照/工作副本为 seam，覆盖单条保存保留其它脏改动、全部回撤保留 Play Mode 历史、脏计数、按语义/技术字段/状态搜索、未绑定与断链筛选、历史定位 |
+| `MusicSystemBehaviorTests` | **#170**：`IMusicSystem` 正式 JSON 解析、状态稳定 source、同状态/同 Clip no-op、单调音乐播放代数、A→B→C 快速切换收口、旧代数回调隔离、稳定态最多当前+淡出两个来源 |
 
 | CountdownLifetimeProjectionTests | **ADR-0035 / #157**：倒计时/耐久全集与 Battle/Run 寿命——revive_stone 内容契约（liveTemplate 引用投影令牌、every/projectKey 为装配实参、{count} 简单式已修）；OnInteract 每互动广播剩余 5→1 满 6 自移除；Battle 作用域离战（ResetBattleScopedCountdownsAction，清关/战败入队）计数器复位阈值并广播 EffectCountdownChanged（authority+projection）；Run 作用域离战不重置；卸载效果（DeactivateEffectAction）广播 EffectCountdownCleared；作用域标记（scope DSL，仅作者/系统可见）绝不进入投影键与渲染文本 || `EffectTemplateAssemblyContractTests` | #70：取消 typeTag/verb 门禁；`requires` 解析；装配实参替换与跨容器共享模板 |
 | `EffectSelfDeclarationContractTests` | #72 / ADR-0010：requires 校验（未知 token / mount 错配 / 缺声明）；拒上下文开关旧形；生产卡挂载显式场景声明审计归零；`ValidateCatalog` 绿 |

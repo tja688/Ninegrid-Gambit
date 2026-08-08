@@ -26,11 +26,18 @@ namespace NineGrid.Presentation.Tests
                 "NineGrid.Presentation",
                 "Systems",
                 "MMSoundManagerAudioPlaybackAdapter.cs"));
+            var audioHostPath = Normalize(Path.Combine(
+                Application.dataPath,
+                "Scripts",
+                "NineGrid.Presentation",
+                "Systems",
+                "MMSoundManagerBootstrap.cs"));
             var offenders = new List<string>();
 
             foreach (var sourcePath in EnumerateProjectSources())
             {
-                if (string.Equals(sourcePath, adapterPath, StringComparison.OrdinalIgnoreCase))
+                if (string.Equals(sourcePath, adapterPath, StringComparison.OrdinalIgnoreCase)
+                    || string.Equals(sourcePath, audioHostPath, StringComparison.OrdinalIgnoreCase))
                 {
                     continue;
                 }
@@ -47,7 +54,6 @@ namespace NineGrid.Presentation.Tests
                 "业务源码不得直接调用 AudioKit 或 MMSoundManager；唯一允许位置是 MMSoundManagerAudioPlaybackAdapter：\n"
                 + string.Join("\n", offenders.ToArray()));
         }
-
         [Test]
         public void SfxAndMusicTrackSelection_IsOwnedByAudioAdapterOnly()
         {
@@ -71,6 +77,91 @@ namespace NineGrid.Presentation.Tests
 
             Assert.IsEmpty(offenders, "MMSoundManager Music/Sfx 轨选择必须封装在音频 Adapter 内。");
             Assert.IsTrue(File.Exists(adapterPath), "缺少唯一 MMSoundManager 音频 Adapter。");
+        }
+
+        [Test]
+        public void MusicStateRequests_AreOwnedByGameFlowLayer()
+        {
+            var offenders = new List<string>();
+            var flowShellPath = Normalize(Path.Combine(
+                Application.dataPath,
+                "Scripts",
+                "NineGrid.Presentation",
+                "Systems",
+                "GameFlowShellSystem.cs"));
+            var musicHostPath = Normalize(Path.Combine(
+                Application.dataPath,
+                "Scripts",
+                "NineGrid.Presentation",
+                "Systems",
+                "MMSoundManagerBootstrap.cs"));
+            var orchestratorPath = Normalize(Path.Combine(
+                Application.dataPath,
+                "Scripts",
+                "NineGrid.Presentation",
+                "Flow",
+                "GameFlow",
+                "GameFlowOrchestrator.cs"));
+            var controllerPath = Normalize(Path.Combine(
+                Application.dataPath,
+                "Scripts",
+                "NineGrid.Presentation",
+                "Flow",
+                "GameFlowController.cs"));
+            var allowed = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+            {
+                flowShellPath,
+                orchestratorPath,
+                controllerPath,
+                musicHostPath,
+                Normalize(Path.Combine(
+                    Application.dataPath,
+                    "Scripts",
+                    "NineGrid.Presentation",
+                    "Commands",
+                    "SetGameFlowShellStateCommand.cs")),
+                Normalize(Path.Combine(
+                    Application.dataPath,
+                    "Scripts",
+                    "NineGrid.Presentation",
+                    "Systems",
+                    "MusicSystem.cs")),
+                Normalize(Path.Combine(
+                    Application.dataPath,
+                    "Scripts",
+                    "NineGrid.Foundation",
+                    "NineGrid.Content",
+                    "Audio",
+                    "MusicBindingCatalog.cs")),
+                Normalize(Path.Combine(
+                    Application.dataPath,
+                    "Scripts",
+                    "NineGrid.Presentation",
+                    "Flow",
+                    "Diagnostics",
+                    "PerfTraceModels.cs")),
+            };
+
+
+            foreach (var sourcePath in EnumerateProjectSources())
+            {
+                if (allowed.Contains(sourcePath))
+                {
+                    continue;
+                }
+
+                var text = File.ReadAllText(sourcePath);
+                if (text.IndexOf("DesiredMusicState", StringComparison.Ordinal) >= 0
+                    || text.IndexOf("MusicStateRequest", StringComparison.Ordinal) >= 0)
+                {
+                    offenders.Add(sourcePath);
+                }
+            }
+
+            Assert.IsEmpty(
+                offenders,
+                "期望音乐状态只由流程层提交；View / Presenter / 卡牌代码不得选择 BGM：\n"
+                + string.Join("\n", offenders.ToArray()));
         }
 
         private static IEnumerable<string> EnumerateProjectSources()

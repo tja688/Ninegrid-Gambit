@@ -6,6 +6,60 @@
     "sfxRoot": "Assets/Resources/audio/SFX",
     "entries": [
         {
+            "guid": "5d1beb7208557cf498f2a418e050a63d",
+            "assetPath": "Assets/Resources/audio/BGM/BattleTheme.mp3",
+            "resourcesKey": "audio/BGM/BattleTheme",
+            "sha256": "bd78de4c684391722dff940f7fd33c53fd7aaea7078dc2fe78a280c4987c5ca2",
+            "sizeBytes": 9848,
+            "kind": "BGM",
+            "loadPolicy": "preload"
+        },
+        {
+            "guid": "48fdc3ae5bafa3b4ca7b67da6cf6048f",
+            "assetPath": "Assets/Resources/audio/BGM/BossBattleTheme.mp3",
+            "resourcesKey": "audio/BGM/BossBattleTheme",
+            "sha256": "1ef8ea84e95200ad5fed6a2d7d12633308b40fe3c044c4b9034ca86496ce81a3",
+            "sizeBytes": 11729,
+            "kind": "BGM",
+            "loadPolicy": "preload"
+        },
+        {
+            "guid": "53c365509d61f1742bbfb226f402d56c",
+            "assetPath": "Assets/Resources/audio/BGM/DefeatTheme.mp3",
+            "resourcesKey": "audio/BGM/DefeatTheme",
+            "sha256": "dc0ae1339663e5c52a6d197bb3a1f5c37e7375b5d49690421cfc6377b9ad495d",
+            "sizeBytes": 61312,
+            "kind": "BGM",
+            "loadPolicy": "preload"
+        },
+        {
+            "guid": "e4683b9e170bce945a45d85fea23b301",
+            "assetPath": "Assets/Resources/audio/BGM/ExplorationTheme.mp3",
+            "resourcesKey": "audio/BGM/ExplorationTheme",
+            "sha256": "7566ca18c63dcfd51f5d0a1c31b17b3f0cf376b624d507aab51319238636495c",
+            "sizeBytes": 10475,
+            "kind": "BGM",
+            "loadPolicy": "preload"
+        },
+        {
+            "guid": "457eafd5ecc900e4eb9b99ac150825a8",
+            "assetPath": "Assets/Resources/audio/BGM/MainMenuTheme.mp3",
+            "resourcesKey": "audio/BGM/MainMenuTheme",
+            "sha256": "0640800d66d8a7e6f351992b382e59bf21c4b0fd6eca05c8a220d20f267f8a64",
+            "sizeBytes": 30922,
+            "kind": "BGM",
+            "loadPolicy": "preload"
+        },
+        {
+            "guid": "d58c3a4c6f8eb2b4e97dc0d082376b10",
+            "assetPath": "Assets/Resources/audio/BGM/VictoryTheme.mp3",
+            "resourcesKey": "audio/BGM/VictoryTheme",
+            "sha256": "3ac7c8f05063909158549871a9cd149313d6eda48958cb63a850e8b3c3cee7dc",
+            "sizeBytes": 7340,
+            "kind": "BGM",
+            "loadPolicy": "preload"
+        },
+        {
             "guid": "96a2e5b7e72353b44ab69c250c796d08",
             "assetPath": "Assets/Resources/audio/SFX/01 箱子打开.mp3",
             "resourcesKey": "audio/SFX/01 箱子打开",

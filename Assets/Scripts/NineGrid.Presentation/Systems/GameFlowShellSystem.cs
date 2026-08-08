@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using NineGrid.Content.Audio;
 using NineGrid.Core;
 using NineGrid.Core.Systems;
 using NineGrid.Flow;
@@ -78,6 +79,7 @@ namespace NineGrid.Presentation.Systems
         public void Bind(IGameFlowView view)
         {
             mView = view;
+            SubmitMusicForShellState(GameFlowShellState.MainMenu, "GameFlowShellSystem.Bind");
         }
 
         public void Unbind()
@@ -97,6 +99,59 @@ namespace NineGrid.Presentation.Systems
         public void ApplyState(GameFlowShellState next)
         {
             mState.Value = next;
+        }
+        internal MusicRequestResult SubmitMusicForState(
+            DesiredMusicState state,
+            string stableSource)
+        {
+            var architecture = NineGridArchitecture.Interface ?? NineGridArchitecture.Current;
+            if (architecture == null)
+            {
+                return null;
+            }
+
+            var music = architecture.GetSystem<IMusicSystem>();
+            if (music == null)
+            {
+                return null;
+            }
+
+            return music.RequestState(new MusicStateRequest(state, stableSource));
+        }
+
+        internal MusicRequestResult SubmitMusicForShellState(
+            GameFlowShellState state,
+            string stableSource)
+        {
+            var desired = DesiredMusicState.RunExploration;
+            switch (state)
+            {
+                case GameFlowShellState.MainMenu:
+                    desired = DesiredMusicState.MainMenu;
+                    break;
+                case GameFlowShellState.BattleStub:
+                    var flowArchitecture = NineGridArchitecture.Interface ?? NineGridArchitecture.Current;
+                    var run = flowArchitecture?.GetModel<RunModel>();
+                    var room = run != null && run.Room != null ? run.Room.Value : RoomKind.None;
+                    var nodeIndex = run != null && run.NodeIndex != null ? run.NodeIndex.Value : 0;
+                    var isBossNode = room == RoomKind.Boss
+                        || (nodeIndex > 0 && nodeIndex % RunModel.NodesPerFloor == 0);
+                    desired = isBossNode ? DesiredMusicState.BossBattle : DesiredMusicState.Battle;
+                    break;
+                case GameFlowShellState.VictoryNotice:
+                    desired = DesiredMusicState.Victory;
+                    break;
+                case GameFlowShellState.DefeatNotice:
+                    desired = DesiredMusicState.Defeat;
+                    break;
+                case GameFlowShellState.RewardChoice:
+                case GameFlowShellState.RoomChoice:
+                case GameFlowShellState.RoomEvent:
+                    desired = DesiredMusicState.RunExploration;
+                    break;
+            }
+
+            return SubmitMusicForState(desired, stableSource);
         }
 
         public void BeginRun(GameFlowRunOptions options)

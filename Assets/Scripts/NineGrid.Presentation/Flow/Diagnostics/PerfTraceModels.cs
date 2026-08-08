@@ -134,6 +134,28 @@ namespace NineGrid.Flow.Diagnostics
         public const string AudioCueCooldown = "AudioCueCooldown";
         /// <summary>MMSoundManager Adapter 播放失败。</summary>
         public const string AudioCueBackendFailure = "AudioCueBackendFailure";
+        /// <summary>音乐状态请求（流程层提交）。</summary>
+        public const string MusicStateRequested = "MusicStateRequested";
+        /// <summary>音乐请求无稳定来源。</summary>
+        public const string MusicStateInvalidSource = "MusicStateInvalidSource";
+        /// <summary>音乐状态未绑定。</summary>
+        public const string MusicStateUnbound = "MusicStateUnbound";
+        /// <summary>状态或最终 Clip 未变化。</summary>
+        public const string MusicStateNoOp = "MusicStateNoOp";
+        /// <summary>音乐实际开始。</summary>
+        public const string MusicStateStarted = "MusicStateStarted";
+        /// <summary>旧音乐进入淡出。</summary>
+        public const string MusicStateRetiring = "MusicStateRetiring";
+        /// <summary>旧音乐淡出完成。</summary>
+        public const string MusicStateRetired = "MusicStateRetired";
+        /// <summary>新切歌前释放更老淡出来源。</summary>
+        public const string MusicStateRetiredSourceReleased = "MusicStateRetiredSourceReleased";
+        /// <summary>音乐 Adapter 播放失败。</summary>
+        public const string MusicStateBackendFailure = "MusicStateBackendFailure";
+        /// <summary>显式停止音乐。</summary>
+        public const string MusicStateStopped = "MusicStateStopped";
+        /// <summary>旧代数回调被忽略。</summary>
+        public const string MusicStateStaleCallback = "MusicStateStaleCallback";
 
         /// <summary>卡牌边沿尘雾 Place 喷发。</summary>
         public const string DustPlace = "DustPlace";
