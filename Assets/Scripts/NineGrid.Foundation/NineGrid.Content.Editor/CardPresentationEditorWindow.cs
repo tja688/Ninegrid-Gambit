@@ -236,6 +236,7 @@ namespace NineGrid.Content.Editor
         {
             listContainer.Clear();
             listContainer.Add(BuildFacesSectionFoldout());
+            listContainer.Add(BuildGlossarySectionFoldout());
             listContainer.Add(BuildEffectPoolSectionFoldout());
             listContainer.Add(BuildVfxLibrarySectionFoldout());
             listContainer.Add(BuildDecksSectionFoldout());
@@ -309,8 +310,6 @@ namespace NineGrid.Content.Editor
         {
             return BuildSectionFoldout("section:effects", "效果池", container =>
             {
-                container.Add(BuildDescriptionGlossaryNavButton());
-
                 var insertables = session.GetInsertableIcons();
                 if (insertables.Count > 0)
                 {
@@ -327,24 +326,6 @@ namespace NineGrid.Content.Editor
                     }
 
                     container.Add(insertFoldout);
-                }
-
-                var catalogCodes = ListCatalogIconCodes();
-                if (catalogCodes.Count > 0)
-                {
-                    var catalogFoldout = new Foldout
-                    {
-                        text = "描述词条编码（点复制）",
-                        value = false,
-                    };
-                    catalogFoldout.style.marginLeft = 4;
-                    catalogFoldout.style.marginBottom = 4;
-                    for (var i = 0; i < catalogCodes.Count; i++)
-                    {
-                        catalogFoldout.contentContainer.Add(BuildCatalogTokenRow(catalogCodes[i]));
-                    }
-
-                    container.Add(catalogFoldout);
                 }
 
                 var templates = session.EffectTemplates;
@@ -755,13 +736,81 @@ namespace NineGrid.Content.Editor
             return box;
         }
 
+        private VisualElement BuildGlossarySectionFoldout()
+        {
+            return BuildSectionFoldout("section:glossary", "词条", container =>
+            {
+                container.Add(BuildDescriptionGlossaryNavButton());
+
+                var catalogCodes = ListCatalogIconCodes();
+                if (catalogCodes.Count > 0)
+                {
+                    var catalogFoldout = new Foldout
+                    {
+                        text = "图标词条编码（点复制 [code]）",
+                        value = false,
+                    };
+                    catalogFoldout.style.marginLeft = 4;
+                    catalogFoldout.style.marginBottom = 4;
+                    for (var i = 0; i < catalogCodes.Count; i++)
+                    {
+                        catalogFoldout.contentContainer.Add(BuildCatalogTokenRow(catalogCodes[i]));
+                    }
+
+                    container.Add(catalogFoldout);
+                }
+
+                EnsureIconCatalogLoaded();
+                var names = new List<string>();
+                var entries = iconCatalog != null ? iconCatalog.Entries : null;
+                if (entries != null)
+                {
+                    for (var i = 0; i < entries.Count; i++)
+                    {
+                        var e = entries[i];
+                        if (e == null || string.IsNullOrWhiteSpace(e.displayNameZh))
+                        {
+                            continue;
+                        }
+
+                        names.Add(e.displayNameZh.Trim());
+                    }
+                }
+
+                if (names.Count > 0)
+                {
+                    var nameFoldout = new Foldout
+                    {
+                        text = "文字词条（点复制 [[名字]]）",
+                        value = false,
+                    };
+                    nameFoldout.style.marginLeft = 4;
+                    nameFoldout.style.marginBottom = 4;
+                    for (var i = 0; i < names.Count; i++)
+                    {
+                        var name = names[i];
+                        nameFoldout.contentContainer.Add(BuildNavButton(
+                            false,
+                            "[[" + name + "]]",
+                            name,
+                            () =>
+                            {
+                                EditorGUIUtility.systemCopyBuffer = "[[" + name + "]]";
+                            }));
+                    }
+
+                    container.Add(nameFoldout);
+                }
+            });
+        }
+
         private VisualElement BuildDescriptionGlossaryNavButton()
         {
             var selected = session.FocusKind == CardPresentationEditorFocusKind.DescriptionGlossary;
             return BuildNavButton(
                 selected,
-                "描述词条",
-                "内联图标 · 基础预制体预览",
+                "词条编辑",
+                "名字 · 介绍 · 颜色 · 可选图标",
                 () => OpenDescriptionRichTextPage());
         }
 
@@ -932,7 +981,7 @@ namespace NineGrid.Content.Editor
                 default:
                     contentRoot.Add(ContentVisualWarmConsoleUi.CreatePageHeader(
                         "未选择",
-                        "从左侧选择卡面、效果模板、特效、卡组，或打开「描述词条」。"));
+                        "从左侧选择卡面、效果模板、特效、卡组，或打开「词条」。"));
                     previewFingerprint = string.Empty;
                     vfxPreviewFingerprint = string.Empty;
                     return;
@@ -1223,9 +1272,8 @@ namespace NineGrid.Content.Editor
             var descriptionCard = ContentVisualWarmConsoleUi.CreateSectionCard(
                 "检查描述（卡面基础描述）",
                 "三词分立（ADR-0035）：**检查描述**（本框，右键检查永远展示的静态规则概括）≠ **局内描述投影**（下方模板，实例/预览渲染层）≠ **卡面介绍**（风味短句）。" +
-                "[Code] 词条图标见左侧「效果池 → 描述词条 / 可插入编码」；数值占位 {value} 简单式（取首个含键装配），" +
-                "同键异值时用限定式 {装配id.value} / {模板id.value} / {卡defId.value}（如 {trap.attack_totem.value}，" +
-                "命中装配取值不一致则歧义不填，保留字面量）；预览所见即所得，显示 JSON 实参值；手改后锁定自定义，清空后恢复自动",
+                "[[词条名]] 文字词条 / [code] 图标见左侧「词条」；数值占位须 {装配id.键}；" +
+                "同键异值时用限定式 {装配id.value}；预览所见即所得；手改后锁定自定义，清空后恢复自动",
                 column =>
                 {
                     EnsureDescriptionIconPipeline();
@@ -1385,7 +1433,7 @@ namespace NineGrid.Content.Editor
 
             var previewCard = ContentVisualWarmConsoleUi.CreateSectionCard(
                 "描述预览",
-                "只预览 design_text 内容框；[Code] 走描述词条图标表",
+                "只预览 design_text 内容框（作者备注；不进右键玩家详情）；[Code] 走词条图标表",
                 column =>
                 {
                     previewContainer = new IMGUIContainer(() =>
@@ -2012,8 +2060,8 @@ namespace NineGrid.Content.Editor
 
             var dirtyHint = (inlineIconStyleDirty || iconCatalogDirty) ? " · 未保存" : string.Empty;
             contentRoot.Add(ContentVisualWarmConsoleUi.CreatePageHeaderCompact(
-                "描述词条",
-                "全局描述图标表 · 装配槽只读下行 · 四套基础卡面预览" + dirtyHint));
+                "词条",
+                "全局词条表 · [[名字]] 详情默认展开 · [code] 图标 hover 解释 · 四套基础卡面预览" + dirtyHint));
 
             var topRow = new VisualElement();
             topRow.style.flexDirection = FlexDirection.Row;
@@ -2068,8 +2116,8 @@ namespace NineGrid.Content.Editor
             topRow.Add(previewCard);
 
             var paramsCard = ContentVisualWarmConsoleUi.CreateSectionCard(
-                "图标映射",
-                "描述专用可改 Sprite；装配下行只读，布局仍用 em",
+                "词条列表",
+                "名字 = [[展示名]]；可选代号/Sprite = [code]；介绍进右键详情",
                 column => BuildRichTextParams(column));
             paramsCard.style.flexGrow = 1.35f;
             paramsCard.style.flexBasis = 0;
@@ -2077,7 +2125,7 @@ namespace NineGrid.Content.Editor
 
             var sampleCard = ContentVisualWarmConsoleUi.CreateSectionCard(
                 "样例描述",
-                "输入框为 [Code]；装配槽走模板，自定义码走描述图标表",
+                "[[名字]] 文字词条；[Code] 图标；装配槽走模板",
                 column =>
                 {
                     var sampleField = new TextField
@@ -2110,7 +2158,7 @@ namespace NineGrid.Content.Editor
             BuildAssemblyDownlinkRows(column, templateSprites);
 
             column.Add(ContentVisualWarmConsoleUi.CreateDescriptionLabel(
-                "描述专用图标表（全局）：可新建代号并选任意 Sprite，不写回预制体。"));
+                "词条表（全局）：名字必填供 [[名字]]；代号+Sprite 可选供 [code] 与 Inspect hover。"));
 
             var listHost = new VisualElement();
             listHost.style.flexDirection = FlexDirection.Column;
@@ -2140,13 +2188,13 @@ namespace NineGrid.Content.Editor
                 {
                     EnsureIconCatalogLoaded();
                     var created = iconCatalog.AddBlankEntry();
-                    created.code = AllocateNewCatalogCode();
+                    created.displayNameZh = "新词条";
                     iconCatalog.InvalidateLookup();
                     iconCatalogDirty = true;
                     CardFacePresentationBinder.SetDescriptionIconCatalogOverride(iconCatalog);
                     CardFacePresentationBinder.InvalidateDescriptionIconCatalogCache();
                     RefreshContent();
-                }) { text = "添加图标" }));
+                }) { text = "添加词条" }));
         }
 
         private void BuildAssemblyDownlinkRows(
@@ -2263,14 +2311,70 @@ namespace NineGrid.Content.Editor
             nameField.RegisterValueChangedCallback(evt =>
             {
                 entry.displayNameZh = evt.newValue ?? string.Empty;
+                iconCatalog.InvalidateLookup();
                 iconCatalogDirty = true;
                 UpdateStatus();
             });
-            row.Add(ContentVisualWarmConsoleUi.WrapControlRow("中文名", nameField, 72f));
+            row.Add(ContentVisualWarmConsoleUi.WrapControlRow("名字", nameField, 72f));
+            row.Add(ContentVisualWarmConsoleUi.CreateDescriptionLabel(
+                string.IsNullOrWhiteSpace(entry.displayNameZh)
+                    ? "（未设名字：无法用 [[…]] 引用）"
+                    : "检查描述写法：[[" + entry.displayNameZh.Trim() + "]]"));
 
-            var token = string.IsNullOrEmpty(entry.code) ? "[?]" : "[" + entry.code + "]";
+            var explanationField = new TextField
+            {
+                multiline = true,
+                value = entry.explanation ?? string.Empty,
+            };
+            explanationField.style.minHeight = 48;
+            explanationField.RegisterValueChangedCallback(evt =>
+            {
+                entry.explanation = evt.newValue ?? string.Empty;
+                iconCatalogDirty = true;
+                UpdateStatus();
+            });
+            row.Add(ContentVisualWarmConsoleUi.WrapControlRow("详细介绍", explanationField, 72f));
+
+            var useColor = entry.HasColorOverride;
+            var colorToggle = new Toggle("覆盖文字颜色") { value = useColor };
+            var colorField = new ColorField { value = useColor ? entry.color : Color.white, showAlpha = false };
+            colorField.SetEnabled(useColor);
+            colorToggle.RegisterValueChangedCallback(evt =>
+            {
+                if (evt.newValue)
+                {
+                    var c = colorField.value;
+                    c.a = 1f;
+                    entry.color = c;
+                }
+                else
+                {
+                    entry.color = new Color(1f, 1f, 1f, 0f);
+                }
+
+                colorField.SetEnabled(evt.newValue);
+                iconCatalogDirty = true;
+                MarkCatalogDraftAndRefreshPreview();
+            });
+            colorField.RegisterValueChangedCallback(evt =>
+            {
+                if (!colorToggle.value)
+                {
+                    return;
+                }
+
+                var c = evt.newValue;
+                c.a = 1f;
+                entry.color = c;
+                iconCatalogDirty = true;
+                MarkCatalogDraftAndRefreshPreview();
+            });
+            row.Add(colorToggle);
+            row.Add(ContentVisualWarmConsoleUi.WrapControlRow("颜色", colorField, 72f));
+
+            var token = string.IsNullOrEmpty(entry.code) ? "（无图标代号）" : "[" + entry.code + "]";
             var tokenField = new TextField { value = token, isReadOnly = true };
-            row.Add(ContentVisualWarmConsoleUi.WrapControlRow("Token", tokenField, 72f));
+            row.Add(ContentVisualWarmConsoleUi.WrapControlRow("图标 Token", tokenField, 72f));
 
             var spriteField = new ObjectField
             {
@@ -3950,7 +4054,7 @@ namespace NineGrid.Content.Editor
             switch (session.FocusKind)
             {
                 case CardPresentationEditorFocusKind.DescriptionGlossary:
-                    focusText = "描述词条 · " + richTextPreviewKind
+                    focusText = "词条 · " + richTextPreviewKind
                                 + (inlineIconStyleDirty || iconCatalogDirty ? " · 脏" : string.Empty);
                     break;
                 case CardPresentationEditorFocusKind.Face:

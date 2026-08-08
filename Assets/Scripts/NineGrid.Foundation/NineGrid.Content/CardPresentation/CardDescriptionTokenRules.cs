@@ -10,7 +10,7 @@ namespace NineGrid.Content.CardPresentation
     /// 检查描述、局内描述投影模板与卡面介绍里的玩家可见数值一律 <c>{装配id.键}</c>
     /// （限定符必须精确等于某条装配的 id）；简单式 <c>{value}</c>/<c>{amount}</c> 与
     /// <c>{卡defId.键}</c> 前缀式在范围内卡（机关 / 遗物 / 道具）上为错误。
-    /// 描述格：普通字符、每个 <c>{…}</c>、每个 <c>[…]</c> 各算 1 格；硬上限 26。
+    /// 描述格：普通字符、每个 <c>{…}</c>、每个 <c>[…]</c>、每个 <c>[[…]]</c> 各算 1 格；硬上限 26。
     /// 校验是纯函数，供内容卫生校验（磁盘）与 EditMode 边界测试共用。
     /// </summary>
     public static class CardDescriptionTokenRules
@@ -43,8 +43,8 @@ namespace NineGrid.Content.CardPresentation
         }
 
         /// <summary>
-        /// 描述格计数：普通字符各 1 格；每个 <c>{…}</c> 数值代码块 1 格；每个 <c>[…]</c> 图标富文本块 1 格。
-        /// 未闭合的 <c>{</c> / <c>[</c> 按 1 格计并继续。
+        /// 描述格计数：普通字符各 1 格；每个 <c>{…}</c> / <c>[…]</c> / <c>[[…]]</c> 各 1 格。
+        /// <c>[[…]]</c> 优先于单括号；未闭合的 <c>{</c> / <c>[</c> 按 1 格计并继续。
         /// </summary>
         public static int CountUnits(string text)
         {
@@ -58,10 +58,31 @@ namespace NineGrid.Content.CardPresentation
             while (index < text.Length)
             {
                 var c = text[index];
-                if (c == '{' || c == '[')
+                if (c == '{')
                 {
-                    var close = c == '{' ? '}' : ']';
-                    var end = text.IndexOf(close, index + 1);
+                    var end = text.IndexOf('}', index + 1);
+                    if (end >= 0)
+                    {
+                        index = end + 1;
+                        units++;
+                        continue;
+                    }
+                }
+                else if (c == '[')
+                {
+                    // [[展示名]] 整块计 1 格（ADR-0037）。
+                    if (index + 1 < text.Length && text[index + 1] == '[')
+                    {
+                        var close = text.IndexOf("]]", index + 2, StringComparison.Ordinal);
+                        if (close >= 0)
+                        {
+                            index = close + 2;
+                            units++;
+                            continue;
+                        }
+                    }
+
+                    var end = text.IndexOf(']', index + 1);
                     if (end >= 0)
                     {
                         index = end + 1;

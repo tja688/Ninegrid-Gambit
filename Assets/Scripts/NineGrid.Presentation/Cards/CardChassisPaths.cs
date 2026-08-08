@@ -44,6 +44,8 @@ namespace NineGrid.Cards
             "Assets/Resources/Arts/Cards/CardFaceDescriptionInlineIconStyle.asset";
         public const string DescriptionIconCatalogAsset =
             "Assets/Resources/Arts/Cards/CardFaceDescriptionIconCatalog.asset";
+        public const string GlossaryRowPrefab =
+            "Assets/Resources/Prefabs/UI/词条详细效果信息.prefab";
 
         /// <summary>
         /// 按 Unity 资产路径加载 GameObject（prefab）。

@@ -8,12 +8,15 @@ using UnityEngine;
 namespace NineGrid.Cards.Presentation
 {
     /// <summary>
-    /// 旁路纯数据 seam：把基础描述中的 `[SlotCode]` / `[CatalogCode]` 解析为 TMP 内联图标标签。
-    /// 装配 Insertable 槽只走 assembledIcons（高层下行，catalog 不可覆盖）；
-    /// 其余代号走项目级描述图标表。普通语义括号（如 `[使用时]`）原样保留。
+    /// 旁路纯数据 seam：检查描述双语法 → TMP 富文本。
+    /// <c>[[展示名]]</c> → 去括号明文（可选着色）；<c>[code]</c> → 内联 sprite
+    ///（装配 Insertable 优先，其余走词条表）。普通语义单括号（如 <c>[使用时]</c>）原样保留。
     /// </summary>
     public static class CardFaceDescriptionComposer
     {
+        private static readonly Regex DoubleBracketToken =
+            new Regex(@"\[\[([^\]]+)\]\]", RegexOptions.CultureInvariant | RegexOptions.Compiled);
+
         private static readonly Regex BracketToken =
             new Regex(@"\[([^\]]+)\]", RegexOptions.CultureInvariant | RegexOptions.Compiled);
 
@@ -31,14 +34,19 @@ namespace NineGrid.Cards.Presentation
 
         public readonly struct Result
         {
-            public Result(string tmpRichText, IReadOnlyList<InlineIcon> icons)
+            public Result(
+                string tmpRichText,
+                IReadOnlyList<InlineIcon> icons,
+                IReadOnlyList<CardGlossaryTerms.ResolvedTerm> explicitTerms)
             {
                 TmpRichText = tmpRichText ?? string.Empty;
                 Icons = icons ?? Array.Empty<InlineIcon>();
+                ExplicitTerms = explicitTerms ?? Array.Empty<CardGlossaryTerms.ResolvedTerm>();
             }
 
             public string TmpRichText { get; }
             public IReadOnlyList<InlineIcon> Icons { get; }
+            public IReadOnlyList<CardGlossaryTerms.ResolvedTerm> ExplicitTerms { get; }
         }
 
         public static Result Compose(
@@ -57,16 +65,21 @@ namespace NineGrid.Cards.Presentation
         {
             if (string.IsNullOrWhiteSpace(basicDescription))
             {
-                return new Result(string.Empty, Array.Empty<InlineIcon>());
+                return new Result(
+                    string.Empty,
+                    Array.Empty<InlineIcon>(),
+                    Array.Empty<CardGlossaryTerms.ResolvedTerm>());
             }
 
+            var explicitTerms = CardGlossaryTerms.ExtractExplicitTerms(basicDescription, catalog);
+            var afterTerms = ExpandDoubleBrackets(basicDescription, catalog);
             var icons = new List<InlineIcon>();
             var seen = new HashSet<string>(StringComparer.Ordinal);
-            var builder = new StringBuilder(basicDescription.Length + 16);
+            var builder = new StringBuilder(afterTerms.Length + 16);
             var offset = 0;
-            foreach (Match match in BracketToken.Matches(basicDescription))
+            foreach (Match match in BracketToken.Matches(afterTerms))
             {
-                builder.Append(basicDescription, offset, match.Index - offset);
+                builder.Append(afterTerms, offset, match.Index - offset);
                 var code = match.Groups[1].Value;
                 if (TryResolve(code, assembledIcons, registry, catalog, out var sprite))
                 {
@@ -84,8 +97,64 @@ namespace NineGrid.Cards.Presentation
                 offset = match.Index + match.Length;
             }
 
-            builder.Append(basicDescription, offset, basicDescription.Length - offset);
-            return new Result(builder.ToString(), icons);
+            builder.Append(afterTerms, offset, afterTerms.Length - offset);
+            return new Result(builder.ToString(), icons, explicitTerms);
+        }
+
+        /// <summary>
+        /// 将 <c>[[名字]]</c> 换成去括号明文（命中词条且有色则包 TMP color）。
+        /// </summary>
+        private static string ExpandDoubleBrackets(
+            string text,
+            CardFaceDescriptionIconCatalogSO catalog)
+        {
+            if (string.IsNullOrEmpty(text) || text.IndexOf("[[", StringComparison.Ordinal) < 0)
+            {
+                return text;
+            }
+
+            var builder = new StringBuilder(text.Length + 16);
+            var offset = 0;
+            foreach (Match match in DoubleBracketToken.Matches(text))
+            {
+                builder.Append(text, offset, match.Index - offset);
+                var name = match.Groups[1].Value.Trim();
+                if (catalog != null
+                    && catalog.TryGetByDisplayName(name, out var entry)
+                    && entry != null)
+                {
+                    var display = string.IsNullOrWhiteSpace(entry.displayNameZh)
+                        ? name
+                        : entry.displayNameZh.Trim();
+                    if (entry.HasColorOverride)
+                    {
+                        builder.Append("<color=#")
+                            .Append(ColorUtility.ToHtmlStringRGBA(entry.color))
+                            .Append('>')
+                            .Append(display)
+                            .Append("</color>");
+                    }
+                    else
+                    {
+                        builder.Append(display);
+                    }
+                }
+                else
+                {
+                    if (catalog != null && !string.IsNullOrEmpty(name))
+                    {
+                        Debug.LogWarning(
+                            "[CardFaceDescriptionComposer] 未命中词条名字 [[" + name + "]]，已去括号显示原文。");
+                    }
+
+                    builder.Append(name);
+                }
+
+                offset = match.Index + match.Length;
+            }
+
+            builder.Append(text, offset, text.Length - offset);
+            return builder.ToString();
         }
 
         private static bool TryResolve(

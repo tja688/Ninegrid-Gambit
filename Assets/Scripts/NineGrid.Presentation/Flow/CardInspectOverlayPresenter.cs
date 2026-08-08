@@ -1,9 +1,9 @@
 using NineGrid.Cards;
 using NineGrid.Cards.Anim;
 using NineGrid.Cards.Presentation;
+using NineGrid.Cards.Slots;
 using NineGrid.Content.CardPresentation;
 using NineGrid.Core;
-using NineGrid.Core.Effects;
 using NineGrid.Core.Systems;
 using NineGrid.Presentation;
 using QFramework;
@@ -41,10 +41,10 @@ namespace NineGrid.Flow
         [SerializeField] private Transform regularCardFace;
         [SerializeField] private TMP_Text enemyFaceIntro;
         [SerializeField] private TMP_Text enemyDeckIntro;
-        [SerializeField] private TMP_Text enemySkillDetails;
         [SerializeField] private TMP_Text regularFaceIntro;
         [SerializeField] private TMP_Text regularDeckIntro;
-        [SerializeField] private TMP_Text regularSkillDetails;
+        [SerializeField] private CardInspectGlossaryListView enemyGlossaryList;
+        [SerializeField] private CardInspectGlossaryListView regularGlossaryList;
 
         private bool _open;
         private bool _dimmerHeld;
@@ -52,6 +52,7 @@ namespace NineGrid.Flow
         private CardFacePresentationBinder _regularBinder;
         private CardPresentationKind _enemyLiveKind = CardPresentationKind.Unknown;
         private CardPresentationKind _regularLiveKind = CardPresentationKind.Unknown;
+        private CardInspectGlossaryRowView _rowPrefab;
 
         public static bool IsOpen
         {
@@ -124,14 +125,14 @@ namespace NineGrid.Flow
                 enemyPanel,
                 out enemyFaceIntro,
                 out enemyDeckIntro,
-                out enemySkillDetails,
-                out var enemyClose);
+                out var enemyClose,
+                out enemyGlossaryList);
             WirePanelSlots(
                 regularPanel,
                 out regularFaceIntro,
                 out regularDeckIntro,
-                out regularSkillDetails,
-                out var regularClose);
+                out var regularClose,
+                out regularGlossaryList);
 
             WireCloseButton(enemyClose);
             WireCloseButton(regularClose);
@@ -145,6 +146,7 @@ namespace NineGrid.Flow
             _regularBinder = null;
             _enemyLiveKind = CardPresentationKind.Unknown;
             _regularLiveKind = CardPresentationKind.Unknown;
+            EnsureGlossaryListsConfigured();
         }
 
         public static bool TryOpen(ManagedCard card)
@@ -200,8 +202,7 @@ namespace NineGrid.Flow
             snapshot.BasicDescription = ResolveInspectBasicDescription(card.DefId, snapshot.BasicDescription);
             var arch = NineGridArchitecture.Interface;
             var catalog = arch?.GetSystem<IContentSystem>()?.Catalog;
-            var liveMounts = CollectLiveEffectMounts(arch, card.Uid);
-            var texts = CardInspectDetailComposer.Compose(card.DefId, snapshot, catalog, liveMounts);
+            var texts = CardInspectDetailComposer.Compose(card.DefId, snapshot, catalog);
             return PresentInspect(isMonster, card, snapshot, texts);
         }
 
@@ -225,7 +226,7 @@ namespace NineGrid.Flow
             snapshot.BasicDescription = ResolveInspectBasicDescription(defId, snapshot.BasicDescription);
             var arch = NineGridArchitecture.Interface;
             var catalog = arch?.GetSystem<IContentSystem>()?.Catalog;
-            var texts = CardInspectDetailComposer.Compose(defId, snapshot, catalog, liveMounts: null);
+            var texts = CardInspectDetailComposer.Compose(defId, snapshot, catalog);
             return PresentInspect(isMonster: false, card: null, snapshot, texts, kindOverride: kind);
         }
 
@@ -254,9 +255,15 @@ namespace NineGrid.Flow
 
             // BounceFan 选项在 UI 层 order 6+；面板底图多为 0–3。根 SG 提到 100 才能整组压住三选一。
             EnsureOverlaySortingGroup();
+            EnsureGlossaryListsConfigured();
 
             SetActiveSafe(enemyPanel, isMonster);
             SetActiveSafe(regularPanel, !isMonster);
+
+            var glossaryCatalog = CardFacePresentationBinder.PeekDescriptionIconCatalog();
+            var terms = CardGlossaryTerms.ExtractExplicitTerms(
+                snapshot != null ? snapshot.BasicDescription : null,
+                glossaryCatalog);
 
             if (isMonster)
             {
@@ -269,7 +276,7 @@ namespace NineGrid.Flow
 
                 SetText(enemyFaceIntro, texts.FaceIntro);
                 SetText(enemyDeckIntro, texts.DeckIntro);
-                SetText(enemySkillDetails, texts.SkillDetails);
+                BindGlossaryPanel(enemyGlossaryList, terms, _enemyBinder, glossaryCatalog);
             }
             else
             {
@@ -284,7 +291,7 @@ namespace NineGrid.Flow
 
                 SetText(regularFaceIntro, texts.FaceIntro);
                 SetText(regularDeckIntro, texts.DeckIntro);
-                SetText(regularSkillDetails, texts.SkillDetails);
+                BindGlossaryPanel(regularGlossaryList, terms, _regularBinder, glossaryCatalog);
             }
 
             return true;
@@ -356,50 +363,117 @@ namespace NineGrid.Flow
             return true;
         }
 
-        /// <summary>
-        /// 从 EffectSystem 收集此卡当局已激活的挂载（含 QuickTest 动态注入技能）。
-        /// </summary>
-        private static IReadOnlyList<CardInspectDetailComposer.LiveEffectMount> CollectLiveEffectMounts(
-            IArchitecture arch,
-            int cardUid)
+        private void EnsureGlossaryListsConfigured()
         {
-            if (arch == null || cardUid == 0)
+            if (_rowPrefab == null)
             {
-                return null;
-            }
-
-            var effectSystem = arch.GetSystem<IEffectSystem>();
-            if (effectSystem == null)
-            {
-                return null;
-            }
-
-            var instanceIds = effectSystem.GetInstanceIdsByOwner(cardUid);
-            if (instanceIds == null || instanceIds.Count == 0)
-            {
-                return null;
-            }
-
-            var mounts = new List<CardInspectDetailComposer.LiveEffectMount>(instanceIds.Count);
-            for (var i = 0; i < instanceIds.Count; i++)
-            {
-                if (!effectSystem.TryGetInstance(instanceIds[i], out var instance)
-                    || instance?.Owner == null
-                    || instance.Definition == null)
+                var go = CardChassisPaths.LoadGameObject(CardChassisPaths.GlossaryRowPrefab);
+                if (go != null)
                 {
-                    continue;
+                    _rowPrefab = go.GetComponent<CardInspectGlossaryRowView>();
                 }
-
-                mounts.Add(new CardInspectDetailComposer.LiveEffectMount(
-                    instance.Owner.SourceDefId,
-                    instance.Definition.Id));
             }
 
-            return mounts.Count > 0 ? mounts : null;
+            ConfigureGlossaryList(ref enemyGlossaryList, enemyPanel);
+            ConfigureGlossaryList(ref regularGlossaryList, regularPanel);
+        }
+
+        private void ConfigureGlossaryList(ref CardInspectGlossaryListView list, GameObject panel)
+        {
+            if (panel == null)
+            {
+                return;
+            }
+
+            var content = FindScrollContent(panel.transform);
+            if (content == null)
+            {
+                return;
+            }
+
+            if (list == null)
+            {
+                list = content.GetComponent<CardInspectGlossaryListView>();
+                if (list == null)
+                {
+                    list = content.gameObject.AddComponent<CardInspectGlossaryListView>();
+                }
+            }
+
+            list.Configure(content, _rowPrefab);
+        }
+
+        private static RectTransform FindScrollContent(Transform panelRoot)
+        {
+            if (panelRoot == null)
+            {
+                return null;
+            }
+
+            var scroll = panelRoot.GetComponentInChildren<UnityEngine.UI.ScrollRect>(true);
+            if (scroll != null && scroll.content != null)
+            {
+                return scroll.content;
+            }
+
+            var content = FindChild(panelRoot, "Content");
+            return content as RectTransform;
+        }
+
+        private void BindGlossaryPanel(
+            CardInspectGlossaryListView list,
+            IReadOnlyList<CardGlossaryTerms.ResolvedTerm> terms,
+            CardFacePresentationBinder binder,
+            CardFaceDescriptionIconCatalogSO glossaryCatalog)
+        {
+            if (list != null)
+            {
+                list.BindExplicitTerms(terms);
+            }
+
+            WireInlineIconHover(binder, list, glossaryCatalog);
+        }
+
+        private static void WireInlineIconHover(
+            CardFacePresentationBinder binder,
+            CardInspectGlossaryListView list,
+            CardFaceDescriptionIconCatalogSO catalog)
+        {
+            if (binder == null)
+            {
+                return;
+            }
+
+            if (!CardFaceSlotNodeMap.TryFindText(
+                    binder.transform,
+                    CardFaceSlotCodes.BasicDescription,
+                    out var description)
+                || description == null)
+            {
+                return;
+            }
+
+            var hover = binder.GetComponent<CardInspectInlineIconHover>();
+            if (hover == null)
+            {
+                hover = binder.gameObject.AddComponent<CardInspectInlineIconHover>();
+            }
+
+            hover.Configure(description, list, catalog, Camera.main);
         }
 
         private void HideAllImmediate()
         {
+            if (enemyGlossaryList != null)
+            {
+                enemyGlossaryList.ClearAll();
+            }
+
+            if (regularGlossaryList != null)
+            {
+                regularGlossaryList.ClearAll();
+            }
+
             SetActiveSafe(enemyPanel, false);
             SetActiveSafe(regularPanel, false);
             if (root != null && root.activeSelf)
@@ -741,13 +815,13 @@ namespace NineGrid.Flow
             GameObject panel,
             out TMP_Text faceIntro,
             out TMP_Text deckIntro,
-            out TMP_Text skillDetails,
-            out Transform closeButton)
+            out Transform closeButton,
+            out CardInspectGlossaryListView glossaryList)
         {
             faceIntro = null;
             deckIntro = null;
-            skillDetails = null;
             closeButton = null;
+            glossaryList = null;
             if (panel == null)
             {
                 return;
@@ -757,7 +831,28 @@ namespace NineGrid.Flow
             closeButton = FindChild(t, "关闭面板 (1)") ?? FindChild(t, "关闭面板");
             faceIntro = FindTmp(t, "背景介绍");
             deckIntro = FindTmp(t, "牌组介绍");
-            skillDetails = FindTmp(t, "详细效果信息");
+
+            var content = FindScrollContent(t);
+            if (content != null)
+            {
+                // 旧单条 TMP 模板：隐藏，改由动态行预制体填充。
+                for (var i = content.childCount - 1; i >= 0; i--)
+                {
+                    var child = content.GetChild(i);
+                    if (child != null
+                        && (child.name.StartsWith("详细效果信息", System.StringComparison.Ordinal)
+                            || child.name.Contains("详细效果信息")))
+                    {
+                        child.gameObject.SetActive(false);
+                    }
+                }
+
+                glossaryList = content.GetComponent<CardInspectGlossaryListView>();
+                if (glossaryList == null)
+                {
+                    glossaryList = content.gameObject.AddComponent<CardInspectGlossaryListView>();
+                }
+            }
         }
 
         private static void WireCloseButton(Transform close)
