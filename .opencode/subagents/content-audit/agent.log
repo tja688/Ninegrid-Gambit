@@ -1,0 +1,1198 @@
+
+> Full-Auto · deepseek-v4-flash
+
+→ Read CONTEXT.md
+
+$ Get-ChildItem -Recurse -File "docs\adr" | Select-Object -ExpandProperty Name
+0001-battle-presentation-unified-timeline-batch-ack.md
+0002-card-chassis-and-face-templates.md
+0003-diagnostic-correlation-layer-chainid-choreoseqid.md
+0004-input-intake-two-axis-gating.md
+0005-card-face-beat-commit.md
+0006-windows-high-polling-mouse-mitigation.md
+0007-unified-presentation-pipeline.md
+0008-single-source-content-and-resources-loading.md
+0009-parameterized-effect-templates.md
+0010-self-declared-effect-responsibility.md
+0011-monster-attack-pattern-intrinsic.md
+0012-enemy-action-phase-volley.md
+0013-action-countdown-unified.md
+0014-theme-ids-are-legacy-opaque.md
+0015-card-slot-placement-local-space.md
+0016-card-face-orientation.md
+0017-trap-card-kind-and-dual-bucket.md
+0018-trigger-visible-causality.md
+0019-avatar-board-walk.md
+0020-board-as-interaction-surface.md
+0021-run-progression-in-core.md
+0022-node-loadout-model.md
+0023-slot-hit-frame-and-claim.md
+0024-board-placement-and-prefab-authored-size.md
+0025-item-slots-run-persistent-hold.md
+0026-leave-trap-sole-clear-condition.md
+0027-relic-drag-recycle-and-rmb-inspect.md
+0028-damage-formula-armor-and-reduction.md
+0029-content-guardrail-stable-theme-deck-mapping.md
+0030-regular-trap-opening-loadout.md
+0031-attribute-room-pick-two.md
+0032-item-cards-usable-outside-battle.md
+0033-help-card-rarity-distribution-control.md
+0034-board-stabilization-refill-batch-ack.md
+0035-dual-description-projection-and-assembly-param-refs.md
+0036-audio-cue-binding-and-music-ownership.md
+
+$ Get-ChildItem -Recurse -File "Assets\Docs\九宫格登神" | Select-Object -ExpandProperty FullName
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\00-��������ĵ����������AI��Ҫ�����.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\01-���ĸ���.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\02-����.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\03-��Ҳ࿨����Ϣ.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\04-���˲࿨����Ϣ.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\05-����.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\06-��ҽ�ɫ.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\07-����.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\08-UI.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\00-��������ĵ����������AI��Ҫ�����\ѭ��.md
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\00-��������ĵ����������AI��Ҫ�����\ѭ��.md.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\00-��������ĵ����������AI��Ҫ�����\Ը��.md
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\00-��������ĵ����������AI��Ҫ�����\Ը��.md.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\00-��������ĵ����������AI��Ҫ�����\֧��.md
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\00-��������ĵ����������AI��Ҫ�����\֧��.md.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\01-���ĸ���\���߿���.md
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\01-���ĸ���\���߿���.md.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\01-���ĸ���\����.md
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\01-���ĸ���\����.md.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\01-���ĸ���\����.md
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\01-���ĸ���\����.md.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\01-���ĸ���\����.md
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\01-���ĸ���\����.md.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\01-���ĸ���\����.md
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\01-���ĸ���\����.md.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\01-���ĸ���\��Ϸ��������.md
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\01-���ĸ���\��Ϸ��������.md.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\01-���ĸ���\ս����λ��.md
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\01-���ĸ���\ս����λ��.md.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\02-����\���ƻ���.md
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\02-����\���ƻ���.md.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\02-����\�������.md
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\02-����\�������.md.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\02-����\��������.md
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\02-����\��������.md.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\02-����\�ƶ�����ת����.md
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\02-����\�ƶ�����ת����.md.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\02-����\ս������.md
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\02-����\ս������.md.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\03-��Ҳ࿨����Ϣ\���߿�.md
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\03-��Ҳ࿨����Ϣ\���߿�.md.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\03-��Ҳ࿨����Ϣ\��ɫ����.md
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\03-��Ҳ࿨����Ϣ\��ɫ����.md.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\03-��Ҳ࿨����Ϣ\ͨ�ÿ���.md
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\03-��Ҳ࿨����Ϣ\ͨ�ÿ���.md.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\03-��Ҳ࿨����Ϣ\��ҿ�.md
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\03-��Ҳ࿨����Ϣ\��ҿ�.md.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\04-���˲࿨����Ϣ\���＼��.md
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\04-���˲࿨����Ϣ\���＼��.md.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\04-���˲࿨����Ϣ\���￨.md
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\04-���˲࿨����Ϣ\���￨.md.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\04-���˲࿨����Ϣ\���ؼ���.md
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\04-���˲࿨����Ϣ\���ؼ���.md.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\04-���˲࿨����Ϣ\���ؿ�.md
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\04-���˲࿨����Ϣ\���ؿ�.md.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\04-���˲࿨����Ϣ\����ϵͳ.md
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\04-���˲࿨����Ϣ\����ϵͳ.md.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\05-����\����.md
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\05-����\����.md.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\06-��ҽ�ɫ\��ɫ.md
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\06-��ҽ�ɫ\��ɫ.md.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\06-��ҽ�ɫ\��ҿ�.md
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\06-��ҽ�ɫ\��ҿ�.md.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\07-����\�㼶����.md
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\07-����\�㼶����.md.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\07-����\������������.md
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\07-����\������������.md.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\07-����\ս���ؿ�����.md
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\07-����\ս���ؿ�����.md.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\08-UI\���沼��.md
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\08-UI\���沼��.md.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\08-UI\��ҽ�������.md
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\08-UI\��ҽ�������.md.meta
+
+✱ Glob "Assets/Docs/九宫格登神/**/*.md" 32 matches
+→ Read docs/adr/0011-monster-attack-pattern-intrinsic.md
+→ Read docs/adr/0013-action-countdown-unified.md
+→ Read docs/adr/0029-content-guardrail-stable-theme-deck-mapping.md
+→ Read Assets/Docs/九宫格登神/04-敌人侧卡牌信息/怪物卡.md
+✱ Glob "docs/code-map/**/*.md" 3 matches
+✱ Glob "Assets/Scripts/NineGrid.Content/**/*.json" 0 matches
+
+$ Get-ChildItem -Recurse -Directory "Assets\Scripts" | Select-Object -ExpandProperty FullName
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Foundation
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Presentation
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\Temporary Test
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\UI
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Foundation\NineGrid.Content
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Foundation\NineGrid.Content.Editor
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Foundation\NineGrid.Core
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Foundation\NineGrid.Core.Tests
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Foundation\NineGrid.DevTest
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Foundation\NineGrid.DevTest.Tests
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Foundation\NineGrid.Content\Audio
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Foundation\NineGrid.Content\CardPresentation
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Foundation\NineGrid.Content\Catalog
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Foundation\NineGrid.Content\Generated
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Foundation\NineGrid.Content.Editor\Ui
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Foundation\NineGrid.Core\Architecture
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Foundation\NineGrid.Core\Commands
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Foundation\NineGrid.Core\Content
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Foundation\NineGrid.Core\Domain
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Foundation\NineGrid.Core\Effects
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Foundation\NineGrid.Core\Models
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Foundation\NineGrid.Core\Presentation
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Foundation\NineGrid.Core\Queries
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Foundation\NineGrid.Core\Setup
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Foundation\NineGrid.Core\Systems
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Foundation\NineGrid.Core\Utilities
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Foundation\NineGrid.Core\Domain\Actions
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Foundation\NineGrid.Core\Domain\Commands
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Foundation\NineGrid.Core\Domain\Events
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Foundation\NineGrid.Core\Domain\Stats
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Foundation\NineGrid.DevTest\Cards
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Foundation\NineGrid.DevTest\Commands
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Foundation\NineGrid.DevTest\Editor
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Foundation\NineGrid.DevTest\Flow
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Presentation\Cards
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Presentation\Cheat
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Presentation\Commands
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Presentation\Controllers
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Presentation\Editor
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Presentation\Flow
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Presentation\Platform
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Presentation\Queries
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Presentation\Setup
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Presentation\Systems
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Presentation\Tests
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Presentation\Cards\Anim
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Presentation\Cards\Battle
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Presentation\Cards\Convergence
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Presentation\Cards\Effects
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Presentation\Cards\Ground
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Presentation\Cards\Presentation
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Presentation\Cards\Slots
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Presentation\Cards\Vfx
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Presentation\Cards\Battle\Defaults
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Presentation\Cards\Effects\Defaults
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Presentation\Cards\Effects\Implementations
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Presentation\Cards\Ground\Ground
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Presentation\Flow\AttributeBoard
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Presentation\Flow\BattleSession
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Presentation\Flow\BoardBriefTip
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Presentation\Flow\Diagnostics
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Presentation\Flow\GameFlow
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Presentation\Flow\InRoomBoard
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Presentation\Flow\Presentation
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Presentation\Flow\RewardBoard
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Presentation\Flow\RoomIcons
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Presentation\Flow\ShopBoard
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Presentation\Flow\TavernBoard
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Presentation\Flow\Transitions
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Presentation\Tests\Attack
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Presentation\Tests\BattleSession
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Presentation\Tests\BehaviorBaseline
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Presentation\Tests\Cards
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Presentation\Tests\Cheat
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Presentation\Tests\Drain
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Presentation\Tests\Explore
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Presentation\Tests\FieldGeometry
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Presentation\Tests\Fixtures
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Presentation\Tests\Flow
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Presentation\Tests\FlowShell
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Presentation\Tests\Fusion
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Presentation\Tests\IntentIntake
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Presentation\Tests\Lifecycle
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Presentation\Tests\Output
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Presentation\Tests\Pickup
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Presentation\Tests\Shuffle
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Presentation\Tests\UseItem
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Presentation\Tests\Zone
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\UI\VisualLook
+
+$ Get-ChildItem -Recurse -File "Assets\Scripts\NineGrid.Foundation\NineGrid.Content" | Select-Object -ExpandProperty FullName
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Foundation\NineGrid.Content\Audio.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Foundation\NineGrid.Content\CardPresentation.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Foundation\NineGrid.Content\Catalog.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Foundation\NineGrid.Content\ContentAssemblyMarker.cs
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Foundation\NineGrid.Content\ContentAssemblyMarker.cs.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Foundation\NineGrid.Content\Generated.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Foundation\NineGrid.Content\NineGrid.Content.asmdef
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Foundation\NineGrid.Content\NineGrid.Content.asmdef.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Foundation\NineGrid.Content\Audio\AudioAssetManifest.cs
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Foundation\NineGrid.Content\Audio\AudioAssetManifest.cs.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Foundation\NineGrid.Content\Audio\AudioAssetManifestLoader.cs
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Foundation\NineGrid.Content\Audio\AudioAssetManifestLoader.cs.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Foundation\NineGrid.Content\Audio\AudioAssetPaths.cs
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Foundation\NineGrid.Content\Audio\AudioAssetPaths.cs.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Foundation\NineGrid.Content\Audio\AudioBindingCatalog.cs
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Foundation\NineGrid.Content\Audio\AudioBindingCatalog.cs.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Foundation\NineGrid.Content\Audio\AudioCueRequest.cs
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Foundation\NineGrid.Content\Audio\AudioCueRequest.cs.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Foundation\NineGrid.Content\Audio\MusicBindingCatalog.cs
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Foundation\NineGrid.Content\Audio\MusicBindingCatalog.cs.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Foundation\NineGrid.Content\CardPresentation\CardAnimSlotIds.cs
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Foundation\NineGrid.Content\CardPresentation\CardAnimSlotIds.cs.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Foundation\NineGrid.Content\CardPresentation\CardDescriptionTokenRules.cs
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Foundation\NineGrid.Content\CardPresentation\CardDescriptionTokenRules.cs.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Foundation\NineGrid.Content\CardPresentation\CardPresentationAnimResolve.cs
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Foundation\NineGrid.Content\CardPresentation\CardPresentationAnimResolve.cs.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Foundation\NineGrid.Content\CardPresentation\CardPresentationAuthority.cs
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Foundation\NineGrid.Content\CardPresentation\CardPresentationAuthority.cs.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Foundation\NineGrid.Content\CardPresentation\CardPresentationConfigCatalog.cs
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Foundation\NineGrid.Content\CardPresentation\CardPresentationConfigCatalog.cs.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Foundation\NineGrid.Content\CardPresentation\CardPresentationConfigDto.cs
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Foundation\NineGrid.Content\CardPresentation\CardPresentationConfigDto.cs.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Foundation\NineGrid.Content\CardPresentation\CardPresentationContentArt.cs
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Foundation\NineGrid.Content\CardPresentation\CardPresentationContentArt.cs.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Foundation\NineGrid.Content\CardPresentation\CardPresentationIndexIO.cs
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Foundation\NineGrid.Content\CardPresentation\CardPresentationIndexIO.cs.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Foundation\NineGrid.Content\CardPresentation\CardPresentationJsonIO.cs
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Foundation\NineGrid.Content\CardPresentation\CardPresentationJsonIO.cs.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Foundation\NineGrid.Content\CardPresentation\CardPresentationSpritePath.cs
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Foundation\NineGrid.Content\CardPresentation\CardPresentationSpritePath.cs.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Foundation\NineGrid.Content\CardPresentation\VisualEffectContentArt.cs
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Foundation\NineGrid.Content\CardPresentation\VisualEffectContentArt.cs.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Foundation\NineGrid.Content\Catalog\CardFrameStyleCatalog.cs
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Foundation\NineGrid.Content\Catalog\CardFrameStyleCatalog.cs.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Foundation\NineGrid.Content\Catalog\CardFrameStyleDefinition.cs
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Foundation\NineGrid.Content\Catalog\CardFrameStyleDefinition.cs.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Foundation\NineGrid.Content\Catalog\ChoiceOptionVisualCatalogSO.cs
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Foundation\NineGrid.Content\Catalog\ChoiceOptionVisualCatalogSO.cs.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Foundation\NineGrid.Content\Catalog\ContentCatalogBootstrap.cs
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Foundation\NineGrid.Content\Catalog\ContentCatalogBootstrap.cs.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Foundation\NineGrid.Content\Catalog\ContentCatalogTableLoader.cs
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Foundation\NineGrid.Content\Catalog\ContentCatalogTableLoader.cs.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Foundation\NineGrid.Content\Catalog\ContentColor.cs
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Foundation\NineGrid.Content\Catalog\ContentColor.cs.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Foundation\NineGrid.Content\Catalog\ContentHygieneValidator.cs
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Foundation\NineGrid.Content\Catalog\ContentHygieneValidator.cs.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Foundation\NineGrid.Content\Catalog\ContentJsonCatalogProjector.cs
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Foundation\NineGrid.Content\Catalog\ContentJsonCatalogProjector.cs.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Foundation\NineGrid.Content\Catalog\ContentVisualCatalog.cs
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Foundation\NineGrid.Content\Catalog\ContentVisualCatalog.cs.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Foundation\NineGrid.Content\Catalog\ContentVisualDefinition.cs
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Foundation\NineGrid.Content\Catalog\ContentVisualDefinition.cs.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Foundation\NineGrid.Content\Catalog\ContentVisualKind.cs
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Foundation\NineGrid.Content\Catalog\ContentVisualKind.cs.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Foundation\NineGrid.Content\Catalog\ContentVisualResolvedView.cs
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Foundation\NineGrid.Content\Catalog\ContentVisualResolvedView.cs.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Foundation\NineGrid.Content\Catalog\ContentVisualResolver.cs
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Foundation\NineGrid.Content\Catalog\ContentVisualResolver.cs.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Foundation\NineGrid.Content\Catalog\ContentVisualSpriteCatalogBootstrapSO.cs
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Foundation\NineGrid.Content\Catalog\ContentVisualSpriteCatalogBootstrapSO.cs.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Foundation\NineGrid.Content\Catalog\ContentVisualSpriteCatalogSO.cs
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Foundation\NineGrid.Content\Catalog\ContentVisualSpriteCatalogSO.cs.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Foundation\NineGrid.Content\Catalog\EffectAssemblyResolver.cs
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Foundation\NineGrid.Content\Catalog\EffectAssemblyResolver.cs.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Foundation\NineGrid.Content\Catalog\EffectDesignTextParameterizer.cs
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Foundation\NineGrid.Content\Catalog\EffectDesignTextParameterizer.cs.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Foundation\NineGrid.Content\Catalog\EffectTemplateCatalog.cs
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Foundation\NineGrid.Content\Catalog\EffectTemplateCatalog.cs.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Foundation\NineGrid.Content\Catalog\HelpCardJsonCatalogProjector.cs
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Foundation\NineGrid.Content\Catalog\HelpCardJsonCatalogProjector.cs.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Foundation\NineGrid.Content\Catalog\HelpCardVisualCatalogSO.cs
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Foundation\NineGrid.Content\Catalog\HelpCardVisualCatalogSO.cs.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Foundation\NineGrid.Content\Catalog\MiscVisualCatalogSO.cs
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Foundation\NineGrid.Content\Catalog\MiscVisualCatalogSO.cs.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Foundation\NineGrid.Content\Catalog\MonsterDeckCatalogBuilder.cs
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Foundation\NineGrid.Content\Catalog\MonsterDeckCatalogBuilder.cs.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Foundation\NineGrid.Content\Catalog\MonsterDeckTableCatalog.cs
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Foundation\NineGrid.Content\Catalog\MonsterDeckTableCatalog.cs.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Foundation\NineGrid.Content\Catalog\MonsterVisualCatalogSO.cs
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Foundation\NineGrid.Content\Catalog\MonsterVisualCatalogSO.cs.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Foundation\NineGrid.Content\Catalog\RelicVisualCatalogSO.cs
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Foundation\NineGrid.Content\Catalog\RelicVisualCatalogSO.cs.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Foundation\NineGrid.Content\Catalog\SkillVisualCatalogSO.cs
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Foundation\NineGrid.Content\Catalog\SkillVisualCatalogSO.cs.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Foundation\NineGrid.Content\Catalog\TableNineContentCatalog.cs
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Foundation\NineGrid.Content\Catalog\TableNineContentCatalog.cs.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Foundation\NineGrid.Content\Catalog\ThemeDeckFormalReadiness.cs
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Foundation\NineGrid.Content\Catalog\ThemeDeckFormalReadiness.cs.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Foundation\NineGrid.Content\Catalog\ThemeDeckMappingVerifier.cs
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Foundation\NineGrid.Content\Catalog\ThemeDeckMappingVerifier.cs.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Foundation\NineGrid.Content\Catalog\ThemeDeckNarrowContract.cs
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Foundation\NineGrid.Content\Catalog\ThemeDeckNarrowContract.cs.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Foundation\NineGrid.Content\Catalog\ThemeDeckStableMapping.cs
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Foundation\NineGrid.Content\Catalog\ThemeDeckStableMapping.cs.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Foundation\NineGrid.Content\Catalog\VisualEffectCatalog.cs
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Foundation\NineGrid.Content\Catalog\VisualEffectCatalog.cs.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Foundation\NineGrid.Content\Catalog\VisualEffectEntryDto.cs
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Foundation\NineGrid.Content\Catalog\VisualEffectEntryDto.cs.meta
+
+$ rg -l "attackPattern" --glob "*.json" --glob "!Library/**" -g '!*.meta' . | Select-Object -First 20
+.\Assets\Arts\ContentVisual\cards\Armor.json
+.\Assets\Arts\ContentVisual\cards\Attack.json
+.\Assets\Arts\ContentVisual\cards\deck_help_archive.json
+.\Assets\Arts\ContentVisual\cards\deck_help.json
+.\Assets\Arts\ContentVisual\cards\deck_dragon.json
+.\Assets\Arts\ContentVisual\cards\avatar_default.json
+.\Assets\Arts\ContentVisual\cards\deck_orc_legion.json
+.\Assets\Arts\ContentVisual\cards\deck_npc.json
+.\Assets\Arts\ContentVisual\cards\deck_insect.json
+.\Assets\Arts\ContentVisual\cards\deck_transition.json
+.\Assets\Arts\ContentVisual\cards\deck_stone_legion.json
+.\Assets\Arts\ContentVisual\cards\deck_smallanimal.json
+.\Assets\Arts\ContentVisual\cards\deck_skeleton_legion.json
+.\Assets\Arts\ContentVisual\cards\ExpandItemCapacity.json
+.\Assets\Arts\ContentVisual\cards\deck_wandering_legion.json
+.\Assets\Arts\ContentVisual\cards\deck_void.json
+.\Assets\Arts\ContentVisual\cards\ExpandItemSlots.json
+.\Assets\Arts\ContentVisual\cards\help_attack_card.json
+.\Assets\Arts\ContentVisual\cards\FixItem.json
+.\Assets\Arts\ContentVisual\cards\help_armor_card.json
+
+$ Get-ChildItem -Recurse -Directory -Filter "*Resources*" -Path "Assets" | Select-Object -ExpandProperty FullName; Get-ChildItem -Recurse -Directory -Filter "*Streaming*" -Path "Assets" | Select-Object -ExpandProperty FullName
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Resources
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Arts\Images\Png\2D Pixel Quest Vol3_ The UI-GUI\Resources Orbs
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Plugins\DamageNumbersPro\Editor\Resources
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Plugins\DOTweenTimeline\Editor\Resources
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Plugins\Easy Save 3\Resources
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Plugins\Febucci\Text Animator for Unity\Samples\BuiltIn\Resources
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Plugins\Febucci\Text Animator for Unity\Scripts\Editor\Resources
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Plugins\Feel\MMFeedbacks\Editor\Resources
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Plugins\Feel\MMFeedbacks\Editor\Sequencing\Resources
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Plugins\Feel\MMFeedbacks\MMFeedbacksForThirdParty\Cinemachine\Resources
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Plugins\Feel\MMFeedbacks\MMFeedbacksForThirdParty\HDRP\Resources
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Plugins\Feel\MMFeedbacks\MMFeedbacksForThirdParty\PostProcessing\Resources
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Plugins\Feel\MMFeedbacks\MMFeedbacksForThirdParty\URP\Resources
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Plugins\Feel\MMTools\Accessories\MMDebugOnScreen\Resources
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Plugins\Feel\MMTools\Foundation\MMAchievements\Resources
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Plugins\Feel\NiceVibrations\Scripts\Components\Resources
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Plugins\Sirenix\Odin Inspector\Config\Resources
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\QFramework\Toolkits\ResKit\Scripts\Implements\ResourcesSupport
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\QFramework\Toolkits\UIKit\Scripts\Resources
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\QFramework\Toolkits\_CoreKit\ActionKit\Scripts\ScreenTransition\Resources
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\QFramework\Toolkits\_CoreKit\GraphKit\IMGUI\Scripts\Editor\Resources
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\QFramework\Toolkits\_CoreKit\Internal\Guidline\Editor\Resources
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\QFramework\Toolkits\_CoreKit\PackageKit\Markdown\Resources
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\TextMesh Pro\Resources
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\StreamingAssets
+
+$ Get-ChildItem -File "Assets\Arts\ContentVisual\cards\deck_*.json" | Select-Object -ExpandProperty Name
+deck_dragon.json
+deck_help_archive.json
+deck_help.json
+deck_insect.json
+deck_npc.json
+deck_orc_legion.json
+deck_player.json
+deck_relic_archive.json
+deck_relic.json
+deck_skeleton_legion.json
+deck_smallanimal.json
+deck_stone_legion.json
+deck_transition.json
+deck_trap.json
+deck_void.json
+deck_wandering_legion.json
+
+$ rg -l '"kind"\s*:\s*"Monster"|"attackPattern"|"cardKind"\s*:\s*"Monster"' --glob "*.json" "Assets\Arts\ContentVisual\cards" | Measure-Object | Select-Object -ExpandProperty Count
+177
+
+→ Read Assets/Scripts/NineGrid.Foundation/NineGrid.Content/Catalog/ThemeDeckStableMapping.cs
+
+$ $files = @("monster.melee_3","monster.big_stone","monster.wandering_child","monster.smart_orc","monster.ringleader","monster.dragon_cult_leader","monster.bone_club_skeleton"); foreach ($f in $files) { $p = "Assets\Arts\ContentVisual\cards\$f.json"; if (Test-Path $p) { $j = Get-Content $p -Raw -Encoding UTF8 | ConvertFrom-Json; Write-Output "=== $f ==="; Write-Output ("id=" + $j.id + " | name=" + $j.displayName + " | deckId=" + $j.deckId); Write-Output ("stats: " + ($j.stats | ConvertTo-Json -Compress)); Write-Output ("attackPattern: " + ($j.attackPattern | ConvertTo-Json -Compress)) } else { Write-Output "=== $f : NOT FOUND ===" } }
+=== monster.melee_3 : NOT FOUND ===
+=== monster.big_stone : NOT FOUND ===
+=== monster.wandering_child : NOT FOUND ===
+=== monster.smart_orc : NOT FOUND ===
+=== monster.ringleader : NOT FOUND ===
+=== monster.dragon_cult_leader : NOT FOUND ===
+=== monster.bone_club_skeleton : NOT FOUND ===
+
+$ rg -l '"monster\.melee_3"|"id"\s*:\s*"monster\.' --glob "*.json" "Assets" -g '!Library/**' -g '!*.meta' 2>$null | Select-Object -First 5
+Assets\Arts\ContentVisual\cards\monster_melee_3.json
+Assets\Arts\ContentVisual\cards\_index.json
+Assets\StreamingAssets\ContentVisual\cards\_index.json
+Assets\StreamingAssets\ContentVisual\cards\monster_melee_3.json
+Assets\Notes\Logs\CoreLog\corelog-20260806-142051-858-seed1.json
+
+$ Get-ChildItem -Recurse -File "Assets\Arts\ContentVisual" -Filter "*.json" | Measure-Object | Select-Object -ExpandProperty Count
+292
+
+$ Get-Content "Assets\Arts\ContentVisual\cards\monster_melee_3.json" -Raw -Encoding UTF8 | ConvertFrom-Json | ConvertTo-Json -Depth 5
+{
+  "schemaVersion": 2,
+  "contentId": "monster.melee_3",
+  "kind": "Monster",
+  "deckId": "deck.dragon",
+  "role": "",
+  "displayName": "СС��ķ",
+  "designSlotName": "",
+  "description": "[[��ͨ��ս]]",
+  "faceIntro": "�����޺�",
+  "attackPattern": "��ͨ��ս",
+  "gold": 5,
+  "stats": {
+    "hp": 4,
+    "armor": 2,
+    "attack": 1,
+    "action": 3,
+    "recovery": 0
+  },
+  "sprites": {
+    "mainIcon": "",
+    "faceBackground": "",
+    "cardFrame": "",
+    "banner": "",
+    "backBorder": "",
+    "backShirt": "",
+    "backLogo": ""
+  },
+  "mainVisual": {
+    "offsetX": 0.05000000074505806,
+    "offsetY": -0.10000000149011612,
+    "uniformScale": 1.0
+  },
+  "animations": {
+    "defaultFps": 8.0,
+    "slots": [
+      {
+        "id": "idle",
+        "sourceType": "folder",
+        "path": "Assets/Resources/ContentArt/Png/���ع���ϼ�/sprites/Map01_monster01_idle_01",
+        "offsetX": 0.0,
+        "offsetY": 0.0
+      },
+      {
+        "id": "attack",
+        "sourceType": "none",
+        "path": "",
+        "offsetX": 0.0,
+        "offsetY": 0.0
+      },
+      {
+        "id": "hurt",
+        "sourceType": "none",
+        "path": "",
+        "offsetX": 0.0,
+        "offsetY": 0.0
+      },
+      {
+        "id": "death",
+        "sourceType": "none",
+        "path": "",
+        "offsetX": 0.0,
+        "offsetY": 0.0
+      },
+      {
+        "id": "lunch",
+        "sourceType": "none",
+        "path": "",
+        "offsetX": 0.0,
+        "offsetY": 0.0
+      }
+    ]
+  },
+  "extraSlots": [],
+  "rarity": "None",
+  "tags": [],
+  "effectAssemblies": [],
+  "effectIds": [],
+  "skillIds": [],
+  "level": "��ͨ",
+  "sequence": 1,
+  "isElite": false,
+  "isBoss": false,
+  "isReserve": false,
+  "containerType": "",
+  "deckKind": "",
+  "monsterDefIds": [],
+  "weight": 0,
+  "rewardPoolId": "",
+  "shopOfferCount": 0,
+  "openingInjects": [],
+  "iconPrefab": "",
+  "boardSlot": 0
+}
+
+$ $out = New-Object System.Collections.Generic.List[string]; Get-ChildItem -File "Assets\Arts\ContentVisual\cards\monster_*.json" | ForEach-Object { try { $j = Get-Content $_.FullName -Raw -Encoding UTF8 | ConvertFrom-Json; if ($j.kind -eq "Monster") { $line = [string]::Format("{0}`t{1}`t{2}`t{3}`t{4}`t{5}`t{6}`t{7}`t{8}`t{9}`t{10}", $j.contentId, $j.deckId, $j.sequence, $j.level, $j.isBoss, $j.isReserve, $j.attackPattern, $j.stats.hp, $j.stats.armor, $j.stats.attack, $j.stats.action); $out.Add($line) } } catch { } }; [System.IO.File]::WriteAllLines("C:\Users\jinji\AppData\Local\Temp\opencode\monster_audit.tsv", $out.ToArray(), (New-Object System.Text.UTF8Encoding($true))); Write-Output ("wrote " + $out.Count + " lines")
+wrote 64 lines
+
+→ Read C:/Users/jinji/AppData/Local/Temp/opencode/monster_audit.tsv
+→ Read Assets/Docs/九宫格登神/07-流程/卡组生成流程.md
+✱ Grep "AttackPattern" in Assets/Scripts/NineGrid.Foundation/NineGrid.Core · 65 matches
+Now let me look at the design docs for countdown and deck generation, plus the Core code consuming attack patterns.
+→ Read Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Domain/AttackPattern.cs
+Key finding: threshold may be code-hardcoded, not JSON. Let me verify.
+✱ Grep "Stats\.Action|\.Action\b.*[Ff]requency|CardStats\.Action" in Assets/Scripts · 9 matches
+→ Read Assets/Scripts/NineGrid.Foundation/NineGrid.Content/Catalog/ContentJsonCatalogProjector.cs [offset=160, limit=60]
+→ Read Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Domain/CardDraft.cs [offset=60, limit=50]
+→ Read Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Systems/ContentSystem.cs [limit=70, offset=100]
+✱ Grep "sequence\s*==\s*1|Sequence\s*==\s*1|sequence\s*==\s*1\b" in Assets/Scripts · 0 matches
+Now checking for content generation/validation logic and the deck table, plus design doc on 移动与旋转机制 (countdown semantics).
+
+$ rg -n "monster_decks|deck_kind|deckKind" --glob "*.json" "Assets\Arts\ContentVisual" -g '!*.meta' -l | Select-Object -First 10
+Assets\Arts\ContentVisual\cards\Armor.json
+Assets\Arts\ContentVisual\cards\Attack.json
+Assets\Arts\ContentVisual\tables\monster_decks.json
+Assets\Arts\ContentVisual\cards\Attribute.json
+Assets\Arts\ContentVisual\cards\avatar_default.json
+Assets\Arts\ContentVisual\cards\Boss.json
+Assets\Arts\ContentVisual\cards\deck_dragon.json
+Assets\Arts\ContentVisual\cards\deck_help_archive.json
+Assets\Arts\ContentVisual\cards\deck_help.json
+Assets\Arts\ContentVisual\cards\deck_insect.json
+
+$ [Console]::OutputEncoding = [System.Text.Encoding]::UTF8; Get-Content "Assets\Arts\ContentVisual\tables\monster_decks.json" -Raw -Encoding UTF8 | ConvertFrom-Json | ConvertTo-Json -Depth 6
+[
+  {
+    "deck_id": "deck.transition",
+    "deck_kind": "Reserve",
+    "display_name": "过渡卡组"
+  },
+  {
+    "deck_id": "deck.wandering_legion",
+    "deck_kind": "Reserve",
+    "display_name": "动物牌组"
+  },
+  {
+    "deck_id": "deck.stone_legion",
+    "deck_kind": "Unknown",
+    "display_name": "哥布牌组"
+  },
+  {
+    "deck_id": "deck.skeleton_legion",
+    "deck_kind": "Unknown",
+    "display_name": "骷髅牌组"
+  },
+  {
+    "deck_id": "deck.orc_legion",
+    "deck_kind": "Unknown",
+    "display_name": "植物牌组"
+  },
+  {
+    "deck_id": "deck.void",
+    "deck_kind": "Unknown",
+    "display_name": "旅者牌组"
+  },
+  {
+    "deck_id": "deck.dragon",
+    "deck_kind": "Unknown",
+    "display_name": "莱姆牌组"
+  },
+  {
+    "deck_id": "deck.insect",
+    "deck_kind": "Unknown",
+    "display_name": "昆虫卡组"
+  },
+  {
+    "deck_id": "deck.npc",
+    "deck_kind": "Reserve",
+    "display_name": "NPC卡组"
+  },
+  {
+    "deck_id": "deck.smallanimal",
+    "deck_kind": "Unknown",
+    "display_name": "小动物卡组"
+  }
+]
+
+$ rg -n "倒计时|行动计数|每\s*\d+\s*次|开火" "Assets\Docs\九宫格登神" --glob "*.md" -g '!00-*'
+Assets\Docs\九宫格登神\04-敌人侧卡牌信息\怪物技能.md:47:效果【类型怪物技能】：[场上]每次本卡对玩家卡造成一次伤害，其他怪物卡的互动次数+1（倒计时-1）
+Assets\Docs\九宫格登神\02-机制\翻面机制.md:7:- 背面默认**双向惰性**：背面卡不可被伤害、不推进/不开火，被动与常规技能默认**不生效**；只有显式声明豁免（`ActiveWhileFaceDown`）的效果才可在背面生效（ADR-0016）。「背面技能照常生效」的旧说法已废止
+
+$ rg -l "attackPattern|stats" "Assets\Scripts\NineGrid.Foundation\NineGrid.Content.Editor" --glob "*.cs" 2>$null; rg -n "MonsterJson|GenerateMonster|生成" "Assets\Scripts\NineGrid.Foundation\NineGrid.Content.Editor" --glob "*.cs" 2>$null | Select-Object -First 20
+Assets\Scripts\NineGrid.Foundation\NineGrid.Content.Editor\CardPresentationEditorWindow.cs
+Assets\Scripts\NineGrid.Foundation\NineGrid.Content.Editor\CardPresentationMigration.cs
+Assets\Scripts\NineGrid.Foundation\NineGrid.Content.Editor\MonsterLoadoutPresentationValidator.cs
+Assets\Scripts\NineGrid.Foundation\NineGrid.Content.Editor\CardPresentationEditorSession.cs:1314:        /// 否则�?body 占位符生成最�?JSON。避�?UI 默认 <c>{}</c> �?<c>{{value}}</c> 落成�?0�?
+Assets\Scripts\NineGrid.Foundation\NineGrid.Content.Editor\CardPresentationEditorSession.cs:1661:                // 磁盘为权威（#140）：扫盘生成索引，避�?Editor 会话状态与磁盘漂移漏抄
+Assets\Scripts\NineGrid.Foundation\NineGrid.Content.Editor\VisualEffectCatalogEditorIO.cs:13:    /// 特效库表编辑读写（Authoring Arts + StreamingAssets 同步）与目录扫描生成�?
+Assets\Scripts\NineGrid.Foundation\NineGrid.Content.Editor\VisualEffectCatalogEditorIO.cs:210:        /// 扫描 Resources 特效树生�?刷新条目；保留已有条目的 fps/scale/displayName/timingBindings�?
+
+$ [Console]::OutputEncoding = [System.Text.Encoding]::UTF8; $files = @("monster_melee_3","monster_big_stone","monster_wandering_child","monster_smart_orc","monster_ringleader","monster_dragon_cult_leader","monster_bone_club_skeleton"); foreach ($f in $files) { $j = Get-Content "Assets\Arts\ContentVisual\cards\$f.json" -Raw -Encoding UTF8 | ConvertFrom-Json; Write-Output ($j.contentId + " | designSlotName=[" + $j.designSlotName + "] | displayName=[" + $j.displayName + "] | attackPattern=[" + $j.attackPattern + "] | hp=" + $j.stats.hp + " armor=" + $j.stats.armor + " attack=" + $j.stats.attack + " action=" + $j.stats.action) }
+monster.melee_3 | designSlotName=[] | displayName=[小小莱姆] | attackPattern=[普通近战] | hp=4 armor=2 attack=1 action=3
+monster.big_stone | designSlotName=[] | displayName=[小蜜蜂] | attackPattern=[斜角近战] | hp=4 armor=2 attack=1 action=3
+monster.wandering_child | designSlotName=[] | displayName=[巨斧骷髅] | attackPattern=[普通近战] | hp=4 armor=0 attack=1 action=3
+monster.smart_orc | designSlotName=[] | displayName=[紫蝎] | attackPattern=[普通近战] | hp=4 armor=2 attack=1 action=3
+monster.ringleader | designSlotName=[] | displayName=[巨棒哥布] | attackPattern=[普通近战] | hp=4 armor=2 attack=1 action=3
+monster.dragon_cult_leader | designSlotName=[] | displayName=[蓝焰] | attackPattern=[普通近战] | hp=4 armor=0 attack=1 action=3
+monster.bone_club_skeleton | designSlotName=[] | displayName=[拳击决斗者] | attackPattern=[无] | hp=4 armor=4 attack=1 action=0
+
+$ git log --oneline -8 -- "Assets/Arts/ContentVisual/cards/monster_big_stone.json" "Assets/Arts/ContentVisual/cards/monster_melee_3.json" "Assets/Arts/ContentVisual/cards/monster_wandering_child.json"
+a4a7b9f92 改动卡牌配置
+ce4716817 准备落地作弊面板
+d0c9839cc feat(content): 召唤套怪物技能迁移 effectAssemblies → skillIds（#130）
+297e712ca 合并
+c5f7c18e8 合并
+b717b15c6 Core/Content: theme monster decks + sequence 1-5 draws (#86).
+6094b924c 落地房间编辑器选项
+ba6c04884 落地批次1
+
+$ git log --oneline -3 -- "Assets/Arts/ContentVisual/cards/monster_bone_club_skeleton.json" "Assets/Arts/ContentVisual/cards/monster_smart_orc.json" "Assets/Arts/ContentVisual/cards/monster_ringleader.json" "Assets/Arts/ContentVisual/cards/monster_dragon_cult_leader.json"
+b3469cdda 合并
+bf68a2359 彻底完善怪物表现
+50a43c082 继续调整
+
+$ git show a4a7b9f92 --stat | Select-Object -First 30
+commit a4a7b9f92fdd92e13f6308b7a63c8297aff6692d
+Author: Tang Jin <156814864+tja688@users.noreply.github.com>
+Date:   Thu Aug 6 12:38:59 2026 +0800
+
+    改动卡牌配置
+
+ Assets/Arts/ContentVisual/cards/monster_beggar.json  | 12 ++++++------
+ .../ContentVisual/cards/monster_big_skeleton.json    |  8 ++++----
+ .../cards/monster_big_skeleton_reborn.json           | 12 ++++++------
+ .../Arts/ContentVisual/cards/monster_big_stone.json  |  8 ++++----
+ .../cards/monster_bone_club_skeleton.json            |  4 ++--
+ .../ContentVisual/cards/monster_bone_courier.json    |  6 +++---
+ .../ContentVisual/cards/monster_brainless_orc.json   | 20 +++++++++++++++-----
+ .../cards/monster_dragon_cult_leader.json            |  4 ++--
+ .../ContentVisual/cards/monster_fire_bather.json     | 10 +++++-----
+ .../ContentVisual/cards/monster_fire_dragon.json     |  2 +-
+ .../ContentVisual/cards/monster_fire_priest.json     |  8 ++++----
+ .../ContentVisual/cards/monster_fire_swallower.json  | 10 +++++-----
+ .../cards/monster_headless_skeleton.json             | 12 ++++++------
+ Assets/Arts/ContentVisual/cards/monster_melee_3.json | 16 ++++++++--------
+ .../ContentVisual/cards/monster_orc_commander.json   | 20 +++++++++++++++-----
+ Assets/Arts/ContentVisual/cards/monster_rogue.json   |  6 +++---
+ .../ContentVisual/cards/monster_skeleton_king.json   |  8 ++++----
+ .../cards/monster_skeleton_taunter.json              |  4 ++--
+ .../Arts/ContentVisual/cards/monster_skull_head.json | 12 ++++++------
+ Assets/Arts/ContentVisual/cards/monster_sky_eye.json |  4 ++--
+ .../Arts/ContentVisual/cards/monster_smart_orc.json  | 20 +++++++++++++++-----
+ .../Arts/ContentVisual/cards/monster_smuggler.json   |  2 +-
+ .../ContentVisual/cards/monster_veteran_orc.json     | 20 +++++++++++++++-----
+ .../ContentVisual/cards/monster_wandering_child.json |  4 ++--
+
+$ git show a4a7b9f92 -- "Assets/Arts/ContentVisual/cards/monster_melee_3.json" "Assets/Arts/ContentVisual/cards/monster_big_stone.json" "Assets/Arts/ContentVisual/cards/monster_wandering_child.json" "Assets/Arts/ContentVisual/cards/monster_bone_club_skeleton.json" | Select-String -Pattern '^[-+].*(armor|hp|attack|action|attackPattern|sequence|contentId)' | ForEach-Object { $_.Line }
+-                "path": "Assets/Arts/Images/Png/像素怪物合集/sprites/Eric_attack_01_M",
++                "path": "Assets/Resources/ContentArt/Png/像素怪物合集2/sprites/Eric_attack_01_M",
+
+$ git log --all --oneline -p -S '"armor": 2' -- "Assets/Arts/ContentVisual/cards/monster_melee_3.json" | Select-String -Pattern '^commit |^Date: |^[-+].*armor' | Select-Object -First 30 | ForEach-Object { $_.Line }
+-    "armor": 0,
++        "armor": 2,
+
+$ git log --all --oneline -p -S '"armor": 0' -- "Assets/Arts/ContentVisual/cards/monster_melee_3.json" | Select-String -Pattern '^commit |^Date: |^[-+].*armor' | Select-Object -First 30 | ForEach-Object { $_.Line }
+-    "armor": 0,
++        "armor": 2,
++        "armor": 0,
+
+$ git log --all --format="%h %ad %s" --date=short -p -S '"armor": 2' -- "Assets/Arts/ContentVisual/cards/monster_melee_3.json" | Select-String -Pattern '^[0-9a-f]{9,}\s|armor' | Select-Object -First 40 | ForEach-Object { $_.Line }
+297e712ca 2026-08-03 合并
+-    "armor": 0,
++        "armor": 2,
+
+$ $files = @("monster_big_stone","monster_smart_orc","monster_ringleader","monster_bone_club_skeleton","monster_dragon_cult_leader","monster_wandering_child"); foreach ($f in $files) { Write-Output "=== $f ==="; git log --all --format="%h %ad %s" --date=short -p -S '"armor": 2' -- "Assets/Arts/ContentVisual/cards/$f.json" | Select-String -Pattern '^[0-9a-f]{9,}\s|armor' | Select-Object -First 10 | ForEach-Object { $_.Line } }
+=== monster_big_stone ===
+297e712ca 2026-08-03 合并
+-    "armor": 5,
++        "armor": 2,
+=== monster_smart_orc ===
+297e712ca 2026-08-03 合并
+-    "armor": 0,
++        "armor": 2,
+=== monster_ringleader ===
+297e712ca 2026-08-03 合并
+-    "armor": 4,
++        "armor": 2,
+=== monster_bone_club_skeleton ===
+=== monster_dragon_cult_leader ===
+=== monster_wandering_child ===
+
+$ git show 297e712ca --stat | Select-Object -First 60
+commit 297e712cabc55211ccbe5f4d7ca4ba58f2585054
+Author: TJA688 <156814864+tja688@users.noreply.github.com>
+Date:   Mon Aug 3 18:22:50 2026 +0800
+
+    合并
+
+ Assets/Arts/ContentVisual/cards/_index.json        | 310 +++++++++++----------
+ Assets/Arts/ContentVisual/cards/deck_dragon.json   | 179 ++++++------
+ Assets/Arts/ContentVisual/cards/deck_insect.json   | 180 ++++++------
+ .../Arts/ContentVisual/cards/deck_orc_legion.json  | 179 ++++++------
+ .../ContentVisual/cards/deck_skeleton_legion.json  | 179 ++++++------
+ .../Arts/ContentVisual/cards/deck_smallanimal.json | 180 ++++++------
+ .../ContentVisual/cards/deck_stone_legion.json     | 179 ++++++------
+ Assets/Arts/ContentVisual/cards/deck_void.json     | 179 ++++++------
+ .../cards/help_armor_breaking_hammer.json          |  33 ++-
+ .../ContentVisual/cards/help_blood_conversion.json |  34 ++-
+ .../ContentVisual/cards/help_blue_chest_card.json  |  34 ++-
+ Assets/Arts/ContentVisual/cards/help_bomb.json     |  34 ++-
+ .../ContentVisual/cards/help_brutality_card.json   |  33 ++-
+ .../cards/help_common_chest_card.json              |  33 ++-
+ .../ContentVisual/cards/help_doubling_tower.json   |  39 +--
+ Assets/Arts/ContentVisual/cards/help_fireball.json |  34 ++-
+ .../Arts/ContentVisual/cards/help_food_card.json   |  34 ++-
+ .../Arts/ContentVisual/cards/help_gold_card.json   |  33 ++-
+ .../cards/help_golden_chest_card.json              |  33 ++-
+ .../Arts/ContentVisual/cards/help_kidnapping.json  |  33 ++-
+ .../ContentVisual/cards/help_stat_boost_card.json  |  33 ++-
+ .../ContentVisual/cards/help_sturdy_shield.json    |  34 ++-
+ .../Arts/ContentVisual/cards/help_swap_card.json   |  33 ++-
+ .../ContentVisual/cards/help_teleport_card.json    |  33 ++-
+ .../ContentVisual/cards/help_throwing_knife.json   |  34 ++-
+ .../ContentVisual/cards/help_ward_magic_card.json  |  33 ++-
+ .../Arts/ContentVisual/cards/help_watchtower.json  |  39 +--
+ .../Arts/ContentVisual/cards/monster_beggar.json   | 186 +++++++------
+ .../Arts/ContentVisual/cards/monster_big_orc.json  | 183 ++++++------
+ .../ContentVisual/cards/monster_big_skeleton.json  | 184 ++++++------
+ .../cards/monster_big_skeleton_reborn.json         | 184 ++++++------
+ .../ContentVisual/cards/monster_big_stone.json     | 182 ++++++------
+ .../cards/monster_bone_club_skeleton.json          | 193 ++++++-------
+ .../ContentVisual/cards/monster_bone_courier.json  | 199 ++++++-------
+ .../ContentVisual/cards/monster_brainless_orc.json | 199 ++++++-------
+ .../cards/monster_dragon_cult_leader.json          | 186 +++++++------
+ .../cards/monster_dragon_follower.json             | 184 ++++++------
+ .../ContentVisual/cards/monster_fire_bather.json   | 199 ++++++-------
+ .../ContentVisual/cards/monster_fire_dragon.json   | 193 ++++++-------
+ .../ContentVisual/cards/monster_fire_priest.json   | 197 +++++++------
+ .../cards/monster_fire_swallower.json              | 199 ++++++-------
+ .../cards/monster_headless_skeleton.json           | 184 ++++++------
+ .../Arts/ContentVisual/cards/monster_hoodlum.json  | 186 +++++++------
+ .../Arts/ContentVisual/cards/monster_melee_3.json  | 182 ++++++------
+ .../Arts/ContentVisual/cards/monster_melee_6.json  | 184 ++++++------
+ Assets/Arts/ContentVisual/cards/monster_mist.json  | 186 ++++++-------
+ .../ContentVisual/cards/monster_orc_commander.json | 199 ++++++-------
+ .../ContentVisual/cards/monster_pickpocket.json    | 187 +++++++------
+ .../ContentVisual/cards/monster_ringleader.json    | 186 +++++++------
+ Assets/Arts/ContentVisual/cards/monster_rogue.json | 191 +++++++------
+ .../ContentVisual/cards/monster_salamander.json    | 187 +++++++------
+ .../ContentVisual/cards/monster_shelter_stone.json | 185 ++++++------
+ .../ContentVisual/cards/monster_skeleton_king.json | 191 +++++++------
+ .../cards/monster_skeleton_taunter.json            | 191 +++++++------
+
+Let me check whether monster card faces actually display armor (potential display gap explaining the feedback).
+$ rg -ln "Armor" "Assets\Scripts\NineGrid.Presentation\Cards" --glob "*.cs" | Select-Object -First 15
+Assets\Scripts\NineGrid.Presentation\Cards\ArmorBlockDisplay.cs
+Assets\Scripts\NineGrid.Presentation\Cards\CombatPresentationContracts.cs
+Assets\Scripts\NineGrid.Presentation\Cards\DamageNumberHook.cs
+Assets\Scripts\NineGrid.Presentation\Cards\PixelCardPackSpriteLibrary.cs
+Assets\Scripts\NineGrid.Presentation\Cards\Presentation\CardFaceDescriptionIconCatalogSO.cs
+Assets\Scripts\NineGrid.Presentation\Cards\Slots\CardFaceSlotCodes.cs
+Assets\Scripts\NineGrid.Presentation\Cards\Slots\CardFaceSlotRegistrySO.cs
+Assets\Scripts\NineGrid.Presentation\Cards\Slots\CardFaceSlotNodeMap.cs
+Assets\Scripts\NineGrid.Presentation\Cards\StandardCardView.cs
+Assets\Scripts\NineGrid.Presentation\Cards\Presentation\CardFacePresentationBinder.cs
+Assets\Scripts\NineGrid.Presentation\Cards\Slots\CardFaceSortingLayers.cs
+Assets\Scripts\NineGrid.Presentation\Cards\Presentation\CardPresentationSnapshot.cs
+
+$ rg -ln "ActionCount|行动计数|Action_Icon" "Assets\Scripts\NineGrid.Presentation" --glob "*.cs" | Select-Object -First 15
+Assets\Scripts\NineGrid.Presentation\Flow\CardInspectOverlayPresenter.cs
+Assets\Scripts\NineGrid.Presentation\Editor\VisualEffectPreviewHost.cs
+Assets\Scripts\NineGrid.Presentation\Editor\CardFacePreviewRequest.cs
+Assets\Scripts\NineGrid.Presentation\Flow\BattleSession\BattleSessionCheat.cs
+Assets\Scripts\NineGrid.Presentation\Tests\Cards\CardFaceDescriptionComposerTests.cs
+Assets\Scripts\NineGrid.Presentation\Tests\Cards\CardFacePreviewBuilderTests.cs
+Assets\Scripts\NineGrid.Presentation\Flow\CoreCardPresentationMapper.cs
+Assets\Scripts\NineGrid.Presentation\Tests\Cards\CardPresentationCommitTests.cs
+Assets\Scripts\NineGrid.Presentation\Tests\Flow\EnemyActionVolleyIntentTests.cs
+Assets\Scripts\NineGrid.Presentation\Cards\Slots\CardFaceSlotRegistrySO.cs
+Assets\Scripts\NineGrid.Presentation\Cards\Slots\CardFaceSlotNodeMap.cs
+Assets\Scripts\NineGrid.Presentation\Cards\Slots\CardFaceSlotCodes.cs
+Assets\Scripts\NineGrid.Presentation\Cards\Slots\CardFaceSortingLayers.cs
+Assets\Scripts\NineGrid.Presentation\Cards\Presentation\CardFaceDescriptionIconCatalogSO.cs
+Assets\Scripts\NineGrid.Presentation\Cards\Presentation\CardFaceDescriptionInlineIconStyleSO.cs
+
+✱ Grep "Armor|护甲|Stat_|ArmorBlock" in Assets/Scripts/NineGrid.Presentation/Cards/Presentation · 5 matches
+→ Read Assets/Scripts/NineGrid.Presentation/Cards/Presentation/CardFacePresentationBinder.cs [limit=80, offset=410]
+
+$ rg -n "倒计时|序列1|序列为1|护甲" "Assets\Notes" --glob "*.md" -l 2>$null | Select-Object -First 10
+Assets\Notes\归档\QuickTest效果通道-技能测试预期对�?md
+Assets\Notes\归档\机关卡落�?三批计划-2026-08-01.md
+Assets\Notes\归档\剩技硬骨头落�?三批计划-2026-07-31.md
+Assets\Notes\归档\怪物攻击模式与敌方行动阶�?落地方案-2026-07-29.md
+
+$ rg -n "近战|远程|次|倒计时" "Assets\Docs\九宫格登神\02-机制\移动与旋转机制.md" "Assets\Docs\九宫格登神\02-机制\交互机制.md" | Select-Object -First 25
+Assets\Docs\九宫格登神\02-机制\交互机制.md:16:  - 不累�?互动次数
+
+$ [Console]::OutputEncoding = [System.Text.Encoding]::UTF8; rg -n "阈值|频率|3\b|5\b|近战" "Assets\Notes\归档\怪物攻击模式与敌方行动阶段-落地方案-2026-07-29.md" | Select-Object -First 40
+10:> **非权威。** 决策权威在 [ADR-0011](../../docs/adr/0011-monster-attack-pattern-intrinsic.md) / [ADR-0012](../../docs/adr/0012-enemy-action-phase-volley.md) / [ADR-0013](../../docs/adr/0013-action-countdown-unified.md)，领域语言权威在根目录 `CONTEXT.md`。本文只记实施顺序、拆票与迁移清单。
+31:- **这一步会改变现有行为**：依赖 `OnInteract` 的遗物/技能触发频率上升到设计值。必须单独成票，不要和新机制混在一起，否则回归来源分不清。
+33:**T2 — 行动计数统一为倒计时语义。** 改 `OnSelfMoveTrigger`（模运算 → 倒计时）、`OnCumulativeTrigger`（阈值减 → 倒计时减 delta），给 `OnInteractTrigger` 补 `every` 参数。
+39:**T3 — 新增几何谓词「对角相邻」。** 行列差均为 1。既有 `SlotId.IsAdjacentTo` / `IBoardSystem.AreAdjacent` 的正交语义**不动**；`RuleId.VirtualAdjacency` 仍只服务怪-怪融合。纯新增，零风险。
+43:**T4 — 卡数据新增 `attackPattern` 必填枚举 + 加载期校验。** 取值：普通近战 / 斜角近战 / 全向近战 / 普通远程 / 无。缺失即装配错误。同票把 61 只怪批量写 `无`（行为中性，等价于当前现状）。
+45:**T5 — Core 敌方行动阶段。** 报名 / 逐条结算 / 收尾三个分拍入口（参照现有 `ResolvePostKillFill` / `ResolvePostKillRotate` 风格）+ 单向打击伤害动作 + 行动名单冻结（uid 升序）+ 逐条资格复核 + 阶段内盘面冻结 + 玩家死亡即终止。收尾段只补牌与通关检查，**不旋转**。
+49:**T7 — 行动倒计时上卡面。** 新增 Core 事件类型 → `PresentationInstructionKind` → `PresentationEventMap` 的 Beat 归属 → `CardFaceStatHandler`。按 ADR-0005，**不得**在 View 上自己减倒计时。
+65:| JSON `stats.action` | 该模式的阈值 N（作者填） |
+67:| 卡面槽 `ActionCount` | 行动倒计时（3 → 2 → 1 → 开火） |
+74:2. **攻击力 0 的怪。** `monster.big_stone`（0/1/5）与 `monster.fire_priest`（0/12/8）零反击，玩家砍它们不付血量代价，因而能免费冻结盘面。两者只能填 `无`。或调数值、或限制同场投放、或明确定为「可用来买时间的安全沙袋」。
+75:3. **模式图标美术。**
+76:4. **平衡实测。** ADR-0013 的期望间隔表以「每次互动都旋转」为一阶近似；实际未击杀不旋转，需实测校正。
+82:T5 / T6 落地后需同 PR 更新 [`docs/code-map/presentation.md`](../../docs/code-map/presentation.md) 与 [`tests.md`](../../docs/code-map/tests.md)，并把 `README.md` 里 ADR-0011 / 0012 / 0013 的「未落地」标记摘掉。
+
+→ Read Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Systems/ContentSystem.cs [limit=40, offset=370]
+→ Read Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Content/ContentDefinitions.cs [limit=30, offset=240]
+
+$ $rows = Import-Csv "C:\Users\jinji\AppData\Local\Temp\opencode\monster_audit.tsv" -Delimiter "`t" -Encoding UTF8; $formal = @("deck.dragon","deck.orc_legion","deck.insect","deck.skeleton_legion","deck.smallanimal","deck.stone_legion","deck.void"); Write-Output ("== all monsters: " + $rows.Count); Write-Output ("== melee-mode all: " + ($rows | Where-Object { $_.attackPattern -match "近战" }).Count); Write-Output ("== ranged: " + ($rows | Where-Object { $_.attackPattern -eq "普通远程" }).Count); Write-Output ("== none: " + ($rows | Where-Object { $_.attackPattern -eq "无" }).Count); $f = $rows | Where-Object { $formal -contains $_.deckId -and $_.isReserve -ne "True" }; Write-Output ("== formal deck members (35): " + $f.Count); Write-Output ("== formal melee: " + ($f | Where-Object { $_.attackPattern -match "近战" }).Count); Write-Output ("== formal ranged: " + ($f | Where-Object { $_.attackPattern -eq "普通远程" }).Count); Write-Output ("== formal none: " + ($f | Where-Object { $_.attackPattern -eq "无" }).Count); Write-Output "== formal by pattern:"; $f | Group-Object attackPattern | ForEach-Object { Write-Output ($_.Name + " : " + $_.Count) }
+Import-Csv: The member "3" is already present.
+== all monsters: 0
+== melee-mode all: 0
+== ranged: 0
+== none: 0
+== formal deck members (35): 0
+== formal melee: 0
+== formal ranged: 0
+== formal none: 0
+== formal by pattern:
+
+$ $lines = [System.IO.File]::ReadAllLines("C:\Users\jinji\AppData\Local\Temp\opencode\monster_audit.tsv", [System.Text.Encoding]::UTF8); $rows = $lines | ForEach-Object { $p = $_.Split("`t"); [pscustomobject]@{ id=$p[0]; deck=$p[1]; seq=$p[2]; level=$p[3]; boss=$p[4]; reserve=$p[5]; pattern=$p[6]; hp=$p[7]; armor=$p[8]; atk=$p[9]; action=$p[10] } }; $formal = @("deck.dragon","deck.orc_legion","deck.insect","deck.skeleton_legion","deck.smallanimal","deck.stone_legion","deck.void"); Write-Output ("all: " + $rows.Count); Write-Output ("melee all: " + ($rows | Where-Object { $_.pattern -match "近战" }).Count); Write-Output ("ranged all: " + ($rows | Where-Object { $_.pattern -eq "普通远程" }).Count); Write-Output ("none all: " + ($rows | Where-Object { $_.pattern -eq "无" }).Count); $f = $rows | Where-Object { $formal -contains $_.deck }; Write-Output ("formal members: " + $f.Count); Write-Output ("formal melee: " + ($f | Where-Object { $_.pattern -match "近战" }).Count); Write-Output ("formal ranged: " + ($f | Where-Object { $_.pattern -eq "普通远程" }).Count); Write-Output ("formal none: " + ($f | Where-Object { $_.pattern -eq "无" }).Count); Write-Output "formal by pattern:"; $f | Group-Object pattern | ForEach-Object { Write-Output ($_.Name + " : " + $_.Count) }; Write-Output "action values in JSON:"; $rows | Group-Object action | ForEach-Object { Write-Output ("action=" + $_.Name + " : " + $_.Count) }; Write-Output "seq1 armor values:"; $rows | Where-Object { $_.seq -eq "1" -and $formal -contains $_.deck } | ForEach-Object { Write-Output ($_.id + " " + $_.deck + " hp=" + $_.hp + " atk=" + $_.atk + " armor=" + $_.armor + " " + $_.pattern) }
+all: 64
+melee all: 49
+ranged all: 9
+none all: 6
+formal members: 35
+formal melee: 23
+formal ranged: 6
+formal none: 6
+formal by pattern:
+��ͨ��ս : 21
+��ͨԶ�� : 6
+ȫ���ս : 1
+�� : 6
+б�ǽ�ս : 1
+action values in JSON:
+action=0 : 6
+action=3 : 49
+action=5 : 9
+seq1 armor values:
+monster.big_stone deck.orc_legion hp=4 atk=1 armor=2 б�ǽ�ս
+monster.bone_club_skeleton deck.void hp=4 atk=1 armor=4 ��
+monster.dragon_cult_leader deck.stone_legion hp=4 atk=1 armor=0 ��ͨ��ս
+monster.melee_3 deck.dragon hp=4 atk=1 armor=2 ��ͨ��ս
+monster.ringleader deck.smallanimal hp=4 atk=1 armor=2 ��ͨ��ս
+monster.smart_orc deck.skeleton_legion hp=4 atk=1 armor=2 ��ͨ��ս
+monster.wandering_child deck.insect hp=4 atk=1 armor=0 ��ͨ��ս
+
+$ rg -n "Sequence" "Assets\Scripts\NineGrid.Foundation\NineGrid.Core\Systems\RewardSystem.cs" "Assets\Scripts\NineGrid.Foundation\NineGrid.Core" --glob "*.cs" -l | Select-Object -First 8
+Assets\Scripts\NineGrid.Foundation\NineGrid.Core\Systems\RewardSystem.cs
+Assets\Scripts\NineGrid.Foundation\NineGrid.Core\Content\ContentDefinitions.cs
+Assets\Scripts\NineGrid.Foundation\NineGrid.Core\Presentation\ActionLogProjector.cs
+Assets\Scripts\NineGrid.Foundation\NineGrid.Core\Effects\EffectAtomLibrary.cs
+Assets\Scripts\NineGrid.Foundation\NineGrid.Core\Effects\EffectAtomSchemas.cs
+Assets\Scripts\NineGrid.Foundation\NineGrid.Core\Presentation\PresentationBatch.cs
+Assets\Scripts\NineGrid.Foundation\NineGrid.Core\Utilities\LogUtility.cs
+Assets\Scripts\NineGrid.Foundation\NineGrid.Core\Systems\ContentSystem.cs
+
+$ [Console]::OutputEncoding = [System.Text.Encoding]::UTF8; Get-Content "Assets\Arts\ContentVisual\cards\deck_dragon.json" -Raw -Encoding UTF8 | ConvertFrom-Json | ConvertTo-Json -Depth 4 | Select-Object -First 40
+{
+  "schemaVersion": 2,
+  "contentId": "deck.dragon",
+  "kind": "Deck",
+  "deckId": "",
+  "role": "",
+  "displayName": "基础怪物卡组",
+  "designSlotName": "",
+  "description": "",
+  "faceIntro": "",
+  "attackPattern": "",
+  "gold": 0,
+  "stats": {
+    "hp": 0,
+    "armor": 0,
+    "attack": 0,
+    "action": 0,
+    "recovery": 0
+  },
+  "sprites": {
+    "mainIcon": "",
+    "faceBackground": "",
+    "cardFrame": "",
+    "banner": "",
+    "backBorder": "",
+    "backShirt": "",
+    "backLogo": ""
+  },
+  "mainVisual": {
+    "offsetX": 0.0,
+    "offsetY": 0.0,
+    "uniformScale": 1.0
+  },
+  "animations": {
+    "defaultFps": 8.0,
+    "slots": [
+      {
+        "id": "idle",
+        "sourceType": "none",
+        "path": "",
+        "offsetX": 0.0,
+        "offsetY": 0.0
+      },
+      {
+        "id": "attack",
+        "sourceType": "none",
+        "path": "",
+        "offsetX": 0.0,
+        "offsetY": 0.0
+      },
+      {
+        "id": "hurt",
+        "sourceType": "none",
+        "path": "",
+        "offsetX": 0.0,
+        "offsetY": 0.0
+      },
+      {
+        "id": "death",
+        "sourceType": "none",
+        "path": "",
+        "offsetX": 0.0,
+        "offsetY": 0.0
+      },
+      {
+        "id": "lunch",
+        "sourceType": "none",
+        "path": "",
+        "offsetX": 0.0,
+        "offsetY": 0.0
+      }
+    ]
+  },
+  "extraSlots": [],
+  "rarity": "",
+  "tags": [],
+  "effectAssemblies": [],
+  "effectIds": [],
+  "skillIds": [],
+  "level": "0",
+  "sequence": 0,
+  "isElite": false,
+  "isBoss": false,
+  "isReserve": false,
+  "containerType": "",
+  "deckKind": "",
+  "monsterDefIds": [],
+  "weight": 0,
+  "rewardPoolId": "",
+  "shopOfferCount": 0,
+  "openingInjects": [],
+  "iconPrefab": "",
+  "boardSlot": 0
+}
+
+$ [Console]::OutputEncoding = [System.Text.Encoding]::UTF8; foreach ($d in @("deck_orc_legion","deck_insect","deck_skeleton_legion","deck_smallanimal","deck_stone_legion","deck_void")) { $j = Get-Content "Assets\Arts\ContentVisual\cards\$d.json" -Raw -Encoding UTF8 | ConvertFrom-Json; Write-Output ($j.contentId + " = [" + $j.displayName + "]") }; $j = Get-Content "Assets\Arts\ContentVisual\cards\deck_dragon.json" -Raw -Encoding UTF8 | ConvertFrom-Json; Write-Output ("monsterDefIds of dragon: " + ($j.monsterDefIds -join ", "))
+deck.orc_legion = [旋转怪物卡组 ]
+deck.insect = [召唤怪物卡组]
+deck.skeleton_legion = [翻面怪物卡组]
+deck.smallanimal = [链接怪物卡组]
+deck.stone_legion = [烈焰怪物卡组]
+deck.void = [决斗怪物卡组]
+monsterDefIds of dragon:
+
+$ $files = @("monster_melee_3","monster_big_stone","monster_wandering_child","monster_smart_orc","monster_ringleader","monster_dragon_cult_leader","monster_bone_club_skeleton"); foreach ($f in $files) { $a = (Get-FileHash "Assets\Arts\ContentVisual\cards\$f.json" -Algorithm MD5).Hash; $s = (Get-FileHash "Assets\StreamingAssets\ContentVisual\cards\$f.json" -Algorithm MD5).Hash; Write-Output ($f + " arts=" + $a + " streaming=" + $s + " match=" + ($a -eq $s)) }
+monster_melee_3 arts=DFB542AFE07CCD3813C50EF8B498E1AF streaming=DFB542AFE07CCD3813C50EF8B498E1AF match=True
+monster_big_stone arts=8C7E9BFC3876CC542D5FA3EF6548FCD7 streaming=8C7E9BFC3876CC542D5FA3EF6548FCD7 match=True
+monster_wandering_child arts=EDB4E8A2BA8C870E00F40C0C9D88ACB8 streaming=EDB4E8A2BA8C870E00F40C0C9D88ACB8 match=True
+monster_smart_orc arts=1ED155D3F653C7953FF1681B03F90018 streaming=1ED155D3F653C7953FF1681B03F90018 match=True
+monster_ringleader arts=9393868A5033665A2B84B64F8E4C298D streaming=9393868A5033665A2B84B64F8E4C298D match=True
+monster_dragon_cult_leader arts=C275933FFB1B8D1F2E26E354D2E61EBA streaming=C275933FFB1B8D1F2E26E354D2E61EBA match=True
+monster_bone_club_skeleton arts=EB623F8BD30E702165B53BBD4824C034 streaming=EB623F8BD30E702165B53BBD4824C034 match=True
+
+$ rg -n "Sequence" "Assets\Scripts\NineGrid.Foundation\NineGrid.Core\Systems\RewardSystem.cs" | Select-Object -First 15
+322:                AddSequenceCards(catalog, deck, options, sequence, rule.GetSequenceCount(sequence));
+747:                if (inject.SourceKind == RoomInjectSourceKind.FloorMonsterSequence)
+749:                    AddSequenceCards(catalog, deck, options, inject.MonsterSequence, inject.Count);
+900:        private int AddSequenceCards(
+912:            var candidates = FilterMonstersBySequence(catalog, deck, sequence);
+922:        private static List<CardContentDefinition> FilterMonstersBySequence(
+941:                if (card.Sequence == sequence)
+
+$ rg -ln "Armor|护甲" "Assets\Arts" --glob "*.uxml" --glob "*.prefab" --glob "*.asset" -g '!*.meta' 2>$null | Select-Object -First 10
+Assets\Arts\Cards\CardFaceSlotRegistry.asset
+Assets\Arts\ContentVisual\ChoiceOptionVisualCatalog.asset
+
+One more check — whether the monster card face template actually has an armor slot node (display gap possibility).
+$ Get-ChildItem -Recurse -File "Assets\Arts" -Include "*.uxml","*.prefab" | Where-Object { $_.Name -match "Monster|monster|Face" } | Select-Object -ExpandProperty FullName | Select-Object -First 20
+(no output)
+
+$ rg -n "MonsterFace|MonsterCardFace|Monster_|怪物卡面" "Assets\Scripts" --glob "*.cs" | Select-Object -First 10
+Assets\Scripts\NineGrid.Presentation\Editor\CardFacePreviewBuilder.cs:192:                    path = CardChassisPaths.MonsterFacePrefab;
+Assets\Scripts\NineGrid.Presentation\Flow\CardInspectOverlayPresenter.cs:666:                    path = CardChassisPaths.MonsterFacePrefab;
+Assets\Scripts\NineGrid.Foundation\NineGrid.Core.Tests\AttackPatternDataPlaneTests.cs:71:        public void ProjectMonster_MissingAttackPattern_IsUnspecified_AndValidateFails()
+Assets\Scripts\NineGrid.Foundation\NineGrid.Core.Tests\AttackPatternDataPlaneTests.cs:89:        public void ProjectMonster_ExplicitNone_PassesValidation_AndDoesNotMountEffects()
+Assets\Scripts\NineGrid.Foundation\NineGrid.Core.Tests\AttackPatternDataPlaneTests.cs:109:        public void ProjectMonster_MeleeAndRanged_WriteReadableFrequencies()
+Assets\Scripts\NineGrid.Foundation\NineGrid.Content.Editor\CardPresentationEditorWindow.cs:2667:                CardPresentationKind.Monster => CardChassisPaths.MonsterFacePrefab,
+Assets\Scripts\NineGrid.Foundation\NineGrid.Content.Editor\CardPresentationEditorWindow.cs:2672:                _ => CardChassisPaths.MonsterFacePrefab,
+Assets\Scripts\NineGrid.Foundation\NineGrid.Core.Tests\EconomyKillGoldRegressionTests.cs:41:        public void KillMonster_WithoutGoldRewardCounter_AwardsMonsterRemovedGold()
+Assets\Scripts\NineGrid.Foundation\NineGrid.Core.Tests\LeaveTrapInsertContractTests.cs:101:        public void MidBattleSpawnedTrueMonster_Kill_DoesNotCountTowardThreshold()
+Assets\Scripts\NineGrid.Foundation\NineGrid.Core.Tests\TrapBatch2RegressionTests.cs:67:        public void RollingStone_MoveToSlot3_ClearsNormalMonster_DoesNotSelfRemove()
+
+$ Get-ChildItem -Recurse -File "Assets" -Filter "*.prefab" | Where-Object { $_.FullName -match "Card|卡面|Face" } | Select-Object -ExpandProperty FullName | Select-Object -First 25
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Arts\Images\PixelartCardTCG\Demo\Samples\����ͷ��ͼͼ��.prefab
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Arts\Images\PixelartCardTCG\Demo\Samples\CardEffects.prefab
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Arts\Images\PixelartCardTCG\Demo\Samples\GameObject.prefab
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Arts\Images\PixelartCardTCG\Demo\Samples\Sample Card 1.prefab
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Arts\Images\PixelartCardTCG\Demo\Samples\Sample Card 2.prefab
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Arts\Images\PixelartCardTCG\Demo\Samples\Sample Card 3.prefab
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Arts\Images\PixelartCardTCG\Demo\Samples\Sample Card 4.prefab
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Plugins\Feel\FeelDemos\CardsUI\Prefabs\FeelCardsUI_Card_Fireproof.prefab
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Plugins\Feel\FeelDemos\CardsUI\Prefabs\FeelCardsUI_Card_Lady.prefab
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Plugins\Feel\FeelDemos\CardsUI\Prefabs\FeelCardsUI_Card_Stormeye.prefab
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Plugins\Feel\FeelDemos\CardsUI\Prefabs\FeelCardsUI_Card_Sumerian.prefab
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Plugins\Feel\FeelDemos\CardsUI\Prefabs\FeelCardsUI_Card.prefab
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Prefabs\��Standard Card.prefab
+
+$ rg -n "MonsterFacePrefab" "Assets\Scripts\NineGrid.Presentation" --glob "*.cs" | Select-Object -First 5
+Assets\Scripts\NineGrid.Presentation\Editor\CardFacePreviewBuilder.cs:192:                    path = CardChassisPaths.MonsterFacePrefab;
+Assets\Scripts\NineGrid.Presentation\Cards\CardChassisPaths.cs:14:        public const string MonsterFacePrefab = "Assets/Prefabs/怪物卡标准模�?prefab";
+Assets\Scripts\NineGrid.Presentation\Flow\CardInspectOverlayPresenter.cs:666:                    path = CardChassisPaths.MonsterFacePrefab;
+Assets\Scripts\NineGrid.Presentation\Tests\Cards\CardFacePreviewBuilderTests.cs:35:            _monsterFace = CreateMonsterFacePrefab("PreviewMonsterFace");
+Assets\Scripts\NineGrid.Presentation\Tests\Cards\CardFacePreviewBuilderTests.cs:260:        private static GameObject CreateMonsterFacePrefab(string name)
+
+$ Get-ChildItem -Recurse -File "Assets\Prefabs" | Select-Object -ExpandProperty Name
+����ͼ�� 1.prefab
+����ͼ�� 1.prefab.meta
+��׼��������.prefab
+��׼��������.prefab.meta
+��׼����ͼ��ģ��.prefab
+��׼����ͼ��ģ��.prefab.meta
+����ս��ͼ�� 1.prefab
+����ս��ͼ�� 1.prefab.meta
+���߿���׼ģ��.prefab
+���߿���׼ģ��.prefab.meta
+����ͼ��.meta
+����ѡ���׼ģ��.prefab
+����ѡ���׼ģ��.prefab.meta
+������.prefab
+������.prefab.meta
+������ֵ.prefab
+������ֵ.prefab.meta
+���￨��׼ģ��.prefab
+���￨��׼ģ��.prefab.meta
+�������.prefab
+�������.prefab.meta
+���ؿ���׼ģ��.prefab
+���ؿ���׼ģ��.prefab.meta
+���Ԥ����.prefab
+���Ԥ����.prefab.meta
+��Ǯͼ��.prefab
+��Ǯͼ��.prefab.meta
+����ս��ͼ�� 1.prefab
+����ս��ͼ�� 1.prefab.meta
+��Standard Card.prefab
+��Standard Card.prefab.meta
+�뿪ͼ�� 1.prefab
+�뿪ͼ�� 1.prefab.meta
+¥�����UI.prefab
+¥�����UI.prefab.meta
+��Ԫ��־.prefab
+��Ԫ��־.prefab.meta
+�Ƶ�ͼ�� 1.prefab
+�Ƶ�ͼ�� 1.prefab.meta
+�̵�ͼ�� 1.prefab
+�̵�ͼ�� 1.prefab.meta
+��¥ͼ�� 1.prefab
+��¥ͼ�� 1.prefab.meta
+��������ͼ�� 1.prefab
+��������ͼ�� 1.prefab.meta
+��ҿ���׼ģ��.prefab
+��ҿ���׼ģ��.prefab.meta
+��Ȫͼ�� 1.prefab
+��Ȫͼ�� 1.prefab.meta
+��¥ͼ�� 1.prefab
+��¥ͼ�� 1.prefab.meta
+Ѫ��.prefab
+Ѫ��.prefab.meta
+һ���������װUI�ܹ�.prefab
+һ���������װUI�ܹ�.prefab.meta
+���￨��׼ģ��.prefab
+���￨��׼ģ��.prefab.meta
+Boss��ͼ�� 1.prefab
+Boss��ͼ�� 1.prefab.meta
+StandardUIButton.prefab
+StandardUIButton.prefab.meta
+StandUISelection.prefab
+StandUISelection.prefab.meta
+VFX.meta
+DamageNumberPopup.prefab
+DamageNumberPopup.prefab.meta
+����ͼ��.prefab
+����ͼ��.prefab.meta
+����ս��ͼ��.prefab
+����ս��ͼ��.prefab.meta
+���߽���ͼ��.prefab
+���߽���ͼ��.prefab.meta
+�ƹ�ͼ��.prefab
+�ƹ�ͼ��.prefab.meta
+����ս��ͼ��.prefab
+����ս��ͼ��.prefab.meta
+�뿪ͼ��.prefab
+�뿪ͼ��.prefab.meta
+�Ƶ�ͼ��.prefab
+�Ƶ�ͼ��.prefab.meta
+Ǯ��ͼ��.prefab
+Ǯ��ͼ��.prefab.meta
+�̵�ͼ��.prefab
+�̵�ͼ��.prefab.meta
+��¥ͼ��.prefab
+��¥ͼ��.prefab.meta
+��������ͼ��.prefab
+��������ͼ��.prefab.meta
+��Ȫͼ��.prefab
+��Ȫͼ��.prefab.meta
+��¥ͼ��.prefab
+��¥ͼ��.prefab.meta
+Boss��ͼ��.prefab
+Boss��ͼ��.prefab.meta
+
+$ [Console]::OutputEncoding = [System.Text.Encoding]::UTF8; rg -n "Armor|Attack|Hp|ActionCount" "Assets\Scripts\NineGrid.Presentation\Cards\Slots\CardFaceSlotCodes.cs" | Select-Object -First 20
+19:        public const string Attack = "Attack";
+20:        public const string Armor = "Armor";
+21:        public const string Hp = "Hp";
+22:        public const string ActionCount = "Action_Count";
+
+$ rg -n "Armor" "Assets\Prefabs\怪物卡标准模板.prefab" 2>$null | Select-Object -First 5; Write-Output "---"; rg -c "m_Name" "Assets\Prefabs\怪物卡标准模板.prefab" 2>$null
+---
+44
+
+$ rg -n '"Armor"|m_Name: \\u|\\u7532|\\u62A4|\\u7532' "Assets\Prefabs\怪物卡标准模板.prefab" | Select-Object -First 15
+2279:  m_Name: "\u62A4\u7532"
+2555:  m_Name: "\u62A4\u7532\u6570\u503C"
+
+$ $content = Get-Content "Assets\Prefabs\怪物卡标准模板.prefab" -Raw -Encoding UTF8; $matches = [regex]::Matches($content, 'm_Name: "((?:\\.|[^"\\])*)"'); $names = $matches | ForEach-Object { $_.Groups[1].Value } | Select-Object -Unique; $decoded = $names | ForEach-Object { $_.Replace('\\u7532','甲').Replace('\\u62A4','护').Replace('\\u653B','攻').Replace('\\u8840','血').Replace('\\u884C\\u52A8','行动').Replace('\\u884C','行').Replace('\\u52A8','动') }; $decoded
+\u4E3B\u89C6\u56FEMask
+\u884C\u52A8\u8BA1\u6570
+\u653B\u51FB
+\u6A2A\u5E45
+\u5361\u6846
+\u6838\u5FC3\u56FE\u6807
+\u80CC\u666F
+\u602A\u7269\u5361\u6807\u51C6\u6A21\u677F
+\u8840\u91CF
+\u63CF\u8FF0
+\u884C\u52A8
+\u8840\u91CF\u6570\u503C
+\u540D\u5B57
+\u62A4\u7532
+\u63CF\u8FF0\u9762\u677F
+\u62A4\u7532\u6570\u503C
+\u653B\u51FB\u6570\u503C
+
+$ [Console]::OutputEncoding = [System.Text.Encoding]::UTF8; rg -n "Armor" "Assets\Scripts\NineGrid.Presentation\Flow\CoreCardPresentationMapper.cs" | Select-Object -First 10
+20:        public int Armor;
+90:                Armor = StatArmorUtility.GetCurrentArmor(card),
+156:                Armor = previous.Armor,
+170:            snapshot.Armor = previous.Armor;
+302:                Armor = source.Armor,
+416:                Armor = Mathf.Max(0, read.Armor),
+450:                Armor = 0,
+686:                || string.Equals(defId, "Armor", System.StringComparison.Ordinal)
+
+$ rg -l "反馈|试玩" "Assets\Notes" --glob "*.md" 2>$null | Select-Object -First 10; Write-Output "---"; git log --oneline -3
+Assets\Notes\归档\触发可见因果-ADR0018-修复计划-2026-08-01.md
+Assets\Notes\归档\机关卡落�?三批计划-2026-08-01.md
+---
+e5428ff06 fix: audio editor row identity and play-mode gating
+fb563f553 fix: audio editor review hardening
+216d46737 feat: add audio binding tuning workbench
+
+All evidence gathered. Writing the report now.
+$ New-Item -ItemType Directory -Force -Path "docs\feedback-analysis" | Out-Null; Test-Path "docs\feedback-analysis"
+True
+
+← Write docs/feedback-analysis/content-audit-report.md
+Wrote file successfully.
+
+$ Test-Path "docs\feedback-analysis\content-audit-report.md"; (Get-Content "docs\feedback-analysis\content-audit-report.md" -Encoding UTF8 | Measure-Object -Line).Lines
+True
+108
+
+报告已写入 `docs/feedback-analysis/content-audit-report.md`：条目 1「近战倒计时统一改 5」判定为内容变更请求但落地点在 Core 机制（`AttackPatternRules.Frequency` 硬编码近战=3，JSON `stats.action` 被覆盖非权威，改 5 会推翻 ADR-0011/0013 并波及 23/35 张正式卡与钉死测试）；条目 2「序列 1 全 1/4/无甲」判定为部分不符——「1 攻 4 血」属实，但护甲实测 2/2/0/2/2/0/4 与设计案 `怪物卡.md` 逐值一致、5/7 有甲，无生成/校验脚本造成。

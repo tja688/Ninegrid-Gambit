@@ -1,0 +1,26 @@
+你是被派出的独立 sub agent。任务：对策划试玩反馈条目做三方比对分析，产出报告。
+
+工作区：C:\Users\jinji\Documents\GitHub\Ninegrid Gambit（Unity 6.3 URP 2D 卡牌 Roguelike「TableNine 九宫牌局」）。
+
+三方材料：
+1. 仓库权威文档：根 CONTEXT.md（领域词汇与行为不变量）、docs/adr/（36 个 ADR 长期决策）、docs/code-map/（代码现状 README.md / presentation.md / tests.md）
+2. 代码实施：Assets/Scripts/NineGrid.Foundation/NineGrid.Core（规则核）、NineGrid.Presentation（表现层）、NineGrid.Content（Catalog / JSON 内容表）
+3. 策划设计案：Assets/Docs/九宫格登神/（01-核心概念、02-机制、03-玩家侧卡牌信息、04-敌人侧卡牌信息、05-遗物、06-玩家角色、07-流程、08-UI）
+
+【核查条目】
+1. "宝箱卡和道具卡格重叠起来看起来太难受了，拖动起来也难受，最好是分开来更直观（特别是宝箱卡，玩家需要一眼能看到三个选项）（道具卡格有些卡没必要拖动的能不能搞成点击使用啊像是宝箱卡，好搞的话真得搞下，不选对象的道具卡拖起没必要）" —— 奖励房/宝箱会话中宝箱卡与道具卡格（手牌）视觉重叠、拖拽体验差；策划建议：宝箱卡三选项分开显示一眼可见；无目标道具卡改为点击使用而非拖拽。重点：特殊奖励房 RewardBoardPresenter（宝箱 1 + 随机道具 3 落格 1/2/3/7/9）、宝箱卡 Bounce 三选一（BounceFanChoicePresenter / SelectorManagerSingleton）、道具卡格（手牌）布局 CardHandManagerSingleton、领取入手牌 PullFromGroundAsync、手牌拖拽 vs 点击使用（ADR-0032 非战斗可用链路 ValidateHandDragApplyAsync）。查证：奖励房宝箱三选项当前呈现方式（是否在地面卡+手牌区重叠）、道具卡格与宝箱卡的屏幕位置关系、点击使用（非拖拽）路径现状（UseItem 是否支持直接点击，还是必须拖到棋盘）。
+
+分析方法（对每条反馈）：
+1. 找设计案原文（Assets/Docs/九宫格登神 对应文档，如 08-UI/界面布局.md、玩家交互操作.md、01-核心概念/道具卡格.md）
+2. 找 ADR / CONTEXT 的权威决策与不变量
+3. 追代码实施（Core 规则 / 表现层 / 内容 JSON），给出具体实现路径与文件:行
+4. 三方比对后判定每条的「真实情况」，归类：落地理解偏差 / 硬错误 / 需要进一步分析 / 设计冲突 / 内容配置问题。此条是 UI 表现与交互设计建议——判定当前布局与交互实现、与设计案/ADR 的差距、改动涉及面。
+5. 结论先行，每条给出判定类型 + 证据 + 现状说明。
+
+纪律：
+- 只探查，绝不修改任何文件（包括文档）。
+- 大 JSON/YAML 不要整读，用 grep / 脚本定向提取。
+- 场景/prefab 中文字段名常是 \uXXXX 转义，先解码再搜。
+- 不提问、不中途汇报，一次干完。
+- 报告写到 C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\docs\feedback-analysis\ui-layout-report.md（Markdown UTF-8）。
+- 完成时只回一句话：报告路径 + 结论摘要。

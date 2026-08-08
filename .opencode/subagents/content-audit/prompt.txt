@@ -1,0 +1,27 @@
+你是被派出的独立 sub agent。任务：对策划试玩反馈条目做三方比对分析，产出报告。
+
+工作区：C:\Users\jinji\Documents\GitHub\Ninegrid Gambit（Unity 6.3 URP 2D 卡牌 Roguelike「TableNine 九宫牌局」）。
+
+三方材料：
+1. 仓库权威文档：根 CONTEXT.md（领域词汇与行为不变量）、docs/adr/（36 个 ADR 长期决策）、docs/code-map/（代码现状 README.md / presentation.md / tests.md）
+2. 代码实施：Assets/Scripts/NineGrid.Foundation/NineGrid.Core（规则核）、NineGrid.Presentation（表现层）、NineGrid.Content（Catalog / JSON 内容表）
+3. 策划设计案：Assets/Docs/九宫格登神/（01-核心概念、02-机制、03-玩家侧卡牌信息、04-敌人侧卡牌信息、05-遗物、06-玩家角色、07-流程、08-UI）
+
+【核查条目】
+1. "近战攻击的倒计时全部修改为5" —— 策划要求：所有近战（近战攻击模式）怪物卡的攻击倒计时（行动倒计时阈值）统一改为 5。重点：ADR-0011 攻击模式内生属性（数据面 #77）、怪物卡 JSON 的 attackPattern 配置（近战/远程/潜伏等模式阈值）、node_deck_rules / monster JSON 中序列 1-5 各卡配置。查证：当前近战模式倒计时阈值配置分布（各卡 JSON 实际值）、改 5 的影响面、这是内容配置变更还是机制变更。
+2. "所有序列为1的怪物卡都没有护甲了，全是1攻击4血量" —— 序列 1 怪物卡全部变成 1 攻 4 血无护甲。重点：主题卡组 JSON（七套 monster deck 序列 1 槽位卡配置，ThemeDeckStableMapping / ADR-0029）、怪物卡 JSON 的 stats（attack/health/armor）、是否有内容批量生成/校验逻辑把序列 1 卡写成固定 1/4/0。查证：序列 1 槽位的七张（或多张）卡 JSON 实际数值、与设计案（04-敌人侧卡牌信息/怪物卡.md 或 07-流程/卡组生成流程.md）预期的差异、是否内容生成脚本或校验规则导致。
+
+分析方法（对每条反馈）：
+1. 找设计案原文（Assets/Docs/九宫格登神 对应文档，如 04-敌人侧卡牌信息/怪物卡.md、07-流程/卡组生成流程.md、02-机制/移动与旋转机制.md 若涉及行动计数）
+2. 找 ADR / CONTEXT 的权威决策与不变量
+3. 追代码实施与内容数据（怪物卡 JSON 在 Content 表/Resources，一卡一文件），给出具体路径与文件:行
+4. 三方比对后判定每条的「真实情况」，归类：落地理解偏差 / 硬错误 / 需要进一步分析 / 设计冲突 / 内容配置问题。第 1 条是内容变更请求——判定当前配置值与"统一改 5"的差距；第 2 条判定内容数据现状与设计案/ADR 的偏差。
+5. 结论先行，每条给出判定类型 + 证据 + 现状说明。
+
+纪律：
+- 只探查，绝不修改任何文件（包括文档）。
+- 大 JSON 不要整读，用 grep / 脚本定向提取（怪物 JSON 很多，逐卡 grep attackPattern / stats）。
+- 场景/prefab 中文字段名常是 \uXXXX 转义，先解码再搜。
+- 不提问、不中途汇报，一次干完。
+- 报告写到 C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\docs\feedback-analysis\content-audit-report.md（Markdown UTF-8）。
+- 完成时只回一句话：报告路径 + 结论摘要。

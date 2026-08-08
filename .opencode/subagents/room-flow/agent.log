@@ -1,0 +1,742 @@
+
+> Full-Auto · deepseek-v4-flash
+
+→ Read CONTEXT.md
+
+$ Get-ChildItem -Recurse -File "docs\adr" | Select-Object -ExpandProperty Name
+0001-battle-presentation-unified-timeline-batch-ack.md
+0002-card-chassis-and-face-templates.md
+0003-diagnostic-correlation-layer-chainid-choreoseqid.md
+0004-input-intake-two-axis-gating.md
+0005-card-face-beat-commit.md
+0006-windows-high-polling-mouse-mitigation.md
+0007-unified-presentation-pipeline.md
+0008-single-source-content-and-resources-loading.md
+0009-parameterized-effect-templates.md
+0010-self-declared-effect-responsibility.md
+0011-monster-attack-pattern-intrinsic.md
+0012-enemy-action-phase-volley.md
+0013-action-countdown-unified.md
+0014-theme-ids-are-legacy-opaque.md
+0015-card-slot-placement-local-space.md
+0016-card-face-orientation.md
+0017-trap-card-kind-and-dual-bucket.md
+0018-trigger-visible-causality.md
+0019-avatar-board-walk.md
+0020-board-as-interaction-surface.md
+0021-run-progression-in-core.md
+0022-node-loadout-model.md
+0023-slot-hit-frame-and-claim.md
+0024-board-placement-and-prefab-authored-size.md
+0025-item-slots-run-persistent-hold.md
+0026-leave-trap-sole-clear-condition.md
+0027-relic-drag-recycle-and-rmb-inspect.md
+0028-damage-formula-armor-and-reduction.md
+0029-content-guardrail-stable-theme-deck-mapping.md
+0030-regular-trap-opening-loadout.md
+0031-attribute-room-pick-two.md
+0032-item-cards-usable-outside-battle.md
+0033-help-card-rarity-distribution-control.md
+0034-board-stabilization-refill-batch-ack.md
+0035-dual-description-projection-and-assembly-param-refs.md
+0036-audio-cue-binding-and-music-ownership.md
+
+$ Get-ChildItem -Recurse -File "Assets\Docs\九宫格登神" | Select-Object -ExpandProperty FullName
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\00-��������ĵ����������AI��Ҫ�����.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\01-���ĸ���.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\02-����.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\03-��Ҳ࿨����Ϣ.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\04-���˲࿨����Ϣ.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\05-����.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\06-��ҽ�ɫ.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\07-����.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\08-UI.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\00-��������ĵ����������AI��Ҫ�����\ѭ��.md
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\00-��������ĵ����������AI��Ҫ�����\ѭ��.md.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\00-��������ĵ����������AI��Ҫ�����\Ը��.md
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\00-��������ĵ����������AI��Ҫ�����\Ը��.md.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\00-��������ĵ����������AI��Ҫ�����\֧��.md
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\00-��������ĵ����������AI��Ҫ�����\֧��.md.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\01-���ĸ���\���߿���.md
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\01-���ĸ���\���߿���.md.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\01-���ĸ���\����.md
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\01-���ĸ���\����.md.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\01-���ĸ���\����.md
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\01-���ĸ���\����.md.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\01-���ĸ���\����.md
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\01-���ĸ���\����.md.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\01-���ĸ���\����.md
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\01-���ĸ���\����.md.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\01-���ĸ���\��Ϸ��������.md
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\01-���ĸ���\��Ϸ��������.md.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\01-���ĸ���\ս����λ��.md
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\01-���ĸ���\ս����λ��.md.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\02-����\���ƻ���.md
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\02-����\���ƻ���.md.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\02-����\�������.md
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\02-����\�������.md.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\02-����\��������.md
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\02-����\��������.md.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\02-����\�ƶ�����ת����.md
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\02-����\�ƶ�����ת����.md.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\02-����\ս������.md
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\02-����\ս������.md.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\03-��Ҳ࿨����Ϣ\���߿�.md
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\03-��Ҳ࿨����Ϣ\���߿�.md.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\03-��Ҳ࿨����Ϣ\��ɫ����.md
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\03-��Ҳ࿨����Ϣ\��ɫ����.md.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\03-��Ҳ࿨����Ϣ\ͨ�ÿ���.md
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\03-��Ҳ࿨����Ϣ\ͨ�ÿ���.md.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\03-��Ҳ࿨����Ϣ\��ҿ�.md
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\03-��Ҳ࿨����Ϣ\��ҿ�.md.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\04-���˲࿨����Ϣ\���＼��.md
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\04-���˲࿨����Ϣ\���＼��.md.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\04-���˲࿨����Ϣ\���￨.md
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\04-���˲࿨����Ϣ\���￨.md.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\04-���˲࿨����Ϣ\���ؼ���.md
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\04-���˲࿨����Ϣ\���ؼ���.md.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\04-���˲࿨����Ϣ\���ؿ�.md
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\04-���˲࿨����Ϣ\���ؿ�.md.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\04-���˲࿨����Ϣ\����ϵͳ.md
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\04-���˲࿨����Ϣ\����ϵͳ.md.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\05-����\����.md
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\05-����\����.md.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\06-��ҽ�ɫ\��ɫ.md
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\06-��ҽ�ɫ\��ɫ.md.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\06-��ҽ�ɫ\��ҿ�.md
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\06-��ҽ�ɫ\��ҿ�.md.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\07-����\�㼶����.md
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\07-����\�㼶����.md.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\07-����\������������.md
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\07-����\������������.md.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\07-����\ս���ؿ�����.md
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\07-����\ս���ؿ�����.md.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\08-UI\���沼��.md
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\08-UI\���沼��.md.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\08-UI\��ҽ�������.md
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\08-UI\��ҽ�������.md.meta
+
+$ $OutputEncoding = [System.Text.Encoding]::UTF8; [Console]::OutputEncoding = [System.Text.Encoding]::UTF8; Get-ChildItem -Recurse -File "Assets\Docs\九宫格登神" -Filter *.md | ForEach-Object { $_.FullName }
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\九宫格登神\00-基础设计文档（如果你是AI不要管这里）\循环.md
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\九宫格登神\00-基础设计文档（如果你是AI不要管这里）\愿景.md
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\九宫格登神\00-基础设计文档（如果你是AI不要管这里）\支柱.md
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\九宫格登神\01-核心概念\道具卡格.md
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\九宫格登神\01-核心概念\房间.md
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\九宫格登神\01-核心概念\经济.md
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\九宫格登神\01-核心概念\卡组.md
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\九宫格登神\01-核心概念\属性.md
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\九宫格登神\01-核心概念\游戏结束条件.md
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\九宫格登神\01-核心概念\战场与位置.md
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\九宫格登神\02-机制\发牌机制.md
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\九宫格登神\02-机制\翻面机制.md
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\九宫格登神\02-机制\交互机制.md
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\九宫格登神\02-机制\移动与旋转机制.md
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\九宫格登神\02-机制\战斗机制.md
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\九宫格登神\03-玩家侧卡牌信息\道具卡.md
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\九宫格登神\03-玩家侧卡牌信息\角色卡组.md
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\九宫格登神\03-玩家侧卡牌信息\通用卡组.md
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\九宫格登神\03-玩家侧卡牌信息\玩家卡.md
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\九宫格登神\04-敌人侧卡牌信息\怪物技能.md
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\九宫格登神\04-敌人侧卡牌信息\怪物卡.md
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\九宫格登神\04-敌人侧卡牌信息\机关技能.md
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\九宫格登神\04-敌人侧卡牌信息\机关卡.md
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\九宫格登神\04-敌人侧卡牌信息\技能系统.md
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\九宫格登神\05-遗物\遗物.md
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\九宫格登神\06-玩家角色\角色.md
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\九宫格登神\06-玩家角色\玩家卡.md
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\九宫格登神\07-流程\层级流程.md
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\九宫格登神\07-流程\卡组生成流程.md
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\九宫格登神\07-流程\战斗关卡流程.md
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\九宫格登神\08-UI\界面布局.md
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\九宫格登神\08-UI\玩家交互操作.md
+
+→ Read docs/adr/0026-leave-trap-sole-clear-condition.md
+→ Read docs/adr/0021-run-progression-in-core.md
+→ Read Assets/Docs/九宫格登神/07-流程/层级流程.md
+→ Read Assets/Docs/九宫格登神/07-流程/战斗关卡流程.md
+→ Read Assets/Docs/九宫格登神/01-核心概念/房间.md
+→ Read Assets/Docs/九宫格登神/04-敌人侧卡牌信息/机关卡.md
+→ Read docs/code-map/README.md
+→ Read docs/code-map/presentation.md
+✱ Grep "PlayNonCombatNodeAsync|RunNodeCycleAsync" in Assets/Scripts · 4 matches
+Now let me explore the code. Key files: GameFlowOrchestrator (RunNodeCycleAsync, PlayNonCombatNodeAsync), MapNodeProgression, CompleteNodeIfCleared, leave trap insertion.
+✱ Grep "class MapNodeProgression|EntersInteractionLoop" in Assets/Scripts · 13 matches
+→ Read Assets/Scripts/NineGrid.Presentation/Flow/GameFlow/GameFlowOrchestrator.cs
+✱ Grep "trap\.leave|LeaveTrap|leave_trap" in Assets/Scripts/NineGrid.Foundation/NineGrid.Core · 34 matches
+✱ Grep "CompleteNodeIfCleared" in Assets/Scripts · 14 matches
+Now let me examine the Core side: leave trap insertion, CompleteNodeIfCleared, and PhaseSystem.
+→ Read Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Systems/DeckSystem.cs
+→ Read Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Models/BattleContextModel.cs
+→ Read Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Domain/MapNodeProgression.cs
+→ Read Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Systems/PhaseSystem.cs [offset=1820, limit=130]
+Now let me check the content side: leave trap JSON, node_deck_rules, and the RoomIcons presenter.
+
+$ Get-ChildItem -Recurse -File -Filter "node_deck_rules.json" | ForEach-Object { $_.FullName }
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Arts\ContentVisual\tables\node_deck_rules.json
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\StreamingAssets\ContentVisual\tables\node_deck_rules.json
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Builds\DevWin64\NinegridGambit_Data\StreamingAssets\ContentVisual\tables\node_deck_rules.json
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Builds\ReleaseWin64\NinegridGambit_Data\StreamingAssets\ContentVisual\tables\node_deck_rules.json
+
+$ Get-ChildItem -Recurse -File -Filter "*leave*" | Where-Object { $_.FullName -notmatch "Tests|\.meta$" } | ForEach-Object { $_.FullName }
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\.cursor\ai-workspace\logs\test-20260802-154211-leave-room-bug.log
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\.cursor\ai-workspace\logs\test-20260802-154217-leave-room-bug.log
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\.cursor\ai-workspace\logs\test-20260802-154219-leave-room-bug.log
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\.cursor\ai-workspace\logs\test-20260802-154220-leave-room-bug.log
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\.cursor\ai-workspace\logs\test-20260802-154230-leave-room-bug.log
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\.cursor\ai-workspace\logs\test-20260802-154250-leave-room-bug.log
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\.cursor\ai-workspace\logs\test-20260803-022334-leave-room-bug.log
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\.cursor\ai-workspace\logs\test-20260803-022336-leave-room-bug.log
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\.cursor\ai-workspace\logs\test-20260803-022337-leave-room-bug.log
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\.cursor\ai-workspace\logs\test-20260803-022338-leave-room-bug.log
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\.cursor\ai-workspace\logs\test-20260804-032008-leave-trap-freeze.log
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\.cursor\ai-workspace\logs\test-20260804-032020-leave-trap-freeze.log
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\.cursor\ai-workspace\logs\test-20260804-032031-leave-trap-freeze.log
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\.cursor\ai-workspace\logs\test-20260804-032038-leave-trap-freeze.log
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\.cursor\ai-workspace\logs\test-20260804-032042-leave-trap-freeze.log
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\.cursor\ai-workspace\logs\test-20260804-032126-leave-trap-freeze.log
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\.cursor\ai-workspace\logs\test-20260804-032204-leave-trap-freeze.log
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\.cursor\ai-workspace\logs\test-20260804-095703-leave-trap-fix.log
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\.cursor\ai-workspace\logs\test-20260804-095707-leave-trap-fix.log
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\.cursor\ai-workspace\logs\test-20260804-095714-leave-trap-fix.log
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Arts\ContentVisual\cards\Leave.json
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Arts\ContentVisual\cards\relic_rotten_cleave_axe.json
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Arts\ContentVisual\cards\trap_leave.json
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Arts\Images\Png\Other\leave.png
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Plugins\Feel\FeelDemos\Barbarians\Materials\FeelBarbarianBackgroundTreeLeaves.mat
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Plugins\Feel\FeelDemos\Barbarians\Materials\FeelBarbarianTopDownLeaves.mat
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Plugins\Feel\FeelDemos\Barbarians\Models\Materials\Leaves.001.mat
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Plugins\Feel\FeelDemos\Barbarians\Models\Materials\Leaves.002.mat
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Plugins\Feel\FeelDemos\Barbarians\Models\Materials\Leaves.003.mat
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Plugins\Feel\FeelDemos\Barbarians\Models\Materials\Leaves.004.mat
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Plugins\Feel\FeelDemos\Barbarians\Models\Materials\Leaves.005.mat
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Plugins\Feel\FeelDemos\Barbarians\Models\Materials\Leaves.mat
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Plugins\Feel\FeelDemos\Bounce\Textures\FeelBounceLeaves.png
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Plugins\Feel\FeelDemos\Springs\Materials\FeelSpringsTalkingTreesLeavesDarker.mat
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Plugins\Feel\FeelDemos\Springs\Materials\FeelSpringsTalkingTreesPineLeaves.mat
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Plugins\Feel\FeelDemos\Springs\Materials\FeelSpringsTalkingTreesRoundLeaves.mat
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\StreamingAssets\ContentVisual\cards\Leave.json
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\StreamingAssets\ContentVisual\cards\relic_rotten_cleave_axe.json
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\StreamingAssets\ContentVisual\cards\trap_leave.json
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Builds\DevWin64\NinegridGambit_Data\StreamingAssets\ContentVisual\cards\Leave.json
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Builds\DevWin64\NinegridGambit_Data\StreamingAssets\ContentVisual\cards\relic_rotten_cleave_axe.json
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Builds\DevWin64\NinegridGambit_Data\StreamingAssets\ContentVisual\cards\trap_leave.json
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Builds\ReleaseWin64\NinegridGambit_Data\StreamingAssets\ContentVisual\cards\Leave.json
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Builds\ReleaseWin64\NinegridGambit_Data\StreamingAssets\ContentVisual\cards\relic_rotten_cleave_axe.json
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Builds\ReleaseWin64\NinegridGambit_Data\StreamingAssets\ContentVisual\cards\trap_leave.json
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\docs\adr\0026-leave-trap-sole-clear-condition.md
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Library\PackageCache\com.unity.splines@56b2023b4b9f\Samples~\SplineExamples\Models\Trees\Leaves.mat
+
+→ Read Assets/StreamingAssets/ContentVisual/cards/trap_leave.json
+→ Read Assets/StreamingAssets/ContentVisual/tables/node_deck_rules.json
+
+$ Get-ChildItem -Recurse -File -Filter "*.json" "Assets\StreamingAssets\ContentVisual\templates" | ForEach-Object { $_.Name }
+(no output)
+
+✱ Grep "OfferNavigationAction|NavigationKind" in Assets/Scripts/NineGrid.Foundation/NineGrid.Core · 35 matches
+→ Read Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Systems/PhaseSystem.cs [limit=140, offset=1350]
+→ Read Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Domain/Actions/PhaseActions.cs [limit=130, offset=230]
+→ Read Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Systems/PhaseSystem.cs [limit=130, offset=120]
+
+$ Get-ChildItem -Recurse -File "Assets\Scripts\NineGrid.Presentation\Flow\RoomIcons" | ForEach-Object { $_.Name }
+RoomIconBoardPresenter.cs
+RoomIconBoardPresenter.cs.meta
+RoomIconBoardSlotResolver.cs
+RoomIconBoardSlotResolver.cs.meta
+RoomIconDwellSession.cs
+RoomIconDwellSession.cs.meta
+RoomIconOccupancy.cs
+RoomIconOccupancy.cs.meta
+RoomIconOccupancySlotHits.cs
+RoomIconOccupancySlotHits.cs.meta
+
+✱ Grep "Navigation|Leave|DwellSession" in Assets/Scripts/NineGrid.Presentation/Flow/RoomIcons · 7 matches
+→ Read Assets/Scripts/NineGrid.Presentation/Flow/RoomIcons/RoomIconBoardPresenter.cs
+→ Read Assets/Scripts/NineGrid.Presentation/Flow/RoomIcons/RoomIconBoardSlotResolver.cs
+✱ Grep "Leave|Navigation|离开" in Assets/Scripts/NineGrid.Presentation/Flow/BoardBriefTip · 8 matches
+→ Read Assets/Docs/九宫格登神/04-敌人侧卡牌信息/机关技能.md
+✱ Grep "tpl\.trap\.leave" in Assets/Scripts/NineGrid.Presentation · 0 matches
+→ Read Assets/Docs/九宫格登神/08-UI/玩家交互操作.md
+
+$ rg -l "tpl\.trap\.leave" "Assets\StreamingAssets" "Assets\Arts" 2>$null
+Assets\StreamingAssets\ContentVisual\tables\effect_templates.json
+Assets\Arts\ContentVisual\tables\effect_templates.json
+Assets\Arts\ContentVisual\cards\trap_leave.json
+Assets\StreamingAssets\ContentVisual\cards\trap_leave.json
+
+$ rg -n -A 30 '"id"\s*:\s*"tpl\.trap\.leave"' "Assets\StreamingAssets\ContentVisual\tables\effect_templates.json"
+1459:  "id": "tpl.trap.leave",
+1460-  "state": "Implemented",
+1461-  "design_text": "[场上]离开：击破本卡时置清关向标志",
+1462-  "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
+1463-  "conditions_json": "[]",
+1464-  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnFatalDamage\",\"target\":\"Self\"},\"target\":{\"atom\":\"Self\"},\"action\":{\"atom\":\"MarkLeaveTrapBroken\"}}"
+1465- },
+1466- {
+1467-  "id": "tpl.relic.rotten_cleave_axe.base",
+1468-  "state": "Implemented",
+1469-  "design_text": "攻击+1",
+1470-  "requires_json": "[\"NoOwnerEntity\"]",
+1471-  "conditions_json": "[]",
+1472-  "body": "{\"kind\":\"Modifier\",\"target\":{\"atom\":\"Player\"},\"modifier\":{\"stat\":\"Attack\",\"op\":\"Add\",\"value\":\"{{value}}\",\"layer\":\"Persistent\",\"scope\":\"Permanent\"}}"
+1473- },
+1474- {
+1475-  "id": "tpl.relic.rotten_cleave_axe.cleave",
+1476-  "state": "Implemented",
+1477-  "design_text": "[战斗时] 对目标正交相邻怪物造成1点伤害",
+1478-  "requires_json": "[\"NoOwnerEntity\"]",
+1479-  "conditions_json": "[]",
+1480-  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnBattle\",\"sourceAction\":\"{{sourceAction}}\",\"targetKind\":\"Monster\",\"maxActionDepth\":0},\"conditions\":[{\"atom\":\"EventFilterActorIsPlayer\",\"eventType\":\"DamageDealt\",\"targetKind\":\"Monster\"}],\"target\":{\"atom\":\"FilteredCards\",\"kind\":\"Monster\",\"zone\":\"Board\",\"adjacentTo\":\"EventTarget\",\"exclude\":[\"EventTarget\"]},\"action\":{\"atom\":\"DealDamage\",\"amount\":\"{{amount}}\",\"actor\":\"Player\"}}"
+1481- },
+1482- {
+1483-  "id": "tpl.relic.thorn_mail.reflect",
+1484-  "state": "Implemented",
+1485-  "design_text": "[战斗时] 玩家损失当前护甲时对攻击者造成等量伤害",
+1486-  "requires_json": "[\"NoOwnerEntity\"]",
+1487-  "conditions_json": "[]",
+1488-  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnBattle\"},\"conditions\":[{\"atom\":\"EventFilter\",\"eventType\":\"ArmorChanged\",\"targetKind\":\"Avatar\",\"maxDelta\":-1}],\"target\":{\"atom\":\"FilteredCards\",\"include\":[\"Actor\"]},\"action\":{\"atom\":\"DealDamage\",\"value\":{\"op\":\"Negate\",\"values\":[{\"source\":\"Event\",\"field\":\"Delta\"}]},\"actor\":\"Player\"}}"
+1489- },
+
+$ Get-Content "C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\.cursor\ai-workspace\logs\test-20260803-022334-leave-room-bug.log" -TotalCount 60
+=== stdout ===
+{
+  "success": true,
+      "format": "json",
+  "command": "command run_tests",
+  "data": {
+    "command": "run_tests",
+    "parameters": {
+      "filter": "RoomIconVisualFit"
+    },
+      "mode": "editor",
+      "Summary": {
+        "Passed": 3,
+        "Failed": 0,
+        "Skipped": 0,
+      },
+        {
+        "Inconclusive": 0
+        "Total": 3,
+      "Results": [
+    "result": {
+          "FullName": "NineGrid.Presentation.Tests.Flow.RoomIconVisualFitTests.ComputeUniformScale_FitsLargerAxis",
+          "Status": "Passed",
+          "Message": null,
+          "StackTrace": null
+        },
+        {
+          "FullName": "NineGrid.Presentation.Tests.Flow.RoomIconVisualFitTests.ComputeUniformScale_ZeroSprite_ReturnsOne",
+          "Status": "Passed",
+          "Duration": 0.0005426,
+          "Message": null,
+          "Duration": 0.0087172,
+          "StackTrace": null
+        {
+          "FullName": "NineGrid.Presentation.Tests.Flow.RoomIconVisualFitTests.ResolveTargetSize_AppliesFill",
+        },
+          "Status": "Passed",
+          "Duration": 0.0002781,
+          "Message": null,
+          "StackTrace": null
+        }
+      ],
+      "Duration": 1.27,
+      "StatusPath": null,
+      "Mode": "EditMode",
+      "FilterApplied": "testname: RoomIconVisualFit",
+      "command": "run_tests",
+      "result": null,
+      "success": true,
+      "executionTimeMs": 1274,
+      "message": null,
+      "error": null,
+      "errorDetails": null,
+      "executedAt": "0001-01-01T00:00:00"
+    },
+    "target": {
+      "projectPath": "C:\\Users\\jinji\\Documents\\GitHub\\Ninegrid Gambit"
+      "port": 7800,
+      "host": "localhost",
+    },
+
+✱ Grep "ResolveRoomIconPrefab" in Assets/Scripts/NineGrid.Presentation · 19 matches
+
+$ Get-ChildItem "Assets\Prefabs\地形图标" -ErrorAction SilentlyContinue | ForEach-Object { $_.Name }
+����ͼ��.prefab
+����ͼ��.prefab.meta
+����ս��ͼ��.prefab
+����ս��ͼ��.prefab.meta
+���߽���ͼ��.prefab
+���߽���ͼ��.prefab.meta
+�ƹ�ͼ��.prefab
+�ƹ�ͼ��.prefab.meta
+����ս��ͼ��.prefab
+����ս��ͼ��.prefab.meta
+�뿪ͼ��.prefab
+�뿪ͼ��.prefab.meta
+�Ƶ�ͼ��.prefab
+�Ƶ�ͼ��.prefab.meta
+Ǯ��ͼ��.prefab
+Ǯ��ͼ��.prefab.meta
+�̵�ͼ��.prefab
+�̵�ͼ��.prefab.meta
+��¥ͼ��.prefab
+��¥ͼ��.prefab.meta
+��������ͼ��.prefab
+��������ͼ��.prefab.meta
+��Ȫͼ��.prefab
+��Ȫͼ��.prefab.meta
+��¥ͼ��.prefab
+��¥ͼ��.prefab.meta
+Boss��ͼ��.prefab
+Boss��ͼ��.prefab.meta
+
+→ Read Assets/Scripts/NineGrid.Presentation/Cards/CardChassisPaths.cs
+→ Read Assets/Scripts/NineGrid.Foundation/NineGrid.Core.Tests/LeaveTrapClearContractTests.cs
+
+$ rg -n "离开机关|离开图标|⌈|门|魔免" "Assets\Docs\九宫格登神" -g "*.md"
+Assets\Docs\九宫格登神\02-机制\战斗机制.md:41:战斗房以击破带「离开」技能的**离开机关卡**为**唯一**清关条件（真怪物清零不再自动清关）。击破当拍场上残留（未拾取道具 / 剩余怪 / 其它机关）一并清场且**不兑金**；[[道具卡格]] 内容保留。击破前玩家可一直留在场地交互（拾取更替、回收丢弃、击杀赚钱）——这不是另开的拣选相位。
+Assets\Docs\九宫格登神\00-基础设计文档（如果你是AI不要管这里）\循环.md:9:5. 击破带「离开」技能的离开机关卡即清关（**唯一清关条件**，ADR-0026）；真怪物清零不再自动清关
+Assets\Docs\九宫格登神\00-基础设计文档（如果你是AI不要管这里）\循环.md:11:7. 清关后按节点放出场地图标（见[[层级流程]]）：节点3 → 消费房（商店 / 卡店）、节点6 → 特殊房（宝箱 / 道具奖励房）、节点8 → 下楼；节点4 / 7 为**非战斗缓冲**（离开图标 / 层主房图标）
+Assets\Docs\九宫格登神\00-基础设计文档（如果你是AI不要管这里）\循环.md:21:5. 进行地图节点4（**非战斗导航缓冲**：1 个离开图标，推进至节点5）
+Assets\Docs\九宫格登神\01-核心概念\游戏结束条件.md:9:第3层第8地图节点（层主房）清关（击破离开机关卡）后通关。
+Assets\Docs\九宫格登神\07-流程\层级流程.md:16: 4. 进行第4地图节点，为**非战斗导航缓冲**（1 个离开图标；不发牌、无清关判定），由离开图标推进至节点5
+Assets\Docs\九宫格登神\07-流程\战斗关卡流程.md:10:6. 击破带「离开」技能的离开机关卡即清关（**唯一清关条件**）；真怪物清零不再自动清关。击破当拍场上残留（未拾取道具 / 剩余怪 / 其它机关）一并清场且**不兑金**；[[道具卡格]] 内容跨节点保留。
+
+→ Read Assets/Docs/九宫格登神/02-机制/发牌机制.md
+→ Read Assets/Docs/九宫格登神/00-基础设计文档（如果你是AI不要管这里）/循环.md
+→ Read Assets/Scripts/NineGrid.Presentation/Flow/RoomIcons/RoomIconDwellSession.cs
+✱ Grep "class AdvanceNodeAction" in Assets/Scripts/NineGrid.Foundation/NineGrid.Core · 1 match
+→ Read Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Domain/Actions/PhaseActions.cs [limit=110, offset=121]
+✱ Grep "RollPostClearRoomChoices" in Assets/Scripts/NineGrid.Foundation/NineGrid.Core · 3 matches
+→ Read Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Systems/RewardSystem.cs [limit=80, offset=130]
+
+$ rg -n "Leave|离开|Node4|节点4|RoomIcon|导航" "docs\code-map\tests.md" | Select-Object -First 30
+19:| `Flow/` | Flow 侧遗�?切片�?*BoardStabilizationSchedulerTests**（Core 每轮补牌须等上一�?Present ack，稳定态检查不提前解算）；**BoardBriefTipCopy / Session**�?89）；**BoardPlacementStructuralTests**�?104+#105 / ADR-0024：生产全集禁 Fit / �?parent �?GroundAnchors / 落格路径禁写 `localScale` / �?`slotHitBoxSize`）；**ShopBoardSlotResolver**�?92）；**TavernBoardSlotResolver**�?93）；**RewardBoardSlotResolver**�?94）；**AttributeBoardSlotResolver / AttributePickIndexResolver / AttributeBoardPresenterStructuralTests**�?137：候选格位、视觉候选→当前 Pending 索引、点击须�?RewardChoiceCoreHook / 禁直�?Model / 首选驻留等二次 / Despawn 释放清理）；**InRoomLeaveWatchStructuralTests**（离开监视 Active 顺序 / 扣金 HUD / SoftBlockOnly；选项与真卡均预制体尺度、禁 Fit）；**InRoomItemAcquirePresentationStructuralTests**（ADR-0025：购领须接手 ItemSlots→手牌，禁只碎裂货架）；**RoomOptionFaceVisualsStructuralTests**（商�?卡店特色选项 Instantiate 选项面后须按 defId 应用 JSON 主图标，禁恒显模板默认图标）�?*BounceFanChoiceHitTests**（固�?AABB 命中 / �?OverlapPoint 回流）；**DirectionalBiasPickerTests**（同层过场四向袋洗牌�?|
+25:| `InRoomBoardWiringStructuralTests.cs` | 结构护栏：`PlayRoomIconChoiceAsync` 进消�?特殊房后须调�?`PresentInRoomSessionAfterEnterAsync`；无独立 `PlayRoomEventAsync` 二次 Enter；`Present*BoardAsync` 禁整�?`SetChoiceOverlay(true)`�?*#137**：`attribute.pick` 池须路由�?`AttributeBoardPresenter` 场地�?|
+43:| 运行时缩�?| `BoardPlacementStructuralTests` + `CardDisplayModeVisualsTests` + `InRoomLeaveWatchStructuralTests` | �?Fit API / `slotHitBoxSize`；落格路径禁�?`localScale`；mode 倍率相对预制体基准且可还原；选项与真卡均预制体尺�?|
+49:| `FormalRunSmokeContractTests` | **#142 正式流程自动烟雾**：正式入口（`InitialGameFactory`，无 QuickTest 载荷）走完整 24 节点骨架�? �?× 8 节点）——构建节点牌�?�?StartNode �?结算信号（离开机关击破清关）→ SelectRoom+EnterRoom 推进；固定种子确定性、不断言随机顺序/动画帧。断言：三层主题不重复绑定（层�?`FloorMonsterDeckId` 一致、跨层互异）；节�?3/6 房间选项分属 ConsumerRooms/SpecialRooms；节�?4/7 非战斗推进不�?InteractionLoop；节�?8 `RequireElite`+含该�?seq5 层主、第 3 层节�?8 �?Victory；正�?Avatar 数值非 HP99/ATK5 |
+53:| `TrapKindDualBucketRegressionTests` / `Batch2HardSkillsRegressionTests`（复活石�?/ `TrapBatch2RegressionTests` / `LeaveTrapDoorLeaveContractTests` / `LeaveTrapInsertContractTests` / `LeaveTrapClearContractTests` | ADR-0017：`CardKind.Trap` 双桶；爆�?`SelectedCards` 指向伤（飞刀等）可伤 Trap；绑�?`trueMonsterOnly` 仍仅真怪；清关/赏金排除；静�?`CounterAttackBanned`；复活石 Kind/deck/container 迁正；批2 滚石/捕熊/烈焰语义�?Help 迁徙�?*#111 / ADR-0026**：离开机关 `trap.leave` + �?魔免/离开（交战可伤、非交战/直接移除无效、魔免挡外来效果含传送、击破置清关标志、无赏金）；**#112 / ADR-0026**：默�?⌈N/2�?�?`ShuffleIntoDrawPile(trap.leave)`（N 不含机关、奇数上取整、幂等）；层主房改击破开局层主；经补牌上场�?*#113 / ADR-0026**：`IsNodeCleared`=`IsLeaveTrapBroken`；真怪清零不清关；击破离开机关清关；清场不兑金；道具卡格保留；QuickTest 置标志跳关；**清关后盘面稳定化不欠补位**（防 Deal 飞行卡死主线�?|
+54:| `RegularTrapBattleLoadoutContractTests` | **#135 / ADR-0030**：`RegularTrapPool` 池过滤（Kind=Trap+稀有度 White，恰六张常规，离开机关/特殊机关排除）；正式战斗装填恰三张且无放回；同种子三张与顺序可复现；池不足按池量�?�?�?�?�?�?）；N 分母不含常规机关；杀机关不计阈�?无赏金；层主房仍三张常规机关且按击破开局层主洗入离开机关 |
+80:| `MapNodeProgressionContractTests` | #84 / ADR-0021 / #107 / #113�? 节点编排全表（节�?7=层主房图标战前缓冲）、非战斗不进 InteractionLoop、进层主房图标推进至节点 8、清关跳�?help.choice（经离开机关标志）、道具卡格清关不兑不�?清场残留、困难房门槛、第 3 层节�?8 通关 |
+81:| `ShopBuyGoldContractTests` / `ShopSessionContractTests` / `ShopItemSlotsUpgradeContractTests` | #92 / #108 / #109：商店四货架 + 未满级升级项、购买留店扣金直写道具卡格、格升级 50 金且不改 `ItemDeckCapacity`、满 5 隐藏、刷新翻倍、离开、余�?格满拒买 |
+83:| `TavernUpgradeCrossNodeEffectTests` | #159 用户流程回归：牌店买两次「道具强化」（+6）→ 离开 �?下一场战斗飞刀�?12；离开牌店后加成仍�?PlayerModel |
+84:| `TavernSessionContractTests` | #93：卡店三项服务、扩�?强化扣费留店、刷新翻倍、离开、道具卡固定二级选择确认/取消、余额不足拒�?|
+85:| `SpecialRewardSessionContractTests` | #94 / #108：宝箱奖�?4 �?/ 道具奖励 5 卡、免费拿直写道具卡格留房、满格拒领、离开放弃不加 skip �?|
+88:| `AttributePickSessionContractTests` | #136 / ADR-0031：属性房三选二——进�?3 加权候选（40/40/20 可重复）、首选不提前结束/移除实例、二选提�?RunModel+推进节点只结算一次、越�?重复选择拒绝、满格不阻断、离开放弃、选择结果注入本关卡组后清空、新 Run 重置 |
+135:- 正式 / QuickTest 隔离�?125 / #135 / #142）：`GameFlowRunModeContractTests` 契约正式入口�?QuickTest 标志/作弊/动态装配（`GameFlowRunOptions.CreateFormal` 无载荷、正�?BeginRun �?RunTag/无技能机关列表），`\0` 仍具镜像与作弊标志（Sequential 节点�?+ HP99/ATK5 + QuickTest RunTag）；结构性断言 `TestMode` 布尔�?`(bool,bool)` 组合构造已删除�?*#135 隔离**：`\0` 无定向机关注入（与正式镜像一致），`\1–\9` 各恰一张定向机关且不得注入离开机关（正式三张常规机关由 Core 装填路径统一注入）�?*#142 镜像骨架**：`Channel0_SequentialQueue_MirrorsFormal24NodeSkeleton` 断言 `\0` Sequential 队列 = 3 �?× 每层战斗节点（与正式 24 节点骨架的战斗段一致）；`FormalEntry_HasNoQuickTestSkillOrTrapPayload` / `QuickTestEntry_FormalMirrorHasNoSkillOrTrap_Channel0` 强化正式↔`\0` 载荷隔离�?
+
+$ rg -l "节点4|节点 4|导航缓冲" "Assets\Notes" -g "*.md" 2>$null | Select-Object -First 10
+Assets\Notes\归档\QuickTest效果通道-技能测试预期对�?md
+Assets\Notes\归档\自然卡牌交互流程落地-三里程碑计划-2026-08-02.md
+
+$ rg -n "节点4|节点 4|导航缓冲|离开图标" "Assets\Notes\归档\自然卡牌交互流程落地-三里程碑计划-2026-08-02.md" | Select-Object -First 20
+51:目标�?4 节点能连着跑通并通关，交互形态换成图�?+ 走位。房间内容一律最简（消费房 / 特殊房只放一个离开图标，不放货架）�?
+76:- `NodeDeckRule` schema 换成「节�?�?序列 1..5 各抽几张」，`node_deck_rules.json` �?8 行（节点 4/7 无怪物行）
+137:4 件货架（1 宝箱卡�? 随机属性道具卡�? 恢复药水�? 食品卡）+ 1 张刷新选项�?+ 1 个离开图标，共 6 个占格对象�?*任意距离点击即买**，扣金币，卡牌碎裂消失，进携带卡包。金币不足时拒绝并在简要解释文字框提示。刷新初�?10 金币，每次翻倍�?
+145:宝箱奖励房（1 宝箱�?+ 3 随机道具卡）/ 道具奖励房（2 属性卡 + 3 随机道具卡）。卡落格上，点击逐个拿走进携带卡包；**踩离开图标即放�?*，不自动收尾�?
+
+$ Get-ChildItem "Assets\StreamingAssets\ContentVisual" -Recurse -File -Filter "*.json" | ForEach-Object { $_.FullName.Replace("C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\StreamingAssets\ContentVisual\","") }
+cards\_index.json
+cards\Armor.json
+cards\Attack.json
+cards\Attribute.json
+cards\avatar_default.json
+cards\Boss.json
+cards\deck_dragon.json
+cards\deck_help_archive.json
+cards\deck_help.json
+cards\deck_insect.json
+cards\deck_npc.json
+cards\deck_orc_legion.json
+cards\deck_player.json
+cards\deck_relic_archive.json
+cards\deck_relic.json
+cards\deck_skeleton_legion.json
+cards\deck_smallanimal.json
+cards\deck_stone_legion.json
+cards\deck_transition.json
+cards\deck_trap.json
+cards\deck_void.json
+cards\deck_wandering_legion.json
+cards\Elite.json
+cards\ExpandItemCapacity.json
+cards\ExpandItemSlots.json
+cards\FixItem.json
+cards\Fountain.json
+cards\GoDown.json
+cards\Gold.json
+cards\GoUp.json
+cards\help_armor_breaking_hammer.json
+cards\help_armor_card.json
+cards\help_attack_card.json
+cards\help_blood_conversion.json
+cards\help_blue_chest_card.json
+cards\help_bomb.json
+cards\help_brutality_card.json
+cards\help_common_chest_card.json
+cards\help_doubling_tower.json
+cards\help_fireball.json
+cards\help_food_card.json
+cards\help_gold_card.json
+cards\help_golden_chest_card.json
+cards\help_healing_potion.json
+cards\help_hp_card.json
+cards\help_impact_tutorial.json
+cards\help_kidnapping.json
+cards\help_rotation_wheel.json
+cards\help_shield_bash_tutorial.json
+cards\help_stat_boost_card.json
+cards\help_sturdy_shield.json
+cards\help_swap_card.json
+cards\help_teleport_card.json
+cards\help_throwing_knife.json
+cards\help_ward_magic_card.json
+cards\help_watchtower.json
+cards\Hp.json
+cards\ItemReward.json
+cards\Leave.json
+cards\monster_beggar.json
+cards\monster_big_orc.json
+cards\monster_big_skeleton_reborn.json
+cards\monster_big_skeleton.json
+cards\monster_big_stone.json
+cards\monster_bone_club_skeleton.json
+cards\monster_bone_courier.json
+cards\monster_brainless_orc.json
+cards\monster_dragon_cult_leader.json
+cards\monster_dragon_follower.json
+cards\monster_executioner.json
+cards\monster_fire_bather.json
+cards\monster_fire_cult_leader.json
+cards\monster_fire_dragon.json
+cards\monster_fire_priest.json
+cards\monster_fire_swallower.json
+cards\monster_friendly_ancient.json
+cards\monster_giant_skeleton.json
+cards\monster_growing_stone.json
+cards\monster_headless_skeleton.json
+cards\monster_hoodlum.json
+cards\monster_killer.json
+cards\monster_megalith.json
+cards\monster_melee_3.json
+cards\monster_melee_6.json
+cards\monster_mist.json
+cards\monster_multi_bone_worm.json
+cards\monster_observer.json
+cards\monster_old_orc.json
+cards\monster_orc_boss.json
+cards\monster_orc_commander.json
+cards\monster_orc_quartermaster.json
+cards\monster_orc_warrior.json
+cards\monster_pickpocket.json
+cards\monster_ringleader.json
+cards\monster_rogue.json
+cards\monster_rolling_stone_man.json
+cards\monster_rotating_cub.json
+cards\monster_salamander.json
+cards\monster_sharp_stone.json
+cards\monster_shelter_stone.json
+cards\monster_skeleton_king.json
+cards\monster_skeleton_mage.json
+cards\monster_skeleton_taunter.json
+cards\monster_skull_head.json
+cards\monster_sky_eye.json
+cards\monster_smart_orc.json
+cards\monster_smuggler.json
+cards\monster_space_master.json
+cards\monster_stepwalker.json
+cards\monster_stone_golem.json
+cards\monster_stone_man.json
+cards\monster_stone_shrimp.json
+cards\monster_stone_swallower.json
+cards\monster_stone_thrower.json
+cards\monster_summon_special_omni.json
+cards\monster_thug.json
+cards\monster_vagrant.json
+cards\monster_veteran_orc.json
+cards\monster_void_cub.json
+cards\monster_void_lost.json
+cards\monster_wandering_child.json
+cards\monster_world_turning_hand.json
+cards\monster_young_orc.json
+cards\RefreshShop.json
+cards\relic_armor_strip_knife.json
+cards\relic_arsenal.json
+cards\relic_battle_hardened.json
+cards\relic_berserker_axe.json
+cards\relic_beyond_dimension.json
+cards\relic_blood_burst.json
+cards\relic_blood_cycle.json
+cards\relic_blood_demon.json
+cards\relic_blood_regen.json
+cards\relic_blood_shockwave.json
+cards\relic_blood_violence.json
+cards\relic_body_potential.json
+cards\relic_composite_armor.json
+cards\relic_craving.json
+cards\relic_dragon_scale_armor.json
+cards\relic_easy_road.json
+cards\relic_even_hatred.json
+cards\relic_foam_armor.json
+cards\relic_forge_tool.json
+cards\relic_gold_armor.json
+cards\relic_gold_blood.json
+cards\relic_gold_knife.json
+cards\relic_golden_coffer.json
+cards\relic_golden_sword.json
+cards\relic_hard_skin.json
+cards\relic_heavy_armor.json
+cards\relic_iron_shield.json
+cards\relic_junk_amplifier.json
+cards\relic_junk_body.json
+cards\relic_junk_coating.json
+cards\relic_junk_cycler.json
+cards\relic_junk_launcher.json
+cards\relic_junk_recycler.json
+cards\relic_junk_slot_machine.json
+cards\relic_junk_sword.json
+cards\relic_lucky_coin.json
+cards\relic_metal_blood.json
+cards\relic_muscle_counter.json
+cards\relic_phoenix_feather.json
+cards\relic_potion_bag.json
+cards\relic_punch_card_knife.json
+cards\relic_rotation_button.json
+cards\relic_rotation_trick.json
+cards\relic_rotten_cleave_axe.json
+cards\relic_rpm_engine.json
+cards\relic_sharp_longsword.json
+cards\relic_shield_knife.json
+cards\relic_sling.json
+cards\relic_spinning_barb.json
+cards\relic_swap_button.json
+cards\relic_terror_mask.json
+cards\relic_thorn_mail.json
+cards\relic_thorn_skin.json
+cards\relic_throwing_knife_bag.json
+cards\relic_tower_child.json
+cards\relic_trap_cell.json
+cards\relic_vitality_amulet.json
+cards\relic_wood_armor.json
+cards\relic_wood_shield.json
+cards\relic_wood_sword.json
+cards\Shop.json
+cards\skill_absorb_bone.json
+cards\skill_absorb_stone.json
+cards\skill_absorb.json
+cards\skill_air_strike.json
+cards\skill_ambush_melee.json
+cards\skill_assassin_leader.json
+cards\skill_attrition.json
+cards\skill_battle_hardened.json
+cards\skill_beggar_bond.json
+cards\skill_blessing.json
+cards\skill_bloodthirst.json
+cards\skill_breathe_fire.json
+cards\skill_call_followers.json
+cards\skill_call_melee6.json
+cards\skill_chant.json
+cards\skill_cloud_breath.json
+cards\skill_death_summon.json
+cards\skill_delivery.json
+cards\skill_endless_flame.json
+cards\skill_evade.json
+cards\skill_fall_apart.json
+cards\skill_falling_rocks.json
+cards\skill_fight_me.json
+cards\skill_find_weakness.json
+cards\skill_fire_power.json
+cards\skill_first_strike.json
+cards\skill_flame_boiling.json
+cards\skill_flame_breath.json
+cards\skill_fracture_fall_apart.json
+cards\skill_gear_delivery.json
+cards\skill_gift.json
+cards\skill_give_punch.json
+cards\skill_guide.json
+cards\skill_hard.json
+cards\skill_holy_duel.json
+cards\skill_hoodlum.json
+cards\skill_hot_observation.json
+cards\skill_intense_burning.json
+cards\skill_leap_kill.json
+cards\skill_learning_growth.json
+cards\skill_link_armor.json
+cards\skill_link_attack_bonus.json
+cards\skill_link_prep.json
+cards\skill_link_tactics.json
+cards\skill_lord_of_death.json
+cards\skill_love_fire.json
+cards\skill_mixed_bones.json
+cards\skill_monster_battle_hardened.json
+cards\skill_offer_fire.json
+cards\skill_orc_tactics.json
+cards\skill_otherworld_help.json
+cards\skill_purge_followers.json
+cards\skill_random_walk.json
+cards\skill_range_expand.json
+cards\skill_ranged_weapon.json
+cards\skill_rascality.json
+cards\skill_recombine_body.json
+cards\skill_recombine_head.json
+cards\skill_recuperate.json
+cards\skill_relentless_chase.json
+cards\skill_rise_up.json
+cards\skill_rolling_crush.json
+cards\skill_rotate_lover.json
+cards\skill_sacrifice.json
+cards\skill_sharp_stone.json
+cards\skill_smart.json
+cards\skill_space_mastery.json
+cards\skill_speed_up.json
+cards\skill_stack_armor.json
+cards\skill_steal.json
+cards\skill_stocking.json
+cards\skill_stone_growth.json
+cards\skill_stone_lover.json
+cards\skill_stone_shelter.json
+cards\skill_stray_cub.json
+cards\skill_stroll.json
+cards\skill_strong_combo.json
+cards\skill_survival_wisdom.json
+cards\skill_swallow_stone.json
+cards\skill_taunt.json
+cards\skill_throw_stone.json
+cards\skill_turn_world.json
+cards\skill_unstable.json
+cards\skill_violence_maniac.json
+cards\skill_violence_nutrition.json
+cards\skill_world_as_neighbors.json
+cards\Tavern.json
+cards\trap_armor_totem.json
+cards\trap_attack_totem.json
+cards\trap_bear_trap.json
+cards\trap_flame.json
+cards\trap_healing_spring.json
+cards\trap_leave.json
+cards\trap_recovery_totem.json
+cards\trap_revive_stone.json
+cards\trap_rolling_stone.json
+cards\trap_spike.json
+cards\Treasure.json
+cards\TreasureReward.json
+cards\UpgradeItemStats.json
+tables\economy.json
+tables\effect_templates.json
+tables\effects.json
+tables\monster_decks.json
+tables\node_deck_rules.json
+tables\reward_pools.json
+tables\visual_effects.json
+
+→ Read Assets/StreamingAssets/ContentVisual/cards/Leave.json
+→ Read Assets/Scripts/NineGrid.Presentation/Flow/BoardBriefTip/BoardBriefTipCopy.cs
+
+$ Test-Path "docs\feedback-analysis"
+True
+
+← Write docs/feedback-analysis/room-flow-report.md
+Wrote file successfully.
+
+I have all the evidence needed. Now writing the report.
+报告已写入 `docs/feedback-analysis/room-flow-report.md`。结论摘要：条目 1（离开机关对应房间类型/击破直接进入/每次洗入两张）为设计变更建议，现状三处全不符——离开机关与房间类型零绑定、击破后必须走图标+驻留1s选房（非直接进入）、每节点仅幂等洗入 1 张（DeckSystem.cs:140），采纳将冲突 ADR-0021/0026 与「地图节点」词条；条目 2（离开后空房间再点离开）为设计案本身多此一举——实现与层级流程.md/ADR-0021 节点 4 非战斗导航缓冲逐字一致，玩家嫌的是节点 4 设计步骤（其保留理由 ADR 未说明），非实现 bug。

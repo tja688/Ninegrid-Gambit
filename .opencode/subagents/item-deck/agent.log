@@ -1,0 +1,183 @@
+
+> Full-Auto · deepseek-v4-flash
+
+$ ls docs/adr/ | Select-Object -First 50
+Directory: C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\docs\adr
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a---           2026/7/27    16:58           2811 0001-battle-presentation-unified-timeline-batch-ack.md
+-a---            2026/8/1    10:16           3436 0002-card-chassis-and-face-templates.md
+-a---            2026/8/7     7:56           5097 0003-diagnostic-correlation-layer-chainid-choreoseqid.md
+-a---           2026/7/27    22:52           4357 0004-input-intake-two-axis-gating.md
+-a---            2026/8/6    17:11           6681 0005-card-face-beat-commit.md
+-a---           2026/7/27    22:51           3574 0006-windows-high-polling-mouse-mitigation.md
+-a---           2026/7/28    10:31           4247 0007-unified-presentation-pipeline.md
+-a---            2026/8/6    10:35           6784 0008-single-source-content-and-resources-loading.md
+-a---            2026/8/7    12:57           6345 0009-parameterized-effect-templates.md
+-a---           2026/7/28    20:32           6023 0010-self-declared-effect-responsibility.md
+-a---           2026/7/29    14:04           8040 0011-monster-attack-pattern-intrinsic.md
+-a---            2026/8/7     7:56          10209 0012-enemy-action-phase-volley.md
+-a---            2026/8/7    10:47           6935 0013-action-countdown-unified.md
+-a---           2026/7/29    17:51           1616 0014-theme-ids-are-legacy-opaque.md
+-a---           2026/7/30    15:07           3226 0015-card-slot-placement-local-space.md
+-a---           2026/7/31    13:57           5650 0016-card-face-orientation.md
+-a---            2026/8/3    18:23           3934 0017-trap-card-kind-and-dual-bucket.md
+-a---            2026/8/1    11:54           2924 0018-trigger-visible-causality.md
+-a---            2026/8/2    17:28           2132 0019-avatar-board-walk.md
+-a---            2026/8/3    18:23           3714 0020-board-as-interaction-surface.md
+-a---            2026/8/4    17:21           3751 0021-run-progression-in-core.md
+-a---            2026/8/6    10:35           5110 0022-node-loadout-model.md
+-a---            2026/8/3    18:23           8467 0023-slot-hit-frame-and-claim.md
+-a---            2026/8/3    13:24           5381 0024-board-placement-and-prefab-authored-size.md
+-a---            2026/8/3    18:22           2302 0025-item-slots-run-persistent-hold.md
+-a---            2026/8/6    10:35           3867 0026-leave-trap-sole-clear-condition.md
+-a---            2026/8/6    10:35           2344 0027-relic-drag-recycle-and-rmb-inspect.md
+-a---            2026/8/4    11:39           5491 0028-damage-formula-armor-and-reduction.md
+-a---            2026/8/6    10:35           4434 0029-content-guardrail-stable-theme-deck-mapping.md
+-a---            2026/8/6    10:35           2774 0030-regular-trap-opening-loadout.md
+-a---            2026/8/6    10:35           3342 0031-attribute-room-pick-two.md
+-a---            2026/8/6    15:43           5180 0032-item-cards-usable-outside-battle.md
+-a---            2026/8/6    16:38           3255 0033-help-card-rarity-distribution-control.md
+-a---            2026/8/7     7:49           3102 0034-board-stabilization-refill-batch-ack.md
+-a---            2026/8/7    12:57           3847 0035-dual-description-projection-and-assembly-param-refs.md
+-a---            2026/8/7    21:38           5787 0036-audio-cue-binding-and-music-ownership.md
+
+$ Get-ChildItem -Recurse "Assets/Docs/九宫格登神" -File | Select-Object -ExpandProperty FullName
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\00-��������ĵ����������AI��Ҫ�����.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\01-���ĸ���.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\02-����.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\03-��Ҳ࿨����Ϣ.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\04-���˲࿨����Ϣ.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\05-����.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\06-��ҽ�ɫ.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\07-����.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\08-UI.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\00-��������ĵ����������AI��Ҫ�����\ѭ��.md
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\00-��������ĵ����������AI��Ҫ�����\ѭ��.md.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\00-��������ĵ����������AI��Ҫ�����\Ը��.md
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\00-��������ĵ����������AI��Ҫ�����\Ը��.md.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\00-��������ĵ����������AI��Ҫ�����\֧��.md
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\00-��������ĵ����������AI��Ҫ�����\֧��.md.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\01-���ĸ���\���߿���.md
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\01-���ĸ���\���߿���.md.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\01-���ĸ���\����.md
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\01-���ĸ���\����.md.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\01-���ĸ���\����.md
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\01-���ĸ���\����.md.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\01-���ĸ���\����.md
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\01-���ĸ���\����.md.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\01-���ĸ���\����.md
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\01-���ĸ���\����.md.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\01-���ĸ���\��Ϸ��������.md
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\01-���ĸ���\��Ϸ��������.md.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\01-���ĸ���\ս����λ��.md
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\01-���ĸ���\ս����λ��.md.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\02-����\���ƻ���.md
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\02-����\���ƻ���.md.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\02-����\�������.md
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\02-����\�������.md.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\02-����\��������.md
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\02-����\��������.md.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\02-����\�ƶ�����ת����.md
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\02-����\�ƶ�����ת����.md.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\02-����\ս������.md
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\02-����\ս������.md.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\03-��Ҳ࿨����Ϣ\���߿�.md
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\03-��Ҳ࿨����Ϣ\���߿�.md.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\03-��Ҳ࿨����Ϣ\��ɫ����.md
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\03-��Ҳ࿨����Ϣ\��ɫ����.md.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\03-��Ҳ࿨����Ϣ\ͨ�ÿ���.md
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\03-��Ҳ࿨����Ϣ\ͨ�ÿ���.md.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\03-��Ҳ࿨����Ϣ\��ҿ�.md
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\03-��Ҳ࿨����Ϣ\��ҿ�.md.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\04-���˲࿨����Ϣ\���＼��.md
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\04-���˲࿨����Ϣ\���＼��.md.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\04-���˲࿨����Ϣ\���￨.md
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\04-���˲࿨����Ϣ\���￨.md.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\04-���˲࿨����Ϣ\���ؼ���.md
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\04-���˲࿨����Ϣ\���ؼ���.md.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\04-���˲࿨����Ϣ\���ؿ�.md
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\04-���˲࿨����Ϣ\���ؿ�.md.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\04-���˲࿨����Ϣ\����ϵͳ.md
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\04-���˲࿨����Ϣ\����ϵͳ.md.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\05-����\����.md
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\05-����\����.md.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\06-��ҽ�ɫ\��ɫ.md
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\06-��ҽ�ɫ\��ɫ.md.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\06-��ҽ�ɫ\��ҿ�.md
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\06-��ҽ�ɫ\��ҿ�.md.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\07-����\�㼶����.md
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\07-����\�㼶����.md.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\07-����\������������.md
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\07-����\������������.md.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\07-����\ս���ؿ�����.md
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\07-����\ս���ؿ�����.md.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\08-UI\���沼��.md
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\08-UI\���沼��.md.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\08-UI\��ҽ�������.md
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Docs\�Ź������\08-UI\��ҽ�������.md.meta
+
+$ Get-ChildItem -Recurse "docs/code-map" -File | Select-Object -ExpandProperty FullName
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\docs\code-map\presentation.md
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\docs\code-map\README.md
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\docs\code-map\tests.md
+
+✱ Glob "Assets/Docs/九宫格登神/**/*.md" 32 matches
+→ Read docs/adr/0022-node-loadout-model.md
+→ Read docs/adr/0026-leave-trap-sole-clear-condition.md
+→ Read docs/adr/0025-item-slots-run-persistent-hold.md
+→ Read docs/adr/0033-help-card-rarity-distribution-control.md
+→ Read docs/adr/0030-regular-trap-opening-loadout.md
+→ Read docs/adr/0031-attribute-room-pick-two.md
+→ Read Assets/Docs/九宫格登神/07-流程/卡组生成流程.md
+→ Read Assets/Docs/九宫格登神/01-核心概念/道具卡格.md
+→ Read Assets/Docs/九宫格登神/01-核心概念/经济.md
+→ Read docs/adr/0021-run-progression-in-core.md
+→ Read docs/adr/0032-item-cards-usable-outside-battle.md
+→ Read CONTEXT.md
+→ Read docs/code-map/README.md
+✱ Grep "BuildNodeDeckOptions" in Assets/Scripts · 49 matches
+→ Read Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Systems/RewardSystem.cs [offset=1, limit=120]
+→ Read Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Systems/RewardSystem.cs [limit=260, offset=220]
+→ Read Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Systems/RewardSystem.cs [limit=300, offset=480]
+✱ Grep "FixedItemCardDefIds|FixItem" in Assets/Scripts · 64 matches
+✱ Grep "clearResidualBoard|clearResidualTrap|CompleteNodeIfCleared|ClearPlayerSideDeck|PlayerOpeningCount" in Assets/Scripts · 100 matches
+→ Read Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Systems/EconomySystem.cs
+→ Read Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Systems/PhaseSystem.cs [limit=150, offset=1840]
+→ Read Assets/Docs/九宫格登神/02-机制/发牌机制.md
+→ Read Assets/Docs/九宫格登神/01-核心概念/卡组.md
+→ Read Assets/Docs/九宫格登神/01-核心概念/房间.md
+→ Read Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Models/PlayerModel.cs
+→ Read Assets/Scripts/NineGrid.Presentation/Flow/BattleSession/BattleSessionExecutor.cs [limit=200, offset=280]
+✱ Grep "PlayerOpeningCount|PlayerCardPoolUids|PlayerCardPool" in Assets/Scripts/NineGrid.Foundation/NineGrid.Core · 28 matches
+✱ Grep "ItemSlotUids|AddToItemSlots|ItemSlots" in Assets/Scripts/NineGrid.Foundation/NineGrid.Core · 95 matches
+→ Read Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Domain/Actions/BoardDeckActions.cs [limit=120, offset=160]
+→ Read Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Systems/PhaseSystem.cs [limit=140, offset=1112]
+✱ Grep "OfferSpecialRewardSessionAction|SpecialRewardPickCount|RewardItemChoice" in Assets/Scripts/NineGrid.Foundation/NineGrid.Core · 16 matches
+→ Read Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Domain/Actions/ContentActions.cs [limit=80, offset=480]
+✱ Grep "固定|兑金|三选" in Assets/Notes · 57 matches
+→ Read Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Systems/PhaseSystem.cs [limit=120, offset=1380]
+
+$ Get-ChildItem "Assets/Notes" -File | Sort-Object LastWriteTime -Descending | Select-Object -First 12 Name, LastWriteTime
+Name                                                   LastWriteTime
+----                                                   -------------
+ͳһ���ƺ�������������޸�-��رʼ�-2026-08-07.md      2026/8/7 7:54:42
+ͳһ���ƺ�������������޸�-��رʼ�-2026-08-07.md.meta 2026/8/7 7:50:07
+��������ȫ�����о�̽��.md                              2026/8/6 22:26:51
+��������ȫ�����о�̽��.md.meta                         2026/8/6 16:07:09
+Logs.meta                                              2026/7/11 14:13:33
+CardSprite.meta                                        2026/7/11 14:13:33
+�鵵.meta                                              2026/7/6 9:18:57
+
+→ Read Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Systems/PhaseSystem.cs [limit=130, offset=900]
+✱ Grep "Options.PlayerCards|\.PlayerCards" in Assets/Scripts · 35 matches
+所有关键证据已集齐。现在写报告。
+
+$ New-Item -ItemType Directory -Path "docs/feedback-analysis" -Force | Out-Null; Test-Path "docs/feedback-analysis"
+True
+
+← Write docs/feedback-analysis/item-deck-report.md
+Wrote file successfully.
+
+报告已写入 `docs\feedback-analysis\item-deck-report.md`。结论摘要：条目 1 判「设计冲突＋可验证体验缺陷」——现状固定卡是确定追加非随机三张，但固定卡排在玩家侧卡组尾部、开局直摆三张永远轮不到它（RewardSystem.cs:560-586 + BoardDeckActions.cs:204），策划建议的三选一为新交互（可复用 ADR-0031 属性房三选二通道）；条目 2 判「设计冲突（非 bug）」——「清关残留不兑金、主动回收才 +10」为策划案原文（卡组.md/经济.md）、ADR-0025/0026、代码（EconomySystem.SettleUnusedHelpCards）三方一致的既定设计，反馈与其直接冲突，且道具卡格在代码路径中明确保留（未发现已入手卡被移除的实现路径）。

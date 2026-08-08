@@ -1,0 +1,7 @@
+继续你未完成的 sub agent 任务：你的进程被中断（不是你的问题），工作区保留了未提交改动与中间产物。先查 git status 与工作区了解进度，继续干完并落盘报告（C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\docs\feedback-analysis\trap-effects-report.md）。全程不提问。
+
+任务回顾：对策划试玩反馈做三方比对（仓库 CONTEXT.md + docs/adr/ + docs/code-map/；代码 Assets/Scripts/NineGrid.Foundation/NineGrid.Core 与 NineGrid.Presentation；设计案 Assets/Docs/九宫格登神/）：
+1. "机关卡的血量不清晰，看不懂有多少血" —— Trap 卡面血量显示（ADR-0017 五套卡面、Trap 卡面模板字段、CoreCardPresentationMapper 投影、trap.* JSON 数值）。
+2. "护甲图腾不加甲，攻击图腾不加攻" —— 常规机关三图腾效果（ADR-0030、trap JSON effectAssemblies、tpl.trap.* 效果模板、触发条件与执行链路）。
+
+判定归类：落地理解偏差 / 硬错误 / 需要进一步分析 / 设计冲突 / 内容配置问题。结论先行，每条给判定类型 + 证据（文件:行）+ 现状说明。只探查不改文件。报告写到 C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\docs\feedback-analysis\trap-effects-report.md（Markdown UTF-8）。完成时只回一句话：报告路径 + 结论摘要。

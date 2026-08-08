@@ -1,0 +1,1125 @@
+
+> Full-Auto · deepseek-v4-flash
+
+→ Read CONTEXT.md
+
+$ Get-ChildItem -Path "docs" -Directory | Select-Object Name; Get-ChildItem -Path "docs\adr" -Filter "*.md" | Select-Object Name; Get-ChildItem -Path "Assets\Docs\九宫格登神" -Recurse -File | Select-Object FullName
+Name
+----
+adr
+agents
+code-map
+feedback-analysis
+superpowers
+0001-battle-presentation-unified-timeline-batch-ack.md
+0002-card-chassis-and-face-templates.md
+0003-diagnostic-correlation-layer-chainid-choreoseqid.md
+0004-input-intake-two-axis-gating.md
+0005-card-face-beat-commit.md
+0006-windows-high-polling-mouse-mitigation.md
+0007-unified-presentation-pipeline.md
+0008-single-source-content-and-resources-loading.md
+0009-parameterized-effect-templates.md
+0010-self-declared-effect-responsibility.md
+0011-monster-attack-pattern-intrinsic.md
+0012-enemy-action-phase-volley.md
+0013-action-countdown-unified.md
+0014-theme-ids-are-legacy-opaque.md
+0015-card-slot-placement-local-space.md
+0016-card-face-orientation.md
+0017-trap-card-kind-and-dual-bucket.md
+0018-trigger-visible-causality.md
+0019-avatar-board-walk.md
+0020-board-as-interaction-surface.md
+0021-run-progression-in-core.md
+0022-node-loadout-model.md
+0023-slot-hit-frame-and-claim.md
+0024-board-placement-and-prefab-authored-size.md
+0025-item-slots-run-persistent-hold.md
+0026-leave-trap-sole-clear-condition.md
+0027-relic-drag-recycle-and-rmb-inspect.md
+0028-damage-formula-armor-and-reduction.md
+0029-content-guardrail-stable-theme-deck-mapping.md
+0030-regular-trap-opening-loadout.md
+0031-attribute-room-pick-two.md
+0032-item-cards-usable-outside-battle.md
+0033-help-card-rarity-distribution-control.md
+0034-board-stabilization-refill-batch-ack.md
+0035-dual-description-projection-and-assembly-param-refs.md
+0036-audio-cue-binding-and-music-ownership.md
+
+→ Read docs/adr/0011-monster-attack-pattern-intrinsic.md
+→ Read docs/adr/0012-enemy-action-phase-volley.md
+→ Read docs/adr/0013-action-countdown-unified.md
+→ Read docs/adr/0028-damage-formula-armor-and-reduction.md
+Now let me look at the design docs and code structure in parallel.
+
+$ Get-ChildItem -Path "Assets\Docs\九宫格登神" -Recurse -File | ForEach-Object { $_.FullName.Replace((Get-Location).Path + '\','') }
+Assets\Docs\�Ź������\00-��������ĵ����������AI��Ҫ�����.meta
+Assets\Docs\�Ź������\01-���ĸ���.meta
+Assets\Docs\�Ź������\02-����.meta
+Assets\Docs\�Ź������\03-��Ҳ࿨����Ϣ.meta
+Assets\Docs\�Ź������\04-���˲࿨����Ϣ.meta
+Assets\Docs\�Ź������\05-����.meta
+Assets\Docs\�Ź������\06-��ҽ�ɫ.meta
+Assets\Docs\�Ź������\07-����.meta
+Assets\Docs\�Ź������\08-UI.meta
+Assets\Docs\�Ź������\00-��������ĵ����������AI��Ҫ�����\ѭ��.md
+Assets\Docs\�Ź������\00-��������ĵ����������AI��Ҫ�����\ѭ��.md.meta
+Assets\Docs\�Ź������\00-��������ĵ����������AI��Ҫ�����\Ը��.md
+Assets\Docs\�Ź������\00-��������ĵ����������AI��Ҫ�����\Ը��.md.meta
+Assets\Docs\�Ź������\00-��������ĵ����������AI��Ҫ�����\֧��.md
+Assets\Docs\�Ź������\00-��������ĵ����������AI��Ҫ�����\֧��.md.meta
+Assets\Docs\�Ź������\01-���ĸ���\���߿���.md
+Assets\Docs\�Ź������\01-���ĸ���\���߿���.md.meta
+Assets\Docs\�Ź������\01-���ĸ���\����.md
+Assets\Docs\�Ź������\01-���ĸ���\����.md.meta
+Assets\Docs\�Ź������\01-���ĸ���\����.md
+Assets\Docs\�Ź������\01-���ĸ���\����.md.meta
+Assets\Docs\�Ź������\01-���ĸ���\����.md
+Assets\Docs\�Ź������\01-���ĸ���\����.md.meta
+Assets\Docs\�Ź������\01-���ĸ���\����.md
+Assets\Docs\�Ź������\01-���ĸ���\����.md.meta
+Assets\Docs\�Ź������\01-���ĸ���\��Ϸ��������.md
+Assets\Docs\�Ź������\01-���ĸ���\��Ϸ��������.md.meta
+Assets\Docs\�Ź������\01-���ĸ���\ս����λ��.md
+Assets\Docs\�Ź������\01-���ĸ���\ս����λ��.md.meta
+Assets\Docs\�Ź������\02-����\���ƻ���.md
+Assets\Docs\�Ź������\02-����\���ƻ���.md.meta
+Assets\Docs\�Ź������\02-����\�������.md
+Assets\Docs\�Ź������\02-����\�������.md.meta
+Assets\Docs\�Ź������\02-����\��������.md
+Assets\Docs\�Ź������\02-����\��������.md.meta
+Assets\Docs\�Ź������\02-����\�ƶ�����ת����.md
+Assets\Docs\�Ź������\02-����\�ƶ�����ת����.md.meta
+Assets\Docs\�Ź������\02-����\ս������.md
+Assets\Docs\�Ź������\02-����\ս������.md.meta
+Assets\Docs\�Ź������\03-��Ҳ࿨����Ϣ\���߿�.md
+Assets\Docs\�Ź������\03-��Ҳ࿨����Ϣ\���߿�.md.meta
+Assets\Docs\�Ź������\03-��Ҳ࿨����Ϣ\��ɫ����.md
+Assets\Docs\�Ź������\03-��Ҳ࿨����Ϣ\��ɫ����.md.meta
+Assets\Docs\�Ź������\03-��Ҳ࿨����Ϣ\ͨ�ÿ���.md
+Assets\Docs\�Ź������\03-��Ҳ࿨����Ϣ\ͨ�ÿ���.md.meta
+Assets\Docs\�Ź������\03-��Ҳ࿨����Ϣ\��ҿ�.md
+Assets\Docs\�Ź������\03-��Ҳ࿨����Ϣ\��ҿ�.md.meta
+Assets\Docs\�Ź������\04-���˲࿨����Ϣ\���＼��.md
+Assets\Docs\�Ź������\04-���˲࿨����Ϣ\���＼��.md.meta
+Assets\Docs\�Ź������\04-���˲࿨����Ϣ\���￨.md
+Assets\Docs\�Ź������\04-���˲࿨����Ϣ\���￨.md.meta
+Assets\Docs\�Ź������\04-���˲࿨����Ϣ\���ؼ���.md
+Assets\Docs\�Ź������\04-���˲࿨����Ϣ\���ؼ���.md.meta
+Assets\Docs\�Ź������\04-���˲࿨����Ϣ\���ؿ�.md
+Assets\Docs\�Ź������\04-���˲࿨����Ϣ\���ؿ�.md.meta
+Assets\Docs\�Ź������\04-���˲࿨����Ϣ\����ϵͳ.md
+Assets\Docs\�Ź������\04-���˲࿨����Ϣ\����ϵͳ.md.meta
+Assets\Docs\�Ź������\05-����\����.md
+Assets\Docs\�Ź������\05-����\����.md.meta
+Assets\Docs\�Ź������\06-��ҽ�ɫ\��ɫ.md
+Assets\Docs\�Ź������\06-��ҽ�ɫ\��ɫ.md.meta
+Assets\Docs\�Ź������\06-��ҽ�ɫ\��ҿ�.md
+Assets\Docs\�Ź������\06-��ҽ�ɫ\��ҿ�.md.meta
+Assets\Docs\�Ź������\07-����\�㼶����.md
+Assets\Docs\�Ź������\07-����\�㼶����.md.meta
+Assets\Docs\�Ź������\07-����\������������.md
+Assets\Docs\�Ź������\07-����\������������.md.meta
+Assets\Docs\�Ź������\07-����\ս���ؿ�����.md
+Assets\Docs\�Ź������\07-����\ս���ؿ�����.md.meta
+Assets\Docs\�Ź������\08-UI\���沼��.md
+Assets\Docs\�Ź������\08-UI\���沼��.md.meta
+Assets\Docs\�Ź������\08-UI\��ҽ�������.md
+Assets\Docs\�Ź������\08-UI\��ҽ�������.md.meta
+
+$ Get-ChildItem -Path "Assets\Scripts\NineGrid.Foundation" -Directory | Select-Object Name; Get-ChildItem -Path "Assets\Scripts" -Directory | Select-Object Name
+Name
+----
+NineGrid.Content
+NineGrid.Content.Editor
+NineGrid.Core
+NineGrid.Core.Tests
+NineGrid.DevTest
+NineGrid.DevTest.Tests
+NineGrid.Foundation
+NineGrid.Presentation
+Temporary Test
+UI
+
+$ $OutputEncoding = [System.Text.Encoding]::UTF8; [Console]::OutputEncoding = [System.Text.Encoding]::UTF8; Get-ChildItem -Path "Assets\Docs\九宫格登神" -Recurse -File -Filter "*.md" | ForEach-Object { $_.FullName.Replace((Get-Location).Path + '\','') }
+Assets\Docs\九宫格登神\00-基础设计文档（如果你是AI不要管这里）\循环.md
+Assets\Docs\九宫格登神\00-基础设计文档（如果你是AI不要管这里）\愿景.md
+Assets\Docs\九宫格登神\00-基础设计文档（如果你是AI不要管这里）\支柱.md
+Assets\Docs\九宫格登神\01-核心概念\道具卡格.md
+Assets\Docs\九宫格登神\01-核心概念\房间.md
+Assets\Docs\九宫格登神\01-核心概念\经济.md
+Assets\Docs\九宫格登神\01-核心概念\卡组.md
+Assets\Docs\九宫格登神\01-核心概念\属性.md
+Assets\Docs\九宫格登神\01-核心概念\游戏结束条件.md
+Assets\Docs\九宫格登神\01-核心概念\战场与位置.md
+Assets\Docs\九宫格登神\02-机制\发牌机制.md
+Assets\Docs\九宫格登神\02-机制\翻面机制.md
+Assets\Docs\九宫格登神\02-机制\交互机制.md
+Assets\Docs\九宫格登神\02-机制\移动与旋转机制.md
+Assets\Docs\九宫格登神\02-机制\战斗机制.md
+Assets\Docs\九宫格登神\03-玩家侧卡牌信息\道具卡.md
+Assets\Docs\九宫格登神\03-玩家侧卡牌信息\角色卡组.md
+Assets\Docs\九宫格登神\03-玩家侧卡牌信息\通用卡组.md
+Assets\Docs\九宫格登神\03-玩家侧卡牌信息\玩家卡.md
+Assets\Docs\九宫格登神\04-敌人侧卡牌信息\怪物技能.md
+Assets\Docs\九宫格登神\04-敌人侧卡牌信息\怪物卡.md
+Assets\Docs\九宫格登神\04-敌人侧卡牌信息\机关技能.md
+Assets\Docs\九宫格登神\04-敌人侧卡牌信息\机关卡.md
+Assets\Docs\九宫格登神\04-敌人侧卡牌信息\技能系统.md
+Assets\Docs\九宫格登神\05-遗物\遗物.md
+Assets\Docs\九宫格登神\06-玩家角色\角色.md
+Assets\Docs\九宫格登神\06-玩家角色\玩家卡.md
+Assets\Docs\九宫格登神\07-流程\层级流程.md
+Assets\Docs\九宫格登神\07-流程\卡组生成流程.md
+Assets\Docs\九宫格登神\07-流程\战斗关卡流程.md
+Assets\Docs\九宫格登神\08-UI\界面布局.md
+Assets\Docs\九宫格登神\08-UI\玩家交互操作.md
+
+→ Read Assets/Docs/九宫格登神/02-机制/战斗机制.md
+→ Read Assets/Docs/九宫格登神/04-敌人侧卡牌信息/怪物卡.md
+→ Read Assets/Docs/九宫格登神/04-敌人侧卡牌信息/技能系统.md
+Now let me explore the Core code structure.
+
+$ $OutputEncoding = [System.Text.Encoding]::UTF8; [Console]::OutputEncoding = [System.Text.Encoding]::UTF8; Get-ChildItem -Path "Assets\Scripts\NineGrid.Core" -Recurse -Filter "*.cs" | ForEach-Object { $_.FullName.Replace((Get-Location).Path + '\','') }
+(no output)
+
+$ Get-ChildItem -Path "Assets\Scripts" -Directory -Recurse -Depth 1 | Select-Object -ExpandProperty FullName
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Foundation
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Presentation
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\Temporary Test
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\UI
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Foundation\NineGrid.Content
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Foundation\NineGrid.Content.Editor
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Foundation\NineGrid.Core
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Foundation\NineGrid.Core.Tests
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Foundation\NineGrid.DevTest
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Foundation\NineGrid.DevTest.Tests
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Presentation\Cards
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Presentation\Cheat
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Presentation\Commands
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Presentation\Controllers
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Presentation\Editor
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Presentation\Flow
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Presentation\Platform
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Presentation\Queries
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Presentation\Setup
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Presentation\Systems
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Presentation\Tests
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\UI\VisualLook
+
+$ Get-ChildItem -Path "Assets\Scripts\NineGrid.Foundation\NineGrid.Core" -Filter "*.cs" | Select-Object -ExpandProperty Name
+(no output)
+
+$ Get-ChildItem -Path "Assets\Scripts\NineGrid.Foundation\NineGrid.Core" -Recurse -File | Select-Object -First 60 -ExpandProperty Name
+Architecture.meta
+Commands.meta
+Content.meta
+Domain.meta
+Effects.meta
+Models.meta
+NineGrid.Core.asmdef
+NineGrid.Core.asmdef.meta
+Presentation.meta
+Queries.meta
+Setup.meta
+Systems.meta
+Utilities.meta
+NineGridArchitecture.cs
+NineGridArchitecture.cs.meta
+CoreCommands.cs
+CoreCommands.cs.meta
+ContentDefinitions.cs
+ContentDefinitions.cs.meta
+ItemUseEligibility.cs
+ItemUseEligibility.cs.meta
+RegularTrapPool.cs
+RegularTrapPool.cs.meta
+ActionCountdown.cs
+ActionCountdown.cs.meta
+Actions.meta
+AttackPattern.cs
+AttackPattern.cs.meta
+AvatarWalkPathfinder.cs
+AvatarWalkPathfinder.cs.meta
+CardCombatRules.cs
+CardCombatRules.cs.meta
+CardDraft.cs
+CardDraft.cs.meta
+CombatEngagementOrder.cs
+CombatEngagementOrder.cs.meta
+Commands.meta
+CoreConstants.cs
+CoreConstants.cs.meta
+CoreEnums.cs
+CoreEnums.cs.meta
+Events.meta
+FaceDownTickCounters.cs
+FaceDownTickCounters.cs.meta
+MapNodeProgression.cs
+MapNodeProgression.cs.meta
+ModifierSource.cs
+ModifierSource.cs.meta
+MonsterBoardRules.cs
+MonsterBoardRules.cs.meta
+SlotId.cs
+SlotId.cs.meta
+Stats.meta
+BattleScopeActions.cs
+BattleScopeActions.cs.meta
+BoardDeckActions.cs
+BoardDeckActions.cs.meta
+ContentActions.cs
+ContentActions.cs.meta
+CoreActions.cs
+
+✱ Grep "EnemyActionPhase|ActionPhase|Volley|Roster" in Assets/Scripts/NineGrid.Foundation/NineGrid.Core · 25 matches
+✗ Read Assets/Scripts/NineGrid.Foundation/NineGrid.Core/ActionCountdown.cs failed
+Error: File not found: C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Foundation\NineGrid.Core\ActionCountdown.cs
+→ Read Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Systems/PhaseSystem.cs [offset=1550, limit=250]
+→ Read Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Systems/PhaseSystem.cs [limit=180, offset=440]
+✱ Grep "GetAttackDamage|AttackPatternCountdown|SetAttackPatternCountdownAction|Frequency\(" in Assets/Scripts/NineGrid.Foundation/NineGrid.Core · 34 matches
+→ Read Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Domain/CardDraft.cs
+→ Read Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Domain/AttackPattern.cs
+✱ Grep "RegisterEnemyActionPhase|ResolveNextEnemyAction|ResolveEnemyActionFinale|ResolveInteractiveRotation|ResolvePostKillBoard|AdvanceInteractionCount" in Assets/Scripts/NineGrid.Presentation · 29 matches
+→ Read Assets/Scripts/NineGrid.Presentation/Flow/Presentation/EnemyActionPhaseScheduler.cs
+→ Read Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Systems/PhaseSystem.cs [limit=240, offset=180]
+→ Read Assets/Scripts/NineGrid.Presentation/Flow/Presentation/AttackIntentScriptFactory.cs
+✱ Grep "CombatHitCommand" in Assets/Scripts/NineGrid.Foundation · 3 matches
+✱ Grep "GameCommandKind.CombatHit|case GameCommandKind.CombatHit" in Assets/Scripts/NineGrid.Foundation/NineGrid.Core · 0 matches
+✱ Grep "CombatHit" in Assets/Scripts/NineGrid.Foundation/NineGrid.Core · 9 matches
+✱ Grep "new AttackCommand|Send\(new AttackCommand|GameCommandKind.Attack" in Assets/Scripts · 18 matches
+→ Read Assets/Scripts/NineGrid.Presentation/Flow/BattleSession/BattleSessionExecutor.Opening.cs [limit=120, offset=180]
+→ Read Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Domain/Events/CardFaceEventValues.cs
+→ Read Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Domain/Actions/PhaseActions.cs [limit=80, offset=320]
+✱ Grep "ActionCountdownChanged|ActionCount" in Assets/Scripts/NineGrid.Presentation · 47 matches
+→ Read Assets/Scripts/NineGrid.Presentation/Flow/Presentation/ExploreIntentScriptFactory.cs
+✱ Grep "mEnemyAction.Append|EnemyActionPhaseScheduler\(" in Assets/Scripts/NineGrid.Presentation/Flow/Presentation · 7 matches
+
+$ Get-ChildItem -Path "Assets\Scripts\NineGrid.Presentation\Flow\Presentation" -Filter "*.cs" | Select-Object -ExpandProperty Name
+AttackIntentRejectedEvent.cs
+AttackIntentScriptFactory.cs
+AttackPostHitBranchStep.cs
+AudioCue.cs
+AudioTriggerPulseSink.cs
+AvatarWalkRunner.cs
+BatchLockstepSteps.cs
+BattleBeatFlush.cs
+BattleBeatHook.cs
+BattleBeatScheduler.cs
+BattleTimeline.cs
+BoardBufferedIntentLegality.cs
+BoardIntentLegality.cs
+BoardStabilizationScheduler.cs
+BoardWalkIntentScriptFactory.cs
+CardEffectTriggerPulseSink.cs
+CardFaceFlipBeatHandler.cs
+CardFaceGenerationBootstrap.cs
+CardFaceStatHandler.cs
+CombatAttackPresentChannel.cs
+CombatCounterPresentChannel.cs
+DamageFloaterBeatHandler.cs
+DamageNumberRequested.cs
+DebouncingTriggerPulseSink.cs
+DelayStep.cs
+DescriptionOutputEvents.cs
+EffectTriggerPulseBeatHandler.cs
+EnemyActionPhaseScheduler.cs
+ExploreIntentRejectedEvent.cs
+ExploreIntentScriptFactory.cs
+ExternalMainlineHoldStep.cs
+FlipPlaybackCoordinator.cs
+GameFlowShellState.cs
+GameFlowShellStateChangedEvent.cs
+GatedTriggerPulseSink.cs
+GoldGainBeatHandler.cs
+GoldGainPresentationRequested.cs
+GoldGainPresentationScheduler.cs
+IAccelerationSink.cs
+IBattleBeatHandler.cs
+IBufferedIntentLegality.cs
+InputIntent.cs
+InputIntentKinds.cs
+IntentBatchProjection.cs
+IntentDisposition.cs
+IPresentationIntentRuntime.cs
+ITimelineDiagnosticSink.cs
+ITimelineStep.cs
+NonCombatUseItemIntentScriptFactory.cs
+NullTriggerPulseSink.cs
+OccupancyForceSyncGuard.cs
+ParallelForkStep.cs
+PickupIntentScriptFactory.cs
+PickupItemRejectedEvent.cs
+PlayerInfoHudBeatHandler.cs
+PresentationDirector.cs
+PresentationSyncBatchGate.cs
+QueuedBoardPresentChannel.cs
+RecycleItemIntentScriptFactory.cs
+RelicHudSyncRequestedEvent.cs
+RevealFaceIntentScriptFactory.cs
+RoutingIntentScriptFactory.cs
+ShuffleBurstGrouper.cs
+ShuffleBurstOriginResolver.cs
+ShuffleIntoDeckPresentSink.cs
+ShuffleIntoDeckScheduler.cs
+ShufflePrefixedPresentChannel.cs
+TeardownPresentationDirectorRequested.cs
+TimelineBranchStep.cs
+TimelineStepStatus.cs
+TriggerPulseHub.cs
+TriggerStep.cs
+UseItemIntentRejectedEvent.cs
+UseItemIntentScriptFactory.cs
+UseItemPresentChannel.cs
+
+→ Read Assets/Scripts/NineGrid.Presentation/Flow/Presentation/RevealFaceIntentScriptFactory.cs
+✱ Grep "AdvanceInteractionCountInternal|PendingEnemyActionUids" in Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Systems/PhaseSystem.cs · 6 matches
+→ Read Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Systems/PhaseSystem.cs [limit=80, offset=1819]
+→ Read Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Systems/PhaseSystem.cs [limit=80, offset=90]
+→ Read Assets/Scripts/NineGrid.Presentation/Flow/Presentation/BoardWalkIntentScriptFactory.cs
+
+$ Get-ChildItem -Path "docs\feedback-analysis" | Select-Object Name, Length, LastWriteTime
+(no output)
+
+→ Read Assets/Scripts/NineGrid.Presentation/Flow/Presentation/BoardStabilizationScheduler.cs
+→ Read Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Effects/EffectAtomLibrary.cs [limit=70, offset=3280]
+✱ Grep "AttackPatternCountdown|attack_pattern|attackPattern" in Assets · 100 matches
+✱ Grep "ModifyActionCountdown" in Assets/StreamingAssets/ContentVisual · 1 match
+
+$ $OutputEncoding = [System.Text.Encoding]::UTF8; [Console]::OutputEncoding = [System.Text.Encoding]::UTF8; Get-Content "Assets\StreamingAssets\ContentVisual\cards\monster_big_stone.json"; Get-Content "Assets\StreamingAssets\ContentVisual\cards\monster_big_orc.json"
+{
+    "schemaVersion": 2,
+    "contentId": "monster.big_stone",
+    "kind": "Monster",
+    "deckId": "deck.orc_legion",
+    "role": "",
+    "displayName": "小蜜蜂",
+    "designSlotName": "",
+    "description": "[[斜角近战]]",
+    "faceIntro": "是CS高手",
+    "attackPattern": "斜角近战",
+    "gold": 5,
+    "stats": {
+        "hp": 4,
+        "armor": 2,
+        "attack": 1,
+        "action": 3,
+        "recovery": 0
+    },
+    "sprites": {
+        "mainIcon": "Assets/Resources/ContentArt/Multiple/pixel_art_card_pack 1.png",
+        "faceBackground": "",
+        "cardFrame": "",
+        "banner": "",
+        "backBorder": "",
+        "backShirt": "",
+        "backLogo": ""
+    },
+    "mainVisual": {
+        "offsetX": 0.0,
+        "offsetY": 0.0,
+        "uniformScale": 1.0
+    },
+    "animations": {
+        "defaultFps": 8.0,
+        "slots": [
+            {
+                "id": "idle",
+                "sourceType": "folder",
+                "path": "Assets/Resources/ContentArt/Png/像素怪物合集2/sprites/buff_bee_idle_01",
+                "offsetX": 0.0,
+                "offsetY": 0.0
+            },
+            {
+                "id": "attack",
+                "sourceType": "none",
+                "path": "",
+                "offsetX": 0.0,
+                "offsetY": 0.0
+            },
+            {
+                "id": "hurt",
+                "sourceType": "none",
+                "path": "",
+                "offsetX": 0.0,
+                "offsetY": 0.0
+            },
+            {
+                "id": "death",
+                "sourceType": "none",
+                "path": "",
+                "offsetX": 0.0,
+                "offsetY": 0.0
+            },
+            {
+                "id": "lunch",
+                "sourceType": "none",
+                "path": "",
+                "offsetX": 0.0,
+                "offsetY": 0.0
+            }
+        ]
+    },
+    "extraSlots": [],
+    "rarity": "None",
+    "tags": [],
+    "effectAssemblies": [],
+    "effectIds": [],
+    "skillIds": [],
+    "level": "普通",
+    "sequence": 1,
+    "isElite": false,
+    "isBoss": false,
+    "isReserve": false,
+    "containerType": "",
+    "deckKind": "",
+    "monsterDefIds": [],
+    "weight": 0,
+    "rewardPoolId": "",
+    "shopOfferCount": 0,
+    "openingInjects": [],
+    "iconPrefab": "",
+    "boardSlot": 0
+}
+{
+    "schemaVersion": 2,
+    "contentId": "monster.big_orc",
+    "kind": "Monster",
+    "deckId": "deck.wandering_legion",
+    "role": "",
+    "displayName": "棕熊1",
+    "description": "",
+    "faceIntro": "曾任职于马戏团，现灵活就业",
+    "attackPattern": "全向近战",
+    "gold": 5,
+    "stats": {
+        "hp": 14,
+        "armor": 0,
+        "attack": 3,
+        "action": 3,
+        "recovery": 0
+    },
+    "sprites": {
+        "mainIcon": "Assets/Resources/ContentArt/Multiple/pixel_art_card_pack 1.png",
+        "faceBackground": "",
+        "cardFrame": "",
+        "banner": "",
+        "backBorder": "",
+        "backShirt": "",
+        "backLogo": ""
+    },
+    "mainVisual": {
+        "offsetX": 0.0,
+        "offsetY": -0.20000000298023225,
+        "uniformScale": 1.0
+    },
+    "animations": {
+        "defaultFps": 8.0,
+        "slots": [
+            {
+                "id": "idle",
+                "sourceType": "folder",
+                "path": "Assets/Resources/ContentArt/Png/像素怪物合集/sprites/07bearBoss_attack_idle",
+                "offsetX": 0.0,
+                "offsetY": 0.0
+            },
+            {
+                "id": "attack",
+                "sourceType": "none",
+                "path": "",
+                "offsetX": 0.0,
+                "offsetY": 0.0
+            },
+            {
+                "id": "hurt",
+                "sourceType": "none",
+                "path": "",
+                "offsetX": 0.0,
+                "offsetY": 0.0
+            },
+            {
+                "id": "death",
+                "sourceType": "none",
+                "path": "",
+                "offsetX": 0.0,
+                "offsetY": 0.0
+            },
+            {
+                "id": "lunch",
+                "sourceType": "none",
+                "path": "",
+                "offsetX": 0.0,
+                "offsetY": 0.0
+            }
+        ]
+    },
+    "extraSlots": [],
+    "rarity": "None",
+    "tags": [],
+    "effectAssemblies": [],
+    "effectIds": [],
+    "skillIds": [],
+    "level": "普通",
+    "sequence": 0,
+    "isElite": false,
+    "isBoss": false,
+    "isReserve": true,
+    "containerType": "",
+    "deckKind": "",
+    "monsterDefIds": [],
+    "weight": 0,
+    "rewardPoolId": "",
+    "shopOfferCount": 0,
+    "openingInjects": [],
+    "iconPrefab": "",
+    "boardSlot": 0
+}
+
+→ Read Assets/Scripts/NineGrid.Presentation/Flow/Presentation/PickupIntentScriptFactory.cs
+✱ Grep "ExecutePickupItem" in Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Systems/PhaseSystem.cs · 3 matches
+→ Read Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Systems/PhaseSystem.cs [limit=90, offset=606]
+✱ Grep "ApplyPickupItemCommand|PickupItemPresentationResult|ApplyPickupItem" in Assets/Scripts · 40 matches
+→ Read Assets/Scripts/NineGrid.Presentation/Controllers/PickupInputController.cs
+Let me check git history and notes for context on the enemy action phase and known issues.
+
+$ git log --oneline -30
+e5428ff06 fix: audio editor row identity and play-mode gating
+fb563f553 fix: audio editor review hardening
+216d46737 feat: add audio binding tuning workbench
+065686ef4 fix(audio): #168 Release 无历史分配且 PerfTrace 补 batchId 关联
+722da5763 refactor(audio): #168 review fixes - PerfTrace, editor-only history, audio lifetime, attempted clip
+4a13add83 feat(audio): #168 land cue vertical slice
+c80925717 refactor(audio): #167 code-review 修订 - 审计模型移入 Editor、去重 key 规范化、code-map 归位
+f64b319b2 feat(audio): #167 收敛唯一 Resources 音频根与导入卫生
+5dfec9e8e 继续合并，准备开工音频
+e1a131969 合并
+eed42957b 保存
+639222c87 Merge branch 'dev' of https://github.com/tja688/Ninegrid-Gambit into dev
+ce64a074b 合并
+cf65b30f8 修俩bug
+42981be9c 准备修复问题
+c59de11c6 合并
+4f9d7954f 数值系统: 机关卡全集逐卡审计迁移 + faceIntro (#161)
+a30ad36aa 数值系统: 遗物全集逐卡审计迁移 + faceIntro (#160)
+5c4a7d913 数值系统: 道具卡（HelpCard）全集逐卡审计迁移 + faceIntro (#159)
+b20418279 数值系统: 牌店可升级伤害参数升格 + 描述限定引用（首批） (#158)
+025fb917c Merge branch 'dev' of https://github.com/tja688/Ninegrid-Gambit into dev
+2d71f8674 Merge branch 'dev' of https://github.com/tja688/Ninegrid-Gambit into dev
+7361be77f 数值系统: 倒计时/耐久卡全集局内模板 + Battle/Run 寿命重置 (#157)
+37523b1ad 没啥问题
+a512733ec 更替为中文版
+3a38dae83 导入一批 音效
+f8b5c0dba 准备拆分伤害
+6dd7b9bbd 准备拆分伤害
+1d5858f72 合并
+e5369cd46 合并
+
+$ Get-ChildItem -Path "Assets\Notes" -File -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Name
+��������ȫ�����о�̽��.md
+��������ȫ�����о�̽��.md.meta
+�鵵.meta
+ͳһ���ƺ�������������޸�-��رʼ�-2026-08-07.md
+ͳһ���ƺ�������������޸�-��رʼ�-2026-08-07.md.meta
+CardSprite.meta
+Logs.meta
+
+$ $OutputEncoding = [System.Text.Encoding]::UTF8; [Console]::OutputEncoding = [System.Text.Encoding]::UTF8; Get-ChildItem -Path "Assets\Notes" -File | Select-Object -ExpandProperty Name
+补牌问题全方面研究探查.md
+补牌问题全方面研究探查.md.meta
+归档.meta
+统一补牌核心与有序表现修复-落地笔记-2026-08-07.md
+统一补牌核心与有序表现修复-落地笔记-2026-08-07.md.meta
+CardSprite.meta
+Logs.meta
+
+$ $OutputEncoding = [System.Text.Encoding]::UTF8; [Console]::OutputEncoding = [System.Text.Encoding]::UTF8; Select-String -Path "Assets\Notes\统一补牌核心与有序表现修复-落地笔记-2026-08-07.md" -Pattern "敌方行动|齐射|倒计时|攻击|双|两次|开火" | Select-Object -First 40 | ForEach-Object { "$($_.LineNumber): $($_.Line)" }
+9: - `BoardStabilizationSystem` 以 Core `BoardModel` / `DeckModel` 判断欠补位，统一覆盖开局、击杀、非击杀移除、捕熊触发和敌方行动收尾等路径。
+
+$ $OutputEncoding = [System.Text.Encoding]::UTF8; [Console]::OutputEncoding = [System.Text.Encoding]::UTF8; Get-Content "Assets\Notes\补牌问题全方面研究探查.md" -TotalCount 120
+## 调查完成，临时脚本已清理。下面是我找到的东西。
+
+结论：这不是一个 bug，是一条缺失的不变量
+你的设计意图（「有空地 + 卡组有卡 → 补牌」）在代码里根本不存在。它不是一条被某处实现错了的规则，而是从来没有被表达成规则——它被拆成了 10 条剧本各自手工排队的补牌批次。所以现象必然「时好时坏」：补不补取决于你恰好走了哪条剧本分支。
+
+三份证据（两路 opencode 子代理 + 我自己的日志取证）指向同一个根：
+
+Core 侧 FillEmptySlotsAction 全仓只有 3 个生产入队点（PhaseSystem.cs:172 开局、:1813 击杀后、:1845 drain/fusion），TriggerSystem 上没有任何 OnKill→Fill 的系统级触发器，pipeline 收尾没有自动 Fill。「场上有空地就补牌」在 Core 里不是不变量，只是表现层调度器的一个选择——连「只在 InteractionLoop 补牌」这条都写在 DrainRefillScheduler.cs:90，而不在 Core。
+
+你抓到的三个现象，各自的机制
+现象 1（节点三开局有空缺不补）——已在你的日志里坐实，而且比你想的更严重
+
+corelog 里 18 次 StartNode 的 boardOccupantCount：17 次是 8，只有节点 3 是 7，而同时 deckCount=14（抽牌堆有 14 张）。逐格快照 1:O55|2:O63|3:O53|4:O0|6:O50|7:O43|8:O44|9:O42 —— 格 4 空，且 coreCount=7。
+
+注意 coreCount=7：Core 自己就只有 7 张。这不是表现层丢视图，是 Core 的补牌只填了 7 格。机制在 BoardDeckActions.cs:371-397：FillEmptySlotsAction 按顺时针只遍历一圈，遍历结束后才派发 OnDeal/OnEnter 触发（:410-413）。而节点 3 格 2 是 trap.rolling_stone——补牌批内被触发的效果腾出的格，本批不会再补，而 StartNode 之后没有任何收尾 Fill 命令。于是空格一直挂到你第一次交互。这也正好解释了你说的「点一下那个空格就正常补牌+旋转」：explore 剧本带 Fill 批。
+
+现象 3（捕熊陷阱 / 恐怖面具 时好时坏）——同一个根，不同触发点
+
+捕熊陷阱 tpl.trap.bear_trap.fill 的触发条件就是 ActionSource(action=FillEmptySlots)——它专门在补牌批里开火，打完还 RemoveCard(Self) 自移除。也就是说它必然落在「补牌循环已跑完」之后。战斗中靠敌方行动收尾（ResolveEnemyActionFinale）兜底补一次，所以「有时补」；一旦场上没有参与敌方行动的怪，EnemyActionPhaseScheduler.cs:51 就早退，收尾补牌也没了，于是「有时不补」。
+
+你说的遗物是恐怖面具 relic.terror_mask（击杀 6 只 → 随机移除 1 只非 Boss 怪）。日志里三次触发（节点 19/21/24）我都追了后续事件——这三次都补上了，因为它挂在 OnCumulative，触发时机在玩家交战批内，晚于它的 ResolvePostKillFill 会补。所以它单独不是漏点，但它和捕熊陷阱叠在一起就是：捕熊在 Fill 批里打死一只怪 → OnKill 链拉起恐怖面具 → 又拆走一只怪 → 两个洞都在 Fill 批内，都不补。这正是你感觉「触发很随机」的来源。
+
+另外还有一个判定口径不一致的独立漏点：攻击路径用 ContainsCardKilled(targetUid) 只看目标死没死，用牌路径用 ContainsAnyCardKilled 看任意卡。所以「攻击没杀死目标、但同批效果杀死了别的怪」时，攻击剧本走非击杀分支，没有 DrainRefill（AttackIntentScriptFactory 里根本没注入 DrainRefillScheduler，与 UseItemIntentScriptFactory 不对称）。
+
+现象 2（节点三战斗末尾红色错误）——日志里没找到 Error/Exception，但找到了两类被降级成 Anomaly 的东西
+
+registrylog 里有 163 次 FieldVisualGap 和 51 次 ChoreoIncompleteAtBeatClose。我按 coreCount != occupiedCount 过滤掉中间态噪声后，剩 27 次真实 Core/表现占格分叉。另外全局 3 次发牌失败 ok=false reason=nullView（节点 3 idx2166、节点 10、节点 21）——Core 已经补了牌，表现层因为 View 为空画不出来，然后回滚清占格。这是「Core 有牌、屏幕没牌」的第二类空缺，与补牌漏排是两回事。你看到的红色警告很可能是这批 Debug.LogWarning（CardDeckManagerSingleton.cs:1189），不是 Exception。
+
+现在开始拷问
+要从一个「统一的根」上解决，有几个决定只有你能做。这些是当前前沿上、不依赖其他未定问题的：
+
+❓ Q1 - 「补牌」到底是谁的不变量：现在它是表现层剧本的编排选择。要收口，有三种根本不同的做法：(a) Core 不变量——在 ActionPipelineSystem 每次 RunToCompletion 收尾处，若「相位=InteractionLoop 且未清关 且有空格 且抽牌堆非空」则自动补到不动点，表现层剧本里所有 Fill/Drain/Fusion 排队全部删掉；(b) 导演层单一兜底——保留 Core 现状，但在 PresentationDirector.Tick 里当主线跑空且无缓冲时检查空格，缺则自动追加一个补牌批；(c) 维持逐剧本排队，只把三个漏点各自补上。
+
+➡️ 我建议 (a)。理由：你的痛点正是「太多、太杂、触发很随机」，而 (b) 和 (c) 都保留了「每新增一条产生空格的路径就要记得手工挂 Fill」这个结构，漏点会持续再生。(a) 把它变成一条 Core 层不可绕过的事实：批次结束时盘面不得同时存在空格和可补的牌。代价是补牌时序从「剧本显式声明」变成「隐式收敛」，ADR-0001 Batch-ack 的批次边界语义需要重新表述。
+
+❓ Q2 - 补牌应该补到「一圈」还是「不动点」：现行 FillEmptySlotsAction 只遍历一圈就收工，然后才派发 OnDeal/OnEnter——这正是节点 3 空格的直接机制。要么改成循环直到「无空格 或 牌堆空 或 达到迭代上限」，要么保持一圈但在触发链之后再排一次 Fill。前者要面对无限循环风险：捕熊陷阱补一张就杀一只再自移除，理论上能把整个牌堆吃光（这在规则上其实是合理的——陷阱确实该一张张吃）。
+
+➡️ 我建议补到不动点，但设迭代上限（例如 16 轮，超限记 Anomaly 而不是抛异常）。理由：「有空地就补」本来就是不动点语义，一圈是实现细节泄漏。上限只是防御 ActionPipelineSystem 那种 depth>64 式的自我保护，正常内容不该碰到。
+
+❓ Q3 - 捕熊陷阱在「开局补牌」里该不该开火：它的触发条件写死 ActionSource=FillEmptySlots，所以开局铺满 8 格的过程中它必然对邻格开火（10 点伤害，一层弱怪普遍撑不住），玩家还没操作就已经掉了一只怪 + 陷阱自爆。这是设计意图，还是「补牌」这个词在开局和战中被当成同一件事的意外后果？
+
+➡️ 我建议开局 Fill 静默机关触发，即区分「开局铺场」与「战中补位」两种 Fill 语义。理由：开局盘面是玩家的初始信息，在他有任何输入之前就自行连锁反应，既不可预期也不可回应；而且这正好是节点 3 现象的源头。但这是策划口径，我不替你定。
+
+❓ Q4 - FieldVisualGap / ChoreoIncompleteAtBeatClose / nullView 该不该升级为硬失败：现在它们是 Anomaly + LogWarning，一次游玩攒了 163 + 51 + 3 条，没人看。你报告的「红色错误」大概就在这里面。
+
+➡️ 我建议：把 coreCount != occupiedCount 的真分叉（27 次）升级为开发期 Assert，nullView 发牌失败升级为必须重试或显式 Anomaly 上屏；coreCount == occupiedCount 的中间态噪声（136 次）则应当从 Gap 判定里剔除——它们把真信号淹了。理由：占格分叉是 ADR-0001 明令禁止的双真相，静默 warning 等于放弃这条不变量。
+
+❓ Q5 - 修复的验证门槛：这类「随机复现」的问题，靠再玩几局验证不可靠。可选：(a) 写 EditMode 契约测试，用固定种子构造「Fill 批内触发移除」场景，断言批次结束后无空格；(b) 加一条运行时不变量检查（每次 idle 时断言「无空格 或 牌堆空」），跑几局看 Anomaly 是否归零；(c) 两者都做。
+
+➡️ 我建议 (c)，且先写 (b)。理由：(b) 能立刻把「还有多少我没抓到的漏点」变成可数的数字——你现在最痛的就是不知道漏点有多少。有了它，(a) 的测试用例可以直接从实测捕获的场景反推，而不是靠想象枚举。
+
+两份完整探查报告在 .opencode/reports/（Refill-Triggers-report.md 的补牌触发矩阵、Refill-EffectAndOpening-report.md 的效果原子清单）。第三路日志取证的子代理进程退出时没落盘，我自己接手做完了，结论都在上面。
+
+后续研究：
+
+## 请以 very thorough 级别研究当前项目中“场地有空位且牌堆有牌则补牌”的 Core 规则实现。重点：FillEmptySlotsAction、ActionPipelineSystem、PhaseSystem、TriggerSystem、所有生产入队点、开局/交互/敌方行动/Drain/Fusion/击杀/效果连锁的批次边界；确认补一圈 vs 补到不动点的真实语义、潜在无限循环及现有防护；列出现有测试。只研究不改动。输出精确文件路径/行号、事实、候选模型利弊与需要用户决策的问题。
+
+研究结论
+当前项目中，“场地有可补空位且抽牌堆有牌则补牌”不是 Core 的全局稳定态不变量，而是由开局、击杀、探索、翻牌、敌方阶段、Drain、Fusion 等流程分别显式安排的一次 FillEmptySlotsAction。
+
+真实语义是：
+
+FillEmptySlotsAction 对固定外圈路径做一次扫描，填完扫描开始时可见的空位；随后统一结算 AfterAction → OnDeal → OnEnter 效果。效果在本次 Fill 中再次制造的空位不会被重新检查。
+
+因此当前是“补一轮”，不是“补到不动点”。某些流程碰巧再补第二轮，但这些是手工批次，不构成统一规则。
+
+另外发现两个重要的额外问题：
+
+Fill 的目标集合并非“所有非 Avatar 格”，而是固定外圈 1,2,3,6,9,8,7,4，永远不包含格 5。如果 Avatar 在战斗开始时不在格 5，格 5 即使为空也无法被 Fill 填充。
+开局 Fill 会先写入 AvatarAppeared，而很多效果的 EventCard 定义为“本批第一个带 CardUid 的事件”。因此开局 Fill 中 EventCard 实际可能是 Avatar，不是第一张补出的牌；捕熊陷阱存在错误作用到 Avatar 的静态可达路径。
+本次只读取和分析，没有修改文件，也没有运行测试。以下测试状态是“源码中存在”，不是本次执行结果。
+
+一、FillEmptySlotsAction 的确切语义
+核心实现：
+
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Foundation\NineGrid.Core\Domain\Actions\BoardDeckActions.cs:339-413
+
+1. 单次固定路径扫描
+扫描路径来自：
+
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Foundation\NineGrid.Core\Domain\Actions\BoardDeckActions.cs:418-441
+
+顺序固定为：
+
+1 → 2 → 3 → 6 → 9 → 8 → 7 → 4
+
+事实：
+
+一次 Action 最多检查 8 个固定外圈格。
+格 5从不在扫描列表中。
+当前 Avatar 格会再次被排除。
+每遇到一个空格，就取抽牌堆首张、移出牌堆并放入该格。
+牌堆空时立即终止本轮。
+这不是随机选格；发牌位置严格按照上述顺时针顺序。
+CardDealt.Amount 是本轮累计补牌数 1...N。
+结束时总会发出一个 SlotsFilled，即使 Amount=0。
+如果 Apply 结束时抽牌堆为 0，总会发出 DrawPileExhausted，包括调用前本来就空的情况。
+相关行：
+
+取固定路径：BoardDeckActions.cs:357-358
+单次循环：BoardDeckActions.cs:371-397
+SlotsFilled：BoardDeckActions.cs:399-400
+DrawPileExhausted：BoardDeckActions.cs:402-405
+2. Fill 本身没有相位、清关或稳定态门禁
+FillEmptySlotsAction.Apply 不检查：
+
+当前是否为 InteractionLoop
+是否已经清关
+是否为终局相位
+是否真的存在可补空位
+这些门禁只存在于部分 PhaseSystem 包装方法中：
+
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Foundation\NineGrid.Core\Systems\PhaseSystem.cs:1838-1886
+
+因此：
+
+ResolvePostKillFillInternal 会拒绝终局和已清关状态。
+Fusion/Drain 共用的 ResolveFillEmptySlotsBatchInternal 会拒绝 skipFill、终局和已清关状态。
+直接执行 BoardSystem.FillEmptySlots() 则没有这些门禁。
+二、固定外圈与“所有非 Avatar 空格”之间存在口径冲突
+
+→ Read Assets/Scripts/NineGrid.Presentation/Tests/Flow/EnemyActionVolleyIntentTests.cs
+→ Read Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Systems/PhaseSystem.cs [limit=70, offset=2000]
+→ Read Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Domain/Actions/EffectActions.cs [limit=80, offset=300]
+Now let me examine the damage formula implementation for feedback #2.
+✱ Grep "DealDamageAction|ConditionalDealDamageIfAliveAction|IgnoreArmor|DamageReduction|GoldArmorAbsorb|DamageMultiplier|DamageFlatDelta" in Assets/Scripts/NineGrid.Foundation/NineGrid.Core · 10 matches
+→ Read Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Domain/Actions/CoreActions.cs [limit=220, offset=1]
+✱ Grep "DamageFlatDelta|DamageMultiplier" in Assets/StreamingAssets/ContentVisual · 7 matches
+
+$ $OutputEncoding = [System.Text.Encoding]::UTF8; [Console]::OutputEncoding = [System.Text.Encoding]::UTF8; Get-ChildItem "Assets\StreamingAssets\ContentVisual\cards\relic_*.json" | Select-Object -ExpandProperty Name
+relic_armor_strip_knife.json
+relic_arsenal.json
+relic_battle_hardened.json
+relic_berserker_axe.json
+relic_beyond_dimension.json
+relic_blood_burst.json
+relic_blood_cycle.json
+relic_blood_demon.json
+relic_blood_regen.json
+relic_blood_shockwave.json
+relic_blood_violence.json
+relic_body_potential.json
+relic_composite_armor.json
+relic_craving.json
+relic_dragon_scale_armor.json
+relic_easy_road.json
+relic_even_hatred.json
+relic_foam_armor.json
+relic_forge_tool.json
+relic_gold_armor.json
+relic_gold_blood.json
+relic_gold_knife.json
+relic_golden_coffer.json
+relic_golden_sword.json
+relic_hard_skin.json
+relic_heavy_armor.json
+relic_iron_shield.json
+relic_junk_amplifier.json
+relic_junk_body.json
+relic_junk_coating.json
+relic_junk_cycler.json
+relic_junk_launcher.json
+relic_junk_recycler.json
+relic_junk_slot_machine.json
+relic_junk_sword.json
+relic_lucky_coin.json
+relic_metal_blood.json
+relic_muscle_counter.json
+relic_phoenix_feather.json
+relic_potion_bag.json
+relic_punch_card_knife.json
+relic_rotation_button.json
+relic_rotation_trick.json
+relic_rotten_cleave_axe.json
+relic_rpm_engine.json
+relic_sharp_longsword.json
+relic_shield_knife.json
+relic_sling.json
+relic_spinning_barb.json
+relic_swap_button.json
+relic_terror_mask.json
+relic_thorn_mail.json
+relic_thorn_skin.json
+relic_throwing_knife_bag.json
+relic_tower_child.json
+relic_trap_cell.json
+relic_vitality_amulet.json
+relic_wood_armor.json
+relic_wood_shield.json
+relic_wood_sword.json
+
+→ Read Assets/Scripts/NineGrid.Presentation/Flow/Presentation/CardFaceStatHandler.cs
+✗ Read Assets/Scripts/NineGrid.Foundation/NineGrid.Core/CombatEngagementOrder.cs failed
+Error: File not found: C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Foundation\NineGrid.Core\CombatEngagementOrder.cs
+
+$ Get-ChildItem -Path "Assets\Scripts\NineGrid.Foundation\NineGrid.Core" -Filter "*.cs" | Select-Object -ExpandProperty Name
+(no output)
+
+$ Get-ChildItem -Path "Assets\Scripts\NineGrid.Foundation\NineGrid.Core" -Recurse -Filter "CombatEngagementOrder.cs" | Select-Object -ExpandProperty FullName
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Foundation\NineGrid.Core\Domain\CombatEngagementOrder.cs
+
+→ Read Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Domain/CombatEngagementOrder.cs
+→ Read Assets/Scripts/NineGrid.Presentation/Flow/Presentation/CardFaceGenerationBootstrap.cs
+Let me check how the avatar's attack is committed at opening and how relic/aura modifiers reach the card face.
+
+$ $OutputEncoding = [System.Text.Encoding]::UTF8; [Console]::OutputEncoding = [System.Text.Encoding]::UTF8; Select-String -Path "Assets\StreamingAssets\ContentVisual\tables\effect_templates.json" -Pattern '"templateId"' | ForEach-Object { $_.Line.Trim() } | Select-Object -First 200
+(no output)
+
+$ $OutputEncoding = [System.Text.Encoding]::UTF8; [Console]::OutputEncoding = [System.Text.Encoding]::UTF8; Get-Content "Assets\StreamingAssets\ContentVisual\tables\effect_templates.json" -TotalCount 60
+[
+ {
+  "id": "tpl.gain_armor_on_use_help_card",
+  "state": "Implemented",
+  "design_text": "[使用时] 玩家获得5点护甲",
+  "requires_json": "[\"ActivatedByUse\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnSelfUsed\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"GainArmor\",\"amount\":\"{{amount}}\"}}"
+ },
+ {
+  "id": "tpl.heal_player_on_use_help_card",
+  "state": "Implemented",
+  "design_text": "[使用时] 恢复10点血量",
+  "requires_json": "[\"ActivatedByUse\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnSelfUsed\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"Heal\",\"amount\":\"{{amount}}\",\"actor\":\"Player\"}}"
+ },
+ {
+  "id": "tpl.help.armor_breaking_hammer.use",
+  "state": "Implemented",
+  "design_text": "[使用时] 将目标怪物卡护甲降低10点",
+  "requires_json": "[\"HasOwnerEntity\", \"ActivatedByUse\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnSelfUsed\"},\"target\":{\"atom\":\"SelectedCards\",\"kind\":\"Monster\",\"zone\":\"Board\",\"count\":\"{{count}}\"},\"action\":{\"atom\":\"TransferArmor\",\"amount\":\"{{amount}}\",\"receiver\":\"None\",\"cause\":\"{{cause}}\"}}"
+ },
+ {
+  "id": "tpl.help.blood_conversion.use",
+  "state": "Implemented",
+  "design_text": "[使用时] 扣除5点血量上限并随机获得攻击+1、护甲+1、50金币或随机遗物",
+  "requires_json": "[\"HasOwnerEntity\", \"ActivatedByUse\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnSelfUsed\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"Sequence\",\"actions\":[{\"atom\":\"ModifyBaseStat\",\"stat\":\"MaxHp\",\"delta\":\"{{delta}}\",\"reason\":\"{{reason}}\"},{\"atom\":\"WeightedRandom\",\"choices\":[{\"weight\":\"{{weight}}\",\"action\":{\"atom\":\"ModifyBaseStat\",\"stat\":\"Attack\",\"delta\":\"{{action_actions_1_choices_0_action_delta}}\",\"reason\":\"{{action_actions_1_choices_0_action_reason}}\"}},{\"weight\":\"{{weight}}\",\"action\":{\"atom\":\"ModifyBaseStat\",\"stat\":\"Armor\",\"delta\":\"{{action_actions_1_choices_1_action_delta}}\",\"reason\":\"{{action_actions_1_choices_1_action_reason}}\"}},{\"weight\":\"{{weight}}\",\"action\":{\"atom\":\"ModifyGold\",\"delta\":\"{{action_actions_1_choices_2_action_delta}}\",\"reason\":\"{{action_actions_1_choices_2_action_reason}}\"}},{\"weight\":\"{{weight}}\",\"action\":{\"atom\":\"GrantRewardFromPool\",\"poolId\":\"{{poolId}}\"}}]}]}}"
+ },
+ {
+  "id": "tpl.help.bomb.use",
+  "state": "Implemented",
+  "design_text": "[使用时] 对所有怪物卡造成4点伤害",
+  "requires_json": "[\"HasOwnerEntity\", \"ActivatedByUse\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnSelfUsed\"},\"target\":{\"atom\":\"AllMonsters\"},\"action\":{\"atom\":\"DealDamage\",\"amount\":\"{{amount}}\",\"actor\":\"Player\"}}"
+ },
+ {
+  "id": "tpl.help.brutality_card.use",
+  "state": "Implemented",
+  "design_text": "[使用时] 玩家下一次对怪物造成的战斗伤害翻倍",
+  "requires_json": "[\"HasOwnerEntity\", \"ActivatedByUse\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnSelfUsed\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"AddRuleModifier\",\"rule\":\"DamageMultiplier\",\"op\":\"Multiply\",\"value\":\"{{value}}\",\"layer\":\"Temporary\",\"scope\":\"Once\",\"source\":\"{{source}}\",\"conditionTarget\":\"None\",\"conditionActor\":\"Player\",\"conditionTargetKind\":\"Monster\",\"sourceAction\":\"{{sourceAction}}\",\"excludeSourcePrefix\":\"{{excludeSourcePrefix}}\"}}"
+ },
+ {
+  "id": "tpl.help.doubling_tower.board_monster",
+  "state": "Implemented",
+  "design_text": "[场上] 处于格1时，对怪物卡使用的帮助卡触发两次",
+  "requires_json": "[\"HasOwnerEntity\", \"ActivatedByUse\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[\"AtSlot\"]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnOtherHelpCardUsed\"},\"conditions\":[{\"atom\":\"AtSlot\",\"target\":\"Self\",\"slot\":1}],\"target\":{\"atom\":\"Self\"},\"action\":{\"atom\":\"ReplayHelpCardEffects\",\"targetKind\":\"Monster\"}}"
+ },
+ {
+  "id": "tpl.help.doubling_tower.item_player",
+  "state": "Implemented",
+
+✱ Grep "AppendPermanentAttackFaceCommit|AppendConditionalPermanentAttackFaceCommitsForBoard" in Assets/Scripts/NineGrid.Foundation/NineGrid.Core · 13 matches
+→ Read Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Domain/Actions/EffectActions.cs [limit=120, offset=1120]
+→ Read Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Domain/Actions/ContentActions.cs [limit=90, offset=20]
+✱ Grep "爆裂决斗者" in Assets/StreamingAssets/ContentVisual · 1 match
+✱ Grep "class AmbushEffectTriggered|Ambush|潜伏" in Assets/Scripts · 10 matches
+
+$ Get-ChildItem -Path "Assets\Scripts\NineGrid.Presentation" -Recurse -Filter "AvatarWalkSystem.cs" | Select-Object -ExpandProperty FullName
+(no output)
+
+✱ Grep "AttackCommand|ResolvePostKillBoardFromCore|new CombatHitCommand" in Assets/Scripts/NineGrid.Presentation · 6 matches
+
+$ $OutputEncoding = [System.Text.Encoding]::UTF8; [Console]::OutputEncoding = [System.Text.Encoding]::UTF8; Select-String -Path "Assets\Scripts\NineGrid.Presentation\Flow\BattleSession\BattleSessionExecutor.Opening.cs" -Pattern "ResolvePostKillBoardFromCore" -Context 5,5
+Assets\Scripts\NineGrid.Presentation\Flow\BattleSession\BattleSessionExecutor.Opening.cs:247:
+  Assets\Scripts\NineGrid.Presentation\Flow\BattleSession\BattleSessionExecutor.Opening.cs:248:                // 开局
+若已置离开机关清关标志（罕见），补走 PostKill→CompleteNodeIfCleared。
+  Assets\Scripts\NineGrid.Presentation\Flow\BattleSession\BattleSessionExecutor.Opening.cs:249:                if (phas
+e.CurrentPhase == GamePhase.InteractionLoop
+  Assets\Scripts\NineGrid.Presentation\Flow\BattleSession\BattleSessionExecutor.Opening.cs:250:                    && a
+rch.GetSystem<IDeckSystem>().IsNodeCleared())
+  Assets\Scripts\NineGrid.Presentation\Flow\BattleSession\BattleSessionExecutor.Opening.cs:251:                {
+> Assets\Scripts\NineGrid.Presentation\Flow\BattleSession\BattleSessionExecutor.Opening.cs:252:                    Coor
+dinator.ResolvePostKillBoardFromCore();
+  Assets\Scripts\NineGrid.Presentation\Flow\BattleSession\BattleSessionExecutor.Opening.cs:253:                }
+  Assets\Scripts\NineGrid.Presentation\Flow\BattleSession\BattleSessionExecutor.Opening.cs:254:
+  Assets\Scripts\NineGrid.Presentation\Flow\BattleSession\BattleSessionExecutor.Opening.cs:255:                TryEnter
+NodeSettlement();
+  Assets\Scripts\NineGrid.Presentation\Flow\BattleSession\BattleSessionExecutor.Opening.cs:256:            }
+  Assets\Scripts\NineGrid.Presentation\Flow\BattleSession\BattleSessionExecutor.Opening.cs:257:            finally
+
+✱ Grep "\.ResolvePostKillBoard\(\)|ResolvePostKillBoard\(\);" in Assets/Scripts/NineGrid.Presentation · 3 matches
+✱ Grep "TryAppendActionCountdownChanged|AddWithFaceAbsolutes|WithFaceAbsolutes" in Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Domain/Actions · 15 matches
+✱ Grep "IsActionBanned|RuleId.ActionBanned|ActionBanned" in Assets/Scripts/NineGrid.Foundation/NineGrid.Core · 3 matches
+→ Read Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Systems/PhaseSystem.cs [limit=30, offset=1805]
+
+$ $OutputEncoding = [System.Text.Encoding]::UTF8; [Console]::OutputEncoding = [System.Text.Encoding]::UTF8; Select-String -Path "Assets\StreamingAssets\ContentVisual\cards\help_brutality_card.json" -Pattern "templateId|design_text" -Context 0,0; Get-Content "Assets\StreamingAssets\ContentVisual\cards\help_brutality_card.json" -TotalCount 60 | Select-String -Pattern "effectAssemblies|templateId|value|design" -Context 0,2
+Assets\StreamingAssets\ContentVisual\cards\help_brutality_card.json:82:            "templateId": "tpl.help.brutality_ca
+rd.use",
+>     "designSlotName": "",
+      "description": "玩家下一次对怪物造成的普通攻击伤害翻倍",
+      "faceIntro": "以暴制暴，加倍奉还",
+
+→ Read Assets/StreamingAssets/ContentVisual/cards/help_brutality_card.json [limit=50, offset=75]
+
+$ $OutputEncoding = [System.Text.Encoding]::UTF8; [Console]::OutputEncoding = [System.Text.Encoding]::UTF8; Get-ChildItem "Assets\StreamingAssets\ContentVisual\cards\relic_*.json" | ForEach-Object { $c = Get-Content $_.FullName -Raw; if ($c -match 'DamageFlatDelta|DamageMultiplier|Attack"') { $name = $_.Name; $m = [regex]::Matches($c, '"displayName": "([^"]*)"'); $dn = if ($m.Count -gt 0) { $m[0].Groups[1].Value } else { "" }; $t = [regex]::Matches($c, '"templateId": "([^"]*)"'); $tids = ($t | ForEach-Object { $_.Groups[1].Value }) -join ","; $d = [regex]::Matches($c, '"design_text": "([^"]*)"'); $ds = ($d | ForEach-Object { $_.Groups[1].Value }) -join " | "; Write-Output "$name :: $dn :: $tids :: $ds" } }
+relic_armor_strip_knife.json :: 破甲 :: tpl.relic.armor_strip_knife.battle,tpl.relic.armor_strip_knife.armor_hit :: 
+relic_arsenal.json :: 军械库 :: tpl.relic.arsenal.node_end :: 
+relic_battle_hardened.json :: 历战 :: tpl.relic.battle_hardened.battle :: 
+relic_berserker_axe.json :: 狂战 :: tpl.relic.wood_sword.base,tpl.relic.berserker_axe.double :: 
+relic_beyond_dimension.json :: 超越维度 :: tpl.relic.rotten_cleave_axe.base,tpl.relic.beyond_dimension.battle :: 
+relic_blood_burst.json :: 血盾 :: tpl.relic.wood_armor.base,tpl.relic.blood_burst.taken :: 
+relic_blood_cycle.json :: 血圣杯 :: tpl.relic.wood_armor.base,tpl.relic.blood_cycle.taken :: 
+relic_blood_demon.json :: 血魔徽章 :: tpl.relic.blood_demon.damage :: 
+relic_blood_regen.json :: 血色项链 :: tpl.relic.wood_armor.base,tpl.relic.blood_regen.battle :: 
+relic_blood_shockwave.json :: 血液冲击波 :: tpl.shared.5.relic_blood_shockwave_max_hp,tpl.relic.blood_shockwave.node_start,tpl.relic.blood_shockwave.node_start_low_hp :: 
+relic_blood_violence.json :: 血之暴力 :: tpl.relic.wood_armor.base,tpl.relic.blood_violence.atk :: 
+relic_body_potential.json :: 大力腰带 :: tpl.relic.wood_armor.base,tpl.relic.body_potential.hp_lost :: 
+relic_composite_armor.json :: 复合盔甲 :: tpl.relic.composite_armor.node_start :: 
+relic_craving.json :: 渴望 :: tpl.shared.5.relic_blood_shockwave_max_hp,tpl.relic.craving.rule :: 
+relic_dragon_scale_armor.json :: 龙鳞甲 :: tpl.shared.4.relic_dragon_scale_armor_base,tpl.shared.5.relic_blood_shockwave_max_hp,tpl.relic.dragon_scale_armor.rule :: 
+relic_easy_road.json :: 轻车熟路 :: tpl.relic.easy_road.node_end :: 
+relic_even_hatred.json :: 偶数仇恨 :: tpl.relic.even_hatred.rule :: 
+relic_foam_armor.json :: 泡沫盔甲 :: tpl.shared.4.relic_dragon_scale_armor_base,tpl.relic.foam_armor.activate,tpl.relic.foam_armor.node_start,tpl.relic.foam_armor.arm :: 
+relic_forge_tool.json :: 锻造器具 :: tpl.relic.forge_tool.init,tpl.relic.forge_tool.node_start :: 
+relic_gold_armor.json :: 金币盔甲 :: tpl.shared.4.relic_dragon_scale_armor_base,tpl.relic.gold_armor.rule :: 
+relic_gold_blood.json :: 金血圣杯 :: tpl.relic.wood_armor.base,tpl.relic.gold_blood.taken :: 
+relic_gold_knife.json :: 打金刀 :: tpl.relic.gold_knife.kill :: 
+relic_golden_coffer.json :: 黄金鱼竿 :: tpl.relic.golden_coffer.grant :: 
+relic_golden_sword.json :: 机械巨弩 :: tpl.relic.golden_sword.init,tpl.relic.golden_sword.battle,tpl.relic.golden_sword.kill :: 
+relic_hard_skin.json :: 硬皮 :: tpl.shared.5.relic_blood_shockwave_max_hp,tpl.shared.2.relic_hard_skin_node_end :: 
+relic_heavy_armor.json :: 重盔甲 :: tpl.shared.4.relic_dragon_scale_armor_base,tpl.relic.heavy_armor.node_start :: 
+relic_iron_shield.json :: 铁盾 :: tpl.shared.4.relic_dragon_scale_armor_base,tpl.relic.iron_shield.reduction :: 
+relic_junk_amplifier.json :: 回收腰带 :: tpl.relic.junk_amplifier.use :: 
+relic_junk_body.json :: 回收衣物 :: tpl.relic.junk_body.use :: 
+relic_junk_coating.json :: 回收铁背心 :: tpl.relic.junk_coating.use :: 
+relic_junk_cycler.json :: 回收手链 :: tpl.relic.junk_cycler.use :: 
+relic_junk_launcher.json :: 回收弹弓 :: tpl.relic.junk_launcher.use :: 
+relic_junk_recycler.json :: 回收食物 :: tpl.relic.junk_recycler.use :: 
+relic_junk_slot_machine.json :: 废物老虎机 :: tpl.relic.junk_slot_machine.use :: 
+relic_junk_sword.json :: 回收棒槌 :: tpl.relic.wood_sword.base,tpl.relic.junk_sword.kill :: 
+relic_lucky_coin.json :: 悬赏令 :: tpl.relic.lucky_coin.boss_kill :: 
+relic_metal_blood.json :: 凝血护甲 :: tpl.relic.metal_blood.taken :: 
+relic_muscle_counter.json :: 狼牙棒 :: tpl.relic.wood_armor.base,tpl.relic.muscle_counter.battle :: 
+relic_phoenix_feather.json :: 凤凰羽毛 :: tpl.shared.5.relic_blood_shockwave_max_hp,tpl.relic.phoenix_feather.fatal :: 
+relic_potion_bag.json :: 药水袋 :: tpl.relic.potion_bag.node_start :: 
+relic_punch_card_knife.json :: 造物之镰 :: tpl.relic.wood_sword.base,tpl.relic.punch_card_knife.remove :: 
+relic_rotation_button.json :: 旋转符文 :: tpl.relic.rotation_button.node_start :: 
+relic_rotation_trick.json :: 旋转之源 :: tpl.relic.rotation_trick.remove :: 
+relic_rotten_cleave_axe.json :: 顺劈斧 :: tpl.relic.rotten_cleave_axe.base,tpl.relic.rotten_cleave_axe.cleave :: 
+relic_rpm_engine.json :: 转速甲 :: tpl.shared.4.relic_dragon_scale_armor_base,tpl.relic.rpm_engine.rotate :: 
+relic_sharp_longsword.json :: 黑暗长戟 :: tpl.relic.wood_sword.base,tpl.relic.sharp_longsword.kill :: 
+relic_shield_knife.json :: 双截棍 :: tpl.relic.shield_knife.kill :: 
+relic_sling.json :: 轻弓 :: tpl.relic.sling.kill :: 
+relic_spinning_barb.json :: 毒鞭 :: tpl.relic.spinning_barb.move :: 
+relic_swap_button.json :: 交换之书 :: tpl.relic.swap_button.node_start :: 
+relic_terror_mask.json :: 死亡面罩 :: tpl.relic.wood_sword.base,tpl.relic.terror_mask.node_start,tpl.relic.terror_mask.remove :: 
+relic_thorn_mail.json :: 尖刺 :: tpl.shared.4.relic_dragon_scale_armor_base,tpl.relic.thorn_mail.reflect :: 
+relic_thorn_skin.json :: 刺皮 :: tpl.relic.thorn_skin.battle :: 
+relic_throwing_knife_bag.json :: 飞刀袋 :: tpl.relic.throwing_knife_bag.node_start :: 
+relic_tower_child.json :: 塔之子 :: tpl.relic.tower_child.node_start :: 
+relic_trap_cell.json :: 暗器 :: tpl.relic.trap_cell.move :: 
+relic_vitality_amulet.json :: 活力探险帽 :: tpl.shared.5.relic_blood_shockwave_max_hp,tpl.shared.2.relic_hard_skin_node_end :: 
+relic_wood_armor.json :: 木甲 :: tpl.relic.wood_armor.base,tpl.relic.wood_armor.set :: 
+relic_wood_shield.json :: 木盾 :: tpl.shared.4.relic_dragon_scale_armor_base,tpl.relic.wood_shield.set :: 
+relic_wood_sword.json :: 木剑 :: tpl.relic.wood_sword.base,tpl.relic.wood_sword.set ::
+
+$ $OutputEncoding = [System.Text.Encoding]::UTF8; [Console]::OutputEncoding = [System.Text.Encoding]::UTF8; $json = Get-Content "Assets\StreamingAssets\ContentVisual\tables\effect_templates.json" -Raw | ConvertFrom-Json; $ids = @('tpl.relic.rotten_cleave_axe.cleave','tpl.relic.berserker_axe.double','tpl.relic.golden_sword.battle','tpl.relic.blood_violence.atk','tpl.relic.sling.kill','tpl.relic.sharp_longsword.kill','tpl.relic.gold_knife.kill','tpl.relic.junk_sword.kill','tpl.relic.wood_sword.base','tpl.relic.rotten_cleave_axe.base'); foreach ($id in $ids) { $t = $json | Where-Object { $_.id -eq $id }; if ($t) { Write-Output "== $id"; Write-Output "design: $($t.design_text)"; Write-Output "body: $($t.body)"; Write-Output "" } }
+== tpl.relic.rotten_cleave_axe.cleave
+design: [战斗时] 对目标正交相邻怪物造成1点伤害
+body: {"kind":"Triggered","trigger":{"atom":"OnBattle","sourceAction":"{{sourceAction}}","targetKind":"Monster","maxActionDepth":0},"conditions":[{"atom":"EventFilterActorIsPlayer","eventType":"DamageDealt","targetKind":"Monster"}],"target":{"atom":"FilteredCards","kind":"Monster","zone":"Board","adjacentTo":"EventTarget","exclude":["EventTarget"]},"action":{"atom":"DealDamage","amount":"{{amount}}","actor":"Player"}}
+
+== tpl.relic.berserker_axe.double
+design: 当前血量低于上限50%时攻击翻倍
+body: {"kind":"Modifier","target":{"atom":"Player"},"conditions":[{"atom":"HpBelow","target":"Self","pct":0.5}],"modifier":{"stat":"Attack","op":"Multiply","value":"{{value}}","layer":"Conditional","scope":"Permanent","source":"{{source}}"}}
+
+== tpl.relic.golden_sword.battle
+design: [战斗时] 本遗物提供的攻击-1（最低为0）
+body: {"kind":"Triggered","trigger":{"atom":"OnBattle","sourceAction":"{{sourceAction}}","targetKind":"Monster","maxActionDepth":0},"conditions":[{"atom":"EventFilterActorIsPlayer","eventType":"DamageDealt","targetKind":"Monster"}],"target":{"atom":"Player"},"action":{"atom":"ModifyRelicRunContribution","stat":"Attack","delta":"{{delta}}","floor":0}}
+
+== tpl.relic.blood_violence.atk
+design: 当前血量低于上限50%时攻击+2
+body: {"kind":"Modifier","target":{"atom":"Player"},"conditions":[{"atom":"HpBelow","target":"Self","pct":0.5}],"modifier":{"stat":"Attack","op":"Add","value":"{{value}}","layer":"Conditional","scope":"Permanent","source":"{{source}}"}}
+
+== tpl.relic.sling.kill
+design: [击杀怪物时] 对随机一张怪物卡造成4点伤害
+body: {"kind":"Triggered","trigger":{"atom":"OnKill"},"target":{"atom":"RandomMonster"},"action":{"atom":"DealDamage","amount":"{{amount}}","actor":"Player"}}
+
+== tpl.relic.sharp_longsword.kill
+design: [击杀怪物时] 本关卡攻击+1
+body: {"kind":"Triggered","trigger":{"atom":"OnKill"},"target":{"atom":"Player"},"action":{"atom":"AddModifier","stat":"Attack","op":"Add","value":"{{value}}","layer":"Temporary","scope":"UntilNodeEnds","source":"{{source}}"}}
+
+== tpl.relic.gold_knife.kill
+design: [击杀怪物时] 获得2金币
+body: {"kind":"Triggered","trigger":{"atom":"OnKill"},"target":{"atom":"Player"},"action":{"atom":"ModifyGold","delta":"{{delta}}","reason":"{{reason}}"}}
+
+== tpl.relic.junk_sword.kill
+design: [击杀怪物时] 恢复2点血量
+body: {"kind":"Triggered","trigger":{"atom":"OnKill"},"target":{"atom":"Player"},"action":{"atom":"Heal","amount":"{{amount}}","actor":"Player"}}
+
+== tpl.relic.wood_sword.base
+design: 攻击+1
+body: {"kind":"Modifier","target":{"atom":"Player"},"modifier":{"stat":"Attack","op":"Add","value":"{{value}}","layer":"Persistent","scope":"Permanent"}}
+
+== tpl.relic.rotten_cleave_axe.base
+design: 攻击+1
+body: {"kind":"Modifier","target":{"atom":"Player"},"modifier":{"stat":"Attack","op":"Add","value":"{{value}}","layer":"Persistent","scope":"Permanent"}}
+
+→ Read Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Domain/Actions/EffectActions.cs [limit=120, offset=1510]
+✱ Grep "CommitPermanentAttackFaceAction" in Assets/Scripts/NineGrid.Foundation/NineGrid.Core · 3 matches
+→ Read Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Effects/EffectSystem.cs [limit=100, offset=540]
+→ Read Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Domain/Actions/CoreActions.cs [limit=140, offset=500]
+✱ Grep "ModifyRelicRunContributionAction" in Assets/Scripts/NineGrid.Foundation/NineGrid.Core · 3 matches
+→ Read Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Domain/Actions/ContentActions.cs [limit=110, offset=150]
+→ Read Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Domain/Actions/ContentActions.cs [limit=90, offset=260]
+✱ Grep "SetupNodeDeckAction|SetupNodeDeck|CreateMonsterDraft|BuildDraft|new CardDraft" in Assets/Scripts/NineGrid.Foundation/NineGrid.Core · 15 matches
+Let me check how enemy cards are actually created at node start — whether the countdown initialization path is always hit.
+→ Read Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Systems/ContentSystem.cs [limit=120, offset=100]
+→ Read Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Domain/Actions/BoardDeckActions.cs [limit=160, offset=1]
+
+$ Get-ChildItem -Path "Assets\Scripts" -Recurse -Filter "AvatarWalkSystem.cs" | Select-Object -ExpandProperty FullName
+(no output)
+
+$ Get-ChildItem -Path "Assets\Scripts" -Recurse -Filter "*Walk*" | Select-Object -ExpandProperty FullName
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Foundation\NineGrid.Core\Domain\AvatarWalkPathfinder.cs
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Foundation\NineGrid.Core\Domain\AvatarWalkPathfinder.cs.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Foundation\NineGrid.Core.Tests\AvatarWalkPathfinderTests.cs
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Foundation\NineGrid.Core.Tests\AvatarWalkPathfinderTests.cs.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Presentation\Cards\BoardWalkInputHook.cs
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Presentation\Cards\BoardWalkInputHook.cs.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Presentation\Commands\SubmitBoardWalkIntentCommand.cs
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Presentation\Commands\SubmitBoardWalkIntentCommand.cs.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Presentation\Controllers\BoardWalkInputController.cs
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Presentation\Controllers\BoardWalkInputController.cs.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Presentation\Flow\Presentation\AvatarWalkRunner.cs
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Presentation\Flow\Presentation\AvatarWalkRunner.cs.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Presentation\Flow\Presentation\BoardWalkIntentScriptFactory.cs
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Presentation\Flow\Presentation\BoardWalkIntentScriptFactory.cs.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Presentation\Tests\Flow\BoardWalkLegalityTests.cs
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Presentation\Tests\Flow\BoardWalkLegalityTests.cs.meta
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Presentation\Tests\FlowShell\WalkSandboxRetirementStructuralTests.cs
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Presentation\Tests\FlowShell\WalkSandboxRetirementStructuralTests.cs.meta
+
+→ Read Assets/Scripts/NineGrid.Presentation/Flow/Presentation/AvatarWalkRunner.cs
+✱ Grep "ActionCountdownChanged|UpdateActionCount" in Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Presentation · 1 match
+→ Read Assets/Docs/九宫格登神/01-核心概念/属性.md
+✱ Grep "倒计时|行动|攻击两次|反击" in Assets/Docs/九宫格登神 · 7 matches
+Let me check the remaining design docs relevant to both feedback items.
+→ Read Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Content/ContentDefinitions.cs [limit=50, offset=230]
+
+$ $OutputEncoding = [System.Text.Encoding]::UTF8; [Console]::OutputEncoding = [System.Text.Encoding]::UTF8; $files = Get-ChildItem "Assets\StreamingAssets\ContentVisual\cards\monster_*.json"; $bad = @(); foreach ($f in $files) { $j = Get-Content $f.FullName -Raw | ConvertFrom-Json; $ap = $j.attackPattern; if ([string]::IsNullOrEmpty($ap)) { continue }; $act = $j.stats.action; if ($ap -eq '普通近战' -or $ap -eq '斜角近战' -or $ap -eq '全向近战') { if ($act -ne 3) { $bad += "$($f.Name): pattern=$ap action=$act" } } elseif ($ap -eq '普通远程') { if ($act -ne 5) { $bad += "$($f.Name): pattern=$ap action=$act" } } }; if ($bad.Count -eq 0) { "ALL OK" } else { $bad }
+ALL OK
+
+$ $OutputEncoding = [System.Text.Encoding]::UTF8; [Console]::OutputEncoding = [System.Text.Encoding]::UTF8; Get-ChildItem "Assets\StreamingAssets\ContentVisual\cards\trap_*.json" | ForEach-Object { $j = Get-Content $_.FullName -Raw | ConvertFrom-Json; Write-Output "$($j.contentId) :: $($j.displayName) :: hp=$($j.stats.hp) atk=$($j.stats.attack) armor=$($j.stats.armor) action=$($j.stats.action) :: skills: $($j.skillIds -join ',')" }
+trap.armor_totem :: 护甲图腾 :: hp=6 atk=0 armor=0 action=0 :: skills: 
+trap.attack_totem :: 攻击图腾 :: hp=6 atk=0 armor=0 action=0 :: skills: 
+trap.bear_trap :: 捕熊陷阱 :: hp=6 atk=0 armor=0 action=0 :: skills: 
+trap.flame :: 烈焰 :: hp=6 atk=0 armor=0 action=0 :: skills: 
+trap.healing_spring :: 疗愈之光 :: hp=6 atk=0 armor=0 action=0 :: skills: 
+trap.leave :: 离开机关 :: hp=6 atk=0 armor=0 action=0 :: skills: 
+trap.recovery_totem :: 恢复图腾 :: hp=6 atk=0 armor=0 action=0 :: skills: 
+trap.revive_stone :: 复活石 :: hp=6 atk=0 armor=0 action=0 :: skills: 
+trap.rolling_stone :: 滚石 :: hp=6 atk=0 armor=0 action=0 :: skills: 
+trap.spike :: 刺藤 :: hp=6 atk=0 armor=0 action=0 :: skills:
+
+✱ Grep "互动|交互|倒计时" in Assets/Docs/九宫格登神/02-机制/交互机制.md · 9 matches
+✱ Grep "行动|倒计时|计数" in Assets/Docs/九宫格登神/08-UI · 0 matches
+✱ Grep "敌方行动|EnemyAction|Counter|倒计时" in docs/code-map · 22 matches
+I now have comprehensive evidence for both items. Let me write the report.
+
+$ Test-Path -LiteralPath "docs\feedback-analysis"
+True
+
+← Write docs/feedback-analysis/battle-logic-report.md
+Wrote file successfully.
+
+报告已写入 `docs\feedback-analysis\battle-logic-report.md`：两条反馈均无对应硬错误代码路径——「倒计时未归零打两次」是设计行为叠加（同拍交战反击+齐射开火、提速加速、多怪齐射，ADR-0012/0013 定案），附一条 Counter 通道视觉不可区分的可读性缺口；「一刀砍掉高血怪/机关」是伤害公式正确但卡面显示口径（Temporary 增伤/规则乘区不上卡面、条件性常驻攻翻转拍内滞后）与结算权威值设计性错位，附策划需确认的显示提示问题。

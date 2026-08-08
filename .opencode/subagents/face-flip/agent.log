@@ -1,0 +1,1742 @@
+
+> Full-Auto · deepseek-v4-flash
+
+→ Read CONTEXT.md
+✱ Glob "docs/adr/*.md" 36 matches
+✱ Glob "Assets/Docs/九宫格登神/**/*.md" 32 matches
+✱ Glob "docs/code-map/*.md" 3 matches
+→ Read docs/adr/0016-card-face-orientation.md
+→ Read docs/adr/0034-board-stabilization-refill-batch-ack.md
+→ Read docs/adr/0005-card-face-beat-commit.md
+→ Read Assets/Docs/九宫格登神/02-机制/翻面机制.md
+→ Read Assets/Docs/九宫格登神/02-机制/发牌机制.md
+→ Read Assets/Docs/九宫格登神/04-敌人侧卡牌信息/怪物卡.md
+→ Read docs/code-map/README.md
+✱ Grep "潜伏近战|起来|跳杀|刺客领袖" in Assets/Docs/九宫格登神/04-敌人侧卡牌信息 · 9 matches
+→ Read Assets/Docs/九宫格登神/04-敌人侧卡牌信息/怪物技能.md
+→ Read docs/code-map/presentation.md
+✱ Grep "class FlipCardAction|class RevealFaceAction|class FillEmptySlotsAction|class ShuffleIntoDrawPileAction" in Assets/Scripts · 4 matches
+Now let me dig into the code. First, locate key Core types for flipping, dealing, and stabilization.
+✱ Grep "潜伏|lurk|AssassinLeader|刺客领袖|rise_up|起来" in Assets/Scripts · 37 matches
+→ Read Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Domain/Actions/FaceOrientationActions.cs
+✱ Grep "ambush_melee" in Assets/Scripts · 11 matches
+✱ Grep "new FlipCardAction|FlipCardAction\(" in Assets/Scripts · 15 matches
+✱ Grep "ambush_melee|assassin_leader|leap_kill" in Assets/Scripts/NineGrid.Foundation/NineGrid.Content · 0 matches
+→ Read Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Effects/EffectAtomLibrary.cs [offset=3240, limit=80]
+
+$ rg -l "ambush_melee" "C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets" -g "*.json" -g "*.asset" 2>$null
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Arts\ContentVisual\tables\effect_templates.json
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\StreamingAssets\ContentVisual\tables\effect_templates.json
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Arts\ContentVisual\cards\_index.json
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Arts\ContentVisual\cards\skill_ambush_melee.json
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\StreamingAssets\ContentVisual\cards\_index.json
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Arts\ContentVisual\cards\monster_young_orc.json
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Arts\ContentVisual\cards\monster_veteran_orc.json
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Arts\ContentVisual\cards\monster_smart_orc.json
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\StreamingAssets\ContentVisual\cards\skill_ambush_melee.json
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\StreamingAssets\ContentVisual\cards\monster_young_orc.json
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\StreamingAssets\ContentVisual\cards\monster_veteran_orc.json
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\StreamingAssets\ContentVisual\cards\monster_smart_orc.json
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\OtherLog\RegistryLog\registrylog-QuickTest-20260801-141335-seed1.json
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260801-141335-seed1.json
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\OtherLog\RegistryLog\registrylog-QuickTest-20260731-210715-seed1.json
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\OtherLog\RegistryLog\registrylog-QuickTest-20260731-210502-seed1.json
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260731-210715-seed1.json
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\PerfLog\perflog-QuickTest-20260731-210502-seed1.json
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\OtherLog\BattleLog\battlelog-QuickTest-20260806-070737-seed1.json
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\OtherLog\BattleLog\battlelog-20260807-160613-seed1.json
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\OtherLog\BattleLog\battlelog-20260807-065519-959-seed1.json
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\OtherLog\BattleLog\battlelog-20260806-190001-887-seed1.json
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\OtherLog\BattleLog\battlelog-20260806-172452-072-seed1.json
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\OtherLog\BattleLog\battlelog-20260731-210502-seed1.json
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\OtherLog\BattleLog\battlelog-20260806-142051-858-seed1.json
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\OtherLog\BattleLog\battlelog-20260806-131533-856-seed1.json
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\OtherLog\BattleLog\battlelog-QuickTest-20260801-141335-seed1.json
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\OtherLog\BattleLog\battlelog-20260807-202826-079-seed1.json
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\OtherLog\BattleLog\battlelog-20260807-171825-410-seed1.json
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\OtherLog\BattleLog\battlelog-20260807-165252-531-seed1.json
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\OtherLog\BattleLog\battlelog-20260807-160751-880-seed1.json
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\OtherLog\BattleLog\battlelog-QuickTest-20260731-210715-seed1.json
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\OtherLog\BattleLog\battlelog-QuickTest-20260731-210502-seed1.json
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\CoreLog\corelog-20260731-210502-seed1.json
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\CoreLog\corelog-QuickTest-20260731-210502-seed1.json
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\CoreLog\corelog-QuickTest-20260731-210715-seed1.json
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\CoreLog\corelog-QuickTest-20260801-141335-seed1.json
+
+$ $j = Get-Content "C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Arts\ContentVisual\tables\effect_templates.json" -Raw | ConvertFrom-Json; $j | ConvertTo-Json -Depth 1 | Select-String -Pattern "ambush_melee|assassin_leader|leap_kill|rise_up" -Context 0,0 | Out-Null; $found = $j.PSObject.Properties.Value; Write-Output ($j | Get-Member -MemberType NoteProperty | Select-Object -ExpandProperty Name | Where-Object { $_ -match "ambush|assassin|leap|rise" })
+(no output)
+
+$ $raw = Get-Content "C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Arts\ContentVisual\tables\effect_templates.json" -Raw; Write-Output ("len=" + $raw.Length); Write-Output $raw.Substring(0, [Math]::Min(1500, $raw.Length))
+len=125896
+[
+ {
+  "id": "tpl.gain_armor_on_use_help_card",
+  "state": "Implemented",
+  "design_text": "[ʹ��ʱ] ��һ��5�㻤��",
+  "requires_json": "[\"ActivatedByUse\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnSelfUsed\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"GainArmor\",\"amount\":\"{{amount}}\"}}"
+ },
+ {
+  "id": "tpl.heal_player_on_use_help_card",
+  "state": "Implemented",
+  "design_text": "[ʹ��ʱ] �ָ�10��Ѫ��",
+  "requires_json": "[\"ActivatedByUse\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnSelfUsed\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"Heal\",\"amount\":\"{{amount}}\",\"actor\":\"Player\"}}"
+ },
+ {
+  "id": "tpl.help.armor_breaking_hammer.use",
+  "state": "Implemented",
+  "design_text": "[ʹ��ʱ] ��Ŀ����￨���׽���10��",
+  "requires_json": "[\"HasOwnerEntity\", \"ActivatedByUse\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnSelfUsed\"},\"target\":{\"atom\":\"SelectedCards\",\"kind\":\"Monster\",\"zone\":\"Board\",\"count\":\"{{count}}\"},\"action\":{\"atom\":\"TransferArmor\",\"amount\":\"{{amount}}\",\"receiver\":\"None\",\"cause\":\"{{cause}}\"}}"
+ },
+ {
+  "id": "tpl.help.blood_conversion.use",
+  "state": "Implemented",
+  "design_text": "[ʹ��ʱ] �۳�5��Ѫ�����޲������ù���+1������+1��50��һ��������",
+  "requires_json": "[\"HasOwnerEntity\", \"ActivatedByUse\", \"CardZoneTriggerable\"]",
+  "condi
+
+$ $raw = Get-Content "C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Arts\ContentVisual\tables\effect_templates.json" -Raw -Encoding UTF8; $arr = $raw | ConvertFrom-Json; foreach ($t in $arr) { if ($t.id -match "ambush|assassin|leap|rise_up") { Write-Output ("ID: " + $t.id); Write-Output ("REQ: " + $t.requires_json); Write-Output ("COND: " + $t.conditions_json); Write-Output ("BODY: " + $t.body); Write-Output ("STATE: " + $t.state); Write-Output "-----" } }
+ID: tpl.skill.rise_up.damage
+REQ: ["HasOwnerEntity", "CardZoneTriggerable"]
+COND: []
+BODY: {"kind":"Triggered","trigger":{"atom":"OnSelfDamageDealtToPlayerCumulative","threshold":1},"target":{"atom":"FilteredCards","kind":"Monster","zone":"Board","exclude":["Self"],"random":true,"count":"{{count}}"},"action":{"atom":"Flip"}}
+STATE: Implemented
+-----
+ID: tpl.skill.leap_kill.flip
+REQ: ["HasOwnerEntity", "CardZoneTriggerable"]
+COND: ["IsFaceUp:target=Self", "Adjacent:left=Self:right=Player"]
+BODY: {"kind":"Triggered","trigger":{"atom":"OnFlip"},"conditions":[{"atom":"IsFaceUp","target":"Self"},{"atom":"Adjacent","left":"Self","right":"Player"}],"target":{"atom":"Player"},"action":{"atom":"DealDamage","value":{"source":"Self","stat":"Attack"},"actor":"Self"}}
+STATE: Implemented
+-----
+ID: tpl.skill.ambush_melee.interact
+REQ: ["HasOwnerEntity", "CardZoneTriggerable"]
+COND: ["IsFaceUp:target=Self", "Adjacent:left=Self:right=Player"]
+BODY: {"kind":"Triggered","trigger":{"atom":"OnInteract","every":5},"conditions":[{"atom":"IsFaceUp","target":"Self"},{"atom":"Adjacent","left":"Self","right":"Player"}],"target":{"atom":"Self"},"action":{"atom":"Sequence","actions":[{"atom":"DealDamage","value":{"source":"Self","stat":"Attack"},"actor":"Self","target":{"atom":"Player"}},{"atom":"Flip","target":{"atom":"Self"}}]}}
+STATE: Implemented
+-----
+ID: tpl.skill.assassin_leader.rule
+REQ: ["HasOwnerEntity", "CardZoneTriggerable"]
+COND: ["IsFaceUp:target=Self", "EventFilter:eventType=CardDealt:targetKind=Monster"]
+BODY: {"kind":"Triggered","trigger":{"atom":"OnDeal"},"conditions":[{"atom":"IsFaceUp","target":"Self"},{"atom":"EventFilter","eventType":"CardDealt","targetKind":"Monster"}],"target":{"atom":"EventCards","eventType":"CardDealt","targetKind":"Monster"},"action":{"atom":"Flip"}}
+STATE: Implemented
+-----
+
+→ Read Assets/Arts/ContentVisual/cards/monster_smart_orc.json
+→ Read Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Domain/Actions/BoardDeckActions.cs [limit=130, offset=320]
+✱ Grep "UpdateFaceUp|CardFaceChanged" in Assets/Scripts/NineGrid.Presentation · 35 matches
+Now let me look at the presentation side: flip pipeline, deck manager, and stabilization scheduler.
+
+$ Get-ChildItem -Recurse "C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Presentation" -Filter "*.cs" | Where-Object { $_.Name -match "Flip|Deck|Stabilization|EventMap|BeatHandler" } | Select-Object -ExpandProperty FullName
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Presentation\Cards\CardBurstScatterIntoDeckPresenter.cs
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Presentation\Cards\CardDeckLayoutSettings.cs
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Presentation\Cards\CardDeckManagerSingleton.cs
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Presentation\Cards\CardDeckMode.cs
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Presentation\Cards\CardDeckSlotContainer.cs
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Presentation\Cards\CardDeckTween.cs
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Presentation\Cards\SkeletonDeckLayoutSettings.cs
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Presentation\Cards\SkeletonDeckPresentationManager.cs
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Presentation\Cards\Presentation\CardFaceFlipPresenter.cs
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Presentation\Commands\EnqueueShuffleIntoDeckFromEventLogCommand.cs
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Presentation\Flow\QuickTestDeckCatalog.cs
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Presentation\Flow\ShuffleIntoDeckPresentationScanner.cs
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Presentation\Flow\Presentation\BoardStabilizationScheduler.cs
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Presentation\Flow\Presentation\CardFaceFlipBeatHandler.cs
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Presentation\Flow\Presentation\DamageFloaterBeatHandler.cs
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Presentation\Flow\Presentation\EffectTriggerPulseBeatHandler.cs
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Presentation\Flow\Presentation\FlipPlaybackCoordinator.cs
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Presentation\Flow\Presentation\GoldGainBeatHandler.cs
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Presentation\Flow\Presentation\IBattleBeatHandler.cs
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Presentation\Flow\Presentation\PlayerInfoHudBeatHandler.cs
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Presentation\Flow\Presentation\ShuffleIntoDeckPresentSink.cs
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Presentation\Flow\Presentation\ShuffleIntoDeckScheduler.cs
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Presentation\Tests\Cards\CardFaceFlipAndBurnExitTests.cs
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Presentation\Tests\Cards\DeckInsertGateTests.cs
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Presentation\Tests\Cards\DeckReturnSettleGateTests.cs
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Presentation\Tests\Cards\DeckSortingLayerPropagateStructuralTests.cs
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Presentation\Tests\Cards\HandDeckOwnershipTests.cs
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Presentation\Tests\Cards\ShuffleIntoDeckPresentationScannerTests.cs
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Presentation\Tests\Flow\BoardStabilizationSchedulerTests.cs
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Presentation\Tests\Flow\FlipPlaybackCoordinatorTests.cs
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Presentation\Tests\Output\GoldGainBeatHandlerTests.cs
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Presentation\Tests\Shuffle\EnqueueShuffleIntoDeckFromEventLogCommandTests.cs
+
+→ Read Assets/Scripts/NineGrid.Presentation/Flow/Presentation/CardFaceFlipBeatHandler.cs
+→ Read Assets/Scripts/NineGrid.Presentation/Flow/Presentation/FlipPlaybackCoordinator.cs
+→ Read Assets/Scripts/NineGrid.Presentation/Flow/Presentation/BoardStabilizationScheduler.cs
+
+$ Get-Content "C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\OtherLog\BattleLog\battlelog-20260807-202826-079-seed1.json" -Raw -Encoding UTF8 | Select-Object -First 1 | ForEach-Object { $_.Substring(0, [Math]::Min(3000, $_.Length)) }
+{"schemaVersion":1,"seed":"1","sessionId":"20260807-202826-079","runTag":"","runTagNote":"","ops":[{"opIndex":0,"opKind":"StartNode","reason":"StartNode","apiPath":"PhaseSystem.StartNode","phaseBefore":"BuildEnemyPool","phaseAfter":"InteractionLoop","floor":"1","nodeIndex":"1","attacker":null,"target":{"uid":1,"defId":"avatar.default","kind":"Avatar","atk":4,"hp":10,"armor":0},"eventStartIndex":0,"eventEndIndex":64,"events":[],"presentation":{"accepted":true,"damageAmount":0,"targetKilled":false,"avatarDefeated":false,"nodeClearedOrRewardPhase":false,"rejectReason":""},"verdictHints":{"avatarDefeated":false,"targetKilled":false,"extraDamageDealtCount":0,"effectTriggeredIds":[]}},{"opIndex":1,"opKind":"CombatHit","reason":"IntentCombatHit","apiPath":"CombatHitCommand","phaseBefore":"","phaseAfter":"InteractionLoop","floor":"1","nodeIndex":"1","attacker":null,"target":{"uid":18,"defId":"trap.spike","kind":"Trap","atk":0,"hp":2,"armor":0},"eventStartIndex":118,"eventEndIndex":126,"events":[{"sequence":118,"type":"ActionStarted","actionName":"BeginPlayerMonsterEngagement","actorUid":0,"targetUid":0,"cardUid":0,"amount":0,"delta":0,"remainingHp":0,"remainingArmor":0,"sourceDefId":"","cause":"","summary":"#118 Action started"},{"sequence":119,"type":"ActionFinished","actionName":"BeginPlayerMonsterEngagement","actorUid":0,"targetUid":0,"cardUid":0,"amount":0,"delta":0,"remainingHp":0,"remainingArmor":0,"sourceDefId":"","cause":"","summary":"#119 Action finished"},{"sequence":120,"type":"ActionStarted","actionName":"DealDamage","actorUid":0,"targetUid":0,"cardUid":0,"amount":0,"delta":0,"remainingHp":0,"remainingArmor":0,"sourceDefId":"","cause":"","summary":"#120 Action started"},{"sequence":121,"type":"HpChanged","actionName":"DealDamage","actorUid":1,"targetUid":18,"cardUid":18,"amount":0,"delta":-4,"remainingHp":2,"remainingArmor":0,"sourceDefId":"","cause":"","summary":"#121 HP changed card=18 amount=0 delta=-4 hp=2 armor=0"},{"sequence":122,"type":"DamageDealt","actionName":"DealDamage","actorUid":1,"targetUid":18,"cardUid":18,"amount":4,"delta":4,"remainingHp":2,"remainingArmor":0,"sourceDefId":"","cause":"","summary":"#122 Damage card=18 amount=4 delta=4 hp=2 armor=0"},{"sequence":123,"type":"ActionFinished","actionName":"DealDamage","actorUid":0,"targetUid":0,"cardUid":0,"amount":0,"delta":0,"remainingHp":0,"remainingArmor":0,"sourceDefId":"","cause":"","summary":"#123 Action finished"},{"sequence":124,"type":"ActionStarted","actionName":"EndBattleScopeCleanup","actorUid":0,"targetUid":0,"cardUid":0,"amount":0,"delta":0,"remainingHp":0,"remainingArmor":0,"sourceDefId":"","cause":"","summary":"#124 Action started"},{"sequence":125,"type":"ActionFinished","actionName":"EndBattleScopeCleanup","actorUid":0,"targetUid":0,"cardUid":0,"amount":0,"delta":0,"remainingHp":0,"remainingArmor":0,"sourceDefId":"","cause":"","summary":"#125 Action finished"}],"presentation":{"accepted":true,"damageAmount":4,"targetKilled":false,"avatarDefeated":false,"nodeCle
+
+Let me analyze the playtest battle logs for actual flip/deal behavior.
+$ $f = "C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\OtherLog\BattleLog\battlelog-20260807-202826-079-seed1.json"; $j = Get-Content $f -Raw -Encoding UTF8 | ConvertFrom-Json; Write-Output ("ops=" + $j.ops.Count); $flipOps = @(); $dealOps = @(); $ambush = @(); foreach ($op in $j.ops) { foreach ($ev in $op.events) { if ($ev.type -eq "CardFaceChanged") { $flipOps += [PSCustomObject]@{op=$op.opIndex; seq=$ev.sequence; kind=$op.opKind; card=$ev.cardUid; result=$ev.amount; src=$ev.sourceDefId; cause=$ev.cause; summary=$ev.summary} }; if ($ev.type -eq "CardDealt") { $dealOps += [PSCustomObject]@{op=$op.opIndex; seq=$ev.sequence; kind=$op.opKind; card=$ev.cardUid; amount=$ev.amount; src=$ev.sourceDefId; summary=$ev.summary} }; if ($ev.cause -match "ambush") { $ambush += [PSCustomObject]@{op=$op.opIndex; seq=$ev.sequence; type=$ev.type; card=$ev.cardUid; src=$ev.sourceDefId; summary=$ev.summary} } } }; Write-Output "--- CardFaceChanged ($($flipOps.Count)):"; $flipOps | Format-Table -AutoSize | Out-String -Width 200; Write-Output "--- CardDealt ($($dealOps.Count)):"; $dealOps | Format-Table -AutoSize | Out-String -Width 200; Write-Output "--- ambush-related ($($ambush.Count)):"; $ambush | Format-Table -AutoSize | Out-String -Width 200
+ops=42
+--- CardFaceChanged (0):
+
+--- CardDealt (3):
+
+op  seq kind      card amount src        summary
+--  --- ----      ---- ------ ---        -------
+ 6  672 CombatHit   20      0 trap.leave #672 Card dealt card=20 hp=6 armor=0 source=trap.leave cause=leaveTrap.insert shuffleInto:trap.leave
+15 1558 CombatHit   41      0 trap.leave #1558 Card dealt card=41 hp=6 armor=0 source=trap.leave cause=leaveTrap.insert shuffleInto:trap.leave
+28 2870 CombatHit   65      0 trap.leave #2870 Card dealt card=65 hp=6 armor=0 source=trap.leave cause=leaveTrap.insert shuffleInto:trap.leave
+
+
+--- ambush-related (0):
+
+$ $files = Get-ChildItem "C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\OtherLog\BattleLog" -Filter "battlelog-*.json" | Sort-Object LastWriteTime -Descending; foreach ($f in $files) { $j = Get-Content $f.FullName -Raw -Encoding UTF8 | ConvertFrom-Json; $faceUp = 0; $faceDown = 0; $ambush = 0; $deal = 0; foreach ($op in $j.ops) { foreach ($ev in $op.events) { if ($ev.type -eq "CardFaceChanged") { if ($ev.amount -eq 0) { $faceDown++ } else { $faceUp++ } }; if ($ev.cause -match "ambush") { $ambush++ }; if ($ev.type -eq "CardDealt") { $deal++ } } }; Write-Output ("{0}  ops={1}  CardFaceChanged+={2} -={3}  ambushEv={4}  Dealt={5}" -f $f.Name, $j.ops.Count, $faceUp, $faceDown, $ambush, $deal) }
+battlelog-20260807-222543-651-seed1.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-20260807-202826-079-seed1.json  ops=42  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=3
+battlelog-QuickTest-20260807-205033-seed42.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-QuickTest-20260807-193005-seed42.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-20260807-171825-410-seed1.json  ops=5  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-QuickTest-20260807-155801-seed42.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-20260807-165252-531-seed1.json  ops=6  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-20260807-160751-880-seed1.json  ops=15  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=1
+battlelog-20260807-160613-seed1.json  ops=4  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-QuickTest-20260807-144702-seed42.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-QuickTest-20260807-094033-seed42.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-20260807-065519-959-seed1.json  ops=10  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=1
+battlelog-20260806-190001-887-seed1.json  ops=3  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-20260806-183510-508-seed1.json  ops=3  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-20260806-172452-072-seed1.json  ops=6  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=1
+battlelog-QuickTest-20260806-171923-seed42.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-20260806-165116-416-seed1.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-QuickTest-20260806-164513-625-seed42.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-QuickTest-20260806-164422-seed42.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-QuickTest-20260806-163945-seed42.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-20260806-161230-919-seed1.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-QuickTest-20260806-153522-seed42.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-20260806-142051-858-seed1.json  ops=191  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=23
+battlelog-20260806-131533-856-seed1.json  ops=7  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-20260806-113225-seed1.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-QuickTest-20260806-070737-seed1.json  ops=168  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=40
+battlelog-QuickTest-20260805-133414-seed1.json  ops=6  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-QuickTest-20260804-230025-seed1.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-20260804-230014-029-seed1.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-20260804-225903-850-seed1.json  ops=2  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-QuickTest-20260804-172809-seed1.json  ops=51  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=3
+battlelog-20260804-172755-572-seed1.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-QuickTest-20260804-170633-seed1.json  ops=10  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=1
+battlelog-QuickTest-20260804-163727-seed1.json  ops=62  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=4
+battlelog-QuickTest-20260804-160922-seed1.json  ops=10  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=1
+battlelog-QuickTest-20260804-145540-seed1.json  ops=64  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=6
+battlelog-QuickTest-20260804-110627-seed1.json  ops=39  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=2
+battlelog-QuickTest-20260804-100427-seed1.json  ops=127  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=9
+battlelog-QuickTest-20260804-095904-seed1.json  ops=10  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=1
+battlelog-QuickTest-20260804-090731-seed1.json  ops=56  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=3
+battlelog-QuickTest-20260804-085356-seed1.json  ops=11  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=1
+battlelog-QuickTest-20260804-083027-seed1.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-QuickTest-20260803-232727-seed1.json  ops=10  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=1
+battlelog-QuickTest-20260803-165558-seed1.json  ops=14  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-QuickTest-20260803-164359-seed1.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-QuickTest-20260803-152527-seed1.json  ops=12  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-QuickTest-20260803-151439-seed1.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-QuickTest-20260803-120702-seed1.json  ops=10  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=1
+battlelog-QuickTest-20260803-114531-seed1.json  ops=10  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-20260803-111945-seed1.json  ops=34  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-QuickTest-20260803-111945-seed1.json  ops=34  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-QuickTest-20260803-110757-seed1.json  ops=6  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-QuickTest-20260803-104945-seed1.json  ops=8  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-QuickTest-20260803-102443-seed1.json  ops=41  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-QuickTest-20260803-101556-seed1.json  ops=17  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-QuickTest-20260802-230732-seed1.json  ops=17  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-20260801-144559-seed1.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-QuickTest-20260801-143549-seed1.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-QuickTest-20260801-142640-seed1.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-QuickTest-20260801-141335-seed1.json  ops=18  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=3
+battlelog-QuickTest-20260801-141137-seed1.json  ops=9  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-QuickTest-20260801-141032-seed1.json  ops=9  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-QuickTest-20260801-140952-seed1.json  ops=6  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-QuickTest-20260801-124002-seed1.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-QuickTest-20260801-123906-seed1.json  ops=2  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-20260801-123509-seed1.json  ops=20  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=3
+battlelog-QuickTest-20260801-123509-seed1.json  ops=20  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=3
+battlelog-QuickTest-20260801-123356-seed1.json  ops=5  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-QuickTest-20260801-113550-seed1.json  ops=11  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=1
+battlelog-QuickTest-20260801-112648-seed1.json  ops=13  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=1
+battlelog-QuickTest-20260801-111539-seed1.json  ops=18  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=1
+battlelog-QuickTest-20260801-110220-seed1.json  ops=10  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-QuickTest-20260801-105436-seed1.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-20260801-105420-seed1.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-QuickTest-20260801-082828-seed1.json  ops=2  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-QuickTest-20260731-215913-seed1.json  ops=5  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-QuickTest-20260731-213810-seed1.json  ops=5  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-QuickTest-20260731-210715-seed1.json  ops=2  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-QuickTest-20260731-210502-seed1.json  ops=18  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-QuickTest-20260731-202848-seed1.json  ops=21  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-QuickTest-20260731-202726-seed1.json  ops=11  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=1
+battlelog-QuickTest-20260731-194244-seed1.json  ops=19  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=5
+battlelog-QuickTest-20260731-191014-seed1.json  ops=26  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=4
+battlelog-QuickTest-20260731-190120-seed1.json  ops=10  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-QuickTest-20260731-184247-seed1.json  ops=17  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-QuickTest-20260731-163730-seed1.json  ops=15  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-QuickTest-20260731-155320-seed1.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-20260731-210706-seed1.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-20260731-210502-seed1.json  ops=18  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-QuickTest-20260731-154449-seed1.json  ops=6  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=1
+battlelog-QuickTest-20260731-151812-seed1.json  ops=4  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-QuickTest-20260731-150417-seed1.json  ops=9  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-QuickTest-20260731-150354-seed1.json  ops=3  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-QuickTest-20260731-150327-seed1.json  ops=5  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-QuickTest-20260731-145531-seed1.json  ops=9  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-QuickTest-20260731-145451-seed1.json  ops=4  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-QuickTest-20260731-145411-seed1.json  ops=7  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-QuickTest-20260731-145325-seed1.json  ops=5  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-QuickTest-20260731-145246-seed1.json  ops=3  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-QuickTest-20260731-140652-seed1.json  ops=4  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-QuickTest-20260731-135336-seed1.json  ops=11  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-QuickTest-20260731-135124-seed1.json  ops=5  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-QuickTest-20260731-134938-seed1.json  ops=10  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-QuickTest-20260731-134302-seed1.json  ops=9  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-QuickTest-20260731-133913-seed1.json  ops=10  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-QuickTest-20260731-133034-seed1.json  ops=3  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-QuickTest-20260731-131219-seed1.json  ops=3  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-QuickTest-20260731-120232-seed1.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-20260731-115012-seed1.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-QuickTest-20260731-111503-seed1.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-QuickTest-20260731-110042-seed1.json  ops=2  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-QuickTest-20260731-102816-seed1.json  ops=6  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-QuickTest-20260730-225834-seed1.json  ops=8  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-QuickTest-20260730-223048-seed1.json  ops=7  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-QuickTest-20260730-221400-seed1.json  ops=3  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-QuickTest-20260730-221354-seed1.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-QuickTest-20260730-220935-seed1.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-QuickTest-20260730-220903-seed1.json  ops=2  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-QuickTest-20260730-212318-seed1.json  ops=3  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=1
+battlelog-QuickTest-20260730-212243-seed1.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-QuickTest-20260730-210745-seed1.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-20260730-203437-seed1.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-20260730-195610-seed1.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-QuickTest-20260730-190610-seed1.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-20260730-151309-seed1.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-20260730-151249-seed1.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-20260730-150308-seed1.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-20260730-145700-seed1.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-20260730-143527-seed1.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-20260730-130142-seed1.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-20260730-124150-seed1.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-20260730-122223-seed1.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-20260730-122109-seed1.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-20260730-120548-seed1.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-20260730-120055-seed1.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-20260730-114626-seed1.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-20260730-114549-seed1.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-20260729-195826-seed1.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-20260729-150956-seed1.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-20260729-150243-seed1.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-20260729-142150-seed1.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-20260729-141946-seed1.json  ops=2  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-20260729-141939-seed1.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-20260729-105505-seed1.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-20260729-105437-seed1.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-QuickTest-20260729-105237-seed1.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-QuickTest-20260729-105156-seed1.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-QuickTest-20260729-105055-seed1.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-20260729-090616-seed1.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-20260728-225802-seed1.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-20260728-225642-seed1.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-20260728-225447-seed1.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-20260728-222527-seed1.json  ops=2  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-20260728-221127-seed1.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-20260728-221038-seed1.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-20260728-220712-seed1.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-20260728-214357-seed1.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-20260728-214224-seed1.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-QuickTest-20260728-203106-seed1.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-20260728-201002-seed1.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-20260728-182021-seed1.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-20260728-174645-seed1.json  ops=2  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-20260728-132603-seed1.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-20260728-132403-seed1.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-20260728-132251-seed1.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-20260728-132123-seed1.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-20260728-110820-seed1.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-20260728-104809-seed1.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-20260727-231134-seed1.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-20260727-231122-seed1.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-20260727-231110-seed1.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-20260727-230458-seed1.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-20260727-230012-seed1.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-20260727-225621-seed1.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-20260727-221919-seed1.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-20260727-221404-seed1.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-20260727-215001-seed1.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-20260727-214335-seed1.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-20260727-210917-seed1.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-20260727-210120-seed1.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-20260727-195822-seed1.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-20260727-195757-seed1.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-20260727-194404-seed1.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-QuickTest-20260727-193158-seed1.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-20260727-173712-seed1.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-20260727-172840-seed1.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-20260727-172703-seed1.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-20260727-140746-seed1.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-20260727-140727-seed1.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-20260727-125953-seed1.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-20260726-213457-seed1.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-20260726-213229-seed1.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-20260726-201958-seed1.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-QuickTest-20260726-120626-seed1.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-QuickTest-20260726-120613-seed1.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-QuickTest-20260724-150552-seed1.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-QuickTest-20260724-085241-seed1.json  ops=2  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-QuickTest-20260724-083840-seed1.json  ops=2  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-QuickTest-20260724-073034-seed1.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-20260726-120357-seed1.json  ops=2  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-20260725-163157-seed1.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-20260725-120224-seed1.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-20260725-120015-seed1.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-20260724-213047-seed1.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-20260724-212701-seed1.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-20260724-185424-seed1.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-20260724-173110-seed1.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-20260724-171600-seed1.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-20260724-170331-seed1.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-20260724-170322-seed1.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-20260724-170109-seed1.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-20260724-170052-seed1.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-20260724-165732-seed1.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-20260724-165627-seed1.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-20260724-164423-seed1.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-20260724-164354-seed1.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-20260724-163355-seed1.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-20260724-163322-seed1.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-20260724-163255-seed1.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-20260724-162729-seed1.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-20260724-153608-seed1.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-20260724-124022-seed1.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-20260724-152353-seed1.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-20260724-123719-seed1.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-20260724-112028-seed1.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-20260724-083650-seed1.json  ops=2  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-20260724-083602-seed1.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-20260724-074809-seed1.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-QuickTest-20260723-171212-seed1.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-QuickTest-20260723-162910-seed1.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-QuickTest-20260723-162731-seed1.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-QuickTest-20260723-162538-seed1.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-QuickTest-20260723-161336-seed1.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-QuickTest-20260723-160118-seed1.json  ops=2  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-QuickTest-20260723-153842-seed1.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-QuickTest-20260723-120618-seed1.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-QuickTest-20260722-190841-seed1.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-QuickTest-20260722-190733-seed1.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-20260723-094722-seed1.json  ops=2  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-20260723-093312-seed1.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-20260722-180526-seed1.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-20260721-222949-seed1.json  ops=2  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-20260721-222928-seed1.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-20260721-222400-seed1.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-20260721-222244-seed1.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-20260721-220403-seed1.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-20260721-220324-seed1.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-20260721-220303-seed1.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-20260721-220206-seed1.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-20260721-215811-seed1.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-20260721-215720-seed1.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-20260721-215428-seed1.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-20260721-214919-seed1.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-20260721-214316-seed1.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-20260721-214250-seed1.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-20260721-211248-seed1.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-20260721-153210-seed1.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-QuickTest-20260720-110815-seed1.json  ops=2  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-QuickTest-20260720-110538-seed1.json  ops=2  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-QuickTest-20260719-224555-seed1.json  ops=10  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-QuickTest-20260719-223810-seed1.json  ops=2  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-QuickTest-20260719-223709-seed1.json  ops=8  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-QuickTest-20260719-221950-seed1.json  ops=3  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-QuickTest-20260719-214616-seed1.json  ops=3  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-QuickTest-20260719-212545-seed1.json  ops=3  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-QuickTest-20260719-212425-seed1.json  ops=15  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-QuickTest-20260719-205356-seed1.json  ops=5  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-QuickTest-20260719-205250-seed1.json  ops=8  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-20260720-160848-seed1.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-20260720-150613-seed1.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-20260720-124942-seed1.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-20260720-081141-seed1.json  ops=2  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-20260720-080443-seed1.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-20260720-080229-seed1.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-20260720-080209-seed1.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-20260720-075711-seed1.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-20260720-075122-seed1.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-20260720-073829-seed1.json  ops=3  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-20260719-223228-seed1.json  ops=6  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-20260719-221831-seed1.json  ops=11  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-20260719-221303-seed1.json  ops=4  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-20260719-220339-seed1.json  ops=7  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-20260719-205216-seed1.json  ops=3  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-20260717-140747-seed1.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-QuickTest-20260716-203410-seed1.json  ops=53  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=7
+battlelog-QuickTest-20260716-203336-seed1.json  ops=17  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=3
+battlelog-20260716-214702-seed1.json  ops=25  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=3
+battlelog-20260716-214641-seed1.json  ops=5  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-20260716-203336-seed1.json  ops=17  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=3
+battlelog-20260716-200459-seed1.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-20260716-200147-seed1.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-20260716-200054-seed1.json  ops=33  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=2
+battlelog-20260716-195828-seed1.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-20260716-183819-seed1.json  ops=17  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=3
+battlelog-20260716-160225-seed1.json  ops=76  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=5
+battlelog-20260716-160146-seed1.json  ops=12  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=2
+battlelog-20260716-155813-seed1.json  ops=9  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=1
+battlelog-20260716-154815-seed1.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-20260716-154800-seed1.json  ops=8  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=1
+battlelog-20260716-154741-seed1.json  ops=7  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-20260716-154705-seed1.json  ops=5  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=1
+battlelog-20260716-154641-seed1.json  ops=5  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=1
+battlelog-QuickTest-20260716-151303-seed1.json  ops=43  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=7
+battlelog-20260716-151004-seed1.json  ops=121  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=11
+battlelog-QuickTest-20260716-135702-seed1.json  ops=15  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-QuickTest-20260716-125928-seed1.json  ops=19  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-QuickTest-20260716-125749-seed1.json  ops=25  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=3
+battlelog-20260716-141143-seed1.json  ops=15  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-20260716-135640-seed1.json  ops=5  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-QuickTest-20260716-114051-seed1.json  ops=51  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=5
+battlelog-QuickTest-20260716-111903-seed1.json  ops=15  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=2
+battlelog-QuickTest-20260716-111710-seed1.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-QuickTest-20260716-104338-seed1.json  ops=99  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=5
+battlelog-QuickTest-20260716-095007-seed1.json  ops=47  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=8
+battlelog-QuickTest-20260715-214027-seed1.json  ops=9  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-QuickTest-20260715-213700-seed1.json  ops=100  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=12
+battlelog-QuickTest-20260715-212812-seed1.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-QuickTest-20260715-212423-seed1.json  ops=65  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-QuickTest-20260714-200318-seed1.json  ops=90  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-20260715-213639-seed1.json  ops=5  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-20260715-210743-seed1.json  ops=44  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-20260715-094207-seed1.json  ops=13  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-QuickTest-20260714-160826-seed1.json  ops=9  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-QuickTest-20260714-153614-seed1.json  ops=234  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=58
+battlelog-20260714-162018-seed1.json  ops=36  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-20260714-153614-seed1.json  ops=234  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=58
+battlelog-QuickTest-20260714-125232-seed1.json  ops=21  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=8
+battlelog-20260714-132552-seed1.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-20260714-124326-seed1.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-20260714-112129-seed1.json  ops=9  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-QuickTest-20260714-105132-seed1.json  ops=5  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=1
+battlelog-20260714-095543-seed1.json  ops=79  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=7
+battlelog-QuickTest-20260714-095543-seed1.json  ops=79  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=7
+battlelog-QuickTest-20260714-095000-seed1.json  ops=5  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=1
+battlelog-QuickTest-20260714-091334-seed1.json  ops=220  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=26
+battlelog-QuickTest-20260713-215440-seed1.json  ops=90  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=9
+battlelog-QuickTest-20260713-201745-seed1.json  ops=92  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=46
+battlelog-QuickTest-20260713-192621-seed1.json  ops=291  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=78
+battlelog-20260713-192551-seed1.json  ops=9  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-20260713-183826-seed1.json  ops=53  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-20260713-171933-seed1.json  ops=40  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-QuickTest-20260713-170949-seed1.json  ops=126  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-QuickTest-20260713-164254-seed1.json  ops=68  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-20260713-164224-seed1.json  ops=9  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-QuickTest-20260713-161528-seed1.json  ops=156  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=19
+battlelog-QuickTest-20260713-160943-seed1.json  ops=31  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-20260713-160909-seed1.json  ops=11  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-20260713-160310-seed1.json  ops=7  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-QuickTest-20260713-143243-seed1.json  ops=7  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-QuickTest-20260713-140248-seed1.json  ops=7  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-QuickTest-20260713-132152-seed1.json  ops=19  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-QuickTest-20260713-131356-seed1.json  ops=7  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-20260713-140142-seed1.json  ops=17  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-20260712-165710-seed1.json  ops=141  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=17
+battlelog-20260712-164311-seed1.json  ops=42  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=5
+battlelog-20260712-160742-seed1.json  ops=354  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=864
+battlelog-20260712-160732-seed1.json  ops=1  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-20260712-154949-seed1.json  ops=244  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=25
+battlelog-20260712-154458-seed1.json  ops=40  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=6
+battlelog-20260712-154127-seed1.json  ops=11  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=2
+battlelog-20260712-151718-seed1.json  ops=81  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=7
+battlelog-20260712-151636-seed1.json  ops=27  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=4
+battlelog-20260712-145407-seed1.json  ops=95  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=15
+battlelog-20260712-144238-seed1.json  ops=42  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=5
+battlelog-20260712-143923-seed1.json  ops=109  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=10
+battlelog-20260712-141249-seed1.json  ops=79  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=7
+battlelog-20260712-141203-seed1.json  ops=27  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=7
+battlelog-20260712-133155-seed1.json  ops=76  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=12
+battlelog-20260712-130144-seed1.json  ops=73  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=10
+battlelog-20260712-130057-seed1.json  ops=31  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=5
+battlelog-20260712-130027-seed1.json  ops=17  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=4
+battlelog-20260711-224814-seed1.json  ops=83  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=11
+battlelog-20260711-220849-seed1.json  ops=86  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=9
+battlelog-20260711-220707-seed1.json  ops=52  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=9
+battlelog-20260711-213734-seed1.json  ops=71  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=9
+battlelog-20260711-213704-seed1.json  ops=17  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=4
+battlelog-20260711-212554-seed1.json  ops=35  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=4
+battlelog-20260711-212403-seed1.json  ops=56  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=10
+battlelog-20260711-211600-seed1.json  ops=135  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=23
+battlelog-20260711-211441-seed1.json  ops=23  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=4
+battlelog-20260711-210427-seed1.json  ops=9  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=2
+battlelog-20260711-204440-seed1.json  ops=68  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=9
+battlelog-20260711-201428-seed1.json  ops=82  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=11
+battlelog-20260711-201345-seed1.json  ops=23  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=6
+battlelog-20260711-200926-seed1.json  ops=56  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=7
+battlelog-20260711-154459-seed1.json  ops=136  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=27
+battlelog-20260711-151955-seed1.json  ops=137  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=32
+battlelog-QuickTest-20260713-124002-seed1.json  ops=49  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-QuickTest-20260713-113131-seed1.json  ops=63  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-20260713-111111-seed1.json  ops=53  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-QuickTest-20260713-111111-seed1.json  ops=53  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-QuickTest-20260713-102748-seed1.json  ops=116  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=0
+battlelog-20260713-095226-seed1.json  ops=182  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=28
+battlelog-QuickTest-20260713-095226-seed1.json  ops=182  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=28
+battlelog-20260713-092351-seed1.json  ops=168  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=35
+battlelog-QuickTest-20260713-092351-seed1.json  ops=168  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=35
+battlelog-20260713-084432-seed1.json  ops=135  CardFaceChanged+=0 -=0  ambushEv=0  Dealt=19
+
+$ $f = "C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\OtherLog\BattleLog\battlelog-QuickTest-20260806-070737-seed1.json"; $j = Get-Content $f -Raw -Encoding UTF8 | ConvertFrom-Json; $types = @{}; foreach ($op in $j.ops) { foreach ($ev in $op.events) { $types[$ev.type] = $types[$ev.type] + 1 } }; $types.GetEnumerator() | Sort-Object Name | Format-Table -AutoSize | Out-String -Width 120; Write-Output "--- StartNode op events (0-64):"; ($j.ops | Where-Object { $_.opIndex -eq 0 }).events | ForEach-Object { "{0} {1} {2} uid={3} src={4}" -f $_.sequence, $_.type, $_.actionName, $_.cardUid, $_.sourceDefId }
+Name              Value
+----              -----
+ActionFinished    1292
+ActionStarted     1292
+ArmorChanged      70
+BaseStatModified  166
+CardDealt         40
+CardKilled        132
+CardRemoved       132
+CardSpawned       19
+DamageDealt       218
+EffectDeactivated 222
+EffectTriggered   189
+GoldModified      94
+HpChanged         205
+
+
+--- StartNode op events (0-64):
+
+$ $f = "C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\OtherLog\BattleLog\battlelog-QuickTest-20260806-070737-seed1.json"; $j = Get-Content $f -Raw -Encoding UTF8 | ConvertFrom-Json; $trig = @{}; $spawn = @(); foreach ($op in $j.ops) { foreach ($ev in $op.events) { if ($ev.type -eq "EffectTriggered") { $k = "$($ev.sourceDefId)|$($ev.cause)"; $trig[$k] = $trig[$k] + 1 }; if ($ev.type -eq "CardSpawned") { $spawn += [PSCustomObject]@{op=$op.opIndex; kind=$op.opKind; uid=$ev.cardUid; src=$ev.sourceDefId; summary=$ev.summary} } } }; Write-Output "--- EffectTriggered by source|cause:"; $trig.GetEnumerator() | Sort-Object Value -Descending | Format-Table -AutoSize | Out-String -Width 150; Write-Output "--- CardSpawned:"; $spawn | Format-Table -AutoSize | Out-String -Width 200; Write-Output "--- opKinds:"; $j.ops | Group-Object opKind | Format-Table Name,Count -AutoSize | Out-String -Width 120
+--- EffectTriggered by source|cause:
+
+Name                                                   Value
+----                                                   -----
+relic.rotten_cleave_axe|relic.rotten_cleave_axe.cleave 117
+relic.shield_knife|relic.shield_knife.kill             35
+skill.death_summon|skill.death_summon.remove           18
+trap.leave|trap.leave.leave                            12
+relic.punch_card_knife|relic.punch_card_knife.remove   5
+skill.lord_of_death|skill.lord_of_death.remove         1
+skill.offer_fire|skill.offer_fire.remove               1
+
+
+--- CardSpawned:
+
+ op kind      uid src               summary
+ -- ----      --- ---               -------
+ 66 CombatHit 164 trap.revive_stone #8577 Card spawned card=164 hp=6 armor=0 source=trap.revive_stone cause=skill.death_summon trap.revive_stone
+ 68 CombatHit 165 trap.revive_stone #8743 Card spawned card=165 hp=6 armor=0 source=trap.revive_stone cause=skill.death_summon trap.revive_stone
+ 69 CombatHit 167 trap.revive_stone #8938 Card spawned card=167 hp=6 armor=0 source=trap.revive_stone cause=skill.death_summon trap.revive_stone
+ 70 CombatHit 169 trap.revive_stone #9000 Card spawned card=169 hp=6 armor=0 source=trap.revive_stone cause=skill.death_summon trap.revive_stone
+ 72 CombatHit 170 trap.revive_stone #9117 Card spawned card=170 hp=6 armor=0 source=trap.revive_stone cause=skill.death_summon trap.revive_stone
+ 73 CombatHit 172 trap.revive_stone #9196 Card spawned card=172 hp=6 armor=0 source=trap.revive_stone cause=skill.death_summon trap.revive_stone
+ 82 CombatHit 195 trap.revive_stone #9956 Card spawned card=195 hp=6 armor=0 source=trap.revive_stone cause=skill.death_summon trap.revive_stone
+ 84 CombatHit 197 trap.revive_stone #10135 Card spawned card=197 hp=6 armor=0 source=trap.revive_stone cause=skill.death_summon trap.revive_stone
+ 85 CombatHit 198 trap.revive_stone #10207 Card spawned card=198 hp=6 armor=0 source=trap.revive_stone cause=skill.death_summon trap.revive_stone
+ 89 CombatHit 201 trap.revive_stone #10566 Card spawned card=201 hp=6 armor=0 source=trap.revive_stone cause=skill.death_summon trap.revive_stone
+104 CombatHit 234 trap.revive_stone #12357 Card spawned card=234 hp=6 armor=0 source=trap.revive_stone cause=skill.death_summon trap.revive_stone
+109 CombatHit 265 trap.revive_stone #12925 Card spawned card=265 hp=6 armor=0 source=trap.revive_stone cause=skill.death_summon trap.revive_stone
+113 CombatHit 266 trap.revive_stone #13562 Card spawned card=266 hp=6 armor=0 source=trap.revive_stone cause=skill.death_summon trap.revive_stone
+120 CombatHit 272 trap.revive_stone #14277 Card spawned card=272 hp=6 armor=0 source=trap.revive_stone cause=skill.death_summon trap.revive_stone
+124 CombatHit 307 trap.revive_stone #15090 Card spawned card=307 hp=6 armor=0 source=trap.revive_stone cause=skill.death_summon trap.revive_stone
+143 CombatHit 347 trap.revive_stone #17096 Card spawned card=347 hp=6 armor=0 source=trap.revive_stone cause=skill.death_summon trap.revive_stone
+147 CombatHit 350 trap.revive_stone #17451 Card spawned card=350 hp=6 armor=0 source=trap.revive_stone cause=skill.lord_of_death trap.revive_stone
+160 CombatHit 357 trap.revive_stone #18804 Card spawned card=357 hp=6 armor=0 source=trap.revive_stone cause=skill.death_summon trap.revive_stone
+163 CombatHit 360 trap.revive_stone #19034 Card spawned card=360 hp=6 armor=0 source=trap.revive_stone cause=skill.death_summon trap.revive_stone
+
+
+--- opKinds:
+
+Name      Count
+----      -----
+CombatHit   155
+StartNode    13
+
+$ $f = "C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\CoreLog\corelog-QuickTest-20260801-141335-seed1.json"; if (Test-Path $f) { $raw = Get-Content $f -Raw -Encoding UTF8; Write-Output ("len=" + $raw.Length); Write-Output $raw.Substring(0, [Math]::Min(1200, $raw.Length)) } else { Write-Output "not found" }; Get-ChildItem "C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\CoreLog" | Select-Object Name, Length
+...output truncated...
+
+Full output saved to: C:\Users\jinji\.local\share\opencode\tool-output\tool_fdef25c250012oaD0RGEBvsvl2
+
+corelog-20260723-160405-seed1.json.meta                    158
+corelog-20260723-161102-seed1.json                        1627
+corelog-20260723-161102-seed1.json.meta                    158
+corelog-20260723-212354-seed1.json                        1627
+corelog-20260723-212354-seed1.json.meta                    158
+corelog-20260723-212618-seed1.json                        1627
+corelog-20260723-212618-seed1.json.meta                    158
+corelog-20260723-213202-seed1.json                        1627
+corelog-20260723-213202-seed1.json.meta                    158
+corelog-20260723-213252-seed1.json                        2018
+corelog-20260723-213252-seed1.json.meta                    158
+corelog-20260723-213341-seed1.json                        2018
+corelog-20260723-213341-seed1.json.meta                    158
+corelog-20260723-213428-seed1.json                        1627
+corelog-20260723-213428-seed1.json.meta                    158
+corelog-20260723-214508-seed1.json                        2018
+corelog-20260723-214508-seed1.json.meta                    158
+corelog-20260723-214552-seed1.json                        2018
+corelog-20260723-214552-seed1.json.meta                    158
+corelog-20260723-214631-seed1.json                        1627
+corelog-20260723-214631-seed1.json.meta                    158
+corelog-20260724-074701-seed1.json                        1627
+corelog-20260724-074701-seed1.json.meta                    165
+corelog-20260724-074809-seed1.json                      273807
+corelog-20260724-074809-seed1.json.meta                    165
+corelog-20260724-083556-seed1.json                         472
+corelog-20260724-083556-seed1.json.meta                    165
+corelog-20260724-083602-seed1.json                      178261
+corelog-20260724-083602-seed1.json.meta                    165
+corelog-20260724-083650-seed1.json                      312749
+corelog-20260724-083650-seed1.json.meta                    165
+corelog-20260724-112002-seed1.json                         472
+corelog-20260724-112002-seed1.json.meta                    165
+corelog-20260724-112028-seed1.json                       53774
+corelog-20260724-112028-seed1.json.meta                    165
+corelog-20260724-112041-seed1.json                         472
+corelog-20260724-112041-seed1.json.meta                    165
+corelog-20260724-123719-seed1.json                      169754
+corelog-20260724-123719-seed1.json.meta                    165
+corelog-20260724-124022-seed1.json                       11123
+corelog-20260724-124022-seed1.json.meta                    165
+corelog-20260724-152353-seed1.json                       89688
+corelog-20260724-152353-seed1.json.meta                    165
+corelog-20260724-152453-seed1.json                         472
+corelog-20260724-152453-seed1.json.meta                    165
+corelog-20260724-153608-seed1.json                        1295
+corelog-20260724-153608-seed1.json.meta                    165
+corelog-20260724-153919-seed1.json                         472
+corelog-20260724-153919-seed1.json.meta                    165
+corelog-20260724-162729-seed1.json                       37677
+corelog-20260724-162729-seed1.json.meta                    165
+corelog-20260724-163255-seed1.json                       98026
+corelog-20260724-163255-seed1.json.meta                    165
+corelog-20260724-163322-seed1.json                       39028
+corelog-20260724-163322-seed1.json.meta                    165
+corelog-20260724-163355-seed1.json                       83826
+corelog-20260724-163355-seed1.json.meta                    165
+corelog-20260724-164354-seed1.json                       95737
+corelog-20260724-164354-seed1.json.meta                    165
+corelog-20260724-164423-seed1.json                       95381
+corelog-20260724-164423-seed1.json.meta                    165
+corelog-20260724-165627-seed1.json                      159621
+corelog-20260724-165627-seed1.json.meta                    165
+corelog-20260724-165732-seed1.json                       73879
+corelog-20260724-165732-seed1.json.meta                    165
+corelog-20260724-170052-seed1.json                       38013
+corelog-20260724-170052-seed1.json.meta                    165
+corelog-20260724-170109-seed1.json                        9492
+corelog-20260724-170109-seed1.json.meta                    165
+corelog-20260724-170322-seed1.json                        9492
+corelog-20260724-170322-seed1.json.meta                    165
+corelog-20260724-170331-seed1.json                        9492
+corelog-20260724-170331-seed1.json.meta                    165
+corelog-20260724-171600-seed1.json                       66046
+corelog-20260724-171600-seed1.json.meta                    165
+corelog-20260724-173110-seed1.json                       38983
+corelog-20260724-173110-seed1.json.meta                    165
+corelog-20260724-185424-seed1.json                       66703
+corelog-20260724-185424-seed1.json.meta                    165
+corelog-20260724-212701-seed1.json                       80614
+corelog-20260724-212701-seed1.json.meta                    165
+corelog-20260724-213047-seed1.json                       83350
+corelog-20260724-213047-seed1.json.meta                    165
+corelog-20260725-120015-seed1.json                      174724
+corelog-20260725-120015-seed1.json.meta                    165
+corelog-20260725-120224-seed1.json                       11450
+corelog-20260725-120224-seed1.json.meta                    165
+corelog-20260725-163157-seed1.json                       82959
+corelog-20260725-163157-seed1.json.meta                    165
+corelog-20260726-120357-seed1.json                      386621
+corelog-20260726-120357-seed1.json.meta                    165
+corelog-20260726-201958-seed1.json                      147243
+corelog-20260726-201958-seed1.json.meta                    165
+corelog-20260726-213229-seed1.json                      175285
+corelog-20260726-213229-seed1.json.meta                    165
+corelog-20260726-213457-seed1.json                      113161
+corelog-20260726-213457-seed1.json.meta                    165
+corelog-20260727-125953-seed1.json                       54089
+corelog-20260727-125953-seed1.json.meta                    158
+corelog-20260727-140727-seed1.json                       54596
+corelog-20260727-140727-seed1.json.meta                    158
+corelog-20260727-140746-seed1.json                        1294
+corelog-20260727-140746-seed1.json.meta                    158
+corelog-20260727-172703-seed1.json                       54681
+corelog-20260727-172703-seed1.json.meta                    158
+corelog-20260727-172840-seed1.json                       86234
+corelog-20260727-172840-seed1.json.meta                    158
+corelog-20260727-173712-seed1.json                       84328
+corelog-20260727-173712-seed1.json.meta                    158
+corelog-20260727-193139-seed1.json                         472
+corelog-20260727-193139-seed1.json.meta                    158
+corelog-20260727-194404-seed1.json                       11123
+corelog-20260727-194404-seed1.json.meta                    158
+corelog-20260727-195757-seed1.json                       10144
+corelog-20260727-195757-seed1.json.meta                    158
+corelog-20260727-195822-seed1.json                        8128
+corelog-20260727-195822-seed1.json.meta                    158
+corelog-20260727-195846-seed1.json                         472
+corelog-20260727-195846-seed1.json.meta                    158
+corelog-20260727-200022-seed1.json                         472
+corelog-20260727-200022-seed1.json.meta                    158
+corelog-20260727-200148-seed1.json                         472
+corelog-20260727-200148-seed1.json.meta                    158
+corelog-20260727-200313-seed1.json                         472
+corelog-20260727-200313-seed1.json.meta                    158
+corelog-20260727-200349-seed1.json                         472
+corelog-20260727-200349-seed1.json.meta                    158
+corelog-20260727-210120-seed1.json                       39021
+corelog-20260727-210120-seed1.json.meta                    158
+corelog-20260727-210917-seed1.json                       38056
+corelog-20260727-210917-seed1.json.meta                    158
+corelog-20260727-214335-seed1.json                       55866
+corelog-20260727-214335-seed1.json.meta                    158
+corelog-20260727-214742-seed1.json                         472
+corelog-20260727-214742-seed1.json.meta                    158
+corelog-20260727-215001-seed1.json                      116238
+corelog-20260727-215001-seed1.json.meta                    158
+corelog-20260727-221404-seed1.json                       24543
+corelog-20260727-221404-seed1.json.meta                    158
+corelog-20260727-221919-seed1.json                      100126
+corelog-20260727-221919-seed1.json.meta                    158
+corelog-20260727-225621-seed1.json                       23886
+corelog-20260727-225621-seed1.json.meta                    158
+corelog-20260727-230012-seed1.json                       52866
+corelog-20260727-230012-seed1.json.meta                    158
+corelog-20260727-230458-seed1.json                      169799
+corelog-20260727-230458-seed1.json.meta                    158
+corelog-20260727-231110-seed1.json                        7269
+corelog-20260727-231110-seed1.json.meta                    165
+corelog-20260727-231122-seed1.json                        8088
+corelog-20260727-231122-seed1.json.meta                    165
+corelog-20260727-231134-seed1.json                       10144
+corelog-20260727-231134-seed1.json.meta                    165
+corelog-20260728-104809-seed1.json                      113178
+corelog-20260728-104809-seed1.json.meta                    158
+corelog-20260728-110820-seed1.json                      153734
+corelog-20260728-110820-seed1.json.meta                    158
+corelog-20260728-132123-seed1.json                       54053
+corelog-20260728-132123-seed1.json.meta                    158
+corelog-20260728-132251-seed1.json                       11450
+corelog-20260728-132251-seed1.json.meta                    158
+corelog-20260728-132403-seed1.json                      115312
+corelog-20260728-132403-seed1.json.meta                    158
+corelog-20260728-132603-seed1.json                       71543
+corelog-20260728-132603-seed1.json.meta                    158
+corelog-20260728-173831-seed1.json                        1627
+corelog-20260728-173831-seed1.json.meta                    165
+corelog-20260728-174645-seed1.json                      371367
+corelog-20260728-174645-seed1.json.meta                    165
+corelog-20260728-182021-seed1.json                      113705
+corelog-20260728-182021-seed1.json.meta                    165
+corelog-20260728-201002-seed1.json                       86269
+corelog-20260728-201002-seed1.json.meta                    165
+corelog-20260728-214224-seed1.json                        9818
+corelog-20260728-214224-seed1.json.meta                    158
+corelog-20260728-214357-seed1.json                      103572
+corelog-20260728-214357-seed1.json.meta                    158
+corelog-20260728-220712-seed1.json                      323357
+corelog-20260728-220712-seed1.json.meta                    158
+corelog-20260728-221038-seed1.json                       53096
+corelog-20260728-221038-seed1.json.meta                    158
+corelog-20260728-221127-seed1.json                       38016
+corelog-20260728-221127-seed1.json.meta                    158
+corelog-20260728-222527-seed1.json                      313127
+corelog-20260728-222527-seed1.json.meta                    158
+corelog-20260728-225447-seed1.json                      127743
+corelog-20260728-225447-seed1.json.meta                    158
+corelog-20260728-225642-seed1.json                      144637
+corelog-20260728-225642-seed1.json.meta                    158
+corelog-20260728-225802-seed1.json                       96917
+corelog-20260728-225802-seed1.json.meta                    158
+corelog-20260729-090616-seed1.json                      114529
+corelog-20260729-090616-seed1.json.meta                    158
+corelog-20260729-105437-seed1.json                       38328
+corelog-20260729-105437-seed1.json.meta                    158
+corelog-20260729-105505-seed1.json                       39004
+corelog-20260729-105505-seed1.json.meta                    158
+corelog-20260729-141939-seed1.json                        1294
+corelog-20260729-141939-seed1.json.meta                    158
+corelog-20260729-141946-seed1.json                      256449
+corelog-20260729-141946-seed1.json.meta                    158
+corelog-20260729-142150-seed1.json                      130364
+corelog-20260729-142150-seed1.json.meta                    158
+corelog-20260729-150243-seed1.json                       11123
+corelog-20260729-150243-seed1.json.meta                    158
+corelog-20260729-150956-seed1.json                      103629
+corelog-20260729-150956-seed1.json.meta                    158
+corelog-20260729-195826-seed1.json                       66334
+corelog-20260729-195826-seed1.json.meta                    158
+corelog-20260730-101319-seed1.json                         472
+corelog-20260730-101319-seed1.json.meta                    158
+corelog-20260730-104109-seed1.json                         472
+corelog-20260730-104109-seed1.json.meta                    158
+corelog-20260730-104135-seed1.json                         472
+corelog-20260730-104135-seed1.json.meta                    158
+corelog-20260730-104540-seed1.json                         472
+corelog-20260730-104540-seed1.json.meta                    158
+corelog-20260730-114549-seed1.json                       39024
+corelog-20260730-114549-seed1.json.meta                    158
+corelog-20260730-114626-seed1.json                      117563
+corelog-20260730-114626-seed1.json.meta                    158
+corelog-20260730-120055-seed1.json                      107155
+corelog-20260730-120055-seed1.json.meta                    158
+corelog-20260730-120548-seed1.json                      166483
+corelog-20260730-120548-seed1.json.meta                    158
+corelog-20260730-122109-seed1.json                      153855
+corelog-20260730-122109-seed1.json.meta                    158
+corelog-20260730-122223-seed1.json                       55175
+corelog-20260730-122223-seed1.json.meta                    158
+corelog-20260730-124150-seed1.json                      147626
+corelog-20260730-124150-seed1.json.meta                    158
+corelog-20260730-130142-seed1.json                      151342
+corelog-20260730-130142-seed1.json.meta                    158
+corelog-20260730-130740-seed1.json                         472
+corelog-20260730-130740-seed1.json.meta                    158
+corelog-20260730-131939-seed1.json                         472
+corelog-20260730-131939-seed1.json.meta                    158
+corelog-20260730-143527-seed1.json                      183514
+corelog-20260730-143527-seed1.json.meta                    158
+corelog-20260730-145700-seed1.json                       56223
+corelog-20260730-145700-seed1.json.meta                    158
+corelog-20260730-150308-seed1.json                       90531
+corelog-20260730-150308-seed1.json.meta                    158
+corelog-20260730-151249-seed1.json                       88988
+corelog-20260730-151249-seed1.json.meta                    158
+corelog-20260730-151309-seed1.json                       55530
+corelog-20260730-151309-seed1.json.meta                    158
+corelog-20260730-195610-seed1.json                       43522
+corelog-20260730-195610-seed1.json.meta                    158
+corelog-20260730-203437-seed1.json                       11123
+corelog-20260730-203437-seed1.json.meta                    158
+corelog-20260730-210441-seed1.json                        1627
+corelog-20260730-210441-seed1.json.meta                    158
+corelog-20260730-210738-seed1.json                         472
+corelog-20260730-210738-seed1.json.meta                    158
+corelog-20260731-110033-seed1.json                         472
+corelog-20260731-110033-seed1.json.meta                    158
+corelog-20260731-110115-seed1.json                         472
+corelog-20260731-110115-seed1.json.meta                    158
+corelog-20260731-110127-seed1.json                         472
+corelog-20260731-110127-seed1.json.meta                    158
+corelog-20260731-115012-seed1.json                       10470
+corelog-20260731-115012-seed1.json.meta                    158
+corelog-20260731-210502-seed1.json                      233697
+corelog-20260731-210502-seed1.json.meta                    165
+corelog-20260731-210706-seed1.json                        1295
+corelog-20260731-210706-seed1.json.meta                    165
+corelog-20260801-105407-seed1.json                         472
+corelog-20260801-105407-seed1.json.meta                    158
+corelog-20260801-105420-seed1.json                       10144
+corelog-20260801-105420-seed1.json.meta                    158
+corelog-20260801-113539-seed1.json                         472
+corelog-20260801-113539-seed1.json.meta                    158
+corelog-20260801-123332-seed1.json                         472
+corelog-20260801-123332-seed1.json.meta                    158
+corelog-20260801-123509-seed1.json                      257883
+corelog-20260801-123509-seed1.json.meta                    158
+corelog-20260801-141235-seed1.json                         472
+corelog-20260801-141235-seed1.json.meta                    158
+corelog-20260801-144559-seed1.json                       11450
+corelog-20260801-144559-seed1.json.meta                    158
+corelog-20260802-174020-seed1.json                        1627
+corelog-20260802-174020-seed1.json.meta                    158
+corelog-20260803-111945-seed1.json                      501288
+corelog-20260803-111945-seed1.json.meta                    158
+corelog-20260804-092431-seed1.json                         472
+corelog-20260804-092431-seed1.json.meta                    158
+corelog-20260804-172755-572-seed1.json                    9169
+corelog-20260804-172755-572-seed1.json.meta                158
+corelog-20260804-225903-850-seed1.json                   68175
+corelog-20260804-225903-850-seed1.json.meta                158
+corelog-20260804-230014-029-seed1.json                    9821
+corelog-20260804-230014-029-seed1.json.meta                158
+corelog-20260805-174735-872-seed1.json                     622
+corelog-20260805-174735-872-seed1.json.meta                165
+corelog-20260805-174735-seed1.json                         840
+corelog-20260805-174735-seed1.json.meta                    165
+corelog-20260805-174736-294-seed1.json                    1613
+corelog-20260805-174736-294-seed1.json.meta                165
+corelog-20260805-174736-seed1.json                         618
+corelog-20260805-174736-seed1.json.meta                    165
+corelog-20260805-175050-434-seed1.json                     622
+corelog-20260805-175050-434-seed1.json.meta                165
+corelog-20260805-175050-822-seed1.json                    1613
+corelog-20260805-175050-822-seed1.json.meta                165
+corelog-20260805-175050-seed1.json                         618
+corelog-20260805-175050-seed1.json.meta                    165
+corelog-20260805-180043-429-seed1.json                     622
+corelog-20260805-180043-429-seed1.json.meta                 60
+corelog-20260805-180043-779-seed1.json                    1613
+corelog-20260805-180043-779-seed1.json.meta                165
+corelog-20260805-180043-seed1.json                         618
+corelog-20260805-180043-seed1.json.meta                    165
+corelog-20260805-181334-429-seed1.json                     622
+corelog-20260805-181334-429-seed1.json.meta                165
+corelog-20260805-181334-807-seed1.json                    1613
+corelog-20260805-181334-807-seed1.json.meta                165
+corelog-20260805-181334-seed1.json                         618
+corelog-20260805-181334-seed1.json.meta                    165
+corelog-20260806-113225-seed1.json                       10375
+corelog-20260806-113225-seed1.json.meta                    158
+corelog-20260806-131533-856-seed1.json                  126884
+corelog-20260806-131533-856-seed1.json.meta                158
+corelog-20260806-142051-858-seed1.json                 5255923
+corelog-20260806-142051-858-seed1.json.meta                158
+corelog-20260806-153619-589-seed42.json                    901
+corelog-20260806-153619-589-seed42.json.meta               158
+corelog-20260806-153619-952-seed1.json                     678
+corelog-20260806-153619-952-seed1.json.meta                158
+corelog-20260806-153619-seed1.json                         674
+corelog-20260806-153619-seed1.json.meta                    158
+corelog-20260806-153620-seed1.json                        1805
+corelog-20260806-153620-seed1.json.meta                    158
+corelog-20260806-161230-919-seed1.json                   11087
+corelog-20260806-161230-919-seed1.json.meta                158
+corelog-20260806-164037-332-seed1.json                     678
+corelog-20260806-164037-332-seed1.json.meta                158
+corelog-20260806-164037-667-seed1.json                    1809
+corelog-20260806-164037-667-seed1.json.meta                158
+corelog-20260806-164037-seed1.json                         674
+corelog-20260806-164037-seed1.json.meta                    158
+corelog-20260806-164037-seed42.json                        897
+corelog-20260806-164037-seed42.json.meta                   158
+corelog-20260806-164513-248-seed1.json                     678
+corelog-20260806-164513-248-seed1.json.meta                158
+corelog-20260806-164513-625-seed1.json                    1809
+corelog-20260806-164513-625-seed1.json.meta                158
+corelog-20260806-164513-seed1.json                         674
+corelog-20260806-164513-seed1.json.meta                    158
+corelog-20260806-164513-seed42.json                        897
+corelog-20260806-164513-seed42.json.meta                   158
+corelog-20260806-164908-895-seed42.json                    901
+corelog-20260806-164908-895-seed42.json.meta               158
+corelog-20260806-164909-227-seed1.json                     678
+corelog-20260806-164909-227-seed1.json.meta                158
+corelog-20260806-164909-seed1.json                        1805
+corelog-20260806-164909-seed1.json.meta                    158
+corelog-20260806-165116-416-seed1.json                   11795
+corelog-20260806-165116-416-seed1.json.meta                158
+corelog-20260806-172011-489-seed42.json                    901
+corelog-20260806-172011-489-seed42.json.meta               158
+corelog-20260806-172011-805-seed1.json                     678
+corelog-20260806-172011-805-seed1.json.meta                158
+corelog-20260806-172011-seed1.json                         674
+corelog-20260806-172011-seed1.json.meta                    158
+corelog-20260806-172012-seed1.json                        1805
+corelog-20260806-172012-seed1.json.meta                    158
+corelog-20260806-172452-072-seed1.json                  195083
+corelog-20260806-172452-072-seed1.json.meta                158
+corelog-20260806-183510-508-seed1.json                   60687
+corelog-20260806-183510-508-seed1.json.meta                158
+corelog-20260806-190001-887-seed1.json                   67186
+corelog-20260806-190001-887-seed1.json.meta                158
+corelog-20260807-065519-959-seed1.json                  178816
+corelog-20260807-065519-959-seed1.json.meta                158
+corelog-20260807-094140-985-seed42.json                    901
+corelog-20260807-094140-985-seed42.json.meta               158
+corelog-20260807-094141-296-seed1.json                     678
+corelog-20260807-094141-296-seed1.json.meta                158
+corelog-20260807-094141-seed1.json                        1805
+corelog-20260807-094141-seed1.json.meta                    158
+corelog-20260807-144759-569-seed42.json                    901
+corelog-20260807-144759-569-seed42.json.meta               158
+corelog-20260807-144759-995-seed1.json                     678
+corelog-20260807-144759-995-seed1.json.meta                158
+corelog-20260807-144759-seed1.json                         674
+corelog-20260807-144759-seed1.json.meta                    158
+corelog-20260807-144800-seed1.json                        1805
+corelog-20260807-144800-seed1.json.meta                    158
+corelog-20260807-155801-seed1.json                         500
+corelog-20260807-155801-seed1.json.meta                    165
+corelog-20260807-155921-541-seed42.json                    901
+corelog-20260807-155921-541-seed42.json.meta               165
+corelog-20260807-155921-seed1.json                         674
+corelog-20260807-155921-seed1.json.meta                    165
+corelog-20260807-155922-314-seed1.json                    1809
+corelog-20260807-155922-314-seed1.json.meta                165
+corelog-20260807-155922-seed1.json                         674
+corelog-20260807-155922-seed1.json.meta                    165
+corelog-20260807-160613-seed1.json                       63539
+corelog-20260807-160613-seed1.json.meta                    165
+corelog-20260807-160751-880-seed1.json                  489993
+corelog-20260807-160751-880-seed1.json.meta                165
+corelog-20260807-165252-531-seed1.json                   78148
+corelog-20260807-165252-531-seed1.json.meta                165
+corelog-20260807-171825-410-seed1.json                  129321
+corelog-20260807-171825-410-seed1.json.meta                165
+corelog-20260807-193058-492-seed1.json                     678
+corelog-20260807-193058-492-seed1.json.meta                158
+corelog-20260807-193058-837-seed1.json                    1809
+corelog-20260807-193058-837-seed1.json.meta                158
+corelog-20260807-193058-seed1.json                         674
+corelog-20260807-193058-seed1.json.meta                    158
+corelog-20260807-193058-seed42.json                        897
+corelog-20260807-193058-seed42.json.meta                   158
+corelog-20260807-202826-079-seed1.json                 1198947
+corelog-20260807-202826-079-seed1.json.meta                165
+corelog-20260807-205130-457-seed1.json                     678
+corelog-20260807-205130-457-seed1.json.meta                158
+corelog-20260807-205130-812-seed1.json                    1809
+corelog-20260807-205130-812-seed1.json.meta                158
+corelog-20260807-205130-seed1.json                         674
+corelog-20260807-205130-seed1.json.meta                    158
+corelog-20260807-205130-seed42.json                        897
+corelog-20260807-205130-seed42.json.meta                   158
+corelog-20260807-222543-651-seed1.json                   11087
+corelog-20260807-222543-651-seed1.json.meta                158
+corelog-20260807-222607-seed1.json                         500
+corelog-20260807-222607-seed1.json.meta                    158
+corelog-QuickTest-20260713-092351-seed1.json            340627
+corelog-QuickTest-20260713-092351-seed1.json.meta          158
+corelog-QuickTest-20260713-095226-seed1.json            377093
+corelog-QuickTest-20260713-095226-seed1.json.meta          158
+corelog-QuickTest-20260713-102748-seed1.json            435246
+corelog-QuickTest-20260713-102748-seed1.json.meta          158
+corelog-QuickTest-20260713-111111-seed1.json            295258
+corelog-QuickTest-20260713-111111-seed1.json.meta          158
+corelog-QuickTest-20260713-113131-seed1.json            372907
+corelog-QuickTest-20260713-113131-seed1.json.meta          158
+corelog-QuickTest-20260713-124002-seed1.json            297690
+corelog-QuickTest-20260713-124002-seed1.json.meta          158
+corelog-QuickTest-20260713-131356-seed1.json             44739
+corelog-QuickTest-20260713-131356-seed1.json.meta          165
+corelog-QuickTest-20260713-132152-seed1.json             77853
+corelog-QuickTest-20260713-132152-seed1.json.meta          165
+corelog-QuickTest-20260713-140248-seed1.json             44747
+corelog-QuickTest-20260713-140248-seed1.json.meta          165
+corelog-QuickTest-20260713-143243-seed1.json             36486
+corelog-QuickTest-20260713-143243-seed1.json.meta          158
+corelog-QuickTest-20260713-160943-seed1.json            131475
+corelog-QuickTest-20260713-160943-seed1.json.meta          158
+corelog-QuickTest-20260713-161528-seed1.json            715359
+corelog-QuickTest-20260713-161528-seed1.json.meta          158
+corelog-QuickTest-20260713-164254-seed1.json            328520
+corelog-QuickTest-20260713-164254-seed1.json.meta          158
+corelog-QuickTest-20260713-170949-seed1.json            761911
+corelog-QuickTest-20260713-170949-seed1.json.meta          158
+corelog-QuickTest-20260713-192621-seed1.json           1558934
+corelog-QuickTest-20260713-192621-seed1.json.meta          165
+corelog-QuickTest-20260713-201745-seed1.json            479468
+corelog-QuickTest-20260713-201745-seed1.json.meta          165
+corelog-QuickTest-20260713-215440-seed1.json            422488
+corelog-QuickTest-20260713-215440-seed1.json.meta          165
+corelog-QuickTest-20260714-091334-seed1.json           1038358
+corelog-QuickTest-20260714-091334-seed1.json.meta          158
+corelog-QuickTest-20260714-095000-seed1.json             29862
+corelog-QuickTest-20260714-095000-seed1.json.meta          158
+corelog-QuickTest-20260714-095543-seed1.json            470760
+corelog-QuickTest-20260714-095543-seed1.json.meta          158
+corelog-QuickTest-20260714-105132-seed1.json             29843
+corelog-QuickTest-20260714-105132-seed1.json.meta          158
+corelog-QuickTest-20260714-125232-seed1.json            154290
+corelog-QuickTest-20260714-125232-seed1.json.meta          165
+corelog-QuickTest-20260714-153614-seed1.json           1211040
+corelog-QuickTest-20260714-153614-seed1.json.meta          165
+corelog-QuickTest-20260714-160826-seed1.json             27643
+corelog-QuickTest-20260714-160826-seed1.json.meta          165
+corelog-QuickTest-20260714-200318-seed1.json            468684
+corelog-QuickTest-20260714-200318-seed1.json.meta          440
+corelog-QuickTest-20260715-212423-seed1.json            628421
+corelog-QuickTest-20260715-212423-seed1.json.meta          165
+corelog-QuickTest-20260715-212812-seed1.json             12977
+corelog-QuickTest-20260715-212812-seed1.json.meta          165
+corelog-QuickTest-20260715-213700-seed1.json            737182
+corelog-QuickTest-20260715-213700-seed1.json.meta          165
+corelog-QuickTest-20260715-214027-seed1.json            147547
+corelog-QuickTest-20260715-214027-seed1.json.meta          165
+corelog-QuickTest-20260716-095007-seed1.json            460061
+corelog-QuickTest-20260716-095007-seed1.json.meta          158
+corelog-QuickTest-20260716-104338-seed1.json            889752
+corelog-QuickTest-20260716-104338-seed1.json.meta          158
+corelog-QuickTest-20260716-111710-seed1.json             13166
+corelog-QuickTest-20260716-111710-seed1.json.meta          158
+corelog-QuickTest-20260716-111903-seed1.json            162389
+corelog-QuickTest-20260716-111903-seed1.json.meta          158
+corelog-QuickTest-20260716-114051-seed1.json            425377
+corelog-QuickTest-20260716-114051-seed1.json.meta          158
+corelog-QuickTest-20260716-125749-seed1.json            274818
+corelog-QuickTest-20260716-125749-seed1.json.meta          165
+corelog-QuickTest-20260716-125928-seed1.json            218762
+corelog-QuickTest-20260716-125928-seed1.json.meta          165
+corelog-QuickTest-20260716-135702-seed1.json            187645
+corelog-QuickTest-20260716-135702-seed1.json.meta          165
+corelog-QuickTest-20260716-151303-seed1.json            496663
+corelog-QuickTest-20260716-151303-seed1.json.meta          158
+corelog-QuickTest-20260716-203336-seed1.json            177942
+corelog-QuickTest-20260716-203336-seed1.json.meta          165
+corelog-QuickTest-20260716-203410-seed1.json            445780
+corelog-QuickTest-20260716-203410-seed1.json.meta          165
+corelog-QuickTest-20260719-205250-seed1.json            388466
+corelog-QuickTest-20260719-205250-seed1.json.meta          165
+corelog-QuickTest-20260719-205356-seed1.json            240397
+corelog-QuickTest-20260719-205356-seed1.json.meta          165
+corelog-QuickTest-20260719-212425-seed1.json            441433
+corelog-QuickTest-20260719-212425-seed1.json.meta          165
+corelog-QuickTest-20260719-212545-seed1.json            188659
+corelog-QuickTest-20260719-212545-seed1.json.meta          165
+corelog-QuickTest-20260719-214616-seed1.json            231221
+corelog-QuickTest-20260719-214616-seed1.json.meta          165
+corelog-QuickTest-20260719-221950-seed1.json            221517
+corelog-QuickTest-20260719-221950-seed1.json.meta          165
+corelog-QuickTest-20260719-223709-seed1.json            366908
+corelog-QuickTest-20260719-223709-seed1.json.meta          165
+corelog-QuickTest-20260719-223810-seed1.json            111740
+corelog-QuickTest-20260719-223810-seed1.json.meta          165
+corelog-QuickTest-20260719-224555-seed1.json            381097
+corelog-QuickTest-20260719-224555-seed1.json.meta          165
+corelog-QuickTest-20260720-110538-seed1.json            469541
+corelog-QuickTest-20260720-110538-seed1.json.meta          165
+corelog-QuickTest-20260720-110815-seed1.json            374662
+corelog-QuickTest-20260720-110815-seed1.json.meta          165
+corelog-QuickTest-20260722-190733-seed1.json            237077
+corelog-QuickTest-20260722-190733-seed1.json.meta          165
+corelog-QuickTest-20260722-190841-seed1.json            302237
+corelog-QuickTest-20260722-190841-seed1.json.meta          165
+corelog-QuickTest-20260723-120618-seed1.json            331070
+corelog-QuickTest-20260723-120618-seed1.json.meta          158
+corelog-QuickTest-20260723-153842-seed1.json            252886
+corelog-QuickTest-20260723-153842-seed1.json.meta          158
+corelog-QuickTest-20260723-160118-seed1.json            350292
+corelog-QuickTest-20260723-160118-seed1.json.meta          158
+corelog-QuickTest-20260723-161336-seed1.json            206639
+corelog-QuickTest-20260723-161336-seed1.json.meta          158
+corelog-QuickTest-20260723-162538-seed1.json            289907
+corelog-QuickTest-20260723-162538-seed1.json.meta          158
+corelog-QuickTest-20260723-162731-seed1.json            366477
+corelog-QuickTest-20260723-162731-seed1.json.meta          158
+corelog-QuickTest-20260723-162910-seed1.json            306134
+corelog-QuickTest-20260723-162910-seed1.json.meta          158
+corelog-QuickTest-20260723-171212-seed1.json            211812
+corelog-QuickTest-20260723-171212-seed1.json.meta          158
+corelog-QuickTest-20260724-073034-seed1.json            414779
+corelog-QuickTest-20260724-073034-seed1.json.meta          165
+corelog-QuickTest-20260724-083840-seed1.json            337592
+corelog-QuickTest-20260724-083840-seed1.json.meta          165
+corelog-QuickTest-20260724-085241-seed1.json            363826
+corelog-QuickTest-20260724-085241-seed1.json.meta          165
+corelog-QuickTest-20260724-150552-seed1.json            102900
+corelog-QuickTest-20260724-150552-seed1.json.meta          165
+corelog-QuickTest-20260726-120613-seed1.json              9834
+corelog-QuickTest-20260726-120613-seed1.json.meta          165
+corelog-QuickTest-20260726-120626-seed1.json            244083
+corelog-QuickTest-20260726-120626-seed1.json.meta          165
+corelog-QuickTest-20260727-193158-seed1.json             11448
+corelog-QuickTest-20260727-193158-seed1.json.meta          158
+corelog-QuickTest-20260728-203106-seed1.json            321917
+corelog-QuickTest-20260728-203106-seed1.json.meta          165
+corelog-QuickTest-20260729-105055-seed1.json             51924
+corelog-QuickTest-20260729-105055-seed1.json.meta          158
+corelog-QuickTest-20260729-105156-seed1.json             10463
+corelog-QuickTest-20260729-105156-seed1.json.meta          158
+corelog-QuickTest-20260729-105237-seed1.json             52254
+corelog-QuickTest-20260729-105237-seed1.json.meta          158
+corelog-QuickTest-20260730-190610-seed1.json            193152
+corelog-QuickTest-20260730-190610-seed1.json.meta          158
+corelog-QuickTest-20260730-210745-seed1.json            161220
+corelog-QuickTest-20260730-210745-seed1.json.meta          158
+corelog-QuickTest-20260730-212243-seed1.json             97560
+corelog-QuickTest-20260730-212243-seed1.json.meta          158
+corelog-QuickTest-20260730-212318-seed1.json             72017
+corelog-QuickTest-20260730-212318-seed1.json.meta          158
+corelog-QuickTest-20260730-220903-seed1.json             67960
+corelog-QuickTest-20260730-220903-seed1.json.meta          158
+corelog-QuickTest-20260730-220935-seed1.json             61496
+corelog-QuickTest-20260730-220935-seed1.json.meta          158
+corelog-QuickTest-20260730-221354-seed1.json              1533
+corelog-QuickTest-20260730-221354-seed1.json.meta          158
+corelog-QuickTest-20260730-221400-seed1.json            176585
+corelog-QuickTest-20260730-221400-seed1.json.meta          158
+corelog-QuickTest-20260730-223048-seed1.json            187579
+corelog-QuickTest-20260730-223048-seed1.json.meta          158
+corelog-QuickTest-20260730-225834-seed1.json            150179
+corelog-QuickTest-20260730-225834-seed1.json.meta          158
+corelog-QuickTest-20260731-102816-seed1.json            107070
+corelog-QuickTest-20260731-102816-seed1.json.meta          158
+corelog-QuickTest-20260731-110042-seed1.json             26428
+corelog-QuickTest-20260731-110042-seed1.json.meta          158
+corelog-QuickTest-20260731-111503-seed1.json             25531
+corelog-QuickTest-20260731-111503-seed1.json.meta          158
+corelog-QuickTest-20260731-120232-seed1.json             25522
+corelog-QuickTest-20260731-120232-seed1.json.meta          158
+corelog-QuickTest-20260731-131219-seed1.json             68299
+corelog-QuickTest-20260731-131219-seed1.json.meta          158
+corelog-QuickTest-20260731-133034-seed1.json             85175
+corelog-QuickTest-20260731-133034-seed1.json.meta          158
+corelog-QuickTest-20260731-133913-seed1.json            181677
+corelog-QuickTest-20260731-133913-seed1.json.meta          158
+corelog-QuickTest-20260731-134302-seed1.json            190932
+corelog-QuickTest-20260731-134302-seed1.json.meta          158
+corelog-QuickTest-20260731-134938-seed1.json            120139
+corelog-QuickTest-20260731-134938-seed1.json.meta          158
+corelog-QuickTest-20260731-135124-seed1.json             93854
+corelog-QuickTest-20260731-135124-seed1.json.meta          158
+corelog-QuickTest-20260731-135336-seed1.json             80445
+corelog-QuickTest-20260731-135336-seed1.json.meta          158
+corelog-QuickTest-20260731-140652-seed1.json             91395
+corelog-QuickTest-20260731-140652-seed1.json.meta          158
+corelog-QuickTest-20260731-145246-seed1.json             69391
+corelog-QuickTest-20260731-145246-seed1.json.meta          158
+corelog-QuickTest-20260731-145325-seed1.json            114216
+corelog-QuickTest-20260731-145325-seed1.json.meta          158
+corelog-QuickTest-20260731-145411-seed1.json            132164
+corelog-QuickTest-20260731-145411-seed1.json.meta          158
+corelog-QuickTest-20260731-145451-seed1.json             68311
+corelog-QuickTest-20260731-145451-seed1.json.meta          158
+corelog-QuickTest-20260731-145531-seed1.json             70818
+corelog-QuickTest-20260731-145531-seed1.json.meta          158
+corelog-QuickTest-20260731-150327-seed1.json             76718
+corelog-QuickTest-20260731-150327-seed1.json.meta          158
+corelog-QuickTest-20260731-150354-seed1.json             40560
+corelog-QuickTest-20260731-150354-seed1.json.meta          158
+corelog-QuickTest-20260731-150417-seed1.json            153769
+corelog-QuickTest-20260731-150417-seed1.json.meta          158
+corelog-QuickTest-20260731-151812-seed1.json             96185
+corelog-QuickTest-20260731-151812-seed1.json.meta          158
+corelog-QuickTest-20260731-154449-seed1.json            115587
+corelog-QuickTest-20260731-154449-seed1.json.meta          158
+corelog-QuickTest-20260731-155320-seed1.json             83413
+corelog-QuickTest-20260731-155320-seed1.json.meta          165
+corelog-QuickTest-20260731-163730-seed1.json            220700
+corelog-QuickTest-20260731-163730-seed1.json.meta          165
+corelog-QuickTest-20260731-184247-seed1.json             87098
+corelog-QuickTest-20260731-184247-seed1.json.meta          165
+corelog-QuickTest-20260731-190120-seed1.json            141384
+corelog-QuickTest-20260731-190120-seed1.json.meta          165
+corelog-QuickTest-20260731-191014-seed1.json            279869
+corelog-QuickTest-20260731-191014-seed1.json.meta          165
+corelog-QuickTest-20260731-194244-seed1.json            198028
+corelog-QuickTest-20260731-194244-seed1.json.meta          165
+corelog-QuickTest-20260731-202726-seed1.json            161222
+corelog-QuickTest-20260731-202726-seed1.json.meta          165
+corelog-QuickTest-20260731-202848-seed1.json            189775
+corelog-QuickTest-20260731-202848-seed1.json.meta          165
+corelog-QuickTest-20260731-210502-seed1.json            232984
+corelog-QuickTest-20260731-210502-seed1.json.meta          165
+corelog-QuickTest-20260731-210715-seed1.json             67035
+corelog-QuickTest-20260731-210715-seed1.json.meta          165
+corelog-QuickTest-20260731-213810-seed1.json             52333
+corelog-QuickTest-20260731-213810-seed1.json.meta          158
+corelog-QuickTest-20260731-215913-seed1.json            121544
+corelog-QuickTest-20260731-215913-seed1.json.meta          158
+corelog-QuickTest-20260801-082828-seed1.json             44830
+corelog-QuickTest-20260801-082828-seed1.json.meta          158
+corelog-QuickTest-20260801-105436-seed1.json            120735
+corelog-QuickTest-20260801-105436-seed1.json.meta          158
+corelog-QuickTest-20260801-110220-seed1.json            151618
+corelog-QuickTest-20260801-110220-seed1.json.meta          158
+corelog-QuickTest-20260801-111539-seed1.json            367180
+corelog-QuickTest-20260801-111539-seed1.json.meta          158
+corelog-QuickTest-20260801-112648-seed1.json            235524
+corelog-QuickTest-20260801-112648-seed1.json.meta          158
+corelog-QuickTest-20260801-113550-seed1.json            211851
+corelog-QuickTest-20260801-113550-seed1.json.meta          158
+corelog-QuickTest-20260801-123356-seed1.json            124162
+corelog-QuickTest-20260801-123356-seed1.json.meta          158
+corelog-QuickTest-20260801-123509-seed1.json            257188
+corelog-QuickTest-20260801-123509-seed1.json.meta          158
+corelog-QuickTest-20260801-123906-seed1.json            132340
+corelog-QuickTest-20260801-123906-seed1.json.meta          158
+corelog-QuickTest-20260801-124002-seed1.json             66757
+corelog-QuickTest-20260801-124002-seed1.json.meta          158
+corelog-QuickTest-20260801-140952-seed1.json            101982
+corelog-QuickTest-20260801-140952-seed1.json.meta          158
+corelog-QuickTest-20260801-141032-seed1.json            174138
+corelog-QuickTest-20260801-141032-seed1.json.meta          158
+corelog-QuickTest-20260801-141137-seed1.json            178280
+corelog-QuickTest-20260801-141137-seed1.json.meta          158
+corelog-QuickTest-20260801-141335-seed1.json            238213
+corelog-QuickTest-20260801-141335-seed1.json.meta          158
+corelog-QuickTest-20260801-142640-seed1.json             55684
+corelog-QuickTest-20260801-142640-seed1.json.meta          158
+corelog-QuickTest-20260801-143549-seed1.json             94452
+corelog-QuickTest-20260801-143549-seed1.json.meta          158
+corelog-QuickTest-20260802-115811-seed1.json             43277
+corelog-QuickTest-20260802-115811-seed1.json.meta          158
+corelog-QuickTest-20260802-141105-seed1.json            130000
+corelog-QuickTest-20260802-141105-seed1.json.meta          158
+corelog-QuickTest-20260802-230732-seed1.json            185783
+corelog-QuickTest-20260802-230732-seed1.json.meta          158
+corelog-QuickTest-20260803-101556-seed1.json            199885
+corelog-QuickTest-20260803-101556-seed1.json.meta          158
+corelog-QuickTest-20260803-102443-seed1.json            487778
+corelog-QuickTest-20260803-102443-seed1.json.meta          158
+corelog-QuickTest-20260803-104945-seed1.json            137904
+corelog-QuickTest-20260803-104945-seed1.json.meta          158
+corelog-QuickTest-20260803-110757-seed1.json             95407
+corelog-QuickTest-20260803-110757-seed1.json.meta          158
+corelog-QuickTest-20260803-111945-seed1.json            500541
+corelog-QuickTest-20260803-111945-seed1.json.meta          158
+corelog-QuickTest-20260803-114531-seed1.json            167328
+corelog-QuickTest-20260803-114531-seed1.json.meta          158
+corelog-QuickTest-20260803-120702-seed1.json            163107
+corelog-QuickTest-20260803-120702-seed1.json.meta          165
+corelog-QuickTest-20260803-151439-seed1.json             11671
+corelog-QuickTest-20260803-151439-seed1.json.meta          158
+corelog-QuickTest-20260803-152527-seed1.json            302696
+corelog-QuickTest-20260803-152527-seed1.json.meta          158
+corelog-QuickTest-20260803-164359-seed1.json             42261
+corelog-QuickTest-20260803-164359-seed1.json.meta          158
+corelog-QuickTest-20260803-165558-seed1.json            245190
+corelog-QuickTest-20260803-165558-seed1.json.meta          158
+corelog-QuickTest-20260803-232727-seed1.json            211107
+corelog-QuickTest-20260803-232727-seed1.json.meta          158
+corelog-QuickTest-20260804-083027-seed1.json             53088
+corelog-QuickTest-20260804-083027-seed1.json.meta          158
+corelog-QuickTest-20260804-085356-seed1.json            176310
+corelog-QuickTest-20260804-085356-seed1.json.meta          158
+corelog-QuickTest-20260804-090731-seed1.json            558611
+corelog-QuickTest-20260804-090731-seed1.json.meta          158
+corelog-QuickTest-20260804-095904-seed1.json            164211
+corelog-QuickTest-20260804-095904-seed1.json.meta          158
+corelog-QuickTest-20260804-100427-seed1.json           1424868
+corelog-QuickTest-20260804-100427-seed1.json.meta          158
+corelog-QuickTest-20260804-110627-seed1.json            568924
+corelog-QuickTest-20260804-110627-seed1.json.meta          158
+corelog-QuickTest-20260804-145540-seed1.json            753858
+corelog-QuickTest-20260804-145540-seed1.json.meta          158
+corelog-QuickTest-20260804-160922-seed1.json            156116
+corelog-QuickTest-20260804-160922-seed1.json.meta          158
+corelog-QuickTest-20260804-163727-seed1.json            745203
+corelog-QuickTest-20260804-163727-seed1.json.meta          158
+corelog-QuickTest-20260804-170633-seed1.json            153644
+corelog-QuickTest-20260804-170633-seed1.json.meta          158
+corelog-QuickTest-20260804-172809-seed1.json            628194
+corelog-QuickTest-20260804-172809-seed1.json.meta          158
+corelog-QuickTest-20260804-230025-seed1.json             13631
+corelog-QuickTest-20260804-230025-seed1.json.meta          158
+corelog-QuickTest-20260805-133414-seed1.json            174109
+corelog-QuickTest-20260805-133414-seed1.json.meta          165
+corelog-QuickTest-20260805-174644-seed1.json               407
+corelog-QuickTest-20260805-174644-seed1.json.meta          165
+corelog-QuickTest-20260805-174736-294-seed1.json          2309
+corelog-QuickTest-20260805-174736-294-seed1.json.meta      165
+corelog-QuickTest-20260805-175954-seed1.json               407
+corelog-QuickTest-20260805-175954-seed1.json.meta          165
+corelog-QuickTest-20260805-181246-seed1.json               407
+corelog-QuickTest-20260805-181246-seed1.json.meta          165
+corelog-QuickTest-20260806-070737-seed1.json           4210590
+corelog-QuickTest-20260806-070737-seed1.json.meta          165
+corelog-QuickTest-20260806-153522-seed42.json              305
+corelog-QuickTest-20260806-153522-seed42.json.meta         158
+corelog-QuickTest-20260806-153619-seed1.json               896
+corelog-QuickTest-20260806-153619-seed1.json.meta          158
+corelog-QuickTest-20260806-163945-seed42.json              305
+corelog-QuickTest-20260806-163945-seed42.json.meta         158
+corelog-QuickTest-20260806-164036-seed1.json               896
+corelog-QuickTest-20260806-164036-seed1.json.meta          158
+corelog-QuickTest-20260806-164422-seed42.json              305
+corelog-QuickTest-20260806-164422-seed42.json.meta         158
+corelog-QuickTest-20260806-164512-seed1.json               896
+corelog-QuickTest-20260806-164512-seed1.json.meta          158
+corelog-QuickTest-20260806-164513-625-seed42.json          309
+corelog-QuickTest-20260806-164513-625-seed42.json.meta     158
+corelog-QuickTest-20260806-164908-seed1.json               896
+corelog-QuickTest-20260806-164908-seed1.json.meta          158
+corelog-QuickTest-20260806-171923-seed42.json              305
+corelog-QuickTest-20260806-171923-seed42.json.meta         158
+corelog-QuickTest-20260806-172011-seed1.json               896
+corelog-QuickTest-20260806-172011-seed1.json.meta          158
+corelog-QuickTest-20260807-094033-seed42.json              305
+corelog-QuickTest-20260807-094033-seed42.json.meta         158
+corelog-QuickTest-20260807-094140-seed1.json               896
+corelog-QuickTest-20260807-094140-seed1.json.meta          158
+corelog-QuickTest-20260807-144702-seed42.json              305
+corelog-QuickTest-20260807-144702-seed42.json.meta         158
+corelog-QuickTest-20260807-144759-seed1.json               896
+corelog-QuickTest-20260807-144759-seed1.json.meta          158
+corelog-QuickTest-20260807-155801-seed42.json              305
+corelog-QuickTest-20260807-155801-seed42.json.meta         165
+corelog-QuickTest-20260807-155921-seed1.json               896
+corelog-QuickTest-20260807-155921-seed1.json.meta          165
+corelog-QuickTest-20260807-193005-seed42.json              305
+corelog-QuickTest-20260807-193005-seed42.json.meta         158
+corelog-QuickTest-20260807-193057-seed1.json               896
+corelog-QuickTest-20260807-193057-seed1.json.meta          158
+corelog-QuickTest-20260807-205033-seed42.json              305
+corelog-QuickTest-20260807-205033-seed42.json.meta         158
+corelog-QuickTest-20260807-205129-seed1.json               896
+corelog-QuickTest-20260807-205129-seed1.json.meta          158
+
+→ Read Assets/Scripts/NineGrid.Presentation/Flow/QuickTestDeckCatalog.cs
+
+$ $f = "C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\CoreLog\corelog-20260807-202826-079-seed1.json"; $raw = Get-Content $f -Raw -Encoding UTF8; Write-Output ("len=" + $raw.Length); Write-Output $raw.Substring(0, 800)
+len=1198920
+{"schemaVersion":3,"seed":"1","sessionId":"20260807-202826-079","runTag":"","runTagNote":"","events":[{"index":0,"beatId":0,"category":"UI","name":"StartRun","loopState":"MainMenu","floor":"1","nodeIndex":"0","phaseBefore":"","phaseAfter":"","accepted":true,"refBattleOpIndex":-1,"payload":{"quickTestMode":"false","runTag":"","runTagNote":"","quickTestNodeOrder":"","quickTestNodeOrderMode":"","quickTestPinnedFirstDeck":""}},{"index":1,"beatId":0,"category":"Loop","name":"SetState","loopState":"BattleStub","floor":"1","nodeIndex":"1","phaseBefore":"","phaseAfter":"","accepted":true,"refBattleOpIndex":-1,"payload":{"from":"MainMenu","to":"BattleStub","nodeIndex":"1"}},{"index":2,"beatId":0,"category":"CoreGate","name":"StartNode","loopState":"","floor":"1","nodeIndex":"1","phaseBefore":"Build
+
+$ $files = Get-ChildItem "C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\CoreLog" -Filter "corelog-2026080*.json" | Where-Object { $_.Length -gt 10000 }; foreach ($f in $files) { $raw = Get-Content $f.FullName -Raw -Encoding UTF8; $j = $raw | ConvertFrom-Json; $fc = @($j.events | Where-Object { $_.name -match "FlipCard|CardFaceChanged|RevealFace" }); $dealt = @($j.events | Where-Object { $_.name -eq "CardDealt" }); $ambush = @($j.events | Where-Object { $_.payload -match "ambush" }); Write-Output ("{0} events={1} flip={2} dealt={3} ambushEv={4}" -f $f.Name, $j.events.Count, $fc.Count, $dealt.Count, $ambush.Count) }
+corelog-20260801-105420-seed1.json events=34 flip=0 dealt=0 ambushEv=0
+corelog-20260801-123509-seed1.json events=768 flip=0 dealt=0 ambushEv=0
+corelog-20260801-144559-seed1.json events=38 flip=0 dealt=0 ambushEv=0
+corelog-20260803-111945-seed1.json events=1638 flip=0 dealt=0 ambushEv=0
+corelog-20260804-225903-850-seed1.json events=206 flip=0 dealt=0 ambushEv=0
+corelog-20260806-113225-seed1.json events=32 flip=0 dealt=0 ambushEv=0
+corelog-20260806-131533-856-seed1.json events=350 flip=0 dealt=0 ambushEv=0
+corelog-20260806-142051-858-seed1.json events=13957 flip=0 dealt=0 ambushEv=0
+corelog-20260806-161230-919-seed1.json events=34 flip=0 dealt=0 ambushEv=0
+corelog-20260806-165116-416-seed1.json events=36 flip=0 dealt=0 ambushEv=0
+corelog-20260806-172452-072-seed1.json events=530 flip=0 dealt=0 ambushEv=0
+corelog-20260806-183510-508-seed1.json events=169 flip=0 dealt=0 ambushEv=0
+corelog-20260806-190001-887-seed1.json events=186 flip=0 dealt=0 ambushEv=0
+corelog-20260807-065519-959-seed1.json events=487 flip=0 dealt=0 ambushEv=0
+corelog-20260807-160613-seed1.json events=176 flip=0 dealt=0 ambushEv=0
+corelog-20260807-160751-880-seed1.json events=1332 flip=0 dealt=0 ambushEv=0
+corelog-20260807-165252-531-seed1.json events=216 flip=0 dealt=0 ambushEv=0
+corelog-20260807-171825-410-seed1.json events=356 flip=0 dealt=0 ambushEv=0
+corelog-20260807-202826-079-seed1.json events=3243 flip=0 dealt=0 ambushEv=0
+corelog-20260807-222543-651-seed1.json events=34 flip=0 dealt=0 ambushEv=0
+
+→ Read Assets/Scripts/NineGrid.Presentation/Cards/CardDeckManagerSingleton.cs
+✱ Grep "CardDealt" in Assets/Scripts/NineGrid.Presentation · 30 matches
+✱ Grep "CardDealt" in Assets/Scripts/NineGrid.Foundation/NineGrid.Core · 15 matches
+
+$ Get-ChildItem -Recurse "C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Presentation" -Filter "*.cs" | Where-Object { $_.Name -match "StandardCardView|CardManagerSingleton|ManagedCard|CardFaceBinder|GroundFieldView" } | Select-Object -ExpandProperty FullName
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Presentation\Cards\CardManagerSingleton.cs
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Presentation\Cards\GroundFieldView.cs
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Presentation\Cards\StandardCardView.cs
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Presentation\Cards\Ground\IGroundFieldView.cs
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Presentation\Cards\Ground\IGroundFieldViewBinding.cs
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Presentation\Cards\Presentation\ICardFaceBinder.cs
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Presentation\Queries\TryGetManagedCardQuery.cs
+
+✱ Grep "AddWithFaceAbsolutes" in Assets/Scripts/NineGrid.Foundation/NineGrid.Core · 16 matches
+→ Read Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Domain/Events/CardFaceEventValues.cs
+→ Read Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Domain/Actions/EffectActions.cs [limit=120, offset=455]
+✱ Grep "FaceUp" in Assets/Scripts/NineGrid.Presentation · 100 matches
+✱ Grep "CardDeckMode|deckBack|ShowBack|cardBack" in Assets/Scripts/NineGrid.Presentation/Cards · 36 matches
+→ Read Assets/Scripts/NineGrid.Presentation/Flow/CoreCardPresentationMapper.cs [limit=120, offset=60]
+→ Read Assets/Scripts/NineGrid.Presentation/Flow/Presentation/AttackIntentScriptFactory.cs
+→ Read Assets/Scripts/NineGrid.Presentation/Flow/Presentation/BatchLockstepSteps.cs
+
+$ rg -n "class SequenceEffectAction|EffectAtom\(\"Sequence\"|class TriggeredEffectTrigger|EffectAtom\(\"OnInteract\"|every" "C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Foundation\NineGrid.Core\Effects\EffectAtomLibrary.cs" | Select-Object -First 30
+rg: regex parse error:
+    (?:class SequenceEffectAction|EffectAtom\(\)
+    ^
+error: unclosed group
+
+$ rg -n 'Sequence' "C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Foundation\NineGrid.Core\Effects\EffectAtomLibrary.cs" | Select-Object -First 20; rg -n 'OnInteract' "C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Foundation\NineGrid.Core\Effects\EffectAtomLibrary.cs" | Select-Object -First 20
+2778:    [EffectAtom("Sequence", EffectAtomKind.Action)]
+2779:    public sealed class SequenceEffectAction : IAction
+304:    [EffectAtom("OnInteract", EffectAtomKind.Trigger)]
+305:    public sealed class OnInteractTrigger : TriggerAtomBase, ICountdownProjectionTrigger
+314:        public override TriggerPoint Point { get { return TriggerPoint.OnInteract; } }
+
+→ Read Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Effects/EffectAtomLibrary.cs [limit=130, offset=2778]
+→ Read Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Presentation/PresentationEventMap.cs
+→ Read Assets/Scripts/NineGrid.Presentation/Flow/Presentation/BattleBeatScheduler.cs
+
+$ $files = Get-ChildItem "C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Arts\ContentVisual\cards" -Filter "monster_*.json"; foreach ($f in $files) { $j = Get-Content $f.FullName -Raw -Encoding UTF8 | ConvertFrom-Json; if ($j.deckId -eq "deck.skeleton_legion") { $ids = ($j.effectAssemblies | ForEach-Object { $_.id }) -join ", "; Write-Output ("{0} | {1} | seq={2} | lvl={3} | pattern={4} | skills: {5}" -f $j.contentId, $j.displayName, $j.sequence, $j.level, $j.attackPattern, $ids) } }
+monster.brainless_orc | ʳ�˻� | seq=2 | lvl=��ͨ | pattern=��ͨԶ�� | skills: skill.ranged_weapon.activate, skill.rise_up.damage
+monster.orc_commander | Ǳˮ�� | seq=5 | lvl=���� | pattern=��ͨ��ս | skills: skill.assassin_leader.rule, skill.rise_up.damage
+monster.smart_orc | ��Ы | seq=1 | lvl=��ͨ | pattern=��ͨ��ս | skills: skill.ambush_melee.interact, skill.leap_kill.flip
+monster.veteran_orc | ɳ�� | seq=4 | lvl=��ͨ | pattern=��ͨ��ս | skills: skill.ambush_melee.interact, skill.steal.flip
+monster.young_orc | ������ | seq=3 | lvl=��ͨ | pattern=��ͨ��ս | skills: skill.ambush_melee.interact, skill.recuperate.flip
+
+✱ Grep "InjectDeck|CardFaceGenerationBootstrap|BuildDeckCards|deckCards" in Assets/Scripts/NineGrid.Presentation · 7 matches
+→ Read Assets/Scripts/NineGrid.Presentation/Flow/Presentation/CardFaceGenerationBootstrap.cs
+→ Read Assets/Scripts/NineGrid.Presentation/Flow/Presentation/CardFaceStatHandler.cs [limit=160, offset=260]
+→ Read Assets/Scripts/NineGrid.Presentation/Flow/BattleSession/BattleSessionExecutor.Opening.cs [limit=180, offset=560]
+✱ Grep "DeckCards" in Assets/Scripts/NineGrid.Presentation/Flow/BattleSession · 6 matches
+→ Read Assets/Scripts/NineGrid.Presentation/Flow/BattleSession/BattleSessionExecutor.Opening.cs [limit=140, offset=360]
+→ Read Assets/Scripts/NineGrid.Presentation/Flow/ShuffleIntoDeckPresentationScanner.cs
+→ Read Assets/Scripts/NineGrid.Presentation/Flow/Presentation/ShuffleIntoDeckScheduler.cs
+→ Read Assets/Scripts/NineGrid.Presentation/Flow/CoreCardPresentationMapper.cs [limit=120, offset=380]
+✱ Grep "DealCardByUidWithFlightAsync|DealCardByUidAsync|EnqueueShuffleIntoDeckFromEventLog" in Assets/Scripts/NineGrid.Presentation · 15 matches
+→ Read Assets/Scripts/NineGrid.Presentation/Flow/BattleSession/BoardPresentationPlayer.cs [limit=140, offset=430]
+✱ Grep "class BoardStabilizationSystem|DeferDrawUid|NeedsRefill|ResolveNextSlice" in Assets/Scripts/NineGrid.Foundation/NineGrid.Core · 13 matches
+→ Read Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Systems/BoardStabilizationSystem.cs
+→ Read Assets/Scripts/NineGrid.Presentation/Flow/Presentation/ShuffleIntoDeckPresentSink.cs
+✱ Grep "TryDequeue|ShuffleIntoDeckPresentSink|RandomInsertIndex" in Assets/Scripts/NineGrid.Presentation · 25 matches
+→ Read Assets/Scripts/NineGrid.Presentation/Flow/BattleSession/BoardPresentationPlayer.cs [limit=130, offset=740]
+→ Read Assets/Scripts/NineGrid.Presentation/Flow/BattleSession/BoardPresentationPlayer.cs [limit=140, offset=870]
+
+$ $files = Get-ChildItem "C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Arts\ContentVisual\cards" -Filter "monster_*.json"; foreach ($f in $files) { $j = Get-Content $f.FullName -Raw -Encoding UTF8 | ConvertFrom-Json; if ($j.deckId -eq "deck.skeleton_legion") { foreach ($a in $j.effectAssemblies) { Write-Output ("{0} :: {1} :: args={2}" -f $j.contentId, $a.id, $a.argsJson) } } }
+monster.brainless_orc :: skill.ranged_weapon.activate :: args={"value":1,"source":"skill.ranged_weapon"}
+monster.brainless_orc :: skill.rise_up.damage :: args={"count":1}
+monster.orc_commander :: skill.assassin_leader.rule :: args={}
+monster.orc_commander :: skill.rise_up.damage :: args={"count":1}
+monster.smart_orc :: skill.ambush_melee.interact :: args={}
+monster.smart_orc :: skill.leap_kill.flip :: args={}
+monster.veteran_orc :: skill.ambush_melee.interact :: args={}
+monster.veteran_orc :: skill.steal.flip :: args={"count":1,"reason":"skill.steal"}
+monster.young_orc :: skill.ambush_melee.interact :: args={}
+monster.young_orc :: skill.recuperate.flip :: args={"delta":1,"armor":2,"reason":"skill.recuperate"}
+
+→ Read Assets/Scripts/NineGrid.Foundation/NineGrid.Core.Tests/Batch2HardSkillsRegressionTests.cs [limit=100, offset=300]
+✱ Grep "class AttackPatternRules|AttackPattern" in Assets/Scripts/NineGrid.Foundation/NineGrid.Core · 65 matches
+→ Read Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Domain/AttackPattern.cs
+→ Read Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Systems/PhaseSystem.cs [limit=150, offset=1620]
+✱ Grep "leaveTrap.insert|ShuffleIntoDrawPile\(" in Assets/Scripts/NineGrid.Foundation/NineGrid.Core · 1 match
+✱ Grep "ApplyVisualsByDefId|TryRead\(|BuildSnapshot\(read" in Assets/Scripts/NineGrid.Presentation/Flow · 13 matches
+→ Read Assets/Scripts/NineGrid.Presentation/Flow/CoreCardPresentationMapper.cs [limit=75, offset=610]
+→ Read Assets/Scripts/NineGrid.Presentation/Flow/BattleSession/BattleSessionExecutor.Opening.cs [limit=120, offset=740]
+✱ Grep "SyncFromCore" in Assets/Scripts/NineGrid.Presentation · 34 matches
+✱ Grep ": IPresentChannel|class.*PresentChannel" in Assets/Scripts/NineGrid.Presentation · 20 matches
+→ Read Assets/Scripts/NineGrid.Presentation/Flow/Presentation/QueuedBoardPresentChannel.cs
+
+$ $j = Get-Content "C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\StreamingAssets\ContentVisual\tables\monster_decks.json" -Raw -Encoding UTF8 | ConvertFrom-Json; foreach ($d in $j) { $r = if ($d.members -is [array]) { $d.members.Count } else { 0 }; if ($d.id -eq "deck.skeleton_legion" -or $d.displayName -match "翻") { Write-Output ("{0} | {1} | status={2} | members={3}" -f $d.id, $d.displayName, $d.status, $r) } }
+(no output)
+
+$ $raw = Get-Content "C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\StreamingAssets\ContentVisual\tables\monster_decks.json" -Raw -Encoding UTF8; Write-Output ("len=" + $raw.Length); Write-Output $raw.Substring(0, [Math]::Min(1000, $raw.Length)); Write-Output "---- skeleton_legion entries:"; $idx = $raw.IndexOf("skeleton_legion"); if ($idx -ge 0) { Write-Output $raw.Substring([Math]::Max(0,$idx-200), [Math]::Min(1200, $raw.Length - [Math]::Max(0,$idx-200))) }
+len=1030
+[
+  {
+    "deck_id": "deck.transition",
+    "deck_kind": "Reserve",
+    "display_name": "���ɿ���"
+  },
+  {
+    "deck_id": "deck.wandering_legion",
+    "deck_kind": "Reserve",
+    "display_name": "��������"
+  },
+  {
+    "deck_id": "deck.stone_legion",
+    "deck_kind": "Unknown",
+    "display_name": "�粼����"
+  },
+  {
+    "deck_id": "deck.skeleton_legion",
+    "deck_kind": "Unknown",
+    "display_name": "��������"
+  },
+  {
+    "deck_id": "deck.orc_legion",
+    "deck_kind": "Unknown",
+    "display_name": "ֲ������"
+  },
+  {
+    "deck_id": "deck.void",
+    "deck_kind": "Unknown",
+    "display_name": "��������"
+  },
+  {
+    "deck_id": "deck.dragon",
+    "deck_kind": "Unknown",
+    "display_name": "��ķ����"
+  },
+  {
+    "deck_id": "deck.insect",
+    "deck_kind": "Unknown",
+    "display_name": "���濨��"
+  },
+  {
+    "deck_id": "deck.npc",
+    "deck_kind": "Reserve",
+    "display_name": "NPC����"
+  },
+  {
+    "deck_id": "deck.smallanimal",
+    "deck_kind": "Unknown",
+    "di
+---- skeleton_legion entries:
+on",
+    "deck_kind": "Reserve",
+    "display_name": "��������"
+  },
+  {
+    "deck_id": "deck.stone_legion",
+    "deck_kind": "Unknown",
+    "display_name": "�粼����"
+  },
+  {
+    "deck_id": "deck.skeleton_legion",
+    "deck_kind": "Unknown",
+    "display_name": "��������"
+  },
+  {
+    "deck_id": "deck.orc_legion",
+    "deck_kind": "Unknown",
+    "display_name": "ֲ������"
+  },
+  {
+    "deck_id": "deck.void",
+    "deck_kind": "Unknown",
+    "display_name": "��������"
+  },
+  {
+    "deck_id": "deck.dragon",
+    "deck_kind": "Unknown",
+    "display_name": "��ķ����"
+  },
+  {
+    "deck_id": "deck.insect",
+    "deck_kind": "Unknown",
+    "display_name": "���濨��"
+  },
+  {
+    "deck_id": "deck.npc",
+    "deck_kind": "Reserve",
+    "display_name": "NPC����"
+  },
+  {
+    "deck_id": "deck.smallanimal",
+    "deck_kind": "Unknown",
+    "display_name": "С���￨��"
+  }
+]
+
+$ $f = "C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\OtherLog\BattleLog\battlelog-20260807-202826-079-seed1.json"; $j = Get-Content $f -Raw -Encoding UTF8 | ConvertFrom-Json; foreach ($op in $j.ops) { if ($op.opKind -eq "StartNode") { $evs = @($op.events | Where-Object { $_.type -in @("CardSpawned","CardDealt") }); Write-Output ("StartNode op={0} node={1} phaseAfter={2} spawnDealEvents={3}" -f $op.opIndex, $op.nodeIndex, $op.phaseAfter, $evs.Count); $evs | ForEach-Object { "  {0} {1} uid={2} src={3} summary={4}" -f $_.sequence, $_.type, $_.cardUid, $_.sourceDefId, $_.summary } } }
+StartNode op=0 node=1 phaseAfter=InteractionLoop spawnDealEvents=0
+StartNode op=9 node=2 phaseAfter=InteractionLoop spawnDealEvents=0
+StartNode op=21 node=3 phaseAfter=InteractionLoop spawnDealEvents=0
+StartNode op=30 node=5 phaseAfter=InteractionLoop spawnDealEvents=0
+
+$ $f = "C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\CoreLog\corelog-20260807-202826-079-seed1.json"; $j = Get-Content $f -Raw -Encoding UTF8 | ConvertFrom-Json; $names = @{}; foreach ($ev in $j.events) { if ($ev.payload) { $s = ($ev.payload | ConvertTo-Json -Compress); if ($s -match "skeleton|legion|deckId|deck_id|monsterDeck|deck") { $names[$ev.name] = $names[$ev.name] + 1 } } }; $names.GetEnumerator() | Format-Table -AutoSize | Out-String -Width 120; Write-Output "--- payloads with deck:"; $j.events | Where-Object { $_.payload -and (($_.payload | ConvertTo-Json -Compress) -match "deck") } | Select-Object -First 6 | ForEach-Object { $_.name + " :: " + ($_.payload | ConvertTo-Json -Compress) }
+Name      Value
+----      -----
+StartNode 4
+StartRun  1
+
+
+--- payloads with deck:
+StartRun :: {"quickTestMode":"false","runTag":"","runTagNote":"","quickTestNodeOrder":"","quickTestNodeOrderMode":"","quickTestPinnedFirstDeck":""}
+StartNode :: {"avatarUid":"1","nodeIndex":"1","deckCount":"10","boardOccupantCount":"8","presOccupantCount":"0"}
+StartNode :: {"avatarUid":"1","nodeIndex":"2","deckCount":"12","boardOccupantCount":"8","presOccupantCount":"0"}
+StartNode :: {"avatarUid":"1","nodeIndex":"3","deckCount":"15","boardOccupantCount":"8","presOccupantCount":"0"}
+StartNode :: {"avatarUid":"1","nodeIndex":"5","deckCount":"16","boardOccupantCount":"8","presOccupantCount":"0"}
+
+$ rg -n "deferDuringBoardStabilization|deferRefill" "C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts" -g "*.cs" | Select-Object -First 20
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Foundation\NineGrid.Core.Tests\BoardStabilizationContractTests.cs:110:                deferDuringBoardStabilization: true));
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Foundation\NineGrid.Core\Domain\Actions\EffectActions.cs:473:            bool deferDuringBoardStabilization = false)
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Foundation\NineGrid.Core\Domain\Actions\EffectActions.cs:480:            DeferDuringBoardStabilization = deferDuringBoardStabilization;
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Foundation\NineGrid.Core\Effects\EffectAtomLibrary.cs:3347:            mDeferRefill = config.Get("deferRefill").AsBool(false);
+
+→ Read Assets/Scripts/NineGrid.Presentation/Cards/StandardCardView.cs [limit=120, offset=95]
+
+$ Test-Path "C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\docs\feedback-analysis"; Get-ChildItem "C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\docs" -Directory | Select-Object -ExpandProperty Name
+True
+adr
+agents
+code-map
+feedback-analysis
+superpowers
+
+I have a comprehensive picture now. Let me verify a few final details before writing the report.
+$ $raw = Get-Content "C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\StreamingAssets\ContentVisual\tables\effect_templates.json" -Raw -Encoding UTF8; $arr = $raw | ConvertFrom-Json; $t = $arr | Where-Object { $_.id -eq "tpl.skill.rise_up.damage" }; Write-Output ("REQ: " + $t.requires_json); Write-Output ("COND: " + $t.conditions_json); Write-Output ("BODY: " + $t.body)
+REQ: ["HasOwnerEntity", "CardZoneTriggerable"]
+COND: []
+BODY: {"kind":"Triggered","trigger":{"atom":"OnSelfDamageDealtToPlayerCumulative","threshold":1},"target":{"atom":"FilteredCards","kind":"Monster","zone":"Board","exclude":["Self"],"random":true,"count":"{{count}}"},"action":{"atom":"Flip"}}
+
+$ rg -n "OnSelfDamageDealtToPlayerCumulative|SelfDamageDealt" "C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Foundation\NineGrid.Core\Effects\EffectAtomLibrary.cs" | Select-Object -First 10
+917:        protected void SetSelfDamageDealtToPlayerMorphology()
+1080:    [EffectAtom("OnSelfDamageDealtToPlayerCumulative", EffectAtomKind.Trigger)]
+1081:    public sealed class OnSelfDamageDealtToPlayerCumulativeTrigger : OnCumulativeTrigger
+1085:            SetSelfDamageDealtToPlayerMorphology();
+1093:    [EffectAtom("OnSelfDamageDealtToPlayer", EffectAtomKind.Trigger)]
+1094:    public sealed class OnSelfDamageDealtToPlayerTrigger : TriggerAtomBase
+
+→ Read Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Effects/EffectAtomLibrary.cs [limit=90, offset=1080]
+
+$ rg -n "class OnCumulativeTrigger" "C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Scripts\NineGrid.Foundation\NineGrid.Core\Effects\EffectAtomLibrary.cs"
+846:    public class OnCumulativeTrigger : TriggerAtomBase, ITriggerFireCount, ICountdownProjectionTrigger
+
+→ Read Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Effects/EffectAtomLibrary.cs [limit=75, offset=846]
+
+← Write docs/feedback-analysis/face-flip-report.md
+Wrote file successfully.
+
+All evidence gathered. Now writing the report.
+报告已写入 `docs/feedback-analysis/face-flip-report.md`。
+
+结论摘要：条目1「潜伏近战不翻面/莫名翻面/发牌即反面」= 内容配置问题（翻面卡组近战怪误配每3拍的普通近战攻击模式，不带翻面）＋设计冲突（「起来」随机双向翻其他怪，可把刚翻下的怪翻回）＋按设计的刺客领袖发牌即背面被误读＋两处表现层翻面错位；条目2「发牌乱发」= 硬错误：Core 洗入即整堆重排（离开机关/呼唤等）而表现层卡组视觉顺序不重排，视觉"下一张"≠实际发出的卡。
