@@ -193,8 +193,17 @@ namespace NineGrid.Presentation.Ui
             fillRect.offsetMin = new Vector2(4f, 4f);
             fillRect.offsetMax = new Vector2(-4f, -4f);
             fill.GetComponent<Image>().color = new Color(0.83f, 0.55f, 0.22f, 1f);
+            var handle = new GameObject("Handle", typeof(RectTransform), typeof(Image));
+            handle.transform.SetParent(root.transform, false);
+            var handleRect = handle.GetComponent<RectTransform>();
+            handleRect.anchorMin = new Vector2(0f, 0.5f);
+            handleRect.anchorMax = new Vector2(0f, 0.5f);
+            handleRect.pivot = new Vector2(0.5f, 0.5f);
+            handleRect.sizeDelta = new Vector2(20f, 44f);
+            handle.GetComponent<Image>().color = new Color(0.95f, 0.86f, 0.72f, 1f);
             var slider = root.GetComponent<Slider>();
             slider.fillRect = fillRect;
+            slider.handleRect = handleRect;
             slider.minValue = 0f;
             slider.maxValue = 1f;
             slider.wholeNumbers = false;
