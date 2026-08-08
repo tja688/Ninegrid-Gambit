@@ -47,16 +47,15 @@ unity command set_autotick --enable true --project-path "<本仓库绝对路径>
 
 ## 常见循环
 
-改 C# → 编译 → 看 Console / 跑测：
+改 C# → 编译 → 看 Console：
 
 ```bash
 unity command recompile --project-path "<本仓库>"
 unity command recompile_status --project-path "<本仓库>"   # 轮询至完成
 unity command console --project-path "<本仓库>" --format json
-unity command run_tests --mode editor --filter <Name> --project-path "<本仓库>" --format json
 ```
 
-多 AI 同仓时：**不要**直接 `run_tests`；用 `.cursor/skills/ai-workspace/` 的 `test`（互斥 + 可共享结果），关/重开 Editor 前先 `gate-restart`。
+验证约定见 [`docs/code-map/tests.md`](../code-map/tests.md)（冲刺期无默认自动化测试套件）。
 
 
 改场景 / GameObject / 组件：用 `create_gameobject`、`find_gameobjects`、`add_component`、`set_component_properties` 等 Pipeline 命令。

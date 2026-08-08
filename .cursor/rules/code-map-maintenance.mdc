@@ -11,7 +11,7 @@ alwaysApply: true
 
 | 层级 | 路径 | 角色 |
 |------|------|------|
-| 代码现状 | `docs/code-map/` | 程序集、目录、装配、测试地图——**只写当下事实** |
+| 代码现状 | `docs/code-map/` | 程序集、目录、装配、验证约定——**只写当下事实** |
 | 长期决策 | `docs/adr/`、`CONTEXT.md` | 行为不变量、领域词汇 |
 | 过程笔记 | `Assets/Notes/` | 复盘与 Spec 草稿，**非权威** |
 
@@ -24,13 +24,12 @@ alwaysApply: true
 - `NineGrid.Presentation` 顶层目录、程序集边界、场景装配（`Setup/`、`PresentationCompositionRoot`、`PresentationSceneBindings`）
 - 新增/删除/重命名 Controller、System、Command、Query，或变更通信范式（Command / Query / Event / IntentIntake）
 - 静态 Hook 矩阵、`*ManagerSingleton` 壳、效果扩展点
-- EditMode 测试分层、结构护栏（`HostContractStructuralTests`、`IntentIntakeStructuralTests` 等）
 
 | 改什么 | 改哪个文件 |
 |--------|------------|
 | 程序集一览、场景入口、维护约定 | `docs/code-map/README.md` |
 | Presentation 目录、装配、读写约定、扩展点 | `docs/code-map/presentation.md` |
-| 测试地图、关闭门槛 | `docs/code-map/tests.md` |
+| 验证门槛 | `docs/code-map/tests.md` |
 
 ## 必须写 ADR 的改动
 
@@ -47,18 +46,15 @@ alwaysApply: true
 每张普通实施票合并前：
 
 1. 硬要求：`unity command recompile` 后 Console 无**由本票改动导致**的新增 Error / Exception / Assert
-2. EditMode 测试不强制全跑（跑不动不强求），能跑绿是加分
+2. 其余按任务需要手动 Play / QuickTest 验证
 
-全量真实场景 PlayMode 终验是 Spec 级门禁，**不是**每张票的默认门槛。
+**测试套件（冲刺期）**：仓库内原有自动化测试已整体清空。**不要**从 git 历史或旧文档恢复旧测试地图。若当前任务需要写测试，可自行新增，不受本条限制。详见 [`docs/code-map/tests.md`](../../docs/code-map/tests.md)。
 
-**两击放弃**：同一验证动作（recompile / 跑测 / 查 Console）2 次尝试仍无果（超时 / 卡死 / 状态不明）即停，不换命令绕路、不再重试；直接汇报改动结果，并建议人手动跑测试 / 手动验证。
+**两击放弃**：同一验证动作（recompile / 查 Console）2 次尝试仍无果（超时 / 卡死 / 状态不明）即停，不换命令绕路、不再重试；直接汇报改动结果，并建议人手动验证。
 
 ## 禁止
 
 - 把未落地的 Spec 目标树（如平铺 `Architecture/`、`Views/`、`Events/` 顶层目录）写入 code-map 当作既成事实
 - 新增业务静态 Sink，或在 View 上直接改 Core 规则状态（见 `presentation.md`）
 - 仅改 `Assets/Notes/` 而不更新 code-map/ADR，却声称架构或目录已变更
-
-## 结构护栏
-
-`NineGrid.Presentation.Tests` 中的结构测试会拦截架构回流；若改动触发护栏失败，修代码或（在确属有意演进时）更新护栏 **并** 同步 code-map / ADR，勿静默删断言。
+- 从 git 历史或归档文档「恢复」已清空的旧 EditMode / PlayMode 测试套件（除非用户明确要求）

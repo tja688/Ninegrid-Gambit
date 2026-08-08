@@ -10,7 +10,7 @@
 
 | 项 | 状态 |
 | --- | --- |
-| 核心转场（Planner / Player / Director） | 已落地，EditMode 可测 |
+| 核心转场（Planner / Player / Director） | 已落地 |
 | 内容层（Marker / Controller / Driver） | 已落地 |
 | Demo 输入（数字键 Commit / Hover Preview） | 已落地（Runtime/Demo） |
 | 场地覆层 / 输入仲裁 / 完整碰撞搜索 | **未做**（见 Spec 后续阶段） |
@@ -46,9 +46,8 @@
 | --- | --- | --- |
 | `NineGrid.LivingUI` | `Runtime/` | 仅 Unity 引擎（asmdef `references: []`） |
 | `NineGrid.LivingUI.Editor` | `Editor/` | Runtime |
-| `NineGrid.LivingUI.Tests` | `Tests/Editor/` | Runtime + Test Runner |
 
-命名空间：`NineGrid.LivingUI` / `.Unity` / `.Demo` / `.Editor` / `.Tests`。
+命名空间：`NineGrid.LivingUI` / `.Unity` / `.Demo` / `.Editor`。
 
 ---
 
@@ -59,7 +58,7 @@
 3. 挂 `LivingUiSceneLayoutSource` + `LivingUiDirector`（及可选 ContentController/Driver）。
 4. 调用 `LivingUiDirector.Commit(layoutId)` / `Preview` / `ClearPreview`。
 
-纯数据主测 seam：`TransitionPlanner`（见 Tests）。
+纯数据主 seam：`TransitionPlanner`（可单测规划逻辑，宿主工程内无捆绑测试程序集）。
 
 ---
 

@@ -10,7 +10,7 @@
 
 | 文档 | 何时读 |
 |------|--------|
-| [`docs/code-map/`](docs/code-map/) | 代码现状入口（程序集、Presentation 目录、测试地图） |
+| [`docs/code-map/`](docs/code-map/) | 代码现状入口（程序集、Presentation 目录、验证约定） |
 | [`docs/adr/`](docs/adr/) | 长期架构决策与行为不变量 |
 | [`CONTEXT.md`](CONTEXT.md) | 仓库当下事实 |
 | `Assets/Notes/` | 进行时过程笔记，**非权威** |
@@ -24,10 +24,12 @@
 |----------|----------|
 | 表现层目录 / 程序集边界 / 装配入口（`Setup/`、`CompositionRoot`、场景绑定） | [`docs/code-map/README.md`](docs/code-map/README.md) |
 | Controller / System / Command·Query 边界、Hook 矩阵、读写与扩展点 | [`docs/code-map/presentation.md`](docs/code-map/presentation.md) |
-| 测试分层、结构护栏、关闭门槛 | [`docs/code-map/tests.md`](docs/code-map/tests.md) |
+| 验证门槛与手动检查约定 | [`docs/code-map/tests.md`](docs/code-map/tests.md) |
 | 长期行为不变量（Batch-ack、占格权威、IntentIntake、卡面 Commit 等） | 新增或修订 [`docs/adr/`](docs/adr/)，并在 code-map 中引用 |
 
-**验证门槛**（见 [`docs/code-map/tests.md`](docs/code-map/tests.md)）：硬要求——`recompile` 后 Console 无**由你的改动导致**的新增 Error / Exception / Assert。EditMode 测试不强制全跑（跑不动不强求），能跑绿视为加分；全量 PlayMode 终验属 Spec 级，非每张票的默认门槛。硬规则见 [`.cursor/rules/code-map-maintenance.mdc`](.cursor/rules/code-map-maintenance.mdc)。
+**验证门槛**（见 [`docs/code-map/tests.md`](docs/code-map/tests.md)）：硬要求——`recompile` 后 Console 无**由你的改动导致**的新增 Error / Exception / Assert；其余按任务需要手动 Play / QuickTest 验证。
+
+**测试套件（冲刺期）**：仓库内原有 EditMode / PlayMode 自动化测试已**整体清空**（有意的阶段性决定）。**不要**从 git 历史或旧文档中恢复、补全或按旧测试地图复刻护栏。若你当前任务需要写测试，可自行新增，不受本条限制。硬规则见 [`.cursor/rules/code-map-maintenance.mdc`](.cursor/rules/code-map-maintenance.mdc)。
 
 ## 工具与工作流
 
@@ -38,17 +40,15 @@
 **场景中文名检索**：`.unity` / `.prefab` YAML 里中文 `m_Name` 常写成 `\uXXXX` 转义（如 `作弊工具BG` → `"\u4F5C\u5F0A\u5DE5\u5177BG"`）。用明文中文 `grep` 会误报「不存在」——应搜 Unicode 转义、在 Editor 里 `FindObjectsOfTypeAll` / Pipeline `find_gameobjects`，或先解码再比。
 
 **Pipeline 长命令纪律**：
-- `run_tests` 一律走 `--async_tests true`（async 模式响应即时返回），随后轮询 `test_status` 至 `completed`
 - `recompile` 后轮询 `recompile_status` 至 `completed`，再发下一个命令
-- 命令超时后先查 `test_status` / `recompile_status` / `api/status` 确认执行状态，再决定是否重试，避免重复启动同一命令
-- **两击放弃**：同一验证动作（recompile / 跑测 / 查 Console）2 次尝试仍无果（超时 / 卡死 / 状态不明）即停，不换命令绕路、不再重试；直接汇报改动结果，并建议人手动跑测试 / 手动验证
+- 命令超时后先查 `recompile_status` / `api/status` 确认执行状态，再决定是否重试，避免重复启动同一命令
+- **两击放弃**：同一验证动作（recompile / 查 Console）2 次尝试仍无果（超时 / 卡死 / 状态不明）即停，不换命令绕路、不再重试；直接汇报改动结果，并建议人手动验证
 
 **技能与工具**：
 
 | 工具 / 技能 | 何时用 | 位置 |
 |-------------|--------|------|
 | Editor 启动 | 开 / 重开 Editor：直启 + `-automated`，避免外部改 `.unity` 弹窗卡死 Pipeline；重启前先保存当前工作 | `.cursor/skills/unity-automated-launch/` |
-| 多 AI 协调 | 同仓多 Agent：先 `claim`；EditMode 测走 `ai-workspace test`；关 / 重开 Editor 前先 `gate-restart` | `.cursor/skills/ai-workspace/` |
 | 日志分析 | 战斗 / 流程 / 表现日志（Play 结束导出至 `Assets/Notes/Logs/`） | `.cursor/skills/table-nine-battlelog-analysis/` |
 | 像素描边 | 像素画 snap 且不糊 SDF / TMP 文本 | `.cursor/skills/sprite-owned-pixel-snap/` |
 | QuickTest 通道 | 主菜单 `\` + `\0`–`\9` 效果体验通道（JSON 空怪、动态技能组装、卡面技能描述；近义技能占位规则） | `.cursor/skills/quick-test-effect-channels/` |
