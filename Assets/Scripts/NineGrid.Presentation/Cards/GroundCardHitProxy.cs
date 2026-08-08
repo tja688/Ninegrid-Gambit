@@ -1,5 +1,6 @@
 using NineGrid.Cards.Convergence;
 using NineGrid.Flow;
+using NineGrid.Flow.Presentation;
 using NineGrid.Presentation;
 using UnityEngine;
 
@@ -169,6 +170,10 @@ namespace NineGrid.Cards
             }
 
             _driver?.SetTarget(CardVisualTarget.Hover);
+            InteractionAudioCues.PulseCard(
+                InteractionAudioCues.GroundCardHover,
+                "GroundCardHitProxy.HoverEnterClaim",
+                _driver?.BoundCard?.DefId);
         }
 
         private void HoverExitClaim()

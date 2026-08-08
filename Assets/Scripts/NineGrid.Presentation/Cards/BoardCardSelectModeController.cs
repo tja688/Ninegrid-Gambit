@@ -215,6 +215,10 @@ namespace NineGrid.Cards
 
             SelectedUids.Add(uid);
             driver?.SetTarget(CardVisualTarget.Selected);
+            InteractionAudioCues.PulseCard(
+                InteractionAudioCues.CardSelect,
+                "BoardCardSelectModeController.TryToggleSelection",
+                card.DefId);
 
             if (SelectedUids.Count >= _requiredCount)
             {

@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using NineGrid.Content.Audio;
+using NineGrid.Content.Editor;
+using NineGrid.Flow.Presentation;
 using NineGrid.Presentation.Systems;
 using NUnit.Framework;
 
@@ -86,6 +88,38 @@ namespace NineGrid.Presentation.Tests
             Assert.AreEqual("a", result.VariantId);
             Assert.AreEqual("missing material", result.FailureReason);
         }
+        [Test]
+        public void CueDeclarationScan_ReportsDuplicateAndUnboundDeclarations()
+        {
+            var catalog = AudioBindingCatalog.FromJson(
+                "{\"schemaVersion\":2,\"bindings\":[{\"cueId\":\"scan.bound\",\"enabled\":true,\"clipKey\":\"audio/SFX/click\"}]}");
+
+            var result = AudioCueDeclarationScanner.Scan(
+                catalog,
+                typeof(AudioSystemBehaviorTests).Assembly);
+
+            Assert.That(result.Findings, Has.Some.Matches<AudioCueDeclarationFinding>(finding =>
+                finding.CueId == "scan.duplicate"
+                && finding.Message.Contains("重复")));
+            Assert.That(result.Findings, Has.Some.Matches<AudioCueDeclarationFinding>(finding =>
+                finding.CueId == "scan.unbound"
+                && finding.Message.Contains("未绑定")));
+            Assert.That(result.Findings, Has.None.Matches<AudioCueDeclarationFinding>(finding =>
+                finding.CueId == "scan.bound"
+                && finding.Message.Contains("未绑定")));
+        }
+
+        [AudioCue("scan.bound", "扫描器已绑定测试", "Tests", "AudioSystemBehaviorTests", AudioCueContexts.None)]
+        private const string ScanBoundCue = "scan.bound";
+
+        [AudioCue("scan.unbound", "扫描器未绑定测试", "Tests", "AudioSystemBehaviorTests", AudioCueContexts.None)]
+        private const string ScanUnboundCue = "scan.unbound";
+
+        [AudioCue("scan.duplicate", "扫描器重复测试一", "Tests", "AudioSystemBehaviorTests", AudioCueContexts.None)]
+        private const string ScanDuplicateCueA = "scan.duplicate";
+
+        [AudioCue("scan.duplicate", "扫描器重复测试二", "Tests", "AudioSystemBehaviorTests", AudioCueContexts.None)]
+        private const string ScanDuplicateCueB = "scan.duplicate";
 
         private static AudioSystem CreateSystem(FakeClock clock, FakePlayback playback)
         {

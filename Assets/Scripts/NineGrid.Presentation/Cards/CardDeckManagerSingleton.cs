@@ -4,6 +4,7 @@ using System.Threading;
 using Cysharp.Threading.Tasks;
 using NineGrid.Cards.Convergence;
 using NineGrid.Flow;
+using NineGrid.Flow.Presentation;
 using UnityEngine;
 
 namespace NineGrid.Cards
@@ -1778,6 +1779,15 @@ namespace NineGrid.Cards
             if (card != null && string.IsNullOrEmpty(card.DefId))
             {
                 _hoveredDeckCard = null;
+                return;
+            }
+
+            if (card != null)
+            {
+                InteractionAudioCues.PulseCard(
+                    InteractionAudioCues.DeckCardHover,
+                    "CardDeckManagerSingleton.ApplyDeckHoverTarget",
+                    card.DefId);
             }
         }
 

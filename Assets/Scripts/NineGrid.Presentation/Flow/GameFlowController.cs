@@ -66,6 +66,37 @@ namespace NineGrid.Flow
         public int NodeIndex => ResolveShell()?.NodeIndex ?? 0;
         public bool CanAcceptQuickTestEntry => ResolveShell()?.CanAcceptQuickTestEntry ?? false;
 
+        private Collider2D hoveredMenuHit;
+
+        private static readonly AudioCueRequest StartHoverRequest = CreateMenuRequest(
+            InteractionAudioCues.MainMenuHover,
+            "GameFlowController.MainMenu.StartHover",
+            "main_menu.start");
+        private static readonly AudioCueRequest QuitHoverRequest = CreateMenuRequest(
+            InteractionAudioCues.MainMenuHover,
+            "GameFlowController.MainMenu.QuitHover",
+            "main_menu.quit");
+        private static readonly AudioCueRequest StartPressRequest = CreateMenuRequest(
+            InteractionAudioCues.MainMenuPress,
+            "GameFlowController.MainMenu.StartPress",
+            "main_menu.start");
+        private static readonly AudioCueRequest QuitPressRequest = CreateMenuRequest(
+            InteractionAudioCues.MainMenuPress,
+            "GameFlowController.MainMenu.QuitPress",
+            "main_menu.quit");
+        private static readonly AudioCueRequest StartRejectRequest = CreateMenuRequest(
+            InteractionAudioCues.MainMenuReject,
+            "GameFlowController.MainMenu.StartReject",
+            "main_menu.start");
+        private static readonly AudioCueRequest QuitRejectRequest = CreateMenuRequest(
+            InteractionAudioCues.MainMenuReject,
+            "GameFlowController.MainMenu.QuitReject",
+            "main_menu.quit");
+        private static readonly AudioCueRequest QuitCancelRequest = CreateMenuRequest(
+            InteractionAudioCues.MainMenuCancel,
+            "GameFlowController.MainMenu.QuitCancel",
+            "main_menu.quit");
+
         private void Awake()
         {
             EnsureViewBindings();
@@ -100,26 +131,42 @@ namespace NineGrid.Flow
         {
             var shell = ResolveShell();
             if (shell == null
-                || shell.State.Value != GameFlowShellState.MainMenu
-                || shell.IsBusy)
+                || shell.State.Value != GameFlowShellState.MainMenu)
             {
+                ClearMenuHover();
                 return;
             }
 
+            // 场景引用只在 Awake / 显式调用 EnsureViewBindings 时解析；Update 仅轮询缓存。
+            UpdateMenuHover();
             if (!WorldPointerUtility.WasPrimaryPressedThisFrame())
             {
                 return;
             }
 
-            EnsureViewBindings();
             if (WorldPointerUtility.TryOverlapColliderOnPlane(worldCamera, startRunHit))
             {
+                if (shell.IsBusy)
+                {
+                    PulseMenuRequest(StartRejectRequest);
+                    return;
+                }
+
+                PulseMenuRequest(StartPressRequest);
                 BeginFormalRun();
                 return;
             }
 
             if (WorldPointerUtility.TryOverlapColliderOnPlane(worldCamera, quitGameHit))
             {
+                if (shell.IsBusy)
+                {
+                    PulseMenuRequest(QuitRejectRequest);
+                    return;
+                }
+
+                PulseMenuRequest(QuitPressRequest);
+                PulseMenuRequest(QuitCancelRequest);
                 QuitGame();
             }
         }
@@ -127,7 +174,7 @@ namespace NineGrid.Flow
         /// <summary>主菜单「开始游戏」：无作弊正式开局。真相在 BeginGameFlowRunCommand。</summary>
         [AudioCue(
             "ui.main_menu.start",
-            "主菜单开始游戏点击",
+            "主菜单开始游戏确认",
             "MainMenu",
             "GameFlowController.BeginFormalRun",
             AudioCueContexts.None)]
@@ -256,6 +303,52 @@ namespace NineGrid.Flow
 #else
             Application.Quit();
 #endif
+        }
+
+        private void UpdateMenuHover()
+        {
+            Collider2D next = null;
+            if (WorldPointerUtility.TryOverlapColliderOnPlane(worldCamera, startRunHit))
+            {
+                next = startRunHit;
+            }
+            else if (WorldPointerUtility.TryOverlapColliderOnPlane(worldCamera, quitGameHit))
+            {
+                next = quitGameHit;
+            }
+
+            if (next == hoveredMenuHit)
+            {
+                return;
+            }
+
+            hoveredMenuHit = next;
+            if (next != null)
+            {
+                PulseMenuRequest(next == startRunHit ? StartHoverRequest : QuitHoverRequest);
+            }
+        }
+
+        private void ClearMenuHover()
+        {
+            hoveredMenuHit = null;
+        }
+
+        private static void PulseMenuRequest(AudioCueRequest request)
+        {
+            TriggerPulseHub.PulseAudio(request);
+        }
+
+        private static AudioCueRequest CreateMenuRequest(string cueId, string source, string contentId)
+        {
+            return new AudioCueRequest(
+                cueId,
+                source,
+                string.Empty,
+                string.Empty,
+                string.Empty,
+                string.Empty,
+                contentId);
         }
 
         private static void SendBeginRun(GameFlowRunOptions options)

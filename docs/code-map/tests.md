@@ -4,7 +4,7 @@
 >
 > 若你当前任务需要写测试，可自行新增程序集与用例，不受本条限制；本页只描述**当下默认验证方式**。
 >
-#172 起恢复最小测试程序集：`NineGrid.Presentation.Tests`（`Assets/Scripts/NineGrid.Presentation/Tests/`，Editor-only）包含 `MusicDiagnosticsBehaviorTests`（Music 轨审计、未知来源、Preview 暂停/恢复）、#173 `AudioSystemBehaviorTests`（起播点/绑定延迟、显式排期取消、按最终绑定冷却、随机池有效变体与避免立即重复、缺失素材后端失败）与 #171 `PlayerAudioSettingsBehaviorTests`（Master/BGM/SFX 三路即时应用、逐路静音保留原音量、持久化、Reset 回随包作者默认、UI 绑定通知）。跑法：`unity command run_tests --mode EditMode --filter NineGrid.Presentation.Tests --filter_type assembly --project-path "<repo>"`。
+#172 起恢复最小测试程序集：`NineGrid.Presentation.Tests`（`Assets/Scripts/NineGrid.Presentation/Tests/`，Editor-only）包含 `MusicDiagnosticsBehaviorTests`（Music 轨审计、未知来源、Preview 暂停/恢复）、#173/#174 `AudioSystemBehaviorTests`（起播点/绑定延迟、显式排期取消、按最终绑定冷却、随机池有效变体与避免立即重复、缺失素材后端失败、声音声明重复与未绑定扫描）与 #171 `PlayerAudioSettingsBehaviorTests`（Master/BGM/SFX 三路即时应用、逐路静音保留原音量、持久化、Reset 回随包作者默认、UI 绑定通知）。跑法：`unity command run_tests --mode EditMode --filter NineGrid.Presentation.Tests --filter_type assembly --project-path "<repo>"`。
 ## 默认验证门槛（普通实施票）
 
 1. **硬要求**：`unity command recompile` 后 Console 无**由本票改动导致**的新增 Error / Exception / Assert

@@ -234,7 +234,7 @@ namespace NineGrid.Content.Editor
         {
             var path = ResolveAbsolutePath(AudioBindingCatalogPaths.ManifestAssetPath);
             var json = File.Exists(path) ? File.ReadAllText(path, Encoding.UTF8) : string.Empty;
-            LoadFromJson(json, ScanDeclarations(), LoadClipOptions());
+            LoadFromJson(json, ScanDeclarations(json), LoadClipOptions());
             diskPath = path;
         }
 
@@ -745,7 +745,7 @@ namespace NineGrid.Content.Editor
             return Path.Combine(Directory.GetCurrentDirectory(), normalized);
         }
 
-        private static List<AudioBindingEditorDeclaration> ScanDeclarations()
+        private static List<AudioBindingEditorDeclaration> ScanDeclarations(string catalogJson)
         {
             var result = new List<AudioBindingEditorDeclaration>();
             var presentation = AppDomain.CurrentDomain.GetAssemblies()
@@ -765,7 +765,9 @@ namespace NineGrid.Content.Editor
                 }
             }
 
-            var scan = AudioCueDeclarationScanner.Scan(presentation);
+            var scan = AudioCueDeclarationScanner.Scan(
+                AudioBindingCatalog.FromJson(catalogJson),
+                presentation);
             for (var i = 0; i < scan.Declarations.Count; i++)
             {
                 var declaration = scan.Declarations[i];

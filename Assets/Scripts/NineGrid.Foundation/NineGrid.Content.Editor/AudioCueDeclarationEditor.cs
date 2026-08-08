@@ -1,6 +1,7 @@
 #if UNITY_EDITOR
 using System;
 using System.Reflection;
+using NineGrid.Content.Audio;
 using NineGrid.Flow.Presentation;
 using UnityEditor;
 using UnityEngine;
@@ -12,7 +13,9 @@ namespace NineGrid.Content.Editor
         [MenuItem("NineGrid/Tools/Scan Audio Cue Declarations")]
         public static void ScanMenu()
         {
-            var result = AudioCueDeclarationScanner.Scan(Assembly.Load("NineGrid.Presentation"));
+            var result = AudioCueDeclarationScanner.Scan(
+                AudioBindingCatalog.LoadFromResources(),
+                Assembly.Load("NineGrid.Presentation"));
             if (result.Findings.Count == 0)
             {
                 Debug.Log("[AudioCueDeclarationScanner] declarations=" + result.Declarations.Count + " findings=0");

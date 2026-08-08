@@ -488,7 +488,10 @@ namespace NineGrid.Cards
                 OriginHandSlot = slotIndex,
                 WasHovering = wasHovering,
             };
-
+            InteractionAudioCues.PulseCard(
+                InteractionAudioCues.CardDragPickup,
+                "CardHandManagerSingleton.TryBeginDragFromHand",
+                removed.DefId);
             BeginDragLoop();
             return true;
         }
@@ -1032,6 +1035,10 @@ namespace NineGrid.Cards
             driver?.SetTarget(CardVisualTarget.Hover);
             BoostHandCardHoverSorting(card);
             RefreshHandHoverAlphas(card);
+            InteractionAudioCues.PulseCard(
+                InteractionAudioCues.HandCardHover,
+                "CardHandManagerSingleton.ApplyHandHoverTarget",
+                card.DefId);
         }
 
         /// <summary>
@@ -1278,6 +1285,11 @@ namespace NineGrid.Cards
                 session.PointerReleasedInZone = !session.PointerReleasedInRecycleZone
                     && IsPointInApplyZone(releaseWorld);
 
+                InteractionAudioCues.PulseCard(
+                    InteractionAudioCues.CardDragDrop,
+                    "CardHandManagerSingleton.RunDragLoopAsync",
+                    card.DefId);
+
                 if (!session.PointerReleasedInRecycleZone && !session.PointerReleasedInZone)
                 {
                     await FinishDragWithReturnAsync(session);
@@ -1331,6 +1343,11 @@ namespace NineGrid.Cards
                 await FinishDragWithReturnAsync(session);
                 return;
             }
+
+            InteractionAudioCues.PulseCard(
+                InteractionAudioCues.CardDragValid,
+                "CardHandManagerSingleton.CompleteDragApplyInternalAsync",
+                card.DefId);
 
             RegistryTraceSink.NotifyUserInteraction?.Invoke("HandDragApply");
             ClearDragSession();
@@ -1551,6 +1568,11 @@ namespace NineGrid.Cards
                 ClearDragSession();
                 return;
             }
+
+            InteractionAudioCues.PulseCard(
+                InteractionAudioCues.CardDragReturn,
+                "CardHandManagerSingleton.FinishDragWithReturnAsync",
+                card.DefId);
 
             _isBusy = true;
             try

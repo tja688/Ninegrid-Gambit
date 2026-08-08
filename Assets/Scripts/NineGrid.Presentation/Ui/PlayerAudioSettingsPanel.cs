@@ -1,3 +1,5 @@
+using NineGrid.Content.Audio;
+using NineGrid.Flow.Presentation;
 using NineGrid.Presentation.Systems;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -51,6 +53,9 @@ namespace NineGrid.Presentation.Ui
         {
             if (Input.GetKeyDown(KeyCode.Escape) && mPanel != null && mPanel.activeSelf)
             {
+                TriggerPulseHub.PulseAudio(AudioCueRequest.Simple(
+                    InteractionAudioCues.PlayerAudioEscape,
+                    "PlayerAudioSettingsPanel.Update.Escape"));
                 SetOpen(false);
             }
         }
@@ -77,8 +82,18 @@ namespace NineGrid.Presentation.Ui
             scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
             scaler.referenceResolution = new Vector2(1920f, 1080f);
 
-            mOpenButton = CreateButton(canvasObject.transform, "音频设置", new Vector2(-120f, -70f), new Vector2(180f, 52f));
-            mOpenButton.onClick.AddListener(() => SetOpen(true));
+            mOpenButton = CreateButton(
+                canvasObject.transform,
+                "音频设置",
+                new Vector2(-120f, -70f),
+                new Vector2(180f, 52f),
+                "player_audio.open",
+                InteractionAudioCues.UiConfirm);
+            mOpenButton.onClick.AddListener(() =>
+            {
+                mOpenButton.GetComponent<UiAudioFeedback>()?.PulseAccepted();
+                SetOpen(true);
+            });
 
             mPanel = new GameObject("Panel", typeof(RectTransform), typeof(Image));
             mPanel.transform.SetParent(canvasObject.transform, false);
@@ -95,10 +110,30 @@ namespace NineGrid.Presentation.Ui
             CreateBusRow(PlayerAudioBus.Bgm, "BGM", -15f);
             CreateBusRow(PlayerAudioBus.Sfx, "音效", -110f);
 
-            var reset = CreateButton(mPanel.transform, "恢复作者默认", new Vector2(-120f, -190f), new Vector2(210f, 46f));
-            reset.onClick.AddListener(() => mSettings.ResetToAuthorDefaults());
-            var close = CreateButton(mPanel.transform, "关闭", new Vector2(120f, -190f), new Vector2(150f, 46f));
-            close.onClick.AddListener(() => SetOpen(false));
+            var reset = CreateButton(
+                mPanel.transform,
+                "恢复作者默认",
+                new Vector2(-120f, -190f),
+                new Vector2(210f, 46f),
+                "player_audio.reset",
+                InteractionAudioCues.UiConfirm);
+            reset.onClick.AddListener(() =>
+            {
+                reset.GetComponent<UiAudioFeedback>()?.PulseAccepted();
+                mSettings.ResetToAuthorDefaults();
+            });
+            var close = CreateButton(
+                mPanel.transform,
+                "关闭",
+                new Vector2(120f, -190f),
+                new Vector2(150f, 46f),
+                "player_audio.close",
+                InteractionAudioCues.UiCancel);
+            close.onClick.AddListener(() =>
+            {
+                close.GetComponent<UiAudioFeedback>()?.PulseAccepted();
+                SetOpen(false);
+            });
 
             mPanel.SetActive(false);
             mBuilt = true;
@@ -108,9 +143,15 @@ namespace NineGrid.Presentation.Ui
         {
             CreateLabel(mPanel.transform, label, label, new Vector2(-238f, y), 21, TextAnchor.MiddleLeft, new Vector2(150f, 42f));
             var slider = CreateSlider(mPanel.transform, label + "音量", new Vector2(35f, y), new Vector2(330f, 36f));
+            slider.gameObject.AddComponent<UiAudioFeedback>().Configure("player_audio." + bus + ".volume", string.Empty);
             slider.onValueChanged.AddListener(value => mSettings.SetVolume(bus, value));
             var mute = CreateToggle(mPanel.transform, label + "静音", "静音", new Vector2(245f, y), new Vector2(130f, 36f));
-            mute.onValueChanged.AddListener(value => mSettings.SetMuted(bus, value));
+            mute.gameObject.AddComponent<UiAudioFeedback>().Configure("player_audio." + bus + ".mute", InteractionAudioCues.UiConfirm);
+            mute.onValueChanged.AddListener(value =>
+            {
+                mute.GetComponent<UiAudioFeedback>()?.PulseAccepted();
+                mSettings.SetMuted(bus, value);
+            });
             RefreshBus(bus, slider, mute);
         }
 
@@ -167,7 +208,13 @@ namespace NineGrid.Presentation.Ui
             DontDestroyOnLoad(host);
         }
 
-        private static Button CreateButton(Transform parent, string text, Vector2 anchoredPosition, Vector2 size)
+        private static Button CreateButton(
+            Transform parent,
+            string text,
+            Vector2 anchoredPosition,
+            Vector2 size,
+            string contentId,
+            string acceptedCueId)
         {
             var root = new GameObject(text, typeof(RectTransform), typeof(Image), typeof(Button));
             root.transform.SetParent(parent, false);
@@ -175,6 +222,7 @@ namespace NineGrid.Presentation.Ui
             root.GetComponent<Image>().color = new Color(0.44f, 0.25f, 0.11f, 1f);
             var button = root.GetComponent<Button>();
             button.targetGraphic = root.GetComponent<Image>();
+            root.AddComponent<UiAudioFeedback>().Configure(contentId, acceptedCueId);
             CreateLabel(root.transform, "Text", text, Vector2.zero, 18, TextAnchor.MiddleCenter, size);
             return button;
         }

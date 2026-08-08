@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Reflection;
+using NineGrid.Content.Audio;
 
 using NineGrid.Flow.Presentation;
 
@@ -34,6 +35,13 @@ namespace NineGrid.Content.Editor
     public static class AudioCueDeclarationScanner
     {
         public static AudioCueDeclarationScanResult Scan(params Assembly[] assemblies)
+        {
+            return Scan(null, assemblies);
+        }
+
+        public static AudioCueDeclarationScanResult Scan(
+            AudioBindingCatalog catalog,
+            params Assembly[] assemblies)
         {
             var declarations = new List<AudioCueDeclaration>();
             var findings = new List<AudioCueDeclarationFinding>();
@@ -94,6 +102,37 @@ namespace NineGrid.Content.Editor
                             byCueId[attribute.CueId] = declaration;
                         }
                     }
+                }
+            }
+
+            if (catalog != null)
+            {
+                var boundCueIds = new HashSet<string>(StringComparer.Ordinal);
+                var bindings = catalog.Bindings;
+                for (var bindingIndex = 0; bindingIndex < bindings.Count; bindingIndex++)
+                {
+                    var binding = bindings[bindingIndex];
+                    if (binding != null && !string.IsNullOrWhiteSpace(binding.CueId))
+                    {
+                        boundCueIds.Add(binding.CueId);
+                    }
+                }
+
+                for (var declarationIndex = 0; declarationIndex < declarations.Count; declarationIndex++)
+                {
+                    var declaration = declarations[declarationIndex];
+                    var cueId = declaration.Attribute.CueId;
+                    if (string.IsNullOrWhiteSpace(cueId) || boundCueIds.Contains(cueId))
+                    {
+                        continue;
+                    }
+
+                    findings.Add(new AudioCueDeclarationFinding
+                    {
+                        CueId = cueId,
+                        FieldName = declaration.Field.DeclaringType.FullName + "." + declaration.Field.Name,
+                        Message = "声音提示未绑定。",
+                    });
                 }
             }
 

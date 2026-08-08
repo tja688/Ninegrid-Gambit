@@ -38,41 +38,46 @@ namespace NineGrid.Flow.Presentation
 
         public void Pulse(string triggerId)
         {
-            TryPulse(triggerId, () => mInner.Pulse(triggerId));
+            if (ShouldPulse(triggerId))
+            {
+                mInner.Pulse(triggerId);
+            }
         }
 
         public void Pulse(AudioCueRequest request)
         {
-            TryPulse(request.CueId, () =>
+            if (!ShouldPulse(request.CueId))
             {
-                var typedInner = mInner as IAudioCuePulseSink;
-                if (typedInner != null)
-                {
-                    typedInner.Pulse(request);
-                }
-                else
-                {
-                    mInner.Pulse(request.CueId);
-                }
-            });
+                return;
+            }
+
+            var typedInner = mInner as IAudioCuePulseSink;
+            if (typedInner != null)
+            {
+                typedInner.Pulse(request);
+            }
+            else
+            {
+                mInner.Pulse(request.CueId);
+            }
         }
 
-        private void TryPulse(string triggerId, Action pulse)
+        private bool ShouldPulse(string triggerId)
         {
             if (string.IsNullOrEmpty(triggerId))
             {
-                return;
+                return false;
             }
 
             var now = mNowSeconds();
             if (mLastPulseAt.TryGetValue(triggerId, out var last)
                 && now - last < mWindowSeconds)
             {
-                return;
+                return false;
             }
 
             mLastPulseAt[triggerId] = now;
-            pulse();
+            return true;
         }
     }
 }
