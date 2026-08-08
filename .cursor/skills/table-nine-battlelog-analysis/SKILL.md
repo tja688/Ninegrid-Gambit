@@ -21,6 +21,9 @@ Play 结束自动导出至 `Assets/Notes/Logs/`（Editor 路径；Player 下为 
 | FlowTrace (CoreLog) | `Assets/Notes/Logs/CoreLog/` | `corelog-…-seed<N>.json` |
 | Perf | `Assets/Notes/Logs/PerfLog/` | `perflog-…` |
 | Registry | `Assets/Notes/Logs/OtherLog/RegistryLog/` | `registrylog-…` |
+| **手动 Bug 快照** | Editor：`Assets/Notes/Logs/ManualBugSnapshots/`；Player：可执行文件旁 `ManualBugSnapshots/` | 目录/文件名带 `!!!AI-BUG-REPORT!!!`；必读 `!!!AI_READ_THIS_FIRST!!!.md`（含 `USER_PROBLEM_TAG`） |
+
+试玩者 F12 →「记录log」→ 填 Tag → 保存：走 `DiagTraceManualSnapshot.Save`（先 `PerfTraceRecorder.StampUserObservation`，再导出四轨到上述快照目录）。
 
 ## 字段关联（#142 统一最低日志字段）
 

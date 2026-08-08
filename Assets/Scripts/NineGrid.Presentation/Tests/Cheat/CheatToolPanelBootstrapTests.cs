@@ -64,7 +64,8 @@ namespace NineGrid.Presentation.Tests.Cheat
             CreateHitStub("一键清关选项", first.transform);
             CreateHitStub("战斗加卡选项", first.transform);
             CreateHitStub("无限金币选项", first.transform);
-            CreateHitStub("作弊选项模板 (3)", first.transform);
+            CreateHitStub("回复满血选项", first.transform);
+            CreateHitStub("记录log选项", first.transform);
 
             var second = new GameObject(SecondLayerName, typeof(RectTransform), typeof(Canvas));
             second.transform.SetParent(_panel.transform, false);
@@ -89,6 +90,26 @@ namespace NineGrid.Presentation.Tests.Cheat
             content.transform.SetParent(viewport.transform, false);
             scroll.viewport = viewport.GetComponent<RectTransform>();
             scroll.content = content.GetComponent<RectTransform>();
+
+            var logLayer = new GameObject("第二层_log记录面板", typeof(RectTransform), typeof(Canvas));
+            logLayer.transform.SetParent(_panel.transform, false);
+            logLayer.GetComponent<Canvas>().renderMode = RenderMode.WorldSpace;
+            logLayer.SetActive(false);
+
+            var noticeGo = new GameObject("notice text", typeof(RectTransform));
+            noticeGo.transform.SetParent(logLayer.transform, false);
+            noticeGo.AddComponent<TextMeshProUGUI>().text = "提醒log成功保存的消息框";
+
+            var logInputGo = new GameObject("InputField (TMP)", typeof(RectTransform), typeof(Image), typeof(TMP_InputField));
+            logInputGo.transform.SetParent(logLayer.transform, false);
+            var logInput = logInputGo.GetComponent<TMP_InputField>();
+            var logTextGo = new GameObject("Text", typeof(RectTransform));
+            logTextGo.transform.SetParent(logInputGo.transform, false);
+            logInput.textComponent = logTextGo.AddComponent<TextMeshProUGUI>();
+            logInput.targetGraphic = logInputGo.GetComponent<Image>();
+
+            var saveGo = new GameObject("Button", typeof(RectTransform), typeof(Image), typeof(Button));
+            saveGo.transform.SetParent(logLayer.transform, false);
 
             var controller = _panel.AddComponent<CheatToolPanelController>();
             controller.OpenPanel();
@@ -133,7 +154,10 @@ namespace NineGrid.Presentation.Tests.Cheat
             CreateEmptyPanelAndOpen();
 
             Assert.IsNotNull(FindChild(FirstLayerName), "一级菜单须被自举");
-            Assert.IsNotNull(FindChild(SecondLayerName), "二级菜单须被自举");
+            Assert.IsNotNull(FindChild(SecondLayerName), "二级加卡菜单须被自举");
+            Assert.IsNotNull(FindChild("第二层_log记录面板"), "log 记录层须被自举");
+            Assert.IsNotNull(FindChild("记录log选项"), "记录log 一级按钮须被自举");
+            Assert.IsNotNull(FindChild("回复满血选项"), "回复满血一级按钮须被自举");
         }
 
         [Test]
@@ -149,7 +173,8 @@ namespace NineGrid.Presentation.Tests.Cheat
                 "一键清关选项",
                 "战斗加卡选项",
                 "无限金币选项",
-                "作弊选项模板 (3)",
+                "回复满血选项",
+                "记录log选项",
             };
 
             for (var i = 0; i < names.Length; i++)
@@ -200,6 +225,50 @@ namespace NineGrid.Presentation.Tests.Cheat
             Assert.IsNotNull(scroll, "二级菜单须有 ScrollRect");
             Assert.IsNotNull(scroll.content, "滚动列表须绑定 Content");
             Assert.IsNotNull(scroll.viewport, "滚动列表须绑定 Viewport");
+        }
+
+        [Test]
+        public void Bootstrap_LogLayerGetsGraphicRaycaster_AndStartsInactive()
+        {
+            CreateSceneLikePanelAndOpen();
+            var logLayer = FindChild("第二层_log记录面板");
+            Assert.IsNotNull(logLayer);
+
+            Assert.IsFalse(logLayer.gameObject.activeSelf, "打开面板后 log 记录层应保持关闭");
+
+            var canvas = logLayer.GetComponent<Canvas>();
+            Assert.IsNotNull(canvas, "log 记录层须有 Canvas");
+            Assert.IsNotNull(
+                canvas.GetComponent<GraphicRaycaster>(),
+                "log Canvas 须补 GraphicRaycaster，否则 InputField/Button 点不中");
+
+            Assert.IsNotNull(
+                FindChildRecursive(logLayer, "InputField (TMP)"),
+                "log 层须有 Tag 输入框");
+            Assert.IsNotNull(
+                FindChildRecursive(logLayer, "notice text"),
+                "log 层须有成功提醒文本");
+            Assert.IsNotNull(
+                FindChildRecursive(logLayer, "Button")?.GetComponent<Button>(),
+                "log 层须有保存 Button");
+        }
+
+        [Test]
+        public void OpenLogRecordMenu_ShowsLogLayer_AndCloseRestoresFirst()
+        {
+            var controller = CreateSceneLikePanelAndOpen();
+            controller.OpenLogRecordMenu();
+
+            var first = FindChild(FirstLayerName);
+            var log = FindChild("第二层_log记录面板");
+            Assert.IsNotNull(first);
+            Assert.IsNotNull(log);
+            Assert.IsFalse(first.gameObject.activeSelf);
+            Assert.IsTrue(log.gameObject.activeSelf);
+
+            controller.CloseLogRecordMenu();
+            Assert.IsFalse(log.gameObject.activeSelf);
+            Assert.IsTrue(first.gameObject.activeSelf);
         }
 
         [Test]

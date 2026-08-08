@@ -8,6 +8,7 @@ using NineGrid.Core.Content;
 using NineGrid.Core.Stats;
 using NineGrid.Core.Systems;
 using NineGrid.Flow;
+using NineGrid.Flow.Diagnostics;
 using NineGrid.Flow.Presentation;
 using QFramework;
 using TMPro;
@@ -30,12 +31,18 @@ namespace NineGrid.Presentation.Cheat
         public const string PanelRootName = "作弊工具BG";
         private const string FirstLayerName = "第一层主面板";
         private const string SecondLayerName = "第二层_添加卡菜单";
+        private const string LogSecondLayerName = "第二层_log记录面板";
         private const string CloseButtonName = "关闭按钮";
         private const string ClearNodeButtonName = "一键清关选项";
         private const string AddCardButtonName = "战斗加卡选项";
         private const string CoinsButtonName = "无限金币选项";
-        private const string HealButtonName = "作弊选项模板 (3)";
+        private const string HealButtonName = "回复满血选项";
+        private const string LogRecordButtonName = "记录log选项";
+        private const string LogNoticeTextName = "notice text";
+        private const string LogSaveButtonName = "Button";
+        private const string LogInputFieldName = "InputField (TMP)";
         private const string SecondLayerBlockerName = "第二层命中遮罩";
+        private const string LogSecondLayerBlockerName = "log记录层命中遮罩";
         private const string OptionFontAssetPath = "Assets/Arts/Fronts/DeYiHei/SmileySans-Oblique-3 SDF.asset";
         private const string OptionFontAssetName = "SmileySans-Oblique-3 SDF";
         private const int CoinsPerClick = 999;
@@ -47,14 +54,20 @@ namespace NineGrid.Presentation.Cheat
         private bool _bound;
         private Transform _firstLayer;
         private Transform _secondLayer;
+        private Transform _logLayer;
         private BoxCollider2D _rootBlocker;
 
         private Canvas _secondCanvas;
+        private Canvas _logCanvas;
         private TMP_InputField _inputField;
+        private TMP_InputField _logTagInput;
+        private TMP_Text _logNoticeText;
+        private Button _logSaveButton;
         private ScrollRect _scrollRect;
         private RectTransform _content;
         private TMP_FontAsset _font;
         private TMP_FontAsset _optionFont;
+        private string _logNoticeDefault;
 
         private List<CheatToolCardSearchIndex.CardEntry> _entries;
 
@@ -78,7 +91,11 @@ namespace NineGrid.Presentation.Cheat
                 return;
             }
 
-            if (_secondLayer != null && _secondLayer.gameObject.activeSelf)
+            if (_logLayer != null && _logLayer.gameObject.activeSelf)
+            {
+                CloseLogRecordMenu();
+            }
+            else if (_secondLayer != null && _secondLayer.gameObject.activeSelf)
             {
                 CloseAddCardMenu();
             }
@@ -161,14 +178,20 @@ namespace NineGrid.Presentation.Cheat
                 _firstLayer.gameObject.SetActive(true);
             }
 
-            CloseAddCardMenu();
+            CloseAllSecondLayers();
             Debug.Log("[CheatTool] 作弊面板已打开（F12 切换 / Esc 关闭）。");
         }
 
         public void ClosePanel()
         {
-            CloseAddCardMenu();
+            CloseAllSecondLayers();
             gameObject.SetActive(false);
+        }
+
+        private void CloseAllSecondLayers()
+        {
+            CloseAddCardMenu(restoreFirstLayer: false);
+            CloseLogRecordMenu(restoreFirstLayer: true);
         }
 
         // ============ 一级菜单功能 ============
@@ -236,6 +259,8 @@ namespace NineGrid.Presentation.Cheat
                 return;
             }
 
+            CloseLogRecordMenu(restoreFirstLayer: false);
+
             if (_firstLayer != null)
             {
                 // 打开二级时关掉一级，避免 BoxCollider2D 与 WorldSpace UI 抢点。
@@ -263,6 +288,11 @@ namespace NineGrid.Presentation.Cheat
 
         public void CloseAddCardMenu()
         {
+            CloseAddCardMenu(restoreFirstLayer: true);
+        }
+
+        private void CloseAddCardMenu(bool restoreFirstLayer)
+        {
             if (_inputField != null)
             {
                 _inputField.DeactivateInputField();
@@ -281,9 +311,127 @@ namespace NineGrid.Presentation.Cheat
                 _secondLayer.gameObject.SetActive(false);
             }
 
-            if (gameObject.activeSelf && _firstLayer != null)
+            if (restoreFirstLayer)
+            {
+                RestoreFirstLayerIfNoSecondOpen();
+            }
+        }
+
+        public void OpenLogRecordMenu()
+        {
+            EnsureBindings();
+            if (_logLayer == null)
+            {
+                Debug.LogWarning("[CheatTool] 未找到「" + LogSecondLayerName + "」。");
+                return;
+            }
+
+            CloseAddCardMenu(restoreFirstLayer: false);
+
+            if (_firstLayer != null)
+            {
+                _firstLayer.gameObject.SetActive(false);
+            }
+
+            _logLayer.gameObject.SetActive(true);
+            ResetLogNotice();
+
+            if (_logTagInput != null)
+            {
+                _logTagInput.text = string.Empty;
+                if (_logTagInput.placeholder is TMP_Text placeholder
+                    && (string.IsNullOrWhiteSpace(placeholder.text)
+                        || placeholder.text.StartsWith("Enter text", StringComparison.OrdinalIgnoreCase)))
+                {
+                    placeholder.text = "描述问题，例如：顺劈斧攻击异常";
+                }
+
+                _logTagInput.ActivateInputField();
+                if (EventSystem.current != null)
+                {
+                    EventSystem.current.SetSelectedGameObject(_logTagInput.gameObject);
+                }
+            }
+        }
+
+        public void CloseLogRecordMenu()
+        {
+            CloseLogRecordMenu(restoreFirstLayer: true);
+        }
+
+        private void CloseLogRecordMenu(bool restoreFirstLayer)
+        {
+            if (_logTagInput != null)
+            {
+                _logTagInput.DeactivateInputField();
+                if (EventSystem.current != null
+                    && EventSystem.current.currentSelectedGameObject == _logTagInput.gameObject)
+                {
+                    EventSystem.current.SetSelectedGameObject(null);
+                }
+            }
+
+            if (_logLayer != null && _logLayer.gameObject.activeSelf)
+            {
+                _logLayer.gameObject.SetActive(false);
+            }
+
+            if (restoreFirstLayer)
+            {
+                RestoreFirstLayerIfNoSecondOpen();
+            }
+        }
+
+        private void RestoreFirstLayerIfNoSecondOpen()
+        {
+            if (!gameObject.activeSelf || _firstLayer == null)
+            {
+                return;
+            }
+
+            var addOpen = _secondLayer != null && _secondLayer.gameObject.activeSelf;
+            var logOpen = _logLayer != null && _logLayer.gameObject.activeSelf;
+            if (!addOpen && !logOpen)
             {
                 _firstLayer.gameObject.SetActive(true);
+            }
+        }
+
+        private void SaveLogSnapshot()
+        {
+            EnsureBindings();
+            var tag = _logTagInput != null ? _logTagInput.text : string.Empty;
+            if (string.IsNullOrWhiteSpace(tag))
+            {
+                SetLogNotice("请先填写问题 Tag（例如：顺劈斧攻击异常），再点保存。");
+                return;
+            }
+
+            var result = DiagTraceManualSnapshot.Save(tag);
+            SetLogNotice(result.Message);
+            if (result.Success)
+            {
+                Debug.Log("[CheatTool] 手动 log 快照已保存：" + result.FolderPath);
+            }
+        }
+
+        private void ResetLogNotice()
+        {
+            if (_logNoticeText == null)
+            {
+                return;
+            }
+
+            _logNoticeText.text = string.IsNullOrEmpty(_logNoticeDefault)
+                ? string.Empty
+                : _logNoticeDefault;
+        }
+
+        private void SetLogNotice(string message)
+        {
+            if (_logNoticeText != null)
+            {
+                _logNoticeText.text = message ?? string.Empty;
             }
         }
 
@@ -348,6 +496,7 @@ namespace NineGrid.Presentation.Cheat
 
             _firstLayer = FindChild(FirstLayerName);
             _secondLayer = FindChild(SecondLayerName);
+            _logLayer = FindChild(LogSecondLayerName);
             if (_firstLayer == null)
             {
                 Debug.LogWarning("[CheatTool] 未找到「" + FirstLayerName + "」。");
@@ -358,37 +507,98 @@ namespace NineGrid.Presentation.Cheat
             BindHitButton(AddCardButtonName, OpenAddCardMenu);
             BindHitButton(CoinsButtonName, AddCoins);
             BindHitButton(HealButtonName, HealAvatarFull);
+            BindHitButton(LogRecordButtonName, OpenLogRecordMenu);
 
-            if (_secondLayer == null)
+            if (_secondLayer != null)
             {
-                Debug.LogWarning("[CheatTool] 未找到「" + SecondLayerName + "」。");
-                return;
-            }
+                EnsureSecondLayerUiInteractable();
+                EnsureSecondLayerPointerBlocker(_secondLayer, SecondLayerBlockerName);
 
-            EnsureSecondLayerUiInteractable();
-            EnsureSecondLayerPointerBlocker();
+                _inputField = _secondLayer.GetComponentInChildren<TMP_InputField>(true);
+                _scrollRect = _secondLayer.GetComponentInChildren<ScrollRect>(true);
+                if (_scrollRect != null)
+                {
+                    _content = _scrollRect.content;
+                    EnsureContentLayout();
+                }
 
-            _inputField = _secondLayer.GetComponentInChildren<TMP_InputField>(true);
-            _scrollRect = _secondLayer.GetComponentInChildren<ScrollRect>(true);
-            if (_scrollRect != null)
-            {
-                _content = _scrollRect.content;
-                EnsureContentLayout();
-            }
+                if (_inputField != null)
+                {
+                    _inputField.onValueChanged.RemoveAllListeners();
+                    _inputField.onValueChanged.AddListener(_ => RefreshResultList());
+                }
+                else
+                {
+                    Debug.LogWarning("[CheatTool] 未找到二级菜单输入框（InputField (TMP)）。");
+                }
 
-            if (_inputField != null)
-            {
-                _inputField.onValueChanged.RemoveAllListeners();
-                _inputField.onValueChanged.AddListener(_ => RefreshResultList());
+                if (_secondLayer.gameObject.activeSelf)
+                {
+                    _secondLayer.gameObject.SetActive(false);
+                }
             }
             else
             {
-                Debug.LogWarning("[CheatTool] 未找到二级菜单输入框（InputField (TMP)）。");
+                Debug.LogWarning("[CheatTool] 未找到「" + SecondLayerName + "」。");
             }
 
-            if (_secondLayer.gameObject.activeSelf)
+            BindLogRecordLayer();
+        }
+
+        private void BindLogRecordLayer()
+        {
+            if (_logLayer == null)
             {
-                _secondLayer.gameObject.SetActive(false);
+                Debug.LogWarning("[CheatTool] 未找到「" + LogSecondLayerName + "」。");
+                return;
+            }
+
+            EnsureLogLayerUiInteractable();
+            EnsureSecondLayerPointerBlocker(_logLayer, LogSecondLayerBlockerName);
+
+            var notice = FindChildRecursive(_logLayer, LogNoticeTextName);
+            _logNoticeText = notice != null ? notice.GetComponent<TMP_Text>() : null;
+            if (_logNoticeText != null)
+            {
+                _logNoticeDefault = _logNoticeText.text;
+            }
+            else
+            {
+                Debug.LogWarning("[CheatTool] 未找到 log 成功提醒文本「" + LogNoticeTextName + "」。");
+            }
+
+            var inputTf = FindChildRecursive(_logLayer, LogInputFieldName);
+            _logTagInput = inputTf != null
+                ? inputTf.GetComponent<TMP_InputField>()
+                : _logLayer.GetComponentInChildren<TMP_InputField>(true);
+            if (_logTagInput == null)
+            {
+                Debug.LogWarning("[CheatTool] 未找到 log 面板 Tag 输入框。");
+            }
+
+            var saveTf = FindChildRecursive(_logLayer, LogSaveButtonName);
+            if (saveTf == null)
+            {
+                // 兼容场景若已改名为「保存按钮」
+                saveTf = FindChildRecursive(_logLayer, "保存按钮");
+            }
+
+            _logSaveButton = saveTf != null
+                ? saveTf.GetComponent<Button>()
+                : _logLayer.GetComponentInChildren<Button>(true);
+            if (_logSaveButton != null)
+            {
+                _logSaveButton.onClick.RemoveAllListeners();
+                _logSaveButton.onClick.AddListener(SaveLogSnapshot);
+            }
+            else
+            {
+                Debug.LogWarning("[CheatTool] 未找到 log 面板保存按钮（Button / 保存按钮）。");
+            }
+
+            if (_logLayer.gameObject.activeSelf)
+            {
+                _logLayer.gameObject.SetActive(false);
             }
         }
 
@@ -397,7 +607,9 @@ namespace NineGrid.Presentation.Cheat
         /// </summary>
         private void EnsureMinimalHierarchyIfEmpty()
         {
-            if (FindChild(FirstLayerName) != null && FindChild(SecondLayerName) != null)
+            if (FindChild(FirstLayerName) != null
+                && FindChild(SecondLayerName) != null
+                && FindChild(LogSecondLayerName) != null)
             {
                 return;
             }
@@ -411,6 +623,17 @@ namespace NineGrid.Presentation.Cheat
                 CreateHitButtonStub(AddCardButtonName, first);
                 CreateHitButtonStub(CoinsButtonName, first);
                 CreateHitButtonStub(HealButtonName, first);
+                CreateHitButtonStub(LogRecordButtonName, first);
+            }
+            else if (FindChild(LogRecordButtonName) == null && FindChild(FirstLayerName) != null)
+            {
+                CreateHitButtonStub(LogRecordButtonName, FindChild(FirstLayerName));
+            }
+
+            // 兼容旧自举名「作弊选项模板 (3)」：测试/旧场景若仍用旧名，补一个回复满血别名桩
+            if (FindChild(HealButtonName) == null && FindChild("作弊选项模板 (3)") != null)
+            {
+                FindChild("作弊选项模板 (3)").name = HealButtonName;
             }
 
             if (FindChild(SecondLayerName) == null)
@@ -428,6 +651,24 @@ namespace NineGrid.Presentation.Cheat
                 BuildFallbackInputField(second);
                 BuildFallbackScrollView(second);
                 secondGo.SetActive(false);
+            }
+
+            if (FindChild(LogSecondLayerName) == null)
+            {
+                var logGo = new GameObject(LogSecondLayerName, typeof(RectTransform), typeof(Canvas));
+                var logRect = logGo.GetComponent<RectTransform>();
+                logRect.SetParent(transform, false);
+                logRect.sizeDelta = new Vector2(3f, 3f);
+
+                var logCanvas = logGo.GetComponent<Canvas>();
+                logCanvas.renderMode = RenderMode.WorldSpace;
+                logCanvas.worldCamera = Camera.main;
+                logCanvas.sortingOrder = 9999;
+
+                BuildFallbackLogNotice(logRect);
+                BuildFallbackLogInputField(logRect);
+                BuildFallbackLogSaveButton(logRect);
+                logGo.SetActive(false);
             }
         }
 
@@ -483,9 +724,39 @@ namespace NineGrid.Presentation.Cheat
             }
         }
 
-        private void EnsureSecondLayerPointerBlocker()
+        private void EnsureLogLayerUiInteractable()
         {
-            var existing = FindChildRecursive(_secondLayer, SecondLayerBlockerName);
+            if (_logLayer == null)
+            {
+                return;
+            }
+
+            _logCanvas = _logLayer.GetComponent<Canvas>();
+            if (_logCanvas == null)
+            {
+                _logCanvas = _logLayer.gameObject.AddComponent<Canvas>();
+                _logCanvas.renderMode = RenderMode.WorldSpace;
+            }
+
+            if (_logCanvas.renderMode == RenderMode.WorldSpace && _logCanvas.worldCamera == null)
+            {
+                _logCanvas.worldCamera = Camera.main;
+            }
+
+            if (_logCanvas.GetComponent<GraphicRaycaster>() == null)
+            {
+                _logCanvas.gameObject.AddComponent<GraphicRaycaster>();
+            }
+        }
+
+        private void EnsureSecondLayerPointerBlocker(Transform layer, string blockerName)
+        {
+            if (layer == null)
+            {
+                return;
+            }
+
+            var existing = FindChildRecursive(layer, blockerName);
             Transform blocker;
             if (existing != null)
             {
@@ -493,9 +764,9 @@ namespace NineGrid.Presentation.Cheat
             }
             else
             {
-                var go = new GameObject(SecondLayerBlockerName);
+                var go = new GameObject(blockerName);
                 blocker = go.transform;
-                blocker.SetParent(_secondLayer, false);
+                blocker.SetParent(layer, false);
                 blocker.SetAsFirstSibling();
                 blocker.localPosition = Vector3.zero;
                 blocker.localScale = Vector3.one;
@@ -507,7 +778,7 @@ namespace NineGrid.Presentation.Cheat
                 box = blocker.gameObject.AddComponent<BoxCollider2D>();
             }
 
-            var rect = _secondLayer as RectTransform;
+            var rect = layer as RectTransform;
             if (rect != null)
             {
                 box.size = rect.sizeDelta;
@@ -610,6 +881,81 @@ namespace NineGrid.Presentation.Cheat
             input.textViewport = areaRect;
             input.textComponent = text;
             input.placeholder = placeholder;
+        }
+
+        private void BuildFallbackLogNotice(Transform parent)
+        {
+            var noticeGo = new GameObject(LogNoticeTextName, typeof(RectTransform));
+            var notice = noticeGo.AddComponent<TextMeshProUGUI>();
+            notice.rectTransform.SetParent(parent, false);
+            notice.rectTransform.sizeDelta = new Vector2(160f, 40f);
+            notice.rectTransform.anchoredPosition = new Vector2(0f, -1f);
+            notice.font = ResolveFont();
+            notice.fontSize = 14f;
+            notice.alignment = TextAlignmentOptions.Center;
+            notice.text = "提醒log成功保存的消息框";
+            notice.raycastTarget = false;
+        }
+
+        private void BuildFallbackLogInputField(Transform parent)
+        {
+            var inputGo = new GameObject(LogInputFieldName, typeof(RectTransform), typeof(Image));
+            var inputRect = inputGo.GetComponent<RectTransform>();
+            inputRect.SetParent(parent, false);
+            inputRect.sizeDelta = new Vector2(160f, 30f);
+            inputRect.anchoredPosition = new Vector2(0f, 1.0f);
+
+            var textArea = new GameObject("Text Area", typeof(RectTransform));
+            var areaRect = textArea.GetComponent<RectTransform>();
+            areaRect.SetParent(inputRect, false);
+            Stretch(areaRect);
+
+            var textGo = new GameObject("Text", typeof(RectTransform));
+            var text = textGo.AddComponent<TextMeshProUGUI>();
+            text.rectTransform.SetParent(areaRect, false);
+            Stretch(text.rectTransform);
+            text.font = ResolveFont();
+            text.fontSize = 16f;
+            text.raycastTarget = false;
+
+            var placeholderGo = new GameObject("Placeholder", typeof(RectTransform));
+            var placeholder = placeholderGo.AddComponent<TextMeshProUGUI>();
+            placeholder.rectTransform.SetParent(areaRect, false);
+            Stretch(placeholder.rectTransform);
+            placeholder.text = "描述问题，例如：顺劈斧攻击异常";
+            placeholder.font = ResolveFont();
+            placeholder.fontSize = 16f;
+            placeholder.fontStyle = FontStyles.Italic;
+            placeholder.color = new Color(0.6f, 0.6f, 0.65f);
+            placeholder.raycastTarget = false;
+
+            var input = inputGo.AddComponent<TMP_InputField>();
+            input.targetGraphic = inputGo.GetComponent<Image>();
+            input.textViewport = areaRect;
+            input.textComponent = text;
+            input.placeholder = placeholder;
+        }
+
+        private void BuildFallbackLogSaveButton(Transform parent)
+        {
+            var buttonGo = new GameObject(LogSaveButtonName, typeof(RectTransform), typeof(Image));
+            var buttonRect = buttonGo.GetComponent<RectTransform>();
+            buttonRect.SetParent(parent, false);
+            buttonRect.sizeDelta = new Vector2(120f, 30f);
+            buttonRect.anchoredPosition = new Vector2(0f, 0.2f);
+
+            var labelGo = new GameObject("Text (TMP)", typeof(RectTransform));
+            var label = labelGo.AddComponent<TextMeshProUGUI>();
+            label.rectTransform.SetParent(buttonRect, false);
+            Stretch(label.rectTransform);
+            label.font = ResolveFont();
+            label.fontSize = 16f;
+            label.alignment = TextAlignmentOptions.Center;
+            label.text = "记录log";
+            label.raycastTarget = false;
+
+            var button = buttonGo.AddComponent<Button>();
+            button.targetGraphic = buttonGo.GetComponent<Image>();
         }
 
         private void BuildFallbackScrollView(Transform parent)
