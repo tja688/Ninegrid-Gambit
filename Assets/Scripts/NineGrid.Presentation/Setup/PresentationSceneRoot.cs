@@ -102,6 +102,9 @@ namespace NineGrid.Presentation.Setup
         /// <summary>EditMode / Pipeline 装配后可显式再接线。</summary>
         public void WireHosts()
         {
+            // Player preferences are persisted separately from the bundled author defaults.
+            // Registering here re-applies them after the runtime MMSoundManager host is available.
+            PlayerAudioSettingsSystem.EnsureRegistered();
             // 音频跨主菜单到跑图保持应用会话；先注册唯一期望音乐 System，再绑定流程壳。
             MusicSystem.EnsureRegistered();
             if (inBattle != null)
