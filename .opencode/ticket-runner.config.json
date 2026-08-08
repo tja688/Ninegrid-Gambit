@@ -6,7 +6,7 @@
   "promptTemplate": "Implement GitHub issue #{number}.",
   "strictClose": false,
   "readyLabel": "ready-for-agent",
-  "defaultParent": 114,
+  "specTitlePrefix": "Spec:",
   "ticketBudgetMinutes": 30,
   "stdoutIdleMinutes": 10,
   "parseErrorLimit": 8,

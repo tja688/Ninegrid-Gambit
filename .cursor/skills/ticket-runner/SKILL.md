@@ -54,12 +54,14 @@ powershell -NoProfile -ExecutionPolicy Bypass -File ".cursor/skills/ticket-runne
 
 | Flag / 配置 | Behavior |
 |-------------|----------|
-| `--parent <n>` | 父 Spec 的 task list / tracked children（如 `#114` → `#115`…） |
-| `defaultParent`（项目 config） | 未传 `--parent` / `--issues` / `--label` 时使用 |
+| （默认） | 自动发现**开放**且标题以 `Spec:` 开头（`specTitlePrefix`）的 Spec，及其**未关闭**子票 |
+| `--parent <n>` | 显式指定父 Spec；子票来源见下 |
 | `--issues a,b,c` | 显式顺序 |
-| `--label <name>` | 无 parent 时的回退；默认 `ready-for-agent` |
+| `--label <name>` | 显式按标签拉票（如 `ready-for-agent`）；不再作为无参默认回退 |
 
-默认队列语义：父 Spec 之后的子票按 task list 序号一路串行（不是跳号猜 issue）。
+**子票解析顺序**（合并去重）：父 Spec body 的 task list（`- [ ] #N`）→ GitHub `trackedIssues` → 子票 body 里的 `## Parent` / `Part of #<parent>`。
+
+**多 Spec 冲突**：若多个开放 Spec 均有 pending 子票 → `plan`/`run` 退出码 1 并列出候选，**由用户选 `--parent`**；仅一个活跃 Spec 时自动选用，无需追问。
 
 ## 批次模型
 
@@ -68,14 +70,14 @@ powershell -NoProfile -ExecutionPolicy Bypass -File ".cursor/skills/ticket-runne
 - 优先级：`--model` > 项目 `.cursor/ticket-runner.config.json` > skill `config.example.json` > 内置默认
 
 ```powershell
-# 默认：读 config.defaultParent，全队列串行
+# 默认：自动发现唯一活跃 Spec + 全队列串行
 ... ticket-runner.ps1 run
 
-# 显式父 Spec
-... ticket-runner.ps1 run --parent 114
+# 显式父 Spec（多 Spec 冲突时）
+... ticket-runner.ps1 run --parent 164
 
 # 整批指定模型（仅用户明确要求时）
-... ticket-runner.ps1 run --parent 114 --model cursor-grok-4.5-high
+... ticket-runner.ps1 run --model cursor-grok-4.5-high
 ```
 
 ## 健壮度（监督循环）
@@ -111,7 +113,7 @@ Escape-hatch 会另开一个 one-shot `agent -p`，要求写入 `intervention-de
 
 | 项 | 默认 |
 |----|------|
-| 队列 | `config.defaultParent`（或用户给的 `--parent`）的子票 task list，从第一张开票起全队列 |
+| 队列 | 自动发现唯一开放 `Spec:` 及其 pending 子票；多 Spec 冲突时停并让用户 `--parent` |
 | 跑法 | `run` **全队列串行**（不用 `--once`） |
 | 模型 | 配置默认 `cursor-grok-4.5-high` |
 
@@ -119,7 +121,7 @@ Escape-hatch 会另开一个 one-shot `agent -p`，要求写入 `intervention-de
 
 - 用户本轮点名了模型（`--model` / 口述 slug）
 - 用户对落地顺序或范围有特殊要求（`--once`、`--from`、`--issues`、只要某几张等）
-- `doctor` 失败，或 config 无 `defaultParent` 且无法解析队列
+- `doctor` 失败，或 Spec 自动发现失败 / 多 Spec 冲突需用户选 `--parent`
 
 ```powershell
 ... doctor
@@ -131,7 +133,7 @@ Escape-hatch 会另开一个 one-shot `agent -p`，要求写入 `intervention-de
 
 1. **先报默认模型**（见上）；若用户覆盖了批次模型则一并写明。
 2. `doctor`；失败则停并报告，成功则继续。
-3. 无上述例外时：**直接** `plan` → `run` 全队列（读 `defaultParent` 或用户给的 `--parent`），不多问。
+3. 无上述例外时：**直接** `plan` → `run` 全队列（自动发现 Spec 或用户给的 `--parent`），不多问。
 4. 有例外时：按用户约束组 flag，再 `plan` → `run`。
 5. 回报 exit code 与 `runs/...` 路径。
 6. **禁止**在本 chat 落地业务 issue。

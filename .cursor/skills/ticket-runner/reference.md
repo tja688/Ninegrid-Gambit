@@ -17,8 +17,9 @@ Live check (requires CLI login):
 
 ## Default queue
 
-Project `.cursor/ticket-runner.config.json` may set `defaultParent` (e.g. `114`).  
-Bare `plan` / `run` then resolve that Spec’s child task list (starting at the first child, typically parent+1) and run the **full** open queue serially. `--once` / `--model` / `--issues` are opt-in overrides only.
+Bare `plan` / `run` (no `--parent` / `--issues` / `--label`) auto-discovers **open** issues whose title starts with `specTitlePrefix` (default `Spec:`), then resolves pending child tickets. Child order: parent task list → `trackedIssues` → body `## Parent` / `Part of #N` links.
+
+If **multiple** open Specs have pending children, exit 1 and list candidates; user must pass `--parent`. If exactly one active Spec, use it silently. `--label` is explicit-only (not a silent fallback). `--once` / `--model` / `--issues` remain opt-in overrides.
 
 ## Supervised worker
 

@@ -68,11 +68,11 @@ Commands:
   doctor    Check gh / Cursor agent / auth / default model
   help      This help
 
-Queue sources (pick one; else config.defaultParent, else readyLabel):
-  --parent <n>           Task-list / tracked children of parent Spec n
+Queue sources (pick one; else auto-discover open Spec: + children):
+  --parent <n>           Task-list / tracked / body-linked children of Spec n
   --issues <a,b,c>       Explicit issue numbers (order preserved)
-  --label <name>         Open issues with label (default: ready-for-agent)
-  defaultParent (config) Used when no --parent/--issues/--label is passed
+  --label <name>         Open issues with label (explicit opt-in)
+  (default)              Open issues titled Spec:* with pending child tickets
 
 Run options:
   --once                 Only the first pending ticket (opt-in; default is full queue)
@@ -196,7 +196,7 @@ function Get-DefaultConfig {
         agentPath                   = ""
         strictClose                 = $false
         readyLabel                  = "ready-for-agent"
-        defaultParent               = $null
+        specTitlePrefix             = "Spec:"
         force                       = $true
         trust                       = $true
         outputFormat                = "stream-json"
@@ -491,6 +491,174 @@ function Get-IssueMeta {
     Invoke-GhJson @("issue", "view", "$Number", "--json", "number,title,state,labels")
 }
 
+function Add-UniqueIssueNumbers {
+    param(
+        [System.Collections.Generic.List[int]] $Target,
+        [hashtable] $Seen,
+        [int[]] $Numbers
+    )
+    if (-not $Numbers) { return }
+    foreach ($n in $Numbers) {
+        $num = [int]$n
+        if (-not $Seen.ContainsKey($num)) {
+            $Seen[$num] = $true
+            $Target.Add($num) | Out-Null
+        }
+    }
+}
+
+function Get-ParentLinkIndex {
+    $index = @{}
+    $list = Invoke-GhJson @("issue", "list", "--state", "open", "--limit", "200", "--json", "number,body")
+    if (-not $list) { return $index }
+    foreach ($it in $list) {
+        $body = [string]$it.body
+        if ([string]::IsNullOrWhiteSpace($body)) { continue }
+        $parents = New-Object System.Collections.Generic.List[int]
+        foreach ($m in [regex]::Matches($body, '(?m)^## Parent\s*\r?\n\s*#(\d+)\b')) {
+            $parents.Add([int]$m.Groups[1].Value) | Out-Null
+        }
+        foreach ($m in [regex]::Matches($body, '(?m)^Part of\s+#(\d+)\b')) {
+            $parents.Add([int]$m.Groups[1].Value) | Out-Null
+        }
+        $childNum = [int]$it.number
+        foreach ($p in ($parents | Select-Object -Unique)) {
+            if (-not $index.ContainsKey($p)) {
+                $index[$p] = New-Object System.Collections.Generic.List[int]
+            }
+            $index[$p].Add($childNum) | Out-Null
+        }
+    }
+    foreach ($k in @($index.Keys)) {
+        $index[$k] = @($index[$k] | Sort-Object)
+    }
+    return $index
+}
+
+function Get-ParentLinkedIssueNumbers {
+    param([int] $Parent, [hashtable] $ParentLinkIndex = $null)
+    if ($ParentLinkIndex -and $ParentLinkIndex.ContainsKey($Parent)) {
+        return @($ParentLinkIndex[$Parent])
+    }
+    $nums = New-Object System.Collections.Generic.List[int]
+    $list = Invoke-GhJson @("issue", "list", "--state", "open", "--limit", "200", "--json", "number,body")
+    if (-not $list) { return @() }
+    $parentHdr = "(?m)^## Parent\s*\r?\n\s*#$Parent\b"
+    $partOf = "(?m)^Part of\s+#$Parent\b"
+    foreach ($it in $list) {
+        $body = [string]$it.body
+        if ($body -match $parentHdr -or $body -match $partOf) {
+            $nums.Add([int]$it.number) | Out-Null
+        }
+    }
+    return @($nums | Sort-Object)
+}
+
+function Get-SpecChildIssueNumbers {
+    param(
+        [int] $Parent,
+        [hashtable] $ParentLinkIndex = $null
+    )
+    $ordered = New-Object System.Collections.Generic.List[int]
+    $seen = @{}
+
+    $bodyObj = Invoke-GhJson @("issue", "view", "$Parent", "--json", "body")
+    Add-UniqueIssueNumbers -Target $ordered -Seen $seen -Numbers (Get-TaskListIssueNumbers -Body $bodyObj.body)
+    Add-UniqueIssueNumbers -Target $ordered -Seen $seen -Numbers (Get-TrackedIssueNumbers -Parent $Parent)
+    Add-UniqueIssueNumbers -Target $ordered -Seen $seen -Numbers (Get-ParentLinkedIssueNumbers -Parent $Parent -ParentLinkIndex $ParentLinkIndex)
+
+    return @($ordered)
+}
+
+function Get-OpenSpecCandidates {
+    param([string] $TitlePrefix = "Spec:")
+    $list = Invoke-GhJson @("issue", "list", "--state", "open", "--limit", "100", "--json", "number,title,state,labels")
+    if (-not $list) { return @() }
+    return @($list | Where-Object { [string]$_.title.StartsWith($TitlePrefix) })
+}
+
+function Resolve-ActiveSpecDiscovery {
+    param([string] $SpecTitlePrefix = "Spec:")
+
+    $specs = Get-OpenSpecCandidates -TitlePrefix $SpecTitlePrefix
+    if ($specs.Count -eq 0) {
+        return [pscustomobject]@{
+            status = "none"
+            reason = "no_open_spec"
+            prefix = $SpecTitlePrefix
+            active = @()
+        }
+    }
+
+    $linkIndex = Get-ParentLinkIndex
+    $active = @()
+    foreach ($spec in $specs) {
+        $parentNum = [int]$spec.number
+        $nums = Get-SpecChildIssueNumbers -Parent $parentNum -ParentLinkIndex $linkIndex
+        if ($nums.Count -eq 0) { continue }
+
+        $openChildren = @()
+        foreach ($n in $nums) {
+            $meta = Get-IssueMeta -Number $n
+            if ([string]$meta.state -ne "CLOSED") { $openChildren += [int]$n }
+        }
+        if ($openChildren.Count -gt 0) {
+            $active += [pscustomobject]@{
+                number       = $parentNum
+                title        = [string]$spec.title
+                openChildren = $openChildren
+            }
+        }
+    }
+
+    if ($active.Count -eq 0) {
+        return [pscustomobject]@{
+            status = "none"
+            reason = "no_pending_children"
+            prefix = $SpecTitlePrefix
+            openSpecs = @($specs | ForEach-Object { [int]$_.number })
+            active = @()
+        }
+    }
+    if ($active.Count -eq 1) {
+        return [pscustomobject]@{
+            status = "ok"
+            parent = $active[0].number
+            title  = $active[0].title
+            active = $active
+        }
+    }
+    return [pscustomobject]@{
+        status = "conflict"
+        prefix = $SpecTitlePrefix
+        active = $active
+    }
+}
+
+function Write-DiscoveryConflict {
+    param($Discovery, [bool] $AsJson)
+    if ($AsJson) {
+        $payload = [ordered]@{
+            error      = "spec_conflict"
+            prefix     = $Discovery.prefix
+            candidates = @($Discovery.active | ForEach-Object {
+                [ordered]@{
+                    parent       = $_.number
+                    title        = $_.title
+                    openChildren = $_.openChildren
+                }
+            })
+        }
+        [Console]::Out.WriteLine(($payload | ConvertTo-Json -Depth 6))
+        return
+    }
+    Write-Host "Multiple open Spec issues have pending child tickets. Use --parent <n>:" -ForegroundColor Red
+    foreach ($c in $Discovery.active) {
+        $kids = ($c.openChildren | ForEach-Object { "#$_" }) -join ", "
+        Write-Host ("  #{0}  {1}  pending: {2}" -f $c.number, $c.title, $kids) -ForegroundColor Yellow
+    }
+}
+
 function Resolve-Queue {
     param(
         [Nullable[int]] $Parent,
@@ -504,12 +672,10 @@ function Resolve-Queue {
         foreach ($n in $Issues) { $ordered.Add([int]$n) | Out-Null }
     }
     elseif ($Parent) {
-        $bodyObj = Invoke-GhJson @("issue", "view", "$Parent", "--json", "body")
-        $fromTask = Get-TaskListIssueNumbers -Body $bodyObj.body
-        $fromTracked = Get-TrackedIssueNumbers -Parent $Parent
-        if ($fromTask.Count -gt 0) { foreach ($n in $fromTask) { $ordered.Add($n) | Out-Null } }
-        elseif ($fromTracked.Count -gt 0) { foreach ($n in $fromTracked) { $ordered.Add($n) | Out-Null } }
-        else { throw "Parent #$Parent has no task-list children (#N) and no trackedIssues." }
+        foreach ($n in (Get-SpecChildIssueNumbers -Parent $Parent)) { $ordered.Add($n) | Out-Null }
+        if ($ordered.Count -eq 0) {
+            throw "Parent #$Parent has no child tickets (task list, trackedIssues, or body ## Parent / Part of links)."
+        }
     }
     elseif ($Label) {
         $list = Invoke-GhJson @("issue", "list", "--state", "open", "--label", $Label, "--limit", "100", "--json", "number,title")
@@ -1227,11 +1393,21 @@ function Invoke-Doctor {
 }
 
 function Invoke-Plan {
-    param($Queue, [bool] $AsJson, [string] $Model)
+    param($Queue, [bool] $AsJson, [string] $Model, $Discovery = $null)
     if ($AsJson) {
         $payload = [ordered]@{ model = $Model; queue = $Queue }
+        if ($Discovery) {
+            $payload.discovery = [ordered]@{
+                status = $Discovery.status
+                parent = $Discovery.parent
+                title  = $Discovery.title
+            }
+        }
         [Console]::Out.WriteLine(($payload | ConvertTo-Json -Depth 6))
         return
+    }
+    if ($Discovery -and $Discovery.status -eq "ok") {
+        Write-Host "discovered parent: #$($Discovery.parent) — $($Discovery.title)" -ForegroundColor Cyan
     }
     Write-Host "batch model: $Model"
     if (-not $Queue -or $Queue.Count -eq 0) { Write-Host "queue: (empty)"; return }
@@ -1431,13 +1607,27 @@ function Main {
     if ($fromRaw) { $from = [int]$fromRaw }
     $issues = @(Parse-IssueList $issuesRaw)
 
+    $discovery = $null
     if (-not $label -and -not $parent -and $issues.Count -eq 0) {
-        $cfgParent = $config.defaultParent
-        if ($null -ne $cfgParent -and "$cfgParent" -ne "" -and [int]$cfgParent -gt 0) {
-            $parent = [int]$cfgParent
-        } else {
-            $label = [string]$config.readyLabel
+        $prefix = [string]$config.specTitlePrefix
+        if ([string]::IsNullOrWhiteSpace($prefix)) { $prefix = "Spec:" }
+        $discovery = Resolve-ActiveSpecDiscovery -SpecTitlePrefix $prefix
+        if ($discovery.status -eq "conflict") {
+            Write-DiscoveryConflict -Discovery $discovery -AsJson $asJson
+            return 1
         }
+        if ($discovery.status -eq "none") {
+            $hint = switch ($discovery.reason) {
+                "no_open_spec" { "No open issues titled '$prefix*'." }
+                "no_pending_children" {
+                    $nums = @($discovery.openSpecs | ForEach-Object { "#$_" }) -join ", "
+                    "Open Spec(s) $nums have no pending child tickets."
+                }
+                default { "Could not resolve an active Spec queue." }
+            }
+            throw "$hint Use --parent <n>, --issues a,b,c, or --label <name>."
+        }
+        $parent = [int]$discovery.parent
     }
     if ($parent -or $issues.Count -gt 0) { $label = $null }
 
@@ -1449,17 +1639,17 @@ function Main {
             "status" { return Invoke-Status -RepoRoot $repoRoot -AsJson $asJson }
             "plan" {
                 $queue = Resolve-Queue -Parent $parent -Issues $issues -Label $label -From $from
-                Invoke-Plan -Queue $queue -AsJson $asJson -Model $effectiveModel
+                Invoke-Plan -Queue $queue -AsJson $asJson -Model $effectiveModel -Discovery $discovery
                 return 0
             }
             "run" {
                 if ($dryRun) {
                     $queue = Resolve-Queue -Parent $parent -Issues $issues -Label $label -From $from
-                    Invoke-Plan -Queue $queue -AsJson $asJson -Model $effectiveModel
+                    Invoke-Plan -Queue $queue -AsJson $asJson -Model $effectiveModel -Discovery $discovery
                     return 0
                 }
                 $queue = Resolve-Queue -Parent $parent -Issues $issues -Label $label -From $from
-                Invoke-Plan -Queue $queue -AsJson:$false -Model $effectiveModel
+                Invoke-Plan -Queue $queue -AsJson:$false -Model $effectiveModel -Discovery $discovery
                 $strictOverride = $null
                 if ($strictClose) { $strictOverride = $true }
                 if ($continueIfOpen) { $strictOverride = $false }
