@@ -154,8 +154,10 @@ namespace NineGrid.Flow.Diagnostics
         public const string MusicStateBackendFailure = "MusicStateBackendFailure";
         /// <summary>显式停止音乐。</summary>
         public const string MusicStateStopped = "MusicStateStopped";
-        /// <summary>旧代数回调被忽略。</summary>
-        public const string MusicStateStaleCallback = "MusicStateStaleCallback";
+         /// <summary>旧代数回调被忽略。</summary>
+         public const string MusicStateStaleCallback = "MusicStateStaleCallback";
+        /// <summary>Music 轨存在未被当前/淡出/Editor Preview 认领的来源。</summary>
+        public const string MusicOverlapAnomaly = "MusicOverlapAnomaly";
 
         /// <summary>卡牌边沿尘雾 Place 喷发。</summary>
         public const string DustPlace = "DustPlace";

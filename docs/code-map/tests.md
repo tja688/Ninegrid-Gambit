@@ -3,7 +3,8 @@
 > **开发冲刺期（2026-08）**：仓库内原有的 EditMode / PlayMode 自动化测试套件已**整体清空**（含 `NineGrid.Core.Tests`、`NineGrid.Presentation.Tests`、`NineGrid.DevTest.Tests`、`NineGrid.LivingUI.Tests`）。这是有意的阶段性决定，**不要**从 git 历史或旧文档中「找回来」、补全或按旧 `tests.md` 地图复刻护栏。
 >
 > 若你当前任务需要写测试，可自行新增程序集与用例，不受本条限制；本页只描述**当下默认验证方式**。
-
+>
+> **#172 起恢复最小测试程序集**：`NineGrid.Presentation.Tests`（`Assets/Scripts/NineGrid.Presentation/Tests/`，Editor-only）新增 `MusicDiagnosticsBehaviorTests`（Music 轨审计、`MusicOverlapAnomaly`、`Stop Unknown Music`、BGM Preview 暂停/恢复/单来源）。跑法：`unity command run_tests --mode EditMode --filter NineGrid.Presentation.Tests --filter_type assembly --project-path "<repo>"`。
 ## 默认验证门槛（普通实施票）
 
 1. **硬要求**：`unity command recompile` 后 Console 无**由本票改动导致**的新增 Error / Exception / Assert

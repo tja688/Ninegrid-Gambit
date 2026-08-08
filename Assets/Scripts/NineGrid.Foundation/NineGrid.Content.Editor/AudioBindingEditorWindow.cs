@@ -94,6 +94,10 @@ namespace NineGrid.Content.Editor
         private const string MenuPath = "NineGrid/音频/声音绑定调音工作台";
 
         private readonly AudioBindingEditorSession session = new AudioBindingEditorSession();
+        private readonly MusicBindingEditorSession musicSession = new MusicBindingEditorSession();
+        private readonly List<MusicHistoryRecord> musicHistory = new List<MusicHistoryRecord>();
+        private MusicAuditResult musicAudit;
+        private IReadOnlyList<MusicOverlapAnomaly> musicAnomalies = Array.Empty<MusicOverlapAnomaly>();
         private VisualElement listContainer;
         private VisualElement contentRoot;
         private TextField searchField;
@@ -117,6 +121,7 @@ namespace NineGrid.Content.Editor
             try
             {
                 session.ReloadFromDisk();
+                musicSession.ReloadFromDisk();
             }
             catch (Exception exception)
             {
@@ -132,38 +137,41 @@ namespace NineGrid.Content.Editor
         {
             EditorApplication.playModeStateChanged -= OnPlayModeStateChanged;
             AssemblyReloadEvents.beforeAssemblyReload -= OnBeforeAssemblyReload;
-            AudioBindingEditorPreview.Stop();
-            if (session.DirtyCount > 0 && !EditorApplication.isCompiling)
+            StopPreview();
+            if ((session.DirtyCount > 0 || musicSession.DirtyCount > 0)
+                && !EditorApplication.isCompiling)
             {
                 EditorUtility.DisplayDialog(
                     "声音绑定未保存",
-                    "关闭工作台不会自动保存。当前有 " + session.DirtyCount + " 条未保存修改。",
+                    "关闭工作台不会自动保存。SFX 脏条目：" + session.DirtyCount
+                    + "；BGM 脏条目：" + musicSession.DirtyCount + "。",
                     "知道了");
             }
         }
 
         private void OnBeforeAssemblyReload()
         {
-            if (session.DirtyCount <= 0)
+            if (session.DirtyCount <= 0 && musicSession.DirtyCount <= 0)
             {
                 return;
             }
 
             EditorUtility.DisplayDialog(
                 "重载前存在未保存声音绑定",
-                "Unity 即将重载程序集；未保存的声音绑定工作副本不会自动写回正式 JSON。脏条目："
-                + session.DirtyCount,
+                "Unity 即将重载程序集；未保存工作副本不会自动写回正式 JSON。SFX 脏条目："
+                + session.DirtyCount + "；BGM 脏条目：" + musicSession.DirtyCount,
                 "知道了");
         }
 
         private void OnPlayModeStateChanged(PlayModeStateChange state)
         {
-            if (state == PlayModeStateChange.ExitingPlayMode && session.DirtyCount > 0)
+            if (state == PlayModeStateChange.ExitingPlayMode
+                && (session.DirtyCount > 0 || musicSession.DirtyCount > 0))
             {
                 EditorUtility.DisplayDialog(
                     "退出 Play Mode 前存在未保存声音绑定",
-                    "退出 Play Mode 不会自动保存声音绑定。当前工作副本会保留在本窗口；脏条目："
-                    + session.DirtyCount,
+                    "退出 Play Mode 不会自动保存。SFX 脏条目：" + session.DirtyCount
+                    + "；BGM 脏条目：" + musicSession.DirtyCount,
                     "知道了");
             }
 
@@ -173,7 +181,7 @@ namespace NineGrid.Content.Editor
 
         private void Update()
         {
-            if (!Application.isPlaying || EditorApplication.timeSinceStartup < nextLiveRefresh)
+            if (EditorApplication.timeSinceStartup < nextLiveRefresh)
             {
                 return;
             }
@@ -194,10 +202,11 @@ namespace NineGrid.Content.Editor
                 "声音绑定调音工作台",
                 "非 Play Mode 编辑正式 audio_bindings.json；Play Mode 查看最近请求并定位最终解析绑定。工作副本不会因关闭或重载自动保存。"));
             rootVisualElement.Add(ContentVisualWarmConsoleUi.BuildToolbar(
-                ("保存全部脏改动", SaveAll, "把全部脏工作副本写入正式 JSON"),
-                ("回撤全部脏改动", RevertAll, "恢复最近一次成功保存的磁盘快照，不清除播放历史"),
+                ("保存全部脏改动", SaveAll, "把全部 SFX/BGM 脏工作副本写入正式 JSON"),
+                ("回撤全部脏改动", RevertAll, "恢复最近一次成功保存的 SFX/BGM 磁盘快照"),
                 ("从磁盘重载", ReloadFromDisk, "丢弃未保存工作副本并重新读取正式 JSON"),
-                ("停止试听", StopPreview, "停止当前编辑器素材试听")));
+                ("停止素材试听", StopPreview, "停止当前编辑器素材试听"),
+                ("停止未知 BGM", StopUnknownMusic, "显式停止诊断发现的未认领 Music 来源")));
             UpdateToolbarEnabledState();
 
             var split = new TwoPaneSplitView(0, 320f, TwoPaneSplitViewOrientation.Horizontal);
@@ -320,6 +329,9 @@ namespace NineGrid.Content.Editor
 
         private void RefreshLiveHistory()
         {
+            musicHistory.Clear();
+            musicAudit = null;
+            musicAnomalies = Array.Empty<MusicOverlapAnomaly>();
             if (!Application.isPlaying)
             {
                 return;
@@ -332,6 +344,14 @@ namespace NineGrid.Content.Editor
                 if (audio != null)
                 {
                     session.SetPlaybackHistory(audio.History);
+                }
+
+                var music = architecture == null ? null : architecture.GetSystem<IMusicSystem>();
+                if (music != null)
+                {
+                    musicAudit = music.LastAudit;
+                    musicAnomalies = music.OverlapAnomalies;
+                    musicHistory.AddRange(music.History);
                 }
             }
             catch (Exception exception)
@@ -430,9 +450,18 @@ namespace NineGrid.Content.Editor
             contentRoot.Clear();
             contentRoot.Add(statusHelpBox);
             UpdateStatusBox();
+            if (Application.isPlaying)
+            {
+                BuildMusicDiagnosticsSection();
+            }
+
+            if (!Application.isPlaying)
+            {
+                BuildMusicAuthoringSection();
+            }
             contentRoot.Add(ContentVisualWarmConsoleUi.CreateStatsGrid(
                 ("筛选结果", session.GetFilteredEntries().Count().ToString(), "当前列表可见条目"),
-                ("未保存", session.DirtyCount.ToString(), "保存后写入正式 JSON"),
+                ("未保存", (session.DirtyCount + musicSession.DirtyCount).ToString(), "SFX/BGM 保存后写入正式 JSON"),
                 ("未绑定", session.UnboundCount.ToString(), "cue 已声明但尚无绑定"),
                 ("断链", session.BrokenCount.ToString(), "素材键未在正式 manifest 中"),
                 ("失败", session.FailedCount.ToString(), "Play Mode 最近后端失败")));
@@ -687,6 +716,210 @@ namespace NineGrid.Content.Editor
                 }));
         }
 
+        private void BuildMusicDiagnosticsSection()
+        {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            var hasAnomaly = musicAudit != null && musicAudit.HasUnknownSources;
+            var warning = hasAnomaly
+                ? "幽灵 BGM 警报：Music 轨存在 " + musicAudit.UnknownSources.Count + " 条未认领来源。默认未自动停止。"
+                : "Music 轨无未认领来源。";
+            var box = ContentVisualWarmConsoleUi.CreateStatusHelpBox(
+                warning,
+                hasAnomaly ? HelpBoxMessageType.Error : HelpBoxMessageType.Info);
+            if (hasAnomaly)
+            {
+                box.style.color = new Color(1f, 0.35f, 0.28f);
+            }
+
+            var section = ContentVisualWarmConsoleUi.CreateSectionCard(
+                "幽灵 BGM 诊断",
+                "审计实际 Music 轨与当前、淡出和 Editor Preview 认领集合；未知来源只报警，停止必须由人工操作。",
+                column =>
+                {
+                    column.Add(box);
+                    if (hasAnomaly)
+                    {
+                        column.Add(new Button(() =>
+                        {
+                            StopUnknownMusic();
+                        }) { text = "停止未知 Music 来源" });
+                    }
+
+                    if (musicAudit != null)
+                    {
+                        column.Add(ContentVisualWarmConsoleUi.WrapControlRow(
+                            "审计触发",
+                            new Label(musicAudit.Trigger),
+                            110f));
+                        column.Add(ContentVisualWarmConsoleUi.WrapControlRow(
+                            "实际 / 已认领",
+                            new Label(musicAudit.ActualSources.Count + " / " + musicAudit.ClaimedSourceIds.Count),
+                            110f));
+                        column.Add(ContentVisualWarmConsoleUi.WrapControlRow(
+                            "未知来源",
+                            new Label(musicAudit.UnknownSources.Count.ToString()),
+                            110f));
+                    }
+
+                    var limit = Mathf.Min(musicHistory.Count, 12);
+                    for (var i = musicHistory.Count - 1; i >= musicHistory.Count - limit; i--)
+                    {
+                        var record = musicHistory[i];
+                        column.Add(ContentVisualWarmConsoleUi.CreateTinyPathLabel(
+                            record.Outcome + " · " + record.State
+                            + " · " + record.StableSource
+                            + " · gen=" + record.MusicGeneration
+                            + (string.IsNullOrEmpty(record.ActualClipKey)
+                                ? string.Empty
+                                : " · " + record.ActualClipKey)));
+                    }
+
+                    for (var i = 0; i < (musicAnomalies?.Count ?? 0) && i < 8; i++)
+                    {
+                        var anomaly = musicAnomalies[musicAnomalies.Count - 1 - i];
+                        column.Add(ContentVisualWarmConsoleUi.CreateTinyPathLabel(
+                            "gen=" + anomaly.MusicGeneration
+                            + " · state=" + anomaly.DesiredState
+                            + " · binding=" + anomaly.FinalBindingClipKey
+                            + " · source=" + anomaly.RequestSource
+                            + " · scene=" + anomaly.SceneName
+                            + " · chain=" + anomaly.ChainId
+                            + " · batch=" + anomaly.BatchId
+                            + " · unknown=" + string.Join(", ", anomaly.UnknownSources.Select(source => source.DisplayName))));
+                    }
+                });
+            contentRoot.Add(section);
+#endif
+        }
+
+        private void BuildMusicAuthoringSection()
+        {
+            contentRoot.Add(ContentVisualWarmConsoleUi.CreateSectionCard(
+                "BGM 绑定与安全试听",
+                "BGM 绑定独立于 SFX 工作副本；试听只允许 MusicSystem 持有一个 Preview 来源，切换前会释放旧 Preview。",
+                column =>
+                {
+                    if (musicSession.Entries.Count == 0)
+                    {
+                        column.Add(ContentVisualWarmConsoleUi.CreateDescriptionLabel("audio_music.json 没有可编辑绑定。"));
+                        return;
+                    }
+
+                    for (var i = 0; i < musicSession.Entries.Count; i++)
+                    {
+                        BuildMusicEntry(column, musicSession.Entries[i]);
+                    }
+                }));
+        }
+
+        private void BuildMusicEntry(VisualElement column, MusicBindingEditorEntry entry)
+        {
+            var dto = entry.Dto;
+            var row = new VisualElement();
+            row.style.paddingTop = 6;
+            row.style.paddingBottom = 8;
+            row.style.marginBottom = 6;
+            row.style.borderBottomWidth = 1;
+            row.style.borderBottomColor = ContentVisualWarmConsoleUi.Theme.Divider;
+
+            row.Add(ContentVisualWarmConsoleUi.CreateTitleLabel(
+                entry.State + (entry.IsDirty ? " · 未保存" : string.Empty),
+                13,
+                true,
+                ContentVisualWarmConsoleUi.Theme.TextPrimary));
+
+            var actions = new List<Button>
+            {
+                new Button(() => PreviewMusic(entry)) { text = "试听 BGM" },
+                new Button(() => SaveMusicEntry(entry)) { text = "保存" },
+                new Button(() => RevertMusicEntry(entry)) { text = "回撤" },
+            };
+            row.Add(ContentVisualWarmConsoleUi.CreateButtonRow(actions.ToArray()));
+
+            var clip = new TextField { value = dto.clipKey ?? string.Empty };
+            clip.RegisterValueChangedCallback(evt =>
+            {
+                dto.clipKey = evt.newValue ?? string.Empty;
+                ChangedMusicEntry();
+            });
+            row.Add(ContentVisualWarmConsoleUi.WrapControlRow("素材键", clip, 110f));
+
+            var volume = new FloatField { value = dto.volumeDb };
+            volume.RegisterValueChangedCallback(evt =>
+            {
+                dto.volumeDb = evt.newValue;
+                ChangedMusicEntry();
+            });
+            row.Add(ContentVisualWarmConsoleUi.WrapControlRow("作者音量 dB", volume, 110f));
+
+            var startOffset = new FloatField { value = dto.startOffsetSeconds };
+            startOffset.RegisterValueChangedCallback(evt =>
+            {
+                dto.startOffsetSeconds = Mathf.Max(0f, evt.newValue);
+                ChangedMusicEntry();
+            });
+            row.Add(ContentVisualWarmConsoleUi.WrapControlRow("素材内部起播点", startOffset, 110f));
+
+            var fadeIn = new FloatField { value = dto.fadeInSeconds };
+            fadeIn.RegisterValueChangedCallback(evt =>
+            {
+                dto.fadeInSeconds = Mathf.Max(0f, evt.newValue);
+                ChangedMusicEntry();
+            });
+            row.Add(ContentVisualWarmConsoleUi.WrapControlRow("淡入", fadeIn, 110f));
+
+            var fadeOut = new FloatField { value = dto.fadeOutSeconds };
+            fadeOut.RegisterValueChangedCallback(evt =>
+            {
+                dto.fadeOutSeconds = Mathf.Max(0f, evt.newValue);
+                ChangedMusicEntry();
+            });
+            row.Add(ContentVisualWarmConsoleUi.WrapControlRow("淡出", fadeOut, 110f));
+
+            var enabled = new Toggle("启用") { value = dto.enabled };
+            enabled.RegisterValueChangedCallback(evt =>
+            {
+                dto.enabled = evt.newValue;
+                ChangedMusicEntry();
+            });
+            row.Add(enabled);
+
+            var loop = new Toggle("循环") { value = dto.loop };
+            loop.RegisterValueChangedCallback(evt =>
+            {
+                dto.loop = evt.newValue;
+                ChangedMusicEntry();
+            });
+            row.Add(loop);
+            column.Add(row);
+        }
+
+        private void SaveMusicEntry(MusicBindingEditorEntry entry)
+        {
+            if (!musicSession.TrySave(entry, out var error))
+            {
+                status = error ?? "BGM 保存失败。";
+                EditorUtility.DisplayDialog("BGM 保存失败", status, "确定");
+                return;
+            }
+
+            status = "已保存 BGM：" + entry.State;
+            RefreshContent();
+        }
+
+        private void RevertMusicEntry(MusicBindingEditorEntry entry)
+        {
+            musicSession.Revert(entry);
+            status = "已回撤 BGM：" + entry.State;
+            RefreshContent();
+        }
+
+        private void ChangedMusicEntry()
+        {
+            status = "BGM 工作副本已修改；尚未写入正式 JSON。";
+            RefreshContent();
+        }
+
         private void Changed(AudioBindingEditorEntry entry)
         {
             status = "工作副本已修改；尚未写入正式 JSON。";
@@ -710,24 +943,28 @@ namespace NineGrid.Content.Editor
 
         private void SaveAll()
         {
-            if (!session.TrySaveAll(out var error))
+            string sfxError;
+            string musicError;
+            var sfxSaved = session.TrySaveAll(out sfxError);
+            var musicSaved = musicSession.TrySaveAll(out musicError);
+            if (!sfxSaved || !musicSaved)
             {
-                status = error ?? "保存失败。";
+                status = sfxError ?? musicError ?? "保存失败。";
                 EditorUtility.DisplayDialog("保存失败", status, "确定");
                 return;
             }
 
-            status = "已保存全部脏绑定。";
+            status = "已保存全部 SFX/BGM 脏绑定。";
             RefreshList();
             RefreshContent();
         }
 
         private void RevertAll()
         {
-            if (session.DirtyCount > 0
+            if ((session.DirtyCount > 0 || musicSession.DirtyCount > 0)
                 && !EditorUtility.DisplayDialog(
                     "回撤全部脏绑定",
-                    "将恢复最近一次成功保存的磁盘快照；Play Mode 播放历史不会清除。继续？",
+                    "将恢复最近一次成功保存的 SFX/BGM 磁盘快照；Play Mode 播放历史不会清除。继续？",
                     "回撤",
                     "取消"))
             {
@@ -735,6 +972,7 @@ namespace NineGrid.Content.Editor
             }
 
             session.RevertAllDirty();
+            musicSession.RevertAllDirty();
             status = "已回撤全部脏工作副本；播放历史保留。";
             RefreshList();
             RefreshContent();
@@ -742,10 +980,11 @@ namespace NineGrid.Content.Editor
 
         private void ReloadFromDisk()
         {
-            if (session.DirtyCount > 0
+            if ((session.DirtyCount > 0 || musicSession.DirtyCount > 0)
                 && !EditorUtility.DisplayDialog(
                     "从磁盘重载",
-                    "将丢弃 " + session.DirtyCount + " 条未保存声音绑定改动；播放历史也会随会话重载清空。继续？",
+                    "将丢弃 SFX 脏条目 " + session.DirtyCount + " 条、BGM 脏条目 "
+                    + musicSession.DirtyCount + " 条。Play Mode 播放历史也会随会话重载清空。继续？",
                     "丢弃并重载",
                     "取消"))
             {
@@ -755,6 +994,7 @@ namespace NineGrid.Content.Editor
             try
             {
                 session.ReloadFromDisk();
+                musicSession.ReloadFromDisk();
                 status = "已从正式 JSON 重载。";
                 RefreshAll();
             }
@@ -781,9 +1021,73 @@ namespace NineGrid.Content.Editor
             }
         }
 
-        private static void StopPreview()
+
+        private void StopPreview()
         {
             AudioBindingEditorPreview.Stop();
+            var architecture = NineGridArchitecture.Interface;
+            var music = architecture?.GetSystem<IMusicSystem>();
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            music?.EndPreview("AudioBindingEditorWindow.StopPreview");
+#endif
+        }
+
+        private void PreviewMusic(MusicBindingEditorEntry entry)
+        {
+            if (entry?.Dto == null)
+            {
+                return;
+            }
+
+            var architecture = NineGridArchitecture.Interface;
+            var music = architecture?.GetSystem<IMusicSystem>();
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            if (music == null)
+            {
+                status = "BGM 试听不可用：MusicSystem 未注册。";
+                RefreshContent();
+                return;
+            }
+
+            var result = music.BeginPreview(new MusicPreviewRequest(
+                entry.Dto.clipKey,
+                entry.Dto.volumeDb,
+                entry.Dto.startOffsetSeconds,
+                entry.Dto.fadeInSeconds,
+                entry.Dto.loop));
+            status = result.Succeeded ? "正在试听 BGM：" + entry.State : result.Reason;
+            RefreshContent();
+#endif
+        }
+
+        private void StopMusicPreview()
+        {
+            var architecture = NineGridArchitecture.Interface;
+            var music = architecture?.GetSystem<IMusicSystem>();
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            music?.EndPreview("AudioBindingEditorWindow.Close");
+#endif
+        }
+
+        private void StopUnknownMusic()
+        {
+            var architecture = NineGridArchitecture.Interface;
+            var music = architecture?.GetSystem<IMusicSystem>();
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            if (music == null)
+            {
+                status = "无法停止未知 BGM：MusicSystem 未注册。";
+            }
+            else
+            {
+                var result = music.StopUnknownMusic("AudioBindingEditorWindow.StopUnknownMusic");
+                status = result.HasUnknownSources
+                    ? "仍有 " + result.UnknownSources.Count + " 条未知 Music 来源。"
+                    : "未知 Music 来源已收口。";
+            }
+
+            RefreshContent();
+#endif
         }
 
         private void UpdateStatusBox()

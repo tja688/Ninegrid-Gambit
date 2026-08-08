@@ -102,6 +102,8 @@ namespace NineGrid.Presentation.Setup
         /// <summary>EditMode / Pipeline 装配后可显式再接线。</summary>
         public void WireHosts()
         {
+            // 音频跨主菜单到跑图保持应用会话；先注册唯一期望音乐 System，再绑定流程壳。
+            MusicSystem.EnsureRegistered();
             if (inBattle != null)
             {
                 inBattle.BindSceneHosts(

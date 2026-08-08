@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using MoreMountains.Tools;
 using NineGrid.Content.Audio;
 using UnityEngine;
@@ -7,9 +8,19 @@ namespace NineGrid.Presentation.Systems
 {
     /// <summary>
     /// 项目唯一音频播放 Adapter：SFX 与 BGM 均由深模块给出正式 Resources 键，分别进入 MMSoundManager Sfx/Music 轨。
-    /// </summary>
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+    public sealed class MMSoundManagerAudioPlaybackAdapter : IAudioPlaybackAdapter, IMusicPlaybackDiagnosticsAdapter
+#else
     public sealed class MMSoundManagerAudioPlaybackAdapter : IAudioPlaybackAdapter, IMusicPlaybackAdapter
+#endif
     {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        private readonly Dictionary<string, AudioSource> musicSources =
+            new Dictionary<string, AudioSource>(StringComparer.Ordinal);
+        private readonly Dictionary<AudioClip, string> musicClipKeys =
+            new Dictionary<AudioClip, string>();
+#endif
+
         public AudioBackendResult Play(AudioPlaybackRequest request)
         {
             var resourcesKey = AudioAssetManifestLoader.NormalizeKey(request.ClipKey);
@@ -51,17 +62,9 @@ namespace NineGrid.Presentation.Systems
             }
 
             var resourcesKey = AudioAssetManifestLoader.NormalizeKey(request.Binding.ClipKey);
-            if (!AudioAssetManifestLoader.TryGet(resourcesKey, out var entry)
-                || entry == null
-                || !string.Equals(entry.kind, "BGM", StringComparison.OrdinalIgnoreCase))
+            if (!TryLoadMusicClip(resourcesKey, out var clip, out var failureReason))
             {
-                return MusicBackendResult.Failure("正式音频 manifest 未登记 BGM 素材键：" + resourcesKey);
-            }
-
-            var clip = Resources.Load<AudioClip>(resourcesKey);
-            if (clip == null)
-            {
-                return MusicBackendResult.Failure("Resources BGM 素材不存在：" + resourcesKey);
+                return MusicBackendResult.Failure(failureReason);
             }
 
             var manager = MMSoundManager.Instance;
@@ -90,8 +93,11 @@ namespace NineGrid.Presentation.Systems
                 return MusicBackendResult.Failure("MMSoundManager Music 播放失败：" + resourcesKey);
             }
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            RegisterMusicSource(source, resourcesKey);
+#endif
             return MusicBackendResult.Success(
-                new MusicPlaybackHandle(resourcesKey, source),
+                new MusicPlaybackHandle(resourcesKey, source, GetSourceId(source)),
                 resourcesKey);
         }
 
@@ -108,6 +114,9 @@ namespace NineGrid.Presentation.Systems
             if (durationSeconds <= 0f)
             {
                 manager.FreeSound(source);
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+                UnregisterMusicSource(source);
+#endif
                 completed?.Invoke();
                 return;
             }
@@ -118,7 +127,13 @@ namespace NineGrid.Presentation.Systems
                 runner = manager.gameObject.AddComponent<MusicFadeRunner>();
             }
 
-            runner.Schedule(source, durationSeconds, completed);
+            runner.Schedule(source, durationSeconds, () =>
+            {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+                UnregisterMusicSource(source);
+#endif
+                completed?.Invoke();
+            });
         }
 
         public void Stop(MusicPlaybackHandle handle)
@@ -138,7 +153,137 @@ namespace NineGrid.Presentation.Systems
             {
                 source.Stop();
             }
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            UnregisterMusicSource(source);
+#endif
         }
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        public MusicBackendResult PlayPreview(MusicPreviewRequest request)
+        {
+            var resourcesKey = AudioAssetManifestLoader.NormalizeKey(request.ClipKey);
+            if (!TryLoadMusicClip(resourcesKey, out var clip, out var failureReason))
+            {
+                return MusicBackendResult.Failure(failureReason);
+            }
+
+            var manager = MMSoundManager.Instance;
+            if (manager == null)
+            {
+                return MusicBackendResult.Failure("MMSoundManager 未就绪：" + resourcesKey);
+            }
+
+            var options = MMSoundManagerPlayOptions.Default;
+            options.MmSoundManagerTrack = MMSoundManager.MMSoundManagerTracks.Music;
+            options.Volume = Mathf.Clamp(DecibelsToLinear(request.VolumeDb), 0f, 2f);
+            options.Loop = request.Loop;
+            options.Fade = request.FadeInSeconds > 0f;
+            options.FadeInitialVolume = options.Fade ? 0f : options.Volume;
+            options.FadeDuration = Mathf.Max(0f, request.FadeInSeconds);
+            options.PlaybackTime = Mathf.Clamp(
+                request.StartOffsetSeconds,
+                0f,
+                Mathf.Max(0f, clip.length - 0.001f));
+            options.Persistent = true;
+            options.DoNotAutoRecycleIfNotDonePlaying = true;
+
+            var source = manager.PlaySound(clip, options);
+            if (source == null)
+            {
+                return MusicBackendResult.Failure("MMSoundManager Music Preview 播放失败：" + resourcesKey);
+            }
+
+            RegisterMusicSource(source, resourcesKey);
+            return MusicBackendResult.Success(
+                new MusicPlaybackHandle(resourcesKey, source, GetSourceId(source)),
+                resourcesKey);
+        }
+
+        public IReadOnlyList<MusicTrackSourceSnapshot> GetPlayingMusicSources()
+        {
+            var manager = MMSoundManager.Instance;
+            if (manager == null)
+            {
+                return Array.Empty<MusicTrackSourceSnapshot>();
+            }
+
+            var sounds = manager.GetSoundsPlaying(MMSoundManager.MMSoundManagerTracks.Music);
+            var result = new List<MusicTrackSourceSnapshot>(sounds?.Count ?? 0);
+            for (var i = 0; i < (sounds?.Count ?? 0); i++)
+            {
+                var source = sounds[i].Source;
+                if (source == null || !source.isPlaying)
+                {
+                    continue;
+                }
+
+                var sourceId = GetSourceId(source);
+                var clipKey = ResolveClipKey(source.clip);
+                RegisterMusicSource(source, clipKey);
+                result.Add(new MusicTrackSourceSnapshot(sourceId, clipKey, source.time));
+            }
+
+            return result;
+        }
+
+        public double GetPlaybackPosition(MusicPlaybackHandle handle)
+        {
+            var source = handle?.NativeHandle as AudioSource;
+            return source == null ? 0d : Math.Max(0d, source.time);
+        }
+
+        public void Pause(MusicPlaybackHandle handle)
+        {
+            var source = handle?.NativeHandle as AudioSource;
+            if (source != null && source.isPlaying)
+            {
+                source.Pause();
+            }
+        }
+
+        public void Resume(MusicPlaybackHandle handle, double positionSeconds)
+        {
+            var source = handle?.NativeHandle as AudioSource;
+            if (source == null)
+            {
+                return;
+            }
+
+            if (source.clip != null)
+            {
+                source.time = Mathf.Clamp(
+                    (float)Math.Max(0d, positionSeconds),
+                    0f,
+                    Mathf.Max(0f, source.clip.length - 0.001f));
+            }
+
+            source.Play();
+        }
+
+        public void StopMusicTrackSource(string sourceId)
+        {
+            if (string.IsNullOrEmpty(sourceId))
+            {
+                return;
+            }
+
+            if (musicSources.TryGetValue(sourceId, out var source) && source != null)
+            {
+                var manager = MMSoundManager.Instance;
+                if (manager != null)
+                {
+                    manager.FreeSound(source);
+                }
+                else
+                {
+                    source.Stop();
+                }
+            }
+
+            musicSources.Remove(sourceId);
+        }
+#endif
 
         public sealed class MusicFadeRunner : MonoBehaviour
         {
@@ -178,5 +323,100 @@ namespace NineGrid.Presentation.Systems
             }
         }
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        private bool TryLoadMusicClip(string resourcesKey, out AudioClip clip, out string failureReason)
+        {
+            clip = null;
+            failureReason = string.Empty;
+            if (!AudioAssetManifestLoader.TryGet(resourcesKey, out var entry)
+                || entry == null
+                || !string.Equals(entry.kind, "BGM", StringComparison.OrdinalIgnoreCase))
+            {
+                failureReason = "正式音频 manifest 未登记 BGM 素材键：" + resourcesKey;
+                return false;
+            }
+
+            clip = Resources.Load<AudioClip>(resourcesKey);
+            if (clip == null)
+            {
+                failureReason = "Resources BGM 素材不存在：" + resourcesKey;
+                return false;
+            }
+
+            return true;
+        }
+#else
+        private bool TryLoadMusicClip(string resourcesKey, out AudioClip clip, out string failureReason)
+        {
+            clip = null;
+            failureReason = string.Empty;
+            if (!AudioAssetManifestLoader.TryGet(resourcesKey, out var entry)
+                || entry == null
+                || !string.Equals(entry.kind, "BGM", StringComparison.OrdinalIgnoreCase))
+            {
+                failureReason = "正式音频 manifest 未登记 BGM 素材键：" + resourcesKey;
+                return false;
+            }
+
+            clip = Resources.Load<AudioClip>(resourcesKey);
+            if (clip == null)
+            {
+                failureReason = "Resources BGM 素材不存在：" + resourcesKey;
+                return false;
+            }
+
+            return true;
+        }
+#endif
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        private void RegisterMusicSource(AudioSource source, string resourcesKey)
+        {
+            if (source == null)
+            {
+                return;
+            }
+
+            var sourceId = GetSourceId(source);
+            musicSources[sourceId] = source;
+            if (source.clip != null && !string.IsNullOrEmpty(resourcesKey))
+            {
+                musicClipKeys[source.clip] = resourcesKey;
+            }
+        }
+
+        private void UnregisterMusicSource(AudioSource source)
+        {
+            if (source != null)
+            {
+                musicSources.Remove(GetSourceId(source));
+            }
+        }
+
+        private string ResolveClipKey(AudioClip clip)
+        {
+            if (clip == null)
+            {
+                return string.Empty;
+            }
+
+            if (musicClipKeys.TryGetValue(clip, out var resourcesKey))
+            {
+                return resourcesKey;
+            }
+
+            return "<unknown>" + clip.name;
+        }
+#endif
+
+        private static string GetSourceId(AudioSource source)
+        {
+            return source == null ? string.Empty : "music-source:" + source.GetInstanceID();
+        }
+
+        private static float DecibelsToLinear(float decibels)
+        {
+            return Mathf.Pow(10f, decibels / 20f);
+        }
     }
 }
