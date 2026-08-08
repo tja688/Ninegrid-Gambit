@@ -453,6 +453,7 @@ namespace NineGrid.Content.Editor
             UpdateStatusBox();
             if (Application.isPlaying)
             {
+                BuildPlayerSettingsSection();
                 BuildMusicDiagnosticsSection();
             }
 
@@ -482,6 +483,49 @@ namespace NineGrid.Content.Editor
             }
 
             BuildEntrySection(entry);
+        }
+
+        private void BuildPlayerSettingsSection()
+        {
+            var architecture = NineGridArchitecture.Interface;
+            var playerSettings = architecture == null
+                ? null
+                : architecture.GetSystem<IPlayerAudioSettingsSystem>();
+            if (playerSettings == null)
+            {
+                return;
+            }
+
+            var author = playerSettings.AuthorDefaults;
+            var current = playerSettings.Current;
+            contentRoot.Add(ContentVisualWarmConsoleUi.CreateSectionCard(
+                "玩家音频偏好（只读）",
+                "随包作者默认与 PlayerPrefs 本地值并列显示；本工作台只编辑作者 SFX/BGM 绑定，绝不写入玩家偏好。",
+                column =>
+                {
+                    AddPlayerAudioBusRow(column, "Master", author, current, PlayerAudioBus.Master);
+                    AddPlayerAudioBusRow(column, "BGM", author, current, PlayerAudioBus.Bgm);
+                    AddPlayerAudioBusRow(column, "SFX", author, current, PlayerAudioBus.Sfx);
+                }));
+        }
+
+        private static void AddPlayerAudioBusRow(
+            VisualElement column,
+            string label,
+            PlayerAudioSettingsSnapshot author,
+            PlayerAudioSettingsSnapshot current,
+            PlayerAudioBus bus)
+        {
+            var authorText = ToPercent(author.Volume(bus)) + (author.IsMuted(bus) ? " · 静音" : string.Empty);
+            var playerText = ToPercent(current.Volume(bus)) + (current.IsMuted(bus) ? " · 静音" : string.Empty);
+            column.Add(ContentVisualWarmConsoleUi.CreateStatsGrid(
+                (label + " 作者默认", authorText, "随包 MMSoundManagerSettings 默认值"),
+                (label + " 玩家本地", playerText, "PlayerPrefs；请在运行时玩家设置面板修改")));
+        }
+
+        private static string ToPercent(float value)
+        {
+            return Mathf.RoundToInt(Mathf.Clamp01(value) * 100f) + "%";
         }
 
         private void BuildEntrySection(AudioBindingEditorEntry entry)

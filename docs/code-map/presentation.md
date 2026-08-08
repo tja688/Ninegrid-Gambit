@@ -132,9 +132,9 @@
 - **#171 玩家音频设置**：`IPlayerAudioSettingsSystem` 是 Master / BGM / SFX 三路玩家偏好的唯一读写接口；从随包 `MMSoundManagerSettings` 捕获作者默认，独立写入 `PlayerPrefs`，其变更通知可供 UI 双向绑定。音量与静音分开存储；静音只将实际总线压至静音值，解除时恢复先前音量；Reset 丢弃玩家偏好并恢复本次包体的作者默认。`MMSoundManagerAudioBusApplier` 将每次设置即时作用至 MMSoundManager 的 Master/Music/Sfx 轨，既有 BGM/SFX 均受影响；不得写回作者 JSON 或调音工作台工作副本。
 - `IMusicSystem` / `MusicSystem` 是唯一期望音乐状态解析与切换模块：从正式 `Resources/audio/audio_music.json` 解析 `MainMenu`、`RunExploration`、`Battle`、`BossBattle`、`Victory`、`Defeat`；流程层提交必填稳定 source；模块记录请求/解析/播放/淡出/收口及代数，并对同状态或同 Clip 请求 no-op。
 - `MMSoundManagerAudioPlaybackAdapter` 是唯一项目自有播放 Adapter：SFX 按正式 `Resources` 键加载，以 MMSoundManager Sfx 轨实际播放；BGM 由 `IMusicSystem` 委托该 Adapter 走 MMSoundManager Music 轨并使用作者音量/循环/淡出；业务 / 表现代码不得直接使用 AudioKit 或 MMSoundManager。
- - #169/#173 `NineGrid/音频/声音绑定调音工作台`（`NineGrid.Content.Editor`）以 `AudioBindingEditorSession` 持有磁盘快照与工作副本：编辑作者音量、素材内部起播点、绑定延迟、最短播放间隔、启用状态；单素材默认不显示池复杂度，启用多素材池后可编辑变体 ID、素材键、权重、音量 trim 与各自起播点；支持单条/全部保存与回撤、普通试听或按真实绑定延迟试听、Play Mode 历史按 `BindingKey` 定位。退出 Play Mode、程序集重载或关闭窗口存在脏条目时明确提示；Revert All Dirty 不清播放历史。
+- #169/#173 `NineGrid/音频/声音绑定调音工作台`（`NineGrid.Content.Editor`）以 `AudioBindingEditorSession` 持有磁盘快照与工作副本：编辑作者音量、素材内部起播点、绑定延迟、最短播放间隔、启用状态；单素材默认不显示池复杂度，启用多素材池后可编辑变体 ID、素材键、权重、音量 trim 与各自起播点；支持单条/全部保存与回撤、普通试听或按真实绑定延迟试听、Play Mode 历史按 `BindingKey` 定位。退出 Play Mode、程序集重载或关闭窗口存在脏条目时明确提示；Revert All Dirty 不清播放历史。**#171 Play Mode 增加只读玩家偏好区**：并列每路作者默认与 PlayerPrefs 模拟值，明确不得在工作台编辑或覆盖玩家设置。
  - 音乐状态只由流程层提交：`GameFlowShellSystem.Bind` 提交主菜单、`SetGameFlowShellStateCommand` 在相位变更时提交对应状态（探索→`RunExploration`、战斗→`Battle`/`BossBattle`、胜负 Notice→`Victory`/`Defeat`），均带稳定 source；`MusicSystem` 只认领一个当前来源和一个淡出来源，新切歌先释放更老淡出来源，旧代数回调不得改写当前状态。
- - **#172 音频调音工作台的音乐诊断区**在 Play Mode 读取 `IMusicSystem.LastAudit` / `OverlapAnomalies` 与固定容量 `History`；顶部红色警报只在存在未认领 Music 来源时出现，未知来源可查看切歌时间线与来源集合，停止动作必须由人工触发。
+- **#172 音频调音工作台的音乐诊断区**在 Play Mode 读取 `IMusicSystem.LastAudit` / `OverlapAnomalies` 与固定容量 `History`；顶部红色警报只在存在未认领 Music 来源时出现，未知来源可查看切歌时间线与来源集合，停止动作必须由人工触发。
 
 ## 仍名 `*ManagerSingleton` 的壳（8）
 
