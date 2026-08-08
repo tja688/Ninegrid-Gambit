@@ -6,8 +6,9 @@
     "role": "Attack",
     "displayName": "机械巨弩",
     "designSlotName": "",
-    "description": "[attack]+{relic.golden_sword.init.value}，普通攻击时：机械疲劳，击杀时：上弦",
+    "description": "[attack]+{relic.golden_sword.init.value}，[[普通攻击]]时[attack]-1，击杀时[attack]+1",
     "faceIntro": "越战越利，斩杀上弦",
+    "liveTemplate": "",
     "attackPattern": "",
     "gold": 0,
     "stats": {
