@@ -119,6 +119,31 @@ namespace NineGrid.Presentation.Tests
         }
 
         [Test]
+        public void BeginPreview_SuspendsCurrentAndRetiringSources_AndRestoresBothPositions()
+        {
+            var adapter = new FakeDiagnosticsAdapter { DeferFades = true };
+            var system = CreateSystem(adapter);
+            system.RequestState(new MusicStateRequest(DesiredMusicState.MainMenu, "main-menu"));
+            system.RequestState(new MusicStateRequest(DesiredMusicState.Battle, "battle"));
+
+            var preview = system.BeginPreview(new MusicPreviewRequest(
+                "audio/BGM/preview",
+                -6f,
+                0f,
+                0.1f,
+                true));
+
+            Assert.IsTrue(preview.Succeeded);
+            Assert.AreEqual(2, adapter.PausedHandles.Count, "试听必须同时暂停当前与淡出中的游戏音乐。");
+            Assert.AreEqual(0, adapter.ResumedHandles.Count);
+
+            system.EndPreview("test-end");
+
+            Assert.AreEqual(2, adapter.ResumedHandles.Count, "试听结束后必须恢复当前与淡出来源。");
+            Assert.AreEqual(DesiredMusicState.Battle, system.DesiredState.Value);
+        }
+
+        [Test]
         public void EndPreview_RestoresGameMusic_AtRecordedPosition_WithoutChangingDesiredState()
         {
             var adapter = new FakeDiagnosticsAdapter();
@@ -174,7 +199,10 @@ namespace NineGrid.Presentation.Tests
             public readonly List<double> ResumedPositions = new List<double>();
             public readonly List<MusicTrackSourceSnapshot> MusicTrackSources = new List<MusicTrackSourceSnapshot>();
 
+            private readonly List<Action> mFadeCallbacks = new List<Action>();
             private int mNextSourceId;
+
+            public bool DeferFades { get; set; }
 
             public string HandleSourceId { get; private set; } = string.Empty;
 
@@ -188,6 +216,12 @@ namespace NineGrid.Presentation.Tests
 
             public void FadeOut(MusicPlaybackHandle handle, float durationSeconds, Action completed)
             {
+                if (DeferFades)
+                {
+                    mFadeCallbacks.Add(completed);
+                    return;
+                }
+
                 completed?.Invoke();
             }
 
@@ -202,6 +236,11 @@ namespace NineGrid.Presentation.Tests
                 return MusicBackendResult.Success(
                     new MusicPlaybackHandle(request.ClipKey, null, HandleSourceId),
                     request.ClipKey);
+            }
+
+            public void InvokeFade(int index)
+            {
+                mFadeCallbacks[index]?.Invoke();
             }
 
             public IReadOnlyList<MusicTrackSourceSnapshot> GetPlayingMusicSources()
@@ -236,7 +275,6 @@ namespace NineGrid.Presentation.Tests
                     }
                 }
             }
-
         }
     }
 }

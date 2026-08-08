@@ -236,7 +236,19 @@ namespace NineGrid.Presentation.Systems
         public void Pause(MusicPlaybackHandle handle)
         {
             var source = handle?.NativeHandle as AudioSource;
-            if (source != null && source.isPlaying)
+            if (source == null)
+            {
+                return;
+            }
+
+            var manager = MMSoundManager.Instance;
+            var fadeRunner = manager == null ? null : manager.gameObject.GetComponent<MusicFadeRunner>();
+            if (fadeRunner != null && fadeRunner.TryPause(source))
+            {
+                return;
+            }
+
+            if (source.isPlaying)
             {
                 source.Pause();
             }
@@ -259,6 +271,9 @@ namespace NineGrid.Presentation.Systems
             }
 
             source.Play();
+            var manager = MMSoundManager.Instance;
+            var fadeRunner = manager == null ? null : manager.gameObject.GetComponent<MusicFadeRunner>();
+            fadeRunner?.TryResume(source);
         }
 
         public void StopMusicTrackSource(string sourceId)
@@ -287,9 +302,38 @@ namespace NineGrid.Presentation.Systems
 
         public sealed class MusicFadeRunner : MonoBehaviour
         {
+            private readonly Dictionary<int, FadeState> fadeStates = new Dictionary<int, FadeState>();
+
             public void Schedule(AudioSource source, float durationSeconds, Action completed)
             {
                 StartCoroutine(Fade(source, durationSeconds, completed));
+            }
+
+            public bool TryPause(AudioSource source)
+            {
+                if (source == null || !fadeStates.TryGetValue(source.GetInstanceID(), out var state))
+                {
+                    return false;
+                }
+
+                state.Paused = true;
+                if (source.isPlaying)
+                {
+                    source.Pause();
+                }
+
+                return true;
+            }
+
+            public bool TryResume(AudioSource source)
+            {
+                if (source == null || !fadeStates.TryGetValue(source.GetInstanceID(), out var state))
+                {
+                    return false;
+                }
+
+                state.Paused = false;
+                return true;
             }
 
             private System.Collections.IEnumerator Fade(
@@ -297,29 +341,60 @@ namespace NineGrid.Presentation.Systems
                 float durationSeconds,
                 Action completed)
             {
-                var initialVolume = source == null ? 0f : Mathf.Max(0f, source.volume);
-                var elapsed = 0f;
-                while (source != null && source.isPlaying && elapsed < durationSeconds)
+                var sourceId = source == null ? 0 : source.GetInstanceID();
+                var state = new FadeState();
+                if (sourceId != 0)
                 {
-                    elapsed += Time.unscaledDeltaTime;
-                    source.volume = Mathf.Lerp(initialVolume, 0f, Mathf.Clamp01(elapsed / durationSeconds));
-                    yield return null;
+                    fadeStates[sourceId] = state;
                 }
 
-                if (source != null)
+                try
                 {
-                    var manager = MMSoundManager.Instance;
-                    if (manager != null)
+                    var initialVolume = source == null ? 0f : Mathf.Max(0f, source.volume);
+                    var elapsed = 0f;
+                    while (source != null
+                        && (source.isPlaying || state.Paused)
+                        && elapsed < durationSeconds)
                     {
-                        manager.FreeSound(source);
+                        if (!state.Paused)
+                        {
+                            elapsed += Time.unscaledDeltaTime;
+                            source.volume = Mathf.Lerp(initialVolume, 0f, Mathf.Clamp01(elapsed / durationSeconds));
+                        }
+
+                        yield return null;
                     }
-                    else
+
+                    if (source != null && !state.Paused && source.isPlaying)
                     {
-                        source.Stop();
+                        var manager = MMSoundManager.Instance;
+                        if (manager != null)
+                        {
+                            manager.FreeSound(source);
+                        }
+                        else
+                        {
+                            source.Stop();
+                        }
+                    }
+
+                    if (!state.Paused)
+                    {
+                        completed?.Invoke();
                     }
                 }
+                finally
+                {
+                    if (sourceId != 0)
+                    {
+                        fadeStates.Remove(sourceId);
+                    }
+                }
+            }
 
-                completed?.Invoke();
+            private sealed class FadeState
+            {
+                public bool Paused;
             }
         }
 
