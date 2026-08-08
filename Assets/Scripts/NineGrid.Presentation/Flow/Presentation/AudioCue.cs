@@ -118,4 +118,152 @@ namespace NineGrid.Flow.Presentation
                 string.Empty));
         }
     }
+
+    /// <summary>卡牌生命周期声音提示；发射点对齐发牌/运动落地与可见退场，不旁路 Core 事件。</summary>
+    public static class CardLifecycleAudioCues
+    {
+        [AudioCue("card.lifecycle.deal", "发牌起飞", "Cards", "DealFlightCoordinator.LaunchDrainFlight", AudioCueContexts.CardDefId)]
+        public const string Deal = "card.lifecycle.deal";
+
+        [AudioCue("card.lifecycle.draw", "抽牌离组", "Cards", "CardDeckManagerSingleton.DealCardToHandAsync", AudioCueContexts.CardDefId)]
+        public const string Draw = "card.lifecycle.draw";
+
+        [AudioCue("card.lifecycle.shuffle", "洗牌入组", "Cards", "BoardPresentationPlayer.PresentOneShuffleIntoDeckAsync", AudioCueContexts.CardDefId)]
+        public const string Shuffle = "card.lifecycle.shuffle";
+
+        [AudioCue("card.lifecycle.into_hand", "卡牌入手就位", "Cards", "CardDeckManagerSingleton.DealCardToHandAsync", AudioCueContexts.CardDefId)]
+        public const string IntoHand = "card.lifecycle.into_hand";
+
+        [AudioCue("card.lifecycle.into_field", "卡牌入场落地", "Cards", "DealFlightCoordinator.NotifyLanded", AudioCueContexts.CardDefId)]
+        public const string IntoField = "card.lifecycle.into_field";
+
+        [AudioCue("card.lifecycle.flip", "卡牌翻面", "Cards", "FlipPlaybackCoordinator.RunPumpAsync", AudioCueContexts.None)]
+        public const string Flip = "card.lifecycle.flip";
+
+        [AudioCue("card.lifecycle.move", "卡牌移位", "Cards", "BoardMotionStepScheduler.ExecuteMotionStepAsync", AudioCueContexts.None)]
+        public const string Move = "card.lifecycle.move";
+
+        [AudioCue("card.lifecycle.swap", "卡牌交换", "Cards", "BoardMotionStepScheduler.ExecuteMotionStepAsync", AudioCueContexts.None)]
+        public const string Swap = "card.lifecycle.swap";
+
+        [AudioCue("card.lifecycle.rotate", "外圈旋转", "Cards", "BoardMotionStepScheduler.ExecuteMotionStepAsync", AudioCueContexts.None)]
+        public const string Rotate = "card.lifecycle.rotate";
+
+        [AudioCue("card.lifecycle.item_use", "道具卡使用", "Cards", "CardEffectManager.PlayUseAsync", AudioCueContexts.CardDefId)]
+        public const string ItemUse = "card.lifecycle.item_use";
+
+        [AudioCue("card.lifecycle.recycle", "卡牌回收兑金", "Cards", "CardHandManagerSingleton.OnRecycleItemIntentFlushed", AudioCueContexts.CardDefId)]
+        public const string Recycle = "card.lifecycle.recycle";
+
+        [AudioCue("card.lifecycle.exit", "卡牌退场", "Cards", "CardEffectManager.PlayDeathAsync", AudioCueContexts.CardDefId)]
+        public const string Exit = "card.lifecycle.exit";
+
+        [AudioCue("card.lifecycle.shatter", "卡牌碎裂", "Cards", "CardEffectManager.PlayDeathAsync", AudioCueContexts.CardDefId)]
+        public const string Shatter = "card.lifecycle.shatter";
+
+        public static void Pulse(string cueId, string diagnosticSource, string cardDefId = null)
+        {
+            if (!string.IsNullOrEmpty(cardDefId))
+            {
+                InteractionAudioCues.PulseCard(cueId, diagnosticSource, cardDefId);
+                return;
+            }
+
+            InteractionAudioCues.Pulse(cueId, diagnosticSource);
+        }
+
+        public static void PulseMotion(NineGrid.Cards.BoardPresentationStepKind kind, string diagnosticSource)
+        {
+            switch (kind)
+            {
+                case NineGrid.Cards.BoardPresentationStepKind.Rotate:
+                    Pulse(Rotate, diagnosticSource);
+                    break;
+                case NineGrid.Cards.BoardPresentationStepKind.Swap:
+                    Pulse(Swap, diagnosticSource);
+                    break;
+                case NineGrid.Cards.BoardPresentationStepKind.Move:
+                    Pulse(Move, diagnosticSource);
+                    break;
+            }
+        }
+    }
+
+    /// <summary>基础战斗声音提示；交战结果仅由 Impact 装饰处理器发射，预备对齐 lunge 起手。</summary>
+    public static class BattleCombatAudioCues
+    {
+        [AudioCue("battle.attack.prepare", "攻击准备起手", "Battle", "CardAttackBasicAdapter.BindLungeBegin", AudioCueContexts.CardDefId)]
+        public const string AttackPrepare = "battle.attack.prepare";
+
+        [AudioCue("battle.attack.hit", "攻击命中", "Battle", "DamageFloaterBeatHandler.TryApply", AudioCueContexts.CardDefId)]
+        public const string AttackHit = "battle.attack.hit";
+
+        [AudioCue("battle.combat.block", "护甲完全格挡", "Battle", "DamageFloaterBeatHandler.TryApply", AudioCueContexts.CardDefId)]
+        public const string Block = "battle.combat.block";
+
+        [AudioCue("battle.combat.armor_absorb", "护甲吸收伤害", "Battle", "DamageFloaterBeatHandler.TryApply", AudioCueContexts.CardDefId)]
+        public const string ArmorAbsorb = "battle.combat.armor_absorb";
+
+        [AudioCue("battle.combat.hp_damage", "血量受伤", "Battle", "DamageFloaterBeatHandler.TryApply", AudioCueContexts.CardDefId)]
+        public const string HpDamage = "battle.combat.hp_damage";
+
+        [AudioCue("battle.combat.heal", "治疗生效", "Battle", "DamageFloaterBeatHandler.TryApply", AudioCueContexts.CardDefId)]
+        public const string Heal = "battle.combat.heal";
+
+        [AudioCue("battle.combat.death", "单位死亡退场", "Battle", "CardEffectManager.PlayDeathAsync", AudioCueContexts.CardDefId)]
+        public const string Death = "battle.combat.death";
+
+        public static void Pulse(string cueId, string diagnosticSource, string cardDefId = null)
+        {
+            CardLifecycleAudioCues.Pulse(cueId, diagnosticSource, cardDefId);
+        }
+    }
+
+    /// <summary>
+    /// Impact 交战结果 → 声音提示映射。与飘字同缝，保证可见事实与声音一致且不由 View/Core 重复发射。
+    /// </summary>
+    public static class CombatOutcomeAudio
+    {
+        public static void PulseShowDamage(NineGrid.Core.CoreGameEvent gameEvent, string diagnosticSource)
+        {
+            if (gameEvent == null || gameEvent.Amount <= 0)
+            {
+                return;
+            }
+
+            var cardDefId = gameEvent.SourceDefId;
+            BattleCombatAudioCues.Pulse(BattleCombatAudioCues.AttackHit, diagnosticSource, cardDefId);
+
+            var armorDamage = gameEvent.ArmorDamage;
+            var hpDamage = gameEvent.HpDamage;
+            if (armorDamage > 0 && hpDamage <= 0)
+            {
+                BattleCombatAudioCues.Pulse(BattleCombatAudioCues.Block, diagnosticSource, cardDefId);
+                return;
+            }
+
+            if (armorDamage > 0)
+            {
+                BattleCombatAudioCues.Pulse(BattleCombatAudioCues.ArmorAbsorb, diagnosticSource, cardDefId);
+            }
+
+            if (hpDamage > 0)
+            {
+                BattleCombatAudioCues.Pulse(BattleCombatAudioCues.HpDamage, diagnosticSource, cardDefId);
+            }
+        }
+
+        public static void PulseHeal(NineGrid.Core.CoreGameEvent gameEvent, string diagnosticSource)
+        {
+            if (gameEvent == null || gameEvent.Delta <= 0)
+            {
+                return;
+            }
+
+            BattleCombatAudioCues.Pulse(
+                BattleCombatAudioCues.Heal,
+                diagnosticSource,
+                gameEvent.SourceDefId);
+        }
+    }
 }

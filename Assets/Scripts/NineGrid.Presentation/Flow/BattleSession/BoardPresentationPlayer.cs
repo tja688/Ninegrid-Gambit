@@ -881,6 +881,11 @@ namespace NineGrid.Flow
                     return;
                 }
 
+                CardLifecycleAudioCues.Pulse(
+                    CardLifecycleAudioCues.Shuffle,
+                    "BoardPresentationPlayer.PresentBurstScatterShuffleGroupAsync",
+                    originEntry.DefId);
+
                 var fieldLayout = fieldManager != null ? fieldManager.LayoutSettings : null;
                 var radius = fieldLayout != null ? fieldLayout.burstScatterRadius : 1.1f;
                 var burstDuration = fieldLayout != null ? fieldLayout.burstScatterDuration : 0.28f;
@@ -972,6 +977,11 @@ namespace NineGrid.Flow
             {
                 return;
             }
+
+            CardLifecycleAudioCues.Pulse(
+                CardLifecycleAudioCues.Shuffle,
+                "BoardPresentationPlayer.PresentOneShuffleIntoDeckAsync",
+                entry.DefId);
 
             if (entry.Kind == ShuffleIntoDeckEventKind.ExistingCard)
             {

@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System;
 using Cysharp.Threading.Tasks;
+using NineGrid.Flow.Presentation;
 using UnityEngine;
 using UnityEngine.Rendering;
 
@@ -159,7 +160,16 @@ namespace NineGrid.Cards
 
             PrepareAttackerAtAvatarAnchor(field, attacker, victimTransform);
             rig.ResetParticipantMotion(attacker, victimTransform);
-            rig.BindParticipants(attacker, victimTransform, victimEffects, in bind, onCombatHit);
+            rig.BindParticipants(
+                attacker,
+                victimTransform,
+                victimEffects,
+                in bind,
+                onLungeBegin: () => BattleCombatAudioCues.Pulse(
+                    BattleCombatAudioCues.AttackPrepare,
+                    "CardAttackBasicAdapter.BindLungeBegin",
+                    victim.DefId),
+                onCombatHit);
 
             await PlayBoundRigAsync(
                 rig,
@@ -238,7 +248,14 @@ namespace NineGrid.Cards
                 tauntTransform,
                 tauntEffects,
                 in bind,
-                onLungeBegin: () => tauntVictim.PlayEffectTriggerPulse(),
+                onLungeBegin: () =>
+                {
+                    BattleCombatAudioCues.Pulse(
+                        BattleCombatAudioCues.AttackPrepare,
+                        "CardAttackBasicAdapter.BindLungeBegin",
+                        tauntVictim.DefId);
+                    tauntVictim.PlayEffectTriggerPulse();
+                },
                 onCombatHit);
 
             await PlayBoundRigAsync(
@@ -323,7 +340,16 @@ namespace NineGrid.Cards
 
             PrepareAttackerAtSlotAnchor(field, attackerTransform, attackerSlot, victimTransform);
             rig.ResetParticipantMotion(attackerTransform, victimTransform);
-            rig.BindParticipants(attackerTransform, victimTransform, victimEffects, in bind, onCombatHit);
+            rig.BindParticipants(
+                attackerTransform,
+                victimTransform,
+                victimEffects,
+                in bind,
+                onLungeBegin: () => BattleCombatAudioCues.Pulse(
+                    BattleCombatAudioCues.AttackPrepare,
+                    "CardAttackBasicAdapter.BindLungeBegin",
+                    attacker.DefId),
+                onCombatHit);
 
             await PlayBoundRigAsync(
                 rig,

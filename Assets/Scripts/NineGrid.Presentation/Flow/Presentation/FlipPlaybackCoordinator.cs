@@ -85,6 +85,9 @@ namespace NineGrid.Flow.Presentation
 
                     try
                     {
+                        CardLifecycleAudioCues.Pulse(
+                            CardLifecycleAudioCues.Flip,
+                            "FlipPlaybackCoordinator.RunPumpAsync");
                         await presenter.PlayFlipAsync(entry.TargetFaceUp);
                     }
                     catch (OperationCanceledException)

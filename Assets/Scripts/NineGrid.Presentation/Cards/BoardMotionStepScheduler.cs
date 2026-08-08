@@ -1,6 +1,7 @@
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using NineGrid.Core;
+using NineGrid.Flow.Presentation;
 using NineGrid.Presentation.Systems;
 using QFramework;
 
@@ -17,6 +18,8 @@ namespace NineGrid.Cards
             BoardPresentationStep step,
             CancellationToken cancellationToken)
         {
+            CardLifecycleAudioCues.PulseMotion(step.Kind, "BoardMotionStepScheduler.ExecuteMotionStepAsync");
+
             var presentation = TryGetPresentation();
             if (presentation != null)
             {

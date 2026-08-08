@@ -127,6 +127,20 @@ namespace NineGrid.Cards
             in BattleBindParams bind,
             Action onCombatHit)
         {
+            BindParticipants(attacker, victim, victimEffects, in bind, onLungeBegin: null, onCombatHit);
+        }
+
+        /// <summary>
+        /// 按战斗编排绑参重绑；<paramref name="onLungeBegin"/> 对齐攻击起手可见帧。
+        /// </summary>
+        public void BindParticipants(
+            Transform attacker,
+            Transform victim,
+            CardEffectManager victimEffects,
+            in BattleBindParams bind,
+            Action onLungeBegin,
+            Action onCombatHit)
+        {
             BindParticipants(
                 attacker,
                 victim,
@@ -138,7 +152,8 @@ namespace NineGrid.Cards
                 bind.HitFlashTimingPolicy,
                 bind.HitFlashCallbackDelay,
                 bind.DeathCallbackDelay,
-                onCombatHit);
+                onCombatHit,
+                onLungeBegin);
         }
 
         /// <summary>
@@ -200,7 +215,8 @@ namespace NineGrid.Cards
             BattleHitFlashTimingPolicy hitFlashTimingPolicy = BattleHitFlashTimingPolicy.Heuristic,
             float hitFlashCallbackDelay = 0f,
             float deathCallbackDelay = 0f,
-            Action onCombatHit = null)
+            Action onCombatHit = null,
+            Action onLungeBegin = null)
         {
             BuildRoleMapIfNeeded();
             CacheBakedClipValuesIfNeeded();
@@ -242,6 +258,7 @@ namespace NineGrid.Cards
             _boundVictim = victim;
             _bindDeathCallbackRequested = bindDeathCallback;
             _hitConfirmedKill = false;
+            _onLungeBegin = onLungeBegin;
 
             ConfigureHitFlashCallback(victimEffects, onCombatHit);
             ConfigureDeathCallback(victimEffects, bindDeathCallback);

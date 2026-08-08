@@ -8,6 +8,7 @@ using Cysharp.Threading.Tasks;
 using NineGrid.Cards.Convergence;
 using NineGrid.Cards.Vfx;
 using NineGrid.Core;
+using NineGrid.Flow.Presentation;
 using NineGrid.Presentation;
 using NineGrid.Presentation.Systems;
 using QFramework;
@@ -2175,6 +2176,10 @@ namespace NineGrid.Cards
                 }
                 else
                 {
+                    CardLifecycleAudioCues.Pulse(
+                        CardLifecycleAudioCues.Exit,
+                        "GroundMotionExecutor.RemoveCardAnimatedAsync",
+                        card.DefId);
                     var initialScale = card.Transform.localScale;
                     await RunViewTweenAsync(
                         CardViewTween.ScaleDisappear(

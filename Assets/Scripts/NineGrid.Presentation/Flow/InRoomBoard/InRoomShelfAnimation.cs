@@ -5,6 +5,7 @@ using Cysharp.Threading.Tasks;
 using DG.Tweening;
 using NineGrid.Cards;
 using NineGrid.Cards.Convergence;
+using NineGrid.Flow.Presentation;
 using NineGrid.Presentation.Systems;
 using UnityEngine;
 
@@ -172,10 +173,15 @@ namespace NineGrid.Flow.InRoomBoard
                 effectManager.PlayDeathAsync(
                     selfSlot: 0,
                     selfDirection: CardBoardDirection.None,
-                    cancellationToken: CancellationToken.None).Forget();
+                    cancellationToken: CancellationToken.None,
+                    audioCueId: CardLifecycleAudioCues.Exit).Forget();
                 return;
             }
 
+            CardLifecycleAudioCues.Pulse(
+                CardLifecycleAudioCues.Exit,
+                "InRoomShelfAnimation.PlayConsumeDeath",
+                card.DefId);
             PlayConsumeDeath(card.Transform);
         }
 

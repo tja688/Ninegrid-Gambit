@@ -1543,7 +1543,8 @@ namespace NineGrid.Cards
                     await effectManager.PlayDeathAsync(
                         selfSlot: 0,
                         selfDirection: CardBoardDirection.None,
-                        cancellationToken: CancellationToken.None);
+                        cancellationToken: CancellationToken.None,
+                        audioCueId: CardLifecycleAudioCues.Shatter);
                 }
                 else
                 {
@@ -1838,6 +1839,10 @@ namespace NineGrid.Cards
                 return;
             }
 
+            CardLifecycleAudioCues.Pulse(
+                CardLifecycleAudioCues.Recycle,
+                "CardHandManagerSingleton.OnRecycleItemIntentFlushed",
+                removed.DefId);
             ShatterCardAfterRecycleAsync(removed).Forget();
         }
 

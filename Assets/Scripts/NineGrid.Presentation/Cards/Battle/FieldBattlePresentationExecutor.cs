@@ -777,6 +777,10 @@ namespace NineGrid.Cards
             }
             else if (victim.Transform != null)
             {
+                CardLifecycleAudioCues.Pulse(
+                    CardLifecycleAudioCues.Exit,
+                    "FieldBattlePresentationExecutor.PresentRemovedFieldCardAsync",
+                    victim.DefId);
                 var removeDuration = geometry != null
                     ? geometry.LayoutSettings.removeDisappearDuration
                     : 0.25f;

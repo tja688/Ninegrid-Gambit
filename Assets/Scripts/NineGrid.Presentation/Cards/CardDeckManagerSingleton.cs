@@ -797,6 +797,11 @@ namespace NineGrid.Cards
             cardManager?.SetDisplayMode(card, CardDisplayMode.GroundCardMode);
             CardOpacityUtility.ResetAlpha(card);
 
+            CardLifecycleAudioCues.Pulse(
+                CardLifecycleAudioCues.Draw,
+                "CardDeckManagerSingleton.DealCardToHandAsync",
+                card.DefId);
+
             var moveDuration = layoutSettings != null ? layoutSettings.moveDuration : 0.2f;
             var scaleTask = CardDeckTween.ScaleAppearAsync(
                 card.Transform,
@@ -810,6 +815,10 @@ namespace NineGrid.Cards
             await scaleTask;
             if (ok)
             {
+                CardLifecycleAudioCues.Pulse(
+                    CardLifecycleAudioCues.IntoHand,
+                    "CardDeckManagerSingleton.DealCardToHandAsync",
+                    card.DefId);
                 try
                 {
                     FlowFieldTraceSink.HandLifecycle?.Invoke(

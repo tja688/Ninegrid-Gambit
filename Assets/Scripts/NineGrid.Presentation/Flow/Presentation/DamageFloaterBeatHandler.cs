@@ -48,6 +48,9 @@ namespace NineGrid.Flow.Presentation
                     return true;
                 }
 
+                // 与飘字同 Impact 缝发声；不阻塞主线 ack，对齐可见命中事实。
+                CombatOutcomeAudio.PulseShowDamage(gameEvent, "DamageFloaterBeatHandler.TryApply");
+
                 var pos = PresentationOutputProjector.ResolveCardWorldPosition(gameEvent.TargetUid);
                 if (!pos.HasValue)
                 {
@@ -85,6 +88,8 @@ namespace NineGrid.Flow.Presentation
                 {
                     return false;
                 }
+
+                CombatOutcomeAudio.PulseHeal(gameEvent, "DamageFloaterBeatHandler.TryApply");
 
                 var pos = PresentationOutputProjector.ResolveCardWorldPosition(gameEvent.TargetUid);
                 if (!pos.HasValue)

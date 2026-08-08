@@ -4,6 +4,7 @@ using System.Threading;
 using Cysharp.Threading.Tasks;
 using NineGrid.Cards.Convergence;
 using NineGrid.Cards.Vfx;
+using NineGrid.Flow.Presentation;
 using UnityEngine;
 
 namespace NineGrid.Cards
@@ -127,6 +128,10 @@ namespace NineGrid.Cards
             ChoreoTraceSink.SafeBeginChoreo("dealFlight", "kind", "drain", "uid", card.Uid.ToString());
             TraceDealFlightBegin(probe);
             EmitAimAnomalyIfNeeded(probe, card.Uid);
+            CardLifecycleAudioCues.Pulse(
+                CardLifecycleAudioCues.Deal,
+                "DealFlightCoordinator.LaunchDrainFlight",
+                card.DefId);
             RunDrainProbeAsync(probe).Forget();
             return probe.Handle;
         }
@@ -410,6 +415,10 @@ namespace NineGrid.Cards
 
                 TraceProbe(probe, "flightStart", card.Uid);
                 probe.FlightBeginUnscaledTime = Time.unscaledTime;
+                CardLifecycleAudioCues.Pulse(
+                    CardLifecycleAudioCues.Deal,
+                    "DealFlightCoordinator.ExploreFlightStart",
+                    card.DefId);
                 SlotFrameConvergence.BeginDealFromLaunch(
                     card,
                     launchPos,
@@ -464,6 +473,10 @@ namespace NineGrid.Cards
                 }
 
                 TraceProbe(probe, "placeOk", card.Uid);
+                CardLifecycleAudioCues.Pulse(
+                    CardLifecycleAudioCues.IntoField,
+                    "DealFlightCoordinator.ExploreLanded",
+                    card.DefId);
                 probe.Handle.Complete(true);
                 probe.Card = null;
             }
@@ -542,6 +555,10 @@ namespace NineGrid.Cards
 
                 // 开局/Drain 发牌：起飞时已 ReleaseClaim，落地后须回登记，否则场地面点击全走「未认领→Explore」。
                 _drainByUid.Remove(uid);
+                CardLifecycleAudioCues.Pulse(
+                    CardLifecycleAudioCues.IntoField,
+                    "DealFlightCoordinator.NotifyLanded",
+                    probe.Card.DefId);
                 _host.NotifyDealFlightLanded(probe.Card, settleSlot);
                 probe.Handle.Complete(true);
             }

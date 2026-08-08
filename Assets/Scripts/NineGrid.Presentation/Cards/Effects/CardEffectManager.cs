@@ -3,6 +3,7 @@ using System.Threading;
 using Cysharp.Threading.Tasks;
 using DG.Tweening;
 using NineGrid.Cards.Convergence;
+using NineGrid.Flow.Presentation;
 using Sirenix.OdinInspector;
 using UnityEngine;
 
@@ -95,8 +96,16 @@ namespace NineGrid.Cards
         public UniTask PlayDeathAsync(
             int selfSlot = 0,
             CardBoardDirection selfDirection = CardBoardDirection.None,
-            CancellationToken cancellationToken = default)
+            CancellationToken cancellationToken = default,
+            string audioCueId = null)
         {
+            var cueId = string.IsNullOrEmpty(audioCueId)
+                ? BattleCombatAudioCues.Death
+                : audioCueId;
+            CardLifecycleAudioCues.Pulse(
+                cueId,
+                "CardEffectManager.PlayDeathAsync",
+                ResolveOwnerDefId());
             return PlayAsync(
                 CardEffectInvokeContext.ForDeath(selfSlot, selfDirection),
                 cancellationToken);
@@ -106,6 +115,10 @@ namespace NineGrid.Cards
             CardBoardDirection selfDirection = CardBoardDirection.None,
             CancellationToken cancellationToken = default)
         {
+            CardLifecycleAudioCues.Pulse(
+                CardLifecycleAudioCues.ItemUse,
+                "CardEffectManager.PlayUseAsync",
+                ResolveOwnerDefId());
             return PlayAsync(
                 CardEffectInvokeContext.ForUse(selfDirection),
                 cancellationToken);
@@ -343,6 +356,12 @@ namespace NineGrid.Cards
             _currentEffect = null;
             _isPlaying = false;
             _suppressHover = false;
+        }
+
+        private string ResolveOwnerDefId()
+        {
+            var card = ResolveManagedCard();
+            return card != null ? card.DefId ?? string.Empty : string.Empty;
         }
 
         private void StopOverlayFlash()
