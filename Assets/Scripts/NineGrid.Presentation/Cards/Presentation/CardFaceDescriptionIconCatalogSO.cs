@@ -6,8 +6,8 @@ using UnityEngine;
 namespace NineGrid.Cards.Presentation
 {
     /// <summary>
-    /// 项目级描述专用图标表：自定义代号 → Sprite（与装配槽无关）。
-    /// 禁止占用装配槽代号；不可反向覆盖 Main_Icon / Action_Icon 等高层装配结果。
+    /// 项目级词条表：名字 / 详细介绍 / 可选颜色；可选 code+sprite 供 <c>[code]</c> 内联图标。
+    /// <c>[[展示名]]</c> 按 <see cref="Entry.displayNameZh"/> 精确匹配；禁止占用装配槽代号。
     /// </summary>
     [CreateAssetMenu(
         fileName = "CardFaceDescriptionIconCatalog",
@@ -17,13 +17,13 @@ namespace NineGrid.Cards.Presentation
         [Serializable]
         public sealed class Entry
         {
-            [Tooltip("描述占位代号，例如 Poison（写入文案为 [Poison]）。")]
+            [Tooltip("描述占位代号，例如 armor（写入文案为 [armor]）。空 = 纯文字词条。")]
             public string code = string.Empty;
 
-            [Tooltip("可选中文名，编辑器列表与详情展开显示。")]
+            [Tooltip("词条名字；[[名字]] 精确匹配键，详情行标题。")]
             public string displayNameZh = string.Empty;
 
-            [Tooltip("词条解释；详情页展开，与卡面图标同源。")]
+            [Tooltip("词条详细介绍；右键详情行正文。")]
             [TextArea(2, 6)]
             public string explanation = string.Empty;
 
@@ -32,12 +32,23 @@ namespace NineGrid.Cards.Presentation
 
             [Tooltip("描述内联使用的 Sprite；空则该代号不解析为图标。")]
             public Sprite sprite;
+
+            [Tooltip("可选词条着色；a=0 表示未配置，跟随正文默认色。")]
+            public Color color = new Color(1f, 1f, 1f, 0f);
+
+            /// <summary>是否配置了覆盖色（a &gt; 0）。</summary>
+            public bool HasColorOverride => color.a > 0.001f;
+
+            /// <summary>是否可作为 <c>[code]</c> 图标词条。</summary>
+            public bool HasInlineIcon =>
+                !string.IsNullOrWhiteSpace(code) && sprite != null;
         }
 
         [SerializeField]
         private List<Entry> entries = new List<Entry>();
 
-        private Dictionary<string, Entry> _lookup;
+        private Dictionary<string, Entry> _codeLookup;
+        private Dictionary<string, Entry> _nameLookup;
 
         public IReadOnlyList<Entry> Entries => entries;
 
@@ -67,13 +78,7 @@ namespace NineGrid.Cards.Presentation
         public bool TryGet(string code, out Sprite sprite)
         {
             sprite = null;
-            if (string.IsNullOrEmpty(code) || IsReservedAssemblySlotCode(code))
-            {
-                return false;
-            }
-
-            EnsureLookup();
-            if (!_lookup.TryGetValue(code, out var entry) || entry == null || entry.sprite == null)
+            if (!TryGetByCode(code, out var entry) || entry == null || entry.sprite == null)
             {
                 return false;
             }
@@ -82,16 +87,33 @@ namespace NineGrid.Cards.Presentation
             return true;
         }
 
-        public bool TryGetEntry(string code, out Entry entry)
+        /// <summary>按 <c>[code]</c> 代号查词条（保留装配槽名时拒绝）。</summary>
+        public bool TryGetByCode(string code, out Entry entry)
         {
             entry = null;
-            if (string.IsNullOrEmpty(code))
+            if (string.IsNullOrEmpty(code) || IsReservedAssemblySlotCode(code))
             {
                 return false;
             }
 
             EnsureLookup();
-            return _lookup.TryGetValue(code, out entry) && entry != null;
+            return _codeLookup.TryGetValue(code, out entry) && entry != null;
+        }
+
+        /// <summary>兼容旧调用：等同 <see cref="TryGetByCode"/>。</summary>
+        public bool TryGetEntry(string code, out Entry entry) => TryGetByCode(code, out entry);
+
+        /// <summary>按 <c>[[展示名]]</c> 精确匹配 <see cref="Entry.displayNameZh"/>。</summary>
+        public bool TryGetByDisplayName(string displayName, out Entry entry)
+        {
+            entry = null;
+            if (string.IsNullOrWhiteSpace(displayName))
+            {
+                return false;
+            }
+
+            EnsureLookup();
+            return _nameLookup.TryGetValue(displayName.Trim(), out entry) && entry != null;
         }
 
         public bool TryAddOrUpdate(string code, Sprite sprite, string displayNameZh, out string error)
@@ -111,7 +133,7 @@ namespace NineGrid.Cards.Presentation
             }
 
             EnsureLookup();
-            if (_lookup.TryGetValue(code, out var existing) && existing != null)
+            if (_codeLookup.TryGetValue(code, out var existing) && existing != null)
             {
                 existing.sprite = sprite;
                 if (displayNameZh != null)
@@ -130,6 +152,7 @@ namespace NineGrid.Cards.Presentation
                 displayNameZh = displayNameZh ?? string.Empty,
                 explanation = string.Empty,
                 partition = "Others",
+                color = new Color(1f, 1f, 1f, 0f),
             };
             entries.Add(created);
             InvalidateLookup();
@@ -190,6 +213,7 @@ namespace NineGrid.Cards.Presentation
                 explanation = string.Empty,
                 partition = "Others",
                 sprite = null,
+                color = new Color(1f, 1f, 1f, 0f),
             };
             entries.Add(created);
             InvalidateLookup();
@@ -203,12 +227,13 @@ namespace NineGrid.Cards.Presentation
             {
                 foreach (var entry in source)
                 {
-                    if (entry == null || string.IsNullOrEmpty(entry.code))
+                    if (entry == null)
                     {
                         continue;
                     }
 
-                    if (IsReservedAssemblySlotCode(entry.code))
+                    // 允许纯文字词条（无 code）；有 code 时仍禁装配槽保留名。
+                    if (!string.IsNullOrEmpty(entry.code) && IsReservedAssemblySlotCode(entry.code))
                     {
                         continue;
                     }
@@ -222,17 +247,19 @@ namespace NineGrid.Cards.Presentation
 
         public void InvalidateLookup()
         {
-            _lookup = null;
+            _codeLookup = null;
+            _nameLookup = null;
         }
 
         private void EnsureLookup()
         {
-            if (_lookup != null)
+            if (_codeLookup != null && _nameLookup != null)
             {
                 return;
             }
 
-            _lookup = new Dictionary<string, Entry>(StringComparer.Ordinal);
+            _codeLookup = new Dictionary<string, Entry>(StringComparer.Ordinal);
+            _nameLookup = new Dictionary<string, Entry>(StringComparer.Ordinal);
             if (entries == null)
             {
                 entries = new List<Entry>();
@@ -242,14 +269,21 @@ namespace NineGrid.Cards.Presentation
             for (var i = 0; i < entries.Count; i++)
             {
                 var entry = entries[i];
-                if (entry == null
-                    || string.IsNullOrEmpty(entry.code)
-                    || IsReservedAssemblySlotCode(entry.code))
+                if (entry == null)
                 {
                     continue;
                 }
 
-                _lookup[entry.code] = entry;
+                if (!string.IsNullOrEmpty(entry.code)
+                    && !IsReservedAssemblySlotCode(entry.code))
+                {
+                    _codeLookup[entry.code] = entry;
+                }
+
+                if (!string.IsNullOrWhiteSpace(entry.displayNameZh))
+                {
+                    _nameLookup[entry.displayNameZh.Trim()] = entry;
+                }
             }
         }
 
