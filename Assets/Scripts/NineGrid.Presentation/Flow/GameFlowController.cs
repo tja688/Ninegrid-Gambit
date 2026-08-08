@@ -1,3 +1,4 @@
+using NineGrid.Content.Audio;
 using NineGrid.Core;
 using NineGrid.Flow.BoardBriefTip;
 using NineGrid.Flow.Presentation;
@@ -124,8 +125,19 @@ namespace NineGrid.Flow
         }
 
         /// <summary>主菜单「开始游戏」：无作弊正式开局。真相在 BeginGameFlowRunCommand。</summary>
+        [AudioCue(
+            "ui.main_menu.start",
+            "主菜单开始游戏点击",
+            "MainMenu",
+            "GameFlowController.BeginFormalRun",
+            AudioCueContexts.None)]
+        private const string MainMenuStartCueId = "ui.main_menu.start";
+
         public void BeginFormalRun()
         {
+            TriggerPulseHub.PulseAudio(AudioCueRequest.Simple(
+                MainMenuStartCueId,
+                "GameFlowController.BeginFormalRun"));
             SendBeginRun(GameFlowRunOptions.CreateFormal());
         }
 

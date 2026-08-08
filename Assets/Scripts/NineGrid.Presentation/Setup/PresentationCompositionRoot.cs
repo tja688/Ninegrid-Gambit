@@ -165,7 +165,7 @@ namespace NineGrid.Presentation.Setup
 
             if (mBindings != null)
             {
-                TriggerPulseOutputHook.RequestReset();
+                TriggerPulseOutputHook.RequestResetFx();
                 var session = NineGridArchitecture.Interface?.GetSystem<IBattleSessionSystem>();
                 session?.ClearPresentChannels();
             }
@@ -194,6 +194,7 @@ namespace NineGrid.Presentation.Setup
             ChoicePresentationSystem.EnsureRegistered(architecture);
             BoardSelectionSystem.EnsureRegistered(architecture);
             GameFlowShellSystem.EnsureRegistered(architecture);
+            MusicSystem.EnsureRegistered(architecture);
             AvatarWalkSystem.EnsureRegistered(architecture);
             InstallBattleBeatScheduler(architecture);
 

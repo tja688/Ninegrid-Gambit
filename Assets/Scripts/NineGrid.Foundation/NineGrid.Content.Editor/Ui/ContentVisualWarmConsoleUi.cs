@@ -252,6 +252,15 @@ namespace NineGrid.Content.Editor.Ui
 
         public static VisualElement CreateSectionCard(string title, string description, Action<VisualElement> build)
         {
+            return CreateSectionCard(title, description, build, true);
+        }
+
+        public static VisualElement CreateSectionCard(
+            string title,
+            string description,
+            Action<VisualElement> build,
+            bool expanded)
+        {
             var outer = new VisualElement();
             outer.style.flexDirection = FlexDirection.Row;
             outer.style.marginBottom = 6;
@@ -272,7 +281,7 @@ namespace NineGrid.Content.Editor.Ui
             inner.style.paddingLeft = 6;
             inner.style.paddingRight = 8;
 
-            var foldout = new Foldout { text = title, value = true };
+            var foldout = new Foldout { text = title, value = expanded };
             foldout.style.unityFontStyleAndWeight = FontStyle.Bold;
             foldout.style.fontSize = 13;
             foldout.style.color = Theme.TextPrimary;

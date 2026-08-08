@@ -1,0 +1,22 @@
+{
+    "schemaVersion": 1,
+    "ticket": "#168",
+    "bindings": [
+        {
+            "cueId": "ui.main_menu.start",
+            "note": "主菜单开始游戏点击",
+            "module": "MainMenu",
+            "enabled": true,
+            "clipKey": "audio/SFX/按钮点击",
+            "volumeDb": -2,
+            "startOffsetSeconds": 0,
+            "bindingDelaySeconds": 0,
+            "minimumIntervalSeconds": 0.05,
+            "selectorCardDefId": "",
+            "selectorSkillId": "",
+            "selectorRoomId": "",
+            "selectorItemDefId": "",
+            "selectorContentId": ""
+        }
+    ]
+}

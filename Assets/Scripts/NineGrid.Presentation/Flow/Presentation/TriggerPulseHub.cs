@@ -1,4 +1,5 @@
 using System;
+using NineGrid.Content.Audio;
 using NineGrid.Flow.Diagnostics;
 
 namespace NineGrid.Flow.Presentation
@@ -52,6 +53,16 @@ namespace NineGrid.Flow.Presentation
             sAudioEnabled = true;
         }
 
+        /// <summary>
+        /// 仅重置 FX 通道（战斗间清理）。音频通道属于主菜单到跑图结束的应用会话，
+        /// 不随局内战斗装配启停（ADR-0036）。
+        /// </summary>
+        public static void ResetFxToNull()
+        {
+            sFx = NullTriggerPulseSink.Instance;
+            sFxEnabled = true;
+        }
+
         public static void PulseFx(string triggerId)
         {
             if (!sFxEnabled)
@@ -63,15 +74,22 @@ namespace NineGrid.Flow.Presentation
             SafePulse(sFx, triggerId, "fx");
         }
 
+        /// <summary>保留无上下文入口；简单 cue 由音频模块解析。</summary>
         public static void PulseAudio(string triggerId)
+        {
+            PulseAudio(AudioCueRequest.Simple(triggerId, "TriggerPulseHub.PulseAudio"));
+        }
+
+        /// <summary>类型化声音提示入口；Hub 不选择素材、不保存绑定。</summary>
+        public static void PulseAudio(AudioCueRequest request)
         {
             if (!sAudioEnabled)
             {
-                DirectorTrace.TriggerPulse(triggerId, "audio", degraded: true);
+                DirectorTrace.TriggerPulse(request.CueId, "audio", degraded: true);
                 return;
             }
 
-            SafePulse(sAudio, triggerId, "audio");
+            SafePulse(sAudio, request);
         }
 
         private static void SafePulse(ITriggerPulseSink sink, string triggerId, string channel)
@@ -84,6 +102,28 @@ namespace NineGrid.Flow.Presentation
             catch (Exception)
             {
                 DirectorTrace.TriggerPulse(triggerId, channel, degraded: true);
+            }
+        }
+
+        private static void SafePulse(ITriggerPulseSink sink, AudioCueRequest request)
+        {
+            try
+            {
+                var typedSink = sink as IAudioCuePulseSink;
+                if (typedSink != null)
+                {
+                    typedSink.Pulse(request);
+                }
+                else
+                {
+                    sink.Pulse(request.CueId);
+                }
+
+                DirectorTrace.TriggerPulse(request.CueId, "audio", degraded: false);
+            }
+            catch (Exception)
+            {
+                DirectorTrace.TriggerPulse(request.CueId, "audio", degraded: true);
             }
         }
     }

@@ -124,6 +124,38 @@ namespace NineGrid.Flow.Diagnostics
         public const string DirectorBypassStart = "DirectorBypassStart";
         /// <summary>FX/音效 Trigger 脉冲（发即完成；可 degraded）。</summary>
         public const string DirectorTriggerPulse = "DirectorTriggerPulse";
+        /// <summary>音频提示请求被受理（IAudioSystem 入口）。</summary>
+        public const string AudioCueRequest = "AudioCueRequest";
+        /// <summary>音频绑定解析后实际播放。</summary>
+        public const string AudioCuePlayed = "AudioCuePlayed";
+        /// <summary>音频提示未绑定/禁用/缺素材，静默返回。</summary>
+        public const string AudioCueUnbound = "AudioCueUnbound";
+        /// <summary>最短播放间隔抑制。</summary>
+        public const string AudioCueCooldown = "AudioCueCooldown";
+        /// <summary>MMSoundManager Adapter 播放失败。</summary>
+        public const string AudioCueBackendFailure = "AudioCueBackendFailure";
+        /// <summary>音乐状态请求（流程层提交）。</summary>
+        public const string MusicStateRequested = "MusicStateRequested";
+        /// <summary>音乐请求无稳定来源。</summary>
+        public const string MusicStateInvalidSource = "MusicStateInvalidSource";
+        /// <summary>音乐状态未绑定。</summary>
+        public const string MusicStateUnbound = "MusicStateUnbound";
+        /// <summary>状态或最终 Clip 未变化。</summary>
+        public const string MusicStateNoOp = "MusicStateNoOp";
+        /// <summary>音乐实际开始。</summary>
+        public const string MusicStateStarted = "MusicStateStarted";
+        /// <summary>旧音乐进入淡出。</summary>
+        public const string MusicStateRetiring = "MusicStateRetiring";
+        /// <summary>旧音乐淡出完成。</summary>
+        public const string MusicStateRetired = "MusicStateRetired";
+        /// <summary>新切歌前释放更老淡出来源。</summary>
+        public const string MusicStateRetiredSourceReleased = "MusicStateRetiredSourceReleased";
+        /// <summary>音乐 Adapter 播放失败。</summary>
+        public const string MusicStateBackendFailure = "MusicStateBackendFailure";
+        /// <summary>显式停止音乐。</summary>
+        public const string MusicStateStopped = "MusicStateStopped";
+        /// <summary>旧代数回调被忽略。</summary>
+        public const string MusicStateStaleCallback = "MusicStateStaleCallback";
 
         /// <summary>卡牌边沿尘雾 Place 喷发。</summary>
         public const string DustPlace = "DustPlace";
@@ -170,6 +202,7 @@ namespace NineGrid.Flow.Diagnostics
         public const string DirectorBypass = "Director.Bypass";
         public const string CardEdgeDustPlace = "CardEdgeDust.Place";
         public const string CardEdgeDustTrail = "CardEdgeDust.Trail";
+        public const string AudioSystemCue = "Audio.System.Cue";
     }
 
     public static class PerfTraceAnomalyCodes

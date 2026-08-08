@@ -1,0 +1,1008 @@
+﻿{
+    "schemaVersion": 1,
+    "ticket": "#167",
+    "formalRoot": "Assets/Resources/audio",
+    "bgmRoot": "Assets/Resources/audio/BGM",
+    "sfxRoot": "Assets/Resources/audio/SFX",
+    "entries": [
+        {
+            "guid": "5d1beb7208557cf498f2a418e050a63d",
+            "assetPath": "Assets/Resources/audio/BGM/BattleTheme.mp3",
+            "resourcesKey": "audio/BGM/BattleTheme",
+            "sha256": "bd78de4c684391722dff940f7fd33c53fd7aaea7078dc2fe78a280c4987c5ca2",
+            "sizeBytes": 9848,
+            "kind": "BGM",
+            "loadPolicy": "preload"
+        },
+        {
+            "guid": "48fdc3ae5bafa3b4ca7b67da6cf6048f",
+            "assetPath": "Assets/Resources/audio/BGM/BossBattleTheme.mp3",
+            "resourcesKey": "audio/BGM/BossBattleTheme",
+            "sha256": "1ef8ea84e95200ad5fed6a2d7d12633308b40fe3c044c4b9034ca86496ce81a3",
+            "sizeBytes": 11729,
+            "kind": "BGM",
+            "loadPolicy": "preload"
+        },
+        {
+            "guid": "53c365509d61f1742bbfb226f402d56c",
+            "assetPath": "Assets/Resources/audio/BGM/DefeatTheme.mp3",
+            "resourcesKey": "audio/BGM/DefeatTheme",
+            "sha256": "dc0ae1339663e5c52a6d197bb3a1f5c37e7375b5d49690421cfc6377b9ad495d",
+            "sizeBytes": 61312,
+            "kind": "BGM",
+            "loadPolicy": "preload"
+        },
+        {
+            "guid": "e4683b9e170bce945a45d85fea23b301",
+            "assetPath": "Assets/Resources/audio/BGM/ExplorationTheme.mp3",
+            "resourcesKey": "audio/BGM/ExplorationTheme",
+            "sha256": "7566ca18c63dcfd51f5d0a1c31b17b3f0cf376b624d507aab51319238636495c",
+            "sizeBytes": 10475,
+            "kind": "BGM",
+            "loadPolicy": "preload"
+        },
+        {
+            "guid": "457eafd5ecc900e4eb9b99ac150825a8",
+            "assetPath": "Assets/Resources/audio/BGM/MainMenuTheme.mp3",
+            "resourcesKey": "audio/BGM/MainMenuTheme",
+            "sha256": "0640800d66d8a7e6f351992b382e59bf21c4b0fd6eca05c8a220d20f267f8a64",
+            "sizeBytes": 30922,
+            "kind": "BGM",
+            "loadPolicy": "preload"
+        },
+        {
+            "guid": "d58c3a4c6f8eb2b4e97dc0d082376b10",
+            "assetPath": "Assets/Resources/audio/BGM/VictoryTheme.mp3",
+            "resourcesKey": "audio/BGM/VictoryTheme",
+            "sha256": "3ac7c8f05063909158549871a9cd149313d6eda48958cb63a850e8b3c3cee7dc",
+            "sizeBytes": 7340,
+            "kind": "BGM",
+            "loadPolicy": "preload"
+        },
+        {
+            "guid": "96a2e5b7e72353b44ab69c250c796d08",
+            "assetPath": "Assets/Resources/audio/SFX/01 箱子打开.mp3",
+            "resourcesKey": "audio/SFX/01 箱子打开",
+            "sha256": "ac991fdc2d55a9168f73605b29f365b276e184fa8d42516a8d8064f0c7781b4e",
+            "sizeBytes": 12678,
+            "kind": "SFX",
+            "loadPolicy": "first_use_cached"
+        },
+        {
+            "guid": "df459d1c38da5574ea4f0ebdff770258",
+            "assetPath": "Assets/Resources/audio/SFX/06 石头脚步声.mp3",
+            "resourcesKey": "audio/SFX/06 石头脚步声",
+            "sha256": "018b94b93d52799ae1fe8333b10fcc80a36f799a8d674ac6bf825ae8defa6488",
+            "sizeBytes": 12678,
+            "kind": "SFX",
+            "loadPolicy": "first_use_cached"
+        },
+        {
+            "guid": "2806b7a68b2e71248a669f6b6a8e7c9f",
+            "assetPath": "Assets/Resources/audio/SFX/06 石头脚步声_1.mp3",
+            "resourcesKey": "audio/SFX/06 石头脚步声_1",
+            "sha256": "72a7559d026e1609050e9ce80554289a730fbbfd39d002dbbe5a77df0aca5782",
+            "sizeBytes": 12678,
+            "kind": "SFX",
+            "loadPolicy": "first_use_cached"
+        },
+        {
+            "guid": "414284c6c5a651c42abed45ddebca15a",
+            "assetPath": "Assets/Resources/audio/SFX/06 石头脚步声_2.mp3",
+            "resourcesKey": "audio/SFX/06 石头脚步声_2",
+            "sha256": "66a508f689b015ef3d59e1b0397a784577d109e6f20cc33a65632634fca32276",
+            "sizeBytes": 12678,
+            "kind": "SFX",
+            "loadPolicy": "first_use_cached"
+        },
+        {
+            "guid": "8b8e18ade23564e49a97d5584b579441",
+            "assetPath": "Assets/Resources/audio/SFX/07 人类剑攻击.mp3",
+            "resourcesKey": "audio/SFX/07 人类剑攻击",
+            "sha256": "8b1a8981a2488e784fa57ebe94693dd83a5aacd89c90cca1d6742c1aecf80f5b",
+            "sizeBytes": 12683,
+            "kind": "SFX",
+            "loadPolicy": "first_use_cached"
+        },
+        {
+            "guid": "0c26143761cdbd545b06ed4348aad14a",
+            "assetPath": "Assets/Resources/audio/SFX/07 人类剑攻击_1.mp3",
+            "resourcesKey": "audio/SFX/07 人类剑攻击_1",
+            "sha256": "a1179c73fa830ca03a4cd6e91be4c353cf32856c042e69e73fa55f3427a32971",
+            "sizeBytes": 12683,
+            "kind": "SFX",
+            "loadPolicy": "first_use_cached"
+        },
+        {
+            "guid": "abbcfe2eed63d664eb9eae00ef3b4765",
+            "assetPath": "Assets/Resources/audio/SFX/244656 绿色大众甲壳虫 爆裂-6增强.mp3",
+            "resourcesKey": "audio/SFX/244656 绿色大众甲壳虫 爆裂-6增强",
+            "sha256": "643c9c822d97764487206f1e32791558667cabddd65c92f6edf52dda4aa1bb92",
+            "sizeBytes": 2324,
+            "kind": "SFX",
+            "loadPolicy": "first_use_cached"
+        },
+        {
+            "guid": "2a10fd59e5565834cae39b42109c42e4",
+            "assetPath": "Assets/Resources/audio/SFX/25 兽人石头行走.mp3",
+            "resourcesKey": "audio/SFX/25 兽人石头行走",
+            "sha256": "842ee6ed2ec9acba1d1b6de4331a356850b7feb1ce843c034ce95a524b2775b1",
+            "sizeBytes": 12682,
+            "kind": "SFX",
+            "loadPolicy": "first_use_cached"
+        },
+        {
+            "guid": "476f995a52eb08d42af6ea7017597ed0",
+            "assetPath": "Assets/Resources/audio/SFX/25 兽人石头行走_1.mp3",
+            "resourcesKey": "audio/SFX/25 兽人石头行走_1",
+            "sha256": "004af2a0a3094a9bbdc063495446565f3c21855410e1324c1c19be2b0bceb529",
+            "sizeBytes": 12682,
+            "kind": "SFX",
+            "loadPolicy": "first_use_cached"
+        },
+        {
+            "guid": "ad3eb987e309a4948a6e86cd4b7e6412",
+            "assetPath": "Assets/Resources/audio/SFX/25 兽人石头行走_2.mp3",
+            "resourcesKey": "audio/SFX/25 兽人石头行走_2",
+            "sha256": "f36628857fb549c9361e7d42fc776cb992877db3d88da6e74779dace4289b621",
+            "sizeBytes": 12682,
+            "kind": "SFX",
+            "loadPolicy": "first_use_cached"
+        },
+        {
+            "guid": "a31a103939d42634383dae762e4d1795",
+            "assetPath": "Assets/Resources/audio/SFX/387834 瑞安西茨 噗.mp3",
+            "resourcesKey": "audio/SFX/387834 瑞安西茨 噗",
+            "sha256": "8e11924e6abe27a4a61c2c89ed5358c85d391245a1a990601ad4b0b57b86241f",
+            "sizeBytes": 9762,
+            "kind": "SFX",
+            "loadPolicy": "first_use_cached"
+        },
+        {
+            "guid": "47fcee857c5733847b373a708546f0fb",
+            "assetPath": "Assets/Resources/audio/SFX/46 毒药.mp3",
+            "resourcesKey": "audio/SFX/46 毒药",
+            "sha256": "d5e735f704d2b4845b98a7d85783ae98325460ae0b8205a43f5ee58d0ccfb9b3",
+            "sizeBytes": 15922,
+            "kind": "SFX",
+            "loadPolicy": "first_use_cached"
+        },
+        {
+            "guid": "07bfec48ca1cdd747b0c51a73fa3d0af",
+            "assetPath": "Assets/Resources/audio/SFX/518850 米奇13 物品装备增强.mp3",
+            "resourcesKey": "audio/SFX/518850 米奇13 物品装备增强",
+            "sha256": "887547cab7c43559e16b621440dd43b196be180cd623a9eb0d1b1ff0d2475e75",
+            "sizeBytes": 11415,
+            "kind": "SFX",
+            "loadPolicy": "first_use_cached"
+        },
+        {
+            "guid": "ad1f6172d28c54c4cbdba79d3be3651f",
+            "assetPath": "Assets/Resources/audio/SFX/530356 丹尼尔波德洛维奇 电击.mp3",
+            "resourcesKey": "audio/SFX/530356 丹尼尔波德洛维奇 电击",
+            "sha256": "fce9fac499daf9f5dbecbc31213c6a39fa847250653813d5b9faf70e83e3e213",
+            "sizeBytes": 11314,
+            "kind": "SFX",
+            "loadPolicy": "first_use_cached"
+        },
+        {
+            "guid": "2e0672670f6b765428d2eb2ffedec71c",
+            "assetPath": "Assets/Resources/audio/SFX/买卖物品增强.FG.mp3",
+            "resourcesKey": "audio/SFX/买卖物品增强.FG",
+            "sha256": "f881c00186daaee7425c1cf86f1c4c7ecb3d85621dbace11da99caf2c234c83a",
+            "sizeBytes": 8594,
+            "kind": "SFX",
+            "loadPolicy": "first_use_cached"
+        },
+        {
+            "guid": "dcc85ecabd7ef424086af459b2771946",
+            "assetPath": "Assets/Resources/audio/SFX/传送增强.mp3",
+            "resourcesKey": "audio/SFX/传送增强",
+            "sha256": "f3bce67b874a7bbb7c98113df0e0cc0a95c110f1802bc8c60ed8eadb2a858d08",
+            "sizeBytes": 8280,
+            "kind": "SFX",
+            "loadPolicy": "first_use_cached"
+        },
+        {
+            "guid": "6a13f4540cbc6204783d3f7fab51aecf",
+            "assetPath": "Assets/Resources/audio/SFX/关门.wav",
+            "resourcesKey": "audio/SFX/关门",
+            "sha256": "e9a57a965402307115cf5e354793fecac8d151190d0c383c183f95fb36ebcf84",
+            "sizeBytes": 101006,
+            "kind": "SFX",
+            "loadPolicy": "first_use_cached"
+        },
+        {
+            "guid": "130a5ae1fd5da0946ba8b20f0194d382",
+            "assetPath": "Assets/Resources/audio/SFX/准备法术2增强.FG.mp3",
+            "resourcesKey": "audio/SFX/准备法术2增强.FG",
+            "sha256": "236c23a13e5d24a5310c7ea0f2e0eb232e2b80c4dc4e720a95f9316528a4550e",
+            "sizeBytes": 16117,
+            "kind": "SFX",
+            "loadPolicy": "first_use_cached"
+        },
+        {
+            "guid": "cc6d0268218d34c4fa91dfc9fc7e30b4",
+            "assetPath": "Assets/Resources/audio/SFX/准备法术增强.FG.mp3",
+            "resourcesKey": "audio/SFX/准备法术增强.FG",
+            "sha256": "a6b6a377b38ec4b4cfabf0ef1a51eada5c8aae8e63dec09f55a000905c476e31",
+            "sizeBytes": 10475,
+            "kind": "SFX",
+            "loadPolicy": "first_use_cached"
+        },
+        {
+            "guid": "846ea4b487ad22e4cbcf1892263a942a",
+            "assetPath": "Assets/Resources/audio/SFX/刀击墙增强.FG.mp3",
+            "resourcesKey": "audio/SFX/刀击墙增强.FG",
+            "sha256": "cbb53f59adcc829a30228adb745c742af3f94b6c82765e7d5dde12b1fc96bb06",
+            "sizeBytes": 7653,
+            "kind": "SFX",
+            "loadPolicy": "first_use_cached"
+        },
+        {
+            "guid": "5950c2198fee03c49969f79c2df22a8e",
+            "assetPath": "Assets/Resources/audio/SFX/切换生命.wav",
+            "resourcesKey": "audio/SFX/切换生命",
+            "sha256": "c7e3b1be9413d5d4affdf5762b0f494b070b24197a6b7d35e7c6d2dba41e3d2f",
+            "sizeBytes": 290632,
+            "kind": "SFX",
+            "loadPolicy": "first_use_cached"
+        },
+        {
+            "guid": "484cbea03dd9d3348a08421248dff726",
+            "assetPath": "Assets/Resources/audio/SFX/剑受击.wav",
+            "resourcesKey": "audio/SFX/剑受击",
+            "sha256": "f56141504747be7bb7ed8dd0adb86c0c116eba7a052ef68fb9c78de84989a3a8",
+            "sizeBytes": 78326,
+            "kind": "SFX",
+            "loadPolicy": "first_use_cached"
+        },
+        {
+            "guid": "94e6e994af5c5f24c9399c16af4b0184",
+            "assetPath": "Assets/Resources/audio/SFX/卡牌升级.mp3",
+            "resourcesKey": "audio/SFX/卡牌升级",
+            "sha256": "0190821a9ce6de0c782c3101984ce12c29554f9b5d38939bef59138e3daff59b",
+            "sizeBytes": 51097,
+            "kind": "SFX",
+            "loadPolicy": "first_use_cached"
+        },
+        {
+            "guid": "2acf601242412b547b3a6f5d2cfb5038",
+            "assetPath": "Assets/Resources/audio/SFX/卡牌取出包装1增强.mp3",
+            "resourcesKey": "audio/SFX/卡牌取出包装1增强",
+            "sha256": "07d396642e8d71b62eb3eeaf086aef302df1cefefd03c469b23d2b9ab9a3e427",
+            "sizeBytes": 7653,
+            "kind": "SFX",
+            "loadPolicy": "first_use_cached"
+        },
+        {
+            "guid": "cf8e9b2469dd48a4f94c01b260cf7103",
+            "assetPath": "Assets/Resources/audio/SFX/卡牌摧毁增强.mp3",
+            "resourcesKey": "audio/SFX/卡牌摧毁增强",
+            "sha256": "9c9cacaccedd4a957bb71a25ec8a8ab9d061fc8f6db6e74b2c7e23f559b583fe",
+            "sizeBytes": 12669,
+            "kind": "SFX",
+            "loadPolicy": "first_use_cached"
+        },
+        {
+            "guid": "ab404fec1c491384cb3175291abf7054",
+            "assetPath": "Assets/Resources/audio/SFX/卡牌放置1增强.mp3",
+            "resourcesKey": "audio/SFX/卡牌放置1增强",
+            "sha256": "2307c4732b3c500c5775d2ec73d48d87f24da1a5fc9cfa9b9631af4a48a0a3f4",
+            "sizeBytes": 3892,
+            "kind": "SFX",
+            "loadPolicy": "first_use_cached"
+        },
+        {
+            "guid": "59d490b902d675540a7665dc31d00971",
+            "assetPath": "Assets/Resources/audio/SFX/卡牌滑动2增强.mp3",
+            "resourcesKey": "audio/SFX/卡牌滑动2增强",
+            "sha256": "4a5e24b8b9a3b1e7638fbdffe641ea3e400553a1730fe767d18b2a649666f0b6",
+            "sizeBytes": 3578,
+            "kind": "SFX",
+            "loadPolicy": "first_use_cached"
+        },
+        {
+            "guid": "79b9a448bd40c11439e73e89f026ae19",
+            "assetPath": "Assets/Resources/audio/SFX/卡牌聚焦.wav",
+            "resourcesKey": "audio/SFX/卡牌聚焦",
+            "sha256": "7566ab2af17d900716d9983dacfdda73b80c5630e94be9ffffab57542a466c69",
+            "sizeBytes": 61542,
+            "kind": "SFX",
+            "loadPolicy": "first_use_cached"
+        },
+        {
+            "guid": "e00a12b600734504ab05e674fb8b93ec",
+            "assetPath": "Assets/Resources/audio/SFX/吃蘑菇.wav",
+            "resourcesKey": "audio/SFX/吃蘑菇",
+            "sha256": "4044d6684d28e10b53b9b980590e2d1efce01036c5a96b83368bcb6caf8ce9b8",
+            "sizeBytes": 411428,
+            "kind": "SFX",
+            "loadPolicy": "first_use_cached"
+        },
+        {
+            "guid": "b04317c99e7b17d43adaad9b495e87c6",
+            "assetPath": "Assets/Resources/audio/SFX/商店物品.wav",
+            "resourcesKey": "audio/SFX/商店物品",
+            "sha256": "7d5b171b9b3950d922ad6bbf5209e0797a4d7b81585abeb6b244da797fc59414",
+            "sizeBytes": 470486,
+            "kind": "SFX",
+            "loadPolicy": "first_use_cached"
+        },
+        {
+            "guid": "8f376c38bcd85844b899bb675430d7c3",
+            "assetPath": "Assets/Resources/audio/SFX/商店门打开.wav",
+            "resourcesKey": "audio/SFX/商店门打开",
+            "sha256": "b331607e918a2930ff123ffce29d922f0ace7dc9f3f3be5e3c0c94b04c70a7c8",
+            "sizeBytes": 1372574,
+            "kind": "SFX",
+            "loadPolicy": "first_use_cached"
+        },
+        {
+            "guid": "3722a7af744a558408cb1f4e5e6eb4e9",
+            "assetPath": "Assets/Resources/audio/SFX/地震增强.mp3",
+            "resourcesKey": "audio/SFX/地震增强",
+            "sha256": "16d9f8ef9a3228abc35fb0ecf2e0baf8a4e26fb39cf418f38141aac97735d90e",
+            "sizeBytes": 62824,
+            "kind": "SFX",
+            "loadPolicy": "first_use_cached"
+        },
+        {
+            "guid": "0a2800d7d764bd74fb0cc10bd6f2cc1f",
+            "assetPath": "Assets/Resources/audio/SFX/坠落增强.mp3",
+            "resourcesKey": "audio/SFX/坠落增强",
+            "sha256": "bc03a5f3949a767c0771e26f9b6d755b1f2f00514538c13bd7ea361fd2876798",
+            "sizeBytes": 8907,
+            "kind": "SFX",
+            "loadPolicy": "first_use_cached"
+        },
+        {
+            "guid": "df1c83c925bb2094cab35a9e721a7d5e",
+            "assetPath": "Assets/Resources/audio/SFX/声音42增强.mp3",
+            "resourcesKey": "audio/SFX/声音42增强",
+            "sha256": "e43a8d5f3df4917c4989b0bd9f06e6b2f1bf9dd2bcaad1223a190a40368e81d0",
+            "sizeBytes": 32104,
+            "kind": "SFX",
+            "loadPolicy": "first_use_cached"
+        },
+        {
+            "guid": "476fc85d22bb5bc4b8e25618dd75de2d",
+            "assetPath": "Assets/Resources/audio/SFX/复古嗖声.mp3",
+            "resourcesKey": "audio/SFX/复古嗖声",
+            "sha256": "88fb958558d8a344ec39c03edb2f40304f899fd087ae2fc601daba912b06c445",
+            "sizeBytes": 12062,
+            "kind": "SFX",
+            "loadPolicy": "first_use_cached"
+        },
+        {
+            "guid": "04acd17cbced44548ae890a6f5977060",
+            "assetPath": "Assets/Resources/audio/SFX/大袋子处理1增强.FG.mp3",
+            "resourcesKey": "audio/SFX/大袋子处理1增强.FG",
+            "sha256": "1e4b743881b8cd4038092b4c9079845b58eb682b75475990ec5d54e7ecee0fa3",
+            "sizeBytes": 11102,
+            "kind": "SFX",
+            "loadPolicy": "first_use_cached"
+        },
+        {
+            "guid": "508eaad12994a1944a85564f3da4c979",
+            "assetPath": "Assets/Resources/audio/SFX/天衣声卡.wav",
+            "resourcesKey": "audio/SFX/天衣声卡",
+            "sha256": "12fe47394bf41cda8d16c5c7252f7a397cdbcea432cb88827d582327a7d36e51",
+            "sizeBytes": 92358,
+            "kind": "SFX",
+            "loadPolicy": "first_use_cached"
+        },
+        {
+            "guid": "382894823f48f144c9132439da336ac9",
+            "assetPath": "Assets/Resources/audio/SFX/失效增强.mp3",
+            "resourcesKey": "audio/SFX/失效增强",
+            "sha256": "42fe5ed0ea696de807e4a051b984aa3bf0f140518428c246f134105292f09f37",
+            "sizeBytes": 10161,
+            "kind": "SFX",
+            "loadPolicy": "first_use_cached"
+        },
+        {
+            "guid": "ea84c1f4d53cc6d4b9a2364551798da9",
+            "assetPath": "Assets/Resources/audio/SFX/失败变奏02.wav",
+            "resourcesKey": "audio/SFX/失败变奏02",
+            "sha256": "66cdf9bbf42ca278bf0785f2dac7881e5fd88bec3f541c0e712b25989fc33023",
+            "sizeBytes": 993398,
+            "kind": "SFX",
+            "loadPolicy": "first_use_cached"
+        },
+        {
+            "guid": "062b0fe892d427d4ebd16647543884cc",
+            "assetPath": "Assets/Resources/audio/SFX/失败铃声 00增强.mp3",
+            "resourcesKey": "audio/SFX/失败铃声 00增强",
+            "sha256": "bf9e88ea7e6638227e2d0d50fd09bfb61a687e59d05b0de12117cf76f1a7aa4a",
+            "sizeBytes": 59689,
+            "kind": "SFX",
+            "loadPolicy": "first_use_cached"
+        },
+        {
+            "guid": "aec8670a55fa76b4aac75a47bb1c4214",
+            "assetPath": "Assets/Resources/audio/SFX/射箭1增强.mp3",
+            "resourcesKey": "audio/SFX/射箭1增强",
+            "sha256": "009cdd3eb2aacddaac336a5f35a5c3b05fccc159eb299c5935d1d9ba1b51e5be",
+            "sizeBytes": 3892,
+            "kind": "SFX",
+            "loadPolicy": "first_use_cached"
+        },
+        {
+            "guid": "01728d0dde1157140ad6af0dc61ea4e4",
+            "assetPath": "Assets/Resources/audio/SFX/小硬币掉落.wav",
+            "resourcesKey": "audio/SFX/小硬币掉落",
+            "sha256": "e36d24fdc644a8e12ebba2848589ada50913d1d694466b243f5522a863f1240f",
+            "sizeBytes": 48808,
+            "kind": "SFX",
+            "loadPolicy": "first_use_cached"
+        },
+        {
+            "guid": "666c9d9af71acd349a08b8f4e453d268",
+            "assetPath": "Assets/Resources/audio/SFX/岩石破坏增强.FG.mp3",
+            "resourcesKey": "audio/SFX/岩石破坏增强.FG",
+            "sha256": "5164573010fcf88aadc44e00665695ab7b2c180f518bb94262314b6dfe642a6d",
+            "sizeBytes": 20819,
+            "kind": "SFX",
+            "loadPolicy": "first_use_cached"
+        },
+        {
+            "guid": "cf97b24120253eb448dc3cce64570296",
+            "assetPath": "Assets/Resources/audio/SFX/开箱.wav",
+            "resourcesKey": "audio/SFX/开箱",
+            "sha256": "3e81600027002d0283deee7dc5ab92630dc9379e51bd137402c7f5567bb4f8f2",
+            "sizeBytes": 377130,
+            "kind": "SFX",
+            "loadPolicy": "first_use_cached"
+        },
+        {
+            "guid": "aac3d4f16f333244eb5e87d9bffa9a7c",
+            "assetPath": "Assets/Resources/audio/SFX/房间清除增强.FG.mp3",
+            "resourcesKey": "audio/SFX/房间清除增强.FG",
+            "sha256": "838e81b83eb4b0711002f864db2604eb6d21da7d6ada54925d9a4256cafc27de",
+            "sizeBytes": 40568,
+            "kind": "SFX",
+            "loadPolicy": "first_use_cached"
+        },
+        {
+            "guid": "84f2e5843de4889478b03bae14a7b300",
+            "assetPath": "Assets/Resources/audio/SFX/房间过渡.wav",
+            "resourcesKey": "audio/SFX/房间过渡",
+            "sha256": "9969af40ecd96dbb8d61c21778fb2d908a75126bde5e3c90a56e5a773bb379f9",
+            "sizeBytes": 832352,
+            "kind": "SFX",
+            "loadPolicy": "first_use_cached"
+        },
+        {
+            "guid": "03a045c22a2f3a94886b3ced56eab39d",
+            "assetPath": "Assets/Resources/audio/SFX/打开关卡解锁.wav",
+            "resourcesKey": "audio/SFX/打开关卡解锁",
+            "sha256": "a0b67412b8a8a04673123d794f49c9fd0cae3d6b1ebba4fe73a6714f10db5875",
+            "sizeBytes": 362342,
+            "kind": "SFX",
+            "loadPolicy": "first_use_cached"
+        },
+        {
+            "guid": "09999ce9426182e4b8f1acd9bcdc2f51",
+            "assetPath": "Assets/Resources/audio/SFX/打开祭坛.wav",
+            "resourcesKey": "audio/SFX/打开祭坛",
+            "sha256": "8459949202779941c60ba00a2f52cf43c400d18eed964eae9650d7a045cb8964",
+            "sizeBytes": 407986,
+            "kind": "SFX",
+            "loadPolicy": "first_use_cached"
+        },
+        {
+            "guid": "5b3af757058c93448b3cb5908631a26e",
+            "assetPath": "Assets/Resources/audio/SFX/打开菜单.wav",
+            "resourcesKey": "audio/SFX/打开菜单",
+            "sha256": "e900059a21f6789df23fea54ce13381dacb0f387f1f85a6fd3a980501af1f563",
+            "sizeBytes": 55266,
+            "kind": "SFX",
+            "loadPolicy": "first_use_cached"
+        },
+        {
+            "guid": "bbefe054065f41f459bc1c4a92107eab",
+            "assetPath": "Assets/Resources/audio/SFX/护甲格挡4增强.mp3",
+            "resourcesKey": "audio/SFX/护甲格挡4增强",
+            "sha256": "611070aa569a3fc7531f272510fd2c79a0e476125daad0c77cf3d50dc470e59b",
+            "sizeBytes": 14550,
+            "kind": "SFX",
+            "loadPolicy": "first_use_cached"
+        },
+        {
+            "guid": "6a12391d03819ab4d8be2231433b6f14",
+            "assetPath": "Assets/Resources/audio/SFX/按钮点击.wav",
+            "resourcesKey": "audio/SFX/按钮点击",
+            "sha256": "9c9a8a66722d9a9eaaa942e8daff38b74635b6b7edbf3e100638cfd8b5fe7cc9",
+            "sizeBytes": 19174,
+            "kind": "SFX",
+            "loadPolicy": "first_use_cached"
+        },
+        {
+            "guid": "9926c4814037c0f4384663110e0395e3",
+            "assetPath": "Assets/Resources/audio/SFX/挥动2增强.mp3",
+            "resourcesKey": "audio/SFX/挥动2增强",
+            "sha256": "f275e7c029a672a95f1c7eab7c1e6e7b30b8618bc17a0d2e3ff3617268ecc255",
+            "sizeBytes": 3578,
+            "kind": "SFX",
+            "loadPolicy": "first_use_cached"
+        },
+        {
+            "guid": "d8a40d94a33c9854bb72218cae67fa8d",
+            "assetPath": "Assets/Resources/audio/SFX/挥动3增强.mp3",
+            "resourcesKey": "audio/SFX/挥动3增强",
+            "sha256": "c274ecb169776d6d3ee6b710fb6c5ebdf0079f6bc3f3281bfe9c047e86d10a6b",
+            "sizeBytes": 3578,
+            "kind": "SFX",
+            "loadPolicy": "first_use_cached"
+        },
+        {
+            "guid": "4b57d69fdc03bd84c86272925cfe0dee",
+            "assetPath": "Assets/Resources/audio/SFX/挥动增强.mp3",
+            "resourcesKey": "audio/SFX/挥动增强",
+            "sha256": "0ee8eb026be95514b69857c3c53bdb46065fccc546440a7ef81a4dedebf49a6e",
+            "sizeBytes": 4519,
+            "kind": "SFX",
+            "loadPolicy": "first_use_cached"
+        },
+        {
+            "guid": "023f5fcad3f82404dbf51b93c53c4ce1",
+            "assetPath": "Assets/Resources/audio/SFX/掉落硬币.wav",
+            "resourcesKey": "audio/SFX/掉落硬币",
+            "sha256": "284082efcbc247a6d9394c8aeb8e692bf94921e47b8bd6c8000d3fab62422aa4",
+            "sizeBytes": 224222,
+            "kind": "SFX",
+            "loadPolicy": "first_use_cached"
+        },
+        {
+            "guid": "b13862a60098e5743bde2bb15ae71404",
+            "assetPath": "Assets/Resources/audio/SFX/撤退增强.FG.mp3",
+            "resourcesKey": "audio/SFX/撤退增强.FG",
+            "sha256": "17aca65588dbec44a9f85cf89158f27594b2efe5faa3f43db65f2cf89cdaf2cc",
+            "sizeBytes": 15177,
+            "kind": "SFX",
+            "loadPolicy": "first_use_cached"
+        },
+        {
+            "guid": "4fa4ac2a7d9ada042af7897f0364c195",
+            "assetPath": "Assets/Resources/audio/SFX/放置卡片.wav",
+            "resourcesKey": "audio/SFX/放置卡片",
+            "sha256": "fa612ed8ec955b2a684604a2a00eb0148da27b842da3d0133bd42946f21652fa",
+            "sizeBytes": 45230,
+            "kind": "SFX",
+            "loadPolicy": "first_use_cached"
+        },
+        {
+            "guid": "fdbce245e2368be40bfc45e3bb535a85",
+            "assetPath": "Assets/Resources/audio/SFX/敌方减益增强.mp3",
+            "resourcesKey": "audio/SFX/敌方减益增强",
+            "sha256": "1170a0c3bdba25ed888c9c3b719d66c4d6196fdbef9a2d7dcc10c505b10e8b1c",
+            "sizeBytes": 11415,
+            "kind": "SFX",
+            "loadPolicy": "first_use_cached"
+        },
+        {
+            "guid": "a048eeceac7ddcb4c952b45f7d8161a0",
+            "assetPath": "Assets/Resources/audio/SFX/敌方增益增强.mp3",
+            "resourcesKey": "audio/SFX/敌方增益增强",
+            "sha256": "97684a45eca52dc6774bb222d6693bb79f0f852d184167118dffb1283dbd7f3b",
+            "sizeBytes": 12982,
+            "kind": "SFX",
+            "loadPolicy": "first_use_cached"
+        },
+        {
+            "guid": "37a951f9e4bc027459477c377cfc8c3a",
+            "assetPath": "Assets/Resources/audio/SFX/文字出现增强.mp3",
+            "resourcesKey": "audio/SFX/文字出现增强",
+            "sha256": "63f137306e1469fcc2bde52f221c98c50f50151772af29818e232758ef8c892a",
+            "sizeBytes": 2324,
+            "kind": "SFX",
+            "loadPolicy": "first_use_cached"
+        },
+        {
+            "guid": "38dfe81f4e9c0554a91e96c792326499",
+            "assetPath": "Assets/Resources/audio/SFX/斩击.wav",
+            "resourcesKey": "audio/SFX/斩击",
+            "sha256": "60b9e5232b20e65b79708f88cbcba5176745fcf902a206c5ed8e39c687cc647d",
+            "sizeBytes": 116194,
+            "kind": "SFX",
+            "loadPolicy": "first_use_cached"
+        },
+        {
+            "guid": "0bdd3ed29457b9146b27da473c5c501b",
+            "assetPath": "Assets/Resources/audio/SFX/施法增强.mp3",
+            "resourcesKey": "audio/SFX/施法增强",
+            "sha256": "d9c9a57b60d4a919e7849f413d0b26954c87e87f25cf5d3f02015c2d2f703363",
+            "sizeBytes": 10475,
+            "kind": "SFX",
+            "loadPolicy": "first_use_cached"
+        },
+        {
+            "guid": "f5d008799f94f384c9c8c1a6e1795590",
+            "assetPath": "Assets/Resources/audio/SFX/木头破坏增强.mp3",
+            "resourcesKey": "audio/SFX/木头破坏增强",
+            "sha256": "fd2ede21b4be5ac6b1361287ed31cd6177db2644e9eb2968f8585009fd9ecce6",
+            "sizeBytes": 15804,
+            "kind": "SFX",
+            "loadPolicy": "first_use_cached"
+        },
+        {
+            "guid": "b8c6a2162e7070c42b79588b4e54c714",
+            "assetPath": "Assets/Resources/audio/SFX/未知.wav",
+            "resourcesKey": "audio/SFX/未知",
+            "sha256": "e31670309b6e7353fd9cb588883db123db0207a389f94ef1409e8f73b61c0c96",
+            "sizeBytes": 1105128,
+            "kind": "SFX",
+            "loadPolicy": "first_use_cached"
+        },
+        {
+            "guid": "c0418a020ce4cb9418b1663b8d64d9d6",
+            "assetPath": "Assets/Resources/audio/SFX/未知_1.wav",
+            "resourcesKey": "audio/SFX/未知_1",
+            "sha256": "e9024ccf8954cf9ff9ea406f83ed3fd9455ea3f919ca6a1d80261f60080e4aa6",
+            "sizeBytes": 1153128,
+            "kind": "SFX",
+            "loadPolicy": "first_use_cached"
+        },
+        {
+            "guid": "9200aa8676082fc4fbda6d60cd10b8af",
+            "assetPath": "Assets/Resources/audio/SFX/治疗.mp3",
+            "resourcesKey": "audio/SFX/治疗",
+            "sha256": "f7cf3c01cdcbc536995b52103552a65232f342d218c0b90771ddc34611814c6e",
+            "sizeBytes": 38539,
+            "kind": "SFX",
+            "loadPolicy": "first_use_cached"
+        },
+        {
+            "guid": "eeb130b9493d0f348bc7e910263db325",
+            "assetPath": "Assets/Resources/audio/SFX/治疗药水.wav",
+            "resourcesKey": "audio/SFX/治疗药水",
+            "sha256": "483b984e8e683647ae83f116bc1cf766b4b574164a779c2c124ebc959368e939",
+            "sizeBytes": 474844,
+            "kind": "SFX",
+            "loadPolicy": "first_use_cached"
+        },
+        {
+            "guid": "8554bf85a12504149ad2ae8714a44bbd",
+            "assetPath": "Assets/Resources/audio/SFX/洗牌.mp3",
+            "resourcesKey": "audio/SFX/洗牌",
+            "sha256": "c69fcc3d14cdcd42e1bdc5030851afb0fa5fc58b53301da9c0c12e680a5eee6e",
+            "sizeBytes": 9674,
+            "kind": "SFX",
+            "loadPolicy": "first_use_cached"
+        },
+        {
+            "guid": "59e7720a6ef5f80419d492effe0aedc0",
+            "assetPath": "Assets/Resources/audio/SFX/洗牌_短版.wav",
+            "resourcesKey": "audio/SFX/洗牌_短版",
+            "sha256": "67a7ee4d5eae8aa562de78a637263e45fc41159d6059b2c72227dd2c394a74a5",
+            "sizeBytes": 264396,
+            "kind": "SFX",
+            "loadPolicy": "first_use_cached"
+        },
+        {
+            "guid": "60fc8825c482703489cbebe6ac0b77b1",
+            "assetPath": "Assets/Resources/audio/SFX/添加卡牌.mp3",
+            "resourcesKey": "audio/SFX/添加卡牌",
+            "sha256": "2409a7afc7dadf4571f605cd620406e5098bfa687cb55a006d7902c5c8c81883",
+            "sizeBytes": 49002,
+            "kind": "SFX",
+            "loadPolicy": "first_use_cached"
+        },
+        {
+            "guid": "3f8b7cef6dd8e3149b15c49f4d3ef9c5",
+            "assetPath": "Assets/Resources/audio/SFX/滴答增强.mp3",
+            "resourcesKey": "audio/SFX/滴答增强",
+            "sha256": "5d4d85d76250c1f9a40d6b45765a8fd790867d0e92b385eb00f16957dc4dd66b",
+            "sizeBytes": 4205,
+            "kind": "SFX",
+            "loadPolicy": "first_use_cached"
+        },
+        {
+            "guid": "cd8342932354e824abcde894b2f07ab5",
+            "assetPath": "Assets/Resources/audio/SFX/潜行增强.mp3",
+            "resourcesKey": "audio/SFX/潜行增强",
+            "sha256": "7954e450a6edb7f9bca59e4f3cebaa62a604ae598eaa66a8fc9efcd0d1f82c90",
+            "sizeBytes": 15177,
+            "kind": "SFX",
+            "loadPolicy": "first_use_cached"
+        },
+        {
+            "guid": "985e1ec58fcc21d4d93ff15017181dcf",
+            "assetPath": "Assets/Resources/audio/SFX/激活增强.mp3",
+            "resourcesKey": "audio/SFX/激活增强",
+            "sha256": "a3bbefdf523c9e0c1f65346a67f0320f2daae88569f40a406e3ed9ced109c125",
+            "sizeBytes": 3265,
+            "kind": "SFX",
+            "loadPolicy": "first_use_cached"
+        },
+        {
+            "guid": "43b1e363c6e70414db11b21c96318a06",
+            "assetPath": "Assets/Resources/audio/SFX/火球增强.mp3",
+            "resourcesKey": "audio/SFX/火球增强",
+            "sha256": "1e59cb4caaf64c9853510b4141f1f2501c3cf4a840f41576af6c13b85c6e4479",
+            "sizeBytes": 17057,
+            "kind": "SFX",
+            "loadPolicy": "first_use_cached"
+        },
+        {
+            "guid": "9b0dc03ff7fddc54ca13980115ae34bb",
+            "assetPath": "Assets/Resources/audio/SFX/点击1增强.mp3",
+            "resourcesKey": "audio/SFX/点击1增强",
+            "sha256": "5abd1b552f83ad7a3b05247de4ebcb30fb213d19e9e16d36228b50f7056802ee",
+            "sizeBytes": 2951,
+            "kind": "SFX",
+            "loadPolicy": "first_use_cached"
+        },
+        {
+            "guid": "338b3e3ca8e4f3e4cbf5a0dfbf8f5830",
+            "assetPath": "Assets/Resources/audio/SFX/点击2增强.mp3",
+            "resourcesKey": "audio/SFX/点击2增强",
+            "sha256": "82b2f41a487d1ed8d21e31974a6624d2e8b061ebe6a2cca5de0b01469eb9fd7b",
+            "sizeBytes": 2324,
+            "kind": "SFX",
+            "loadPolicy": "first_use_cached"
+        },
+        {
+            "guid": "c79eb16fbc35d1947b5409d428403b49",
+            "assetPath": "Assets/Resources/audio/SFX/点击确认轻音.wav",
+            "resourcesKey": "audio/SFX/点击确认轻音",
+            "sha256": "d3af000a6394271c8265cd933dff7fc29fa6477a0062daa1130122fdad17024d",
+            "sizeBytes": 131760,
+            "kind": "SFX",
+            "loadPolicy": "first_use_cached"
+        },
+        {
+            "guid": "81005d376d05d4d46b3ae16b25a51a78",
+            "assetPath": "Assets/Resources/audio/SFX/物品击中.wav",
+            "resourcesKey": "audio/SFX/物品击中",
+            "sha256": "ee48ea18caf7060a94a13db7f0cf821fcf364d0ab43b131e29a640b2384ce637",
+            "sizeBytes": 64676,
+            "kind": "SFX",
+            "loadPolicy": "first_use_cached"
+        },
+        {
+            "guid": "d63c6366431949344bca4db87b96bf80",
+            "assetPath": "Assets/Resources/audio/SFX/玻璃破碎01增强.FG.mp3",
+            "resourcesKey": "audio/SFX/玻璃破碎01增强.FG",
+            "sha256": "5aa4c29086a01cfec1d3a2edfba066faedfff88db64323140def739a343d2881",
+            "sizeBytes": 15177,
+            "kind": "SFX",
+            "loadPolicy": "first_use_cached"
+        },
+        {
+            "guid": "554a26c54e592e9489c6a5366efb1a0e",
+            "assetPath": "Assets/Resources/audio/SFX/用力增强.mp3",
+            "resourcesKey": "audio/SFX/用力增强",
+            "sha256": "2e43de989ead0371d65225192aaae744d17ffc20fafd292b9289df047bc4148e",
+            "sizeBytes": 12355,
+            "kind": "SFX",
+            "loadPolicy": "first_use_cached"
+        },
+        {
+            "guid": "6e20968073e684748ae601759491098c",
+            "assetPath": "Assets/Resources/audio/SFX/界面点击.wav",
+            "resourcesKey": "audio/SFX/界面点击",
+            "sha256": "3950044cb5a94ba03d207bec2af88773193b6d76b8f1787e04b366e1d29ea4f0",
+            "sizeBytes": 14484,
+            "kind": "SFX",
+            "loadPolicy": "first_use_cached"
+        },
+        {
+            "guid": "4e9276472edbbe9428b38dc0e944d786",
+            "assetPath": "Assets/Resources/audio/SFX/界面点击旧.wav",
+            "resourcesKey": "audio/SFX/界面点击旧",
+            "sha256": "292e83d0763e45d51c6fe28524cfd283efb92594e08cc6363998dba62d7d479d",
+            "sizeBytes": 145124,
+            "kind": "SFX",
+            "loadPolicy": "first_use_cached"
+        },
+        {
+            "guid": "e7fbf79967ae807428667b87fb31def2",
+            "assetPath": "Assets/Resources/audio/SFX/界面翻页.wav",
+            "resourcesKey": "audio/SFX/界面翻页",
+            "sha256": "9a91c15287d649056fb530a5d9f67a05ab2e31992c4c457ac68619506b81eb7a",
+            "sizeBytes": 27664,
+            "kind": "SFX",
+            "loadPolicy": "first_use_cached"
+        },
+        {
+            "guid": "b1714043f2bca914ba15df3c5ef3db02",
+            "assetPath": "Assets/Resources/audio/SFX/界面聚焦.wav",
+            "resourcesKey": "audio/SFX/界面聚焦",
+            "sha256": "62016ec0322e7f7f55abc3b410f217dec66a2e382336650b9c9bfec2d133ad22",
+            "sizeBytes": 7976,
+            "kind": "SFX",
+            "loadPolicy": "first_use_cached"
+        },
+        {
+            "guid": "04e61081ee090674a87326ca9578c050",
+            "assetPath": "Assets/Resources/audio/SFX/短治疗.wav",
+            "resourcesKey": "audio/SFX/短治疗",
+            "sha256": "352f5f791e0c8159edecd15a23dc0f1678256f9731b5100de58e9fe71fbc301a",
+            "sizeBytes": 913130,
+            "kind": "SFX",
+            "loadPolicy": "first_use_cached"
+        },
+        {
+            "guid": "c029731ae5f770a42b929bcf57caa992",
+            "assetPath": "Assets/Resources/audio/SFX/破坏石头增强.mp3",
+            "resourcesKey": "audio/SFX/破坏石头增强",
+            "sha256": "f21c16e42e23d2af701942e9e1da80c14c0cd71a5cee0b010efdbec5d5517eb1",
+            "sizeBytes": 23640,
+            "kind": "SFX",
+            "loadPolicy": "first_use_cached"
+        },
+        {
+            "guid": "372e4f2666936e04b84013fdb18aa875",
+            "assetPath": "Assets/Resources/audio/SFX/硬币叮当.mp3",
+            "resourcesKey": "audio/SFX/硬币叮当",
+            "sha256": "84f946908aaa456f1f610e9a83d94fe6495228f83bb102e6c9db26c7636f7c83",
+            "sizeBytes": 10096,
+            "kind": "SFX",
+            "loadPolicy": "first_use_cached"
+        },
+        {
+            "guid": "3d16f1b1480e8ce42a1e852fc3eec41b",
+            "assetPath": "Assets/Resources/audio/SFX/神圣增强.FG.mp3",
+            "resourcesKey": "audio/SFX/神圣增强.FG",
+            "sha256": "a16c94c4bd0df1a2fc81eb2a45703ec3ffc23339e49840c59bed21854c7a5dd6",
+            "sizeBytes": 17057,
+            "kind": "SFX",
+            "loadPolicy": "first_use_cached"
+        },
+        {
+            "guid": "ae520d218fa1f0a49b5c2acbc454be4d",
+            "assetPath": "Assets/Resources/audio/SFX/羊叫.wav",
+            "resourcesKey": "audio/SFX/羊叫",
+            "sha256": "36db3af6851f840e2adbd33c1b1936b681e80f2f7f0316a5b26228858cb71d12",
+            "sizeBytes": 97930,
+            "kind": "SFX",
+            "loadPolicy": "first_use_cached"
+        },
+        {
+            "guid": "33f5af06f8097e74d9a539e1c6965852",
+            "assetPath": "Assets/Resources/audio/SFX/翻牌.wav",
+            "resourcesKey": "audio/SFX/翻牌",
+            "sha256": "ad6ae2caef0a32944931662af18ed56d0306af3e2586c9f2558898d3f7784bd9",
+            "sizeBytes": 154426,
+            "kind": "SFX",
+            "loadPolicy": "first_use_cached"
+        },
+        {
+            "guid": "f5c756b7b4b35fb478c18f80a067db06",
+            "assetPath": "Assets/Resources/audio/SFX/脚步声.wav",
+            "resourcesKey": "audio/SFX/脚步声",
+            "sha256": "8903753e9cd13769ec9a736dd05c73609556d10f28bc41dc7ed7aa06cc0707a6",
+            "sizeBytes": 119132,
+            "kind": "SFX",
+            "loadPolicy": "first_use_cached"
+        },
+        {
+            "guid": "f4ba6ca816acb7141afc3e92207a4aeb",
+            "assetPath": "Assets/Resources/audio/SFX/英雄死亡增强.FG.mp3",
+            "resourcesKey": "audio/SFX/英雄死亡增强.FG",
+            "sha256": "2ae7593d4f7ae9ce5942bcda90f0e610b03a7e8d41675b8c009bfb0b1a6bb35a",
+            "sizeBytes": 16117,
+            "kind": "SFX",
+            "loadPolicy": "first_use_cached"
+        },
+        {
+            "guid": "09a961a8130b1fa4b96facaa10c15112",
+            "assetPath": "Assets/Resources/audio/SFX/药水使用增强.FG.mp3",
+            "resourcesKey": "audio/SFX/药水使用增强.FG",
+            "sha256": "5746e9d618ef766d80b76de46408be46873bb836b1bc5af7bfbe3329301ba4ce",
+            "sizeBytes": 8594,
+            "kind": "SFX",
+            "loadPolicy": "first_use_cached"
+        },
+        {
+            "guid": "a2c074cc337d8844bb89e651c8c87144",
+            "assetPath": "Assets/Resources/audio/SFX/获得翼键增强.mp3",
+            "resourcesKey": "audio/SFX/获得翼键增强",
+            "sha256": "8b48adfc498215ccf3b9b71e89cc19f46a236c26851f548e4f8c2c6f8114d292",
+            "sizeBytes": 17998,
+            "kind": "SFX",
+            "loadPolicy": "first_use_cached"
+        },
+        {
+            "guid": "107f6df7f9895d146912fde3b07bcfc4",
+            "assetPath": "Assets/Resources/audio/SFX/装备利器增强.mp3",
+            "resourcesKey": "audio/SFX/装备利器增强",
+            "sha256": "c4b60ec49b538c1f9672328175ac022fb21e66525b3bdf6c331ba28c4c1d457f",
+            "sizeBytes": 4519,
+            "kind": "SFX",
+            "loadPolicy": "first_use_cached"
+        },
+        {
+            "guid": "8bf06e50004605e4698a2f285c9baa98",
+            "assetPath": "Assets/Resources/audio/SFX/装备饰品增强.mp3",
+            "resourcesKey": "audio/SFX/装备饰品增强",
+            "sha256": "bc6682f1c2f9a6fa9fd7b9e0110a0883e108516068667211330fdbebf8f4604c",
+            "sizeBytes": 15804,
+            "kind": "SFX",
+            "loadPolicy": "first_use_cached"
+        },
+        {
+            "guid": "381fa8cd1713f23499dbd5d3ac358a6a",
+            "assetPath": "Assets/Resources/audio/SFX/解锁关卡秘密.wav",
+            "resourcesKey": "audio/SFX/解锁关卡秘密",
+            "sha256": "061aa0cbf805976d505a461abc6c10069f341f8aad83538ce3f3cef88ae87f8b",
+            "sizeBytes": 227632,
+            "kind": "SFX",
+            "loadPolicy": "first_use_cached"
+        },
+        {
+            "guid": "9d9ddfac362800a4dbc18042fa4ae6c1",
+            "assetPath": "Assets/Resources/audio/SFX/解锁增强.mp3",
+            "resourcesKey": "audio/SFX/解锁增强",
+            "sha256": "5e157f7af400a515cb4566cdec9311036123c69e726152174594bb6f2fd40328",
+            "sizeBytes": 4832,
+            "kind": "SFX",
+            "loadPolicy": "first_use_cached"
+        },
+        {
+            "guid": "33ef09a9fddb72e41a51b8f27be21ced",
+            "assetPath": "Assets/Resources/audio/SFX/解锁宝箱.wav",
+            "resourcesKey": "audio/SFX/解锁宝箱",
+            "sha256": "4c89877f9d6ddae38d93c8f536e8c8bfaafa9568d0a5aeb3188df33b81bd9d41",
+            "sizeBytes": 377680,
+            "kind": "SFX",
+            "loadPolicy": "first_use_cached"
+        },
+        {
+            "guid": "64d4dfb6eef124348bcaa02fa388b134",
+            "assetPath": "Assets/Resources/audio/SFX/购买物品.wav",
+            "resourcesKey": "audio/SFX/购买物品",
+            "sha256": "3d4bb9c41b644ed3069e79cad636daa94fd0223f2c7b05f10b6844ac8b8dbdf0",
+            "sizeBytes": 72800,
+            "kind": "SFX",
+            "loadPolicy": "first_use_cached"
+        },
+        {
+            "guid": "a51d31077e914e54ba3c0cab677fc63a",
+            "assetPath": "Assets/Resources/audio/SFX/锤子声.wav",
+            "resourcesKey": "audio/SFX/锤子声",
+            "sha256": "8fe7db0c944ab3919ee7572274c3e4d6d61b0a2314c7cce0cfbe06b1f91893fd",
+            "sizeBytes": 121820,
+            "kind": "SFX",
+            "loadPolicy": "first_use_cached"
+        },
+        {
+            "guid": "6be6dfbd6a5a6ee4dac5bb707f4416f5",
+            "assetPath": "Assets/Resources/audio/SFX/闪电.mp3",
+            "resourcesKey": "audio/SFX/闪电",
+            "sha256": "2db0259aff8caa66344c9b0714f137a1835f39e33aecf55351f09210eae25d2c",
+            "sizeBytes": 12604,
+            "kind": "SFX",
+            "loadPolicy": "first_use_cached"
+        },
+        {
+            "guid": "b9260071a8c3988408eb59347fa50680",
+            "assetPath": "Assets/Resources/audio/SFX/阅读卷轴增强.FG.mp3",
+            "resourcesKey": "audio/SFX/阅读卷轴增强.FG",
+            "sha256": "c9599dba91220ce1d17ae7f698e91606ab04bd58f7771fb7da83bb377b5c28df",
+            "sizeBytes": 12355,
+            "kind": "SFX",
+            "loadPolicy": "first_use_cached"
+        },
+        {
+            "guid": "a4415a8b83f3ae640a18266962fc2d50",
+            "assetPath": "Assets/Resources/audio/SFX/随机5增强.FG.mp3",
+            "resourcesKey": "audio/SFX/随机5增强.FG",
+            "sha256": "920097e05d89f2de84cd7da54ffed155807fba0ee066255ce0cfe062da35cfc5",
+            "sizeBytes": 6400,
+            "kind": "SFX",
+            "loadPolicy": "first_use_cached"
+        },
+        {
+            "guid": "de20a4c735eedca449928d5188a6866b",
+            "assetPath": "Assets/Resources/audio/SFX/魔法游戏药水弹出.wav",
+            "resourcesKey": "audio/SFX/魔法游戏药水弹出",
+            "sha256": "93b4d9475b605903e52c471f85c09b86a399cbf8ef0b4369dba719ee4afa53b9",
+            "sizeBytes": 693902,
+            "kind": "SFX",
+            "loadPolicy": "first_use_cached"
+        }
+    ]
+}

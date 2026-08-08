@@ -5,7 +5,8 @@
         "NineGrid.Core",
         "NineGrid.Content",
         "NineGrid.Presentation",
-        "NineGrid.Presentation.Editor"
+        "NineGrid.Presentation.Editor",
+        "QFramework"
     ],
     "includePlatforms": [
         "Editor"
