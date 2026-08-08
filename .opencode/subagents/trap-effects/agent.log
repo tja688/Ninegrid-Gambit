@@ -1,0 +1,1008 @@
+
+> Full-Auto · deepseek-v4-flash
+
+$ git status --short; git log --oneline -3
+?? .opencode/subagents/attribute-room/
+?? .opencode/subagents/battle-logic/
+?? .opencode/subagents/boss-open/
+?? .opencode/subagents/content-audit/
+?? .opencode/subagents/face-flip/
+?? .opencode/subagents/item-deck/
+?? .opencode/subagents/room-flow/
+?? .opencode/subagents/trap-effects/
+?? .opencode/subagents/ui-layout/
+?? Assets/Screenshots/screenshot-20260808-092211.png
+?? Assets/Screenshots/screenshot-20260808-092211.png.meta
+?? docs/feedback-analysis/
+50b942e53 整批删除所有测试（不要主动恢复）
+01e4f6a6d Merge branch 'dev' of https://github.com/tja688/Ninegrid-Gambit into dev
+4c1857822 添加log系统
+
+$ Test-Path "docs\feedback-analysis"; Get-ChildItem "docs" -Directory | Select-Object Name
+True
+
+Name
+----
+adr
+agents
+code-map
+feedback-analysis
+superpowers
+
+$ Get-ChildItem "docs\feedback-analysis" -Recurse | Select-Object FullName; Get-ChildItem ".opencode\subagents\trap-effects" -Recurse | Select-Object FullName
+FullName
+--------
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\docs\feedback-analysis\battle-logic-report.md
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\docs\feedback-analysis\boss-open-report.md
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\docs\feedback-analysis\content-audit-report.md
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\docs\feedback-analysis\face-flip-report.md
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\docs\feedback-analysis\item-deck-report.md
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\docs\feedback-analysis\room-flow-report.md
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\docs\feedback-analysis\ui-layout-report.md
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\.opencode\subagents\trap-effects\agent.log
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\.opencode\subagents\trap-effects\prompt.txt
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\.opencode\subagents\trap-effects\run-agent.ps1
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\.opencode\subagents\trap-effects\session.txt
+
+✱ Grep "TrapFacePrefab|TrapFace" in Assets/Scripts · 5 matches
+✱ Grep "class CoreCardPresentationMapper|CardPresentationMapper" in Assets/Scripts/NineGrid.Presentation · 51 matches
+Resuming. Continuing the trap-face + totem investigation, now on the presentation side.
+→ Read Assets/Scripts/NineGrid.Presentation/Flow/CoreCardPresentationMapper.cs
+
+$ Get-ChildItem "Assets\Resources\Prefabs" -Filter "*标准模版*" | Select-Object Name, Length
+Name                       Length
+----                       ------
+���߿���׼ģ��.prefab       52214
+���߿���׼ģ��.prefab.meta    161
+���ؿ���׼ģ��.prefab       61426
+���ؿ���׼ģ��.prefab.meta    161
+���￨��׼ģ��.prefab       51424
+���￨��׼ģ��.prefab.meta    161
+
+Now checking the Trap face template prefab vs Monster face template for HP slots.
+→ Read Assets/Scripts/NineGrid.Presentation/Cards/CardChassisPaths.cs
+
+$ rg -n "Binder|SlotName|槽|名字|血|攻|甲|行动" "Assets\Scripts\NineGrid.Presentation\Cards" --include="*.cs" -l | Out-String -Width 200
+rg: unrecognized flag --include
+
+similar flags that are available: --include-zero
+
+$ Get-ChildItem "Assets\Scripts\NineGrid.Presentation\Cards" -File | Select-Object Name | Out-String -Width 200
+Name
+----
+Anim.meta
+ArmorBlockDisplay.cs
+ArmorBlockDisplay.cs.meta
+AttackInputHook.cs
+AttackInputHook.cs.meta
+AvatarBoardFacing.cs
+AvatarBoardFacing.cs.meta
+AvatarBoardFacingHook.cs
+AvatarBoardFacingHook.cs.meta
+AvatarBoardFacingState.cs
+AvatarBoardFacingState.cs.meta
+Battle.meta
+BoardCardSelectModeController.cs
+BoardCardSelectModeController.cs.meta
+BoardMotionStepScheduler.cs
+BoardMotionStepScheduler.cs.meta
+BoardPresentationMerge.cs
+BoardPresentationMerge.cs.meta
+BoardSelectParkedCardHitProxy.cs
+BoardSelectParkedCardHitProxy.cs.meta
+BoardWalkInputHook.cs
+BoardWalkInputHook.cs.meta
+BurstScatterPointSampler.cs
+BurstScatterPointSampler.cs.meta
+CardAttackBasicAdapter.cs
+CardAttackBasicAdapter.cs.meta
+CardAttackBasicDirectionRig.cs
+CardAttackBasicDirectionRig.cs.meta
+CardBurstScatterIntoDeckPresenter.cs
+CardBurstScatterIntoDeckPresenter.cs.meta
+CardChassisPaths.cs
+CardChassisPaths.cs.meta
+CardDeckLayoutSettings.cs
+CardDeckLayoutSettings.cs.meta
+CardDeckManagerSingleton.cs
+CardDeckManagerSingleton.cs.meta
+CardDeckMode.cs
+CardDeckMode.cs.meta
+CardDeckSlotContainer.cs
+CardDeckSlotContainer.cs.meta
+CardDeckTween.cs
+CardDeckTween.cs.meta
+CardEntityLifecycleHook.cs
+CardEntityLifecycleHook.cs.meta
+CardHandAnchorUtility.cs
+CardHandAnchorUtility.cs.meta
+CardHandLayoutSettings.cs
+CardHandLayoutSettings.cs.meta
+CardHandManagerSingleton.cs
+CardHandManagerSingleton.cs.meta
+CardHandSlotContainer.cs
+CardHandSlotContainer.cs.meta
+CardManagerSingleton.cs
+CardManagerSingleton.cs.meta
+CardOpacityUtility.cs
+CardOpacityUtility.cs.meta
+CardPerformanceTimelinePlayer.cs
+CardPerformanceTimelinePlayer.cs.meta
+CardPresentationKind.cs
+CardPresentationKind.cs.meta
+CardPresentationKindResolver.cs
+CardPresentationKindResolver.cs.meta
+CardPresentationProbe.cs
+CardPresentationProbe.cs.meta
+CardSlotAnchorUtility.cs
+CardSlotAnchorUtility.cs.meta
+CardViewTween.cs
+CardViewTween.cs.meta
+CardVisualDriver.cs
+CardVisualDriver.cs.meta
+CardZoneOwnershipHook.cs
+CardZoneOwnershipHook.cs.meta
+ChoreoTraceSink.cs
+ChoreoTraceSink.cs.meta
+CombatPresentationContracts.cs
+CombatPresentationContracts.cs.meta
+Convergence.meta
+DamageNumberHook.cs
+DamageNumberHook.cs.meta
+DealFlightContext.cs
+DealFlightContext.cs.meta
+DealFlightHandle.cs
+DealFlightHandle.cs.meta
+DealFlightKind.cs
+DealFlightKind.cs.meta
+DealFlightLayoutSettings.cs
+DealFlightLayoutSettings.cs.meta
+DealFlightMath.cs
+DealFlightMath.cs.meta
+DealSettleBudget.cs
+DealSettleBudget.cs.meta
+DealVisualTargetResolver.cs
+DealVisualTargetResolver.cs.meta
+DescriptionDisplayHook.cs
+DescriptionDisplayHook.cs.meta
+DiagnosticOutputHook.cs
+DiagnosticOutputHook.cs.meta
+DirectorAttackPresentTargeting.cs
+DirectorAttackPresentTargeting.cs.meta
+Effects.meta
+ExploreInputHook.cs
+ExploreInputHook.cs.meta
+FieldBattlePresentationHook.cs
+FieldBattlePresentationHook.cs.meta
+FieldBattleView.cs
+FieldBattleView.cs.meta
+FlowFieldTraceSink.cs
+FlowFieldTraceSink.cs.meta
+Ground.meta
+GroundCardHitProxy.cs
+GroundCardHitProxy.cs.meta
+GroundFieldGeometryHook.cs
+GroundFieldGeometryHook.cs.meta
+GroundFieldHitSurface.cs
+GroundFieldHitSurface.cs.meta
+GroundFieldLayoutSettings.cs
+GroundFieldLayoutSettings.cs.meta
+GroundFieldSnapshot.cs
+GroundFieldSnapshot.cs.meta
+GroundFieldView.cs
+GroundFieldView.cs.meta
+GroundSlotHitProxy.cs
+GroundSlotHitProxy.cs.meta
+GroundSlotRelation.cs
+GroundSlotRelation.cs.meta
+GroundSlotTopology.cs
+GroundSlotTopology.cs.meta
+HandCardHitProxy.cs
+HandCardHitProxy.cs.meta
+PerfTraceSink.cs
+PerfTraceSink.cs.meta
+PickupInputHook.cs
+PickupInputHook.cs.meta
+PixelCardPackSpriteLibrary.asset
+PixelCardPackSpriteLibrary.asset.meta
+PixelCardPackSpriteLibrary.cs
+PixelCardPackSpriteLibrary.cs.meta
+PixelDigitDisplay.cs
+PixelDigitDisplay.cs.meta
+Presentation.meta
+RecycleItemInputHook.cs
+RecycleItemInputHook.cs.meta
+RegistryTraceSink.cs
+RegistryTraceSink.cs.meta
+SkeletonDeckLayoutSettings.cs
+SkeletonDeckLayoutSettings.cs.meta
+SkeletonDeckPresentationManager.cs
+SkeletonDeckPresentationManager.cs.meta
+SkeletonFusionPresentationRequest.cs
+SkeletonFusionPresentationRequest.cs.meta
+Slots.meta
+StandardCardView.cs
+StandardCardView.cs.meta
+TriggerPulseOutputHook.cs
+TriggerPulseOutputHook.cs.meta
+UseItemInputHook.cs
+UseItemInputHook.cs.meta
+Vfx.meta
+
+$ Get-ChildItem "Assets\Scripts\NineGrid.Presentation\Cards\Presentation" -File | Select-Object Name | Out-String -Width 200
+Name
+----
+CardDetailDescriptionComposer.cs
+CardDetailDescriptionComposer.cs.meta
+CardFaceDescriptionComposer.cs
+CardFaceDescriptionComposer.cs.meta
+CardFaceDescriptionIconCatalogSO.cs
+CardFaceDescriptionIconCatalogSO.cs.meta
+CardFaceDescriptionInlineIconStyleSO.cs
+CardFaceDescriptionInlineIconStyleSO.cs.meta
+CardFaceDescriptionParamFiller.cs
+CardFaceDescriptionParamFiller.cs.meta
+CardFaceDescriptionProjector.cs
+CardFaceDescriptionProjector.cs.meta
+CardFaceDescriptionSpriteAssetBuilder.cs
+CardFaceDescriptionSpriteAssetBuilder.cs.meta
+CardFaceFlipPresenter.cs
+CardFaceFlipPresenter.cs.meta
+CardFacePresentationBinder.cs
+CardFacePresentationBinder.cs.meta
+CardInspectDetailComposer.cs
+CardInspectDetailComposer.cs.meta
+CardPresentationSnapshot.cs
+CardPresentationSnapshot.cs.meta
+ICardFaceBinder.cs
+ICardFaceBinder.cs.meta
+
+$ rg -n "Hp|Armor|Attack|ActionCount|血量|护甲|攻击|行动" "Assets\Scripts\NineGrid.Presentation\Cards\Presentation\CardFacePresentationBinder.cs" | Select-Object -First 80
+442:                    // 玩家卡：攻击 + 护甲；不绑血量到卡面�?
+443:                    SetNumeric(CardFaceSlotCodes.Attack, snapshot.Attack);
+444:                    SetNumeric(CardFaceSlotCodes.Armor, snapshot.Armor);
+448:                    SetNumeric(CardFaceSlotCodes.Attack, snapshot.Attack);
+449:                    SetNumeric(CardFaceSlotCodes.Armor, snapshot.Armor);
+450:                    SetNumeric(CardFaceSlotCodes.Hp, snapshot.Hp);
+451:                    // 行动计数�?UpdateActionCount 指令 Commit；snapshot 缺省�?0�?
+452:                    SetNumeric(CardFaceSlotCodes.ActionCount, snapshot.ActionCount);
+
+→ Read Assets/Scripts/NineGrid.Presentation/Cards/Presentation/CardFacePresentationBinder.cs [limit=200, offset=380]
+→ Read Assets/Scripts/NineGrid.Presentation/Flow/Presentation/CardFaceStatHandler.cs
+Key finding: `ApplyStats` only writes numerics for Avatar/Monster — Trap falls into `default` (no stat writing). Let me verify the stat handler path and the slot map.
+→ Read Assets/Scripts/NineGrid.Presentation/Cards/Presentation/CardFacePresentationBinder.cs [limit=380]
+
+$ rg -n "CardFaceSlotCodes" "Assets\Scripts\NineGrid.Presentation\Cards\Presentation\CardFacePresentationBinder.cs" | Select-Object -First 5; Get-ChildItem "Assets\Scripts\NineGrid.Presentation\Cards\Slots" -File | Select-Object Name
+139:                CardFaceSlotCodes.BasicDescription,
+147:                    CardFaceSlotCodes.MainIcon,
+154:            _templateDefaults?.TryGetValue(CardFaceSlotCodes.MainIcon, out templateDefault);
+166:            TryApplySprite(CardFaceSlotCodes.FaceBackground, snapshot.FaceBackground);
+167:            TryApplySprite(CardFaceSlotCodes.BackBorder, snapshot.BackBorder);
+
+Name
+----
+CardFaceSlotCodes.cs
+CardFaceSlotCodes.cs.meta
+CardFaceSlotDefinition.cs
+CardFaceSlotDefinition.cs.meta
+CardFaceSlotNodeMap.cs
+CardFaceSlotNodeMap.cs.meta
+CardFaceSlotRegistrySO.cs
+CardFaceSlotRegistrySO.cs.meta
+CardFaceSlotResolver.cs
+CardFaceSlotResolver.cs.meta
+CardFaceSlotRole.cs
+CardFaceSlotRole.cs.meta
+CardFaceSortingLayers.cs
+CardFaceSortingLayers.cs.meta
+CardFaceSortingOrderValidator.cs
+CardFaceSortingOrderValidator.cs.meta
+
+$ rg -n "Hp|Armor|Attack|ActionCount|血量|护甲|攻击|行动计数|Blood|HpIcon" "Assets\Scripts\NineGrid.Presentation\Cards\Slots\CardFaceSlotNodeMap.cs" 2>$null | Select-Object -First 60
+45:                { CardFaceSlotCodes.Attack, new[] { "攻击数�?, "Attack" } },
+46:                { CardFaceSlotCodes.Armor, new[] { "护甲数�?, "Armor" } },
+47:                { CardFaceSlotCodes.Hp, new[] { "血量数�?, "Hp", "Life" } },
+48:                { CardFaceSlotCodes.ActionCount, new[] { "行动计数", "ActionCount", "Action_Count" } },
+53:        /// 数值槽 �?旁路装饰图标节点名（预制体配对：攻击数值↔攻击 等）�?
+59:                { CardFaceSlotCodes.Attack, new[] { "攻击", "Attack_Icon", "AttackIcon" } },
+60:                { CardFaceSlotCodes.Armor, new[] { "护甲", "Armor_Icon", "ArmorIcon" } },
+61:                { CardFaceSlotCodes.Hp, new[] { "血�?, "Hp_Icon", "HpIcon", "Life_Icon" } },
+107:            if (numericSlotCode == CardFaceSlotCodes.ActionCount)
+144:        /// 怪物「行动计数」同时存�?Sprite �?TMP 同名节点时，优先�?TMP 的节点�?
+
+$ $trap = "Assets\Resources\Prefabs\机关卡标准模版.prefab"; $monster = "Assets\Resources\Prefabs\怪物卡标准模板.prefab"; $avatar = "Assets\Resources\Prefabs\玩家卡标准模板.prefab"; foreach ($f in @($trap,$monster,$avatar)) { Write-Output "=== $f ==="; rg -o "\\u[0-9a-fA-F]{4}" $f | Sort-Object -Unique | ForEach-Object { $u = $_ -replace "\\u","0x"; try { $ch = [char][Convert]::ToInt32($u,16); "$_ = $ch" } catch {} } | Out-String -Width 200 }
+=== Assets\Resources\Prefabs\���ؿ���׼ģ��.prefab ===
+\u4E16 = ��
+\u4E3B = ��
+\u4ECB = ��
+\u503C = ֵ
+\u5173 = ��
+\u51C6 = ׼
+\u533A = ��
+\u5361 = ��
+\u540D = ��
+\u56FE = ͼ
+\u57DF = ��
+\u5B57 = ��
+\u5E45 = ��
+\u5FC3 = ��
+\u6570 = ��
+\u6587 = ��
+\u666F = ��
+\u673A = ��
+\u6807 = ��
+\u6838 = ��
+\u6846 = ��
+\u6A21 = ģ
+\u6A2A = ��
+\u7248 = ��
+\u754C = ��
+\u7ECD = ��
+\u80CC = ��
+\u8840 = Ѫ
+\u89C6 = ��
+\u91CF = ��
+\u9644 = ��
+
+=== Assets\Resources\Prefabs\���￨��׼ģ��.prefab ===
+\u4E3B = ��
+\u503C = ֵ
+\u51C6 = ׼
+\u51FB = ��
+\u52A8 = ��
+\u5361 = ��
+\u540D = ��
+\u56FE = ͼ
+\u5B57 = ��
+\u5E45 = ��
+\u5FC3 = ��
+\u602A = ��
+\u62A4 = ��
+\u63CF = ��
+\u653B = ��
+\u6570 = ��
+\u666F = ��
+\u677F = ��
+\u6807 = ��
+\u6838 = ��
+\u6846 = ��
+\u6A21 = ģ
+\u6A2A = ��
+\u7269 = ��
+\u7532 = ��
+\u80CC = ��
+\u8840 = Ѫ
+\u884C = ��
+\u89C6 = ��
+\u8BA1 = ��
+\u8FF0 = ��
+\u91CF = ��
+\u9762 = ��
+
+=== Assets\Resources\Prefabs\��ҿ���׼ģ��.prefab ===
+\u4E3B = ��
+\u503C = ֵ
+\u5175 = ��
+\u51C6 = ׼
+\u51FB = ��
+\u5361 = ��
+\u540D = ��
+\u54E5 = ��
+\u56FE = ͼ
+\u5927 = ��
+\u5B57 = ��
+\u5BB6 = ��
+\u5E45 = ��
+\u6001 = ̬
+\u62A4 = ��
+\u653B = ��
+\u6570 = ��
+\u666F = ��
+\u677F = ��
+\u6807 = ��
+\u6846 = ��
+\u6A21 = ģ
+\u6A2A = ��
+\u72B6 = ״
+\u73A9 = ��
+\u7532 = ��
+\u80CC = ��
+\u89C6 = ��
+
+$ function Decode-PrefabNames($path) { $content = Get-Content -Raw $path; $names = [regex]::Matches($content, 'm_Name: (\\u[0-9a-fA-F]{4}[^\\r\\n]*)') | ForEach-Object { $_.Groups[1].Value }; $names = $names | ForEach-Object { $raw = $_.Trim(); $decoded = [regex]::Replace($raw, '\\u([0-9a-fA-F]{4})', { param($m) [char][Convert]::ToInt32($m.Groups[1].Value, 16).ToString() }); $decoded }; $names | Sort-Object -Unique }; Write-Output "=== TRAP ==="; Decode-PrefabNames "Assets\Resources\Prefabs\机关卡标准模版.prefab"; Write-Output "=== MONSTER ==="; Decode-PrefabNames "Assets\Resources\Prefabs\怪物卡标准模板.prefab"
+=== TRAP ===
+=== MONSTER ===
+
+$ rg -o 'm_Name: .*' "Assets\Resources\Prefabs\机关卡标准模版.prefab" | Select-Object -First 40
+m_Name: "\u8840\u91CF"
+m_Name: CardShirts_8
+m_Name: "\u4E3B\u89C6\u56FEMask"
+m_Name: 
+m_Name: Front
+m_Name: "\u540D\u5B57"
+m_Name: 
+m_Name: 
+m_Name: 
+m_Name: "\u6A2A\u5E45"
+m_Name: "\u4ECB\u7ECD\u533A\u57DF"
+m_Name: "\u6807\u51C6\u4E16\u754C\u6587\u5B57"
+m_Name: 
+m_Name: 
+m_Name: 
+m_Name: logo
+m_Name: Rank_2 (1)
+m_Name: Rank_2
+m_Name: "\u5361\u6846"
+m_Name: "\u80CC\u666F"
+m_Name: "\u6838\u5FC3\u56FE\u6807"
+m_Name: "\u9644Icon"
+m_Name: "\u673A\u5173\u5361\u6807\u51C6\u6A21\u7248"
+m_Name: Card_Border_rectangle_bronze
+m_Name: back
+m_Name: Rank_2 (2)
+m_Name: "\u8840\u91CF\u6570\u503C"
+m_Name: 
+m_Name: 
+m_Name:
+
+$ function Get-DecodedNames($path) { $raw = rg -o 'm_Name: .*' $path; $out = @(); foreach ($line in $raw) { $val = $line -replace '^m_Name: "?','' -replace '"$',''; if ($val -match '\\u') { $decoded = [regex]::Replace($val, '\\u([0-9a-fA-F]{4})', { param($m) [char][Convert]::ToInt32($m.Groups[1].Value, 16).ToString() }); $out += $decoded } }; $out | Sort-Object -Unique }; Write-Output "=== TRAP ==="; Get-DecodedNames "Assets\Resources\Prefabs\机关卡标准模版.prefab"; Write-Output ""; Write-Output "=== MONSTER ==="; Get-DecodedNames "Assets\Resources\Prefabs\怪物卡标准模板.prefab"
+=== TRAP ===
+InvalidArgument: Cannot convert value "34880" to type "System.Char". Error: "String must be exactly one character long."
+InvalidArgument: Cannot convert value "37327" to type "System.Char". Error: "String must be exactly one character long."
+InvalidArgument: Cannot convert value "20027" to type "System.Char". Error: "String must be exactly one character long."
+InvalidArgument: Cannot convert value "35270" to type "System.Char". Error: "String must be exactly one character long."
+InvalidArgument: Cannot convert value "22270" to type "System.Char". Error: "String must be exactly one character long."
+InvalidArgument: Cannot convert value "21517" to type "System.Char". Error: "String must be exactly one character long."
+InvalidArgument: Cannot convert value "23383" to type "System.Char". Error: "String must be exactly one character long."
+InvalidArgument: Cannot convert value "27178" to type "System.Char". Error: "String must be exactly one character long."
+InvalidArgument: Cannot convert value "24133" to type "System.Char". Error: "String must be exactly one character long."
+InvalidArgument: Cannot convert value "20171" to type "System.Char". Error: "String must be exactly one character long."
+InvalidArgument: Cannot convert value "32461" to type "System.Char". Error: "String must be exactly one character long."
+InvalidArgument: Cannot convert value "21306" to type "System.Char". Error: "String must be exactly one character long."
+InvalidArgument: Cannot convert value "22495" to type "System.Char". Error: "String must be exactly one character long."
+InvalidArgument: Cannot convert value "26631" to type "System.Char". Error: "String must be exactly one character long."
+InvalidArgument: Cannot convert value "20934" to type "System.Char". Error: "String must be exactly one character long."
+InvalidArgument: Cannot convert value "19990" to type "System.Char". Error: "String must be exactly one character long."
+InvalidArgument: Cannot convert value "30028" to type "System.Char". Error: "String must be exactly one character long."
+InvalidArgument: Cannot convert value "25991" to type "System.Char". Error: "String must be exactly one character long."
+InvalidArgument: Cannot convert value "23383" to type "System.Char". Error: "String must be exactly one character long."
+InvalidArgument: Cannot convert value "21345" to type "System.Char". Error: "String must be exactly one character long."
+InvalidArgument: Cannot convert value "26694" to type "System.Char". Error: "String must be exactly one character long."
+InvalidArgument: Cannot convert value "32972" to type "System.Char". Error: "String must be exactly one character long."
+InvalidArgument: Cannot convert value "26223" to type "System.Char". Error: "String must be exactly one character long."
+InvalidArgument: Cannot convert value "26680" to type "System.Char". Error: "String must be exactly one character long."
+InvalidArgument: Cannot convert value "24515" to type "System.Char". Error: "String must be exactly one character long."
+InvalidArgument: Cannot convert value "22270" to type "System.Char". Error: "String must be exactly one character long."
+InvalidArgument: Cannot convert value "26631" to type "System.Char". Error: "String must be exactly one character long."
+InvalidArgument: Cannot convert value "38468" to type "System.Char". Error: "String must be exactly one character long."
+InvalidArgument: Cannot convert value "26426" to type "System.Char". Error: "String must be exactly one character long."
+InvalidArgument: Cannot convert value "20851" to type "System.Char". Error: "String must be exactly one character long."
+InvalidArgument: Cannot convert value "21345" to type "System.Char". Error: "String must be exactly one character long."
+InvalidArgument: Cannot convert value "26631" to type "System.Char". Error: "String must be exactly one character long."
+InvalidArgument: Cannot convert value "20934" to type "System.Char". Error: "String must be exactly one character long."
+InvalidArgument: Cannot convert value "27169" to type "System.Char". Error: "String must be exactly one character long."
+InvalidArgument: Cannot convert value "29256" to type "System.Char". Error: "String must be exactly one character long."
+InvalidArgument: Cannot convert value "34880" to type "System.Char". Error: "String must be exactly one character long."
+InvalidArgument: Cannot convert value "37327" to type "System.Char". Error: "String must be exactly one character long."
+InvalidArgument: Cannot convert value "25968" to type "System.Char". Error: "String must be exactly one character long."
+InvalidArgument: Cannot convert value "20540" to type "System.Char". Error: "String must be exactly one character long."
+
+Icon
+Mask
+
+=== MONSTER ===
+InvalidArgument: Cannot convert value "20027" to type "System.Char". Error: "String must be exactly one character long."
+InvalidArgument: Cannot convert value "35270" to type "System.Char". Error: "String must be exactly one character long."
+InvalidArgument: Cannot convert value "22270" to type "System.Char". Error: "String must be exactly one character long."
+InvalidArgument: Cannot convert value "34892" to type "System.Char". Error: "String must be exactly one character long."
+InvalidArgument: Cannot convert value "21160" to type "System.Char". Error: "String must be exactly one character long."
+InvalidArgument: Cannot convert value "35745" to type "System.Char". Error: "String must be exactly one character long."
+InvalidArgument: Cannot convert value "25968" to type "System.Char". Error: "String must be exactly one character long."
+InvalidArgument: Cannot convert value "34892" to type "System.Char". Error: "String must be exactly one character long."
+InvalidArgument: Cannot convert value "21160" to type "System.Char". Error: "String must be exactly one character long."
+InvalidArgument: Cannot convert value "35745" to type "System.Char". Error: "String must be exactly one character long."
+InvalidArgument: Cannot convert value "25968" to type "System.Char". Error: "String must be exactly one character long."
+InvalidArgument: Cannot convert value "25915" to type "System.Char". Error: "String must be exactly one character long."
+InvalidArgument: Cannot convert value "20987" to type "System.Char". Error: "String must be exactly one character long."
+InvalidArgument: Cannot convert value "27178" to type "System.Char". Error: "String must be exactly one character long."
+InvalidArgument: Cannot convert value "24133" to type "System.Char". Error: "String must be exactly one character long."
+InvalidArgument: Cannot convert value "21345" to type "System.Char". Error: "String must be exactly one character long."
+InvalidArgument: Cannot convert value "26694" to type "System.Char". Error: "String must be exactly one character long."
+InvalidArgument: Cannot convert value "26680" to type "System.Char". Error: "String must be exactly one character long."
+InvalidArgument: Cannot convert value "24515" to type "System.Char". Error: "String must be exactly one character long."
+InvalidArgument: Cannot convert value "22270" to type "System.Char". Error: "String must be exactly one character long."
+InvalidArgument: Cannot convert value "26631" to type "System.Char". Error: "String must be exactly one character long."
+InvalidArgument: Cannot convert value "32972" to type "System.Char". Error: "String must be exactly one character long."
+InvalidArgument: Cannot convert value "26223" to type "System.Char". Error: "String must be exactly one character long."
+InvalidArgument: Cannot convert value "24618" to type "System.Char". Error: "String must be exactly one character long."
+InvalidArgument: Cannot convert value "29289" to type "System.Char". Error: "String must be exactly one character long."
+InvalidArgument: Cannot convert value "21345" to type "System.Char". Error: "String must be exactly one character long."
+InvalidArgument: Cannot convert value "26631" to type "System.Char". Error: "String must be exactly one character long."
+InvalidArgument: Cannot convert value "20934" to type "System.Char". Error: "String must be exactly one character long."
+InvalidArgument: Cannot convert value "27169" to type "System.Char". Error: "String must be exactly one character long."
+InvalidArgument: Cannot convert value "26495" to type "System.Char". Error: "String must be exactly one character long."
+InvalidArgument: Cannot convert value "34880" to type "System.Char". Error: "String must be exactly one character long."
+InvalidArgument: Cannot convert value "37327" to type "System.Char". Error: "String must be exactly one character long."
+InvalidArgument: Cannot convert value "25551" to type "System.Char". Error: "String must be exactly one character long."
+InvalidArgument: Cannot convert value "36848" to type "System.Char". Error: "String must be exactly one character long."
+InvalidArgument: Cannot convert value "34892" to type "System.Char". Error: "String must be exactly one character long."
+InvalidArgument: Cannot convert value "21160" to type "System.Char". Error: "String must be exactly one character long."
+InvalidArgument: Cannot convert value "34880" to type "System.Char". Error: "String must be exactly one character long."
+InvalidArgument: Cannot convert value "37327" to type "System.Char". Error: "String must be exactly one character long."
+InvalidArgument: Cannot convert value "25968" to type "System.Char". Error: "String must be exactly one character long."
+InvalidArgument: Cannot convert value "20540" to type "System.Char". Error: "String must be exactly one character long."
+InvalidArgument: Cannot convert value "21517" to type "System.Char". Error: "String must be exactly one character long."
+InvalidArgument: Cannot convert value "23383" to type "System.Char". Error: "String must be exactly one character long."
+InvalidArgument: Cannot convert value "25252" to type "System.Char". Error: "String must be exactly one character long."
+InvalidArgument: Cannot convert value "30002" to type "System.Char". Error: "String must be exactly one character long."
+InvalidArgument: Cannot convert value "25551" to type "System.Char". Error: "String must be exactly one character long."
+InvalidArgument: Cannot convert value "36848" to type "System.Char". Error: "String must be exactly one character long."
+InvalidArgument: Cannot convert value "38754" to type "System.Char". Error: "String must be exactly one character long."
+InvalidArgument: Cannot convert value "26495" to type "System.Char". Error: "String must be exactly one character long."
+InvalidArgument: Cannot convert value "25252" to type "System.Char". Error: "String must be exactly one character long."
+InvalidArgument: Cannot convert value "30002" to type "System.Char". Error: "String must be exactly one character long."
+InvalidArgument: Cannot convert value "25968" to type "System.Char". Error: "String must be exactly one character long."
+InvalidArgument: Cannot convert value "20540" to type "System.Char". Error: "String must be exactly one character long."
+
+Mask
+InvalidArgument: Cannot convert value "25915" to type "System.Char". Error: "String must be exactly one character long."
+InvalidArgument: Cannot convert value "20987" to type "System.Char". Error: "String must be exactly one character long."
+InvalidArgument: Cannot convert value "25968" to type "System.Char". Error: "String must be exactly one character long."
+InvalidArgument: Cannot convert value "20540" to type "System.Char". Error: "String must be exactly one character long."
+
+$ $content = Get-Content -Raw "Assets\Resources\Prefabs\机关卡标准模版.prefab"; $names = [regex]::Matches($content, 'm_Name: "(\\u[0-9a-fA-F]{4})+') | ForEach-Object { $_.Value -replace '^m_Name: "','' }; $out = foreach ($n in $names) { $codes = [regex]::Matches($n, '\\u([0-9a-fA-F]{4})') | ForEach-Object { [Convert]::ToInt32($_.Groups[1].Value, 16) }; -join ($codes | ForEach-Object { [char]$_ }) }; $out | Sort-Object -Unique
+����
+��׼��������
+��
+����ͼ��
+���
+���ؿ���׼ģ��
+��������
+����
+����
+Ѫ��
+Ѫ����ֵ
+����ͼ
+
+$ [Console]::OutputEncoding = [System.Text.Encoding]::UTF8; $content = Get-Content -Raw "Assets\Resources\Prefabs\机关卡标准模版.prefab"; $names = [regex]::Matches($content, 'm_Name: "(\\u[0-9a-fA-F]{4})+') | ForEach-Object { $_.Value -replace '^m_Name: "','' }; $out = foreach ($n in $names) { $codes = [regex]::Matches($n, '\\u([0-9a-fA-F]{4})') | ForEach-Object { [Convert]::ToInt32($_.Groups[1].Value, 16) }; -join ($codes | ForEach-Object { [char]$_ }) }; Write-Output "=== TRAP ==="; $out | Sort-Object -Unique; $content2 = Get-Content -Raw "Assets\Resources\Prefabs\怪物卡标准模板.prefab"; $names2 = [regex]::Matches($content2, 'm_Name: "(\\u[0-9a-fA-F]{4})+') | ForEach-Object { $_.Value -replace '^m_Name: "','' }; $out2 = foreach ($n in $names2) { $codes = [regex]::Matches($n, '\\u([0-9a-fA-F]{4})') | ForEach-Object { [Convert]::ToInt32($_.Groups[1].Value, 16) }; -join ($codes | ForEach-Object { [char]$_ }) }; Write-Output "=== MONSTER ==="; $out2 | Sort-Object -Unique
+=== TRAP ===
+背景
+标准世界文字
+附
+核心图标
+横幅
+机关卡标准模版
+介绍区域
+卡框
+名字
+血量
+血量数值
+主视图
+=== MONSTER ===
+背景
+攻击
+攻击数值
+怪物卡标准模板
+核心图标
+横幅
+护甲
+护甲数值
+卡框
+描述
+描述面板
+名字
+行动
+行动计数
+血量
+血量数值
+主视图
+
+HP slot exists in the Trap template but the binder never writes it. Let me check the template's default text values in the prefab.
+$ [Console]::OutputEncoding = [System.Text.Encoding]::UTF8; $content = Get-Content -Raw "Assets\Resources\Prefabs\机关卡标准模版.prefab"; $matches = [regex]::Matches($content, 'm_Text: "[^"]*"'); $texts = foreach ($m in $matches) { $v = $m.Value -replace '^m_Text: "','' -replace '"$',''; $decoded = [regex]::Replace($v, '\\u([0-9a-fA-F]{4})', { param($mm) [char][Convert]::ToInt32($mm.Groups[1].Value,16).ToString() }); $decoded }; $texts | Sort-Object -Unique; Write-Output "=== MONSTER TEXTS ==="; $content2 = Get-Content -Raw "Assets\Resources\Prefabs\怪物卡标准模板.prefab"; $matches2 = [regex]::Matches($content2, 'm_Text: "[^"]*"'); $texts2 = foreach ($m in $matches2) { $v = $m.Value -replace '^m_Text: "','' -replace '"$',''; $decoded = [regex]::Replace($v, '\\u([0-9a-fA-F]{4})', { param($mm) [char][Convert]::ToInt32($mm.Groups[1].Value,16).ToString() }); $decoded }; $texts2 | Sort-Object -Unique
+=== MONSTER TEXTS ===
+
+$ $content = Get-Content -Raw "Assets\Resources\Prefabs\机关卡标准模版.prefab"; $idx = $content.IndexOf('m_Name: "\u8840\u91CF\u6570\u503C"'); Write-Output "index: $idx"; $slice = $content.Substring($idx - 500, 2000); [Console]::OutputEncoding = [System.Text.Encoding]::UTF8; $decoded = [regex]::Replace($slice, '\\u([0-9a-fA-F]{4})', { param($mm) [char][Convert]::ToInt32($mm.Groups[1].Value,16).ToString() }); $decoded
+index: 55324
+InvalidArgument: Cannot convert value "34880" to type "System.Char". Error: "String must be exactly one character long."
+de: 0
+  m_WasSpriteAssigned: 1
+  m_SpriteSortPoint: 0
+--- !u!1 &9148092475904047470
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1355714387057278585}
+  - component: {fileID: 228691145661563936}
+  - component: {fileID: 3825288637334428626}
+  - component: {fileID: 8624260437325611965}
+  - component: {fileID: 3247204159273929217}
+  m_Layer: 8
+  m_Name: ""
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &1355714387057278585
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9148092475904047470}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 0.5, y: 0.5, z: 0.5}
+  m_ConstrainProportionsScale: 1
+  m_Children: []
+  m_Father: {fileID: 3616404307040214961}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: 0, y: -2}
+  m_SizeDelta: {x: 7.0393, y: 7.4837}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!23 &228691145661563936
+MeshRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9148092475904047470}
+  m_Enabled: 1
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
+  m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
+  m_MotionVectors: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 2
+  m_RayTraceProcedural: 0
+  m_RayTracingAccelStructBuildFlagsOverride: 0
+  m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
+  m_ForceMeshLod: -1
+  m_MeshLodSelectionBias: 0
+  m_RenderingLayerMask: 1
+  m_RendererPriority: 0
+  m_Materials:
+  - {fileID: 3878174645474185667, guid: cb1
+InvalidArgument: Cannot convert value "37327" to type "System.Char". Error: "String must be exactly one character long."
+InvalidArgument: Cannot convert value "25968" to type "System.Char". Error: "String must be exactly one character long."
+InvalidArgument: Cannot convert value "20540" to type "System.Char". Error: "String must be exactly one character long."
+
+→ Read Assets/Scripts/NineGrid.Presentation/Cards/Slots/CardFaceSlotNodeMap.cs
+
+$ $m = Get-Content -Raw "Assets\Resources\Prefabs\怪物卡标准模板.prefab"; Write-Output "monster TMP text: $([regex]::Matches($m, 'm_text: ').Count) / m_Text: $([regex]::Matches($m, 'm_Text: ').Count) / TextMeshPro: $([regex]::Matches($m, 'TextMeshPro').Count) / TextMeshProUGUI: $([regex]::Matches($m, 'TextMeshProUGUI').Count) / Text: $([regex]::Matches($m, '--- !u!22').Count)"; $t = Get-Content -Raw "Assets\Resources\Prefabs\机关卡标准模版.prefab"; Write-Output "trap TextMeshPro: $([regex]::Matches($t, 'TextMeshPro').Count) / TextMeshProUGUI: $([regex]::Matches($t, 'TextMeshProUGUI').Count) / m_Text: $([regex]::Matches($t, 'm_Text: ').Count)"
+monster TMP text: 6 / m_Text: 0 / TextMeshPro: 12 / TextMeshProUGUI: 0 / Text: 6
+trap TextMeshPro: 6 / TextMeshProUGUI: 0 / m_Text: 0
+
+$ [Console]::OutputEncoding = [System.Text.Encoding]::UTF8; function Get-Texts($path) { $content = Get-Content -Raw $path; $matches = [regex]::Matches($content, 'm_text: "[^"]*"'); foreach ($m in $matches) { $v = $m.Value -replace '^m_text: "','' -replace '"$',''; $decoded = [regex]::Replace($v, '\\u([0-9a-fA-F]{4})', { param($mm) [char][Convert]::ToInt32($mm.Groups[1].Value,16).ToString() }); $decoded } }; Write-Output "=== TRAP TEXTS ==="; Get-Texts "Assets\Resources\Prefabs\机关卡标准模版.prefab"; Write-Output "=== MONSTER TEXTS ==="; Get-Texts "Assets\Resources\Prefabs\怪物卡标准模板.prefab"
+=== TRAP TEXTS ===
+=== MONSTER TEXTS ===
+
+$ $t = Get-Content -Raw "Assets\Resources\Prefabs\机关卡标准模版.prefab"; [regex]::Matches($t, 'm_text[^,]{0,80}') | Select-Object -First 10 | ForEach-Object { $_.Value }; Write-Output "---monster---"; $m = Get-Content -Raw "Assets\Resources\Prefabs\怪物卡标准模板.prefab"; [regex]::Matches($m, 'm_text[^,]{0,80}') | Select-Object -First 10 | ForEach-Object { $_.Value }
+m_text: 
+  m_isRightToLeft: 0
+  m_fontAsset: {fileID: 11400000
+m_textAlignment: 65535
+  m_characterSpacing: 0
+  m_characterHorizontalScale: 1
+  m_wor
+m_text: 
+  m_isRightToLeft: 0
+  m_fontAsset: {fileID: 11400000
+m_textAlignment: 65535
+  m_characterSpacing: 0
+  m_characterHorizontalScale: 1
+  m_wor
+m_text: 2
+  m_isRightToLeft: 0
+  m_fontAsset: {fileID: 11400000
+m_textAlignment: 65535
+  m_characterSpacing: 0
+  m_characterHorizontalScale: 1
+  m_wor
+---monster---
+m_text: 12
+  m_isRightToLeft: 0
+  m_fontAsset: {fileID: 11400000
+m_textAlignment: 65535
+  m_characterSpacing: 0
+  m_characterHorizontalScale: 1
+  m_wor
+m_text: 
+  m_isRightToLeft: 0
+  m_fontAsset: {fileID: 11400000
+m_textAlignment: 65535
+  m_characterSpacing: -0.3
+  m_characterHorizontalScale: 1
+  m_
+m_text: 12
+  m_isRightToLeft: 0
+  m_fontAsset: {fileID: 11400000
+m_textAlignment: 65535
+  m_characterSpacing: 0
+  m_characterHorizontalScale: 1
+  m_wor
+m_text: 
+  m_isRightToLeft: 0
+  m_fontAsset: {fileID: 11400000
+m_textAlignment: 65535
+  m_characterSpacing: 0
+  m_characterHorizontalScale: 1
+  m_wor
+m_text: 12
+  m_isRightToLeft: 0
+  m_fontAsset: {fileID: 11400000
+m_textAlignment: 65535
+  m_characterSpacing: 0
+  m_characterHorizontalScale: 1
+  m_wor
+
+$ $t = Get-Content -Raw "Assets\Resources\Prefabs\机关卡标准模版.prefab"; $idx = $t.IndexOf('m_Name: "\u8840\u91CF\u6570\u503C"'); Write-Output "trap hp-value node at $idx"; $block = $t.Substring($idx - 1200, 1300); $block; Write-Output "========== MONSTER =========="; $m = Get-Content -Raw "Assets\Resources\Prefabs\怪物卡标准模板.prefab"; $idx2 = $m.IndexOf('m_Name: "\u653B\u51FB\u6570\u503C"'); Write-Output "monster atk-value node at $idx2"; $block2 = $m.Substring($idx2 - 1200, 1300); $block2
+trap hp-value node at 55324
+}
+  m_LightProbeVolumeOverride: {fileID: 0}
+  m_ScaleInLightmap: 1
+  m_ReceiveGI: 1
+  m_PreserveUVs: 0
+  m_IgnoreNormalsForChartDetection: 0
+  m_ImportantGI: 0
+  m_StitchLightmapSeams: 1
+  m_SelectedEditorRenderState: 0
+  m_MinimumChartSize: 4
+  m_AutoUVMaxDistance: 0.5
+  m_AutoUVMaxAngle: 89
+  m_LightmapParameters: {fileID: 0}
+  m_GlobalIlluminationMeshLod: 0
+  m_SortingLayerID: 615528325
+  m_SortingLayer: 2
+  m_SortingOrder: 52
+  m_MaskInteraction: 0
+  m_Sprite: {fileID: 3463983450324853707, guid: 7925c5a97139a264499510ff29e4e028, type: 3}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_FlipX: 0
+  m_FlipY: 0
+  m_DrawMode: 0
+  m_Size: {x: 0.3, y: 0.3}
+  m_AdaptiveModeThreshold: 0.5
+  m_SpriteTileMode: 0
+  m_WasSpriteAssigned: 1
+  m_SpriteSortPoint: 0
+--- !u!1 &9148092475904047470
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1355714387057278585}
+  - component: {fileID: 228691145661563936}
+  - component: {fileID: 3825288637334428626}
+  - component: {fileID: 8624260437325611965}
+  - component: {fileID: 3247204159273929217}
+  m_Layer: 8
+  m_Name: "\u8840\u91CF\u6570\u503C"
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+========== MONSTER ==========
+monster atk-value node at 80423
+s: 5
+  outlineEnabled: 1
+--- !u!114 &2274023712111535568
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8744380025507340051}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a67e24c8cb650b64da0c52b2a65aa743, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: NineGrid.LivingUI::NineGrid.LivingUI.Unity.LivingUiContentMarker
+  contentId: Card Info Text
+  carrierId: 1
+  anchor: 0
+  faceLayout: 2
+  restrictToFace: 0
+  envelopeSize: {x: 0, y: 0}
+  authoringSize: {x: 3, y: 3}
+  authoredLocalPosition: {x: -0.0013694763, y: -0.12308335, z: -0.05}
+  authoredLocalScale: {x: 0.4, y: 0.4, z: 0.4}
+  hasAuthoredPose: 1
+--- !u!1 &8821446209525578689
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 4146811501994850924}
+  - component: {fileID: 327183348112073254}
+  - component: {fileID: 5947725627186412437}
+  - component: {fileID: 6534485455142329095}
+  - component: {fileID: 8195451823271999474}
+  m_Layer: 8
+  m_Name: "\u653B\u51FB\u6570\u503C"
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+
+$ $t = Get-Content -Raw "Assets\Resources\Prefabs\机关卡标准模版.prefab"; foreach ($id in @('3825288637334428626','8624260437325611965','3247204159273929217')) { $idx = $t.IndexOf("!u! &$id"); if ($idx -lt 0) { $idx = $t.IndexOf("&$id`n"); }; Write-Output "=== $id at $idx ==="; if ($idx -gt 0) { $t.Substring($idx, [Math]::Min(700, $t.Length - $idx)) } }
+=== 3825288637334428626 at 57494 ===
+&3825288637334428626
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9148092475904047470}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9541d86e2fd84c1d9990edf0852d74ab, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.TextMeshPro::TMPro.TextMeshPro
+  m_Material: {fileID: 0}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_RaycastTarget: 1
+  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
+  m_Maskable: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  m_text: 2
+  m_isRightToLeft: 0
+  m_fontAsset: {fileID: 11400000, guid: cb1d1a3d491188d4
+=== 8624260437325611965 at 60197 ===
+&8624260437325611965
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9148092475904047470}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 67b5df31a57836f469f04d4b5f72994d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::NineGrid.UI.TmpBitmapPixelOutline
+  outlineColor: {r: 0, g: 0, b: 0, a: 1}
+  outlineFontPixels: 1
+  outlineEnabled: 1
+--- !u!114 &3247204159273929217
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9
+=== 3247204159273929217 at 60708 ===
+&3247204159273929217
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9148092475904047470}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a67e24c8cb650b64da0c52b2a65aa743, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: NineGrid.LivingUI::NineGrid.LivingUI.Unity.LivingUiContentMarker
+  contentId: Card Info Text
+  carrierId: 1
+  anchor: 0
+  faceLayout: 2
+  restrictToFace: 0
+  envelopeSize: {x: 0, y: 0}
+  authoringSize: {x: 3, y: 3}
+  authoredLocalPosition: {x: -0.0013694763, y: -0.12308335, z: -0.05}
+  authoredLocalScale: {x: 0.4, y: 0.4, z: 0.4}
+  h
+
+✱ Grep "Card Info Text" in Assets/Scripts · 2 matches
+✱ Grep "class LivingUiContentMarker" in Assets/Scripts · 0 matches
+✱ Grep "PresentationInstructionKind.DealCard|new PresentationInstruction\(PresentationInstructionKind\.SpawnCard|RemainingHp =" in Assets/Scripts/NineGrid.Presentation · 2 matches
+✱ Grep "class SourceAdjacentToUidCondition" in Assets/Scripts/NineGrid.Foundation/NineGrid.Core · 1 match
+HP slot exists in the trap template with a hardcoded "2", but the binder never writes Trap stats. Let me verify the instruction chain and check the totem aura condition evaluation.
+→ Read Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Domain/Stats/StatConditions.cs [limit=120, offset=200]
+→ Read Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Effects/EffectAtomLibrary.cs [limit=130, offset=90]
+→ Read Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Effects/EffectAtomLibrary.cs [limit=80, offset=690]
+→ Read Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Domain/Actions/BoardDeckActions.cs [limit=220, offset=386]
+✱ Grep "class CardFaceEventValues" in Assets/Scripts/NineGrid.Foundation/NineGrid.Core · 1 match
+→ Read Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Domain/Events/CardFaceEventValues.cs
+✱ Grep "class AddStatModifierAction" in Assets/Scripts/NineGrid.Foundation/NineGrid.Core · 1 match
+✱ Grep "BaseStatModified" in Assets/Scripts/NineGrid.Presentation · 5 matches
+→ Read Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Domain/Actions/EffectActions.cs [limit=160, offset=1086]
+→ Read docs/adr/0028-damage-formula-armor-and-reduction.md
+✱ Grep "CurrentArmor|GetCurrentArmor" in Assets/Scripts/NineGrid.Foundation/NineGrid.Core · 36 matches
+→ Read Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Domain/Actions/CoreActions.cs [limit=130, offset=80]
+→ Read Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Domain/Stats/StatArmorUtility.cs
+→ Read Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Domain/Actions/PhaseActions.cs [limit=80, offset=40]
+✱ Grep "ActivateCardEffects|ActivateRuntimeEffects|ActivateEffectInstance" in Assets/Scripts/NineGrid.Foundation/NineGrid.Core · 3 matches
+→ Read Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Systems/ContentSystem.cs [limit=130, offset=120]
+✱ Grep "ApplyContentToCard" in Assets/Scripts/NineGrid.Foundation/NineGrid.Core · 8 matches
+→ Read Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Domain/Actions/BoardDeckActions.cs [limit=70, offset=30]
+→ Read Assets/Scripts/NineGrid.Presentation/Flow/BattleSession/CoreBatchProjectionCoordinator.cs [limit=130, offset=560]
+✱ Grep "PresentationInstructionKind.ModifyBaseStat|new PresentationInstruction\(PresentationInstructionKind" in Assets/Scripts/NineGrid.Presentation · 2 matches
+✱ Grep "BuildInstructions|InstructionBuild|ToInstructions|ProjectInstructions" in Assets/Scripts/NineGrid.Presentation · 0 matches
+✱ Grep "PresentationInstruction\s*\{|new PresentationInstruction" in Assets/Scripts/NineGrid.Presentation · 3 matches
+✱ Grep "class PresentationInstruction|PresentationInstructionKind FromEvent|InstructionKind = " in Assets/Scripts/NineGrid.Presentation · 0 matches
+✱ Grep "PresentationInstruction" in Assets/Scripts/NineGrid.Presentation/Flow/Presentation · 46 matches
+✱ Grep "class PresentationEventMap|static.*Map\(CoreEventType|PresentationInstructionKind.*CoreEventType" in Assets/Scripts/NineGrid.Presentation · 0 matches
+✱ Grep "BaseStatModified" in Assets/Scripts · 11 matches
+→ Read Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Presentation/PresentationEventMap.cs
+✱ Grep "CardZoneTriggerable|HasOwnerEntity" in Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Effects · 9 matches
+→ Read Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Effects/EffectRequires.cs [limit=120, offset=200]
+→ Read Assets/Scripts/NineGrid.Presentation/Flow/QuickTestDeckCatalog.cs
+→ Read Assets/Docs/九宫格登神/01-核心概念/属性.md
+✱ Grep "AppendConditionalPermanentAttackFaceCommitsForBoard|class MoveCardAction" in Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Domain/Actions · 6 matches
+→ Read Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Domain/Actions/EffectActions.cs [limit=120, offset=356]
+→ Read Assets/Scripts/NineGrid.Presentation/Flow/Presentation/CardFaceGenerationBootstrap.cs
+✱ Grep "EnemyOpeningCount|OpeningDealAction|FillEmptySlotsAction" in Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Systems · 8 matches
+→ Read Assets/Scripts/NineGrid.Presentation/Flow/CardInspectOverlayPresenter.cs [limit=120, offset=180]
+✱ Grep "Hp|Attack|Armor|血量|攻击|护甲" in Assets/Scripts/NineGrid.Presentation/Cards/Presentation/CardInspectDetailComposer.cs · 12 matches
+
+$ [Console]::OutputEncoding = [System.Text.Encoding]::UTF8; $m = Get-Content -Raw "Assets\Resources\Prefabs\怪物卡标准模板.prefab"; $idx = $m.IndexOf('m_Name: "\u8840\u91CF\u6570\u503C"'); if ($idx -gt 0) { $block = $m.Substring($idx - 200, 600); $block -replace '\\u([0-9a-fA-F]{4})', { param($mm) [char][Convert]::ToInt32($mm.Groups[1].Value,16).ToString() } } else { Write-Output "monster hp-value node not found" }
+InvalidOperation: Cannot index into a null array.
+877}
+  - component: {fileID: 3225682402942658022}
+  - component: {fileID: 8095838269074714393}
+  - component: {fileID: 2931310009188451594}
+  - component: {fileID: 1248169054006860016}
+  m_Layer: 8
+  m_Name: ""
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &2317444327156431877
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6905198925927007211}
+  m_LocalRotation: {x: -0, y: -0, z: -
+InvalidOperation: Cannot index into a null array.
+InvalidOperation: Cannot index into a null array.
+InvalidOperation: Cannot index into a null array.
+
+$ [Console]::OutputEncoding = [System.Text.Encoding]::UTF8; rg -n "血量|卡面|数值|三围" "Assets\Docs\九宫格登神\08-UI\界面布局.md" | Select-Object -First 30
+7:| **玩家信息面板** | 屏幕左上方  | 头像、血量（当前/上限）、攻击、护甲、状态、金币数量                           |
+19:**怪物卡**：显示的攻/甲/血包含技能加成，实时反映实际战斗数值。
+21:**机关卡**：显示的攻/甲/血包含技能加成，实时反映实际战斗数值。
+32:3. **条件修正**：满足条件时生效的修正（如处于特定格、血量低于阈值等）
+37:**玩家血量上限** = 基础血量 → 持久修正 → 条件修正 → 临时修正
+
+$ [Console]::OutputEncoding = [System.Text.Encoding]::UTF8; rg -n "卡面|血量|数值|显示" "Assets\Docs\九宫格登神\04-敌人侧卡牌信息\怪物卡.md" | Select-Object -First 30
+7:每提升一层，所有怪物卡攻击+1血量+2
+10:| 名称    | 血量  | 攻击  | 护甲  | 技能                | 等级  | 序列  |
+20:| 名称    | 血量  | 攻击  | 护甲  | 技能                       | 等级  | 序列  |
+30:| 名称    | 血量  | 攻击  | 护甲  | 技能                       | 等级  | 序列  |
+40:| 名称    | 血量  | 攻击  | 护甲  | 技能                       | 等级  | 序列  |
+49:| 名称    | 血量  | 攻击  | 护甲  | 技能                         | 等级  | 序列  |
+59:| 名称    | 血量  | 攻击  | 护甲  | 技能                         | 等级  | 序列  |
+69:| 名称    | 血量  | 攻击  | 护甲  | 技能              | 等级  | 序列  |
+
+I have all the evidence. Let me check the existing report format for consistency, then write the report.
+→ Read docs/feedback-analysis/battle-logic-report.md [limit=60]
+All evidence gathered. Writing the report now.
+
+← Write docs/feedback-analysis/trap-effects-report.md
+Wrote file successfully.
+
+报告已落盘：`docs/feedback-analysis/trap-effects-report.md`
+
+摘要：条目1「机关卡血量不清晰」判定为**硬错误**——机关 JSON 血量 6、模板有「血量数值」槽（但烘焙默认「2」）、投影快照有 HP，唯独 `CardFacePresentationBinder.ApplyStats`（CardFacePresentationBinder.cs:455-457）无 Trap 分支，血量从不写入卡面、受伤不更新；条目2「护甲图腾不加甲」判定为**设计冲突**——效果落在有效护甲层（effect_templates.json stat:Armor），战斗内伤害/卡面/可消耗全走当前护甲（CoreActions.cs:100、ADR-0028），战斗中零后果，玩家观察属实；「攻击图腾不加攻」为**落地理解偏差 + 覆盖缺口**——初始在板怪生效且卡面刷新（TrapBatch3RegressionTests.cs:78-110），但 refresh 只在 CardMoved 时重挂（effect_templates.json:1355），击杀补牌/效果生成的后入场邻接怪拿不到光环。
