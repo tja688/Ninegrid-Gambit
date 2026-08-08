@@ -1,3 +1,4 @@
+using NineGrid.Content.Audio;
 using NineGrid.Core;
 using NineGrid.Core.Systems;
 
@@ -9,6 +10,13 @@ namespace NineGrid.Flow.Presentation
     /// </summary>
     public sealed class EffectTriggerPulseBeatHandler : IBattleBeatHandler
     {
+        [AudioCue(
+            "sfx.effect.trigger",
+            "怪物技能触发",
+            "Battle",
+            "EffectTriggerPulseBeatHandler.TryApply",
+            AudioCueContexts.CardDefId | AudioCueContexts.SkillId | AudioCueContexts.ContentId)]
+        private const string EffectTriggerCueId = "sfx.effect.trigger";
         public bool TryApply(PresentationInstruction instruction)
         {
             if (instruction == null || instruction.Kind != PresentationInstructionKind.TriggerEffect)
@@ -29,7 +37,14 @@ namespace NineGrid.Flow.Presentation
 
             var fxId = CardEffectTriggerPulseSink.IdForCard(gameEvent.CardUid);
             TriggerPulseHub.PulseFx(fxId);
-            TriggerPulseHub.PulseAudio("sfx.effect." + gameEvent.CardUid.ToString());
+            TriggerPulseHub.PulseAudio(new AudioCueRequest(
+                EffectTriggerCueId,
+                "EffectTriggerPulseBeatHandler.TryApply",
+                gameEvent.SourceDefId,
+                gameEvent.SourceDefId,
+                string.Empty,
+                string.Empty,
+                gameEvent.Cause));
             return true;
         }
 

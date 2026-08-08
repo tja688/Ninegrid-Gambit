@@ -13,6 +13,16 @@ namespace NineGrid.Content.Audio
     }
 
     [Serializable]
+    public sealed class AudioVariantDto
+    {
+        public string variantId;
+        public string clipKey;
+        public float weight = 1f;
+        public float volumeTrimDb;
+        public float startOffsetSeconds;
+    }
+
+    [Serializable]
     public sealed class AudioBindingDto
     {
         public string cueId;
@@ -24,6 +34,7 @@ namespace NineGrid.Content.Audio
         public float startOffsetSeconds;
         public float bindingDelaySeconds;
         public float minimumIntervalSeconds;
+        public AudioVariantDto[] variants;
         public string selectorCardDefId;
         public string selectorSkillId;
         public string selectorRoomId;
@@ -43,6 +54,7 @@ namespace NineGrid.Content.Audio
             float startOffsetSeconds,
             float bindingDelaySeconds,
             float minimumIntervalSeconds,
+            AudioVariantDto[] variants,
             string selectorCardDefId,
             string selectorSkillId,
             string selectorRoomId,
@@ -58,6 +70,7 @@ namespace NineGrid.Content.Audio
             StartOffsetSeconds = startOffsetSeconds;
             BindingDelaySeconds = bindingDelaySeconds;
             MinimumIntervalSeconds = minimumIntervalSeconds;
+            Variants = variants ?? Array.Empty<AudioVariantDto>();
             SelectorCardDefId = selectorCardDefId ?? string.Empty;
             SelectorSkillId = selectorSkillId ?? string.Empty;
             SelectorRoomId = selectorRoomId ?? string.Empty;
@@ -81,6 +94,7 @@ namespace NineGrid.Content.Audio
         public float StartOffsetSeconds { get; }
         public float BindingDelaySeconds { get; }
         public float MinimumIntervalSeconds { get; }
+        public IReadOnlyList<AudioVariantDto> Variants { get; }
         public string SelectorCardDefId { get; }
         public string SelectorSkillId { get; }
         public string SelectorRoomId { get; }
@@ -192,6 +206,7 @@ namespace NineGrid.Content.Audio
                     row.startOffsetSeconds,
                     row.bindingDelaySeconds,
                     row.minimumIntervalSeconds,
+                    row.variants,
                     row.selectorCardDefId,
                     row.selectorSkillId,
                     row.selectorRoomId,

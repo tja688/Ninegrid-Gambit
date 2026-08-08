@@ -98,6 +98,7 @@ namespace NineGrid.Content.Editor
         private readonly List<MusicHistoryRecord> musicHistory = new List<MusicHistoryRecord>();
         private MusicAuditResult musicAudit;
         private IReadOnlyList<MusicOverlapAnomaly> musicAnomalies = Array.Empty<MusicOverlapAnomaly>();
+        private bool previewWithBindingDelay;
         private VisualElement listContainer;
         private VisualElement contentRoot;
         private TextField searchField;
@@ -515,10 +516,23 @@ namespace NineGrid.Content.Editor
                     RefreshList();
                     RefreshContent();
                 }) { text = "回撤此条" });
-                actions.Add(new Button(() => PreviewEntry(entry)) { text = "试听当前素材" });
+                actions.Add(new Button(() => PreviewEntry(entry))
+                {
+                    text = previewWithBindingDelay ? "按真实延迟试听" : "试听当前素材",
+                });
             }
 
             contentRoot.Add(ContentVisualWarmConsoleUi.CreateButtonRow(actions.ToArray()));
+            if (!entry.IsUnbound)
+            {
+                var previewDelay = new Toggle("试听时应用真实绑定延迟") { value = previewWithBindingDelay };
+                previewDelay.RegisterValueChangedCallback(evt =>
+                {
+                    previewWithBindingDelay = evt.newValue;
+                    RefreshContent();
+                });
+                contentRoot.Add(previewDelay);
+            }
 
             if (entry.IsUnbound)
             {
@@ -625,6 +639,49 @@ namespace NineGrid.Content.Editor
                         Changed(entry);
                     });
                     column.Add(ContentVisualWarmConsoleUi.WrapControlRow("最短播放间隔", interval, 110f));
+                    var usePool = new Toggle("启用多素材随机池")
+                    {
+                        value = dto.variants != null && dto.variants.Length > 0,
+                    };
+                    usePool.RegisterValueChangedCallback(evt =>
+                    {
+                        dto.variants = evt.newValue
+                            ? new[]
+                            {
+                                new AudioVariantDto
+                                {
+                                    variantId = "variant-a",
+                                    clipKey = dto.clipKey,
+                                    weight = 1f,
+                                    volumeTrimDb = 0f,
+                                    startOffsetSeconds = dto.startOffsetSeconds,
+                                },
+                            }
+                            : Array.Empty<AudioVariantDto>();
+                        Changed(entry);
+                    });
+                    column.Add(usePool);
+
+                    if (dto.variants != null && dto.variants.Length > 0)
+                    {
+                        for (var i = 0; i < dto.variants.Length; i++)
+                        {
+                            BuildVariantEditor(column, entry, dto.variants[i], i);
+                        }
+
+                        column.Add(new Button(() =>
+                        {
+                            var variants = (dto.variants ?? Array.Empty<AudioVariantDto>()).ToList();
+                            variants.Add(new AudioVariantDto
+                            {
+                                variantId = "variant-" + (variants.Count + 1),
+                                weight = 1f,
+                            });
+                            dto.variants = variants.ToArray();
+                            Changed(entry);
+                        }) { text = "添加随机变体" });
+                    }
+
 
                     var enabled = new Toggle("启用") { value = dto.enabled };
                     enabled.RegisterValueChangedCallback(evt =>
@@ -634,6 +691,81 @@ namespace NineGrid.Content.Editor
                     });
                     column.Add(enabled);
                 });
+        }
+
+        private void BuildVariantEditor(
+            VisualElement column,
+            AudioBindingEditorEntry entry,
+            AudioVariantDto variant,
+            int index)
+        {
+            if (variant == null)
+            {
+                return;
+            }
+
+            var box = ContentVisualWarmConsoleUi.CreateSectionCard(
+                "随机变体 " + (index + 1),
+                "权重仅在有效变体间计算；默认避免与上次立即重复。",
+                body =>
+                {
+                    var id = new TextField { value = variant.variantId ?? string.Empty };
+                    id.RegisterValueChangedCallback(evt =>
+                    {
+                        variant.variantId = evt.newValue ?? string.Empty;
+                        Changed(entry);
+                    });
+                    body.Add(ContentVisualWarmConsoleUi.WrapControlRow("变体 ID", id, 110f));
+
+                    var clip = new TextField { value = variant.clipKey ?? string.Empty };
+                    clip.RegisterValueChangedCallback(evt =>
+                    {
+                        variant.clipKey = evt.newValue ?? string.Empty;
+                        Changed(entry);
+                    });
+                    body.Add(ContentVisualWarmConsoleUi.WrapControlRow("素材键", clip, 110f));
+
+                    var weight = new FloatField { value = variant.weight };
+                    weight.RegisterValueChangedCallback(evt =>
+                    {
+                        variant.weight = Mathf.Max(0f, evt.newValue);
+                        Changed(entry);
+                    });
+                    body.Add(ContentVisualWarmConsoleUi.WrapControlRow("权重", weight, 110f));
+
+                    var trim = new FloatField { value = variant.volumeTrimDb };
+                    trim.RegisterValueChangedCallback(evt =>
+                    {
+                        variant.volumeTrimDb = evt.newValue;
+                        Changed(entry);
+                    });
+                    body.Add(ContentVisualWarmConsoleUi.WrapControlRow("音量 trim dB", trim, 110f));
+
+                    var offset = new FloatField { value = variant.startOffsetSeconds };
+                    offset.RegisterValueChangedCallback(evt =>
+                    {
+                        variant.startOffsetSeconds = Mathf.Max(0f, evt.newValue);
+                        Changed(entry);
+                    });
+                    body.Add(ContentVisualWarmConsoleUi.WrapControlRow("素材内部起播点", offset, 110f));
+                    var previewVariant = new Button(() => PreviewClipKey(variant.clipKey, variant.startOffsetSeconds))
+                    {
+                        text = "试听此变体",
+                    };
+                    body.Add(ContentVisualWarmConsoleUi.WrapControlRow("试听", previewVariant, 110f));
+
+                    body.Add(new Button(() =>
+                    {
+                        var variants = (entry.Dto.variants ?? Array.Empty<AudioVariantDto>()).ToList();
+                        if (index >= 0 && index < variants.Count)
+                        {
+                            variants.RemoveAt(index);
+                            entry.Dto.variants = variants.ToArray();
+                            Changed(entry);
+                        }
+                    }) { text = "删除此变体" });
+                });
+            column.Add(box);
         }
 
         private VisualElement BuildTechnicalSection(AudioBindingEditorEntry entry)
@@ -696,6 +828,7 @@ namespace NineGrid.Content.Editor
                         var summary = ContentVisualWarmConsoleUi.CreateTinyPathLabel(
                             record.Outcome + " · " + record.CueId
                             + (string.IsNullOrEmpty(record.CueNote) ? string.Empty : " · " + record.CueNote)
+                            + (string.IsNullOrEmpty(record.VariantId) ? string.Empty : " · 变体 " + record.VariantId)
                             + (string.IsNullOrEmpty(record.ActualClipKey) ? string.Empty : " · " + record.ActualClipKey));
                         summary.style.flexGrow = 1;
                         row.Add(summary);
@@ -1009,16 +1142,54 @@ namespace NineGrid.Content.Editor
         {
             var option = session.FindClipOption(entry.Dto?.clipKey);
             var clip = option == null ? null : AssetDatabase.LoadAssetAtPath<AudioClip>(option.AssetPath);
-            if (!AudioBindingEditorPreview.Play(clip, entry.Dto?.startOffsetSeconds ?? 0f))
+            var offset = entry.Dto?.startOffsetSeconds ?? 0f;
+            var delay = previewWithBindingDelay ? Math.Max(0f, entry.Dto?.bindingDelaySeconds ?? 0f) : 0f;
+            if (delay > 0f)
+            {
+                var startedAt = EditorApplication.timeSinceStartup;
+                void WaitForDelay()
+                {
+                    if (EditorApplication.timeSinceStartup - startedAt < delay)
+                    {
+                        EditorApplication.delayCall += WaitForDelay;
+                        return;
+                    }
+
+                    AudioBindingEditorPreview.Play(clip, offset);
+                }
+
+                EditorApplication.delayCall += WaitForDelay;
+                status = "等待真实绑定延迟后试听：" + delay.ToString("0.###") + "s · " + entry.Note;
+                RefreshContent();
+                return;
+            }
+
+            if (!AudioBindingEditorPreview.Play(clip, offset))
             {
                 status = "无法试听：素材未导入或 AudioUtil 不可用。";
-                RefreshContent();
             }
             else
             {
                 status = "正在试听：" + entry.Note;
-                RefreshContent();
             }
+
+            RefreshContent();
+        }
+
+        private void PreviewClipKey(string clipKey, float startOffsetSeconds)
+        {
+            var option = session.FindClipOption(clipKey);
+            var clip = option == null ? null : AssetDatabase.LoadAssetAtPath<AudioClip>(option.AssetPath);
+            if (!AudioBindingEditorPreview.Play(clip, startOffsetSeconds))
+            {
+                status = "无法试听：素材未导入或 AudioUtil 不可用。";
+            }
+            else
+            {
+                status = "正在试听变体素材：" + clipKey;
+            }
+
+            RefreshContent();
         }
 
 

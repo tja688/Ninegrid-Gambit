@@ -5,6 +5,7 @@ using NineGrid.Core;
 using NineGrid.Flow.Diagnostics;
 using QFramework;
 using UnityEngine;
+using System.Collections;
 
 namespace NineGrid.Presentation.Systems
 {
@@ -24,6 +25,23 @@ namespace NineGrid.Presentation.Systems
         Cooldown,
         BackendFailure,
     }
+    public readonly struct AudioScheduleKey
+    {
+        public AudioScheduleKey(long value)
+        {
+            Value = value;
+        }
+
+        public long Value { get; }
+        public bool IsValid => Value > 0;
+    }
+
+    public interface IAudioCueScheduler
+    {
+        AudioScheduleKey Schedule(float delaySeconds, Action callback);
+        bool Cancel(AudioScheduleKey key);
+    }
+
 
     public readonly struct AudioPlaybackRequest
     {
@@ -92,6 +110,7 @@ namespace NineGrid.Presentation.Systems
         public string CueNote { get; internal set; }
         public string BindingKey { get; internal set; }
         public string ActualClipKey { get; internal set; }
+        public string VariantId { get; internal set; }
         public string FailureReason { get; internal set; }
     }
 
@@ -103,6 +122,7 @@ namespace NineGrid.Presentation.Systems
         public string BindingKey { get; internal set; }
         public string DiagnosticSource { get; internal set; }
         public string ActualClipKey { get; internal set; }
+        public string VariantId { get; internal set; }
         public string FailureReason { get; internal set; }
         public double Time { get; internal set; }
     }
@@ -113,6 +133,8 @@ namespace NineGrid.Presentation.Systems
         IReadOnlyList<AudioHistoryRecord> History { get; }
 #endif
         AudioCueResult RequestCue(AudioCueRequest request);
+        AudioScheduleKey ScheduleCue(AudioCueRequest request, float delaySeconds);
+        bool CancelScheduledCue(AudioScheduleKey key);
     }
 
     public sealed class AudioSystem : AbstractSystem, IAudioSystem
@@ -122,22 +144,30 @@ namespace NineGrid.Presentation.Systems
         private readonly AudioBindingCatalog mCatalog;
         private readonly IAudioPlaybackAdapter mPlayback;
         private readonly IAudioClock mClock;
+        private readonly IAudioCueScheduler mScheduler;
+        private readonly Func<double> mRandomValue;
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
         private readonly int mHistoryCapacity;
         private readonly List<AudioHistoryRecord> mHistory;
 #endif
         private readonly Dictionary<AudioBinding, double> mLastPlayedAt =
             new Dictionary<AudioBinding, double>();
+        private readonly Dictionary<AudioBinding, string> mLastVariantIds =
+            new Dictionary<AudioBinding, string>();
 
         public AudioSystem(
             AudioBindingCatalog catalog,
             IAudioPlaybackAdapter playback,
             IAudioClock clock,
-            int historyCapacity = DefaultHistoryCapacity)
+            int historyCapacity = DefaultHistoryCapacity,
+            IAudioCueScheduler scheduler = null,
+            Func<double> randomValue = null)
         {
             mCatalog = catalog ?? AudioBindingCatalog.FromJson(string.Empty);
             mPlayback = playback ?? new NullAudioPlaybackAdapter();
             mClock = clock ?? new RealtimeAudioClock();
+            mScheduler = scheduler;
+            mRandomValue = randomValue ?? (() => UnityEngine.Random.value);
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
             mHistoryCapacity = Math.Max(1, historyCapacity);
             mHistory = new List<AudioHistoryRecord>(mHistoryCapacity);
@@ -173,6 +203,18 @@ namespace NineGrid.Presentation.Systems
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
         public IReadOnlyList<AudioHistoryRecord> History => mHistory;
 #endif
+        public AudioScheduleKey ScheduleCue(AudioCueRequest request, float delaySeconds)
+        {
+            var scheduler = mScheduler ?? UnityAudioCueScheduler.Instance;
+            return scheduler.Schedule(Math.Max(0f, delaySeconds), () => RequestCue(request));
+        }
+
+        public bool CancelScheduledCue(AudioScheduleKey key)
+        {
+            var scheduler = mScheduler ?? UnityAudioCueScheduler.Instance;
+            return scheduler.Cancel(key);
+        }
+
 
         public AudioCueResult RequestCue(AudioCueRequest request)
         {
@@ -202,13 +244,17 @@ namespace NineGrid.Presentation.Systems
                 note: hasResolvedBinding ? resolvedBinding.Note : null,
                 reason: null);
 
-            if (!hasResolvedBinding
-                || !resolvedBinding.Enabled
-                || string.IsNullOrWhiteSpace(resolvedBinding.ClipKey))
+            if (!hasResolvedBinding || !resolvedBinding.Enabled)
             {
                 return RecordUnbound(request, string.IsNullOrWhiteSpace(request.CueId)
                     ? "cue ID 为空。"
-                    : "声音绑定不存在、已禁用或缺少素材。");
+                    : "声音绑定不存在或已禁用。");
+            }
+
+            var variant = ResolveVariant(resolvedBinding);
+            if (variant == null || string.IsNullOrWhiteSpace(variant.ClipKey))
+            {
+                return RecordUnbound(request, "声音绑定缺少有效素材。");
             }
 
             var now = mClock.UnscaledTime;
@@ -250,9 +296,9 @@ namespace NineGrid.Presentation.Systems
             var playbackRequest = new AudioPlaybackRequest(
                 request.CueId,
                 resolvedBinding.Note,
-                resolvedBinding.ClipKey,
-                DecibelsToLinear(resolvedBinding.VolumeDb),
-                Math.Max(0f, resolvedBinding.StartOffsetSeconds),
+                variant.ClipKey,
+                DecibelsToLinear(resolvedBinding.VolumeDb + variant.VolumeTrimDb),
+                Math.Max(0f, variant.StartOffsetSeconds),
                 Math.Max(0f, resolvedBinding.BindingDelaySeconds));
 
             AudioBackendResult backend;
@@ -275,7 +321,8 @@ namespace NineGrid.Presentation.Systems
                     CueNote = resolvedBinding.Note,
                     BindingKey = resolvedBinding.BindingKey,
                     DiagnosticSource = request.DiagnosticSource,
-                    ActualClipKey = resolvedBinding.ClipKey,
+                    ActualClipKey = variant.ClipKey,
+                    VariantId = variant.VariantId,
                     FailureReason = backend.FailureReason,
                     Time = now,
                 });
@@ -285,7 +332,7 @@ namespace NineGrid.Presentation.Systems
                     request,
                     AudioHistoryOutcome.BackendFailure,
                     now,
-                    resolvedBinding.ClipKey,
+                    variant.ClipKey,
                     resolvedBinding.Note,
                     backend.FailureReason);
                 return new AudioCueResult
@@ -294,15 +341,20 @@ namespace NineGrid.Presentation.Systems
                     CueId = request.CueId,
                     CueNote = resolvedBinding.Note,
                     BindingKey = resolvedBinding.BindingKey,
-                    ActualClipKey = resolvedBinding.ClipKey,
+                    ActualClipKey = variant.ClipKey,
+                    VariantId = variant.VariantId,
                     FailureReason = backend.FailureReason,
                 };
             }
 
             var actualClipKey = string.IsNullOrEmpty(backend.ActualClipKey)
-                ? resolvedBinding.ClipKey
+                ? variant.ClipKey
                 : backend.ActualClipKey;
             mLastPlayedAt[resolvedBinding] = now;
+            if (!string.IsNullOrEmpty(variant.VariantId))
+            {
+                mLastVariantIds[resolvedBinding] = variant.VariantId;
+            }
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
             AddHistory(new AudioHistoryRecord
             {
@@ -312,6 +364,7 @@ namespace NineGrid.Presentation.Systems
                 BindingKey = resolvedBinding.BindingKey,
                 DiagnosticSource = request.DiagnosticSource,
                 ActualClipKey = actualClipKey,
+                VariantId = variant.VariantId,
                 Time = now,
             });
 #endif
@@ -330,6 +383,7 @@ namespace NineGrid.Presentation.Systems
                 CueNote = resolvedBinding.Note,
                 BindingKey = resolvedBinding.BindingKey,
                 ActualClipKey = actualClipKey,
+                VariantId = variant.VariantId,
             };
         }
 
@@ -447,6 +501,126 @@ namespace NineGrid.Presentation.Systems
             mHistory.Add(record);
         }
 #endif
+
+        private ResolvedAudioVariant ResolveVariant(AudioBinding binding)
+        {
+            var valid = new List<ResolvedAudioVariant>();
+            for (var i = 0; i < binding.Variants.Count; i++)
+            {
+                var row = binding.Variants[i];
+                if (row == null || string.IsNullOrWhiteSpace(row.clipKey) || row.weight <= 0f)
+                {
+                    continue;
+                }
+
+                valid.Add(new ResolvedAudioVariant(
+                    string.IsNullOrWhiteSpace(row.variantId) ? "variant-" + i : row.variantId,
+                    row.clipKey,
+                    row.weight,
+                    row.volumeTrimDb,
+                    Math.Max(0f, row.startOffsetSeconds)));
+            }
+
+            if (valid.Count == 0)
+            {
+                return string.IsNullOrWhiteSpace(binding.ClipKey)
+                    ? null
+                    : new ResolvedAudioVariant(string.Empty, binding.ClipKey, 1f, 0f, binding.StartOffsetSeconds);
+            }
+
+            if (valid.Count > 1 && mLastVariantIds.TryGetValue(binding, out var previous))
+            {
+                valid.RemoveAll(candidate => string.Equals(candidate.VariantId, previous, StringComparison.Ordinal));
+            }
+
+            var totalWeight = 0d;
+            for (var i = 0; i < valid.Count; i++)
+            {
+                totalWeight += valid[i].Weight;
+            }
+
+            var roll = Math.Max(0d, Math.Min(0.999999999d, mRandomValue())) * totalWeight;
+            for (var i = 0; i < valid.Count; i++)
+            {
+                roll -= valid[i].Weight;
+                if (roll < 0d)
+                {
+                    return valid[i];
+                }
+            }
+
+            return valid[valid.Count - 1];
+        }
+
+        private sealed class ResolvedAudioVariant
+        {
+            public ResolvedAudioVariant(string variantId, string clipKey, float weight, float volumeTrimDb, float startOffsetSeconds)
+            {
+                VariantId = variantId ?? string.Empty;
+                ClipKey = clipKey ?? string.Empty;
+                Weight = weight;
+                VolumeTrimDb = volumeTrimDb;
+                StartOffsetSeconds = startOffsetSeconds;
+            }
+
+            public string VariantId { get; }
+            public string ClipKey { get; }
+            public float Weight { get; }
+            public float VolumeTrimDb { get; }
+            public float StartOffsetSeconds { get; }
+        }
+
+        private sealed class UnityAudioCueScheduler : MonoBehaviour, IAudioCueScheduler
+        {
+            private readonly Dictionary<long, Coroutine> mPending = new Dictionary<long, Coroutine>();
+            private long mNextKey;
+            private static UnityAudioCueScheduler sInstance;
+
+            public static UnityAudioCueScheduler Instance
+            {
+                get
+                {
+                    if (sInstance == null)
+                    {
+                        var host = new GameObject(nameof(UnityAudioCueScheduler));
+                        DontDestroyOnLoad(host);
+                        sInstance = host.AddComponent<UnityAudioCueScheduler>();
+                    }
+
+                    return sInstance;
+                }
+            }
+
+            public AudioScheduleKey Schedule(float delaySeconds, Action callback)
+            {
+                var key = new AudioScheduleKey(++mNextKey);
+                mPending[key.Value] = StartCoroutine(WaitAndInvoke(key.Value, delaySeconds, callback));
+                return key;
+            }
+
+            public bool Cancel(AudioScheduleKey key)
+            {
+                if (!key.IsValid || !mPending.TryGetValue(key.Value, out var coroutine))
+                {
+                    return false;
+                }
+
+                StopCoroutine(coroutine);
+                mPending.Remove(key.Value);
+                return true;
+            }
+
+            private IEnumerator WaitAndInvoke(long key, float delaySeconds, Action callback)
+            {
+                if (delaySeconds > 0f)
+                {
+                    yield return new WaitForSecondsRealtime(delaySeconds);
+                }
+
+                mPending.Remove(key);
+                callback?.Invoke();
+            }
+        }
 
         private static float DecibelsToLinear(float decibels)
         {

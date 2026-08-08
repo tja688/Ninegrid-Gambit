@@ -115,14 +115,34 @@ namespace NineGrid.Content.Editor
                 return false;
             }
 
-            if (string.IsNullOrWhiteSpace(Dto.clipKey))
+            var variants = Dto.variants ?? Array.Empty<AudioVariantDto>();
+            if (variants.Length == 0)
             {
-                return true;
+                return string.IsNullOrWhiteSpace(Dto.clipKey)
+                    || (knownClipKeys != null
+                        && knownClipKeys.Count > 0
+                        && !knownClipKeys.Contains(AudioAssetManifestLoader.NormalizeKey(Dto.clipKey)));
             }
 
-            return knownClipKeys != null
-                && knownClipKeys.Count > 0
-                && !knownClipKeys.Contains(AudioAssetManifestLoader.NormalizeKey(Dto.clipKey));
+            var hasValidVariant = false;
+            for (var i = 0; i < variants.Length; i++)
+            {
+                var variant = variants[i];
+                if (variant == null || string.IsNullOrWhiteSpace(variant.clipKey) || variant.weight <= 0f)
+                {
+                    continue;
+                }
+
+                hasValidVariant = true;
+                if (knownClipKeys != null
+                    && knownClipKeys.Count > 0
+                    && !knownClipKeys.Contains(AudioAssetManifestLoader.NormalizeKey(variant.clipKey)))
+                {
+                    return true;
+                }
+            }
+
+            return !hasValidVariant;
         }
 
         public void Revert()
@@ -523,12 +543,39 @@ namespace NineGrid.Content.Editor
                 startOffsetSeconds = source.startOffsetSeconds,
                 bindingDelaySeconds = source.bindingDelaySeconds,
                 minimumIntervalSeconds = source.minimumIntervalSeconds,
+                variants = CloneVariants(source.variants),
                 selectorCardDefId = source.selectorCardDefId,
                 selectorSkillId = source.selectorSkillId,
                 selectorRoomId = source.selectorRoomId,
                 selectorItemDefId = source.selectorItemDefId,
                 selectorContentId = source.selectorContentId,
             };
+        }
+
+        private static AudioVariantDto[] CloneVariants(AudioVariantDto[] source)
+        {
+            if (source == null || source.Length == 0)
+            {
+                return Array.Empty<AudioVariantDto>();
+            }
+
+            var result = new AudioVariantDto[source.Length];
+            for (var i = 0; i < source.Length; i++)
+            {
+                var row = source[i];
+                result[i] = row == null
+                    ? null
+                    : new AudioVariantDto
+                    {
+                        variantId = row.variantId,
+                        clipKey = row.clipKey,
+                        weight = row.weight,
+                        volumeTrimDb = row.volumeTrimDb,
+                        startOffsetSeconds = row.startOffsetSeconds,
+                    };
+            }
+
+            return result;
         }
 
         internal static bool DtoEquals(AudioBindingDto left, AudioBindingDto right)
