@@ -144,6 +144,9 @@ namespace NineGrid.Presentation.Systems
     public sealed class AudioSystem : AbstractSystem, IAudioSystem
     {
         public const int DefaultHistoryCapacity = 256;
+        private const double BurstWindowSeconds = 1d;
+        private const int BurstThreshold = 4;
+        private const double BurstReportCooldownSeconds = 2d;
 
         private readonly AudioBindingCatalog mCatalog;
         private readonly IAudioPlaybackAdapter mPlayback;
@@ -160,6 +163,15 @@ namespace NineGrid.Presentation.Systems
             new Dictionary<AudioBinding, string>();
         private readonly Dictionary<long, PendingScheduledCue> mPendingSchedules =
             new Dictionary<long, PendingScheduledCue>();
+        private readonly Dictionary<string, double> mLastPlayedAtByCue =
+            new Dictionary<string, double>(StringComparer.Ordinal);
+        private readonly Dictionary<string, Queue<double>> mBurstWindowByCue =
+            new Dictionary<string, Queue<double>>(StringComparer.Ordinal);
+        private readonly Dictionary<string, double> mLastBurstReportAtByCue =
+            new Dictionary<string, double>(StringComparer.Ordinal);
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        private AudioDiagnosticsService mDiagnosticsService;
+#endif
 
         public AudioSystem(
             AudioBindingCatalog catalog,
@@ -202,6 +214,16 @@ namespace NineGrid.Presentation.Systems
                 catalog ?? AudioBindingCatalog.LoadFromResources(),
                 playback ?? new MMSoundManagerAudioPlaybackAdapter(),
                 clock ?? new RealtimeAudioClock());
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            if (playback is IAudioPlaybackDiagnosticsAdapter diagnosticsAdapter)
+            {
+                created.mDiagnosticsService = AudioDiagnosticsService.Install(diagnosticsAdapter);
+            }
+            else if (created.mPlayback is IAudioPlaybackDiagnosticsAdapter fallbackDiagnostics)
+            {
+                created.mDiagnosticsService = AudioDiagnosticsService.Install(fallbackDiagnostics);
+            }
+#endif
             arch.RegisterSystem<IAudioSystem>(created);
             return created;
         }
@@ -456,6 +478,7 @@ namespace NineGrid.Presentation.Systems
                 actualClipKey,
                 resolvedBinding.Note,
                 null);
+            TrackBurstIfNeeded(request, actualClipKey, now);
             return new AudioCueResult
             {
                 Outcome = AudioCueOutcome.Played,
@@ -469,6 +492,14 @@ namespace NineGrid.Presentation.Systems
 
         protected override void OnInit()
         {
+        }
+
+        protected override void OnDeinit()
+        {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            mDiagnosticsService?.Dispose();
+            mDiagnosticsService = null;
+#endif
         }
 
         private AudioCueResult RecordUnbound(AudioCueRequest request, string reason)
@@ -499,7 +530,7 @@ namespace NineGrid.Presentation.Systems
             };
         }
 
-        private static void RecordTrace(
+        private void RecordTrace(
             string kind,
             AudioCueRequest request,
             AudioHistoryOutcome outcome,
@@ -568,6 +599,25 @@ namespace NineGrid.Presentation.Systems
                     payload["contentId"] = request.ContentId;
                 }
 
+                if (outcome == AudioHistoryOutcome.Played
+                    || outcome == AudioHistoryOutcome.Requested)
+                {
+                    var cueId = request.CueId ?? string.Empty;
+                    if (!string.IsNullOrEmpty(cueId)
+                        && mLastPlayedAtByCue.TryGetValue(cueId, out var previousAt))
+                    {
+                        var sinceLastMs = Math.Max(0d, (time - previousAt) * 1000d);
+                        payload["sinceLastPlayMs"] = sinceLastMs.ToString(
+                            "R",
+                            System.Globalization.CultureInfo.InvariantCulture);
+                    }
+
+                    if (outcome == AudioHistoryOutcome.Played && !string.IsNullOrEmpty(cueId))
+                    {
+                        mLastPlayedAtByCue[cueId] = time;
+                    }
+                }
+
                 DirectorTrace.AppendBusyFields(payload);
                 payload["batchId"] = DirectorTrace.ActiveBatchId.ToString(
                     System.Globalization.CultureInfo.InvariantCulture);
@@ -582,6 +632,88 @@ namespace NineGrid.Presentation.Systems
                 // 运行时 UID 可进诊断，但不得参与绑定解析主键。
                 PerfTraceRecorder.Record(
                     kind,
+                    uid: request.DiagnosticCardUid > 0 ? request.DiagnosticCardUid : -1,
+                    PerfTraceSites.AudioSystemCue,
+                    payload);
+            }
+            catch (Exception)
+            {
+                // 音频打点失败不干扰玩法路径。
+            }
+        }
+
+        private void TrackBurstIfNeeded(AudioCueRequest request, string clipKey, double now)
+        {
+            if (string.IsNullOrWhiteSpace(request.CueId))
+            {
+                return;
+            }
+
+            if (!mBurstWindowByCue.TryGetValue(request.CueId, out var window))
+            {
+                window = new Queue<double>();
+                mBurstWindowByCue[request.CueId] = window;
+            }
+
+            while (window.Count > 0 && now - window.Peek() > BurstWindowSeconds)
+            {
+                window.Dequeue();
+            }
+
+            window.Enqueue(now);
+            if (window.Count < BurstThreshold)
+            {
+                return;
+            }
+
+            if (mLastBurstReportAtByCue.TryGetValue(request.CueId, out var lastReportAt)
+                && now - lastReportAt < BurstReportCooldownSeconds)
+            {
+                return;
+            }
+
+            mLastBurstReportAtByCue[request.CueId] = now;
+            try
+            {
+                var payload = new Dictionary<string, string>
+                {
+                    ["cueId"] = request.CueId,
+                    ["clipKey"] = clipKey ?? string.Empty,
+                    ["diagnosticSource"] = request.DiagnosticSource ?? string.Empty,
+                    ["playsInWindow"] = window.Count.ToString(System.Globalization.CultureInfo.InvariantCulture),
+                    ["windowSeconds"] = BurstWindowSeconds.ToString(
+                        "R",
+                        System.Globalization.CultureInfo.InvariantCulture),
+                    ["directorIdle"] = (!DirectorTrace.DirectorMainlineBusy
+                        && !DirectorTrace.DirectorBypassBusy)
+                        ? "true"
+                        : "false",
+                    ["reason"] = "同一 cue 在短窗口内高频播放。",
+                };
+
+                if (!string.IsNullOrEmpty(request.CardDefId))
+                {
+                    payload["cardDefId"] = request.CardDefId;
+                }
+
+                if (!string.IsNullOrEmpty(request.SkillId))
+                {
+                    payload["skillId"] = request.SkillId;
+                }
+
+                DirectorTrace.AppendBusyFields(payload);
+                payload["batchId"] = DirectorTrace.ActiveBatchId.ToString(
+                    System.Globalization.CultureInfo.InvariantCulture);
+                payload["sessionId"] = DiagTraceShared.CurrentSessionId;
+                payload["runTag"] = DiagTraceShared.RunTag;
+                if (request.DiagnosticCardUid > 0)
+                {
+                    payload["diagnosticCardUid"] = request.DiagnosticCardUid.ToString(
+                        System.Globalization.CultureInfo.InvariantCulture);
+                }
+
+                PerfTraceRecorder.Record(
+                    PerfTraceKinds.AudioCueBurstAnomaly,
                     uid: request.DiagnosticCardUid > 0 ? request.DiagnosticCardUid : -1,
                     PerfTraceSites.AudioSystemCue,
                     payload);

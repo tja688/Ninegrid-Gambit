@@ -138,6 +138,12 @@ namespace NineGrid.Flow.Diagnostics
         public const string AudioCueCooldown = "AudioCueCooldown";
         /// <summary>MMSoundManager Adapter 播放失败。</summary>
         public const string AudioCueBackendFailure = "AudioCueBackendFailure";
+        /// <summary>短窗口内同一 cue 高频连发。</summary>
+        public const string AudioCueBurstAnomaly = "AudioCueBurstAnomaly";
+        /// <summary>低频 Sfx 轨巡检快照（仅在有播放源时落盘）。</summary>
+        public const string AudioSfxTrackSnapshot = "AudioSfxTrackSnapshot";
+        /// <summary>Sfx 来源在空闲或 loop 状态下持续多秒播放。</summary>
+        public const string AudioSfxPersistAnomaly = "AudioSfxPersistAnomaly";
         /// <summary>音乐状态请求（流程层提交）。</summary>
         public const string MusicStateRequested = "MusicStateRequested";
         /// <summary>音乐请求无稳定来源。</summary>

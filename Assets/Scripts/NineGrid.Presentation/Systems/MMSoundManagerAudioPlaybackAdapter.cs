@@ -9,7 +9,10 @@ namespace NineGrid.Presentation.Systems
     /// <summary>
     /// 项目唯一音频播放 Adapter：SFX 与 BGM 均由深模块给出正式 Resources 键，分别进入 MMSoundManager Sfx/Music 轨。
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
-    public sealed class MMSoundManagerAudioPlaybackAdapter : IAudioPlaybackAdapter, IMusicPlaybackDiagnosticsAdapter
+    public sealed class MMSoundManagerAudioPlaybackAdapter
+        : IAudioPlaybackAdapter,
+            IMusicPlaybackDiagnosticsAdapter,
+            IAudioPlaybackDiagnosticsAdapter
 #else
     public sealed class MMSoundManagerAudioPlaybackAdapter : IAudioPlaybackAdapter, IMusicPlaybackAdapter
 #endif
@@ -19,6 +22,12 @@ namespace NineGrid.Presentation.Systems
             new Dictionary<string, AudioSource>(StringComparer.Ordinal);
         private readonly Dictionary<AudioClip, string> musicClipKeys =
             new Dictionary<AudioClip, string>();
+        private readonly Dictionary<string, AudioSource> sfxSources =
+            new Dictionary<string, AudioSource>(StringComparer.Ordinal);
+        private readonly Dictionary<string, string> sfxClipKeys =
+            new Dictionary<string, string>(StringComparer.Ordinal);
+        private readonly Dictionary<string, string> sfxCueIds =
+            new Dictionary<string, string>(StringComparer.Ordinal);
 #endif
 
         public AudioBackendResult Play(AudioPlaybackRequest request)
@@ -49,9 +58,15 @@ namespace NineGrid.Presentation.Systems
             options.DoNotAutoRecycleIfNotDonePlaying = false;
 
             var source = manager.PlaySound(clip, options);
-            return source == null
-                ? AudioBackendResult.Failure("MMSoundManager Sfx 播放失败：" + resourcesKey)
-                : AudioBackendResult.Success(resourcesKey);
+            if (source == null)
+            {
+                return AudioBackendResult.Failure("MMSoundManager Sfx 播放失败：" + resourcesKey);
+            }
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            RegisterSfxSource(source, resourcesKey, request.CueId);
+#endif
+            return AudioBackendResult.Success(resourcesKey);
         }
 
         public MusicBackendResult Play(MusicPlaybackRequest request)
@@ -198,6 +213,39 @@ namespace NineGrid.Presentation.Systems
             return MusicBackendResult.Success(
                 new MusicPlaybackHandle(resourcesKey, source, GetSourceId(source)),
                 resourcesKey);
+        }
+
+        public IReadOnlyList<SfxTrackSourceSnapshot> GetPlayingSfxSources()
+        {
+            var manager = MMSoundManager.Instance;
+            if (manager == null)
+            {
+                return Array.Empty<SfxTrackSourceSnapshot>();
+            }
+
+            var sounds = manager.GetSoundsPlaying(MMSoundManager.MMSoundManagerTracks.Sfx);
+            var result = new List<SfxTrackSourceSnapshot>(sounds?.Count ?? 0);
+            for (var i = 0; i < (sounds?.Count ?? 0); i++)
+            {
+                var source = sounds[i].Source;
+                if (source == null || !source.isPlaying)
+                {
+                    continue;
+                }
+
+                var sourceId = GetSfxSourceId(source);
+                var clipKey = ResolveSfxClipKey(source, sourceId);
+                sfxCueIds.TryGetValue(sourceId, out var cueId);
+                RegisterSfxSource(source, clipKey, cueId);
+                result.Add(new SfxTrackSourceSnapshot(
+                    sourceId,
+                    clipKey,
+                    cueId,
+                    source.time,
+                    source.loop));
+            }
+
+            return result;
         }
 
         public IReadOnlyList<MusicTrackSourceSnapshot> GetPlayingMusicSources()
@@ -445,6 +493,41 @@ namespace NineGrid.Presentation.Systems
 #endif
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
+        private void RegisterSfxSource(AudioSource source, string resourcesKey, string cueId)
+        {
+            if (source == null)
+            {
+                return;
+            }
+
+            var sourceId = GetSfxSourceId(source);
+            sfxSources[sourceId] = source;
+            if (!string.IsNullOrEmpty(resourcesKey))
+            {
+                sfxClipKeys[sourceId] = resourcesKey;
+            }
+
+            if (!string.IsNullOrEmpty(cueId))
+            {
+                sfxCueIds[sourceId] = cueId;
+            }
+        }
+
+        private string ResolveSfxClipKey(AudioSource source, string sourceId)
+        {
+            if (!string.IsNullOrEmpty(sourceId) && sfxClipKeys.TryGetValue(sourceId, out var resourcesKey))
+            {
+                return resourcesKey;
+            }
+
+            if (source?.clip == null)
+            {
+                return string.Empty;
+            }
+
+            return "<unknown>" + source.clip.name;
+        }
+
         private void RegisterMusicSource(AudioSource source, string resourcesKey)
         {
             if (source == null)
@@ -487,6 +570,11 @@ namespace NineGrid.Presentation.Systems
         private static string GetSourceId(AudioSource source)
         {
             return source == null ? string.Empty : "music-source:" + source.GetInstanceID();
+        }
+
+        private static string GetSfxSourceId(AudioSource source)
+        {
+            return source == null ? string.Empty : "sfx-source:" + source.GetInstanceID();
         }
 
         private static float DecibelsToLinear(float decibels)
