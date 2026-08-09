@@ -5,6 +5,7 @@ using MoreMountains.Tools;
 using NineGrid.Cards;
 using NineGrid.Core;
 using NineGrid.Core.Systems;
+using NineGrid.Flow.Presentation;
 using QFramework;
 using UnityEngine;
 using UnityEngine.UI;
@@ -183,6 +184,9 @@ namespace NineGrid.Flow.Transitions
                 EnsureSettings();
                 EnsureRoundHierarchy();
                 ApplySettingsToFaders();
+                FlowRoomEconomyAudioCues.PulseTransition(
+                    crossFloor,
+                    "RunSceneTransitionService.BeginCoverAsync");
                 await PlayFadeInAsync(crossFloor, ct);
                 mCoverHeld = true;
             }

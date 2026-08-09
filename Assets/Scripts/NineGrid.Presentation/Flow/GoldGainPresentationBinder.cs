@@ -81,6 +81,9 @@ namespace NineGrid.Flow
 
         private static void OnGoldGainPresentationRequested(GoldGainPresentationRequested e)
         {
+            FlowRoomEconomyAudioCues.PulseGoldPresentation(
+                e.IsSpend,
+                "GoldGainPresentationBinder.OnGoldGainPresentationRequested");
             var goldFx = UnityEngine.Object.FindFirstObjectByType<GoldGainFxManagerSingleton>();
             if (e.IsSpend)
             {

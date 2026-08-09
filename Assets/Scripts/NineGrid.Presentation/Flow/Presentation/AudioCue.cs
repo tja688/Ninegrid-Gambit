@@ -421,4 +421,99 @@ namespace NineGrid.Flow.Presentation
         }
     }
 
+    /// <summary>
+    /// 房间、经济与跑图流程声音提示；发射对齐进房/离房、商店/卡店、奖励/属性、金币演出与胜负回菜单，
+    /// 不经 FlowTrace 旁路，也不由 Presenter 提交 Music。
+    /// </summary>
+    public static class FlowRoomEconomyAudioCues
+    {
+        [AudioCue("flow.room.enter", "进入房间", "Flow", "RoomIconBoardPresenter.ExecuteSelectEnterHardCut", AudioCueContexts.RoomId)]
+        public const string RoomEnter = "flow.room.enter";
+
+        [AudioCue("flow.room.leave", "离开房间", "Flow", "ShopBoardPresenter.TryLeave", AudioCueContexts.None)]
+        public const string RoomLeave = "flow.room.leave";
+
+        [AudioCue("flow.run.floor_cross", "上下楼过场", "Flow", "RunSceneTransitionService.BeginCoverAsync", AudioCueContexts.None)]
+        public const string FloorCross = "flow.run.floor_cross";
+
+        [AudioCue("flow.run.transition", "同层导航过场", "Flow", "RunSceneTransitionService.BeginCoverAsync", AudioCueContexts.None)]
+        public const string RunTransition = "flow.run.transition";
+
+        [AudioCue("shop.buy", "商店购买成功", "Shop", "ShopBoardPresenter.TryBuy", AudioCueContexts.ContentId)]
+        public const string ShopBuy = "shop.buy";
+
+        [AudioCue("shop.refresh", "商店刷新成功", "Shop", "ShopBoardPresenter.TryRefresh", AudioCueContexts.None)]
+        public const string ShopRefresh = "shop.refresh";
+
+        [AudioCue("shop.upgrade", "商店升级牌格", "Shop", "ShopBoardPresenter.TryBuy", AudioCueContexts.ContentId)]
+        public const string ShopUpgrade = "shop.upgrade";
+
+        [AudioCue("shop.insufficient_gold", "商店余额不足", "Shop", "ShopBoardPresenter.TryBuy", AudioCueContexts.None)]
+        public const string ShopInsufficientGold = "shop.insufficient_gold";
+
+        [AudioCue("tavern.buy", "牌店购买或服务成功", "Tavern", "TavernBoardPresenter.TrySelect", AudioCueContexts.ContentId)]
+        public const string TavernBuy = "tavern.buy";
+
+        [AudioCue("tavern.refresh", "牌店刷新成功", "Tavern", "TavernBoardPresenter.TryRefresh", AudioCueContexts.None)]
+        public const string TavernRefresh = "tavern.refresh";
+
+        [AudioCue("tavern.insufficient_gold", "牌店余额不足", "Tavern", "TavernBoardPresenter.TrySelect", AudioCueContexts.None)]
+        public const string TavernInsufficientGold = "tavern.insufficient_gold";
+
+        [AudioCue("reward.claim", "领取奖励", "Reward", "RewardBoardPresenter.HandleTake", AudioCueContexts.ContentId)]
+        public const string RewardClaim = "reward.claim";
+
+        [AudioCue("reward.abandon", "放弃奖励离开", "Reward", "RewardBoardPresenter.TryLeave", AudioCueContexts.None)]
+        public const string RewardAbandon = "reward.abandon";
+
+        [AudioCue("attribute.pick", "属性提升选择", "Attribute", "AttributeBoardPresenter.TrySelect", AudioCueContexts.ContentId)]
+        public const string AttributePick = "attribute.pick";
+
+        [AudioCue("economy.gold_gain", "获得金币", "Economy", "GoldGainPresentationBinder.OnGoldGainPresentationRequested", AudioCueContexts.None)]
+        public const string GoldGain = "economy.gold_gain";
+
+        [AudioCue("economy.gold_spend", "消耗金币", "Economy", "GoldGainPresentationBinder.OnGoldGainPresentationRequested", AudioCueContexts.None)]
+        public const string GoldSpend = "economy.gold_spend";
+
+        [AudioCue("flow.victory", "整局胜利提示", "Flow", "GameFlowOrchestrator.ShowBattleEndAndReturnAsync", AudioCueContexts.None)]
+        public const string Victory = "flow.victory";
+
+        [AudioCue("flow.defeat", "战斗失败提示", "Flow", "GameFlowOrchestrator.ShowBattleEndAndReturnAsync", AudioCueContexts.None)]
+        public const string Defeat = "flow.defeat";
+
+        [AudioCue("flow.return_main_menu", "返回主菜单", "Flow", "GameFlowOrchestrator.EnterMainMenuImmediate", AudioCueContexts.None)]
+        public const string ReturnMainMenu = "flow.return_main_menu";
+
+        public static void Pulse(string cueId, string diagnosticSource, string contentId = null)
+        {
+            InteractionAudioCues.Pulse(cueId, diagnosticSource, contentId);
+        }
+
+        public static void PulseRoom(string cueId, string diagnosticSource, string roomId)
+        {
+            TriggerPulseHub.PulseAudio(new NineGrid.Content.Audio.AudioCueRequest(
+                cueId,
+                diagnosticSource,
+                string.Empty,
+                string.Empty,
+                roomId ?? string.Empty,
+                string.Empty,
+                string.Empty));
+        }
+
+        public static void PulseTransition(bool crossFloor, string diagnosticSource)
+        {
+            Pulse(crossFloor ? FloorCross : RunTransition, diagnosticSource);
+        }
+
+        public static void PulseGoldPresentation(bool isSpend, string diagnosticSource)
+        {
+            Pulse(isSpend ? GoldSpend : GoldGain, diagnosticSource);
+        }
+
+        public static bool IsInsufficientGoldReason(string reason)
+        {
+            return string.Equals(reason, "Not enough gold", StringComparison.Ordinal);
+        }
+    }
 }

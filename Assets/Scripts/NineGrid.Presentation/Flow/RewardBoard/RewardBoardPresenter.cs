@@ -10,6 +10,7 @@ using NineGrid.Core.Systems;
 using NineGrid.Flow;
 using NineGrid.Flow.BoardBriefTip;
 using NineGrid.Flow.InRoomBoard;
+using NineGrid.Flow.Presentation;
 using NineGrid.Flow.RoomIcons;
 using NineGrid.Flow.Transitions;
 using NineGrid.Presentation;
@@ -467,6 +468,15 @@ namespace NineGrid.Flow.RewardBoard
             }
 
             var logStart = InRoomGoldPresentation.CaptureEventLogCount(arch);
+            var pending = arch.GetModel<PendingChoiceModel>();
+            var contentId = string.Empty;
+            if (pending != null
+                && shelfIndex >= 0
+                && shelfIndex < pending.RewardOptions.Count)
+            {
+                contentId = pending.RewardOptions[shelfIndex]?.DefId ?? string.Empty;
+            }
+
             var result = RewardChoiceCoreHook.SelectReward(shelfIndex);
             if (result == null || !result.Accepted)
             {
@@ -481,6 +491,10 @@ namespace NineGrid.Flow.RewardBoard
                 return;
             }
 
+            FlowRoomEconomyAudioCues.Pulse(
+                FlowRoomEconomyAudioCues.RewardClaim,
+                "RewardBoardPresenter.HandleTake",
+                contentId);
             Debug.Log("[RewardBoard] Take accepted shelfIndex=" + shelfIndex);
             // ADR-0025：领取直写 ItemSlots；货架纯表现卡须换成 Core uid 并接入手牌，勿只碎裂。
             PresentShelfAcquireOrShatter(shelfIndex, arch, logStart);
@@ -524,6 +538,9 @@ namespace NineGrid.Flow.RewardBoard
             var result = RewardChoiceCoreHook.SkipHelpChoice();
             if (result != null && result.Accepted)
             {
+                FlowRoomEconomyAudioCues.Pulse(
+                    FlowRoomEconomyAudioCues.RewardAbandon,
+                    "RewardBoardPresenter.TryLeave");
                 DespawnAll();
                 return true;
             }

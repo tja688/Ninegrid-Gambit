@@ -10,6 +10,7 @@ using NineGrid.Core.Systems;
 using NineGrid.Flow;
 using NineGrid.Flow.BoardBriefTip;
 using NineGrid.Flow.InRoomBoard;
+using NineGrid.Flow.Presentation;
 using NineGrid.Flow.RoomIcons;
 using NineGrid.Flow.Transitions;
 using NineGrid.Presentation;
@@ -748,12 +749,24 @@ namespace NineGrid.Flow.TavernBoard
             }
 
             var logStart = InRoomGoldPresentation.CaptureEventLogCount(arch);
+            var pendingBefore = arch.GetModel<PendingChoiceModel>();
+            var contentId = string.Empty;
+            if (pendingBefore != null
+                && optionIndex >= 0
+                && optionIndex < pendingBefore.RewardOptions.Count)
+            {
+                contentId = pendingBefore.RewardOptions[optionIndex]?.DefId ?? string.Empty;
+            }
+
             var result = RewardChoiceCoreHook.SelectReward(optionIndex);
             if (result == null || !result.Accepted)
             {
                 var reason = result?.Reason ?? string.Empty;
-                if (string.Equals(reason, "Not enough gold", StringComparison.Ordinal))
+                if (FlowRoomEconomyAudioCues.IsInsufficientGoldReason(reason))
                 {
+                    FlowRoomEconomyAudioCues.Pulse(
+                        FlowRoomEconomyAudioCues.TavernInsufficientGold,
+                        "TavernBoardPresenter.TrySelect");
                     ShowNotice("金币不足");
                 }
                 else if (string.Equals(reason, "No item source pool", StringComparison.Ordinal))
@@ -768,6 +781,10 @@ namespace NineGrid.Flow.TavernBoard
                 return;
             }
 
+            FlowRoomEconomyAudioCues.Pulse(
+                FlowRoomEconomyAudioCues.TavernBuy,
+                "TavernBoardPresenter.TrySelect",
+                contentId);
             InRoomGoldPresentation.PresentGoldChangesSince(arch, logStart);
             // 消耗表演：服务购买（扩容/强化）与「道具卡固定」确认走标准 Death 碎裂，勿凭空消失。
             var pending = arch.GetModel<PendingChoiceModel>();
@@ -848,14 +865,20 @@ namespace NineGrid.Flow.TavernBoard
             var result = RewardChoiceCoreHook.RefreshShop();
             if (result == null || !result.Accepted)
             {
-                if (string.Equals(result?.Reason, "Not enough gold", StringComparison.Ordinal))
+                if (FlowRoomEconomyAudioCues.IsInsufficientGoldReason(result?.Reason))
                 {
+                    FlowRoomEconomyAudioCues.Pulse(
+                        FlowRoomEconomyAudioCues.TavernInsufficientGold,
+                        "TavernBoardPresenter.TryRefresh");
                     ShowNotice("金币不足");
                 }
 
                 return;
             }
 
+            FlowRoomEconomyAudioCues.Pulse(
+                FlowRoomEconomyAudioCues.TavernRefresh,
+                "TavernBoardPresenter.TryRefresh");
             InRoomGoldPresentation.PresentGoldChangesSince(arch, logStart);
             ResyncFromPending(arch);
         }
@@ -890,6 +913,9 @@ namespace NineGrid.Flow.TavernBoard
                 return true;
             }
 
+            FlowRoomEconomyAudioCues.Pulse(
+                FlowRoomEconomyAudioCues.RoomLeave,
+                "TavernBoardPresenter.TryLeaveOrCancel");
             DespawnAll();
             leftShop = true;
             return true;

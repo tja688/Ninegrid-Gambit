@@ -956,6 +956,9 @@ namespace NineGrid.Flow
             NineGridArchitecture.Interface?.GetSystem<IFieldBattlePresentationSystem>()?.CancelBattleWork();
 
             RequestSetState(victory ? GameFlowShellState.VictoryNotice : GameFlowShellState.DefeatNotice);
+            FlowRoomEconomyAudioCues.Pulse(
+                victory ? FlowRoomEconomyAudioCues.Victory : FlowRoomEconomyAudioCues.Defeat,
+                "GameFlowOrchestrator.ShowBattleEndAndReturnAsync");
             var view = mShell.View;
             view?.EnsureViewBindings();
             view?.ShowInRunShell();
@@ -1000,6 +1003,9 @@ namespace NineGrid.Flow
             NineGridArchitecture.Interface?.GetSystem<IFieldBattlePresentationSystem>()?.CancelBattleWork();
             ResolveSession()?.ClearPresentationSurface();
             view?.ShowMainMenuPanels();
+            FlowRoomEconomyAudioCues.Pulse(
+                FlowRoomEconomyAudioCues.ReturnMainMenu,
+                "GameFlowOrchestrator.EnterMainMenuImmediate");
             RequestSetState(GameFlowShellState.MainMenu);
             try
             {

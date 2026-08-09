@@ -357,6 +357,11 @@ namespace NineGrid.Flow.RoomIcons
                     return false;
                 }
 
+                var room = arch.GetModel<RunModel>()?.Room?.Value ?? RoomKind.None;
+                FlowRoomEconomyAudioCues.PulseRoom(
+                    FlowRoomEconomyAudioCues.RoomEnter,
+                    "RoomIconBoardPresenter.ExecuteSelectEnterHardCut",
+                    room == RoomKind.None ? string.Empty : room.ToString());
                 HardCutAfterEnter(arch);
                 return true;
             }

@@ -10,6 +10,7 @@ using NineGrid.Core.Systems;
 using NineGrid.Flow;
 using NineGrid.Flow.BoardBriefTip;
 using NineGrid.Flow.InRoomBoard;
+using NineGrid.Flow.Presentation;
 using NineGrid.Flow.RoomIcons;
 using NineGrid.Flow.Transitions;
 using NineGrid.Presentation;
@@ -650,14 +651,27 @@ namespace NineGrid.Flow.ShopBoard
             }
 
             var logStart = InRoomGoldPresentation.CaptureEventLogCount(arch);
+            var pending = arch.GetModel<PendingChoiceModel>();
+            var defId = string.Empty;
+            if (pending != null
+                && shelfIndex >= 0
+                && shelfIndex < pending.RewardOptions.Count)
+            {
+                defId = pending.RewardOptions[shelfIndex]?.DefId ?? string.Empty;
+            }
+
+            var isUpgrade = IsShopSlotUpgradeOption(defId);
             var result = RewardChoiceCoreHook.SelectReward(shelfIndex);
             if (result == null || !result.Accepted)
             {
                 var reason = result?.Reason ?? string.Empty;
                 Debug.LogWarning(
                     "[ShopBoard] Buy rejected shelfIndex=" + shelfIndex + " reason=" + reason);
-                if (string.Equals(reason, "Not enough gold", StringComparison.Ordinal))
+                if (FlowRoomEconomyAudioCues.IsInsufficientGoldReason(reason))
                 {
+                    FlowRoomEconomyAudioCues.Pulse(
+                        FlowRoomEconomyAudioCues.ShopInsufficientGold,
+                        "ShopBoardPresenter.TryBuy");
                     ShowNotice("金币不足");
                 }
                 else if (!string.IsNullOrEmpty(reason))
@@ -668,6 +682,10 @@ namespace NineGrid.Flow.ShopBoard
                 return;
             }
 
+            FlowRoomEconomyAudioCues.Pulse(
+                isUpgrade ? FlowRoomEconomyAudioCues.ShopUpgrade : FlowRoomEconomyAudioCues.ShopBuy,
+                "ShopBoardPresenter.TryBuy",
+                defId);
             Debug.Log("[ShopBoard] Buy accepted shelfIndex=" + shelfIndex);
             InRoomGoldPresentation.PresentGoldChangesSince(arch, logStart);
             // ADR-0025：购入直写 ItemSlots；货架纯表现卡须换成 Core uid 并接入手牌，勿只碎裂。
@@ -738,14 +756,20 @@ namespace NineGrid.Flow.ShopBoard
             {
                 Debug.LogWarning(
                     "[ShopBoard] Refresh rejected reason=" + (result?.Reason ?? string.Empty));
-                if (string.Equals(result?.Reason, "Not enough gold", StringComparison.Ordinal))
+                if (FlowRoomEconomyAudioCues.IsInsufficientGoldReason(result?.Reason))
                 {
+                    FlowRoomEconomyAudioCues.Pulse(
+                        FlowRoomEconomyAudioCues.ShopInsufficientGold,
+                        "ShopBoardPresenter.TryRefresh");
                     ShowNotice("金币不足");
                 }
 
                 return;
             }
 
+            FlowRoomEconomyAudioCues.Pulse(
+                FlowRoomEconomyAudioCues.ShopRefresh,
+                "ShopBoardPresenter.TryRefresh");
             Debug.Log("[ShopBoard] Refresh accepted");
             InRoomGoldPresentation.PresentGoldChangesSince(arch, logStart);
             ResyncFromPending(arch);
@@ -763,6 +787,9 @@ namespace NineGrid.Flow.ShopBoard
             var result = RewardChoiceCoreHook.SkipHelpChoice();
             if (result != null && result.Accepted)
             {
+                FlowRoomEconomyAudioCues.Pulse(
+                    FlowRoomEconomyAudioCues.RoomLeave,
+                    "ShopBoardPresenter.TryLeave");
                 Debug.Log("[ShopBoard] Leave accepted (SkipHelpChoice)");
                 DespawnAll();
                 return true;

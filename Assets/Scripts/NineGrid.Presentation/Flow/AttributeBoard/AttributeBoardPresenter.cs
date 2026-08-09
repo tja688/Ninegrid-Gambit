@@ -9,6 +9,7 @@ using NineGrid.Core.Content;
 using NineGrid.Core.Systems;
 using NineGrid.Flow;
 using NineGrid.Flow.BoardBriefTip;
+using NineGrid.Flow.Presentation;
 using NineGrid.Flow.RoomIcons;
 using NineGrid.Flow.Transitions;
 using NineGrid.Presentation;
@@ -358,6 +359,11 @@ namespace NineGrid.Flow.AttributeBoard
                 return;
             }
 
+            var contentId = pending.RewardOptions[pendingIndex]?.DefId ?? string.Empty;
+            FlowRoomEconomyAudioCues.Pulse(
+                FlowRoomEconomyAudioCues.AttributePick,
+                "AttributeBoardPresenter.TrySelect",
+                contentId);
             Debug.Log("[AttributeBoard] Select accepted pendingIndex=" + pendingIndex);
             mSelectedFlags[candidateIndex] = true;
             MarkSelected(managed: mCandidateCards[candidateIndex]);
@@ -426,6 +432,9 @@ namespace NineGrid.Flow.AttributeBoard
             var result = RewardChoiceCoreHook.SkipHelpChoice();
             if (result != null && result.Accepted)
             {
+                FlowRoomEconomyAudioCues.Pulse(
+                    FlowRoomEconomyAudioCues.RoomLeave,
+                    "AttributeBoardPresenter.TryLeave");
                 DespawnAll();
                 return true;
             }
