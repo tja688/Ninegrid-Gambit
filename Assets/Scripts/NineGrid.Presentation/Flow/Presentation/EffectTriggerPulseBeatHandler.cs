@@ -6,7 +6,7 @@ namespace NineGrid.Flow.Presentation
 {
     /// <summary>
     /// 效果触发 FX/音效脉冲装饰处理器：在 Impact 消费 TriggerEffect，不占主线就位回执。
-    /// 仅九宫格在场卡发脉冲；卡组/手牌/已移除跳过（仍认领指令以免 Settled 误诊）。
+    /// 已登记且不在场（非 Board）的卡跳过脉冲；无架构或卡尚未登记时仍发脉冲，便于单测与装配前诊断。
     /// 声音走稳定 cue + cardDefId/skillId 内容覆盖；运行时 UID 只进诊断，不进绑定主键。
     /// </summary>
     public sealed class EffectTriggerPulseBeatHandler : IBattleBeatHandler
@@ -53,7 +53,8 @@ namespace NineGrid.Flow.Presentation
             var registry = arch.GetModel<CardRegistry>();
             if (!registry.TryGet(uid, out var coreCard) || coreCard == null)
             {
-                return false;
+                // Architecture.Interface 会懒创建空架构；卡尚未登记时与无架构同，仍发脉冲。
+                return true;
             }
 
             return coreCard.Zone.Value == ZoneId.Board;

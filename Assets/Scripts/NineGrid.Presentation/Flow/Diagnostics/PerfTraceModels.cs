@@ -126,6 +126,10 @@ namespace NineGrid.Flow.Diagnostics
         public const string DirectorTriggerPulse = "DirectorTriggerPulse";
         /// <summary>音频提示请求被受理（IAudioSystem 入口）。</summary>
         public const string AudioCueRequest = "AudioCueRequest";
+        /// <summary>可取消蓄力/预备排期成立。</summary>
+        public const string AudioCueScheduled = "AudioCueScheduled";
+        /// <summary>可取消排期被显式撤销。</summary>
+        public const string AudioCueCancelled = "AudioCueCancelled";
         /// <summary>音频绑定解析后实际播放。</summary>
         public const string AudioCuePlayed = "AudioCuePlayed";
         /// <summary>音频提示未绑定/禁用/缺素材，静默返回。</summary>

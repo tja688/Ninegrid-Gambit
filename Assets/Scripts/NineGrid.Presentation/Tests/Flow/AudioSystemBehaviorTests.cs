@@ -52,7 +52,12 @@ namespace NineGrid.Presentation.Tests
             var cancelled = system.ScheduleCue(AudioCueRequest.Simple("ui.test", "cancelled"), 3f);
 
             Assert.IsTrue(kept.IsValid);
+            Assert.AreEqual(AudioHistoryOutcome.Scheduled, system.History[0].Outcome);
+            Assert.AreEqual(kept.Value, system.History[0].ScheduleKey);
+            Assert.AreEqual(2f, system.History[0].ScheduleDelaySeconds, 0.001f);
             Assert.IsTrue(system.CancelScheduledCue(cancelled));
+            Assert.AreEqual(AudioHistoryOutcome.Cancelled, system.History[system.History.Count - 1].Outcome);
+            Assert.AreEqual(cancelled.Value, system.History[system.History.Count - 1].ScheduleKey);
             scheduler.Fire(kept);
             Assert.AreEqual(1, playback.Requests.Count);
             Assert.IsFalse(system.CancelScheduledCue(cancelled));

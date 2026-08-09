@@ -15,6 +15,37 @@ namespace NineGrid.Presentation.Tests
             + "{\"state\":\"BossBattle\",\"enabled\":true,\"clipKey\":\"audio/BGM/boss\",\"volumeDb\":-6,\"fadeInSeconds\":0.1,\"fadeOutSeconds\":0.2,\"loop\":true}]}";
 
         [Test]
+        public void RequestState_RapidSwitches_KeepSingleCurrentAndAtMostOneRetiring()
+        {
+            var adapter = new FakeDiagnosticsAdapter { DeferFades = true };
+            var system = CreateSystem(adapter);
+
+            system.RequestState(new MusicStateRequest(DesiredMusicState.MainMenu, "menu"));
+            system.RequestState(new MusicStateRequest(DesiredMusicState.Battle, "battle-1"));
+            system.RequestState(new MusicStateRequest(DesiredMusicState.BossBattle, "boss"));
+
+            Assert.AreEqual(DesiredMusicState.BossBattle, system.CurrentState);
+            Assert.AreEqual("audio/BGM/boss", system.CurrentClipKey);
+            Assert.AreEqual(1, system.CurrentSourceCount);
+            Assert.AreEqual(1, system.RetiringSourceCount);
+            Assert.AreEqual(3L, system.CurrentMusicGeneration);
+            Assert.AreEqual(3, adapter.Played.Count);
+
+            // 第一次淡出回调属于已被 ReleaseRetiringSource 收口的旧来源，不得改写当前状态。
+            adapter.InvokeFade(0);
+            Assert.AreEqual(DesiredMusicState.BossBattle, system.CurrentState);
+            Assert.AreEqual(1, system.CurrentSourceCount);
+            Assert.AreEqual(1, system.RetiringSourceCount);
+            Assert.IsTrue(HasHistory(system, MusicHistoryOutcome.StaleCallback));
+
+            // 当前淡出来源完成后只剩唯一正确 BGM。
+            adapter.InvokeFade(1);
+            Assert.AreEqual(DesiredMusicState.BossBattle, system.CurrentState);
+            Assert.AreEqual(1, system.CurrentSourceCount);
+            Assert.AreEqual(0, system.RetiringSourceCount);
+        }
+
+        [Test]
         public void AuditMusicTrack_UnknownSource_ProducesCorrelatedAnomalyWithoutAutoStop()
         {
             var adapter = new FakeDiagnosticsAdapter();

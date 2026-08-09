@@ -20,6 +20,8 @@ namespace NineGrid.Presentation.Systems
     public enum AudioHistoryOutcome
     {
         Requested,
+        Scheduled,
+        Cancelled,
         Played,
         Unbound,
         Cooldown,
@@ -124,6 +126,8 @@ namespace NineGrid.Presentation.Systems
         public string ActualClipKey { get; internal set; }
         public string VariantId { get; internal set; }
         public string FailureReason { get; internal set; }
+        public long ScheduleKey { get; internal set; }
+        public float ScheduleDelaySeconds { get; internal set; }
         public double Time { get; internal set; }
     }
 
@@ -154,6 +158,8 @@ namespace NineGrid.Presentation.Systems
             new Dictionary<AudioBinding, double>();
         private readonly Dictionary<AudioBinding, string> mLastVariantIds =
             new Dictionary<AudioBinding, string>();
+        private readonly Dictionary<long, PendingScheduledCue> mPendingSchedules =
+            new Dictionary<long, PendingScheduledCue>();
 
         public AudioSystem(
             AudioBindingCatalog catalog,
@@ -206,13 +212,87 @@ namespace NineGrid.Presentation.Systems
         public AudioScheduleKey ScheduleCue(AudioCueRequest request, float delaySeconds)
         {
             var scheduler = mScheduler ?? UnityAudioCueScheduler.Instance;
-            return scheduler.Schedule(Math.Max(0f, delaySeconds), () => RequestCue(request));
+            var clampedDelay = Math.Max(0f, delaySeconds);
+            AudioScheduleKey key = default;
+            key = scheduler.Schedule(clampedDelay, () =>
+            {
+                mPendingSchedules.Remove(key.Value);
+                RequestCue(request);
+            });
+            if (!key.IsValid)
+            {
+                return key;
+            }
+
+            mPendingSchedules[key.Value] = new PendingScheduledCue(request, clampedDelay);
+            var scheduledAt = mClock.UnscaledTime;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            AddHistory(new AudioHistoryRecord
+            {
+                Outcome = AudioHistoryOutcome.Scheduled,
+                CueId = request.CueId,
+                DiagnosticSource = request.DiagnosticSource,
+                ScheduleKey = key.Value,
+                ScheduleDelaySeconds = clampedDelay,
+                Time = scheduledAt,
+            });
+#endif
+            RecordTrace(
+                PerfTraceKinds.AudioCueScheduled,
+                request,
+                AudioHistoryOutcome.Scheduled,
+                scheduledAt,
+                clipKey: null,
+                note: null,
+                reason: null,
+                scheduleKey: key.Value,
+                scheduleDelaySeconds: clampedDelay);
+            return key;
         }
 
         public bool CancelScheduledCue(AudioScheduleKey key)
         {
+            if (!key.IsValid)
+            {
+                return false;
+            }
+
             var scheduler = mScheduler ?? UnityAudioCueScheduler.Instance;
-            return scheduler.Cancel(key);
+            if (!scheduler.Cancel(key))
+            {
+                return false;
+            }
+
+            PendingScheduledCue pending;
+            var hadPending = mPendingSchedules.TryGetValue(key.Value, out pending);
+            mPendingSchedules.Remove(key.Value);
+            var cancelledAt = mClock.UnscaledTime;
+            var request = hadPending
+                ? pending.Request
+                : AudioCueRequest.Simple(string.Empty, "AudioSystem.CancelScheduledCue");
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            AddHistory(new AudioHistoryRecord
+            {
+                Outcome = AudioHistoryOutcome.Cancelled,
+                CueId = request.CueId,
+                DiagnosticSource = request.DiagnosticSource,
+                ScheduleKey = key.Value,
+                ScheduleDelaySeconds = hadPending ? pending.DelaySeconds : 0f,
+                FailureReason = "explicit cancel",
+                Time = cancelledAt,
+            });
+#endif
+            RecordTrace(
+                PerfTraceKinds.AudioCueCancelled,
+                request,
+                AudioHistoryOutcome.Cancelled,
+                cancelledAt,
+                clipKey: null,
+                note: null,
+                reason: "explicit cancel",
+                scheduleKey: key.Value,
+                scheduleDelaySeconds: hadPending ? pending.DelaySeconds : 0f);
+            return true;
         }
 
 
@@ -426,7 +506,9 @@ namespace NineGrid.Presentation.Systems
             double time,
             string clipKey,
             string note,
-            string reason)
+            string reason,
+            long scheduleKey = 0L,
+            float scheduleDelaySeconds = 0f)
         {
             try
             {
@@ -450,6 +532,15 @@ namespace NineGrid.Presentation.Systems
                 if (!string.IsNullOrEmpty(reason))
                 {
                     payload["reason"] = reason;
+                }
+
+                if (scheduleKey > 0L)
+                {
+                    payload["scheduleKey"] = scheduleKey.ToString(
+                        System.Globalization.CultureInfo.InvariantCulture);
+                    payload["scheduleDelaySeconds"] = scheduleDelaySeconds.ToString(
+                        "R",
+                        System.Globalization.CultureInfo.InvariantCulture);
                 }
 
                 if (!string.IsNullOrEmpty(request.CardDefId))
@@ -499,6 +590,18 @@ namespace NineGrid.Presentation.Systems
             {
                 // 音频打点失败不干扰玩法路径。
             }
+        }
+
+        private readonly struct PendingScheduledCue
+        {
+            public PendingScheduledCue(AudioCueRequest request, float delaySeconds)
+            {
+                Request = request;
+                DelaySeconds = delaySeconds;
+            }
+
+            public AudioCueRequest Request { get; }
+            public float DelaySeconds { get; }
         }
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD

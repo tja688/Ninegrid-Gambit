@@ -20,11 +20,11 @@ BGM 不走声音提示脉冲。游戏流程层提交期望音乐状态，音频�
 
 音乐状态只由流程层提交，来源标识必填。切歌保持一个当前来源与至多一个淡出来源；新切歌到来时立即回收更老的淡出来源。Editor/Development Build 在状态请求、播放、淡出完成、场景切换及低频巡检时审计 Music 轨；未被当前来源、淡出来源或编辑器试听认领的播放记为异常，默认只报告并允许工具一键停止。编辑器试听 BGM 默认暂停游戏音乐并记录播放位置，结束后原位恢复，不改变期望音乐状态。
 
-项目自有源码须有结构护栏：只有音频播放 Adapter 可以调用 MMSoundManager 播放，只有音乐模块可以指定 Music 轨，业务代码不得直接调用 AudioKit 或 MMSoundManager。完整调音窗口仅为 Editor 开发工具；玩家 Master/BGM/SFX 音量与静音属于独立本地设置，不写回作者配置。
+项目自有源码须有结构护栏：只有音频播放 Adapter 可以调用 MMSoundManager 播放，只有音乐模块可以指定 Music 轨，业务代码不得直接调用 AudioKit 或 MMSoundManager。#179 起由 EditMode `AudioStructureGuardTests` 扫描项目自有源码强制该约束，并禁止裸 `PulseAudio("...")` 与动态 `sfx.effect.<uid>` 绑定键拼接。完整调音窗口仅为 Editor 开发工具；玩家 Master/BGM/SFX 音量与静音属于独立本地设置，不写回作者配置。
 
 作者 Master/BGM/SFX 默认值属于正式 JSON；玩家三路音量与静音属于独立本地设置，两者不得共用同一权威。调音窗口在非 Play Mode 可浏览、编辑、试听、校验与运行 AI 绑定；Play Mode 增加最近请求、聚合频率、抑制/失败原因、当前音乐状态与重叠警报。窗口复用现有编辑器的磁盘快照/工作副本/指纹脏标记机制，提供单条保存、全部保存、单条回撤与一键回撤全部脏改动。
 
-关键音频事件并入现有 PerfTrace 会话，与 Battle/Core/Perf 共用 sessionId、seed、runTag、chainId 和 batchId；完整实时播放历史只保留在 Editor 固定容量环形缓冲。项目自有源码的结构护栏禁止绕过声音提示或音乐状态入口。
+关键音频事件并入现有 PerfTrace 会话，与 Battle/Core/Perf 共用 sessionId、seed、runTag、chainId 和 batchId；SFX 另记录 `AudioCueScheduled` / `AudioCueCancelled`（含 `scheduleKey`）与播放/冷却/失败；音乐侧保留切歌代数因果。完整实时播放历史只保留在 Editor 固定容量环形缓冲。项目自有源码的结构护栏禁止绕过声音提示或音乐状态入口。
 
 ## 相关
 

@@ -190,6 +190,17 @@ namespace NineGrid.Content.Editor
 
         private static void ValidateParams(AudioBindingDto row, string key, List<Finding> findings)
         {
+            if (string.IsNullOrWhiteSpace(row.note))
+            {
+                findings.Add(new Finding
+                {
+                    Category = "empty-note",
+                    BindingKey = key,
+                    CueId = row.cueId,
+                    Detail = "声音绑定缺少中文音效说明。",
+                });
+            }
+
             if (row.volumeDb < -80f || row.volumeDb > 24f)
             {
                 findings.Add(new Finding
