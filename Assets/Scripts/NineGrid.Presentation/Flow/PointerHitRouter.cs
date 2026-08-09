@@ -80,12 +80,7 @@ namespace NineGrid.Flow
                     return;
                 }
 
-                // 战斗信息预览槽：半黑屏下可按 defId 开详述。
-                if (TryInspectBattleInfoPreviewSlot(best))
-                {
-                    return;
-                }
-
+                // 战斗信息预览槽命中已断开（待动态框选）；半黑屏下不再经槽开详述。
                 TryOpenCardInspect(best);
                 return;
             }
@@ -158,27 +153,6 @@ namespace NineGrid.Flow
 
             return RelicHudHook.TryInspectRelic != null
                 && RelicHudHook.TryInspectRelic(camera, screen);
-        }
-
-        private static bool TryInspectBattleInfoPreviewSlot(IPointerHitTarget hovered)
-        {
-            if (!BattleInfoPreviewPresenter.IsOpen)
-            {
-                return false;
-            }
-
-            if (CardInspectOverlayPresenter.IsOpen)
-            {
-                CardInspectOverlayPresenter.CloseIfOpen();
-                return true;
-            }
-
-            if (hovered is not BattleInfoPreviewSlotView slot || !slot.HasContent)
-            {
-                return false;
-            }
-
-            return CardInspectOverlayPresenter.TryOpenByDefId(slot.DefId, slot.KindHint);
         }
 
         private static void TryOpenCardInspect(IPointerHitTarget hovered)

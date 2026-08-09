@@ -15,6 +15,8 @@ namespace NineGrid.Presentation.Editor
     public static class DevPlayerBuild
     {
         private const string StatusFile = "Temp/ninegrid_dev_player_build_status.json";
+        private const string DesktopDevPlayerFolderName = "game1";
+        private const string DesktopDevPlayerExeName = "Ninegrid Gambit.exe";
 
         private static bool sPending;
         private static bool sBuilding;
@@ -35,6 +37,24 @@ namespace NineGrid.Presentation.Editor
                 "Builds/DevWin64/NinegridGambit.exe",
                 cleanCache: true);
             Debug.Log("[DevPlayerBuild] " + result);
+        }
+
+        [MenuItem("NineGrid/Build/Development Windows64 Player (Desktop/game1)")]
+        public static void BuildDevelopmentWindows64ToDesktopGame1FromMenu()
+        {
+            var result = QueueDevelopmentWindows64(
+                GetDesktopGame1OutputPath(),
+                cleanCache: true);
+            Debug.Log("[DevPlayerBuild] " + result);
+        }
+
+        /// <summary>
+        /// 桌面 Development 包输出路径：<c>Desktop/game1/Ninegrid Gambit.exe</c>（含 F12 作弊面板）。
+        /// </summary>
+        public static string GetDesktopGame1OutputPath()
+        {
+            var desktop = Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory);
+            return Path.Combine(desktop, DesktopDevPlayerFolderName, DesktopDevPlayerExeName);
         }
 
         /// <summary>

@@ -323,7 +323,7 @@
 - **键盘**：`Flow/KeyboardUtility` —— New Input only 下替代 `Input.GetKey*`（DevTest 热键 / UITestBootstrap / Escape Esc 跳过）
 - **命中**：`Flow/PointerHitRouter`（`RuntimeInitializeOnLoad` 自举；`-40`）轮询 `PointerHitRegistry`；**手牌按下优先** `CardHandManagerSingleton.TryBeginDragFromHoveredCard`（Hand `-50` 先刷 hover 槽位带）；**右键**开 `CardInspectOverlayPresenter`（场卡经 `GroundFieldHitSurface.TryResolveInspectCard` 取认领卡，手牌仍走 collider/`TryPeekHoveredCardForInspect`；再右键或关闭钮关）
 - **局内 UI 叠层**：`BattleUiDimmerOverlay` + `UiOverlayHitProxy`（`DimmerBackground`：详述优先关，再关战斗信息预览；面板内 `Swallow` 不关预览；关闭钮 `CloseCardInspect`）；`PresentationInputGates.BattleUiOverlayActive` 只读投影
-- **战斗信息预览**：`BattleInfoPreviewPresenter.ShowAndWaitAsync`（`GameFlowOrchestrator.PlayRealBattleAsync` 正式 Run、发牌前）；槽 `BattleInfoPreviewSlotView` 右键 `TryOpenByDefId`；关详述不 Complete 预览；图标复用卡面 `mainVisual` 见上表 `BattleInfoPreview/`
+- **战斗信息预览**：`BattleInfoPreviewPresenter.ShowAndWaitAsync`（`GameFlowOrchestrator.PlayRealBattleAsync` 正式 Run、发牌前）；槽 `BattleInfoPreviewSlotView` **暂不**注册 `PointerHitRegistry`（无悬停黄边 / 槽右键详述，待动态框选）；面板根仍 `UiOverlayHitProxy.Swallow`；关详述不 Complete 预览；图标复用卡面 `mainVisual` 见上表 `BattleInfoPreview/`
 - **代理**：`GroundFieldHitSurface`（场地面单一注册，解格号 → 查 `SlotClaimRegistry`）/ `HandCardHitProxy` / `BoardSelectParkedCardHitProxy` 实现 `IPointerHitTarget`；落格 `GroundCardHitProxy` / `BoardBriefTipHitProxy` / 商店·卡店·奖励 Board HitProxy 改为**认领登记**（无自建命中盒、不注册 Router）；`GroundSlotHitProxy` 遗留壳
 - **Win Player mitigation**：`Platform/WindowsHighPollingMouseMitigation`（`#if UNITY_STANDALONE_WIN && !UNITY_EDITOR`）
 - **工程设置**：`activeInputHandler = 1`（New Input System only）
@@ -339,7 +339,7 @@
 | `CardHandManagerSingleton` 布局带 | `handHitBoxSize` AABB 数学，不用 collider；`DefaultExecutionOrder(-50)` | 手牌 hover + 起拖 |
 | `CardHandManagerSingleton` 拖拽落点 | 交棒 `GroundFieldView.TryResolveSlotAtWorld`（场地面九框） | 拖拽落格 |
 | `WorldPointerUtility.TryOverlapColliderOnPlane` | 与 Router 同平面换算；已退役 z=0 `TryPickCollider` | 主菜单 StartRun / Quit；HUD 血槽悬停；StartRunHoverScale |
-| `BounceFanChoicePresenter` | 容器本地固定 AABB（`BaseLocalPosition` + `hitBoxSize`），倒序遍历；**不**跟悬停 tween、**不**启用卡面 collider；ChoiceOverlay 下合法悬停可开右键详述，详述打开期间屏蔽点选 | 战斗内扇形三选一（宝箱遗物） |
+| `BounceFanChoicePresenter` | 容器本地固定 AABB（`BaseLocalPosition` + `hitBoxSize`≈`2.4×3.0`），`spacing`≈`2.0`；倒序遍历；**不**跟悬停 tween、**不**启用卡面 collider；ChoiceOverlay 下合法悬停可开右键详述，详述打开期间屏蔽点选 | 战斗内扇形三选一（宝箱遗物） |
 | `Physics2D.GetRayIntersection` | — | `Arts/` demo，不属表现层 |
 
 板面参照：底板 Sliced `1.9 × 2.45` × 2 = 世界 `3.8 × 4.9`；格距 `5 × 5.5`；`GroundAnchors/slotN` 自带 `BoxCollider2D` 本地 `1.625 × 2.0625`（已启用）。

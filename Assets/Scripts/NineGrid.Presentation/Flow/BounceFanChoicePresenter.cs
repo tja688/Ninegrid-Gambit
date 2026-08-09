@@ -27,13 +27,13 @@ namespace NineGrid.Flow
         [SerializeField] private Vector3 containerLocalOffset = new(0.4f, 0.5f, 0f);
 
         [Tooltip("相邻选项中心水平间距（世界本地单位）；扇形相对中心对称。")]
-        [SerializeField] private float spacing = 1.1f;
+        [SerializeField] private float spacing = 2.0f;
 
         [Tooltip("相邻选项旋转步进（度）；居中扇形，两侧对称。")]
         [SerializeField] private float rotationStep = 5f;
 
         [Tooltip("选择判定框全尺寸（容器本地单位）；相对各选项静止中心，不跟随悬停推挤。")]
-        [SerializeField] private Vector2 hitBoxSize = new(1.9f, 2.5f);
+        [SerializeField] private Vector2 hitBoxSize = new(2.4f, 3.0f);
 
         [Header("Hover")]
         [Tooltip("悬停时邻卡水平推开距离。")]

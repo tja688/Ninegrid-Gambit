@@ -5,13 +5,14 @@ using UnityEngine;
 namespace NineGrid.Flow.BattleInfoPreview
 {
     /// <summary>
-    /// 战斗信息预览槽：命中代理 + 黄边悬停；图标复用卡面 <c>mainVisual</c>，再叠分类外部缩放。
+    /// 战斗信息预览槽：图标复用卡面 <c>mainVisual</c>，再叠分类外部缩放。
+    /// 暂不接入 <see cref="PointerHitRegistry"/>（槽 collider / 黄边悬停待动态框选系统）。
     /// </summary>
     [DisallowMultipleComponent]
     [RequireComponent(typeof(SpriteRenderer))]
-    public sealed class BattleInfoPreviewSlotView : MonoBehaviour, IPointerHitTarget
+    public sealed class BattleInfoPreviewSlotView : MonoBehaviour
     {
-        private const int HitSortBoost = BattleUiDimmerOverlay.HitSort + 3;
+        private const int VisualSortBoost = BattleUiDimmerOverlay.HitSort + 3;
         private const string ArtChildName = "__Art";
         private const float FallbackSlotSize = 0.8f;
 
@@ -40,32 +41,13 @@ namespace NineGrid.Flow.BattleInfoPreview
 
         public Sprite FrameSprite => frameSprite;
 
-        public Collider2D HitCollider =>
-            hitCollider != null ? hitCollider : (hitCollider = GetComponent<BoxCollider2D>());
-
-        public int HitSortOrder
-        {
-            get
-            {
-                var renderer = iconRenderer != null ? iconRenderer : GetComponent<SpriteRenderer>();
-                if (renderer != null)
-                {
-                    return Mathf.Max(HitSortBoost, renderer.sortingOrder);
-                }
-
-                return HitSortBoost;
-            }
-        }
-
-        public int HitTypePriority => PointerHitSurfacePriorities.Overlay;
-
         public void EnsureWired(Color highlightColor, Sprite highlightSprite = null)
         {
             EnsureArtHierarchy();
 
-            if (iconRenderer != null && iconRenderer.sortingOrder < HitSortBoost)
+            if (iconRenderer != null && iconRenderer.sortingOrder < VisualSortBoost)
             {
-                iconRenderer.sortingOrder = HitSortBoost;
+                iconRenderer.sortingOrder = VisualSortBoost;
             }
 
             if (iconPlayer == null)
@@ -90,8 +72,9 @@ namespace NineGrid.Flow.BattleInfoPreview
 
             highlight.Configure(highlightColor, highlightSprite);
             highlight.BindTarget(iconRenderer, SlotLocalSize);
+            highlight.Hide();
 
-            EnsureCollider();
+            DisableLegacyHitCollider();
         }
 
         public void Bind(string contentDefId, CardPresentationKind kind, float iconExternalScale = 1f)
@@ -111,7 +94,7 @@ namespace NineGrid.Flow.BattleInfoPreview
             }
 
             iconPlayer.PlayIdleOrStatic(defId, externalScale);
-            SyncColliderToSlot();
+            DisableLegacyHitCollider();
             highlight?.Hide();
         }
 
@@ -122,10 +105,7 @@ namespace NineGrid.Flow.BattleInfoPreview
             externalScale = 1f;
             iconPlayer?.ClearVisual();
             highlight?.Hide();
-            if (hitCollider != null)
-            {
-                hitCollider.enabled = false;
-            }
+            DisableLegacyHitCollider();
         }
 
         /// <summary>换图后由 IconPlayer 调用：复用卡面 mainVisual，再乘外部缩放。</summary>
@@ -148,52 +128,18 @@ namespace NineGrid.Flow.BattleInfoPreview
                 slotOffsetX,
                 slotOffsetY,
                 iconExternalScale);
-            SyncColliderToSlot();
-        }
-
-        private void OnEnable()
-        {
-            if (HasContent)
-            {
-                PointerHitRegistry.Register(this);
-            }
+            DisableLegacyHitCollider();
         }
 
         private void OnDisable()
         {
-            PointerHitRegistry.Unregister(this);
             highlight?.Hide();
         }
 
-        public void HandlePointerEnter()
-        {
-            if (HasContent)
-            {
-                highlight?.Show();
-            }
-        }
-
-        public void HandlePointerExit()
-        {
-            highlight?.Hide();
-        }
-
-        public void HandlePointerDown()
-        {
-            // 左键：面板内不关预览；详述由右键路径打开。
-        }
-
+        /// <summary>兼容旧调用点：槽位已不再注册 PointerHit。</summary>
         public void RefreshHitRegistration()
         {
-            PointerHitRegistry.Unregister(this);
-            if (isActiveAndEnabled && HasContent)
-            {
-                PointerHitRegistry.Register(this);
-                if (hitCollider != null)
-                {
-                    hitCollider.enabled = true;
-                }
-            }
+            DisableLegacyHitCollider();
         }
 
         private void EnsureArtHierarchy()
@@ -221,24 +167,24 @@ namespace NineGrid.Flow.BattleInfoPreview
             var rootSr = GetComponent<SpriteRenderer>();
             if (rootSr != null && rootSr != iconRenderer)
             {
-                if (rootSr.sortingOrder >= HitSortBoost)
+                if (rootSr.sortingOrder >= VisualSortBoost)
                 {
                     iconRenderer.sortingOrder = rootSr.sortingOrder;
                     iconRenderer.sortingLayerID = rootSr.sortingLayerID;
                 }
-                else if (iconRenderer.sortingOrder < HitSortBoost)
+                else if (iconRenderer.sortingOrder < VisualSortBoost)
                 {
                     iconRenderer.sortingLayerID = rootSr.sortingLayerID;
-                    iconRenderer.sortingOrder = HitSortBoost;
+                    iconRenderer.sortingOrder = VisualSortBoost;
                 }
 
                 rootSr.enabled = false;
                 rootSr.sprite = null;
             }
 
-            if (iconRenderer.sortingOrder < HitSortBoost)
+            if (iconRenderer.sortingOrder < VisualSortBoost)
             {
-                iconRenderer.sortingOrder = HitSortBoost;
+                iconRenderer.sortingOrder = VisualSortBoost;
             }
 
             // 不再 Cover + SpriteMask 裁切；完整显示卡面调好的图标。
@@ -282,29 +228,17 @@ namespace NineGrid.Flow.BattleInfoPreview
             _slotSizeCaptured = true;
         }
 
-        private void EnsureCollider()
-        {
-            hitCollider = GetComponent<BoxCollider2D>();
-            if (hitCollider == null)
-            {
-                hitCollider = gameObject.AddComponent<BoxCollider2D>();
-            }
-
-            hitCollider.isTrigger = true;
-            SyncColliderToSlot();
-        }
-
-        private void SyncColliderToSlot()
+        private void DisableLegacyHitCollider()
         {
             if (hitCollider == null)
             {
-                return;
+                hitCollider = GetComponent<BoxCollider2D>();
             }
 
-            var size = SlotLocalSize;
-            hitCollider.size = size;
-            hitCollider.offset = Vector2.zero;
-            hitCollider.enabled = HasContent;
+            if (hitCollider != null)
+            {
+                hitCollider.enabled = false;
+            }
         }
     }
 }
