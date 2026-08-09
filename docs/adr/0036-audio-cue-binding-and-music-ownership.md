@@ -20,9 +20,9 @@ BGM 不走声音提示脉冲。游戏流程层提交期望音乐状态，音频�
 
 音乐状态只由流程层提交，来源标识必填。切歌保持一个当前来源与至多一个淡出来源；新切歌到来时立即回收更老的淡出来源。Editor/Development Build 在状态请求、播放、淡出完成、场景切换及低频巡检时审计 Music 轨；未被当前来源、淡出来源或编辑器试听认领的播放记为异常，默认只报告并允许工具一键停止。编辑器试听 BGM 默认暂停游戏音乐并记录播放位置，结束后原位恢复，不改变期望音乐状态。
 
-项目自有源码须有结构护栏：只有音频播放 Adapter 可以调用 MMSoundManager 播放，只有音乐模块可以指定 Music 轨，业务代码不得直接调用 AudioKit 或 MMSoundManager。#179 起由 EditMode `AudioStructureGuardTests` 扫描项目自有源码强制该约束，并禁止裸 `PulseAudio("...")` 与动态 `sfx.effect.<uid>` 绑定键拼接。完整调音窗口仅为 Editor 开发工具；玩家 Master/BGM/SFX 音量与静音属于独立本地设置，不写回作者配置。
+项目自有源码须有结构护栏：只有音频播放 Adapter 可以调用 MMSoundManager 播放，只有音乐模块可以指定 Music 轨，业务代码不得直接调用 AudioKit 或 MMSoundManager。#179 起由 EditMode `AudioStructureGuardTests` 扫描项目自有源码强制该约束，并禁止裸 `PulseAudio("...")` 与动态 `sfx.effect.<uid>` 绑定键拼接。完整调音工作台仅为 Editor 开发工具（系统浏览器 localhost HTML，非玩家可见 UI）；玩家 Master/BGM/SFX 音量与静音属于独立本地设置，不写回作者配置。
 
-作者 Master/BGM/SFX 默认值属于正式 JSON；玩家三路音量与静音属于独立本地设置，两者不得共用同一权威。调音窗口在非 Play Mode 可浏览、编辑、试听、校验与运行 AI 绑定；Play Mode 增加最近请求、聚合频率、抑制/失败原因、当前音乐状态与重叠警报。窗口复用现有编辑器的磁盘快照/工作副本/指纹脏标记机制，提供单条保存、全部保存、单条回撤与一键回撤全部脏改动。
+作者 Master/BGM/SFX 默认值属于正式 JSON；玩家三路音量与静音属于独立本地设置，两者不得共用同一权威。#187 起作者态由单一 `AudioWorkbenchEditorState` 拥有双 Session：浏览器只发约定命令补丁，不改 JSON 文本；Play Mode 下 SFX 工作副本每次变更热应用到后续触发，唯显式保存写盘并标 `humanConfirmed`；未保存禁用为临时静音（`Suppressed`），保存后为永久禁用。程序集重载经 SessionState 恢复工作副本；若磁盘相对基线已变，阻塞 save/revert/apply，仅提供显式「恢复临时版」或「丢弃临时版」，无静默合并。
 
 Editor/Development Build 下 `IAudioSystem` 暴露运行时热调音缝：`ApplyWorkbenchCatalog` 以严格 `AudioBindingCatalog.TryFromJson` 原子替换**后续**请求所用 catalog（非法 JSON、空 DTO、或 `bindings == null` 失败且不替换旧 catalog；合法空数组 `bindings:[]` 可成功装入空 catalog；Revision 递增仅在成功时）；`enabled=false` 的命中记为可观察的 `Suppressed`（trace `AudioCueSuppressed`，reason `workbench binding disabled`），不选变体、不播放，但仍进历史与聚合——未保存的禁用是临时静音，显式保存后写入正式 JSON 才成永久禁用。热应用保留 cue 级频率窗，清除绑定实例级冷却/变体记忆；已在播源不重启不停；已排期回调解析最新 catalog。每条 `AudioHistoryRecord` 有单调 `Sequence` 与完整请求上下文及 Adapter `SourceId`；快照含 History、PlayingSources 与按 BindingKey（无则 CueId）聚合。`StopSfxSource` / `PreviewWorkbenchBinding` 经 diagnostics Adapter 停指定源或按 BindingKey 试听工作副本（忽略 enabled，不改冷却/burst/普通历史）；MMSoundManager 仍只在 Adapter 内。BGM 保持预览+保存，本 ADR 不要求 live music catalog 热换。
 

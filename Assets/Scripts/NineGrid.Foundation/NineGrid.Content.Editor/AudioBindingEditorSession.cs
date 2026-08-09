@@ -483,6 +483,231 @@ namespace NineGrid.Content.Editor
             }
         }
 
+        public bool TryCreateDraft(string cueId, out AudioBindingEditorEntry entry, out string error)
+        {
+            entry = null;
+            error = null;
+            if (string.IsNullOrWhiteSpace(cueId))
+            {
+                error = "空补丁：cueId 不能为空。";
+                return false;
+            }
+
+            var normalizedCueId = cueId.Trim();
+            entry = entries.FirstOrDefault(candidate =>
+                string.Equals(candidate.CueId, normalizedCueId, StringComparison.Ordinal));
+            if (entry == null)
+            {
+                if (!declarationsByCueId.TryGetValue(normalizedCueId, out var declaration))
+                {
+                    declaration = new AudioBindingEditorDeclaration(
+                        normalizedCueId,
+                        string.Empty,
+                        string.Empty,
+                        string.Empty);
+                    declarationsByCueId[normalizedCueId] = declaration;
+                }
+
+                entry = new AudioBindingEditorEntry(null, null, declaration);
+                entries.Add(entry);
+                entries.Sort(CompareEntries);
+            }
+
+            if (entry.HasBinding)
+            {
+                error = "cueId 已有绑定，无法创建草稿：" + normalizedCueId;
+                return false;
+            }
+
+            entry.CreateDraftBinding();
+            return true;
+        }
+
+        public bool TryReplaceWorkingDto(
+            string originalBindingKey,
+            AudioBindingDto replacement,
+            out AudioBindingEditorEntry entry,
+            out string error)
+        {
+            entry = null;
+            error = null;
+            if (replacement == null)
+            {
+                error = "空补丁：replacement 不能为空。";
+                return false;
+            }
+
+            if (string.IsNullOrWhiteSpace(originalBindingKey))
+            {
+                error = "空补丁：originalBindingKey 不能为空。";
+                return false;
+            }
+
+            entry = FindEntryByBindingKey(originalBindingKey);
+            if (entry == null || entry.Dto == null)
+            {
+                error = "找不到绑定：" + originalBindingKey;
+                return false;
+            }
+
+            var next = CloneDto(entry.Dto);
+            next.enabled = replacement.enabled;
+            next.clipKey = replacement.clipKey ?? string.Empty;
+            next.volumeDb = replacement.volumeDb;
+            next.startOffsetSeconds = Math.Max(0f, replacement.startOffsetSeconds);
+            next.bindingDelaySeconds = Math.Max(0f, replacement.bindingDelaySeconds);
+            next.minimumIntervalSeconds = Math.Max(0f, replacement.minimumIntervalSeconds);
+            next.variants = ClampVariants(replacement.variants);
+            next.selectorCardDefId = replacement.selectorCardDefId ?? string.Empty;
+            next.selectorSkillId = replacement.selectorSkillId ?? string.Empty;
+            next.selectorRoomId = replacement.selectorRoomId ?? string.Empty;
+            next.selectorItemDefId = replacement.selectorItemDefId ?? string.Empty;
+            next.selectorContentId = replacement.selectorContentId ?? string.Empty;
+            // cueId / note / module / authoringStatus remain session-authoritative.
+
+            var nextKey = ComputeBindingKey(next);
+            for (var i = 0; i < entries.Count; i++)
+            {
+                var other = entries[i];
+                if (ReferenceEquals(other, entry) || other?.Dto == null)
+                {
+                    continue;
+                }
+
+                if (string.Equals(other.BindingKey, nextKey, StringComparison.Ordinal))
+                {
+                    error = "键冲突：补丁会产生重复 BindingKey：" + nextKey;
+                    return false;
+                }
+            }
+
+            entry.Dto = next;
+            return true;
+        }
+
+        public AudioBindingCatalogDto BuildWorkingCatalog()
+        {
+            var rows = new List<AudioBindingDto>(entries.Count);
+            for (var i = 0; i < entries.Count; i++)
+            {
+                if (entries[i]?.Dto != null)
+                {
+                    rows.Add(CloneDto(entries[i].Dto));
+                }
+            }
+
+            return new AudioBindingCatalogDto
+            {
+                schemaVersion = Math.Max(3, diskCatalog?.schemaVersion ?? 3),
+                ticket = diskCatalog?.ticket ?? "#169",
+                bindings = rows.ToArray(),
+            };
+        }
+
+        public string BuildWorkingJson()
+        {
+            return JsonUtility.ToJson(BuildWorkingCatalog(), true);
+        }
+
+        public void LoadFromSnapshots(
+            string savedJson,
+            string workingJson,
+            IEnumerable<AudioBindingEditorDeclaration> declarations,
+            IEnumerable<AudioBindingEditorClipOption> clipOptions)
+        {
+            LoadFromJson(savedJson, declarations, clipOptions);
+            var workingCatalog = ParseCatalog(workingJson);
+            var workingRows = workingCatalog.bindings ?? Array.Empty<AudioBindingDto>();
+            for (var i = 0; i < workingRows.Length; i++)
+            {
+                var working = workingRows[i];
+                if (working == null)
+                {
+                    continue;
+                }
+
+                var key = ComputeBindingKey(working);
+                var entry = FindEntryByBindingKey(key);
+                if (entry == null)
+                {
+                    declarationsByCueId.TryGetValue(working.cueId ?? string.Empty, out var declaration);
+                    if (declaration == null)
+                    {
+                        declaration = new AudioBindingEditorDeclaration(
+                            working.cueId ?? string.Empty,
+                            working.note ?? string.Empty,
+                            working.module ?? string.Empty,
+                            string.Empty);
+                        if (!string.IsNullOrWhiteSpace(declaration.CueId))
+                        {
+                            declarationsByCueId[declaration.CueId] = declaration;
+                        }
+                    }
+
+                    entry = new AudioBindingEditorEntry(CloneDto(working), null, declaration);
+                    entries.Add(entry);
+                    continue;
+                }
+
+                entry.Dto = CloneDto(working);
+            }
+
+            entries.Sort(CompareEntries);
+        }
+
+        public AudioBindingEditorEntry FindEntryByBindingKey(string bindingKey)
+        {
+            if (string.IsNullOrEmpty(bindingKey))
+            {
+                return null;
+            }
+
+            var current = entries.FirstOrDefault(entry =>
+                string.Equals(entry.BindingKey, bindingKey, StringComparison.Ordinal));
+            if (current != null)
+            {
+                return current;
+            }
+
+            var historical = entries.FirstOrDefault(entry => entry.MatchesHistoricalBindingKey(bindingKey));
+            if (historical != null)
+            {
+                return historical;
+            }
+
+            return entries.FirstOrDefault(entry => entry.MatchesRowKey(bindingKey));
+        }
+
+        private static AudioVariantDto[] ClampVariants(AudioVariantDto[] source)
+        {
+            if (source == null || source.Length == 0)
+            {
+                return Array.Empty<AudioVariantDto>();
+            }
+
+            var result = new AudioVariantDto[source.Length];
+            for (var i = 0; i < source.Length; i++)
+            {
+                var row = source[i];
+                if (row == null)
+                {
+                    result[i] = null;
+                    continue;
+                }
+
+                result[i] = new AudioVariantDto
+                {
+                    variantId = row.variantId,
+                    clipKey = row.clipKey,
+                    weight = Math.Max(0f, row.weight),
+                    volumeTrimDb = row.volumeTrimDb,
+                    startOffsetSeconds = Math.Max(0f, row.startOffsetSeconds),
+                };
+            }
+
+            return result;
+        }
+
         public bool IsBroken(AudioBindingEditorEntry entry)
         {
             return entry != null && entry.IsBroken(knownClipKeys);

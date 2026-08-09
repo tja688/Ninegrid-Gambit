@@ -150,6 +150,102 @@ namespace NineGrid.Content.Editor
             }
         }
 
+        public bool TryReplaceWorkingDto(
+            string state,
+            MusicBindingDto replacement,
+            out MusicBindingEditorEntry entry,
+            out string error)
+        {
+            entry = null;
+            error = null;
+            if (replacement == null)
+            {
+                error = "空补丁：replacement 不能为空。";
+                return false;
+            }
+
+            if (string.IsNullOrWhiteSpace(state))
+            {
+                error = "空补丁：state 不能为空。";
+                return false;
+            }
+
+            entry = entries.FirstOrDefault(candidate =>
+                string.Equals(candidate.State, state.Trim(), StringComparison.OrdinalIgnoreCase));
+            if (entry?.Dto == null)
+            {
+                error = "找不到 BGM 状态：" + state;
+                return false;
+            }
+
+            entry.Dto.enabled = replacement.enabled;
+            entry.Dto.clipKey = replacement.clipKey ?? string.Empty;
+            entry.Dto.volumeDb = replacement.volumeDb;
+            entry.Dto.startOffsetSeconds = Math.Max(0f, replacement.startOffsetSeconds);
+            entry.Dto.fadeInSeconds = Math.Max(0f, replacement.fadeInSeconds);
+            entry.Dto.fadeOutSeconds = Math.Max(0f, replacement.fadeOutSeconds);
+            entry.Dto.loop = replacement.loop;
+            // state remains session-authoritative.
+            return true;
+        }
+
+        public MusicBindingCatalogDto BuildWorkingCatalog()
+        {
+            var rows = new MusicBindingDto[entries.Count];
+            for (var i = 0; i < entries.Count; i++)
+            {
+                rows[i] = CloneDto(entries[i].Dto);
+            }
+
+            return new MusicBindingCatalogDto
+            {
+                schemaVersion = diskCatalog?.schemaVersion ?? 1,
+                ticket = diskCatalog?.ticket ?? "#172",
+                bindings = rows,
+            };
+        }
+
+        public string BuildWorkingJson()
+        {
+            return JsonUtility.ToJson(BuildWorkingCatalog(), true);
+        }
+
+        public void LoadFromSnapshots(string savedJson, string workingJson)
+        {
+            LoadFromJson(savedJson);
+            var workingCatalog = ParseCatalog(workingJson);
+            var workingRows = workingCatalog.bindings ?? Array.Empty<MusicBindingDto>();
+            for (var i = 0; i < workingRows.Length; i++)
+            {
+                var working = workingRows[i];
+                if (working == null || string.IsNullOrWhiteSpace(working.state))
+                {
+                    continue;
+                }
+
+                var entry = entries.FirstOrDefault(candidate =>
+                    string.Equals(candidate.State, working.state, StringComparison.OrdinalIgnoreCase));
+                if (entry?.Dto == null)
+                {
+                    entries.Add(new MusicBindingEditorEntry(working));
+                    continue;
+                }
+
+                entry.Dto.enabled = working.enabled;
+                entry.Dto.clipKey = working.clipKey ?? string.Empty;
+                entry.Dto.volumeDb = working.volumeDb;
+                entry.Dto.startOffsetSeconds = Math.Max(0f, working.startOffsetSeconds);
+                entry.Dto.fadeInSeconds = Math.Max(0f, working.fadeInSeconds);
+                entry.Dto.fadeOutSeconds = Math.Max(0f, working.fadeOutSeconds);
+                entry.Dto.loop = working.loop;
+            }
+
+            entries.Sort((left, right) => string.Compare(
+                left.State,
+                right.State,
+                StringComparison.OrdinalIgnoreCase));
+        }
+
         internal static MusicBindingDto CloneDto(MusicBindingDto source)
         {
             if (source == null)

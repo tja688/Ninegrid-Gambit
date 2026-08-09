@@ -1,0 +1,96 @@
+:root {
+  --bg-0: #2a221c;
+  --bg-1: #3a2f26;
+  --bg-2: #4a3c31;
+  --ink: #f4efe6;
+  --muted: #cbb8a4;
+  --amber: #d9a441;
+  --danger: #c75b39;
+  --radius: 8px;
+  --font: "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+}
+
+* { box-sizing: border-box; }
+html, body {
+  margin: 0;
+  height: 100%;
+  background: linear-gradient(180deg, #241d18 0%, var(--bg-0) 40%, #1d1713 100%);
+  color: var(--ink);
+  font: 13px/1.45 var(--font);
+}
+
+.topbar {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding: 10px 14px;
+  background: var(--bg-1);
+  border-bottom: 1px solid #5a4636;
+}
+
+.brand {
+  font-size: 15px;
+  font-weight: 650;
+  letter-spacing: 0.02em;
+}
+
+.badge {
+  border-left: 3px solid var(--amber);
+  background: var(--bg-2);
+  padding: 4px 10px;
+  border-radius: 6px;
+  color: var(--muted);
+}
+
+.badge.ok { color: var(--ink); border-left-color: #7cbc5c; }
+.badge.bad { color: #ffd0c0; border-left-color: var(--danger); }
+
+.status { color: var(--muted); flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.tabs {
+  display: flex;
+  gap: 6px;
+  padding: 10px 14px 0;
+}
+
+.tab {
+  appearance: none;
+  border: 0;
+  border-radius: var(--radius) var(--radius) 0 0;
+  background: #312820;
+  color: var(--muted);
+  padding: 8px 14px;
+  cursor: pointer;
+}
+
+.tab.active {
+  background: var(--bg-1);
+  color: var(--ink);
+  box-shadow: inset 0 -2px 0 var(--amber);
+}
+
+.panel {
+  margin: 0 14px 14px;
+  min-height: calc(100vh - 140px);
+  background: var(--bg-1);
+  border: 1px solid #5a4636;
+  border-radius: 0 var(--radius) var(--radius) var(--radius);
+  padding: 16px;
+}
+
+.placeholder { color: var(--muted); max-width: 52rem; }
+.kv { display: grid; grid-template-columns: 140px 1fr; gap: 6px 12px; margin-top: 12px; }
+.kv b { color: var(--amber); font-weight: 600; }
+
+.footer {
+  position: sticky;
+  bottom: 0;
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 14px;
+  background: rgba(26, 20, 16, 0.92);
+  border-top: 1px solid #5a4636;
+}
+
+.error { color: #ffb19a; white-space: pre-wrap; }
