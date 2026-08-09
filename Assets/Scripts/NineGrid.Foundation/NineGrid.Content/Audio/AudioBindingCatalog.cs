@@ -22,6 +22,24 @@ namespace NineGrid.Content.Audio
         public float startOffsetSeconds;
     }
 
+    /// <summary>#178 作者态：AI 草稿可被后续自动绑定覆盖；人工确认后默认保留。</summary>
+    public static class AudioBindingAuthoringStatuses
+    {
+        public const string AiDraft = "aiDraft";
+        public const string HumanConfirmed = "humanConfirmed";
+
+        public static bool IsHumanConfirmed(string status)
+        {
+            return string.Equals(status, HumanConfirmed, StringComparison.Ordinal);
+        }
+
+        public static bool IsAiDraft(string status)
+        {
+            return string.IsNullOrWhiteSpace(status)
+                || string.Equals(status, AiDraft, StringComparison.Ordinal);
+        }
+    }
+
     [Serializable]
     public sealed class AudioBindingDto
     {
@@ -40,6 +58,8 @@ namespace NineGrid.Content.Audio
         public string selectorRoomId;
         public string selectorItemDefId;
         public string selectorContentId;
+        /// <summary>aiDraft | humanConfirmed；缺省按草稿处理。</summary>
+        public string authoringStatus;
     }
 
     public sealed class AudioBinding
@@ -59,7 +79,8 @@ namespace NineGrid.Content.Audio
             string selectorSkillId,
             string selectorRoomId,
             string selectorItemDefId,
-            string selectorContentId)
+            string selectorContentId,
+            string authoringStatus = null)
         {
             CueId = cueId ?? string.Empty;
             Note = note ?? string.Empty;
@@ -76,6 +97,7 @@ namespace NineGrid.Content.Audio
             SelectorRoomId = selectorRoomId ?? string.Empty;
             SelectorItemDefId = selectorItemDefId ?? string.Empty;
             SelectorContentId = selectorContentId ?? string.Empty;
+            AuthoringStatus = authoringStatus ?? string.Empty;
             BindingKey = AudioBindingKey.Compose(
                 CueId,
                 SelectorCardDefId,
@@ -100,6 +122,7 @@ namespace NineGrid.Content.Audio
         public string SelectorRoomId { get; }
         public string SelectorItemDefId { get; }
         public string SelectorContentId { get; }
+        public string AuthoringStatus { get; }
         public string BindingKey { get; }
 
         public bool IsBaseBinding => string.IsNullOrEmpty(SelectorCardDefId)
@@ -211,7 +234,8 @@ namespace NineGrid.Content.Audio
                     row.selectorSkillId,
                     row.selectorRoomId,
                     row.selectorItemDefId,
-                    row.selectorContentId));
+                    row.selectorContentId,
+                    row.authoringStatus));
             }
 
             return new AudioBindingCatalog(result);

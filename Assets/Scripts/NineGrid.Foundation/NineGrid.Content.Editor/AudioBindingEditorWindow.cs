@@ -203,9 +203,10 @@ namespace NineGrid.Content.Editor
                 "声音绑定调音工作台",
                 "非 Play Mode 编辑正式 audio_bindings.json；Play Mode 查看最近请求并定位最终解析绑定。工作副本不会因关闭或重载自动保存。"));
             rootVisualElement.Add(ContentVisualWarmConsoleUi.BuildToolbar(
-                ("保存全部脏改动", SaveAll, "把全部 SFX/BGM 脏工作副本写入正式 JSON"),
+                ("保存全部脏改动", SaveAll, "把全部 SFX/BGM 脏工作副本写入正式 JSON，并标记为人工确认"),
                 ("回撤全部脏改动", RevertAll, "恢复最近一次成功保存的 SFX/BGM 磁盘快照"),
                 ("从磁盘重载", ReloadFromDisk, "丢弃未保存工作副本并重新读取正式 JSON"),
+                ("AI 初始绑定", RunAiBindPreserve, "高权限填充未确认条目；默认保留人工确认"),
                 ("停止素材试听", StopPreview, "停止当前编辑器素材试听"),
                 ("停止未知 BGM", StopUnknownMusic, "显式停止诊断发现的未认领 Music 来源")));
             UpdateToolbarEnabledState();
@@ -533,7 +534,8 @@ namespace NineGrid.Content.Editor
             contentRoot.Add(ContentVisualWarmConsoleUi.CreatePageHeader(
                 string.IsNullOrWhiteSpace(entry.Note) ? "（无音效说明）" : entry.Note,
                 entry.CueId + " · " + (string.IsNullOrEmpty(entry.Module) ? "未声明模块" : entry.Module)
-                + (string.IsNullOrEmpty(entry.AuthoritativeEmitter) ? string.Empty : " · " + entry.AuthoritativeEmitter)));
+                + (string.IsNullOrEmpty(entry.AuthoritativeEmitter) ? string.Empty : " · " + entry.AuthoritativeEmitter)
+                + AuthoringStatusSuffix(entry)));
 
             if (Application.isPlaying)
             {
@@ -553,7 +555,7 @@ namespace NineGrid.Content.Editor
             }
             else
             {
-                actions.Add(new Button(() => SaveEntry(entry)) { text = "保存此条" });
+                actions.Add(new Button(() => SaveEntry(entry)) { text = "保存此条（确认）" });
                 actions.Add(new Button(() =>
                 {
                     session.Revert(entry);
@@ -1113,9 +1115,52 @@ namespace NineGrid.Content.Editor
                 return;
             }
 
-            status = "已保存：" + entry.Note;
+            status = "已保存并人工确认：" + entry.Note;
             RefreshList();
             RefreshContent();
+        }
+
+        private void RunAiBindPreserve()
+        {
+            if (session.DirtyCount > 0 || musicSession.DirtyCount > 0)
+            {
+                if (!EditorUtility.DisplayDialog(
+                        "AI 初始绑定",
+                        "当前有未保存脏改动。继续将先写入 AI 绑定结果并重载磁盘（脏改动会丢失）。",
+                        "继续绑定",
+                        "取消"))
+                {
+                    return;
+                }
+            }
+
+            var result = AudioAiInitialBinder.RunAndWrite(forceRebindAll: false);
+            session.ReloadFromDisk();
+            musicSession.ReloadFromDisk();
+            status = result?.Report?.summary ?? "AI 绑定完成。";
+            RefreshList();
+            RefreshContent();
+            RefreshStatus();
+        }
+
+        private static string AuthoringStatusSuffix(AudioBindingEditorEntry entry)
+        {
+            if (entry == null || entry.Dto == null)
+            {
+                return string.Empty;
+            }
+
+            if (AudioBindingAuthoringStatuses.IsHumanConfirmed(entry.Dto.authoringStatus))
+            {
+                return " · 人工确认";
+            }
+
+            if (AudioBindingAuthoringStatuses.IsAiDraft(entry.Dto.authoringStatus))
+            {
+                return " · AI 草稿";
+            }
+
+            return string.Empty;
         }
 
         private void SaveAll()
@@ -1131,7 +1176,7 @@ namespace NineGrid.Content.Editor
                 return;
             }
 
-            status = "已保存全部 SFX/BGM 脏绑定。";
+            status = "已保存全部 SFX/BGM 脏绑定（人工确认）。";
             RefreshList();
             RefreshContent();
         }

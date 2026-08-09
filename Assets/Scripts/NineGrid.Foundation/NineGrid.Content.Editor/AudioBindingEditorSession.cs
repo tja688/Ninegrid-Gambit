@@ -105,6 +105,7 @@ namespace NineGrid.Content.Editor
                 selectorRoomId = string.Empty,
                 selectorItemDefId = string.Empty,
                 selectorContentId = string.Empty,
+                authoringStatus = AudioBindingAuthoringStatuses.AiDraft,
             };
         }
 
@@ -408,6 +409,7 @@ namespace NineGrid.Content.Editor
                 return true;
             }
 
+            MarkHumanConfirmed(entry.Dto);
             var rows = BuildRowsForSave(entry);
             if (!ValidateBindingKeys(rows, out error)
                 || !TryWriteCatalog(rows, out var json, out error))
@@ -429,6 +431,14 @@ namespace NineGrid.Content.Editor
                 return true;
             }
 
+            for (var i = 0; i < entries.Count; i++)
+            {
+                if (entries[i].IsDirty && entries[i].Dto != null)
+                {
+                    MarkHumanConfirmed(entries[i].Dto);
+                }
+            }
+
             var rows = BuildRowsForSave(null);
             if (!ValidateBindingKeys(rows, out error)
                 || !TryWriteCatalog(rows, out var json, out error))
@@ -447,6 +457,14 @@ namespace NineGrid.Content.Editor
             }
 
             return true;
+        }
+
+        private static void MarkHumanConfirmed(AudioBindingDto dto)
+        {
+            if (dto != null)
+            {
+                dto.authoringStatus = AudioBindingAuthoringStatuses.HumanConfirmed;
+            }
         }
 
         public void Revert(AudioBindingEditorEntry entry)
@@ -549,6 +567,7 @@ namespace NineGrid.Content.Editor
                 selectorRoomId = source.selectorRoomId,
                 selectorItemDefId = source.selectorItemDefId,
                 selectorContentId = source.selectorContentId,
+                authoringStatus = source.authoringStatus,
             };
         }
 
@@ -679,6 +698,10 @@ namespace NineGrid.Content.Editor
                 ticket = diskCatalog?.ticket ?? "#169",
                 bindings = rows ?? Array.Empty<AudioBindingDto>(),
             };
+            if (output.schemaVersion < 3)
+            {
+                output.schemaVersion = 3;
+            }
             json = JsonUtility.ToJson(output, true);
 
             if (string.IsNullOrEmpty(diskPath))
