@@ -8,6 +8,7 @@
     "designSlotName": "",
     "description": "[attack]+{relic.terror_mask.attack.value}，本场战斗每击杀{relic.terror_mask.remove.threshold}，随机破坏{relic.terror_mask.remove.count}只常规怪物",
     "faceIntro": "杀够六个，送走一个",
+    "liveTemplate": "[attack]+{relic.terror_mask.attack.value}，本场战斗再击杀{relic.terror_mask.remove.threshold}只后，随机破坏{relic.terror_mask.remove.count}只常规怪物",
     "attackPattern": "",
     "gold": 0,
     "stats": {
@@ -93,7 +94,7 @@
             "id": "relic.terror_mask.remove",
             "templateId": "tpl.relic.terror_mask.remove",
             "containerType": "Relic",
-            "argsJson": "{\"count\":1,\"reason\":\"relic.terror_mask\",\"threshold\":6}"
+            "argsJson": "{\"count\":1,\"reason\":\"relic.terror_mask\",\"threshold\":6,\"projectKey\":\"relic.terror_mask.remove.threshold\"}"
         }
     ],
     "effectIds": [],

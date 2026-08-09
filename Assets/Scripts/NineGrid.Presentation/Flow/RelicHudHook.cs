@@ -21,6 +21,14 @@ namespace NineGrid.Flow
         /// <summary>ADR-0027：右键开遗物详述（可穿透半黑屏）。</summary>
         public static Func<UnityEngine.Camera, UnityEngine.Vector2, bool> TryInspectRelic;
 
+        /// <summary>
+        /// ADR-0035：Settled 提交遗物倒计时剩余（SourceDefId=relic.*，键=装配id.键，值为剩余文本）。
+        /// </summary>
+        public static Action<string, string, string> CommitCountdownRemaining;
+
+        /// <summary>ADR-0035：Settled 清除遗物倒计时投影键。</summary>
+        public static Action<string, string> ClearCountdownRemaining;
+
         public static void RequestWire()
         {
             WireController?.Invoke();

@@ -12,9 +12,9 @@ using UnityEngine.Rendering;
 namespace NineGrid.Flow
 {
     /// <summary>
-    /// 局内遗物栏表现单例：从 Core PlayerModel.RelicDefIds 读写，刷到 RelicPanelAnchors 子槽图标。
-    /// 图标权威：一卡一文件 JSON sprites.mainIcon（#69）；JSON 缺省时回退 RelicVisualCatalog bootstrap。
-    /// ADR-0027：左键拖入共享回收区丢弃；栏位布局不因拖动重排。
+    /// 局内遗物栏表现单例：从 Core PlayerModel.RelicDefIds 读写，刷到 RelicPanelAnchors 子槽。
+    /// 显示：槽下挂「标准遗物图标模板」（图标+计数）；命中 Collider/HitProxy 仍在锚点（ADR-0027）。
+    /// 计数：只消费 Settled 已提交剩余（ADR-0035）；禁止 View 直读 Core 计数器。
     /// </summary>
     public sealed class RelicManagerSingleton : MonoBehaviour
     {
@@ -26,8 +26,14 @@ namespace NineGrid.Flow
         [Tooltip("遗物栏锚点根；留空则运行时按名查找 RelicPanelAnchors。")]
         [SerializeField] private Transform panelAnchors;
 
-        private SpriteRenderer[] _slotRenderers = System.Array.Empty<SpriteRenderer>();
+        [Tooltip("遗物栏图标显示壳；留空则按 CardChassisPaths.RelicHudIconPrefab 加载。")]
+        [SerializeField] private GameObject iconPrefab;
+
+        private RelicIconSlotView[] _slots = System.Array.Empty<RelicIconSlotView>();
         private readonly List<string> _displayedDefIds = new();
+        private readonly Dictionary<string, Dictionary<string, string>> _committedRemaining
+            = new(System.StringComparer.Ordinal);
+        private readonly List<RelicCountdownProjection.Entry> _projectionScratch = new(4);
         private CancellationTokenSource _dragCts;
         private int _dragSlotIndex = -1;
         private string _dragDefId;
@@ -81,7 +87,36 @@ namespace NineGrid.Flow
                 }
             }
 
-            ContentIconSlotBinder.ApplyFromPresentationJson(_slotRenderers, _displayedDefIds);
+            // 卸下的遗物清掉已提交剩余，避免重装时脏值。
+            PruneCommittedToDisplayed();
+
+            for (var i = 0; i < _slots.Length; i++)
+            {
+                var slot = _slots[i];
+                if (slot == null)
+                {
+                    continue;
+                }
+
+                if (i >= _displayedDefIds.Count)
+                {
+                    slot.ClearVisual();
+                    continue;
+                }
+
+                var defId = _displayedDefIds[i];
+                var sprite = ResolveSprite(defId);
+                if (sprite == null)
+                {
+                    slot.ClearVisual();
+                    continue;
+                }
+
+                slot.ApplySprite(sprite);
+                slot.BindDefId(defId);
+                RefreshCounterForSlot(slot, defId);
+            }
+
             // 拖动中栏位须保持隐藏，且不改布局（ADR-0027）。
             if (_dragSlotIndex >= 0)
             {
@@ -94,7 +129,55 @@ namespace NineGrid.Flow
             CancelDragImmediate(restoreSlot: false);
             EnsureBindings();
             _displayedDefIds.Clear();
-            ContentIconSlotBinder.ClearAll(_slotRenderers);
+            _committedRemaining.Clear();
+            for (var i = 0; i < _slots.Length; i++)
+            {
+                _slots[i]?.ClearVisual();
+            }
+        }
+
+        /// <summary>
+        /// Settled 提交遗物倒计时剩余（ADR-0035）：SourceDefId=relic.*，键为完整装配id.键。
+        /// </summary>
+        public void CommitCountdownRemaining(string relicDefId, string projectKey, string remainingText)
+        {
+            if (string.IsNullOrEmpty(relicDefId)
+                || string.IsNullOrEmpty(projectKey)
+                || !relicDefId.StartsWith("relic.", System.StringComparison.Ordinal))
+            {
+                return;
+            }
+
+            if (!_committedRemaining.TryGetValue(relicDefId, out var map) || map == null)
+            {
+                map = new Dictionary<string, string>(System.StringComparer.Ordinal);
+                _committedRemaining[relicDefId] = map;
+            }
+
+            map[projectKey] = remainingText ?? "0";
+            RefreshCounterForDefId(relicDefId);
+        }
+
+        /// <summary>
+        /// Settled 清除遗物倒计时投影键；回退装配周期初值（若仍装备）。
+        /// </summary>
+        public void ClearCountdownRemaining(string relicDefId, string projectKey)
+        {
+            if (string.IsNullOrEmpty(relicDefId) || string.IsNullOrEmpty(projectKey))
+            {
+                return;
+            }
+
+            if (_committedRemaining.TryGetValue(relicDefId, out var map) && map != null)
+            {
+                map.Remove(projectKey);
+                if (map.Count == 0)
+                {
+                    _committedRemaining.Remove(relicDefId);
+                }
+            }
+
+            RefreshCounterForDefId(relicDefId);
         }
 
         /// <summary>
@@ -134,8 +217,9 @@ namespace NineGrid.Flow
                 return false;
             }
 
-            if (!TryResolveRelicSlotUnderPointer(camera, screen, out var slotIndex, out var defId, out var slotRenderer)
-                || slotRenderer == null
+            if (!TryResolveRelicSlotUnderPointer(camera, screen, out var slotIndex, out var defId, out var slotView)
+                || slotView == null
+                || slotView.IconRenderer == null
                 || string.IsNullOrEmpty(defId))
             {
                 return false;
@@ -144,7 +228,7 @@ namespace NineGrid.Flow
             _dragSlotIndex = slotIndex;
             _dragDefId = defId;
             HideSlotVisual(slotIndex);
-            SpawnDragGhost(slotRenderer, camera, screen);
+            SpawnDragGhost(slotView.IconRenderer, camera, screen);
             hand?.SetRecycleZonePresentationActive(true, ResolveDiscardRelicGold());
 
             _dragCts?.Cancel();
@@ -223,7 +307,6 @@ namespace NineGrid.Flow
             _dragDefId = null;
             _dragCts?.Dispose();
             _dragCts = null;
-            // Core 已丢弃；同步栏位触发布局重算。
             SyncFromCore();
         }
 
@@ -282,29 +365,25 @@ namespace NineGrid.Flow
 
         private void HideSlotVisual(int slotIndex)
         {
-            if (slotIndex < 0 || slotIndex >= _slotRenderers.Length)
+            if (slotIndex < 0 || slotIndex >= _slots.Length)
             {
                 return;
             }
 
-            var sr = _slotRenderers[slotIndex];
-            if (sr != null)
-            {
-                sr.enabled = false;
-            }
+            _slots[slotIndex]?.SetDisplayVisible(false);
         }
 
         private void ShowSlotVisual(int slotIndex)
         {
-            if (slotIndex < 0 || slotIndex >= _slotRenderers.Length)
+            if (slotIndex < 0 || slotIndex >= _slots.Length || slotIndex >= _displayedDefIds.Count)
             {
                 return;
             }
 
-            var sr = _slotRenderers[slotIndex];
-            if (sr != null && sr.sprite != null)
+            var slot = _slots[slotIndex];
+            if (slot?.IconRenderer != null && slot.IconRenderer.sprite != null)
             {
-                sr.enabled = true;
+                slot.SetDisplayVisible(true);
             }
         }
 
@@ -313,11 +392,11 @@ namespace NineGrid.Flow
             Vector2 screen,
             out int slotIndex,
             out string defId,
-            out SpriteRenderer slotRenderer)
+            out RelicIconSlotView slotView)
         {
             slotIndex = -1;
             defId = null;
-            slotRenderer = null;
+            slotView = null;
             EnsureBindings();
 
             ContentIconSlotHitProxy bestRelic = null;
@@ -360,24 +439,105 @@ namespace NineGrid.Flow
             }
 
             defId = bestRelic.DefId;
-            slotRenderer = bestRelic.GetComponent<SpriteRenderer>();
-            if (slotRenderer == null)
+            for (var i = 0; i < _slots.Length; i++)
             {
-                return false;
-            }
-
-            for (var i = 0; i < _slotRenderers.Length; i++)
-            {
-                if (_slotRenderers[i] != slotRenderer)
+                var slot = _slots[i];
+                if (slot == null || slot.HitProxy != bestRelic)
                 {
                     continue;
                 }
 
                 slotIndex = i;
+                slotView = slot;
                 return i < _displayedDefIds.Count && _displayedDefIds[i] == defId;
             }
 
             return false;
+        }
+
+        private void RefreshCounterForDefId(string defId)
+        {
+            EnsureBindings();
+            for (var i = 0; i < _displayedDefIds.Count && i < _slots.Length; i++)
+            {
+                if (_displayedDefIds[i] != defId)
+                {
+                    continue;
+                }
+
+                RefreshCounterForSlot(_slots[i], defId);
+                return;
+            }
+        }
+
+        private void RefreshCounterForSlot(RelicIconSlotView slot, string defId)
+        {
+            if (slot == null || string.IsNullOrEmpty(defId))
+            {
+                return;
+            }
+
+            if (!RelicCountdownProjection.TryGetEntries(defId, _projectionScratch))
+            {
+                slot.SetCounter(null, visible: false);
+                return;
+            }
+
+            // 图标只显示一个裸数字：取首个 period>1 的投影键。
+            var entry = _projectionScratch[0];
+            string text;
+            if (_committedRemaining.TryGetValue(defId, out var map)
+                && map != null
+                && map.TryGetValue(entry.ProjectKey, out var committed)
+                && !string.IsNullOrEmpty(committed))
+            {
+                text = committed;
+            }
+            else
+            {
+                text = entry.Period.ToString();
+            }
+
+            slot.SetCounter(text, visible: true);
+        }
+
+        private void PruneCommittedToDisplayed()
+        {
+            if (_committedRemaining.Count == 0)
+            {
+                return;
+            }
+
+            var keep = new HashSet<string>(_displayedDefIds, System.StringComparer.Ordinal);
+            var remove = new List<string>();
+            foreach (var pair in _committedRemaining)
+            {
+                if (!keep.Contains(pair.Key))
+                {
+                    remove.Add(pair.Key);
+                }
+            }
+
+            for (var i = 0; i < remove.Count; i++)
+            {
+                _committedRemaining.Remove(remove[i]);
+            }
+        }
+
+        private static Sprite ResolveSprite(string defId)
+        {
+            if (CardPresentationConfigCatalog.TryGet(defId, out var dto)
+                && dto?.sprites != null
+                && !string.IsNullOrWhiteSpace(dto.sprites.mainIcon))
+            {
+                var fromJson = CardPresentationSpritePath.LoadSprite(dto.sprites.mainIcon);
+                if (fromJson != null)
+                {
+                    return fromJson;
+                }
+            }
+
+            return ContentIconSlotBinder.TryLoadLegacyRelicIconPublic(defId);
         }
 
         private static Vector3 ScreenToWorldOnPlane(Vector2 screen, Camera camera, float planeZ)
@@ -422,9 +582,35 @@ namespace NineGrid.Flow
                 }
             }
 
-            if ((_slotRenderers == null || _slotRenderers.Length == 0) && panelAnchors != null)
+            if (iconPrefab == null)
             {
-                _slotRenderers = ContentIconSlotBinder.CollectChildRenderers(panelAnchors);
+                iconPrefab = CardChassisPaths.LoadGameObject(CardChassisPaths.RelicHudIconPrefab);
+            }
+
+            if ((_slots == null || _slots.Length == 0) && panelAnchors != null)
+            {
+                var list = new List<RelicIconSlotView>(panelAnchors.childCount);
+                for (var i = 0; i < panelAnchors.childCount; i++)
+                {
+                    var child = panelAnchors.GetChild(i);
+                    if (child == null)
+                    {
+                        continue;
+                    }
+
+                    var view = new RelicIconSlotView(child);
+                    view.EnsureDisplay(iconPrefab);
+                    list.Add(view);
+                }
+
+                _slots = list.ToArray();
+            }
+            else if (_slots != null && iconPrefab != null)
+            {
+                for (var i = 0; i < _slots.Length; i++)
+                {
+                    _slots[i]?.EnsureDisplay(iconPrefab);
+                }
             }
         }
     }

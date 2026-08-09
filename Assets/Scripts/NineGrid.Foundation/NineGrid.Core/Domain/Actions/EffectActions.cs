@@ -80,85 +80,138 @@ namespace NineGrid.Core
         }
     }
 
-    /// <summary>
-    /// 效果倒计时剩余提交（ADR-0035）：读取效果触发器的倒计时计数器当前值，
-    /// 以 <see cref="CoreEventType.EffectCountdownChanged"/> 结算指令广播到表现层
-    /// （Settled 消费，键为完整「装配id.键」）。剩余只经本指令投影，禁止 View 直读 Core 计数器。
-    /// </summary>
-    public sealed class CommitEffectCountdownRemainingAction : GameAction
-    {
-        public CommitEffectCountdownRemainingAction(int cardUid, string projectionKey, string counterKey)
+        /// <summary>
+        /// 效果倒计时剩余提交（ADR-0035）：读取效果触发器的倒计时计数器当前值，
+        /// 以 <see cref="CoreEventType.EffectCountdownChanged"/> 结算指令广播到表现层
+        /// （Settled 消费，键为完整「装配id.键」）。剩余只经本指令投影，禁止 View 直读 Core 计数器。
+        /// 遗物效果 OwnerUid=0：计数器落在 Avatar 上，<paramref name="sourceDefId"/> 须为 relic.* 供 HUD 路由。
+        /// </summary>
+        public sealed class CommitEffectCountdownRemainingAction : GameAction
         {
-            CardUid = cardUid;
-            ProjectionKey = projectionKey ?? string.Empty;
-            CounterKey = counterKey ?? string.Empty;
+            public CommitEffectCountdownRemainingAction(int cardUid, string projectionKey, string counterKey)
+                : this(cardUid, projectionKey, counterKey, null)
+            {
+            }
+
+            public CommitEffectCountdownRemainingAction(
+                int cardUid,
+                string projectionKey,
+                string counterKey,
+                string sourceDefId)
+            {
+                CardUid = cardUid;
+                ProjectionKey = projectionKey ?? string.Empty;
+                CounterKey = counterKey ?? string.Empty;
+                SourceDefId = sourceDefId ?? string.Empty;
+            }
+
+            public int CardUid { get; private set; }
+            public string ProjectionKey { get; private set; }
+            public string CounterKey { get; private set; }
+            public string SourceDefId { get; private set; }
+            public override string ActionName { get { return "CommitEffectCountdownRemaining"; } }
+
+            public override GameActionResult Apply(GameActionContext context)
+            {
+                if (string.IsNullOrEmpty(ProjectionKey) || string.IsNullOrEmpty(CounterKey))
+                {
+                    return GameActionResult.Empty;
+                }
+
+                var registry = context.GetModel<CardRegistry>();
+                CardInstance counterHost = null;
+                if (CardUid > 0)
+                {
+                    registry.TryGet(CardUid, out counterHost);
+                }
+                else
+                {
+                    // 遗物：触发器写在 Avatar 上（OwnerCard ?? AvatarCard）。
+                    var avatarUid = context.GetModel<BoardModel>().AvatarUid.Value;
+                    if (avatarUid > 0)
+                    {
+                        registry.TryGet(avatarUid, out counterHost);
+                    }
+                }
+
+                if (counterHost == null)
+                {
+                    return GameActionResult.Empty;
+                }
+
+                var remaining = Math.Max(0, counterHost.Counters.Get(CounterKey));
+                var eventSource = !string.IsNullOrEmpty(SourceDefId)
+                    ? SourceDefId
+                    : (counterHost.DefId ?? string.Empty);
+                return new GameActionResult()
+                    .AddEvent(new CoreGameEvent(CoreEventType.EffectCountdownChanged, context.ActionId, ActionName)
+                        .WithCard(counterHost.Uid)
+                        .WithResultValue(remaining)
+                        .WithMessage(ProjectionKey)
+                        .WithSource(eventSource, ActionName));
+            }
         }
 
-        public int CardUid { get; private set; }
-        public string ProjectionKey { get; private set; }
-        public string CounterKey { get; private set; }
-        public override string ActionName { get { return "CommitEffectCountdownRemaining"; } }
-
-        public override GameActionResult Apply(GameActionContext context)
+        /// <summary>
+        /// 效果倒计时投影清除（ADR-0035 / #157）：效果被卸载（Deactivate）或持有者离开战斗时，
+        /// 广播清除指令让表现层移除该投影键的已提交剩余（回退静态/初始），
+        /// 避免失效效果继续投影「剩余N次」。键为完整「装配id.键」。
+        /// 遗物 OwnerUid=0 时仍广播，靠 <paramref name="sourceDefId"/>=relic.* 路由到遗物栏。
+        /// </summary>
+        public sealed class ClearEffectCountdownRemainingAction : GameAction
         {
-            if (string.IsNullOrEmpty(ProjectionKey) || string.IsNullOrEmpty(CounterKey))
+            public ClearEffectCountdownRemainingAction(int cardUid, string projectionKey)
+                : this(cardUid, projectionKey, null)
             {
-                return GameActionResult.Empty;
             }
 
-            CardInstance card;
-            if (!context.GetModel<CardRegistry>().TryGet(CardUid, out card) || card == null)
+            public ClearEffectCountdownRemainingAction(int cardUid, string projectionKey, string sourceDefId)
             {
-                return GameActionResult.Empty;
+                CardUid = cardUid;
+                ProjectionKey = projectionKey ?? string.Empty;
+                SourceDefId = sourceDefId ?? string.Empty;
             }
 
-            var remaining = Math.Max(0, card.Counters.Get(CounterKey));
-            return new GameActionResult()
-                .AddEvent(new CoreGameEvent(CoreEventType.EffectCountdownChanged, context.ActionId, ActionName)
-                    .WithCard(card.Uid)
-                    .WithResultValue(remaining)
+            public int CardUid { get; private set; }
+            public string ProjectionKey { get; private set; }
+            public string SourceDefId { get; private set; }
+            public override string ActionName { get { return "ClearEffectCountdownRemaining"; } }
+
+            public override GameActionResult Apply(GameActionContext context)
+            {
+                if (string.IsNullOrEmpty(ProjectionKey))
+                {
+                    return GameActionResult.Empty;
+                }
+
+                var registry = context.GetModel<CardRegistry>();
+                CardInstance card = null;
+                if (CardUid > 0)
+                {
+                    registry.TryGet(CardUid, out card);
+                }
+
+                var eventSource = !string.IsNullOrEmpty(SourceDefId)
+                    ? SourceDefId
+                    : (card != null ? card.DefId ?? string.Empty : string.Empty);
+
+                // 遗物清除：无 CardUid 也必须发出，否则 HUD 无法回退。
+                if (card == null && string.IsNullOrEmpty(eventSource))
+                {
+                    return GameActionResult.Empty;
+                }
+
+                var evt = new CoreGameEvent(CoreEventType.EffectCountdownCleared, context.ActionId, ActionName)
                     .WithMessage(ProjectionKey)
-                    .WithSource(card.DefId ?? string.Empty, ActionName));
-        }
-    }
+                    .WithSource(eventSource, ActionName);
+                if (card != null)
+                {
+                    evt = evt.WithCard(card.Uid);
+                }
 
-    /// <summary>
-    /// 效果倒计时投影清除（ADR-0035 / #157）：效果被卸载（Deactivate）或持有者离开战斗时，
-    /// 广播清除指令让表现层移除该投影键的已提交剩余（回退静态/初始），
-    /// 避免失效效果继续投影「剩余N次」。键为完整「装配id.键」。
-    /// </summary>
-    public sealed class ClearEffectCountdownRemainingAction : GameAction
-    {
-        public ClearEffectCountdownRemainingAction(int cardUid, string projectionKey)
-        {
-            CardUid = cardUid;
-            ProjectionKey = projectionKey ?? string.Empty;
-        }
-
-        public int CardUid { get; private set; }
-        public string ProjectionKey { get; private set; }
-        public override string ActionName { get { return "ClearEffectCountdownRemaining"; } }
-
-        public override GameActionResult Apply(GameActionContext context)
-        {
-            if (string.IsNullOrEmpty(ProjectionKey))
-            {
-                return GameActionResult.Empty;
+                return new GameActionResult().AddEvent(evt);
             }
-
-            CardInstance card;
-            if (!context.GetModel<CardRegistry>().TryGet(CardUid, out card) || card == null)
-            {
-                return GameActionResult.Empty;
-            }
-
-            return new GameActionResult()
-                .AddEvent(new CoreGameEvent(CoreEventType.EffectCountdownCleared, context.ActionId, ActionName)
-                    .WithCard(card.Uid)
-                    .WithMessage(ProjectionKey)
-                    .WithSource(card.DefId ?? string.Empty, ActionName));
         }
-    }
 
     /// <summary>
     /// 离开战斗时重置 Battle 作用域倒计时（ADR-0035 / #157）：遍历激活的效果实例，
@@ -193,10 +246,22 @@ namespace NineGrid.Core
                     continue;
                 }
 
-                CardInstance owner;
-                if (instance.Owner.OwnerUid <= 0
-                    || !registry.TryGet(instance.Owner.OwnerUid, out owner)
-                    || owner == null)
+                CardInstance owner = null;
+                if (instance.Owner.OwnerUid > 0)
+                {
+                    registry.TryGet(instance.Owner.OwnerUid, out owner);
+                }
+                else if (instance.Owner.ContainerType == EffectContainerType.Relic)
+                {
+                    // 遗物计数器落在 Avatar（与 OnCumulative 等触发器一致）。
+                    var avatarUid = context.GetModel<BoardModel>().AvatarUid.Value;
+                    if (avatarUid > 0)
+                    {
+                        registry.TryGet(avatarUid, out owner);
+                    }
+                }
+
+                if (owner == null)
                 {
                     continue;
                 }
@@ -204,9 +269,10 @@ namespace NineGrid.Core
                 var counterKey = countdown.ResolveCounterKey(instance.InstanceId);
                 owner.Counters.Set(counterKey, Math.Max(1, countdown.CountdownPeriod));
                 result.AddFollowUp(new CommitEffectCountdownRemainingAction(
-                    owner.Uid,
+                    instance.Owner.OwnerUid > 0 ? owner.Uid : 0,
                     countdown.CountdownProjectionKey,
-                    counterKey));
+                    counterKey,
+                    instance.Owner.SourceDefId));
             }
 
             return result;
@@ -1505,6 +1571,9 @@ namespace NineGrid.Core
             var countdown = instance.Trigger as ICountdownProjectionTrigger;
             var projectionKey = countdown != null ? countdown.CountdownProjectionKey : string.Empty;
             var ownerUid = instance.Owner != null ? instance.Owner.OwnerUid : 0;
+            var sourceDefId = instance.Owner != null ? instance.Owner.SourceDefId : string.Empty;
+            var isRelic = instance.Owner != null
+                && instance.Owner.ContainerType == EffectContainerType.Relic;
 
             if (instance.Owner != null
                 && instance.Owner.ContainerType == EffectContainerType.Relic)
@@ -1517,9 +1586,12 @@ namespace NineGrid.Core
                 .AddEvent(new CoreGameEvent(CoreEventType.EffectDeactivated, context.ActionId, ActionName)
                     .WithMessage(InstanceId));
 
-            if (!string.IsNullOrEmpty(projectionKey) && ownerUid > 0)
+            if (!string.IsNullOrEmpty(projectionKey) && (ownerUid > 0 || isRelic))
             {
-                result.AddFollowUp(new ClearEffectCountdownRemainingAction(ownerUid, projectionKey));
+                result.AddFollowUp(new ClearEffectCountdownRemainingAction(
+                    ownerUid,
+                    projectionKey,
+                    sourceDefId));
             }
 
             return result;

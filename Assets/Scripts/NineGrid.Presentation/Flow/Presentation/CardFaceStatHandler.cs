@@ -108,6 +108,14 @@ namespace NineGrid.Flow.Presentation
                 return;
             }
 
+            // 遗物优先：计数器挂在 Avatar 上时 CardUid 会误命中玩家卡面（ADR-0035）。
+            if (!string.IsNullOrEmpty(gameEvent.SourceDefId)
+                && gameEvent.SourceDefId.StartsWith("relic.", System.StringComparison.Ordinal))
+            {
+                TryApplyRelicCountdownRemaining(gameEvent);
+                return;
+            }
+
             if (!TryResolveCard(gameEvent, out var card))
             {
                 return;
@@ -130,12 +138,56 @@ namespace NineGrid.Flow.Presentation
                 return;
             }
 
+            if (!string.IsNullOrEmpty(gameEvent.SourceDefId)
+                && gameEvent.SourceDefId.StartsWith("relic.", System.StringComparison.Ordinal))
+            {
+                TryClearRelicCountdownRemaining(gameEvent);
+                return;
+            }
+
             if (!TryResolveCard(gameEvent, out var card))
             {
                 return;
             }
 
             CoreCardPresentationMapper.ClearCountdownRemaining(card, gameEvent.Message);
+        }
+
+        private static void TryApplyRelicCountdownRemaining(CoreGameEvent gameEvent)
+        {
+            var defId = gameEvent?.SourceDefId;
+            if (string.IsNullOrEmpty(defId)
+                || !defId.StartsWith("relic.", System.StringComparison.Ordinal))
+            {
+                return;
+            }
+
+            if (RelicHudHook.CommitCountdownRemaining == null)
+            {
+                RelicHudHook.RequestWire();
+            }
+
+            RelicHudHook.CommitCountdownRemaining?.Invoke(
+                defId,
+                gameEvent.Message,
+                Mathf.Max(0, gameEvent.ResultValue).ToString());
+        }
+
+        private static void TryClearRelicCountdownRemaining(CoreGameEvent gameEvent)
+        {
+            var defId = gameEvent?.SourceDefId;
+            if (string.IsNullOrEmpty(defId)
+                || !defId.StartsWith("relic.", System.StringComparison.Ordinal))
+            {
+                return;
+            }
+
+            if (RelicHudHook.ClearCountdownRemaining == null)
+            {
+                RelicHudHook.RequestWire();
+            }
+
+            RelicHudHook.ClearCountdownRemaining?.Invoke(defId, gameEvent.Message);
         }
 
         private static void ApplyBaseStat(CoreGameEvent gameEvent)

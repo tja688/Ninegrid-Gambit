@@ -13,10 +13,11 @@ status: accepted
 5. **描述格硬上限 26。** 基础描述、介绍、局内投影共用：字符 / 每个 `{…}` / 每个 `[…]` 各算 1 格。
 6. **范围。** 本决策只约束真实接线的机关卡 / 遗物 / 道具卡（HelpCard）；怪物攻击行动倒计时仍走既有行动计数槽（[ADR-0013](0013-action-countdown-unified.md)），不在本双套描述范围内。归档弃用内容不改。
 7. **迁移工艺。** 逐卡对照内核原子与人手文案审计，禁止盲脚本替换；保留手写句子，只修写死/错线；顺手补 `faceIntro`（简洁有趣，≤26 格，后人手打磨）。
+8. **遗物栏图标计数（addendum）。** 遗物 `ActivateRelic` 的 OwnerUid=0，倒计时计数器落在 Avatar 上；`CommitEffectCountdownRemaining` / `ClearEffectCountdownRemaining` 在 CardUid=0 时读 Avatar 计数器，并以 `SourceDefId=relic.*` 广播。表现层：`SourceDefId` 以 `relic.` 开头时**优先**路由到遗物栏 HUD（勿写入 Avatar 卡面）；图标裸数字只吃 Settled 已提交剩余（未提交前用装配 `threshold`/`every` 初值）。Collider 仍在锚点，显示壳为「标准遗物图标模板」。
 
 ## 为什么
 
-旧简单式与「设计 5、填出 1」类错线同源：同键多装配时首个命中、或参数根本未暴露。检查描述必须保持说明书式静态「每 N 次」，才能和局内「还剩几次」体感句拆开；若在同句上偷换剩余，会污染作者句式。投影数字走 Settled 与血/攻同一输出纪律（[ADR-0005](0005-card-face-beat-commit.md)），避免权威已变、表演未完就改字。
+旧简单式与「设计 5、填出 1」类错线同源：同键多装配时首个命中、或参数根本未暴露。检查描述必须保持说明书式静态「每 N 次」，才能和局内「还剩几次」体感句拆开；若在同句上偷换剩余，会污染作者句式。投影数字走 Settled 与血/攻同一输出纪律（[ADR-0005](0005-card-face-beat-commit.md)），避免权威已变、表演未完就改字。遗物若按 CardUid 硬绑会因 OwnerUid=0 丢事件，或误把剩余写上玩家卡面。
 
 ## 考虑过的替代
 
@@ -24,16 +25,19 @@ status: accepted
 - **局内描述直读内核计数器**：否决——打破卡面显示值提交纪律，会提前变数。
 - **无倒计时卡/未获得预览走另一套静态通路**：否决——双通路易分叉；改为投影层恒在、无动态时同文。
 - **叙事数字允许不进参数栏**：否决——审计无法区分「摆烂写死」与「有意非参数」。
+- **遗物倒计时另开一套非 Settled 通路**：否决——与卡面投影纪律分叉；统一 `projectKey` + Settled，仅多一条 SourceDefId 路由。
 
 ## 后果
 
 - 修订 `CONTEXT.md` 中卡面基础描述 / 卡面介绍，并新增局内描述投影、装配参数引用、描述格。
 - [ADR-0009](0009-parameterized-effect-templates.md) 第 4 点「卡面 `{参数}`」收紧为本 ADR 的限定式契约；初始插值仍成立，但战中剩余改由局内投影承担。
 - 编辑器校验、内容审计、Settled 倒计时提交与局内模板字段需落地；悬停简要（局内不触发）不在本 ADR 范围。
+- 遗物栏计数与卡面局内描述共享同一 `EffectCountdownChanged` 缝；试点内容（如 `relic.terror_mask`）须在模板 body 暴露 `{{projectKey}}` 并由装配实参填写。
 
 ## 相关
 
 - [ADR-0005](0005-card-face-beat-commit.md) — 卡面显示值结算锚点提交
 - [ADR-0009](0009-parameterized-effect-templates.md) — 参数化效果与卡面 `{参数}`
 - [ADR-0013](0013-action-countdown-unified.md) — 倒计时语义与计数设施
+- [ADR-0027](0027-relic-drag-recycle-and-rmb-inspect.md) — 遗物栏拖弃与右键详述
 - `CONTEXT.md` — 卡面基础描述、卡面介绍、局内描述投影、装配参数引用、描述格

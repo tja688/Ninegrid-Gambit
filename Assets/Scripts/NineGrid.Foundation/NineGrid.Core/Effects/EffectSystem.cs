@@ -282,7 +282,8 @@ namespace NineGrid.Core.Effects
                 new CommitEffectCountdownRemainingAction(
                     runtime.OwnerUid,
                     countdown.CountdownProjectionKey,
-                    countdown.CountdownCounterKey),
+                    countdown.CountdownCounterKey,
+                    runtime.SourceDefId),
             };
         }
 
@@ -304,7 +305,8 @@ namespace NineGrid.Core.Effects
             return new CommitEffectCountdownRemainingAction(
                 runtime.OwnerUid,
                 countdown.CountdownProjectionKey,
-                countdown.CountdownCounterKey);
+                countdown.CountdownCounterKey,
+                runtime.SourceDefId);
         }
 
         public EffectNonTriggerProbeResult ProbeWhyNotTriggered(string instanceId, TriggerContext triggerContext)

@@ -23,6 +23,9 @@ namespace NineGrid.Cards
         public const string TrapFacePrefab = "Assets/Resources/Prefabs/机关卡标准模版.prefab";
         public const string RoomOptionFacePrefab = "Assets/Resources/Prefabs/房间选项标准模板.prefab";
 
+        /// <summary>遗物栏 HUD 图标显示壳（只负责图标+计数；命中 Collider 仍在 RelicSlot 锚点）。</summary>
+        public const string RelicHudIconPrefab = "Assets/Prefabs/标准遗物图标模板.prefab";
+
         public const string RoomIconBattle = "Assets/Resources/Prefabs/地形图标/常规战斗图标.prefab";
         public const string RoomIconElite = "Assets/Resources/Prefabs/地形图标/困难战斗图标.prefab";
         public const string RoomIconBoss = "Assets/Resources/Prefabs/地形图标/Boss房图标.prefab";

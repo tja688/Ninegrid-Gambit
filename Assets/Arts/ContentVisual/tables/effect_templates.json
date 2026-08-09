@@ -1677,8 +1677,8 @@
   "design_text": "[击杀怪物时] 本关卡每移除6张怪物卡，随机移除一张九宫格上的普通等级怪物卡",
   "requires_json": "[\"NoOwnerEntity\"]",
   "conditions_json": "[]",
-  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnCumulative\",\"metric\":\"monsterRemoved\",\"threshold\":6,\"counterKey\":\"relic.terror_mask.remove\"},\"target\":{\"atom\":\"FilteredCards\",\"kind\":\"Monster\",\"zone\":\"Board\",\"excludeBoss\":true,\"random\":true,\"count\":\"{{count}}\"},\"action\":{\"atom\":\"RemoveCard\",\"destination\":\"Removed\",\"reason\":\"{{reason}}\"}}"
- },
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnCumulative\",\"metric\":\"monsterRemoved\",\"threshold\":\"{{threshold}}\",\"counterKey\":\"relic.terror_mask.remove\",\"projectKey\":\"{{projectKey}}\"},\"target\":{\"atom\":\"FilteredCards\",\"kind\":\"Monster\",\"zone\":\"Board\",\"excludeBoss\":true,\"random\":true,\"count\":\"{{count}}\"},\"action\":{\"atom\":\"RemoveCard\",\"destination\":\"Removed\",\"reason\":\"{{reason}}\"}}"
+},
  {
   "id": "tpl.relic.junk_cycler.use",
   "state": "Implemented",

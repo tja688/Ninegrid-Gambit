@@ -22,6 +22,8 @@ namespace NineGrid.Presentation.Controllers
         private System.Func<string, bool> mDiscardHandler;
         private System.Func<Camera, Vector2, bool> mBeginDragHandler;
         private System.Func<Camera, Vector2, bool> mInspectHandler;
+        private System.Action<string, string, string> mCommitCountdownHandler;
+        private System.Action<string, string> mClearCountdownHandler;
         private RelicManagerSingleton mRelicManager;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
@@ -33,6 +35,8 @@ namespace NineGrid.Presentation.Controllers
             RelicHudHook.TryDiscardRelic = null;
             RelicHudHook.TryBeginDragRelic = null;
             RelicHudHook.TryInspectRelic = null;
+            RelicHudHook.CommitCountdownRemaining = null;
+            RelicHudHook.ClearCountdownRemaining = null;
         }
 
         protected override void OnBind()
@@ -118,6 +122,16 @@ namespace NineGrid.Presentation.Controllers
             return CardInspectOverlayPresenter.TryOpenByDefId(defId, CardPresentationKind.Relic);
         }
 
+        public void HandleCommitCountdownRemaining(string relicDefId, string projectKey, string remainingText)
+        {
+            ResolveRelicManager()?.CommitCountdownRemaining(relicDefId, projectKey, remainingText);
+        }
+
+        public void HandleClearCountdownRemaining(string relicDefId, string projectKey)
+        {
+            ResolveRelicManager()?.ClearCountdownRemaining(relicDefId, projectKey);
+        }
+
         private void OnSyncRequested(RelicHudSyncRequestedEvent e)
         {
             if (e.Clear)
@@ -137,11 +151,15 @@ namespace NineGrid.Presentation.Controllers
             mDiscardHandler = HandleDiscardRelic;
             mBeginDragHandler = HandleBeginDragRelic;
             mInspectHandler = HandleInspectRelic;
+            mCommitCountdownHandler = HandleCommitCountdownRemaining;
+            mClearCountdownHandler = HandleClearCountdownRemaining;
             RelicHudHook.SyncFromCore = mSyncHandler;
             RelicHudHook.Clear = mClearHandler;
             RelicHudHook.TryDiscardRelic = mDiscardHandler;
             RelicHudHook.TryBeginDragRelic = mBeginDragHandler;
             RelicHudHook.TryInspectRelic = mInspectHandler;
+            RelicHudHook.CommitCountdownRemaining = mCommitCountdownHandler;
+            RelicHudHook.ClearCountdownRemaining = mClearCountdownHandler;
         }
 
         private void ClearHandlers()
@@ -171,11 +189,25 @@ namespace NineGrid.Presentation.Controllers
                 RelicHudHook.TryInspectRelic = null;
             }
 
+            if (mCommitCountdownHandler != null
+                && RelicHudHook.CommitCountdownRemaining == mCommitCountdownHandler)
+            {
+                RelicHudHook.CommitCountdownRemaining = null;
+            }
+
+            if (mClearCountdownHandler != null
+                && RelicHudHook.ClearCountdownRemaining == mClearCountdownHandler)
+            {
+                RelicHudHook.ClearCountdownRemaining = null;
+            }
+
             mSyncHandler = null;
             mClearHandler = null;
             mDiscardHandler = null;
             mBeginDragHandler = null;
             mInspectHandler = null;
+            mCommitCountdownHandler = null;
+            mClearCountdownHandler = null;
         }
 
         private RelicManagerSingleton ResolveRelicManager()

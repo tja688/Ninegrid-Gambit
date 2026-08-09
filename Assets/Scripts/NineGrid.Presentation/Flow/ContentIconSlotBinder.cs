@@ -151,6 +151,12 @@ namespace NineGrid.Flow
 
         private static Sprite TryLoadLegacyRelicIcon(string defId)
         {
+            return TryLoadLegacyRelicIconPublic(defId);
+        }
+
+        /// <summary>遗物栏 HUD 在 JSON mainIcon 失败时的 bootstrap 回退（与 ApplySlots 同源）。</summary>
+        public static Sprite TryLoadLegacyRelicIconPublic(string defId)
+        {
             if (string.IsNullOrEmpty(defId)
                 || !defId.StartsWith("relic.", System.StringComparison.Ordinal))
             {
