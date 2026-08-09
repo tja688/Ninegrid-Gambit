@@ -30,7 +30,10 @@ namespace NineGrid.Cards.Presentation
         /// <summary>行动倒计时；经 UpdateActionCount 指令 Commit，缺省 0。</summary>
         public int ActionCount;
 
-        /// <summary>攻击模式（ADR-0011）；用于卡面攻击模式槽矩阵。</summary>
+        /// <summary>
+        /// 攻击模式（ADR-0011）；局内怪物由 Core 投影，用于卡面攻击模式槽图标切换（见
+        /// <see cref="CardFaceAttackPatternIconResolver"/>，当前仅三档近战）。
+        /// </summary>
         public NineGrid.Core.AttackPattern AttackPattern;
 
         /// <summary>是否挂有技能同步触发（ADR-0038）。</summary>

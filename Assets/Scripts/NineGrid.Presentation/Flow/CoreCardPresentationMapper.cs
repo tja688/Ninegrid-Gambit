@@ -581,7 +581,7 @@ namespace NineGrid.Flow
 
             snapshot.FrameColor = ResolveFrameColor(dto);
 
-            // ADR-0038：预览/无 Core uid 路径从 JSON 填节奏矩阵字段。
+            // ADR-0038：预览/无 Core uid 路径从 JSON 填节奏矩阵字段（攻击模式→卡面图标见 CardFaceAttackPatternIconResolver）。
             if (AttackPatternRules.TryParse(dto.attackPattern, out var pattern))
             {
                 snapshot.AttackPattern = pattern;

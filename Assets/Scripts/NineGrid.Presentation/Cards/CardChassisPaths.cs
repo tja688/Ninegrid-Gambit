@@ -47,6 +47,12 @@ namespace NineGrid.Cards
             "Assets/Resources/Arts/Cards/CardFaceDescriptionInlineIconStyle.asset";
         public const string DescriptionIconCatalogAsset =
             "Assets/Resources/Arts/Cards/CardFaceDescriptionIconCatalog.asset";
+
+        /// <summary>
+        /// 怪物攻击模式槽图标图集（临时接线；完整节奏图标 Catalog 待后续）。
+        /// </summary>
+        public const string MonsterAttackPatternIconSheet =
+            "Assets/Resources/ContentArt/Multiple/1786242411378_d.png";
         public const string GlossaryRowPrefab =
             "Assets/Resources/Prefabs/UI/词条详细效果信息.prefab";
 

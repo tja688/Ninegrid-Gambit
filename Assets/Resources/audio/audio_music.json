@@ -4,8 +4,8 @@
     "bindings": [
         {
             "state": "MainMenu",
-            "enabled": false,
-            "clipKey": "audio/BGM/MainMenuTheme",
+            "enabled": true,
+            "clipKey": "audio/BGM/Celtic-Air-WTJ014801",
             "volumeDb": -6,
             "startOffsetSeconds": 0,
             "fadeInSeconds": 0.15,
@@ -14,8 +14,8 @@
         },
         {
             "state": "RunExploration",
-            "enabled": false,
-            "clipKey": "audio/BGM/ExplorationTheme",
+            "enabled": true,
+            "clipKey": "audio/BGM/Celtic-Air-WTJ014801",
             "volumeDb": -6,
             "startOffsetSeconds": 0,
             "fadeInSeconds": 0.15,
@@ -24,8 +24,8 @@
         },
         {
             "state": "Battle",
-            "enabled": false,
-            "clipKey": "audio/BGM/BattleTheme",
+            "enabled": true,
+            "clipKey": "audio/BGM/Celtic-Air-WTJ014801",
             "volumeDb": -6,
             "startOffsetSeconds": 0,
             "fadeInSeconds": 0.15,
@@ -34,8 +34,8 @@
         },
         {
             "state": "BossBattle",
-            "enabled": false,
-            "clipKey": "audio/BGM/BossBattleTheme",
+            "enabled": true,
+            "clipKey": "audio/BGM/Celtic-Air-WTJ014801",
             "volumeDb": -6,
             "startOffsetSeconds": 0,
             "fadeInSeconds": 0.15,
@@ -44,8 +44,8 @@
         },
         {
             "state": "Victory",
-            "enabled": false,
-            "clipKey": "audio/BGM/VictoryTheme",
+            "enabled": true,
+            "clipKey": "audio/BGM/Celtic-Air-WTJ014801",
             "volumeDb": -6,
             "startOffsetSeconds": 0,
             "fadeInSeconds": 0.05,
@@ -54,8 +54,8 @@
         },
         {
             "state": "Defeat",
-            "enabled": false,
-            "clipKey": "audio/BGM/DefeatTheme",
+            "enabled": true,
+            "clipKey": "audio/BGM/Celtic-Air-WTJ014801",
             "volumeDb": -6,
             "startOffsetSeconds": 0,
             "fadeInSeconds": 0.05,

@@ -6,56 +6,11 @@
     "sfxRoot": "Assets/Resources/audio/SFX",
     "entries": [
         {
-            "guid": "5d1beb7208557cf498f2a418e050a63d",
-            "assetPath": "Assets/Resources/audio/BGM/BattleTheme.mp3",
-            "resourcesKey": "audio/BGM/BattleTheme",
-            "sha256": "bd78de4c684391722dff940f7fd33c53fd7aaea7078dc2fe78a280c4987c5ca2",
-            "sizeBytes": 9848,
-            "kind": "BGM",
-            "loadPolicy": "preload"
-        },
-        {
-            "guid": "48fdc3ae5bafa3b4ca7b67da6cf6048f",
-            "assetPath": "Assets/Resources/audio/BGM/BossBattleTheme.mp3",
-            "resourcesKey": "audio/BGM/BossBattleTheme",
-            "sha256": "1ef8ea84e95200ad5fed6a2d7d12633308b40fe3c044c4b9034ca86496ce81a3",
-            "sizeBytes": 11729,
-            "kind": "BGM",
-            "loadPolicy": "preload"
-        },
-        {
-            "guid": "53c365509d61f1742bbfb226f402d56c",
-            "assetPath": "Assets/Resources/audio/BGM/DefeatTheme.mp3",
-            "resourcesKey": "audio/BGM/DefeatTheme",
-            "sha256": "dc0ae1339663e5c52a6d197bb3a1f5c37e7375b5d49690421cfc6377b9ad495d",
-            "sizeBytes": 61312,
-            "kind": "BGM",
-            "loadPolicy": "preload"
-        },
-        {
-            "guid": "e4683b9e170bce945a45d85fea23b301",
-            "assetPath": "Assets/Resources/audio/BGM/ExplorationTheme.mp3",
-            "resourcesKey": "audio/BGM/ExplorationTheme",
-            "sha256": "7566ca18c63dcfd51f5d0a1c31b17b3f0cf376b624d507aab51319238636495c",
-            "sizeBytes": 10475,
-            "kind": "BGM",
-            "loadPolicy": "preload"
-        },
-        {
-            "guid": "457eafd5ecc900e4eb9b99ac150825a8",
-            "assetPath": "Assets/Resources/audio/BGM/MainMenuTheme.mp3",
-            "resourcesKey": "audio/BGM/MainMenuTheme",
-            "sha256": "0640800d66d8a7e6f351992b382e59bf21c4b0fd6eca05c8a220d20f267f8a64",
-            "sizeBytes": 30922,
-            "kind": "BGM",
-            "loadPolicy": "preload"
-        },
-        {
-            "guid": "d58c3a4c6f8eb2b4e97dc0d082376b10",
-            "assetPath": "Assets/Resources/audio/BGM/VictoryTheme.mp3",
-            "resourcesKey": "audio/BGM/VictoryTheme",
-            "sha256": "3ac7c8f05063909158549871a9cd149313d6eda48958cb63a850e8b3c3cee7dc",
-            "sizeBytes": 7340,
+            "guid": "8a968093dfaa57b40b7aef993ed60fdc",
+            "assetPath": "Assets/Resources/audio/BGM/Celtic-Air-WTJ014801.mp3",
+            "resourcesKey": "audio/BGM/Celtic-Air-WTJ014801",
+            "sha256": "0fe056e54f30af3c574fbfafdb035d8304fada2c76d37b0b7a46a7958e6a75bb",
+            "sizeBytes": 2448384,
             "kind": "BGM",
             "loadPolicy": "preload"
         },
@@ -182,6 +137,60 @@
             "resourcesKey": "audio/SFX/530356 丹尼尔波德洛维奇 电击",
             "sha256": "fce9fac499daf9f5dbecbc31213c6a39fa847250653813d5b9faf70e83e3e213",
             "sizeBytes": 11314,
+            "kind": "SFX",
+            "loadPolicy": "first_use_cached"
+        },
+        {
+            "guid": "5d1beb7208557cf498f2a418e050a63d",
+            "assetPath": "Assets/Resources/audio/SFX/BattleTheme.mp3",
+            "resourcesKey": "audio/SFX/BattleTheme",
+            "sha256": "bd78de4c684391722dff940f7fd33c53fd7aaea7078dc2fe78a280c4987c5ca2",
+            "sizeBytes": 9848,
+            "kind": "SFX",
+            "loadPolicy": "first_use_cached"
+        },
+        {
+            "guid": "48fdc3ae5bafa3b4ca7b67da6cf6048f",
+            "assetPath": "Assets/Resources/audio/SFX/BossBattleTheme.mp3",
+            "resourcesKey": "audio/SFX/BossBattleTheme",
+            "sha256": "1ef8ea84e95200ad5fed6a2d7d12633308b40fe3c044c4b9034ca86496ce81a3",
+            "sizeBytes": 11729,
+            "kind": "SFX",
+            "loadPolicy": "first_use_cached"
+        },
+        {
+            "guid": "53c365509d61f1742bbfb226f402d56c",
+            "assetPath": "Assets/Resources/audio/SFX/DefeatTheme.mp3",
+            "resourcesKey": "audio/SFX/DefeatTheme",
+            "sha256": "dc0ae1339663e5c52a6d197bb3a1f5c37e7375b5d49690421cfc6377b9ad495d",
+            "sizeBytes": 61312,
+            "kind": "SFX",
+            "loadPolicy": "first_use_cached"
+        },
+        {
+            "guid": "e4683b9e170bce945a45d85fea23b301",
+            "assetPath": "Assets/Resources/audio/SFX/ExplorationTheme.mp3",
+            "resourcesKey": "audio/SFX/ExplorationTheme",
+            "sha256": "7566ca18c63dcfd51f5d0a1c31b17b3f0cf376b624d507aab51319238636495c",
+            "sizeBytes": 10475,
+            "kind": "SFX",
+            "loadPolicy": "first_use_cached"
+        },
+        {
+            "guid": "457eafd5ecc900e4eb9b99ac150825a8",
+            "assetPath": "Assets/Resources/audio/SFX/MainMenuTheme.mp3",
+            "resourcesKey": "audio/SFX/MainMenuTheme",
+            "sha256": "0640800d66d8a7e6f351992b382e59bf21c4b0fd6eca05c8a220d20f267f8a64",
+            "sizeBytes": 30922,
+            "kind": "SFX",
+            "loadPolicy": "first_use_cached"
+        },
+        {
+            "guid": "d58c3a4c6f8eb2b4e97dc0d082376b10",
+            "assetPath": "Assets/Resources/audio/SFX/VictoryTheme.mp3",
+            "resourcesKey": "audio/SFX/VictoryTheme",
+            "sha256": "3ac7c8f05063909158549871a9cd149313d6eda48958cb63a850e8b3c3cee7dc",
+            "sizeBytes": 7340,
             "kind": "SFX",
             "loadPolicy": "first_use_cached"
         },
