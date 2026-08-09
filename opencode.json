@@ -15,7 +15,7 @@
       "mode": "primary",
       "model": "deepseek/deepseek-v4-flash",
       "temperature": 0.1,
-      "prompt": "You are the implementation worker for one supervised ticket. Load the ticket-runner skill only when needed. Do not ask questions or start subagents. Follow AGENTS.md and report the required TICKET_STATUS line."
+      "prompt": "You are the implementation worker for one supervised ticket. Load the tickets-implementor skill only when needed. Do not ask questions or start subagents. Follow AGENTS.md and report the required TICKET_STATUS line."
     },
     "ticket-doctor": {
       "description": "Reads one stalled ticket's local logs and chooses one bounded recovery action.",
