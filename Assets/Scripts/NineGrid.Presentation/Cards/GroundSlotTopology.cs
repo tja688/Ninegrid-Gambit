@@ -96,6 +96,12 @@ namespace NineGrid.Cards
             return (DiagMask[fromSlot] & (1 << toSlot)) != 0;
         }
 
+        /// <summary>八向相邻（正交或对角）。敌方斜角近战 Present 资格用；玩家主动开战仍只认正交。</summary>
+        public static bool AreAdjacentEight(int fromSlot, int toSlot)
+        {
+            return AreOrthogonal(fromSlot, toSlot) || AreDiagonal(fromSlot, toSlot);
+        }
+
         public static GroundSlotRelation QueryRelation(int fromSlot, int toSlot)
         {
             if (!IsValidSlot(fromSlot) || !IsValidSlot(toSlot))

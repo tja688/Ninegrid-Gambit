@@ -602,7 +602,7 @@ namespace NineGrid.Cards
                 return false;
             }
 
-            if (!geometry.IsAvatarOrthogonalBattleSlot(attackerSlot)
+            if (!GroundSlotTopology.AreAdjacentEight(attackerSlot, GroundSlotTopology.AvatarReservedSlot)
                 || !geometry.TryGetCardAt(attackerSlot, out attacker))
             {
                 Debug.LogWarning($"[FieldBattle] 格位 {attackerSlot} 不可触发怪物反击。");

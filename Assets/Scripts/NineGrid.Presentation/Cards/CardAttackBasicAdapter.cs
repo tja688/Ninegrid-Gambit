@@ -9,7 +9,8 @@ using UnityEngine.Rendering;
 namespace NineGrid.Cards
 {
     /// <summary>
-    /// 场地级 CardAttackBasic 执行器：管理四向交战 rig，按 BattleBindParams 绑参播放。
+    /// 场地级 CardAttackBasic 执行器：管理交战 rig，按 BattleBindParams 绑参播放。
+    /// 玩家主动开战仍只接四向正交；敌方单向打击（Counter）支持对角，缺对角 rig 时用相对冲刺回退四向。
     /// 编排路由由 FieldBattleManager + Catalog 负责，本类不决定变体语义。
     /// </summary>
     [DisallowMultipleComponent]
@@ -75,18 +76,100 @@ namespace NineGrid.Cards
         }
 
         /// <summary>
-        /// 怪物反击玩家：攻击格与 Avatar 正交相邻时，选用与玩家进攻相反方向的 rig，并互换攻击者/受击者绑定。
+        /// 怪物→Avatar 单向打击 Present：攻击格与 Avatar 正交或对角相邻时，选用反向方向 rig。
+        /// 场景仅有四向 rig 时，对角回退到任意可用四向（Counter 绑参使用相对冲刺朝真实 Avatar）。
         /// </summary>
         public bool TryResolveCounterAttackDirectionForAttackerSlot(int attackerSlot, out CardBoardDirection direction)
         {
             direction = CardBoardDirection.None;
-            if (!TryResolveDirectionForVictimSlot(attackerSlot, out var avatarToMonster))
+            if (!GroundSlotTopology.IsValidSlot(attackerSlot)
+                || !GroundSlotTopology.AreAdjacentEight(
+                    attackerSlot,
+                    GroundSlotTopology.AvatarReservedSlot))
             {
                 return false;
             }
 
-            direction = CardBoardDirectionUtility.GetOrthogonalOpposite(avatarToMonster);
-            return direction != CardBoardDirection.None && _rigByDirection.ContainsKey(direction);
+            var avatarToMonster = CardBoardDirectionUtility.ComputeSelfDirection(
+                attackerSlot,
+                GroundSlotTopology.AvatarReservedSlot);
+            if (avatarToMonster == CardBoardDirection.None)
+            {
+                return false;
+            }
+
+            EnsureRigsCollected();
+            var preferred = CardBoardDirectionUtility.GetOpposite(avatarToMonster);
+            if (preferred != CardBoardDirection.None
+                && _rigByDirection.ContainsKey(preferred))
+            {
+                direction = preferred;
+                return true;
+            }
+
+            return TryPickFallbackCounterRig(avatarToMonster, out direction);
+        }
+
+        /// <summary>
+        /// 对角无专用 rig 时，优先取对角分量上的正交向，再任意可用四向。
+        /// </summary>
+        private bool TryPickFallbackCounterRig(
+            CardBoardDirection avatarToMonster,
+            out CardBoardDirection direction)
+        {
+            direction = CardBoardDirection.None;
+            foreach (var candidate in EnumerateCounterFallbackDirections(avatarToMonster))
+            {
+                if (_rigByDirection.ContainsKey(candidate))
+                {
+                    direction = candidate;
+                    return true;
+                }
+            }
+
+            foreach (var pair in _rigByDirection)
+            {
+                direction = pair.Key;
+                return true;
+            }
+
+            return false;
+        }
+
+        private static IEnumerable<CardBoardDirection> EnumerateCounterFallbackDirections(
+            CardBoardDirection avatarToMonster)
+        {
+            switch (avatarToMonster)
+            {
+                case CardBoardDirection.UpLeft:
+                    yield return CardBoardDirection.DownRight;
+                    yield return CardBoardDirection.Down;
+                    yield return CardBoardDirection.Right;
+                    break;
+                case CardBoardDirection.UpRight:
+                    yield return CardBoardDirection.DownLeft;
+                    yield return CardBoardDirection.Down;
+                    yield return CardBoardDirection.Left;
+                    break;
+                case CardBoardDirection.DownLeft:
+                    yield return CardBoardDirection.UpRight;
+                    yield return CardBoardDirection.Up;
+                    yield return CardBoardDirection.Right;
+                    break;
+                case CardBoardDirection.DownRight:
+                    yield return CardBoardDirection.UpLeft;
+                    yield return CardBoardDirection.Up;
+                    yield return CardBoardDirection.Left;
+                    break;
+                default:
+                    var opposite = CardBoardDirectionUtility.GetOpposite(avatarToMonster);
+                    if (opposite != CardBoardDirection.None)
+                    {
+                        yield return opposite;
+                    }
+
+                    break;
+            }
         }
 
         /// <summary>
@@ -328,6 +411,13 @@ namespace NineGrid.Cards
                 return;
             }
 
+            // 对角无专用 Timeline 时回退四向 rig；必须相对冲刺，否则会播错烘焙轴向。
+            if (GroundSlotTopology.AreDiagonal(attackerSlot, GroundSlotTopology.AvatarReservedSlot)
+                && (!bind.UseRelativeAttackerMotion || !bind.UseRelativeVictimKnockback))
+            {
+                bind = WithForcedRelativeMotion(in bind);
+            }
+
             var attackerTransform = attacker.Transform;
             var victimTransform = victim.Transform;
             victim.TryGetEffectManager(out var victimEffects);
@@ -358,6 +448,24 @@ namespace NineGrid.Cards
                 victimSnapshot,
                 bind,
                 cancellationToken);
+        }
+
+        private static BattleBindParams WithForcedRelativeMotion(in BattleBindParams bind)
+        {
+            return new BattleBindParams(
+                bind.Intent,
+                bind.ProfileId,
+                bind.RigFamily,
+                useRelativeAttackerMotion: true,
+                useRelativeVictimKnockback: true,
+                bind.VictimKnockbackCoefficient,
+                bind.BindDeathCallback,
+                bind.HitFlashTimingPolicy,
+                bind.HitFlashCallbackDelay,
+                bind.DeathCallbackDelay,
+                bind.RestoreAttackerToSlot,
+                bind.RestoreVictimToSlot,
+                bind.RequireFinalStateGuard);
         }
 
         private async UniTask PlayBoundRigAsync(

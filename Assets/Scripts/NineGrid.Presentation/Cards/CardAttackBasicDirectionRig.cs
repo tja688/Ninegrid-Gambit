@@ -1432,6 +1432,27 @@ namespace NineGrid.Cards
                 return CardBoardDirection.None;
             }
 
+            // 复合对角名须先于单轴「Up/Down/Left/Right」匹配（Contains("Up") 会误吃 UpLeft）。
+            if (rigName.Contains("UpLeft"))
+            {
+                return CardBoardDirection.UpLeft;
+            }
+
+            if (rigName.Contains("UpRight"))
+            {
+                return CardBoardDirection.UpRight;
+            }
+
+            if (rigName.Contains("DownLeft"))
+            {
+                return CardBoardDirection.DownLeft;
+            }
+
+            if (rigName.Contains("DownRight"))
+            {
+                return CardBoardDirection.DownRight;
+            }
+
             if (rigName.Contains("Up"))
             {
                 return CardBoardDirection.Up;

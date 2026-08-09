@@ -30,8 +30,23 @@ namespace NineGrid.Cards
 
         /// <summary>
         /// 正交四向取反（用于怪物反击：攻击格与玩家格互换后选用反向 rig）。
+        /// 对角输入返回 <see cref="CardBoardDirection.None"/>；八向取反见 <see cref="GetOpposite"/>。
         /// </summary>
         public static CardBoardDirection GetOrthogonalOpposite(CardBoardDirection direction)
+        {
+            var opposite = GetOpposite(direction);
+            return opposite switch
+            {
+                CardBoardDirection.Up or CardBoardDirection.Down
+                    or CardBoardDirection.Left or CardBoardDirection.Right => opposite,
+                _ => CardBoardDirection.None,
+            };
+        }
+
+        /// <summary>
+        /// 八向取反（正交与对角）。用于敌方单向打击 Present：怪→Avatar 选用反向方向。
+        /// </summary>
+        public static CardBoardDirection GetOpposite(CardBoardDirection direction)
         {
             return direction switch
             {
@@ -39,6 +54,10 @@ namespace NineGrid.Cards
                 CardBoardDirection.Down => CardBoardDirection.Up,
                 CardBoardDirection.Left => CardBoardDirection.Right,
                 CardBoardDirection.Right => CardBoardDirection.Left,
+                CardBoardDirection.UpLeft => CardBoardDirection.DownRight,
+                CardBoardDirection.UpRight => CardBoardDirection.DownLeft,
+                CardBoardDirection.DownLeft => CardBoardDirection.UpRight,
+                CardBoardDirection.DownRight => CardBoardDirection.UpLeft,
                 _ => CardBoardDirection.None,
             };
         }
