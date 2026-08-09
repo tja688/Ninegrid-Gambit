@@ -1,12 +1,11 @@
 using NineGrid.Cards;
-using NineGrid.Cards.Anim;
 using NineGrid.Content.CardPresentation;
 using UnityEngine;
 
 namespace NineGrid.Flow.BattleInfoPreview
 {
     /// <summary>
-    /// 战斗信息预览槽：固定框 + SpriteMask 裁切 + Cover 图标 + 命中代理 + 黄边悬停。
+    /// 战斗信息预览槽：命中代理 + 黄边悬停；图标复用卡面 <c>mainVisual</c>，再叠分类外部缩放。
     /// </summary>
     [DisallowMultipleComponent]
     [RequireComponent(typeof(SpriteRenderer))]
@@ -20,11 +19,11 @@ namespace NineGrid.Flow.BattleInfoPreview
         [SerializeField] private BattleInfoPreviewIconPlayer iconPlayer;
         [SerializeField] private BattleInfoPreviewHighlight highlight;
         [SerializeField] private BoxCollider2D hitCollider;
-        [SerializeField] private SpriteMask slotMask;
         [SerializeField] private Vector2 slotLocalSize;
         [SerializeField] private Sprite frameSprite;
         [SerializeField] private string defId;
         [SerializeField] private CardPresentationKind kindHint = CardPresentationKind.Unknown;
+        [SerializeField] private float externalScale = 1f;
 
         private bool _slotSizeCaptured;
 
@@ -63,14 +62,11 @@ namespace NineGrid.Flow.BattleInfoPreview
         public void EnsureWired(Color highlightColor, Sprite highlightSprite = null)
         {
             EnsureArtHierarchy();
-            EnsureSlotMask();
 
             if (iconRenderer != null && iconRenderer.sortingOrder < HitSortBoost)
             {
                 iconRenderer.sortingOrder = HitSortBoost;
             }
-
-            SyncMaskSortingRange();
 
             if (iconPlayer == null)
             {
@@ -93,15 +89,16 @@ namespace NineGrid.Flow.BattleInfoPreview
             }
 
             highlight.Configure(highlightColor, highlightSprite);
-            highlight.BindSlotFrame(frameSprite, SlotLocalSize, iconRenderer);
+            highlight.BindTarget(iconRenderer, SlotLocalSize);
 
             EnsureCollider();
         }
 
-        public void Bind(string contentDefId, CardPresentationKind kind)
+        public void Bind(string contentDefId, CardPresentationKind kind, float iconExternalScale = 1f)
         {
             defId = contentDefId ?? string.Empty;
             kindHint = kind;
+            externalScale = iconExternalScale > 0.0001f ? iconExternalScale : 1f;
             if (string.IsNullOrEmpty(defId))
             {
                 Clear();
@@ -113,7 +110,7 @@ namespace NineGrid.Flow.BattleInfoPreview
                 EnsureWired(new Color(1f, 0.92f, 0.2f, 0.95f));
             }
 
-            iconPlayer.PlayIdleOrStatic(defId);
+            iconPlayer.PlayIdleOrStatic(defId, externalScale);
             SyncColliderToSlot();
             highlight?.Hide();
         }
@@ -122,6 +119,7 @@ namespace NineGrid.Flow.BattleInfoPreview
         {
             defId = string.Empty;
             kindHint = CardPresentationKind.Unknown;
+            externalScale = 1f;
             iconPlayer?.ClearVisual();
             highlight?.Hide();
             if (hitCollider != null)
@@ -130,8 +128,12 @@ namespace NineGrid.Flow.BattleInfoPreview
             }
         }
 
-        /// <summary>换图后由 IconPlayer 调用：按槽尺寸 Cover，可选 JSON 构图覆盖。</summary>
-        public void ApplyArtFit(CardPresentationBattleInfoSlotDisplayDto display)
+        /// <summary>换图后由 IconPlayer 调用：复用卡面 mainVisual，再乘外部缩放。</summary>
+        public void ApplyMainVisual(
+            CardPresentationMainVisualDto mainVisual,
+            float slotOffsetX,
+            float slotOffsetY,
+            float iconExternalScale)
         {
             EnsureArtHierarchy();
             if (iconRenderer == null || iconRenderer.sprite == null)
@@ -140,8 +142,12 @@ namespace NineGrid.Flow.BattleInfoPreview
                 return;
             }
 
-            BattleInfoSlotArtFit.ApplyCover(iconRenderer, SlotLocalSize, display);
-            SyncMaskSortingRange();
+            BattleInfoSlotArtFit.ApplyMainVisual(
+                iconRenderer,
+                mainVisual,
+                slotOffsetX,
+                slotOffsetY,
+                iconExternalScale);
             SyncColliderToSlot();
         }
 
@@ -211,7 +217,7 @@ namespace NineGrid.Flow.BattleInfoPreview
                 iconRenderer = art.gameObject.AddComponent<SpriteRenderer>();
             }
 
-            // 根上原占位 SpriteRenderer 只用于量尺寸 / 作 Mask 形状，不再当图标。
+            // 根上原占位 SpriteRenderer 只用于量尺寸 / 高亮框，不再当图标。
             var rootSr = GetComponent<SpriteRenderer>();
             if (rootSr != null && rootSr != iconRenderer)
             {
@@ -235,7 +241,14 @@ namespace NineGrid.Flow.BattleInfoPreview
                 iconRenderer.sortingOrder = HitSortBoost;
             }
 
-            iconRenderer.maskInteraction = SpriteMaskInteraction.VisibleInsideMask;
+            // 不再 Cover + SpriteMask 裁切；完整显示卡面调好的图标。
+            iconRenderer.maskInteraction = SpriteMaskInteraction.None;
+
+            var leftoverMask = GetComponent<SpriteMask>();
+            if (leftoverMask != null)
+            {
+                leftoverMask.enabled = false;
+            }
         }
 
         private void CaptureSlotSizeIfNeeded()
@@ -267,39 +280,6 @@ namespace NineGrid.Flow.BattleInfoPreview
             }
 
             _slotSizeCaptured = true;
-        }
-
-        private void EnsureSlotMask()
-        {
-            CaptureSlotSizeIfNeeded();
-
-            if (slotMask == null)
-            {
-                slotMask = GetComponent<SpriteMask>();
-            }
-
-            if (slotMask == null)
-            {
-                slotMask = gameObject.AddComponent<SpriteMask>();
-            }
-
-            if (slotMask.sprite == null && frameSprite != null)
-            {
-                slotMask.sprite = frameSprite;
-            }
-
-            slotMask.enabled = slotMask.sprite != null;
-            slotMask.alphaCutoff = 0.01f;
-        }
-
-        private void SyncMaskSortingRange()
-        {
-            if (slotMask == null || iconRenderer == null || !slotMask.enabled)
-            {
-                return;
-            }
-
-            CardMainVisualMaskAnchor.ApplyMaskSortingRange(slotMask, iconRenderer, -2, 2);
         }
 
         private void EnsureCollider()

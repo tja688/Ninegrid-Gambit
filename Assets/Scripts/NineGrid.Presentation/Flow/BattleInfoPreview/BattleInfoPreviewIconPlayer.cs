@@ -5,8 +5,8 @@ using UnityEngine;
 namespace NineGrid.Flow.BattleInfoPreview
 {
     /// <summary>
-    /// 预览槽图标播放：切 Sprite，再按槽 Cover 适配（不写卡面 Mask 锚点）。
-    /// Idle 多帧：以首帧做一次 Cover，切帧只换 sprite。
+    /// 预览槽图标播放：切 Sprite，再按卡面 <c>mainVisual</c> + 分类外部缩放摆放。
+    /// Idle 多帧：首帧摆一次，切帧只换 sprite。
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class BattleInfoPreviewIconPlayer : MonoBehaviour
@@ -19,7 +19,10 @@ namespace NineGrid.Flow.BattleInfoPreview
         private int _frameIndex;
         private float _elapsed;
         private bool _playing;
-        private CardPresentationBattleInfoSlotDisplayDto _display;
+        private CardPresentationMainVisualDto _mainVisual;
+        private float _slotOffsetX;
+        private float _slotOffsetY;
+        private float _externalScale = 1f;
 
         public SpriteRenderer Target =>
             target != null ? target : (target = ResolveArtRenderer());
@@ -75,10 +78,13 @@ namespace NineGrid.Flow.BattleInfoPreview
             }
         }
 
-        public void PlayIdleOrStatic(string defId)
+        public void PlayIdleOrStatic(string defId, float externalScale = 1f)
         {
             Stop();
-            _display = null;
+            _mainVisual = null;
+            _slotOffsetX = 0f;
+            _slotOffsetY = 0f;
+            _externalScale = externalScale > 0.0001f ? externalScale : 1f;
             var renderer = Target;
             if (renderer == null)
             {
@@ -93,7 +99,7 @@ namespace NineGrid.Flow.BattleInfoPreview
                 return;
             }
 
-            _display = config.slotDisplays != null ? config.slotDisplays.battleInfo : null;
+            _mainVisual = config.mainVisual;
 
             if (config.animations != null && config.animations.defaultFps > 0.01f)
             {
@@ -105,6 +111,12 @@ namespace NineGrid.Flow.BattleInfoPreview
                 CardAnimSlotIds.Idle,
                 out _,
                 out var slotDto);
+
+            if (slotDto != null)
+            {
+                _slotOffsetX = slotDto.offsetX;
+                _slotOffsetY = slotDto.offsetY;
+            }
 
             if (kind == CardPresentationAnimResolve.Kind.Frames && slotDto != null)
             {
@@ -144,7 +156,10 @@ namespace NineGrid.Flow.BattleInfoPreview
         {
             Stop();
             _frames = System.Array.Empty<Sprite>();
-            _display = null;
+            _mainVisual = null;
+            _slotOffsetX = 0f;
+            _slotOffsetY = 0f;
+            _externalScale = 1f;
             if (Target != null)
             {
                 Target.sprite = null;
@@ -188,11 +203,16 @@ namespace NineGrid.Flow.BattleInfoPreview
         {
             if (slotView != null)
             {
-                slotView.ApplyArtFit(_display);
+                slotView.ApplyMainVisual(_mainVisual, _slotOffsetX, _slotOffsetY, _externalScale);
                 return;
             }
 
-            BattleInfoSlotArtFit.ApplyCover(Target, new Vector2(0.8f, 0.8f), _display);
+            BattleInfoSlotArtFit.ApplyMainVisual(
+                Target,
+                _mainVisual,
+                _slotOffsetX,
+                _slotOffsetY,
+                _externalScale);
         }
     }
 }

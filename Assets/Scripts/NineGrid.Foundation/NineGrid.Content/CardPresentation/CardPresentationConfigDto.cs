@@ -60,11 +60,6 @@ namespace NineGrid.Content.CardPresentation
         /// <summary>槽位图权威（有路径则不再读 ContentVisual SO）。</summary>
         public CardPresentationSpritesDto sprites;
         public CardPresentationMainVisualDto mainVisual;
-        /// <summary>
-        /// 非卡面语境的薄展示覆盖（如战斗信息槽 Cover 构图）；缺省 = 纯 Cover 居中。
-        /// 不复用 <see cref="mainVisual"/>（卡面 Mask / BottomCenter 语义）。
-        /// </summary>
-        public CardPresentationSlotDisplaysDto slotDisplays;
         public CardPresentationAnimationsDto animations;
         public CardPresentationExtraSlotDto[] extraSlots;
         /// <summary>稀有度（如 White/Blue/Gold/Red）；schema≥2 时投影进 Catalog。</summary>
@@ -165,25 +160,6 @@ namespace NineGrid.Content.CardPresentation
         public float offsetX;
         public float offsetY;
         public float uniformScale = 1f;
-    }
-
-    /// <summary>跨面板薄展示配置；各字段可选，缺省走面板默认适配。</summary>
-    [Serializable]
-    public sealed class CardPresentationSlotDisplaysDto
-    {
-        public CardPresentationBattleInfoSlotDisplayDto battleInfo;
-    }
-
-    /// <summary>
-    /// 战斗信息预览槽构图：在 Cover 铺满裁切之上叠加 pivot / zoom。
-    /// pivot 0 = 居中；约 [-0.5, 0.5] 为相对溢出量的偏移（类 object-position）。
-    /// </summary>
-    [Serializable]
-    public sealed class CardPresentationBattleInfoSlotDisplayDto
-    {
-        public float pivotX;
-        public float pivotY;
-        public float zoom = 1f;
     }
 
     [Serializable]

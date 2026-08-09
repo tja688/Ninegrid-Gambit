@@ -40,7 +40,9 @@ namespace NineGrid.Flow.BattleInfoPreview
 
         [Header("配置")]
         [SerializeField] private BattleInfoPreviewCopySO copyConfig;
-        [SerializeField] private Color highlightColor = new Color(1f, 0.92f, 0.2f, 0.95f);
+        [Tooltip("悬停四角框 tint；默认白以保留素材金色。")]
+        [SerializeField] private Color highlightColor = Color.white;
+        [Tooltip("悬停四角框（九宫）；空则用 F_U_Frame3 默认路径。")]
         [SerializeField] private Sprite highlightSprite;
         [SerializeField] private string avatarDefId = DefaultAvatarDefId;
         [SerializeField] private bool previewLeaveTrap = true;
@@ -51,6 +53,16 @@ namespace NineGrid.Flow.BattleInfoPreview
         [SerializeField] private Vector2 avatarIconOffset = Vector2.zero;
         [Tooltip("玩家立绘本地缩放（1 = 场景原缩放）。")]
         [SerializeField] private float avatarIconScale = 1f;
+
+        [Header("槽位图标外部缩放")]
+        [Tooltip("叠在卡面 mainVisual 之上：怪物槽统一外缩放。")]
+        [SerializeField] private float monsterIconExternalScale = 1f;
+        [Tooltip("叠在卡面 mainVisual 之上：玩家道具/技能等槽统一外缩放（种类多时可整体缩小）。")]
+        [SerializeField] private float playerItemIconExternalScale = 0.75f;
+        [Tooltip("叠在卡面 mainVisual 之上：环境/机关槽统一外缩放。")]
+        [SerializeField] private float environmentIconExternalScale = 1f;
+        [Tooltip("叠在卡面 mainVisual 之上：玩家本体立绘图标外缩放（与上方「玩家立绘」槽 Transform 缩放独立）。")]
+        [SerializeField] private float avatarIconExternalScale = 1f;
 
         private UniTaskCompletionSource _dismissTcs;
         private bool _dimmerHeld;
@@ -272,18 +284,29 @@ namespace NineGrid.Flow.BattleInfoPreview
             var avatarId = string.IsNullOrWhiteSpace(avatarDefId) ? DefaultAvatarDefId : avatarDefId.Trim();
             if (playerBodySlotView != null)
             {
-                playerBodySlotView.Bind(avatarId, CardPresentationKind.Avatar);
+                playerBodySlotView.Bind(
+                    avatarId,
+                    CardPresentationKind.Avatar,
+                    Mathf.Max(0.01f, avatarIconExternalScale));
                 ApplyAvatarPortraitTransform();
                 playerBodySlotView.RefreshHitRegistration();
             }
 
             var playerDefs = CollectDefIds(options?.PlayerCards, kind => true);
-            FillSlots(playerItemSlots, playerDefs, ResolvePlayerKind);
+            FillSlots(
+                playerItemSlots,
+                playerDefs,
+                ResolvePlayerKind,
+                Mathf.Max(0.01f, playerItemIconExternalScale));
 
             var monsterDefs = CollectDefIds(
                 options?.EnemyCards,
                 kind => kind == CardKind.Monster);
-            FillSlots(monsterSlots, monsterDefs, _ => CardPresentationKind.Monster);
+            FillSlots(
+                monsterSlots,
+                monsterDefs,
+                _ => CardPresentationKind.Monster,
+                Mathf.Max(0.01f, monsterIconExternalScale));
 
             var envDefs = CollectDefIds(
                 options?.EnemyCards,
@@ -299,7 +322,11 @@ namespace NineGrid.Flow.BattleInfoPreview
                 }
             }
 
-            FillSlots(environmentSlots, envDefs, _ => CardPresentationKind.Trap);
+            FillSlots(
+                environmentSlots,
+                envDefs,
+                _ => CardPresentationKind.Trap,
+                Mathf.Max(0.01f, environmentIconExternalScale));
         }
 
         private void ApplyRoomInfoText()
@@ -394,7 +421,8 @@ namespace NineGrid.Flow.BattleInfoPreview
         private void FillSlots(
             List<BattleInfoPreviewSlotView> slots,
             List<string> defIds,
-            Func<string, CardPresentationKind> kindResolver)
+            Func<string, CardPresentationKind> kindResolver,
+            float iconExternalScale)
         {
             if (slots == null)
             {
@@ -422,7 +450,7 @@ namespace NineGrid.Flow.BattleInfoPreview
 
                 if (i < count)
                 {
-                    slot.Bind(defIds[i], kindResolver(defIds[i]));
+                    slot.Bind(defIds[i], kindResolver(defIds[i]), iconExternalScale);
                     slot.RefreshHitRegistration();
                 }
                 else
@@ -565,6 +593,11 @@ namespace NineGrid.Flow.BattleInfoPreview
             if (copyConfig == null)
             {
                 copyConfig = Resources.Load<BattleInfoPreviewCopySO>(BattleInfoPreviewCopySO.ResourcePath);
+            }
+
+            if (highlightSprite == null)
+            {
+                highlightSprite = ResolveDefaultHighlightSprite();
             }
 
             if (playerGroup == null)
@@ -717,6 +750,16 @@ namespace NineGrid.Flow.BattleInfoPreview
             }
 
             _panelHitProxy.enabled = active;
+        }
+
+        private static Sprite ResolveDefaultHighlightSprite()
+        {
+#if UNITY_EDITOR
+            return UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>(
+                BattleInfoPreviewHighlight.DefaultCornerFrameAssetPath);
+#else
+            return null;
+#endif
         }
 
         private static TMP_Text FindRoomInfoText(Transform root)
