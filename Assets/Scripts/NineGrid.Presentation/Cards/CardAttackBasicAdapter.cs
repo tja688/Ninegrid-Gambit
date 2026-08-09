@@ -371,9 +371,16 @@ namespace NineGrid.Cards
             var field = GroundFieldGeometryHook.FieldOrNull();
             var victimTransform = victimSnapshot.Transform;
             var sortBoost = BeginAttackerSortBoost(attackerSnapshot, victimSnapshot);
+            // 蓄力/预备尚未成立：可取消排期；打断时由本出口显式撤销，不订阅实体生命周期。
+            var chargeKey = TryScheduleAttackCharge(attackerSnapshot.Card);
             try
             {
                 await rig.PlayAsync(cancellationToken);
+            }
+            catch (OperationCanceledException)
+            {
+                SkillEffectTrapRelicAudioCues.CancelScheduled(chargeKey);
+                throw;
             }
             finally
             {
@@ -401,6 +408,19 @@ namespace NineGrid.Cards
                     bind,
                     CancellationToken.None,
                     restoreVictimOverride: restoreVictim);
+            }
+        }
+
+        private static NineGrid.Presentation.Systems.AudioScheduleKey TryScheduleAttackCharge(ManagedCard attacker)
+        {
+            try
+            {
+                return SkillEffectTrapRelicAudioCues.ScheduleAttackCharge(
+                    attacker != null ? attacker.DefId : string.Empty);
+            }
+            catch (Exception)
+            {
+                return default;
             }
         }
 

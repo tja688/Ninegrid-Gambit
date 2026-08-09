@@ -482,7 +482,18 @@ namespace NineGrid.Presentation.Systems
                     System.Globalization.CultureInfo.InvariantCulture);
                 payload["sessionId"] = DiagTraceShared.CurrentSessionId;
                 payload["runTag"] = DiagTraceShared.RunTag;
-                PerfTraceRecorder.Record(kind, uid: -1, PerfTraceSites.AudioSystemCue, payload);
+                if (request.DiagnosticCardUid > 0)
+                {
+                    payload["diagnosticCardUid"] = request.DiagnosticCardUid.ToString(
+                        System.Globalization.CultureInfo.InvariantCulture);
+                }
+
+                // 运行时 UID 可进诊断，但不得参与绑定解析主键。
+                PerfTraceRecorder.Record(
+                    kind,
+                    uid: request.DiagnosticCardUid > 0 ? request.DiagnosticCardUid : -1,
+                    PerfTraceSites.AudioSystemCue,
+                    payload);
             }
             catch (Exception)
             {

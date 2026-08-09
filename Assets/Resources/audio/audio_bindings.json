@@ -1,6 +1,6 @@
 {
     "schemaVersion": 2,
-    "ticket": "#176",
+    "ticket": "#175",
     "bindings": [
         {
             "cueId": "ui.main_menu.start",
@@ -15,38 +15,6 @@
             "variants": [],
             "selectorCardDefId": "",
             "selectorSkillId": "",
-            "selectorRoomId": "",
-            "selectorItemDefId": "",
-            "selectorContentId": ""
-        },
-        {
-            "cueId": "sfx.effect.trigger",
-            "note": "怪物技能触发",
-            "module": "Battle",
-            "enabled": true,
-            "clipKey": "",
-            "volumeDb": -2,
-            "startOffsetSeconds": 0,
-            "bindingDelaySeconds": 0.8,
-            "minimumIntervalSeconds": 0.08,
-            "variants": [
-                {
-                    "variantId": "cast-a",
-                    "clipKey": "audio/SFX/准备法术增强.FG",
-                    "weight": 1,
-                    "volumeTrimDb": 0,
-                    "startOffsetSeconds": 0
-                },
-                {
-                    "variantId": "cast-b",
-                    "clipKey": "audio/SFX/准备法术2增强.FG",
-                    "weight": 1,
-                    "volumeTrimDb": -1,
-                    "startOffsetSeconds": 0.05
-                }
-            ],
-            "selectorCardDefId": "",
-            "selectorSkillId": "skill.flame_boiling",
             "selectorRoomId": "",
             "selectorItemDefId": "",
             "selectorContentId": ""
@@ -696,6 +664,123 @@
             "clipKey": "audio/SFX/英雄死亡增强.FG",
             "volumeDb": -2,
             "minimumIntervalSeconds": 0.1
+        },
+        {
+            "cueId": "sfx.effect.trigger",
+            "note": "可见效果触发",
+            "module": "Battle",
+            "enabled": true,
+            "clipKey": "audio/SFX/准备法术增强.FG",
+            "volumeDb": -2,
+            "startOffsetSeconds": 0,
+            "bindingDelaySeconds": 0,
+            "minimumIntervalSeconds": 0.08,
+            "variants": [],
+            "selectorCardDefId": "",
+            "selectorSkillId": "",
+            "selectorRoomId": "",
+            "selectorItemDefId": "",
+            "selectorContentId": ""
+        },
+        {
+            "cueId": "sfx.skill.trigger",
+            "note": "怪物技能触发",
+            "module": "Battle",
+            "enabled": true,
+            "clipKey": "audio/SFX/准备法术增强.FG",
+            "volumeDb": -2,
+            "startOffsetSeconds": 0,
+            "bindingDelaySeconds": 0,
+            "minimumIntervalSeconds": 0.08,
+            "variants": [],
+            "selectorCardDefId": "",
+            "selectorSkillId": "",
+            "selectorRoomId": "",
+            "selectorItemDefId": "",
+            "selectorContentId": ""
+        },
+        {
+            "cueId": "sfx.skill.trigger",
+            "note": "沸腾之焰技能触发（延迟对齐）",
+            "module": "Battle",
+            "enabled": true,
+            "clipKey": "",
+            "volumeDb": -2,
+            "startOffsetSeconds": 0,
+            "bindingDelaySeconds": 0.8,
+            "minimumIntervalSeconds": 0.08,
+            "variants": [
+                {
+                    "variantId": "cast-a",
+                    "clipKey": "audio/SFX/准备法术增强.FG",
+                    "weight": 1,
+                    "volumeTrimDb": 0,
+                    "startOffsetSeconds": 0
+                },
+                {
+                    "variantId": "cast-b",
+                    "clipKey": "audio/SFX/准备法术2增强.FG",
+                    "weight": 1,
+                    "volumeTrimDb": -1,
+                    "startOffsetSeconds": 0.05
+                }
+            ],
+            "selectorCardDefId": "",
+            "selectorSkillId": "skill.flame_boiling",
+            "selectorRoomId": "",
+            "selectorItemDefId": "",
+            "selectorContentId": ""
+        },
+        {
+            "cueId": "sfx.trap.trigger",
+            "note": "机关触发",
+            "module": "Battle",
+            "enabled": true,
+            "clipKey": "audio/SFX/准备法术2增强.FG",
+            "volumeDb": -3,
+            "startOffsetSeconds": 0,
+            "bindingDelaySeconds": 0,
+            "minimumIntervalSeconds": 0.08,
+            "variants": [],
+            "selectorCardDefId": "",
+            "selectorSkillId": "",
+            "selectorRoomId": "",
+            "selectorItemDefId": "",
+            "selectorContentId": ""
+        },
+        {
+            "cueId": "sfx.relic.trigger",
+            "note": "遗物触发",
+            "module": "Battle",
+            "enabled": true,
+            "clipKey": "audio/SFX/解锁增强",
+            "volumeDb": -3,
+            "startOffsetSeconds": 0,
+            "bindingDelaySeconds": 0,
+            "minimumIntervalSeconds": 0.1,
+            "variants": [],
+            "selectorCardDefId": "",
+            "selectorSkillId": "",
+            "selectorRoomId": "",
+            "selectorItemDefId": "",
+            "selectorContentId": ""
+        },
+        {
+            "cueId": "battle.attack.charge",
+            "note": "攻击蓄力可取消预备",
+            "module": "Battle",
+            "enabled": true,
+            "clipKey": "audio/SFX/挥动增强",
+            "volumeDb": -6,
+            "startOffsetSeconds": 0,
+            "bindingDelaySeconds": 0,
+            "minimumIntervalSeconds": 0.05,
+            "variants": [],
+            "selectorCardDefId": "",
+            "selectorSkillId": "",
+            "selectorRoomId": "",
+            "selectorItemDefId": "",
+            "selectorContentId": ""
         }
     ]
 }

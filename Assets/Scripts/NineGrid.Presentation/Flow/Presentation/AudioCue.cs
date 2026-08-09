@@ -266,4 +266,159 @@ namespace NineGrid.Flow.Presentation
                 gameEvent.SourceDefId);
         }
     }
+
+    /// <summary>
+    /// 技能 / 可见效果 / 机关 / 遗物声音提示。权威发射为
+    /// <see cref="EffectTriggerPulseBeatHandler"/>（触发）与
+    /// <see cref="NineGrid.Cards.CardAttackBasicAdapter"/>（可取消蓄力排期）。
+    /// 内容覆盖靠 cardDefId+skillId 解析，禁止动态 <c>sfx.effect.&lt;CardUid&gt;</c> 绑定主键。
+    /// </summary>
+    public static class SkillEffectTrapRelicAudioCues
+    {
+        public const float DefaultChargeScheduleSeconds = 0.35f;
+
+        [AudioCue(
+            "sfx.effect.trigger",
+            "可见效果触发",
+            "Battle",
+            "EffectTriggerPulseBeatHandler.TryApply",
+            AudioCueContexts.CardDefId | AudioCueContexts.SkillId | AudioCueContexts.ContentId)]
+        public const string EffectTrigger = "sfx.effect.trigger";
+
+        [AudioCue(
+            "sfx.skill.trigger",
+            "怪物技能触发",
+            "Battle",
+            "EffectTriggerPulseBeatHandler.TryApply",
+            AudioCueContexts.CardDefId | AudioCueContexts.SkillId)]
+        public const string SkillTrigger = "sfx.skill.trigger";
+
+        [AudioCue(
+            "sfx.trap.trigger",
+            "机关触发",
+            "Battle",
+            "EffectTriggerPulseBeatHandler.TryApply",
+            AudioCueContexts.CardDefId | AudioCueContexts.SkillId | AudioCueContexts.ContentId)]
+        public const string TrapTrigger = "sfx.trap.trigger";
+
+        [AudioCue(
+            "sfx.relic.trigger",
+            "遗物触发",
+            "Battle",
+            "EffectTriggerPulseBeatHandler.TryApply",
+            AudioCueContexts.CardDefId | AudioCueContexts.SkillId | AudioCueContexts.ContentId)]
+        public const string RelicTrigger = "sfx.relic.trigger";
+
+        [AudioCue(
+            "battle.attack.charge",
+            "攻击蓄力可取消预备",
+            "Battle",
+            "CardAttackBasicAdapter.PlayBoundRigAsync",
+            AudioCueContexts.CardDefId)]
+        public const string AttackCharge = "battle.attack.charge";
+
+        public static string ResolveCueId(string sourceDefId, string cause)
+        {
+            if (StartsWithToken(sourceDefId, "trap.") || StartsWithToken(cause, "trap."))
+            {
+                return TrapTrigger;
+            }
+
+            if (StartsWithToken(sourceDefId, "relic.") || StartsWithToken(cause, "relic."))
+            {
+                return RelicTrigger;
+            }
+
+            if (StartsWithToken(cause, "skill."))
+            {
+                return SkillTrigger;
+            }
+
+            return EffectTrigger;
+        }
+
+        public static bool IsLegacyDynamicEffectCueId(string cueId)
+        {
+            if (string.IsNullOrEmpty(cueId) || !cueId.StartsWith("sfx.effect.", StringComparison.Ordinal))
+            {
+                return false;
+            }
+
+            var suffix = cueId.Substring("sfx.effect.".Length);
+            if (string.Equals(suffix, "trigger", StringComparison.Ordinal))
+            {
+                return false;
+            }
+
+            for (var i = 0; i < suffix.Length; i++)
+            {
+                if (!char.IsDigit(suffix[i]))
+                {
+                    return false;
+                }
+            }
+
+            return suffix.Length > 0;
+        }
+
+        public static void PulseTrigger(
+            string sourceDefId,
+            string cause,
+            string diagnosticSource,
+            int diagnosticCardUid = 0)
+        {
+            var cueId = ResolveCueId(sourceDefId, cause);
+            TriggerPulseHub.PulseAudio(new NineGrid.Content.Audio.AudioCueRequest(
+                cueId,
+                diagnosticSource,
+                sourceDefId ?? string.Empty,
+                cause ?? string.Empty,
+                string.Empty,
+                string.Empty,
+                string.Empty,
+                diagnosticCardUid));
+        }
+
+        public static NineGrid.Presentation.Systems.AudioScheduleKey ScheduleAttackCharge(
+            string cardDefId,
+            float delaySeconds = DefaultChargeScheduleSeconds)
+        {
+            var audio = NineGrid.Presentation.Systems.AudioSystem.EnsureRegistered();
+            return audio.ScheduleCue(
+                new NineGrid.Content.Audio.AudioCueRequest(
+                    AttackCharge,
+                    "CardAttackBasicAdapter.PlayBoundRigAsync",
+                    cardDefId ?? string.Empty,
+                    string.Empty,
+                    string.Empty,
+                    string.Empty,
+                    string.Empty),
+                Math.Max(0f, delaySeconds));
+        }
+
+        public static bool CancelScheduled(NineGrid.Presentation.Systems.AudioScheduleKey key)
+        {
+            if (!key.IsValid)
+            {
+                return false;
+            }
+
+            try
+            {
+                return NineGrid.Presentation.Systems.AudioSystem.EnsureRegistered()
+                    .CancelScheduledCue(key);
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+        }
+
+        private static bool StartsWithToken(string value, string prefix)
+        {
+            return !string.IsNullOrEmpty(value)
+                && value.StartsWith(prefix, StringComparison.Ordinal);
+        }
+    }
+
 }

@@ -11,7 +11,8 @@ namespace NineGrid.Content.Audio
             string skillId,
             string roomId,
             string itemDefId,
-            string contentId)
+            string contentId,
+            int diagnosticCardUid = 0)
         {
             CueId = cueId ?? string.Empty;
             DiagnosticSource = diagnosticSource ?? string.Empty;
@@ -20,6 +21,8 @@ namespace NineGrid.Content.Audio
             RoomId = roomId ?? string.Empty;
             ItemDefId = itemDefId ?? string.Empty;
             ContentId = contentId ?? string.Empty;
+            // 运行时 UID 仅诊断上下文，不得进入绑定主键 / cueId。
+            DiagnosticCardUid = diagnosticCardUid > 0 ? diagnosticCardUid : 0;
         }
 
         public string CueId { get; }
@@ -29,6 +32,7 @@ namespace NineGrid.Content.Audio
         public string RoomId { get; }
         public string ItemDefId { get; }
         public string ContentId { get; }
+        public int DiagnosticCardUid { get; }
 
         public static AudioCueRequest Simple(string cueId, string diagnosticSource)
         {

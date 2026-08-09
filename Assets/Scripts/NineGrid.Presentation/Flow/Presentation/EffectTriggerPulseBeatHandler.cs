@@ -7,16 +7,10 @@ namespace NineGrid.Flow.Presentation
     /// <summary>
     /// 效果触发 FX/音效脉冲装饰处理器：在 Impact 消费 TriggerEffect，不占主线就位回执。
     /// 仅九宫格在场卡发脉冲；卡组/手牌/已移除跳过（仍认领指令以免 Settled 误诊）。
+    /// 声音走稳定 cue + cardDefId/skillId 内容覆盖；运行时 UID 只进诊断，不进绑定主键。
     /// </summary>
     public sealed class EffectTriggerPulseBeatHandler : IBattleBeatHandler
     {
-        [AudioCue(
-            "sfx.effect.trigger",
-            "怪物技能触发",
-            "Battle",
-            "EffectTriggerPulseBeatHandler.TryApply",
-            AudioCueContexts.CardDefId | AudioCueContexts.SkillId | AudioCueContexts.ContentId)]
-        private const string EffectTriggerCueId = "sfx.effect.trigger";
         public bool TryApply(PresentationInstruction instruction)
         {
             if (instruction == null || instruction.Kind != PresentationInstructionKind.TriggerEffect)
@@ -37,14 +31,13 @@ namespace NineGrid.Flow.Presentation
 
             var fxId = CardEffectTriggerPulseSink.IdForCard(gameEvent.CardUid);
             TriggerPulseHub.PulseFx(fxId);
-            TriggerPulseHub.PulseAudio(new AudioCueRequest(
-                EffectTriggerCueId,
+
+            // 单一权威音频出口：按内容种类选一个稳定 cue，禁止再发 sfx.effect.<CardUid> 或第二条内容路径。
+            SkillEffectTrapRelicAudioCues.PulseTrigger(
+                gameEvent.SourceDefId,
+                gameEvent.Cause,
                 "EffectTriggerPulseBeatHandler.TryApply",
-                gameEvent.SourceDefId,
-                gameEvent.SourceDefId,
-                string.Empty,
-                string.Empty,
-                gameEvent.Cause));
+                gameEvent.CardUid);
             return true;
         }
 
