@@ -1140,7 +1140,6 @@ namespace NineGrid.Content.Editor
             status = result?.Report?.summary ?? "AI 绑定完成。";
             RefreshList();
             RefreshContent();
-            RefreshStatus();
         }
 
         private static string AuthoringStatusSuffix(AudioBindingEditorEntry entry)
