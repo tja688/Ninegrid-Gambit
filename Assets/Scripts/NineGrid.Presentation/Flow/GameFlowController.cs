@@ -138,6 +138,14 @@ namespace NineGrid.Flow
             }
 
             // 场景引用只在 Awake / 显式调用 EnsureViewBindings 时解析；Update 仅轮询缓存。
+            // 局内功能菜单（音量等）打开时半黑屏盖住主菜单，勿再响应开始/退出。
+            if (NineGrid.Presentation.Ui.PlayerAudioSettingsPanel.IsOpen
+                || BattleUiDimmerOverlay.IsActive)
+            {
+                ClearMenuHover();
+                return;
+            }
+
             UpdateMenuHover();
             if (!WorldPointerUtility.WasPrimaryPressedThisFrame())
             {

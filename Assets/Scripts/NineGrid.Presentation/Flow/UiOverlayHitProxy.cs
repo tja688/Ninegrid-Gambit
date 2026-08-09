@@ -1,4 +1,5 @@
 using NineGrid.Flow.BattleInfoPreview;
+using NineGrid.Presentation.Ui;
 using UnityEngine;
 
 namespace NineGrid.Flow
@@ -8,8 +9,10 @@ namespace NineGrid.Flow
         /// <summary>吞点击；若详述开着则只关详述（面板内不关战斗信息预览）。</summary>
         Swallow = 0,
         CloseCardInspect = 1,
-        /// <summary>半黑屏：详述优先关；详述已关且预览开则关预览。</summary>
+        /// <summary>半黑屏：详述优先关；详述已关且预览开则关预览；再否则关局内功能菜单。</summary>
         DimmerBackground = 2,
+        /// <summary>关闭局内功能菜单（音量等）。</summary>
+        CloseInRunFunctionMenu = 3,
     }
 
     /// <summary>
@@ -72,6 +75,9 @@ namespace NineGrid.Flow
                 case UiOverlayHitAction.CloseCardInspect:
                     CardInspectOverlayPresenter.CloseIfOpen();
                     break;
+                case UiOverlayHitAction.CloseInRunFunctionMenu:
+                    PlayerAudioSettingsPanel.CloseIfOpen();
+                    break;
                 case UiOverlayHitAction.Swallow:
                     if (CardInspectOverlayPresenter.IsOpen)
                     {
@@ -89,6 +95,12 @@ namespace NineGrid.Flow
                     if (BattleInfoPreviewPresenter.IsOpen)
                     {
                         BattleInfoPreviewPresenter.RequestDismiss();
+                        break;
+                    }
+
+                    if (PlayerAudioSettingsPanel.IsOpen)
+                    {
+                        PlayerAudioSettingsPanel.CloseIfOpen();
                     }
 
                     break;
