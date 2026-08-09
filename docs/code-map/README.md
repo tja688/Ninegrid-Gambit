@@ -20,9 +20,9 @@
 | [ADR-0008](../adr/0008-single-source-content-and-resources-loading.md) | 一卡一文件 JSON + ContentArt Resources 加载 |
 | [ADR-0009](../adr/0009-parameterized-effect-templates.md) | 效果参数化模板、分类三轴、词条、奖池查询 |
 | [ADR-0010](../adr/0010-self-declared-effect-responsibility.md) | 效果责任自陈、拆除外部场域门禁 |
-| [ADR-0011](../adr/0011-monster-attack-pattern-intrinsic.md) | 怪物攻击模式为内生必填属性（**#77 数据面 + #80 四开火模式 + #82 内容赋模**；表现见 #81） |
+| [ADR-0011](../adr/0011-monster-attack-pattern-intrinsic.md) | 怪物攻击模式为内生几何属性（**部分 superseded by ADR-0038**：频率表废止；**#77/#80/#82/#81 已落地**的几何与敌方开火仍有效） |
 | [ADR-0012](../adr/0012-enemy-action-phase-volley.md) | 敌方行动阶段：齐射与盘面冻结（**#79/#80/#81 已落地**：Core 报名/逐条/收尾 + 四模式单向打击；表现 Counter 分拍 + ActionCount Commit） |
-| [ADR-0013](../adr/0013-action-countdown-unified.md) | 行动计数统一为倒计时、开火窗口一次性（**#76 Core 效果侧已落地**；攻击模式消费见 #79/#80；卡面上屏见 #81） |
+| [ADR-0013](../adr/0013-action-countdown-unified.md) | 倒计时语义与一次性开火窗口（**部分 superseded by ADR-0038**：模式与同步技能改为卡级共享倒计时；**#76/#79/#80/#81 数学与上屏已落地**） |
 | [ADR-0014](../adr/0014-theme-ids-are-legacy-opaque.md) | 主题化 contentId/deckId 是历史残留不透明主键；卡组仅内部渠道；勿被虚构命名带偏 |
 | [ADR-0016](../adr/0016-card-face-orientation.md) | 牌面朝向 Core 权威；背面双向惰性（不可伤害 / 不敌方开火 / 攻击倒计时冻结）；独立 `faceDownTick.*` |
 | [ADR-0017](../adr/0017-trap-card-kind-and-dual-bucket.md) | 机关卡 `CardKind.Trap`；双桶交战；赏金排除；清关条件见 ADR-0026；静默 CounterAttackBanned；五套卡面 |
@@ -44,8 +44,9 @@
 | [ADR-0035](../adr/0035-dual-description-projection-and-assembly-param-refs.md) | 装配参数引用唯一化（`{装配id.键}`）；检查描述 vs 局内描述投影双套；倒计时 Settled 提交（#156：`EffectCountdownChanged` → `CommittedCountdownRemaining` 快照重投影；#157：Battle/Run 作用域 + 离战真重置）；描述格 26；范围限机关/遗物/道具；**#158 首批牌店可升级伤害升格**（help.bomb/help.throwing_knife：伤害为装配实参 + 描述限定令牌 + faceIntro 草稿 ≤26，双侧镜像）；**#159 道具卡全集逐卡审计**（19 张 live HelpCard：6 张简单式令牌升格 `{装配id.键}`——healing_potion/swap_card/sturdy_shield/teleport_card/gold_card/kidnapping，其余散文保留；全卡 faceIntro 草稿 ≤26；归档卡豁免原样）；**#160 遗物全集逐卡审计**（51 张 live Relic：terror_mask `{value}` 等简单式/写死数字/叙事同值双胞胎（阈值/百分比/步长/格位）全部唯一化入库对齐内核常数；junk_sword 描述按内核 OnKill 修正；全卡 faceIntro 草稿 ≤26；归档 9 件豁免原样）；**#161 机关全集逐卡审计**（10 张 live Trap：healing_spring 非稳定装配 id `fx.6c652d05` 修正为 `trap.healing_spring.heal_on_move`；简单式 `{amount}`/写死数字（捕熊10、刺藤伤害1）升格 `{装配id.键}`；节奏 every/格位 slot 叙事同值双胞胎入库；滚石「破坏」按内核改「移除」；revive_stone 打出物按内核特5改「重生骷髅」；全卡 faceIntro 草稿 ≤26） |
 | [ADR-0036](../adr/0036-audio-cue-binding-and-music-ownership.md) | 声音提示与绑定真源；Resources 音频根；MMSoundManager 播放 Adapter；**#170/#179 已落地**唯一期望音乐状态、BGM JSON、Music 轨切歌代数/收口、PerfTrace 排期/取消链路与 EditMode 结构护栏 |
 | [ADR-0037](../adr/0037-inspect-detail-is-glossary-rows.md) | 右键详述效果区改词条行：`[[名字]]` 默认展开、`[code]` 图标仅 Inspect hover；告别 `design_text` 堆砌 |
+| [ADR-0038](../adr/0038-card-rhythm-dual-channel.md) | 卡级节奏：行动/移动双通道 + 节奏源/周期 + 共享倒计时；攻击模式仅几何；技能同步触发同拍；图标矩阵（**文档已钉；Core/内容/卡面接线见落地 Spec**） |
 
-> ADR-0011–0013 已落地（含卡面倒计时 Commit 与单向打击 Counter 分拍，#81）。落地方案见 `Assets/Notes/怪物攻击模式与敌方行动阶段-落地方案-2026-07-29.md`（过程笔记，非权威）。
+> ADR-0011–0013 几何、倒计时数学与敌方行动阶段已落地（#81）；**节奏频率与共用计数**以 ADR-0038 为准（部分 supersede）。旧落地方案见 `Assets/Notes/怪物攻击模式与敌方行动阶段-落地方案-2026-07-29.md`（过程笔记，非权威）。
 >
 > ADR-0030（#135）：正式战斗开局随机三张常规机关（`RegularTrapPool`：Kind=Trap+稀有度 White 池过滤、无放回、种子可复现；离开机关/特殊机关不入池）。
 >
