@@ -36,7 +36,7 @@ superseded_in_part_by: ADR-0025, ADR-0031
 `RoomDefinition` 的 `GoldDelta` / `MaxHpDelta` / `HealToFull` 删除，改为**注入声明**：往玩家侧 / 怪物侧注入哪些卡（固定卡 id、或从某池按权重抽 N 张、可否重复）。
 
 - 金币房 = 注入 1 张金币卡；恢复房 = 注入 1 张食品卡；宝箱房 = 注入 1 张宝箱卡
-- 属性房 = ~~从血量卡 40% / 加甲卡 40% / 加攻卡 20% 抽 2 张（可重复）~~ → 改为**玩家三选二会话**：进房生成 3 个加权候选（可重复），选 2 张加入玩家侧卡组，选择结果经 `RunModel.AttributePickDefIds` 在下一战斗开局注入（[ADR-0031](0031-attribute-room-pick-two.md)）
+- 属性房 = 从血量卡 40% / 加甲卡 40% / 加攻卡 20% 抽 2 张（可重复）加入玩家侧卡组；进房直接开战，无三选二会话（[ADR-0031](0031-attribute-room-pick-two.md) 已废止）
 - 困难房 = 从金币卡 / 宝箱卡 / 食品卡 / 三张属性卡里抽 2 张（不可重复）+ 向怪物侧注入本层卡组的序列 3、序列 4 各 1 张
 
 `RoomKind` 新增 `Attribute` / `TreasureReward` / `ItemReward`，删除 `Battle` 与 `Event`。

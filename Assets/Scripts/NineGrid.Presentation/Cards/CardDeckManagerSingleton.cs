@@ -1,8 +1,10 @@
 using System;
 using System.Collections.Generic;
+using System.Text;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using NineGrid.Cards.Convergence;
+using NineGrid.Core;
 using NineGrid.Flow;
 using NineGrid.Flow.Presentation;
 using UnityEngine;
@@ -47,7 +49,7 @@ namespace NineGrid.Cards
         private readonly HashSet<int> _returnInFlightUids = new();
         private readonly Dictionary<int, UniTaskCompletionSource> _returnSettledWaiters = new();
 
-        /// <summary>入组索引：随机落点（非空时排除最左 slot 0）。</summary>
+        /// <summary>入组索引：随机落点（非空时排除最左 slot 0；显式 0 允许置顶）。</summary>
         public const int RandomInsertIndex = -1;
 
         public CardDeckMode CurrentMode { get; private set; } = CardDeckMode.Standby;
@@ -55,6 +57,9 @@ namespace NineGrid.Cards
         public int DeckCount => _slotContainer?.Count ?? _pendingEntryCards.Count;
 
         public bool IsBusy => _isBusy;
+
+        /// <summary>是否仍有场上回库 in-flight（对账前须等其结算）。</summary>
+        public bool HasReturnInFlight => _returnInFlightUids.Count > 0;
 
         public CardDeckLayoutSettings LayoutSettings => layoutSettings;
 
@@ -420,6 +425,77 @@ namespace NineGrid.Cards
         public bool ContainsUid(int uid)
         {
             return TryFindDeckSlotByUid(uid, out _);
+        }
+
+        /// <summary>
+        /// 将 InGame 视觉槽序对齐 Core <c>DrawPileUids</c>（slot 0 = 下一张）。
+        /// Busy / 回库 in-flight / 非 InGame 时拒绝。瞬时改序 + sorting，无洗牌动画。
+        /// </summary>
+        public bool SyncVisualOrderFromDrawPile(IReadOnlyList<int> orderedUids)
+        {
+            if (CurrentMode != CardDeckMode.InGame || _slotContainer == null)
+            {
+                return false;
+            }
+
+            if (_isBusy || HasReturnInFlight)
+            {
+                Debug.LogWarning(
+                    "[CardDeckManager] SyncVisualOrderFromDrawPile 跳过：busy 或 return-in-flight。");
+                return false;
+            }
+
+            if (orderedUids == null)
+            {
+                return false;
+            }
+
+            _slotContainer.TryReorderToUids(orderedUids);
+            SnapDeckCardsToLayoutPositions();
+            _slotContainer.ApplySortingOrders();
+            AssertTopMatchesDrawPile(orderedUids, "SyncVisualOrderFromDrawPile");
+            return true;
+        }
+
+        /// <summary>
+        /// Dev：视觉 slot0 须等于 Core 抽牌堆顶。双方都非空且张数一致时失配打 Error
+        /// （开局/补牌 Present 中途 Core 已抽、视觉未抽完时张数不等，跳过以免误报）。
+        /// </summary>
+        public void AssertTopMatchesDrawPile(IReadOnlyList<int> orderedUids, string site)
+        {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            if (_slotContainer == null || orderedUids == null)
+            {
+                return;
+            }
+
+            if (_slotContainer.Count == 0 || orderedUids.Count == 0)
+            {
+                return;
+            }
+
+            // Present 滞后：Core 已移除、视觉尚未抽出 → 张数不等，跳过。
+            if (_slotContainer.Count != orderedUids.Count)
+            {
+                return;
+            }
+
+            if (!_slotContainer.TryGetCardAt(0, out var top) || top == null)
+            {
+                return;
+            }
+
+            var coreTop = orderedUids[0];
+            if (top.Uid == coreTop)
+            {
+                return;
+            }
+
+            Debug.LogError(
+                $"[CardDeckManager] 顶牌失同步 site={site} visualSlot0={top.Uid} coreTop={coreTop}\n"
+                + $"visual=[{FormatDeckUidList(_slotContainer)}]\n"
+                + $"core=[{FormatUidList(orderedUids)}]");
+#endif
         }
 
         /// <summary>
@@ -856,7 +932,7 @@ namespace NineGrid.Cards
 
         /// <summary>
         /// 场地卡垂直上飞离画后插入卡组（发射后不管，可与旋转/换位并行）。
-        /// <paramref name="insertIndex"/> 为 <see cref="RandomInsertIndex"/> 时随机落点；显式索引在非空时不得为最左 slot 0。
+        /// <paramref name="insertIndex"/> 为 <see cref="RandomInsertIndex"/> 时随机落点（非空排除 slot 0）；显式 0 允许置顶。
         /// </summary>
         public bool LaunchReturnFieldCardToDeck(ManagedCard card, int insertIndex = RandomInsertIndex)
         {
@@ -952,7 +1028,7 @@ namespace NineGrid.Cards
         }
 
         /// <summary>
-        /// 解析入组槽位：随机时非空排除 index 0；显式 0 在非空时抬到 1；牌组空时唯一合法为 0。
+        /// 解析入组槽位：随机时非空排除 index 0；显式 0 允许置顶（Core Top=true）；牌组空时唯一合法为 0。
         /// </summary>
         private int ResolveDeckInsertIndex(int requestedIndex)
         {
@@ -967,12 +1043,7 @@ namespace NineGrid.Cards
                 return UnityEngine.Random.Range(1, count + 1);
             }
 
-            if (requestedIndex <= 0)
-            {
-                return 1;
-            }
-
-            return requestedIndex;
+            return Mathf.Clamp(requestedIndex, 0, count);
         }
 
         /// <summary>
@@ -1281,6 +1352,7 @@ namespace NineGrid.Cards
             }
 
             ReportDealTrace(dealUid, groundSlot, placeable: true, ok: true, rollback: false, reason: string.Empty);
+            AssertTopMatchesCoreDrawPile("TryDealCard");
             return true;
         }
 
@@ -1569,6 +1641,82 @@ namespace NineGrid.Cards
 
             return false;
         }
+
+        private void SnapDeckCardsToLayoutPositions()
+        {
+            if (_slotContainer == null)
+            {
+                return;
+            }
+
+            var count = _slotContainer.Count;
+            for (var i = 0; i < count; i++)
+            {
+                if (!_slotContainer.TryGetCardAt(i, out var card) || card?.Transform == null)
+                {
+                    continue;
+                }
+
+                card.Transform.position = _slotContainer.GetLayoutPosition(i);
+            }
+        }
+
+        private void AssertTopMatchesCoreDrawPile(string site)
+        {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            var deck = NineGridArchitecture.Current?.GetModel<DeckModel>();
+            if (deck == null)
+            {
+                return;
+            }
+
+            AssertTopMatchesDrawPile(deck.DrawPileUids, site);
+#endif
+        }
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        private static string FormatDeckUidList(CardDeckSlotContainer slots)
+        {
+            if (slots == null || slots.Count == 0)
+            {
+                return string.Empty;
+            }
+
+            var sb = new StringBuilder(slots.Count * 8);
+            for (var i = 0; i < slots.Count; i++)
+            {
+                if (i > 0)
+                {
+                    sb.Append(',');
+                }
+
+                sb.Append(slots.TryGetCardAt(i, out var card) && card != null ? card.Uid : 0);
+            }
+
+            return sb.ToString();
+        }
+
+        private static string FormatUidList(IReadOnlyList<int> uids)
+        {
+            if (uids == null || uids.Count == 0)
+            {
+                return string.Empty;
+            }
+
+            var sb = new StringBuilder(uids.Count * 8);
+            for (var i = 0; i < uids.Count; i++)
+            {
+                if (i > 0)
+                {
+                    sb.Append(',');
+                }
+
+                sb.Append(uids[i]);
+            }
+
+            return sb.ToString();
+        }
+#endif
 
         /// <summary>
         /// Entry 目标：前 maxSlots 张各占锚点；超出叠在末锚点并加 Z 步进。

@@ -815,11 +815,41 @@ namespace NineGrid.Flow
                         await UniTask.Delay(TimeSpan.FromSeconds(dealInterval), cancellationToken: ct);
                     }
                 }
+
+                await SyncDeckVisualOrderFromCoreAsync(deckManager, ct);
             }
             finally
             {
                 _shuffleIntoScheduler.RecordPresentEnd(startedCount);
             }
+        }
+
+        /// <summary>
+        /// 洗入 Present 结算后：视觉槽序对齐 Core DrawPileUids（slot 0 = 下一张）。
+        /// </summary>
+        private static async UniTask SyncDeckVisualOrderFromCoreAsync(
+            CardDeckManagerSingleton deckManager,
+            CancellationToken ct)
+        {
+            if (deckManager == null || deckManager.CurrentMode != CardDeckMode.InGame)
+            {
+                return;
+            }
+
+            while (deckManager.IsBusy || deckManager.HasReturnInFlight)
+            {
+                ct.ThrowIfCancellationRequested();
+                await UniTask.Yield(PlayerLoopTiming.Update, ct);
+            }
+
+            var arch = NineGridArchitecture.Current;
+            var deck = arch?.GetModel<DeckModel>();
+            if (deck == null)
+            {
+                return;
+            }
+
+            deckManager.SyncVisualOrderFromDrawPile(deck.DrawPileUids);
         }
 
         private async UniTask PresentBurstScatterShuffleGroupAsync(

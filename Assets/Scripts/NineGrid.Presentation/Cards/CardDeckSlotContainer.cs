@@ -130,6 +130,91 @@ namespace NineGrid.Cards
             }
         }
 
+        /// <summary>
+        /// 按 Core 抽牌堆 uid 序重排已入组卡。slot 0 = 下一张。
+        /// 缺席 uid 跳过并 Warning；组内多余卡追加到末尾并 Warning。序未变返回 false。
+        /// </summary>
+        public bool TryReorderToUids(IReadOnlyList<int> orderedUids)
+        {
+            if (orderedUids == null || _slots.Count == 0)
+            {
+                return false;
+            }
+
+            var byUid = new Dictionary<int, ManagedCard>(_slots.Count);
+            for (var i = 0; i < _slots.Count; i++)
+            {
+                var card = _slots[i];
+                if (card == null || card.Uid <= 0)
+                {
+                    continue;
+                }
+
+                if (!byUid.ContainsKey(card.Uid))
+                {
+                    byUid.Add(card.Uid, card);
+                }
+            }
+
+            var reordered = new List<ManagedCard>(_slots.Count);
+            var placed = new HashSet<int>();
+            for (var i = 0; i < orderedUids.Count; i++)
+            {
+                var uid = orderedUids[i];
+                if (uid <= 0 || !byUid.TryGetValue(uid, out var card))
+                {
+                    if (uid > 0)
+                    {
+                        Debug.LogWarning(
+                            $"[CardDeckSlotContainer] TryReorderToUids 缺席 uid={uid}（Core 有、视觉无）。");
+                    }
+
+                    continue;
+                }
+
+                reordered.Add(card);
+                placed.Add(uid);
+            }
+
+            for (var i = 0; i < _slots.Count; i++)
+            {
+                var card = _slots[i];
+                if (card == null || card.Uid <= 0 || placed.Contains(card.Uid))
+                {
+                    continue;
+                }
+
+                Debug.LogWarning(
+                    $"[CardDeckSlotContainer] TryReorderToUids 多余视觉卡 uid={card.Uid}，追加末尾。");
+                reordered.Add(card);
+                placed.Add(card.Uid);
+            }
+
+            if (reordered.Count != _slots.Count)
+            {
+                return false;
+            }
+
+            var changed = false;
+            for (var i = 0; i < reordered.Count; i++)
+            {
+                if (_slots[i] != reordered[i])
+                {
+                    changed = true;
+                    break;
+                }
+            }
+
+            if (!changed)
+            {
+                return false;
+            }
+
+            _slots.Clear();
+            _slots.AddRange(reordered);
+            return true;
+        }
+
         public IReadOnlyList<ManagedCard> SnapshotCards()
         {
             return new List<ManagedCard>(_slots);

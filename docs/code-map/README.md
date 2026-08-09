@@ -37,7 +37,7 @@
 | [ADR-0028](../adr/0028-damage-formula-armor-and-reduction.md) | 标准伤害公式：三层护甲、伤害减免、无视护甲（公式层已落地；遗物内容另票） |
 | [ADR-0029](../adr/0029-content-guardrail-stable-theme-deck-mapping.md) | 内容护栏：七套稳定 ID—策划槽位—sequence 映射契约（#127；`ThemeDeckStableMapping` + 映射正确 / 正式可达两层校验 + 禁 displayName 断言） |
 | [ADR-0030](../adr/0030-regular-trap-opening-loadout.md) | 常规机关装填契约（#135）：正式战斗开局随机三张常规机关，`RegularTrapPool` 池过滤/无放回/种子可复现；离开机关与特殊机关不入池；`RewardSystem.BuildNodeDeckOptions` 唯一注入点 |
-| [ADR-0031](../adr/0031-attribute-room-pick-two.md) | 属性房三选二会话（#136）：进房 3 加权候选 → 玩家选 2 → 结果经 `RunModel.AttributePickDefIds` 本关开局注入；自动随机注入退役 |
+| [ADR-0031](../adr/0031-attribute-room-pick-two.md) | ~~属性房三选二会话~~ **已废止**：属性房与其他战斗房一样进房直接开战；开局按 `OpeningInjects` 加权自动注入 2 张属性卡 |
 | [ADR-0032](../adr/0032-item-cards-usable-outside-battle.md) | 部分道具卡非战斗可用（`usableOutsideBattle` 卡级声明）：RoomChoice / RewardItemChoice 相位放行，RoomEvent 不放行；首批恢复药水/生日蛋糕/钱袋子；三处相位门禁改卡级裁决 + 非锁步冲刷表演 + 内容卫生告警 |
 | [ADR-0033](../adr/0033-help-card-rarity-distribution-control.md) | 道具卡稀有度分级投放：常规 White 进入随机来源池，特殊卡走定向来源 |
 | [ADR-0034](../adr/0034-board-stabilization-refill-batch-ack.md) | 盘面稳定化归 Core；补牌按独立切片与 Present ack 锁步推进；融合结果由 Core 管理延后抽牌 |
@@ -50,7 +50,7 @@
 >
 > ADR-0030（#135）：正式战斗开局随机三张常规机关（`RegularTrapPool`：Kind=Trap+稀有度 White 池过滤、无放回、种子可复现；离开机关/特殊机关不入池）。
 >
-> ADR-0031（#136/#137）：属性房改为玩家三选二会话（进房 3 加权候选 → 选 2 → `RunModel.AttributePickDefIds` 本关开局注入，消费后清空）；自动随机注入退役。Core 状态机（#136）与表现接线（#137：`AttributeBoardPresenter` 三候选真卡 + 离开图标场地板，点击经 `RewardChoiceCoreHook` → IntentIntake → Core）均已落地。
+> ADR-0031（#136/#137）**已废止**（2026-08-09）：属性房恢复进房直接开战；`BuildNodeDeckOptions` 按 `RoomDefinition.OpeningInjects` 加权自动注入 2 张（40/40/20，可重复）。遗留 `AttributeBoardPresenter` / 三选二 Core 路径不再触发。
 
 ## 程序集一览
 

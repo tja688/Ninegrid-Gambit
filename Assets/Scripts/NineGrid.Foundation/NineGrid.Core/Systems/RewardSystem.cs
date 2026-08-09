@@ -351,16 +351,6 @@ namespace NineGrid.Core.Systems
                 return pipeline.RunToCompletion();
             }
 
-            // #136：属性房三选二会话。候选按房间注入声明加权抽取（策划权重为准，允许同种重复）；
-            // 玩家选满两张后结果写入 RunModel，下一战斗节点开局注入。
-            if (room.Kind == RoomKind.Attribute)
-            {
-                // 新会话一律先清旧 Generation 残留，避免流产流程的旧选择被后续战斗消费。
-                this.GetModel<RunModel>().ClearAttributePicks();
-                pipeline.Enqueue(new OfferAttributePickSessionAction(BuildAttributeCandidates(room)));
-                return pipeline.RunToCompletion();
-            }
-
             if (room.Kind == RoomKind.Tavern)
             {
                 pipeline.Enqueue(new OfferTavernSessionAction(
@@ -468,9 +458,7 @@ namespace NineGrid.Core.Systems
         public const int TavernServicePriceGold = 50;
         public const int TavernUpgradeStatDelta = 3;
 
-        /// <summary>属性房三选二（#136）：进房生成的候选数。</summary>
-        public const int AttributeCandidateCount = 3;
-        /// <summary>属性房三选二（#136）：选满张数后结束会话。</summary>
+        /// <summary>属性房三选二会话（#136，已退役流程）遗留常量。</summary>
         public const int AttributePickCount = 2;
 
         private void AppendRandomItemShelves(List<RewardEntry> shelves, int count)
@@ -653,70 +641,12 @@ namespace NineGrid.Core.Systems
                     continue;
                 }
 
-                // #136：属性房不再自动随机注入；只注入玩家三选二会话提交的选择结果。
-                var defIds = room.Kind == RoomKind.Attribute
-                    ? ConsumeAttributePicksForLoadout()
-                    : RollInjectCardDefIds(inject);
+                var defIds = RollInjectCardDefIds(inject);
                 for (var j = 0; j < defIds.Count; j++)
                 {
                     TryAddPlayerCard(catalog, content, options, defIds[j]);
                 }
             }
-        }
-
-        /// <summary>
-        /// #136：取本属性房战斗的玩家选择结果（≤2 张）并消费清空。
-        /// 无选择结果（未开会话 / 会话被放弃）时返回空，本关按无注入处理。
-        /// </summary>
-        private List<string> ConsumeAttributePicksForLoadout()
-        {
-            var run = this.GetModel<RunModel>();
-            var picks = new List<string>(run.AttributePickDefIds);
-            run.ClearAttributePicks();
-            return picks;
-        }
-
-        /// <summary>
-        /// #136：属性房三选二候选生成。按房间 Player 侧 WeightedPool 注入声明抽取
-        /// <see cref="AttributeCandidateCount"/> 个候选；同种是否可重复以声明 AllowDuplicates 为准。
-        /// </summary>
-        private List<RewardEntry> BuildAttributeCandidates(RoomDefinition room)
-        {
-            var result = new List<RewardEntry>();
-            if (room == null)
-            {
-                return result;
-            }
-
-            var injects = room.OpeningInjects;
-            for (var i = 0; i < injects.Count; i++)
-            {
-                var inject = injects[i];
-                if (inject == null
-                    || inject.Side != RoomInjectSide.Player
-                    || inject.SourceKind != RoomInjectSourceKind.WeightedPool)
-                {
-                    continue;
-                }
-
-                var rolled = new List<string>();
-                RollWeightedInjectPool(
-                    new RoomInjectDeclaration
-                    {
-                        Side = RoomInjectSide.Player,
-                        SourceKind = RoomInjectSourceKind.WeightedPool,
-                        Count = AttributeCandidateCount,
-                        AllowDuplicates = inject.AllowDuplicates
-                    }
-                    .AddPoolOptions(inject.Pool),
-                    rolled);
-                for (var j = 0; j < rolled.Count; j++)
-                {
-                    result.Add(new RewardEntry(rolled[j], CardKind.HelpCard, 1, 1));
-                }
-            }
-
-            return result;
         }
 
         private void AppendRoomOpeningInjectMonsterCards(

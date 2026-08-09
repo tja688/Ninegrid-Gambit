@@ -35,10 +35,10 @@
 | `ShopBoard/` | 商店货架 + 刷新 + 离开（#92）：任意距离点击购买、驻留离开 |
 | `TavernBoard/` | 卡店三项服务 + 刷新 + 离开（#93）：就地选项；「道具卡固定」二级选择铺空格候选 |
 | `RewardBoard/` | 特殊奖励房真卡 + 离开（#94）：任意距离点击拿走、踩离开放弃 |
-| `AttributeBoard/` | 属性房三选二候选真卡 + 离开（#137）：任意距离点击选择两张、踩离开放弃 |
+| `AttributeBoard/` | ~~属性房三选二~~（ADR-0031 已废止）遗留代码，正式流程不再触发 |
 | `InRoomBoard/` | 房内共用：`InRoomGoldPresentation`（非战斗扣金→HUD）、`RoomOptionFaceVisuals`（商店/卡店特色选项面按 defId 应用 JSON 主图标，修复恒显模板默认图标） |
 | `BoardBriefTip/` | 简要解释文字框 + 楼层提示（#89）：文案纯逻辑、悬停命中代理、胜负 Notice 出口 |
-| `BattleInfoPreview/` | 战斗信息预览：正式 Run 在 `StartBattleNodeAsync` 前硬阻塞；场景 `UI面板/战斗信息展示BG` 上挂 `BattleInfoPreviewPresenter`（Inspector 可配）；图标按 **defId 种类去重**；槽位图标 **复用卡面 `mainVisual` + idle 槽偏移**（`BattleInfoSlotArtFit.ApplyMainVisual` / `__Art`），再叠 Presenter 分类外部缩放（怪物/玩家道具/环境/本体）；悬停为九宫四角框 `F_U_Frame3`（`BattleInfoPreviewHighlight`，框住图标包围盒）；`BattleInfoPreviewCopySO`（Resources `Flow/BattleInfoPreviewCopy`）；半黑屏 + 详述嵌套退回预览 |
+| `BattleInfoPreview/` | 战斗信息预览：正式 Run 在 `StartBattleNodeAsync` 前硬阻塞；数据源为 `BuildNodeDeckOptions` 的 `PlayerCards`（含房间开局注入 + 固定卡 + 来源池）；槽位不足时**优先**展示房间注入候选与固定卡（属性房加权属性卡、恢复房食品卡等）；图标按 **defId 种类去重**；槽位图标 **复用卡面 `mainVisual` + idle 槽偏移**（`BattleInfoSlotArtFit.ApplyMainVisual` / `__Art`），再叠 Presenter 分类外部缩放（怪物/玩家道具/环境/本体）；悬停为九宫四角框 `F_U_Frame3`（`BattleInfoPreviewHighlight`，框住图标包围盒）；`BattleInfoPreviewCopySO`（Resources `Flow/BattleInfoPreviewCopy`）；半黑屏 + 详述嵌套退回预览 |
 | `Diagnostics/` | Battle/Flow/Perf/Registry Trace Recorder 与 Sink |
 | （根下） | `BattleSessionController`、`GameFlowController`、若干 `*ManagerSingleton`（Presenter 壳名）；**指针缝** `WorldPointerUtility`、**命中路由** `PointerHitRouter` / `IPointerHitTarget` / `PointerHitRegistry`（替代 OnMouse*，ADR-0006）；**开局选项** `GameFlowRunOptions`（`CreateFormal` 正式无作弊 / `CreateQuickTest` QuickTest；`QuickTestMode` 由载荷推导，`TestMode` 布尔已删，#125）；**QuickTest 通道** `QuickTestDeckCatalog` / `QuickTestRunOptions`（主菜单 `\0`=流程测试 Sequential 空技能；`\1`–`\9`：`skillIds` 一怪一技挂载 + **`trapContentIds` 经 `AddEnemyCard` 注入敌池**；正式开局不挂怪技能/不注机关；挂载经 `BattleSessionCheat.TryAttachSkillsToBoardMonsters`：**一怪一技**按格号升序，不够则 Spawn 白板宿主 + 至少一只无技能同伴）。**批1** `CardKind.Trap` / 双桶 / 五套卡面（ADR-0017）；**批2** 滚石/捕熊/烈焰迁 Trap + QT `\1`/`\6`/`\8`/`\9` 机关注入；**批3** 倒刺/三图腾/治疗泉 + QT `\1`–`\9` 九机关齐全（`help.healing_spring` 已删）；**#111** 离开机关 `trap.leave` + `tpl.trap.door`/`tpl.trap.magic_immunity`/`tpl.trap.leave`（可注入）；**#112** 默认 ⌈N/2⌉ 真怪击破后洗入；层主房改击破开局层主（`DeckSystem` OnKill → `ShuffleIntoDrawPile`，经补牌上场）；**#113** `IsNodeCleared`=`IsLeaveTrapBroken`（真怪清零不清关；击破离开机关清关；清场不兑金；QT 跳关置标志；**清关后禁止 PostKill Fill 补牌**） |
 
@@ -88,6 +88,7 @@
 - **装配**：`RecycleItemIntentScriptFactory`（`ApplyRecycleItemSlotCommand`）经 `PresentationCompositionRoot` 路由
 - **拖放**：`CardHandManagerSingleton` 拖起激活 `CardRecycleNotice`（半透明黑底 + 图标 + `标准世界文字 (2)` 价值 TMP）+ `HandcardRecycleZone`；落入回收区优先于 ApplyZone；提交 `SubmitRecycleItemIntentCommand`
 - **叠层**：回收 UI 激活期间 `CardDeckManagerSingleton.SetRecycleBackgroundSuppressed(true)` 把卡组卡临时切到 Sorting Layer `BG`，Notice 留在 `Main` 压住卡组；手牌拖拽 / 遗物 ghost 仍在 `Main` 更高 order，压住 Notice。`CardDeckSlotContainer.ApplySortingOrder` **每次**入槽都 `PropagateSortingLayerFromGroup`（不只在 layer 名变化时）；`CardManagerSingleton.ApplyDisplayMode` 对已入槽 `CardDeckMode` 委托 `EnsureDeckSorting`（对齐手牌 `EnsureHandSorting`），避免 `RefreshDisplayMode` 把序打回默认 -30 / 子节点逃出 BG
+- **抽牌堆视觉序不变量**：InGame 槽位 `[0..n)` 在洗入/回库 Present 结算后必须等于 Core `DeckModel.DrawPileUids`；slot 0（最左、最高 sortingOrder）= 下一张要发。`BoardPresentationPlayer` 洗入批 Present 末尾 `SyncVisualOrderFromDrawPile`；`CardDeckSlotContainer.TryReorderToUids` 只重排已在组内的卡。随机入组仍排除 slot 0，但显式 index 0 允许置顶（Core `Top=true`）。Editor/Dev：sync 后与 `TryDealCard` 成功后，在视觉与 Core **张数一致**时断言 slot0 == `DrawPileUids[0]`，失配 `LogError` 打出两份 uid 列表。表现只读对账，不改写抽牌堆（ADR-0034）
 - **价值预览**：指针悬停回收区时 TMP 显示 `+RecycleItemSlotGold` / 遗物拖时 `+DiscardRelicGold`；拖出或拖结束隐藏
 - **退场**：回收成功后走 `PlayDeathAsync` 碎裂（`ShatterCardAfterRecycleAsync`），与使用道具的 `PlayUseAsync`/缩小退场分开
 
@@ -146,7 +147,7 @@
 
 这些是 **Presenter / 管理器壳**，不是旧四大巨型宿主（已改名为 `BattleSessionController` / `GroundFieldView` / `FieldBattleView` / `GameFlowController`）：
 
-- Cards：`CardManagerSingleton`（底盘 + Kind→卡面五套：`Avatar`/`Monster`/`HelpCard|Item|PlayerCard`/`Relic`/`Trap`，路径见 `CardChassisPaths`；ADR-0002 / ADR-0017；**运行时 Spawn 不含** `Room` / `ChoiceOption`）、`CardHandManagerSingleton`、`CardDeckManagerSingleton`（局内 NewCard 洗入如离开机关经 `CardDeckAddAnchors`；遗物/技能开局赠牌才走 `AddCardAtFromOrigin` 锚点直飞）
+- Cards：`CardManagerSingleton`（底盘 + Kind→卡面五套：`Avatar`/`Monster`/`HelpCard|Item|PlayerCard`/`Relic`/`Trap`，路径见 `CardChassisPaths`；ADR-0002 / ADR-0017；**运行时 Spawn 不含** `Room` / `ChoiceOption`）、`CardHandManagerSingleton`、`CardDeckManagerSingleton`（局内 NewCard 洗入如离开机关经 `CardDeckAddAnchors`；遗物/技能开局赠牌才走 `AddCardAtFromOrigin` 锚点直飞；洗入 Present 后 `SyncVisualOrderFromDrawPile` 对齐 `DrawPileUids`）
 - 编辑器扩展壳（非运行时五套）：`CardChassisPaths.RoomOptionFacePrefab`（`房间选项标准模板`）+ `ResolveRoomIconPrefab`（`Assets/Prefabs/地形图标/*图标.prefab`）；卡牌表现编辑器侧栏「卡面」下另分 **房间图标** / **房间选项**
 - **怪物遭遇正式配置（#134 起）**：七套正式主题卡组（`ThemeDeckStableMapping`，deckId 为历史不透明主键）在遭遇表 `monster_decks.json` 已切 `Unknown` 正式可选；过渡卡组 `deck.transition` 与池外流浪卡（`deck.wandering_legion` 等）已**归档**——表行 `Reserve` + 成员 `isReserve`，保留 JSON 但不再被 RewardSystem 序列抽卡选中（仍被效果模板 `ShuffleInto` 按 defId 直生，见 ADR-0029）。卡 JSON 保留 `sequence`（1–5）与 `designSlotName`（近战1/远程2…，仅表现、不进 Core）；编辑器可改所属卡组 / 槽位名 / 序列 / 等级。菜单 `NineGrid/Content/校验怪物遭遇配置（过渡期|交付就绪）` 一键校验；交付就绪为正向门禁（ADR-0029）
 - Flow：`DamageNumberManagerSingleton`、`GoldGainFxManagerSingleton`、`RelicManagerSingleton`（#69：图标优先一卡一文件 JSON `sprites.mainIcon`；空缺时回退 `RelicVisualCatalog` bootstrap；显示壳为槽下挂 `Assets/Prefabs/标准遗物图标模板.prefab`（`图标本体` + `计数` TMP）；**Collider / `ContentIconSlotHitProxy` 仍在 `RelicSlot` 锚点**，预制体只负责显示；有 `projectKey` 且 period>1 的遗物在图标显示「还差几次」（未 Settled 前用装配 `threshold`/`every` 初值；Settled 后吃 `EffectCountdownChanged`，`SourceDefId=relic.*` 经 `CardFaceStatHandler` → `RelicHudHook` 写入已提交表）；**#98 / ADR-0027**：装备栏上限 12；**左键拖**遗物图标（抬高排序 + 半透明，槽显示根隐藏不改布局）共用道具卡格回收区 → `DiscardRelic` +20 金；**右键** `CardInspectOverlayPresenter.TryOpenByDefId` 详述；满栏 Bounce 拒收「遗物格子已满」且拖弃可穿透半黑屏；宝箱跳过走 `SkipRelicChoiceGold`）、`SelectorManagerSingleton`（卡面主视图锚定为祖先变换无关的局部空间计算，见 [ADR-0015](../adr/0015-card-slot-placement-local-space.md)；BounceFan 不得在 `scale=0` 期间提交卡面，`BuildEntries` 保持 `scale=1`，入场归零只在 `PlayEntryAnimation`；选择命中为容器本地固定 AABB，ChoiceOverlay 下合法悬停可开右键详述且详述打开期间屏蔽点选）
@@ -245,14 +246,11 @@
 - **领取入手牌**：同商店，经 `InRoomItemAcquirePresentation` 把 Core ItemSlots 新卡从货架位接入手牌（ADR-0025）
 - `GameFlowOrchestrator.PresentInRoomSessionAfterEnterAsync`：`IsSpecialRewardPool` 走特殊房场地板；道具奖励房选房图标 #138 已补齐（`道具奖励图标.prefab`，JSON `iconPrefab` 经编辑器双写）
 
-### 属性房三选二会话（#136/#137 · ADR-0031）
+### 属性房（战斗房 · ADR-0022）
 
-- Core：进 `Attribute` → `OfferAttributePickSession` 生成 3 个加权候选（`attribute.pick` 池，`Kind=AttributePick`，策划权重 40/40/20，允许同种重复）；`SelectReward` 按候选实例记录选择并移除该实例（不可重复点同实例）；选满 2 张提交 `RunModel.AttributePickDefIds` 并推进节点；`SkipHelpChoice` 放弃未选完的候选并推进节点（不加 skip 金）
-- 选择结果 **不写道具卡格**：下一战斗节点 `BuildNodeDeckOptions` 消费 `AttributePickDefIds` 注入玩家侧卡组（消费后清空；无选择结果不注入）
-- 表现（#137）：`AttributeBoardPresenter` 落格 1/3/7 三张候选真卡、8 离开；Avatar 硬切格 5；任意距离点击选择（`AttributeBoardHitProxy`），首次选择金框驻留视觉确认、继续等第二次；选满两张经简要解释 Notice 播报完成并清理候选（房间推进由 Core/过场接续）；离开驻留 1s 放弃未选完候选（`SkipHelpChoice`，不加 skip 金）
-- 候选真卡 `GroundCardMode`（预制体原生尺寸，不 Fit / 不 parent 到锚点，#104 / ADR-0024）；候选 `SoftBlockOnly`，离开 `WalkDestination`；离开监视约定同商店（**不持 ChoiceOverlay**；禁用 `GroundCardHitProxy`）；候选卡面显示当前名称 + 描述 tip（`CardPresentationConfigCatalog`，无价格）
-- 点击经 `RewardChoiceCoreHook.SelectReward`（`RewardChoiceInputController` → IntentIntake → Core `SelectReward`）；视觉候选 → 当前 Pending 索引经 `AttributePickIndexResolver`（Core 移除已选实例后索引前移）；会话变更（Generation/离开）经 `ResyncFromPending` 收尾
-- `GameFlowOrchestrator.PresentInRoomSessionAfterEnterAsync`：`IsAttributePickPool` 走 `PresentAttributeBoardAsync` 属性房场地板；`PhaseSystem` 在 `RewardItemChoice` 为属性房池加 `MoveAvatar`（离开图标需 BoardWalk）
+- 与其他战斗房（金币/宝箱/恢复）相同：图标驻留 EnterRoom 后直接 `AdvanceNode` 开战，**无**房内场地板会话
+- 开局注入：`RewardSystem.BuildNodeDeckOptions` 读 `RoomKind.Attribute` 的 `OpeningInjects`——Player 侧 `WeightedPool` `count=2`、`allowDuplicates=true`（血量/加甲/加攻 40/40/20）
+- ~~#136/#137 三选二会话~~（ADR-0031 已废止）：`OfferAttributePickSession` / `AttributeBoardPresenter` 遗留未删，正式流程不再触发
 
 ### Avatar 跳格（已落地 · ADR-0019 / #88 放宽）
 
@@ -288,19 +286,19 @@
 
 **已删**：`Battle`（随机战斗房从具体战斗房类型抽）、`Event`（由 `Attribute` 承接）。
 
-**开局注入（ADR-0022 / #95 / #136）**：`RoomDefinition.OpeningInjects` 声明往玩家侧/怪物侧塞哪些卡；`RewardSystem.BuildNodeDeckOptions` 按 `RunModel.Room` 执行（玩家侧在固定卡之后；怪物侧在节点序列抽卡之后）。**属性房例外**（#136 / ADR-0031）：不自动抽取，只注入玩家三选二会话提交的 `RunModel.AttributePickDefIds`（消费后清空）。携带卡包开局倒空已退役（ADR-0025 / #108）。节点 1/5 `RandomBattle` 开局若尚未是战斗房则现场抽一种（不含困难房）。
+**开局注入（ADR-0022 / #95）**：`RoomDefinition.OpeningInjects` 声明往玩家侧/怪物侧塞哪些卡；`RewardSystem.BuildNodeDeckOptions` 按 `RunModel.Room` 执行（玩家侧在固定卡之后；怪物侧在节点序列抽卡之后）。属性房与其它战斗房相同，按声明加权自动注入（如 2 张属性卡 40/40/20）。携带卡包开局倒空已退役（ADR-0025 / #108）。节点 1/5 `RandomBattle` 开局若尚未是战斗房则现场抽一种（不含困难房）。
 
 **勿与选项卡混淆（设计案对照）**
 
 | 表象 | 设计案实际 | 配置落点 |
 |------|------------|----------|
 | 「回满血」 | **恢复房**开局塞 **食品卡**（HelpCard）；非就地选项卡 | 不建 `HealFull` ChoiceOption |
-| 「血量+2 / 攻击+1 / 护甲+1」 | **属性房**进房生成 3 个加权候选（血量/加甲/加攻 40/40/20，可重复），玩家**三选二**加入本关玩家侧卡组（#136 / ADR-0031，选择结果注入见上「开局注入」段）；旧局内 BounceFan `Attack`/`Armor`/`Hp` 三选一 UI 已退役（#90） | HelpCard 真卡；ChoiceOption 内容条目仍在（属性房真实三选二接线见本 Map #136/#137） |
+| 「血量+2 / 攻击+1 / 护甲+1」 | **属性房**开局按 `OpeningInjects` 加权自动塞 2 张属性道具卡进玩家侧卡组（40/40/20，可重复）；进房直接开战；旧三选二会话与 BounceFan `Attack`/`Armor`/`Hp` 已退役 | HelpCard 真卡 |
 | 「给钱」 | **金币房**开局塞 **金币卡** | HelpCard，不建 `GainGold` ChoiceOption |
 | 卡店三项 + 刷新 | 策划消费房明文服务 | `UpgradeItemStats` / `FixItem` / `ExpandItemCapacity` / `RefreshShop` |
 | 商店道具牌格升级 | 商店就地扩容道具卡格（3…5） | `ExpandItemSlots`（勿与卡店 `ExpandItemCapacity` 混淆） |
 
-特殊选项卡种子（`ChoiceOption`）：卡店服务 `UpgradeItemStats`/`FixItem`/`ExpandItemCapacity`/`RefreshShop`；商店 `ExpandItemSlots`；`Attack`/`Armor`/`Hp` 内容条目仍在（UI 入口 #90 已退役，属性房真实三选二接线见本 Map #136/#137）。
+特殊选项卡种子（`ChoiceOption`）：卡店服务 `UpgradeItemStats`/`FixItem`/`ExpandItemCapacity`/`RefreshShop`；商店 `ExpandItemSlots`；`Attack`/`Armor`/`Hp` 内容条目仍在（UI 入口 #90 已退役）。
 
 局内选房走场地图标 + 驻留提交；`RoomChoicePresenter` 与 `RoomChoisePanel` 接线已删（#90）。`SelectorManagerSingleton` 只剩 Bounce；扇形 `BounceFanChoicePresenter` 仅服务宝箱开遗物。通关三选一已退役（ADR-0021）：清关进 `RoomChoice` 后由 `NodeSettlementReadiness` 唤醒主循环刷图标；`TryForceNodeVictory` 同路走 `TryCompleteClearedNode`。图标落格只对齐世界位置、保留预制体根缩放（#100 校准进目标盒约 `2.55 × 3.7`；#104 已删 `RoomIconVisualFit` / `slotHitBoxSize`）；`BoardBriefTipHitProxy` 配置 Walk 槽后单击转发 BoardWalk。房内货架/就地选项卡点选已接线（商店 #92、卡店 #93、特殊奖励房 #94；入口见上文各节），不再属 M2 待落地。
 

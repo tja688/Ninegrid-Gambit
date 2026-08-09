@@ -5,7 +5,9 @@ using Cysharp.Threading.Tasks;
 using NineGrid.Cards;
 using NineGrid.Core;
 using NineGrid.Core.Content;
+using NineGrid.Core.Systems;
 using NineGrid.Flow.BoardBriefTip;
+using QFramework;
 using TMPro;
 using UnityEngine;
 
@@ -292,7 +294,7 @@ namespace NineGrid.Flow.BattleInfoPreview
                 playerBodySlotView.RefreshHitRegistration();
             }
 
-            var playerDefs = CollectDefIds(options?.PlayerCards, kind => true);
+            var playerDefs = CollectPlayerItemDefIdsForPreview(options);
             FillSlots(
                 playerItemSlots,
                 playerDefs,
@@ -381,6 +383,138 @@ namespace NineGrid.Flow.BattleInfoPreview
             }
 
             return "房间类型：{room}\n楼层：{floor}\n进度：{progress}";
+        }
+
+        /// <summary>
+        /// 玩家侧道具预览：含来源池随机 + 固定卡 + 房间开局注入（与 <see cref="RewardSystem.BuildNodeDeckOptions"/> 同序生成）。
+        /// 房间注入 / 固定卡排在列表尾部，槽位不足时优先展示「开局即可知」的专属牌。
+        /// </summary>
+        private List<string> CollectPlayerItemDefIdsForPreview(NodeDeckOptions options)
+        {
+            var all = CollectDefIds(options?.PlayerCards, kind => true);
+            if (all.Count == 0)
+            {
+                return all;
+            }
+
+            var arch = NineGridArchitecture.Current;
+            var roomCandidates = CollectRoomOpeningInjectCandidateDefIds(arch);
+            var fixedCards = arch != null ? arch.GetModel<PlayerModel>().FixedItemCardDefIds : null;
+
+            var prioritized = new List<string>();
+            for (var i = 0; i < all.Count; i++)
+            {
+                var defId = all[i];
+                if (!IsKnownAtOpeningDefId(defId, roomCandidates, fixedCards))
+                {
+                    continue;
+                }
+
+                if (!prioritized.Contains(defId))
+                {
+                    prioritized.Add(defId);
+                }
+            }
+
+            for (var i = 0; i < all.Count; i++)
+            {
+                var defId = all[i];
+                if (!prioritized.Contains(defId))
+                {
+                    prioritized.Add(defId);
+                }
+            }
+
+            return prioritized;
+        }
+
+        private static bool IsKnownAtOpeningDefId(
+            string defId,
+            HashSet<string> roomCandidates,
+            IReadOnlyList<string> fixedCards)
+        {
+            if (string.IsNullOrEmpty(defId))
+            {
+                return false;
+            }
+
+            if (roomCandidates != null && roomCandidates.Contains(defId))
+            {
+                return true;
+            }
+
+            if (fixedCards == null)
+            {
+                return false;
+            }
+
+            for (var i = 0; i < fixedCards.Count; i++)
+            {
+                if (string.Equals(fixedCards[i], defId, StringComparison.Ordinal))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        /// <summary>本关房间 <see cref="RunModel.Room"/> 的玩家侧开局注入候选 defId（固定 + 加权池选项）。</summary>
+        private static HashSet<string> CollectRoomOpeningInjectCandidateDefIds(IArchitecture arch)
+        {
+            var result = new HashSet<string>(StringComparer.Ordinal);
+            if (arch == null)
+            {
+                return result;
+            }
+
+            var run = arch.GetModel<RunModel>();
+            var roomKind = run != null ? run.Room.Value : RoomKind.None;
+            if (roomKind == RoomKind.None)
+            {
+                return result;
+            }
+
+            var catalog = arch.GetSystem<IContentSystem>()?.Catalog;
+            RoomDefinition room;
+            if (catalog == null || !catalog.Rewards.TryGetRoom(roomKind, out room) || room == null)
+            {
+                return result;
+            }
+
+            var injects = room.OpeningInjects;
+            for (var i = 0; i < injects.Count; i++)
+            {
+                var inject = injects[i];
+                if (inject == null || inject.Side != RoomInjectSide.Player)
+                {
+                    continue;
+                }
+
+                if (inject.SourceKind == RoomInjectSourceKind.FixedCard
+                    && !string.IsNullOrEmpty(inject.CardDefId))
+                {
+                    result.Add(inject.CardDefId);
+                    continue;
+                }
+
+                if (inject.SourceKind != RoomInjectSourceKind.WeightedPool)
+                {
+                    continue;
+                }
+
+                var pool = inject.Pool;
+                for (var j = 0; j < pool.Count; j++)
+                {
+                    var option = pool[j];
+                    if (option != null && !string.IsNullOrEmpty(option.CardDefId))
+                    {
+                        result.Add(option.CardDefId);
+                    }
+                }
+            }
+
+            return result;
         }
 
         /// <summary>按 defId 去重：同种只占一槽（出现几个种类显示几个）。</summary>
