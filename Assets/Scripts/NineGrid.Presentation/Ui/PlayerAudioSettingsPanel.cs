@@ -1,15 +1,18 @@
 using System;
 using NineGrid.Content.Audio;
+using NineGrid.Core;
 using NineGrid.Flow;
 using NineGrid.Flow.Presentation;
+using NineGrid.Presentation.Commands;
 using NineGrid.Presentation.Systems;
+using QFramework;
 using UnityEngine;
 
 namespace NineGrid.Presentation.Ui
 {
     /// <summary>
-    /// 局内功能菜单（含音量模块）场景接线：主菜单「菜单按钮」打开，半黑屏 / 关闭钮 / Escape 关闭。
-    /// 仅绑定 <see cref="IPlayerAudioSettingsSystem"/>，不生成运行时 ugui。
+    /// 局内功能菜单场景接线：主菜单「菜单按钮」或局内 Esc（无半黑屏时）打开，半黑屏 / 关闭钮 / Esc 关闭；
+    /// 音量模块与「回到主菜单」「退出游戏」走既有流程命令，不生成运行时 ugui。
     /// </summary>
     [DisallowMultipleComponent]
     [DefaultExecutionOrder(100)]
@@ -19,16 +22,21 @@ namespace NineGrid.Presentation.Ui
         public const string MenuButtonName = "菜单按钮";
         public const string VolumeModuleName = "音量模块";
         public const string CloseButtonPath = "功能模块/关闭面板";
+        public const string ReturnToMainMenuButtonPath = "功能模块/回到主菜单";
+        public const string QuitGameButtonPath = "功能模块/退出游戏";
         private const string DimmerReason = "in-run-function-menu";
         private const float SliderHandleHalfPad = 0.28f;
 
         private static PlayerAudioSettingsPanel sInstance;
+        private static EscapeInputRelay sEscapeRelay;
 
         private IPlayerAudioSettingsSystem mSettings;
         private GameObject mPanelRoot;
         private GameObject mMenuButton;
         private BoxCollider2D mMenuButtonCollider;
+        private Transform mMasterMuteRoot;
         private Transform mMasterMuteOn;
+        private Transform mBgmMuteRoot;
         private Transform mBgmMuteOff;
         private VolumeSliderBinder mBgmSlider;
         private VolumeSliderBinder mSfxSlider;
@@ -44,20 +52,24 @@ namespace NineGrid.Presentation.Ui
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void Install()
         {
-            if (FindSceneInstance() != null)
+            // 面板默认失活：场景序列化组件不会立刻 Awake，须在此强制接线，
+            // 否则主菜单「菜单按钮」永远挂不上 FunctionMenuHitProxy。
+            var live = FindSceneInstance() ?? EnsureFromScene();
+            if (live == null)
             {
                 return;
             }
 
-            var panel = FindSceneNamed(PanelRootName);
-            if (panel == null)
+            live.EnsureInstanceState();
+            if (live.mPanelRoot != null && live.mPanelRoot.activeSelf)
             {
-                return;
+                live.mPanelRoot.SetActive(false);
             }
 
-            if (panel.GetComponent<PlayerAudioSettingsPanel>() == null)
+            if (Application.isPlaying)
             {
-                panel.AddComponent<PlayerAudioSettingsPanel>();
+                live.EnsureBound();
+                EnsureEscapeRelay();
             }
         }
 
@@ -77,16 +89,22 @@ namespace NineGrid.Presentation.Ui
 
         private void Awake()
         {
-            sInstance = this;
-            mPanelRoot = gameObject;
-            if (mPanelRoot.activeSelf)
-            {
-                mPanelRoot.SetActive(false);
-            }
-
+            EnsureInstanceState();
+            // 勿在此强制 SetActive(false)：面板默认失活，Awake 会推迟到首次打开；
+            // 若此处再关一次，会把 SetOpen(true) 刚打开的面板立刻关掉。
+            // 开局误激活的收口只放在 Install。
             if (Application.isPlaying)
             {
                 EnsureBound();
+            }
+        }
+
+        private void EnsureInstanceState()
+        {
+            sInstance = this;
+            if (mPanelRoot == null)
+            {
+                mPanelRoot = gameObject;
             }
         }
 
@@ -137,13 +155,51 @@ namespace NineGrid.Presentation.Ui
                 return;
             }
 
-            if (KeyboardUtility.GetKeyDown(KeyCode.Escape))
+            if (TryHandleEscapeClose())
             {
-                TriggerPulseHub.PulseAudio(AudioCueRequest.Simple(
-                    InteractionAudioCues.PlayerAudioEscape,
-                    "PlayerAudioSettingsPanel.Update.Escape"));
-                SetOpen(false);
+                return;
             }
+        }
+
+        private static void EnsureEscapeRelay()
+        {
+            if (sEscapeRelay != null)
+            {
+                return;
+            }
+
+            var relayObject = new GameObject(nameof(PlayerAudioSettingsPanel) + ".EscapeRelay");
+            sEscapeRelay = relayObject.AddComponent<EscapeInputRelay>();
+        }
+
+        private static bool TryHandleEscapeClose()
+        {
+            if (!KeyboardUtility.GetKeyDown(KeyCode.Escape))
+            {
+                return false;
+            }
+
+            TriggerPulseHub.PulseAudio(AudioCueRequest.Simple(
+                InteractionAudioCues.PlayerAudioEscape,
+                "PlayerAudioSettingsPanel.Update.Escape"));
+            if (sInstance != null)
+            {
+                sInstance.SetOpen(false);
+            }
+
+            return true;
+        }
+
+        private static bool CanOpenFromEscape()
+        {
+            if (IsOpen || BattleUiDimmerOverlay.IsActive)
+            {
+                return false;
+            }
+
+            var arch = NineGridArchitecture.Interface ?? NineGridArchitecture.Current;
+            var shell = arch?.GetSystem<IGameFlowShellSystem>();
+            return shell != null && shell.State.Value != GameFlowShellState.MainMenu;
         }
 
         private void EnsureBound()
@@ -165,19 +221,42 @@ namespace NineGrid.Presentation.Ui
 
             WirePanelSwallow(mPanelRoot);
             WireCloseButton(mPanelRoot.transform.Find(CloseButtonPath));
+            WireFlowMenuButton(
+                mPanelRoot.transform.Find(ReturnToMainMenuButtonPath),
+                RequestReturnToMainMenu);
+            WireFlowMenuButton(
+                mPanelRoot.transform.Find(QuitGameButtonPath),
+                RequestQuitGame);
 
             var volume = mPanelRoot.transform.Find(VolumeModuleName);
             if (volume != null)
             {
+                mMasterMuteRoot = volume.Find("总音量关");
                 mMasterMuteOn = volume.Find("总音量关/总音量开");
+                mBgmMuteRoot = volume.Find("音乐开");
                 mBgmMuteOff = volume.Find("音乐开/音乐关");
-                WireMuteToggle(volume.Find("总音量关"), PlayerAudioBus.Master, "player_audio.master.mute");
-                WireMuteToggle(volume.Find("音乐开"), PlayerAudioBus.Bgm, "player_audio.bgm.mute");
+                WireMuteControl(
+                    mMasterMuteRoot,
+                    mMasterMuteOn,
+                    null,
+                    PlayerAudioBus.Master,
+                    "player_audio.master.mute");
+                WireMuteControl(
+                    mBgmMuteRoot,
+                    null,
+                    mBgmMuteOff,
+                    PlayerAudioBus.Bgm,
+                    "player_audio.bgm.mute");
                 mBgmSlider = WireSlider(volume.Find("bgm音量滑条"), PlayerAudioBus.Bgm, "player_audio.bgm.volume");
                 mSfxSlider = WireSlider(volume.Find("SFX音量滑条 (1)"), PlayerAudioBus.Sfx, "player_audio.sfx.volume");
             }
 
             RefreshVisuals(mSettings.Current);
+            if (mMenuButtonCollider != null)
+            {
+                mMenuButtonCollider.enabled = !IsOpen;
+            }
+
             mBound = true;
         }
 
@@ -191,6 +270,12 @@ namespace NineGrid.Presentation.Ui
 
             if (open == mPanelRoot.activeSelf)
             {
+                // 即使开关态未变，也同步菜单按钮可点状态（避免失活面板旁路关面板后 collider 卡死）。
+                if (mMenuButtonCollider != null)
+                {
+                    mMenuButtonCollider.enabled = !open;
+                }
+
                 return;
             }
 
@@ -241,18 +326,57 @@ namespace NineGrid.Presentation.Ui
 
         private void RefreshVisuals(PlayerAudioSettingsSnapshot snapshot)
         {
-            if (mMasterMuteOn != null)
-            {
-                mMasterMuteOn.gameObject.SetActive(!snapshot.MasterMuted);
-            }
-
-            if (mBgmMuteOff != null)
-            {
-                mBgmMuteOff.gameObject.SetActive(snapshot.BgmMuted);
-            }
+            ApplyMuteVisuals(
+                mMasterMuteRoot,
+                mMasterMuteOn,
+                null,
+                snapshot.MasterMuted);
+            ApplyMuteVisuals(
+                mBgmMuteRoot,
+                null,
+                mBgmMuteOff,
+                snapshot.BgmMuted);
 
             mBgmSlider?.SetNormalized(snapshot.BgmVolume);
             mSfxSlider?.SetNormalized(snapshot.SfxVolume);
+        }
+
+        private static void ApplyMuteVisuals(
+            Transform root,
+            Transform onIndicator,
+            Transform offIndicator,
+            bool muted)
+        {
+            if (onIndicator != null)
+            {
+                onIndicator.gameObject.SetActive(!muted);
+            }
+
+            if (offIndicator != null)
+            {
+                offIndicator.gameObject.SetActive(muted);
+            }
+
+            // 父节点与指示态子节点常叠在同一位置；只显示当前态，避免排序盖住反馈。
+            if (root != null)
+            {
+                var showRoot = muted ? offIndicator == null : onIndicator == null;
+                SetSpriteRendererVisible(root, showRoot);
+            }
+        }
+
+        private static void SetSpriteRendererVisible(Transform target, bool visible)
+        {
+            if (target == null)
+            {
+                return;
+            }
+
+            var renderer = target.GetComponent<SpriteRenderer>();
+            if (renderer != null)
+            {
+                renderer.enabled = visible;
+            }
         }
 
         private void WireMenuButton(GameObject button)
@@ -262,7 +386,15 @@ namespace NineGrid.Presentation.Ui
                 return;
             }
 
-            mMenuButtonCollider = EnsureCollider(button, new Vector2(0.5f, 0.5f));
+            // 优先沿用场景预置碰撞体尺寸；缺失时按精灵包围盒，避免硬编码 0.5 点不中。
+            var preferred = PreferSpriteSize(button.transform);
+            var existing = button.GetComponent<BoxCollider2D>();
+            if (existing != null && existing.size.x > 0.01f && existing.size.y > 0.01f)
+            {
+                preferred = existing.size;
+            }
+
+            mMenuButtonCollider = EnsureCollider(button, preferred);
             var hit = button.GetComponent<FunctionMenuHitProxy>();
             if (hit == null)
             {
@@ -293,6 +425,81 @@ namespace NineGrid.Presentation.Ui
                 UiOverlayHitAction.CloseInRunFunctionMenu,
                 BattleUiDimmerOverlay.CloseHitSort,
                 PointerHitSurfacePriorities.Overlay);
+        }
+
+        private void WireFlowMenuButton(Transform root, Action onClick)
+        {
+            if (root == null || onClick == null)
+            {
+                return;
+            }
+
+            WireFlowMenuClickTarget(root, onClick);
+            for (var i = 0; i < root.childCount; i++)
+            {
+                var child = root.GetChild(i);
+                if (IsDecoratorNode(child))
+                {
+                    continue;
+                }
+
+                WireFlowMenuClickTarget(child, onClick);
+            }
+        }
+
+        private static void WireFlowMenuClickTarget(Transform target, Action onClick)
+        {
+            if (target == null)
+            {
+                return;
+            }
+
+            var preferred = PreferSpriteSize(target);
+            var existing = target.GetComponent<BoxCollider2D>();
+            if (existing != null && existing.size.x > 0.01f && existing.size.y > 0.01f)
+            {
+                preferred = existing.size;
+            }
+
+            EnsureCollider(target.gameObject, preferred);
+            BindClick(target.gameObject, onClick, BattleUiDimmerOverlay.CloseHitSort);
+        }
+
+        private void RequestReturnToMainMenu()
+        {
+            InteractionAudioCues.Pulse(
+                InteractionAudioCues.UiConfirm,
+                "PlayerAudioSettingsPanel.RequestReturnToMainMenu",
+                "in_run_function_menu.return_main_menu");
+            SetOpen(false);
+
+            var arch = NineGridArchitecture.Interface ?? NineGridArchitecture.Current;
+            if (arch != null)
+            {
+                arch.SendCommand(new ReturnToMainMenuCommand());
+                return;
+            }
+
+            ResolveFlowController()?.ReturnToMainMenu();
+        }
+
+        private void RequestQuitGame()
+        {
+            InteractionAudioCues.Pulse(
+                InteractionAudioCues.MainMenuPress,
+                "PlayerAudioSettingsPanel.RequestQuitGame",
+                "main_menu.quit");
+            InteractionAudioCues.Pulse(
+                InteractionAudioCues.MainMenuCancel,
+                "PlayerAudioSettingsPanel.RequestQuitGame",
+                "main_menu.quit");
+            SetOpen(false);
+            ResolveFlowController()?.QuitGame();
+        }
+
+        private static GameFlowController ResolveFlowController()
+        {
+            return UnityEngine.Object.FindFirstObjectByType<GameFlowController>();
         }
 
         private static void WirePanelSwallow(GameObject panel)
@@ -327,18 +534,16 @@ namespace NineGrid.Presentation.Ui
                 PointerHitSurfacePriorities.Overlay);
         }
 
-        private void WireMuteToggle(Transform root, PlayerAudioBus bus, string contentId)
+        private void WireMuteControl(
+            Transform root,
+            Transform onIndicator,
+            Transform offIndicator,
+            PlayerAudioBus bus,
+            string contentId)
         {
             if (root == null)
             {
                 return;
-            }
-
-            EnsureCollider(root.gameObject, PreferSpriteSize(root));
-            var child = root.childCount > 0 ? root.GetChild(0) : null;
-            if (child != null)
-            {
-                EnsureCollider(child.gameObject, PreferSpriteSize(child));
             }
 
             void Toggle()
@@ -355,11 +560,36 @@ namespace NineGrid.Presentation.Ui
                 mSettings.SetMuted(bus, !mSettings.Current.IsMuted(bus));
             }
 
-            BindClick(root.gameObject, Toggle, BattleUiDimmerOverlay.CloseHitSort);
-            if (child != null)
+            WireMuteClickTarget(root, Toggle);
+            WireMuteClickTarget(onIndicator, Toggle);
+            WireMuteClickTarget(offIndicator, Toggle);
+
+            for (var i = 0; i < root.childCount; i++)
             {
-                BindClick(child.gameObject, Toggle, BattleUiDimmerOverlay.CloseHitSort + 1);
+                var child = root.GetChild(i);
+                if (child == onIndicator || child == offIndicator || IsDecoratorNode(child))
+                {
+                    continue;
+                }
+
+                WireMuteClickTarget(child, Toggle);
             }
+        }
+
+        private static void WireMuteClickTarget(Transform target, Action onClick)
+        {
+            if (target == null)
+            {
+                return;
+            }
+
+            EnsureCollider(target.gameObject, PreferSpriteSize(target));
+            BindClick(target.gameObject, onClick, BattleUiDimmerOverlay.CloseHitSort);
+        }
+
+        private static bool IsDecoratorNode(Transform node)
+        {
+            return node != null && node.name.StartsWith("__", StringComparison.Ordinal);
         }
 
         private VolumeSliderBinder WireSlider(Transform track, PlayerAudioBus bus, string contentId)
@@ -375,12 +605,10 @@ namespace NineGrid.Presentation.Ui
                 return null;
             }
 
-            var trackSr = track.GetComponent<SpriteRenderer>();
-            var trackHalf = trackSr != null && trackSr.sprite != null
-                ? trackSr.sprite.bounds.extents.x
-                : 1.3f;
-            var minX = -(trackHalf - SliderHandleHalfPad);
-            var maxX = trackHalf - SliderHandleHalfPad;
+            if (!TryGetSliderRange(track, handle, out var minX, out var maxX))
+            {
+                return null;
+            }
 
             EnsureCollider(track.gameObject, PreferSpriteSize(track));
             EnsureCollider(handle.gameObject, PreferSpriteSize(handle));
@@ -438,12 +666,48 @@ namespace NineGrid.Presentation.Ui
             return col;
         }
 
+        private static bool TryGetSliderRange(Transform track, Transform handle, out float minX, out float maxX)
+        {
+            minX = 0f;
+            maxX = 1f;
+            var trackSr = track != null ? track.GetComponent<SpriteRenderer>() : null;
+            if (trackSr == null || trackSr.sprite == null)
+            {
+                return false;
+            }
+
+            var handleHalf = SliderHandleHalfPad;
+            var handleSr = handle != null ? handle.GetComponent<SpriteRenderer>() : null;
+            if (handleSr != null && handleSr.sprite != null)
+            {
+                handleHalf = handleSr.drawMode == SpriteDrawMode.Simple
+                    ? handleSr.sprite.bounds.extents.x
+                    : handleSr.size.x * 0.5f;
+                handleHalf = Mathf.Max(handleHalf * 0.85f, 0.04f);
+            }
+
+            var bounds = trackSr.localBounds;
+            minX = bounds.min.x + handleHalf;
+            maxX = bounds.max.x - handleHalf;
+            if (maxX < minX)
+            {
+                var center = (bounds.min.x + bounds.max.x) * 0.5f;
+                minX = center;
+                maxX = center;
+            }
+
+            return true;
+        }
+
         private static Vector2 PreferSpriteSize(Transform t)
         {
             var sr = t.GetComponent<SpriteRenderer>();
             if (sr != null && sr.sprite != null)
             {
-                var size = sr.sprite.bounds.size;
+                // Sliced/Tiled 以 Renderer.size 为准；Simple 用精灵包围盒。
+                var size = sr.drawMode == SpriteDrawMode.Simple
+                    ? (Vector2)sr.sprite.bounds.size
+                    : sr.size;
                 return new Vector2(Mathf.Max(0.25f, size.x), Mathf.Max(0.25f, size.y));
             }
 
@@ -542,6 +806,30 @@ namespace NineGrid.Presentation.Ui
         private static bool IsSceneObject(GameObject go)
         {
             return go != null && go.scene.IsValid() && go.scene.isLoaded;
+        }
+
+        /// <summary>面板根失活时仍监听 Esc 打开；关闭仍由激活中的面板 Update 处理。</summary>
+        [DisallowMultipleComponent]
+        [DefaultExecutionOrder(99)]
+        private sealed class EscapeInputRelay : MonoBehaviour
+        {
+            private void Update()
+            {
+                if (!KeyboardUtility.GetKeyDown(KeyCode.Escape) || !CanOpenFromEscape())
+                {
+                    return;
+                }
+
+                RequestOpen();
+            }
+
+            private void OnDestroy()
+            {
+                if (sEscapeRelay == this)
+                {
+                    sEscapeRelay = null;
+                }
+            }
         }
 
         /// <summary>局内功能菜单点击代理（生产路径；非作弊专用）。</summary>

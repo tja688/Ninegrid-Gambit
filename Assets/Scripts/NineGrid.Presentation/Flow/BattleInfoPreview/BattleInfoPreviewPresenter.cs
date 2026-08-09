@@ -517,8 +517,28 @@ namespace NineGrid.Flow.BattleInfoPreview
                 return;
             }
 
-            _avatarSlotBaseLocalPos = playerBodySlot.localPosition;
-            _avatarSlotBaseLocalScale = playerBodySlot.localScale;
+            // 场景里 localPose 往往已含 OnValidate 叠过的 offset/scale；
+            // 必须先扣回，否则 Player（无 OnValidate）会再叠一次 → 往左下偏。
+            CaptureAvatarSlotBaseFromCurrentTransform();
+        }
+
+        /// <summary>
+        /// 从当前 Transform 反推「场景原位」基准。Editor / Player 共用，避免 #if UNITY_EDITOR 分叉。
+        /// </summary>
+        private void CaptureAvatarSlotBaseFromCurrentTransform()
+        {
+            if (playerBodySlot == null)
+            {
+                return;
+            }
+
+            _avatarSlotBaseLocalPos = playerBodySlot.localPosition
+                - new Vector3(avatarIconOffset.x, avatarIconOffset.y, 0f);
+            var scale = Mathf.Max(0.01f, avatarIconScale);
+            _avatarSlotBaseLocalScale = new Vector3(
+                playerBodySlot.localScale.x / scale,
+                playerBodySlot.localScale.y / scale,
+                playerBodySlot.localScale.z);
             if (_avatarSlotBaseLocalScale.sqrMagnitude < 0.0001f)
             {
                 _avatarSlotBaseLocalScale = Vector3.one;
@@ -560,18 +580,7 @@ namespace NineGrid.Flow.BattleInfoPreview
             // Edit 模式首次：把当前场景位当基准，再叠偏移，方便在 Inspector 里拖调。
             if (!_avatarSlotBaseCaptured)
             {
-                _avatarSlotBaseLocalPos = playerBodySlot.localPosition - new Vector3(avatarIconOffset.x, avatarIconOffset.y, 0f);
-                var scale = Mathf.Max(0.01f, avatarIconScale);
-                _avatarSlotBaseLocalScale = new Vector3(
-                    playerBodySlot.localScale.x / scale,
-                    playerBodySlot.localScale.y / scale,
-                    playerBodySlot.localScale.z);
-                if (_avatarSlotBaseLocalScale.sqrMagnitude < 0.0001f)
-                {
-                    _avatarSlotBaseLocalScale = Vector3.one;
-                }
-
-                _avatarSlotBaseCaptured = true;
+                CaptureAvatarSlotBaseFromCurrentTransform();
             }
 
             ApplyAvatarPortraitTransform();
