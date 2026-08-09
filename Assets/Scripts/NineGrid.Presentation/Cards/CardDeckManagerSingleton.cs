@@ -1441,6 +1441,12 @@ namespace NineGrid.Cards
                 return false;
             }
 
+            // 已在卡组槽位：禁止再 TryInsertAt（容器不查重，重复入列会幽灵占槽，#180）。
+            if (ContainsUid(card.Uid))
+            {
+                return true;
+            }
+
             _isBusy = true;
             try
             {

@@ -426,6 +426,11 @@ namespace NineGrid.Flow
                 }
             }
 
+            // 遗物/技能开局授予须先入 PendingDeckAddUids，再构建抽牌堆 Inject 列表；
+            // 否则同一 uid 既 InjectDeck 又 DeckAdds，卡组槽位重复入列，战中补牌会
+            // 卡组↔场地来回抢跑（#180 药水袋 / 飞刀袋等同路径）。
+            CaptureOpeningDeckAdds(arch, plan);
+
             for (var i = 0; i < deck.DrawPileUids.Count; i++)
             {
                 var uid = deck.DrawPileUids[i];
@@ -451,7 +456,6 @@ namespace NineGrid.Flow
                 }
             }
 
-            CaptureOpeningDeckAdds(arch, plan);
             CaptureOpeningHandDeals(arch, plan);
 
             return plan;
@@ -749,10 +753,15 @@ namespace NineGrid.Flow
 
                 if (plan.DeckAdds.Count > 0)
                 {
-                                        for (var d = 0; d < plan.DeckAdds.Count; d++)
+                    for (var d = 0; d < plan.DeckAdds.Count; d++)
                     {
                         cancellationToken.ThrowIfCancellationRequested();
                         var deckDeal = plan.DeckAdds[d];
+                        if (Deck != null && Deck.ContainsUid(deckDeal.Uid))
+                        {
+                            continue;
+                        }
+
                         if (!TryResolveHandDealOrigin(deckDeal.SourceDefId, out var origin))
                         {
                             if (Deck == null || !Deck.TryGetDefaultDealOrigin(out origin))
