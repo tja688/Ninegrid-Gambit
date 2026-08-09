@@ -27,6 +27,8 @@ namespace NineGrid.Presentation.Cheat
 
         private void Update()
         {
+            CheatToolGodMode.Tick();
+
             if (KeyboardUtility.GetKeyDown(KeyCode.F12))
             {
                 CheatToolPanelController.TryToggle();

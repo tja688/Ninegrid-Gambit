@@ -37,6 +37,7 @@ namespace NineGrid.Presentation.Cheat
         private const string AddCardButtonName = "战斗加卡选项";
         private const string CoinsButtonName = "无限金币选项";
         private const string HealButtonName = "回复满血选项";
+        private const string GodModeButtonName = "无敌模式选项";
         private const string LogRecordButtonName = "记录log选项";
         private const string LogNoticeTextName = "notice text";
         private const string LogSaveButtonName = "Button";
@@ -507,6 +508,7 @@ namespace NineGrid.Presentation.Cheat
             BindHitButton(AddCardButtonName, OpenAddCardMenu);
             BindHitButton(CoinsButtonName, AddCoins);
             BindHitButton(HealButtonName, HealAvatarFull);
+            BindHitButton(GodModeButtonName, CheatToolGodMode.Toggle);
             BindHitButton(LogRecordButtonName, OpenLogRecordMenu);
 
             if (_secondLayer != null)
@@ -623,6 +625,7 @@ namespace NineGrid.Presentation.Cheat
                 CreateHitButtonStub(AddCardButtonName, first);
                 CreateHitButtonStub(CoinsButtonName, first);
                 CreateHitButtonStub(HealButtonName, first);
+                CreateHitButtonStub(GodModeButtonName, first);
                 CreateHitButtonStub(LogRecordButtonName, first);
             }
             else if (FindChild(LogRecordButtonName) == null && FindChild(FirstLayerName) != null)
@@ -815,7 +818,7 @@ namespace NineGrid.Presentation.Cheat
 
         private void BindHitButton(string objectName, Action onClick)
         {
-            var target = FindChild(objectName);
+            var target = FindButton(objectName);
             if (target == null)
             {
                 Debug.LogWarning("[CheatTool] 未找到按钮「" + objectName + "」。");
@@ -1190,6 +1193,18 @@ namespace NineGrid.Presentation.Cheat
         private Transform FindChild(string objectName)
         {
             return FindChildRecursive(transform, objectName);
+        }
+
+        /// <summary>场景按钮名偶带尾部空格，先精确再 trim 兼容。</summary>
+        private Transform FindButton(string objectName)
+        {
+            var target = FindChild(objectName);
+            if (target != null)
+            {
+                return target;
+            }
+
+            return FindChild(objectName + " ");
         }
 
         private static Transform FindChildRecursive(Transform root, string objectName)
