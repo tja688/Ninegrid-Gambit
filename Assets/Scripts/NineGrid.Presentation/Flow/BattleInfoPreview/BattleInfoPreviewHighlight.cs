@@ -2,7 +2,7 @@ using UnityEngine;
 
 namespace NineGrid.Flow.BattleInfoPreview
 {
-    /// <summary>预览槽悬停亮边：可改色黄边（默认缩放衬底）。</summary>
+    /// <summary>预览槽悬停亮边：按固定槽框缩放（不跟 Cover 后的大图走）。</summary>
     [DisallowMultipleComponent]
     public sealed class BattleInfoPreviewHighlight : MonoBehaviour
     {
@@ -13,8 +13,9 @@ namespace NineGrid.Flow.BattleInfoPreview
         [SerializeField] private float scaleMultiplier = 1.18f;
         [SerializeField] private Sprite overrideSprite;
 
-        private SpriteRenderer _icon;
-        private Vector3 _baseScale = Vector3.one;
+        private SpriteRenderer _sortSource;
+        private Sprite _frameSprite;
+        private Vector2 _slotLocalSize = new Vector2(0.8f, 0.8f);
         private bool _visible;
 
         public Color HighlightColor
@@ -41,9 +42,23 @@ namespace NineGrid.Flow.BattleInfoPreview
             }
         }
 
+        /// <summary>旧接口：仅有图标时回退用图标 sprite。</summary>
         public void BindIcon(SpriteRenderer icon)
         {
-            _icon = icon;
+            _sortSource = icon;
+            _frameSprite = null;
+            EnsureRing();
+            Hide();
+        }
+
+        /// <summary>按槽框 sprite / 本地尺寸画黄边，排序跟图标。</summary>
+        public void BindSlotFrame(Sprite frameSprite, Vector2 slotLocalSize, SpriteRenderer sortSource)
+        {
+            _frameSprite = frameSprite;
+            _slotLocalSize = slotLocalSize.x > 0.0001f && slotLocalSize.y > 0.0001f
+                ? slotLocalSize
+                : new Vector2(0.8f, 0.8f);
+            _sortSource = sortSource;
             EnsureRing();
             Hide();
         }
@@ -56,7 +71,7 @@ namespace NineGrid.Flow.BattleInfoPreview
                 return;
             }
 
-            SyncFromIcon();
+            SyncFromSlot();
             ring.enabled = true;
             _visible = true;
         }
@@ -75,7 +90,7 @@ namespace NineGrid.Flow.BattleInfoPreview
         {
             if (_visible)
             {
-                SyncFromIcon();
+                SyncFromSlot();
             }
         }
 
@@ -100,36 +115,48 @@ namespace NineGrid.Flow.BattleInfoPreview
                 ring = go.AddComponent<SpriteRenderer>();
             }
 
-            _baseScale = Vector3.one;
             ring.color = highlightColor;
+            ring.maskInteraction = SpriteMaskInteraction.None;
             ring.enabled = false;
         }
 
-        private void SyncFromIcon()
+        private void SyncFromSlot()
         {
             if (ring == null)
             {
                 return;
             }
 
-            Sprite sprite = overrideSprite;
-            if (sprite == null && _icon != null)
+            Sprite sprite = overrideSprite != null ? overrideSprite : _frameSprite;
+            if (sprite == null && _sortSource != null)
             {
-                sprite = _icon.sprite;
+                sprite = _sortSource.sprite;
             }
 
             ring.sprite = sprite;
             ring.color = highlightColor;
-            ring.flipX = _icon != null && _icon.flipX;
-            ring.flipY = _icon != null && _icon.flipY;
 
-            if (_icon != null)
+            if (_sortSource != null)
             {
-                ring.sortingLayerID = _icon.sortingLayerID;
-                ring.sortingOrder = _icon.sortingOrder - 1;
-                ring.transform.localPosition = Vector3.zero;
-                ring.transform.localRotation = Quaternion.identity;
-                ring.transform.localScale = _baseScale * scaleMultiplier;
+                ring.sortingLayerID = _sortSource.sortingLayerID;
+                ring.sortingOrder = _sortSource.sortingOrder - 1;
+                ring.flipX = _sortSource.flipX;
+                ring.flipY = _sortSource.flipY;
+            }
+
+            ring.transform.localPosition = Vector3.zero;
+            ring.transform.localRotation = Quaternion.identity;
+
+            if (sprite != null)
+            {
+                var sz = sprite.bounds.size;
+                var sx = _slotLocalSize.x / Mathf.Max(0.0001f, sz.x) * scaleMultiplier;
+                var sy = _slotLocalSize.y / Mathf.Max(0.0001f, sz.y) * scaleMultiplier;
+                ring.transform.localScale = new Vector3(sx, sy, 1f);
+            }
+            else
+            {
+                ring.transform.localScale = Vector3.one * scaleMultiplier;
             }
         }
     }

@@ -38,6 +38,11 @@ namespace NineGrid.Content.Editor
         private long lastObservedHistorySequence = -1;
         private int lastObservedMusicHistoryCount = -1;
         private int lastObservedPlayingSourceCount = -1;
+        private int lastObservedUnclaimedSfxCount = -1;
+        private int lastObservedSceneOrphanCount = -1;
+        private int lastObservedPersistAnomalyCount = -1;
+        private int lastObservedMusicPlayingCount = -1;
+        private int lastObservedMusicUnknownCount = -1;
 
         public static AudioWorkbenchEditorState Instance => instance ??= new AudioWorkbenchEditorState();
 
@@ -170,6 +175,10 @@ namespace NineGrid.Content.Editor
                     return true;
                 case "stopSfxSource":
                     return DispatchStopSfxSource(payloadJson, out payload, out error);
+                case "stopAllSfxSources":
+                    return DispatchStopAllSfxSources(out payload, out error);
+                case "stopMusicSource":
+                    return DispatchStopMusicSource(payloadJson, out payload, out error);
                 case "runAiBindPreserve":
                     if (!EnsureMutationsAllowed(out error)) return false;
                     return DispatchAiBind(out payload, out error);
@@ -206,6 +215,11 @@ namespace NineGrid.Content.Editor
                 lastObservedHistorySequence = -1;
                 lastObservedMusicHistoryCount = -1;
                 lastObservedPlayingSourceCount = -1;
+                lastObservedUnclaimedSfxCount = -1;
+                lastObservedSceneOrphanCount = -1;
+                lastObservedPersistAnomalyCount = -1;
+                lastObservedMusicPlayingCount = -1;
+                lastObservedMusicUnknownCount = -1;
                 return false;
             }
 
@@ -214,7 +228,12 @@ namespace NineGrid.Content.Editor
             long runtimeRevision = 0;
             long historySequence = 0;
             var playingCount = 0;
+            var unclaimedSfx = 0;
+            var sceneOrphans = 0;
+            var persistAnomalies = 0;
             var musicHistoryCount = 0;
+            var musicPlaying = 0;
+            var musicUnknown = 0;
             var architecture = NineGridArchitecture.Interface;
             var audio = architecture?.GetSystem<IAudioSystem>();
             if (audio != null)
@@ -222,6 +241,19 @@ namespace NineGrid.Content.Editor
                 var snap = audio.GetWorkbenchSnapshot();
                 runtimeRevision = snap?.Revision ?? 0;
                 playingCount = snap?.PlayingSources?.Count ?? 0;
+                sceneOrphans = snap?.SceneOrphans?.Count ?? 0;
+                persistAnomalies = snap?.PersistAnomalies?.Count ?? 0;
+                if (snap?.PlayingSources != null)
+                {
+                    for (var i = 0; i < snap.PlayingSources.Count; i++)
+                    {
+                        if (!snap.PlayingSources[i].Claimed)
+                        {
+                            unclaimedSfx++;
+                        }
+                    }
+                }
+
                 if (snap?.History != null && snap.History.Count > 0)
                 {
                     historySequence = snap.History[snap.History.Count - 1].Sequence;
@@ -229,19 +261,36 @@ namespace NineGrid.Content.Editor
             }
 
             var music = architecture?.GetSystem<IMusicSystem>();
-            if (music?.History != null)
+            if (music != null)
             {
-                musicHistoryCount = music.History.Count;
+                if (music.History != null)
+                {
+                    musicHistoryCount = music.History.Count;
+                }
+
+                var audit = music.LastAudit ?? music.AuditMusicTrack("AudioWorkbench.Tick");
+                musicPlaying = audit?.ActualSources?.Count ?? 0;
+                musicUnknown = audit?.UnknownSources?.Count ?? 0;
             }
 
             var changed = runtimeRevision != lastObservedRuntimeRevision
                 || historySequence != lastObservedHistorySequence
                 || playingCount != lastObservedPlayingSourceCount
-                || musicHistoryCount != lastObservedMusicHistoryCount;
+                || unclaimedSfx != lastObservedUnclaimedSfxCount
+                || sceneOrphans != lastObservedSceneOrphanCount
+                || persistAnomalies != lastObservedPersistAnomalyCount
+                || musicHistoryCount != lastObservedMusicHistoryCount
+                || musicPlaying != lastObservedMusicPlayingCount
+                || musicUnknown != lastObservedMusicUnknownCount;
             lastObservedRuntimeRevision = runtimeRevision;
             lastObservedHistorySequence = historySequence;
             lastObservedPlayingSourceCount = playingCount;
+            lastObservedUnclaimedSfxCount = unclaimedSfx;
+            lastObservedSceneOrphanCount = sceneOrphans;
+            lastObservedPersistAnomalyCount = persistAnomalies;
             lastObservedMusicHistoryCount = musicHistoryCount;
+            lastObservedMusicPlayingCount = musicPlaying;
+            lastObservedMusicUnknownCount = musicUnknown;
             if (!changed)
             {
                 return false;
@@ -358,6 +407,25 @@ namespace NineGrid.Content.Editor
                         playbackPositionSeconds = s.PlaybackPositionSeconds,
                         loop = s.Loop,
                         isPlaying = s.IsPlaying,
+                        claimed = s.Claimed,
+                    }).ToArray(),
+                sceneOrphans = (snap.SceneOrphans ?? Array.Empty<SceneAudioOrphanSnapshot>())
+                    .Select(o => new
+                    {
+                        gameObjectPath = o.GameObjectPath,
+                        clipName = o.ClipName,
+                        playbackPositionSeconds = o.PlaybackPositionSeconds,
+                        loop = o.Loop,
+                    }).ToArray(),
+                persistAnomalies = (snap.PersistAnomalies ?? Array.Empty<AudioPersistAnomalySnapshot>())
+                    .Select(a => new
+                    {
+                        sourceId = a.SourceId,
+                        clipKey = a.ClipKey,
+                        cueId = a.CueId,
+                        loop = a.Loop,
+                        reason = a.Reason,
+                        time = a.Time,
                     }).ToArray(),
                 aggregates = (snap.Aggregates ?? Array.Empty<AudioCueAggregate>()).Select(a => new
                 {
@@ -410,6 +478,10 @@ namespace NineGrid.Content.Editor
 
         private static object ProjectMusicRuntime(IMusicSystem music)
         {
+            var audit = music.LastAudit ?? music.AuditMusicTrack("AudioWorkbench.Snapshot");
+            var claimed = new HashSet<string>(
+                audit?.ClaimedSourceIds ?? Array.Empty<string>(),
+                StringComparer.Ordinal);
             return new
             {
                 desired = music.DesiredState?.ToString(),
@@ -419,6 +491,16 @@ namespace NineGrid.Content.Editor
                 currentSourceCount = music.CurrentSourceCount,
                 retiringSourceCount = music.RetiringSourceCount,
                 currentStableSource = music.CurrentStableSource,
+                playingSources = (audit?.ActualSources ?? Array.Empty<MusicTrackSourceSnapshot>())
+                    .Select(s => new
+                    {
+                        sourceId = s.SourceId,
+                        clipKey = s.ClipKey,
+                        playbackPositionSeconds = s.PlaybackPositionSeconds,
+                        isPlaying = s.IsPlaying,
+                        claimed = claimed.Contains(s.SourceId),
+                        loop = true,
+                    }).ToArray(),
                 history = (music.History ?? Array.Empty<MusicHistoryRecord>()).Select(h => new
                 {
                     outcome = h.Outcome.ToString(),
@@ -430,12 +512,12 @@ namespace NineGrid.Content.Editor
                     reason = h.Reason,
                     time = h.Time,
                 }).ToArray(),
-                lastAudit = music.LastAudit == null ? null : new
+                lastAudit = audit == null ? null : new
                 {
-                    trigger = music.LastAudit.Trigger,
-                    hasUnknownSources = music.LastAudit.HasUnknownSources,
-                    claimedSourceIds = music.LastAudit.ClaimedSourceIds,
-                    unknownSources = music.LastAudit.UnknownSources?.Select(s => new
+                    trigger = audit.Trigger,
+                    hasUnknownSources = audit.HasUnknownSources,
+                    claimedSourceIds = audit.ClaimedSourceIds,
+                    unknownSources = audit.UnknownSources?.Select(s => new
                     {
                         sourceId = s.SourceId,
                         clipKey = s.ClipKey,
@@ -805,6 +887,65 @@ namespace NineGrid.Content.Editor
             return stopped;
 #else
             error = "StopSfxSource 仅 Editor/Development 可用。";
+            return false;
+#endif
+        }
+
+        private bool DispatchStopAllSfxSources(out object payload, out string error)
+        {
+            payload = null;
+            error = null;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            var audio = NineGridArchitecture.Interface?.GetSystem<IAudioSystem>();
+            if (audio == null)
+            {
+                error = "IAudioSystem 未注册。";
+                SetError(error);
+                return false;
+            }
+
+            var stopped = audio.StopAllSfxSources();
+            payload = new { stopped };
+            statusMessage = "已停止 " + stopped + " 条 SFX 源。";
+            ClearError();
+            BumpRevision();
+            return true;
+#else
+            error = "StopAllSfxSources 仅 Editor/Development 可用。";
+            return false;
+#endif
+        }
+
+        private bool DispatchStopMusicSource(string payloadJson, out object payload, out string error)
+        {
+            payload = null;
+            error = null;
+            var sourceId = ReadString(payloadJson, "sourceId");
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            var music = NineGridArchitecture.Interface?.GetSystem<IMusicSystem>();
+            if (music == null)
+            {
+                error = "MusicSystem 未注册。";
+                SetError(error);
+                return false;
+            }
+
+            var stopped = music.StopMusicSource(sourceId);
+            payload = new { stopped };
+            statusMessage = stopped ? "已停止 Music SourceId：" + sourceId : "停止 Music 失败：" + sourceId;
+            if (stopped)
+            {
+                ClearError();
+            }
+            else
+            {
+                SetError(statusMessage);
+            }
+
+            BumpRevision();
+            return stopped;
+#else
+            error = "StopMusicSource 仅 Editor/Development 可用。";
             return false;
 #endif
         }

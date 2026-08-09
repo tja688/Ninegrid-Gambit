@@ -419,6 +419,18 @@ namespace NineGrid.Presentation.Tests
 
                 return false;
             }
+
+            public int StopAllSfxSources()
+            {
+                var count = Sources.Count;
+                Sources.Clear();
+                return count;
+            }
+
+            public IReadOnlyList<SceneAudioOrphanSnapshot> GetSceneAudioOrphans()
+            {
+                return Array.Empty<SceneAudioOrphanSnapshot>();
+            }
         }
 
         private sealed class FakeScheduler : IAudioCueScheduler

@@ -15,10 +15,13 @@ namespace NineGrid.Presentation.Systems
     public sealed class AudioDiagnosticsService
     {
         private const int PersistAuditThreshold = 3;
+        private const int PersistAnomalyCapacity = 32;
 
         private readonly IAudioPlaybackDiagnosticsAdapter mAdapter;
         private readonly Dictionary<string, PersistTracker> mPersistBySource =
             new Dictionary<string, PersistTracker>(StringComparer.Ordinal);
+        private readonly List<AudioPersistAnomalySnapshot> mRecentPersistAnomalies =
+            new List<AudioPersistAnomalySnapshot>(PersistAnomalyCapacity);
         private AudioDiagnosticsTicker mTicker;
 
         private AudioDiagnosticsService(IAudioPlaybackDiagnosticsAdapter adapter)
@@ -48,6 +51,17 @@ namespace NineGrid.Presentation.Systems
             mTicker?.Dispose();
             mTicker = null;
             mPersistBySource.Clear();
+            mRecentPersistAnomalies.Clear();
+        }
+
+        public IReadOnlyList<AudioPersistAnomalySnapshot> RecentPersistAnomalies
+        {
+            get
+            {
+                var copy = new AudioPersistAnomalySnapshot[mRecentPersistAnomalies.Count];
+                mRecentPersistAnomalies.CopyTo(copy);
+                return copy;
+            }
         }
 
         public void AuditSfxTrack(string trigger)
@@ -175,12 +189,15 @@ namespace NineGrid.Presentation.Systems
                 payload);
         }
 
-        private static void RecordPersistAnomaly(
+        private void RecordPersistAnomaly(
             string trigger,
             SfxTrackSourceSnapshot snapshot,
             PersistTracker tracker,
             bool directorIdle)
         {
+            var reason = directorIdle
+                ? "Sfx 来源在导演空闲时连续多秒仍在播放。"
+                : "Sfx 来源开启 loop 并持续多秒播放。";
             var payload = new Dictionary<string, string>
             {
                 ["trigger"] = trigger ?? string.Empty,
@@ -188,12 +205,11 @@ namespace NineGrid.Presentation.Systems
                 ["clipKey"] = snapshot.ClipKey,
                 ["cueId"] = snapshot.CueId ?? string.Empty,
                 ["loop"] = snapshot.Loop ? "true" : "false",
+                ["claimed"] = snapshot.Claimed ? "true" : "false",
                 ["consecutiveAudits"] = tracker.ConsecutiveAudits.ToString(CultureInfo.InvariantCulture),
                 ["directorIdle"] = directorIdle ? "true" : "false",
                 ["scene"] = SceneManager.GetActiveScene().name ?? string.Empty,
-                ["reason"] = directorIdle
-                    ? "Sfx 来源在导演空闲时连续多秒仍在播放。"
-                    : "Sfx 来源开启 loop 并持续多秒播放。",
+                ["reason"] = reason,
             };
 
             DirectorTrace.AppendBusyFields(payload);
@@ -205,6 +221,19 @@ namespace NineGrid.Presentation.Systems
                 uid: -1,
                 PerfTraceSites.AudioSystemCue,
                 payload);
+
+            if (mRecentPersistAnomalies.Count >= PersistAnomalyCapacity)
+            {
+                mRecentPersistAnomalies.RemoveAt(0);
+            }
+
+            mRecentPersistAnomalies.Add(new AudioPersistAnomalySnapshot(
+                snapshot.SourceId,
+                snapshot.ClipKey,
+                snapshot.CueId,
+                snapshot.Loop,
+                reason,
+                Time.realtimeSinceStartupAsDouble));
         }
 
         private sealed class PersistTracker

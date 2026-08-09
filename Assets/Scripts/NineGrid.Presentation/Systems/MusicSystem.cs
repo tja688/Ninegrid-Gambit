@@ -221,6 +221,9 @@ namespace NineGrid.Presentation.Systems
         MusicAuditResult AuditMusicTrack(string trigger);
 
         MusicAuditResult StopUnknownMusic(string stableSource = null);
+
+        /// <summary>停止指定 Music 轨源（含未知源）；空/未知 ID 返回 false。</summary>
+        bool StopMusicSource(string sourceId);
 #endif
     }
 
@@ -708,6 +711,40 @@ namespace NineGrid.Presentation.Systems
             }
 
             return AuditMusicTrack("StopUnknownMusic.After");
+        }
+
+        public bool StopMusicSource(string sourceId)
+        {
+            if (string.IsNullOrEmpty(sourceId))
+            {
+                return false;
+            }
+
+            var diagnostics = mPlayback as IMusicPlaybackDiagnosticsAdapter;
+            if (diagnostics == null)
+            {
+                return false;
+            }
+
+            var before = diagnostics.GetPlayingMusicSources() ?? Array.Empty<MusicTrackSourceSnapshot>();
+            var existed = false;
+            for (var i = 0; i < before.Count; i++)
+            {
+                if (string.Equals(before[i].SourceId, sourceId, StringComparison.Ordinal))
+                {
+                    existed = true;
+                    break;
+                }
+            }
+
+            if (!existed)
+            {
+                return false;
+            }
+
+            diagnostics.StopMusicTrackSource(sourceId);
+            AuditMusicTrack("StopMusicSource");
+            return true;
         }
 #endif
 

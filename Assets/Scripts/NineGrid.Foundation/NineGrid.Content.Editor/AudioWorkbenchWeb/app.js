@@ -142,6 +142,38 @@
     return new Set(((state.runtime && state.runtime.playingSources) || []).map((s) => s.sourceId));
   }
 
+  function findDeclByCueOrClip(cueId, clipKey) {
+    if (cueId) {
+      const byCue = declByCue(cueId);
+      if (byCue) return byCue;
+    }
+    if (!clipKey) return null;
+    return (state.declarations || []).find((d) => d.dto && d.dto.clipKey === clipKey) || null;
+  }
+
+  async function muteBindingTemp(decl) {
+    if (!decl || !decl.dto) return;
+    const replacement = Object.assign({}, decl.dto, { enabled: false });
+    await run("replaceSfxBinding", {
+      originalBindingKey: decl.bindingKey,
+      replacement,
+    });
+    selectedBindingKey = state.focusedBindingKey || decl.bindingKey;
+  }
+
+  async function saveBindingPermanent(decl) {
+    if (!decl) return;
+    if (decl.dto && decl.dto.enabled) {
+      await muteBindingTemp(decl);
+      decl = declByKey(selectedBindingKey) || decl;
+    }
+    await run("saveBinding", { bindingKey: decl.bindingKey, channel: "sfx" });
+  }
+
+  function hintShortcuts() {
+    return `<div class="hint-line">快捷键：Space 固定 · <b>E</b> 临时禁 · <b>Ctrl+S</b> 永久禁 · P 试听 · Esc 取消选中</div>`;
+  }
+
   function syncStreamFromState() {
     if (!state || !state.playMode || !state.runtime) {
       streamRows = [];
@@ -407,7 +439,7 @@
       ? declByKey(selectedBindingKey)
       : (ev ? findDeclForEvent(ev) : null);
     if (!ev && !decl) {
-      host.innerHTML = `<div class="empty">选择一条事件或绑定以检查与调音</div>`;
+      host.innerHTML = `<div class="empty">选择一条事件或绑定以检查与调音<br/>${hintShortcuts()}</div>`;
       return;
     }
     const playing = playingSourceIds();
@@ -415,8 +447,19 @@
     const canStop = !!(sourceId && playing.has(sourceId));
     const dto = (decl && decl.dto) || null;
     const clips = state.clipOptions || [];
+    const enabled = !!(dto && dto.enabled);
 
-    let html = `<div class="section"><h3>检查</h3><div class="kv">`;
+    let html = `<div class="section kill-panel"><h3>灭火</h3>
+      <div class="actions kill-actions">
+        <button type="button" class="danger" data-act="stop-source" ${canStop ? "" : "disabled"} title="${canStop ? "" : "该次 SourceId 已不在播放中；请用下方「正在播放」停源"}">立刻停播（本次）</button>
+        <button type="button" class="danger" data-act="mute-temp" ${dto ? "" : "disabled"}>${enabled ? "临时禁用绑定" : "已临时/永久禁用"}</button>
+        <button type="button" class="danger primary" data-act="mute-save" ${decl ? "" : "disabled"}>保存永久禁用</button>
+      </div>
+      ${hintShortcuts()}
+      ${!canStop && sourceId ? `<div class="meta">SourceId 已结束：${esc(sourceId)}</div>` : ""}
+    </div>`;
+
+    html += `<div class="section"><h3>检查</h3><div class="kv">`;
     if (ev) {
       html += `
         <b>outcome</b><span class="outcome-${esc(ev.outcome)}">${esc(ev.outcome)}</span>
@@ -441,7 +484,6 @@
     if (ev) {
       const pinned = pins.has(ev.sequence);
       html += `<button type="button" data-act="toggle-pin">${pinned ? "取消固定" : "固定"}</button>`;
-      html += `<button type="button" data-act="stop-source" ${canStop ? "" : "disabled"}>停止本次播放</button>`;
     }
     html += `
       <button type="button" data-act="preview" ${dto ? "" : "disabled"}>试听当前绑定</button>
@@ -472,7 +514,6 @@
           <button type="button" class="primary" data-act="apply-patch">应用补丁</button>
           <button type="button" data-act="save-one">保存此条</button>
           <button type="button" data-act="revert-one">回撤此条</button>
-          ${decl.isUnbound ? "" : ""}
           ${!decl.hasBinding ? `<button type="button" data-act="create-draft">创建草稿</button>` : ""}
         </div>
       </div>`;
@@ -528,7 +569,17 @@
       return;
     }
     if (act === "stop-source") {
-      await run("stopSfxSource", { sourceId: ev.sourceId });
+      const sid = (ev && ev.sourceId) || lastPreviewSourceId;
+      if (!sid) return;
+      await run("stopSfxSource", { sourceId: sid });
+      return;
+    }
+    if (act === "mute-temp") {
+      await muteBindingTemp(decl);
+      return;
+    }
+    if (act === "mute-save") {
+      await saveBindingPermanent(decl);
       return;
     }
     if (act === "stop-preview") {
@@ -574,11 +625,130 @@
     }
   }
 
+  function renderNowPlaying(host) {
+    if (!host) return;
+    const playMode = !!(state && state.playMode);
+    if (!playMode) {
+      host.innerHTML = `<div class="empty">进入 Play Mode 后显示正在播放源（Sfx / Music / 场景旁路）</div>`;
+      return;
+    }
+
+    const sfx = ((state.runtime && state.runtime.playingSources) || []).slice();
+    const music = ((state.musicRuntime && state.musicRuntime.playingSources) || []).slice();
+    const orphans = ((state.runtime && state.runtime.sceneOrphans) || []).slice();
+    const persist = ((state.runtime && state.runtime.persistAnomalies) || []).slice().slice(-6);
+
+    const rows = [];
+    sfx.forEach((s) => {
+      rows.push({
+        track: "Sfx",
+        sourceId: s.sourceId,
+        clipKey: s.clipKey,
+        cueId: s.cueId,
+        loop: !!s.loop,
+        pos: s.playbackPositionSeconds,
+        claimed: s.claimed !== false,
+        kind: "sfx",
+      });
+    });
+    music.forEach((s) => {
+      rows.push({
+        track: "Music",
+        sourceId: s.sourceId,
+        clipKey: s.clipKey,
+        cueId: "",
+        loop: s.loop !== false,
+        pos: s.playbackPositionSeconds,
+        claimed: !!s.claimed,
+        kind: "music",
+      });
+    });
+    orphans.forEach((o) => {
+      rows.push({
+        track: "Scene",
+        sourceId: "",
+        clipKey: o.clipName || "(no clip)",
+        cueId: o.gameObjectPath,
+        loop: !!o.loop,
+        pos: o.playbackPositionSeconds,
+        claimed: false,
+        kind: "orphan",
+      });
+    });
+
+    const head = `<div class="now-head"><h2>正在播放</h2>
+        <span class="meta">${rows.length} 源 · Sfx ${sfx.length} · Music ${music.length} · Scene ${orphans.length}</span>
+        <button type="button" class="danger" id="npStopAllSfx">紧急：停全部 SFX</button>
+        <button type="button" class="danger" id="npStopUnknownMusic">紧急：停全部未知 Music</button>
+      </div>`;
+
+    if (!rows.length) {
+      host.innerHTML = `${head}
+      <div class="empty">当前无在播源。若仍听到声音，旁路会出现在 Scene 行；也可切 BGM 页。</div>
+      ${persist.length ? `<div class="persist-list"><h3>近期持续异常</h3>${persist.map((a) =>
+        `<div class="persist-row"><span class="badge-unclaimed">Persist</span> ${esc(a.clipKey || a.sourceId)} · ${esc(a.reason || "")}</div>`
+      ).join("")}</div>` : ""}`;
+      wireNowPlayingActions(host);
+      return;
+    }
+
+    host.innerHTML = `${head}
+      <div class="now-list">${rows.map((r) => {
+        const decl = findDeclByCueOrClip(r.cueId, r.clipKey);
+        const canStop = (r.kind === "sfx" || r.kind === "music") && !!r.sourceId;
+        return `<div class="now-row ${r.claimed ? "" : "unclaimed"}">
+          <span class="track track-${esc(r.track.toLowerCase())}">${esc(r.track)}</span>
+          <span class="claim ${r.claimed ? "ok" : "bad"}">${r.claimed ? "认领" : "未认领"}${r.loop ? " · loop" : ""}</span>
+          <span class="ellipsis mono" title="${esc(r.clipKey)}">${esc(r.clipKey || "—")}</span>
+          <span class="ellipsis meta" title="${esc(r.cueId || r.sourceId)}">${esc(r.cueId || r.sourceId || "")}</span>
+          <span class="meta">${Number(r.pos || 0).toFixed(2)}s</span>
+          <span class="now-acts">
+            <button type="button" data-np="stop" data-kind="${esc(r.kind)}" data-sid="${esc(r.sourceId)}" ${canStop ? "" : "disabled"}>停</button>
+            <button type="button" data-np="mute" data-bkey="${esc((decl && decl.bindingKey) || "")}" ${decl ? "" : "disabled"}>临时禁</button>
+            <button type="button" data-np="save" data-bkey="${esc((decl && decl.bindingKey) || "")}" ${decl ? "" : "disabled"}>永久禁</button>
+          </span>
+        </div>`;
+      }).join("")}</div>
+      ${persist.length ? `<div class="persist-list"><h3>近期持续异常</h3>${persist.map((a) =>
+        `<div class="persist-row"><span class="badge-unclaimed">Persist</span> ${esc(a.clipKey || a.sourceId)} · ${esc(a.reason || "")}
+          <button type="button" data-np="stop" data-kind="sfx" data-sid="${esc(a.sourceId)}" ${a.sourceId ? "" : "disabled"}>停</button>
+        </div>`
+      ).join("")}</div>` : ""}`;
+    wireNowPlayingActions(host);
+  }
+
+  function wireNowPlayingActions(host) {
+    const stopAll = host.querySelector("#npStopAllSfx");
+    if (stopAll) stopAll.onclick = () => run("stopAllSfxSources", {});
+    const stopMusic = host.querySelector("#npStopUnknownMusic");
+    if (stopMusic) stopMusic.onclick = () => run("stopUnknownMusic", {});
+    host.querySelectorAll("[data-np]").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        const op = btn.dataset.np;
+        if (op === "stop") {
+          const kind = btn.dataset.kind;
+          const sid = btn.dataset.sid;
+          if (!sid) return;
+          if (kind === "music") await run("stopMusicSource", { sourceId: sid });
+          else await run("stopSfxSource", { sourceId: sid });
+          return;
+        }
+        const bkey = btn.dataset.bkey;
+        const decl = declByKey(bkey);
+        if (!decl) return;
+        selectedBindingKey = bkey;
+        if (op === "mute") await muteBindingTemp(decl);
+        else if (op === "save") await saveBindingPermanent(decl);
+      });
+    });
+  }
+
   function renderCapture() {
     syncStreamFromState();
     const modules = Array.from(new Set((state.declarations || []).map((d) => d.module).filter(Boolean))).sort();
     els.panel.innerHTML = `
       <div id="freqRail" class="freq-rail"></div>
+      <div id="nowPlaying" class="now-playing"></div>
       <div class="capture-layout" style="--col-left:${cols.left};--col-mid:${cols.mid};--col-right:${cols.right}">
         <section class="col" id="colStream">
           <div class="col-head">
@@ -609,6 +779,7 @@
       </div>`;
 
     renderFreqRail(document.getElementById("freqRail"));
+    renderNowPlaying(document.getElementById("nowPlaying"));
     const chipHost = document.getElementById("outcomeChips");
     ["Requested", ...DEFAULT_OUTCOMES].forEach((o) => {
       const on = (filters.outcomes || []).includes(o) || (o === "Requested" && (filters.outcomes || []).includes("Requested"));
@@ -960,6 +1131,8 @@
         renderGlobal();
         const freq = document.getElementById("freqRail");
         if (freq) renderFreqRail(freq);
+        const now = document.getElementById("nowPlaying");
+        if (now) renderNowPlaying(now);
         const list = document.getElementById("streamList");
         if (list) {
           const rows = filteredStream();

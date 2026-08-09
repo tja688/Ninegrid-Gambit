@@ -28,6 +28,7 @@ namespace NineGrid.Presentation.Systems
             new Dictionary<string, string>(StringComparer.Ordinal);
         private readonly Dictionary<string, string> sfxCueIds =
             new Dictionary<string, string>(StringComparer.Ordinal);
+        private readonly HashSet<string> sfxOwnedIds = new HashSet<string>(StringComparer.Ordinal);
 #endif
 
         public AudioBackendResult Play(AudioPlaybackRequest request)
@@ -65,7 +66,7 @@ namespace NineGrid.Presentation.Systems
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
             var sourceId = GetSfxSourceId(source);
-            RegisterSfxSource(source, resourcesKey, request.CueId);
+            RegisterSfxSource(source, resourcesKey, request.CueId, owned: true);
             return AudioBackendResult.Success(resourcesKey, sourceId);
 #else
             return AudioBackendResult.Success(resourcesKey);
@@ -237,15 +238,19 @@ namespace NineGrid.Presentation.Systems
                 }
 
                 var sourceId = GetSfxSourceId(source);
+                var owned = sfxOwnedIds.Contains(sourceId);
                 var clipKey = ResolveSfxClipKey(source, sourceId);
                 sfxCueIds.TryGetValue(sourceId, out var cueId);
-                RegisterSfxSource(source, clipKey, cueId);
+                // Track for StopSfxSource without promoting escape sources to "owned".
+                RegisterSfxSource(source, clipKey, cueId, owned: false);
                 result.Add(new SfxTrackSourceSnapshot(
                     sourceId,
                     clipKey,
                     cueId,
                     source.time,
-                    source.loop));
+                    source.loop,
+                    isPlaying: true,
+                    claimed: owned));
             }
 
             return result;
@@ -260,10 +265,16 @@ namespace NineGrid.Presentation.Systems
 
             if (!sfxSources.TryGetValue(sourceId, out var source) || source == null)
             {
-                sfxSources.Remove(sourceId);
-                sfxClipKeys.Remove(sourceId);
-                sfxCueIds.Remove(sourceId);
-                return false;
+                // Last chance: resolve from live Sfx track so unclaimed sources remain stoppable.
+                source = FindLiveSfxSource(sourceId);
+                if (source == null)
+                {
+                    sfxSources.Remove(sourceId);
+                    sfxClipKeys.Remove(sourceId);
+                    sfxCueIds.Remove(sourceId);
+                    sfxOwnedIds.Remove(sourceId);
+                    return false;
+                }
             }
 
             var manager = MMSoundManager.Instance;
@@ -279,7 +290,65 @@ namespace NineGrid.Presentation.Systems
             sfxSources.Remove(sourceId);
             sfxClipKeys.Remove(sourceId);
             sfxCueIds.Remove(sourceId);
+            sfxOwnedIds.Remove(sourceId);
             return true;
+        }
+
+        public int StopAllSfxSources()
+        {
+            var playing = GetPlayingSfxSources();
+            var stopped = 0;
+            for (var i = 0; i < playing.Count; i++)
+            {
+                if (StopSfxSource(playing[i].SourceId))
+                {
+                    stopped++;
+                }
+            }
+
+            return stopped;
+        }
+
+        public IReadOnlyList<SceneAudioOrphanSnapshot> GetSceneAudioOrphans()
+        {
+            var manager = MMSoundManager.Instance;
+            var pooled = new HashSet<int>();
+            if (manager != null)
+            {
+                CollectPooledInstanceIds(manager, MMSoundManager.MMSoundManagerTracks.Sfx, pooled);
+                CollectPooledInstanceIds(manager, MMSoundManager.MMSoundManagerTracks.Music, pooled);
+            }
+
+            var sources = UnityEngine.Object.FindObjectsByType<AudioSource>(
+                FindObjectsInactive.Exclude,
+                FindObjectsSortMode.None);
+            if (sources == null || sources.Length == 0)
+            {
+                return Array.Empty<SceneAudioOrphanSnapshot>();
+            }
+
+            var result = new List<SceneAudioOrphanSnapshot>();
+            for (var i = 0; i < sources.Length; i++)
+            {
+                var source = sources[i];
+                if (source == null || !source.isPlaying)
+                {
+                    continue;
+                }
+
+                if (pooled.Contains(source.GetInstanceID()))
+                {
+                    continue;
+                }
+
+                result.Add(new SceneAudioOrphanSnapshot(
+                    BuildHierarchyPath(source.transform),
+                    source.clip != null ? source.clip.name : string.Empty,
+                    source.time,
+                    source.loop));
+            }
+
+            return result;
         }
 
         public IReadOnlyList<MusicTrackSourceSnapshot> GetPlayingMusicSources()
@@ -527,7 +596,7 @@ namespace NineGrid.Presentation.Systems
 #endif
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
-        private void RegisterSfxSource(AudioSource source, string resourcesKey, string cueId)
+        private void RegisterSfxSource(AudioSource source, string resourcesKey, string cueId, bool owned)
         {
             if (source == null)
             {
@@ -545,6 +614,72 @@ namespace NineGrid.Presentation.Systems
             {
                 sfxCueIds[sourceId] = cueId;
             }
+
+            if (owned)
+            {
+                sfxOwnedIds.Add(sourceId);
+            }
+        }
+
+        private AudioSource FindLiveSfxSource(string sourceId)
+        {
+            var manager = MMSoundManager.Instance;
+            if (manager == null || string.IsNullOrEmpty(sourceId))
+            {
+                return null;
+            }
+
+            var sounds = manager.GetSoundsPlaying(MMSoundManager.MMSoundManagerTracks.Sfx);
+            for (var i = 0; i < (sounds?.Count ?? 0); i++)
+            {
+                var source = sounds[i].Source;
+                if (source != null && string.Equals(GetSfxSourceId(source), sourceId, StringComparison.Ordinal))
+                {
+                    return source;
+                }
+            }
+
+            return null;
+        }
+
+        private static void CollectPooledInstanceIds(
+            MMSoundManager manager,
+            MMSoundManager.MMSoundManagerTracks track,
+            HashSet<int> into)
+        {
+            if (manager == null || into == null)
+            {
+                return;
+            }
+
+            var sounds = manager.GetSoundsPlaying(track);
+            for (var i = 0; i < (sounds?.Count ?? 0); i++)
+            {
+                var source = sounds[i].Source;
+                if (source != null)
+                {
+                    into.Add(source.GetInstanceID());
+                }
+            }
+        }
+
+        private static string BuildHierarchyPath(Transform transform)
+        {
+            if (transform == null)
+            {
+                return string.Empty;
+            }
+
+            var parts = new List<string>(8);
+            var current = transform;
+            while (current != null)
+            {
+                parts.Add(current.name);
+                current = current.parent;
+            }
+
+            parts.Reverse();
+            return string.Join("/", parts);
         }
 
         private string ResolveSfxClipKey(AudioSource source, string sourceId)

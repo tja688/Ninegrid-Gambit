@@ -4,7 +4,7 @@
     "bindings": [
         {
             "state": "MainMenu",
-            "enabled": true,
+            "enabled": false,
             "clipKey": "audio/BGM/MainMenuTheme",
             "volumeDb": -6,
             "startOffsetSeconds": 0,
@@ -14,7 +14,7 @@
         },
         {
             "state": "RunExploration",
-            "enabled": true,
+            "enabled": false,
             "clipKey": "audio/BGM/ExplorationTheme",
             "volumeDb": -6,
             "startOffsetSeconds": 0,
@@ -24,7 +24,7 @@
         },
         {
             "state": "Battle",
-            "enabled": true,
+            "enabled": false,
             "clipKey": "audio/BGM/BattleTheme",
             "volumeDb": -6,
             "startOffsetSeconds": 0,
@@ -34,7 +34,7 @@
         },
         {
             "state": "BossBattle",
-            "enabled": true,
+            "enabled": false,
             "clipKey": "audio/BGM/BossBattleTheme",
             "volumeDb": -6,
             "startOffsetSeconds": 0,
@@ -44,7 +44,7 @@
         },
         {
             "state": "Victory",
-            "enabled": true,
+            "enabled": false,
             "clipKey": "audio/BGM/VictoryTheme",
             "volumeDb": -6,
             "startOffsetSeconds": 0,
@@ -54,7 +54,7 @@
         },
         {
             "state": "Defeat",
-            "enabled": true,
+            "enabled": false,
             "clipKey": "audio/BGM/DefeatTheme",
             "volumeDb": -6,
             "startOffsetSeconds": 0,

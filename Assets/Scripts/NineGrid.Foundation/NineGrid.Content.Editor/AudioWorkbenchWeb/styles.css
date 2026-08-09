@@ -147,8 +147,8 @@ input[type="checkbox"] { accent-color: var(--amber); }
 
 .capture-layout, .static-layout, .bgm-layout {
   display: grid;
-  height: calc(100vh - 210px);
-  min-height: 420px;
+  height: calc(100vh - 320px);
+  min-height: 320px;
 }
 .capture-layout {
   grid-template-columns: var(--col-left, 1.2fr) 6px var(--col-mid, 0.9fr) 6px var(--col-right, 1.1fr);
@@ -326,3 +326,85 @@ input[type="checkbox"] { accent-color: var(--amber); }
   color: var(--muted);
   padding: 16px;
 }
+
+.now-playing {
+  border-bottom: 1px solid var(--divider);
+  background: #2a211b;
+  max-height: 180px;
+  overflow: auto;
+  padding: 6px 10px 8px;
+}
+.now-head {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-bottom: 6px;
+}
+.now-head h2 {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 650;
+}
+.now-list { display: flex; flex-direction: column; gap: 4px; }
+.now-row {
+  display: grid;
+  grid-template-columns: 54px 88px 1.2fr 1fr 52px auto;
+  gap: 8px;
+  align-items: center;
+  padding: 4px 8px;
+  background: var(--bg-1);
+  border: 1px solid var(--divider);
+  border-left: 3px solid var(--ok);
+  border-radius: var(--radius);
+  font-size: 12px;
+}
+.now-row.unclaimed { border-left-color: var(--danger); background: #3a2420; }
+.now-acts { display: flex; gap: 4px; flex-wrap: wrap; justify-content: flex-end; }
+.now-acts button { padding: 2px 8px; font-size: 12px; }
+.track {
+  font-weight: 650;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.track-sfx { color: var(--amber); }
+.track-music { color: var(--cool); }
+.track-scene { color: #ffb19a; }
+.claim.ok { color: var(--ok); }
+.claim.bad { color: #ffb19a; font-weight: 650; }
+.badge-unclaimed {
+  display: inline-block;
+  border: 1px solid var(--danger);
+  color: #ffb19a;
+  border-radius: 999px;
+  padding: 0 6px;
+  font-size: 11px;
+  margin-right: 6px;
+}
+.persist-list { margin-top: 8px; }
+.persist-list h3 { margin: 0 0 4px; font-size: 12px; color: var(--muted); }
+.persist-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+  font-size: 12px;
+  color: var(--muted);
+  padding: 2px 0;
+}
+.kill-panel {
+  border: 1px solid var(--danger);
+  background: #3a2420;
+  border-radius: var(--radius);
+  padding: 8px 10px;
+  margin-bottom: 10px;
+}
+.kill-panel h3 { margin: 0 0 6px; color: #ffd0c0; }
+.kill-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+.hint-line {
+  margin-top: 6px;
+  color: var(--muted);
+  font-size: 11px;
+}
+.hint-line b { color: var(--amber); font-weight: 650; }
+

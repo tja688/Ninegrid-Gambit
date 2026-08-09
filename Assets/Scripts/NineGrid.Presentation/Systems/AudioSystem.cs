@@ -165,6 +165,8 @@ namespace NineGrid.Presentation.Systems
         public long Revision { get; internal set; }
         public IReadOnlyList<AudioHistoryRecord> History { get; internal set; }
         public IReadOnlyList<SfxTrackSourceSnapshot> PlayingSources { get; internal set; }
+        public IReadOnlyList<SceneAudioOrphanSnapshot> SceneOrphans { get; internal set; }
+        public IReadOnlyList<AudioPersistAnomalySnapshot> PersistAnomalies { get; internal set; }
         public IReadOnlyList<AudioCueAggregate> Aggregates { get; internal set; }
     }
 
@@ -193,6 +195,7 @@ namespace NineGrid.Presentation.Systems
         AudioWorkbenchApplyResult ApplyWorkbenchCatalog(string catalogJson);
         AudioWorkbenchPreviewResult PreviewWorkbenchBinding(string bindingKey, bool includeBindingDelay);
         bool StopSfxSource(string sourceId);
+        int StopAllSfxSources();
 #endif
         AudioCueResult RequestCue(AudioCueRequest request);
         AudioScheduleKey ScheduleCue(AudioCueRequest request, float delaySeconds);
@@ -304,6 +307,7 @@ namespace NineGrid.Presentation.Systems
             }
 
             IReadOnlyList<SfxTrackSourceSnapshot> playing = Array.Empty<SfxTrackSourceSnapshot>();
+            IReadOnlyList<SceneAudioOrphanSnapshot> orphans = Array.Empty<SceneAudioOrphanSnapshot>();
             if (mPlayback is IAudioPlaybackDiagnosticsAdapter diagnostics)
             {
                 var live = diagnostics.GetPlayingSfxSources();
@@ -317,7 +321,22 @@ namespace NineGrid.Presentation.Systems
 
                     playing = copy;
                 }
+
+                var liveOrphans = diagnostics.GetSceneAudioOrphans();
+                if (liveOrphans != null && liveOrphans.Count > 0)
+                {
+                    var orphanCopy = new SceneAudioOrphanSnapshot[liveOrphans.Count];
+                    for (var i = 0; i < liveOrphans.Count; i++)
+                    {
+                        orphanCopy[i] = liveOrphans[i];
+                    }
+
+                    orphans = orphanCopy;
+                }
             }
+
+            IReadOnlyList<AudioPersistAnomalySnapshot> persist =
+                mDiagnosticsService?.RecentPersistAnomalies ?? Array.Empty<AudioPersistAnomalySnapshot>();
 
             var aggregates = new AudioCueAggregate[mAggregates.Count];
             var index = 0;
@@ -331,6 +350,8 @@ namespace NineGrid.Presentation.Systems
                 Revision = mRevision,
                 History = historyCopy,
                 PlayingSources = playing,
+                SceneOrphans = orphans,
+                PersistAnomalies = persist,
                 Aggregates = aggregates,
             };
         }
@@ -420,6 +441,16 @@ namespace NineGrid.Presentation.Systems
             }
 
             return diagnostics.StopSfxSource(sourceId);
+        }
+
+        public int StopAllSfxSources()
+        {
+            if (!(mPlayback is IAudioPlaybackDiagnosticsAdapter diagnostics))
+            {
+                return 0;
+            }
+
+            return diagnostics.StopAllSfxSources();
         }
 
         private static AudioWorkbenchPreviewResult PreviewFailure(string reason)

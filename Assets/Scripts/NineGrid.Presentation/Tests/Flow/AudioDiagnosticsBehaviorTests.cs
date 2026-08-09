@@ -1,4 +1,5 @@
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using NineGrid.Content.Audio;
@@ -84,6 +85,23 @@ namespace NineGrid.Presentation.Tests
             Assert.IsFalse(system.StopSfxSource(sourceId));
             Assert.IsFalse(system.StopSfxSource(string.Empty));
             Assert.IsFalse(system.StopSfxSource("sfx-source:missing"));
+            Assert.That(system.GetWorkbenchSnapshot().PlayingSources.Count, Is.EqualTo(0));
+        }
+
+        [Test]
+        public void StopAllSfxSources_ClearsPlayingSnapshot()
+        {
+            var playback = new FakeDiagnosticsPlayback();
+            var system = new AudioSystem(
+                AudioBindingCatalog.FromJson(CatalogJson),
+                playback,
+                new FakeClock(),
+                randomValue: () => 0d);
+
+            system.RequestCue(AudioCueRequest.Simple("ui.test", "a"));
+            system.RequestCue(AudioCueRequest.Simple("ui.test", "b"));
+            Assert.That(system.GetWorkbenchSnapshot().PlayingSources.Count, Is.EqualTo(2));
+            Assert.That(system.StopAllSfxSources(), Is.EqualTo(2));
             Assert.That(system.GetWorkbenchSnapshot().PlayingSources.Count, Is.EqualTo(0));
         }
 
@@ -177,6 +195,18 @@ namespace NineGrid.Presentation.Tests
                 }
 
                 return false;
+            }
+
+            public int StopAllSfxSources()
+            {
+                var count = Sources.Count;
+                Sources.Clear();
+                return count;
+            }
+
+            public IReadOnlyList<SceneAudioOrphanSnapshot> GetSceneAudioOrphans()
+            {
+                return Array.Empty<SceneAudioOrphanSnapshot>();
             }
         }
 
