@@ -13,9 +13,10 @@ namespace NineGrid.Flow.BattleInfoPreview
 {
     /// <summary>
     /// 战斗信息预览面板：正式进战、Opening 发牌前硬阻塞展示。
-    /// 场景根：<c>UI面板/战斗信息展示BG</c>。
+    /// 场景根：<c>UI面板/战斗信息展示BG</c>（选中该物体即可在 Inspector 改配置）。
     /// </summary>
     [DisallowMultipleComponent]
+    [AddComponentMenu("NineGrid/Flow/Battle Info Preview Presenter")]
     public sealed class BattleInfoPreviewPresenter : MonoBehaviour
     {
         public const string RootObjectName = "战斗信息展示BG";
@@ -45,10 +46,19 @@ namespace NineGrid.Flow.BattleInfoPreview
         [SerializeField] private bool previewLeaveTrap = true;
         [SerializeField] private string leaveTrapDefId = DefaultLeaveTrapDefId;
 
+        [Header("玩家立绘")]
+        [Tooltip("相对「玩家本体占位」场景原位的本地偏移（XY）。")]
+        [SerializeField] private Vector2 avatarIconOffset = Vector2.zero;
+        [Tooltip("玩家立绘本地缩放（1 = 场景原缩放）。")]
+        [SerializeField] private float avatarIconScale = 1f;
+
         private UniTaskCompletionSource _dismissTcs;
         private bool _dimmerHeld;
         private bool _open;
         private UiOverlayHitProxy _panelHitProxy;
+        private Vector3 _avatarSlotBaseLocalPos;
+        private Vector3 _avatarSlotBaseLocalScale = Vector3.one;
+        private bool _avatarSlotBaseCaptured;
 
         public static bool IsOpen
         {
@@ -235,10 +245,23 @@ namespace NineGrid.Flow.BattleInfoPreview
                 _dimmerHeld = false;
             }
 
+            RestoreAvatarSlotBaseTransform();
+
             if (completeAwait && wasOpen)
             {
                 _dismissTcs?.TrySetResult();
             }
+        }
+
+        private void RestoreAvatarSlotBaseTransform()
+        {
+            if (!_avatarSlotBaseCaptured || playerBodySlot == null)
+            {
+                return;
+            }
+
+            playerBodySlot.localPosition = _avatarSlotBaseLocalPos;
+            playerBodySlot.localScale = _avatarSlotBaseLocalScale;
         }
 
         private void ApplyContent(NodeDeckOptions options)
@@ -250,6 +273,7 @@ namespace NineGrid.Flow.BattleInfoPreview
             if (playerBodySlotView != null)
             {
                 playerBodySlotView.Bind(avatarId, CardPresentationKind.Avatar);
+                ApplyAvatarPortraitTransform();
                 playerBodySlotView.RefreshHitRegistration();
             }
 
@@ -332,6 +356,7 @@ namespace NineGrid.Flow.BattleInfoPreview
             return "房间类型：{room}\n楼层：{floor}\n进度：{progress}";
         }
 
+        /// <summary>按 defId 去重：同种只占一槽（出现几个种类显示几个）。</summary>
         private static List<string> CollectDefIds(
             IReadOnlyList<CardDraft> drafts,
             Func<CardKind, bool> predicate)
@@ -346,6 +371,11 @@ namespace NineGrid.Flow.BattleInfoPreview
             {
                 var draft = drafts[i];
                 if (draft == null || string.IsNullOrEmpty(draft.DefId) || !predicate(draft.Kind))
+                {
+                    continue;
+                }
+
+                if (list.Contains(draft.DefId))
                 {
                     continue;
                 }
@@ -452,6 +482,74 @@ namespace NineGrid.Flow.BattleInfoPreview
             slot?.EnsureWired(highlightColor, highlightSprite);
         }
 
+        private void CaptureAvatarSlotBaseIfNeeded()
+        {
+            if (_avatarSlotBaseCaptured || playerBodySlot == null)
+            {
+                return;
+            }
+
+            _avatarSlotBaseLocalPos = playerBodySlot.localPosition;
+            _avatarSlotBaseLocalScale = playerBodySlot.localScale;
+            if (_avatarSlotBaseLocalScale.sqrMagnitude < 0.0001f)
+            {
+                _avatarSlotBaseLocalScale = Vector3.one;
+            }
+
+            _avatarSlotBaseCaptured = true;
+        }
+
+        private void ApplyAvatarPortraitTransform()
+        {
+            if (playerBodySlot == null)
+            {
+                return;
+            }
+
+            CaptureAvatarSlotBaseIfNeeded();
+            var scale = Mathf.Max(0.01f, avatarIconScale);
+            playerBodySlot.localPosition = _avatarSlotBaseLocalPos
+                + new Vector3(avatarIconOffset.x, avatarIconOffset.y, 0f);
+            playerBodySlot.localScale = new Vector3(
+                _avatarSlotBaseLocalScale.x * scale,
+                _avatarSlotBaseLocalScale.y * scale,
+                _avatarSlotBaseLocalScale.z);
+        }
+
+#if UNITY_EDITOR
+        private void OnValidate()
+        {
+            if (playerBodySlot == null && playerBodySlotView != null)
+            {
+                playerBodySlot = playerBodySlotView.transform;
+            }
+
+            if (playerBodySlot == null)
+            {
+                return;
+            }
+
+            // Edit 模式首次：把当前场景位当基准，再叠偏移，方便在 Inspector 里拖调。
+            if (!_avatarSlotBaseCaptured)
+            {
+                _avatarSlotBaseLocalPos = playerBodySlot.localPosition - new Vector3(avatarIconOffset.x, avatarIconOffset.y, 0f);
+                var scale = Mathf.Max(0.01f, avatarIconScale);
+                _avatarSlotBaseLocalScale = new Vector3(
+                    playerBodySlot.localScale.x / scale,
+                    playerBodySlot.localScale.y / scale,
+                    playerBodySlot.localScale.z);
+                if (_avatarSlotBaseLocalScale.sqrMagnitude < 0.0001f)
+                {
+                    _avatarSlotBaseLocalScale = Vector3.one;
+                }
+
+                _avatarSlotBaseCaptured = true;
+            }
+
+            ApplyAvatarPortraitTransform();
+        }
+#endif
+
         private void EnsureBindings()
         {
             if (panelRoot == null)
@@ -492,6 +590,11 @@ namespace NineGrid.Flow.BattleInfoPreview
             if (playerBodySlot == null && playerGroup != null)
             {
                 playerBodySlot = playerGroup.Find("玩家本体占位");
+            }
+
+            if (playerBodySlot != null)
+            {
+                CaptureAvatarSlotBaseIfNeeded();
             }
 
             if (playerBodySlotView == null && playerBodySlot != null)
