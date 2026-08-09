@@ -11,15 +11,15 @@
     <div class="brand">声音绑定调音工作台</div>
     <div id="connectionBadge" class="badge">连接中…</div>
     <div id="statusLine" class="status"></div>
+    <div class="toolbar-actions" id="globalActions"></div>
   </header>
   <nav class="tabs" role="tablist">
     <button class="tab" data-mode="实时抓音" type="button">实时抓音</button>
     <button class="tab" data-mode="静态绑定库" type="button">静态绑定库</button>
     <button class="tab" data-mode="BGM" type="button">BGM</button>
   </nav>
-  <main id="modePanel" class="panel">
-    <p class="placeholder">正在加载作者态快照…</p>
-  </main>
+  <div id="conflictBanner" class="conflict hidden"></div>
+  <main id="modePanel" class="panel"></main>
   <footer class="footer">
     <span id="dirtyLine"></span>
     <span id="errorLine" class="error"></span>

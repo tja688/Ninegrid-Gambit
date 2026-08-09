@@ -34,6 +34,10 @@ namespace NineGrid.Content.Editor
         private TransientPayload blockedTransient;
         private bool pendingRecoverOverwriteConfirm;
         private long localRevision = 1;
+        private long lastObservedRuntimeRevision = -1;
+        private long lastObservedHistorySequence = -1;
+        private int lastObservedMusicHistoryCount = -1;
+        private int lastObservedPlayingSourceCount = -1;
 
         public static AudioWorkbenchEditorState Instance => instance ??= new AudioWorkbenchEditorState();
 
@@ -122,6 +126,13 @@ namespace NineGrid.Content.Editor
                 case "ping":
                     payload = new { ok = true, revision = localRevision };
                     return true;
+                case "focusBinding":
+                {
+                    var key = ReadString(payloadJson, "bindingKey");
+                    FocusBinding(key);
+                    payload = new { focusedBindingKey };
+                    return true;
+                }
                 case "createDraft":
                     if (!EnsureMutationsAllowed(out error)) return false;
                     return DispatchCreateDraft(payloadJson, out payload, out error);
@@ -184,6 +195,65 @@ namespace NineGrid.Content.Editor
             }
         }
 
+        /// <summary>
+        /// Play Mode 下比较运行时指纹；有变化则抬升 LocalRevision，供 loopback 推送抓音流。
+        /// </summary>
+        public bool TickRuntimeObservation()
+        {
+            if (!IsPlayMode)
+            {
+                lastObservedRuntimeRevision = -1;
+                lastObservedHistorySequence = -1;
+                lastObservedMusicHistoryCount = -1;
+                lastObservedPlayingSourceCount = -1;
+                return false;
+            }
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            RefreshRuntimeHistory();
+            long runtimeRevision = 0;
+            long historySequence = 0;
+            var playingCount = 0;
+            var musicHistoryCount = 0;
+            var architecture = NineGridArchitecture.Interface;
+            var audio = architecture?.GetSystem<IAudioSystem>();
+            if (audio != null)
+            {
+                var snap = audio.GetWorkbenchSnapshot();
+                runtimeRevision = snap?.Revision ?? 0;
+                playingCount = snap?.PlayingSources?.Count ?? 0;
+                if (snap?.History != null && snap.History.Count > 0)
+                {
+                    historySequence = snap.History[snap.History.Count - 1].Sequence;
+                }
+            }
+
+            var music = architecture?.GetSystem<IMusicSystem>();
+            if (music?.History != null)
+            {
+                musicHistoryCount = music.History.Count;
+            }
+
+            var changed = runtimeRevision != lastObservedRuntimeRevision
+                || historySequence != lastObservedHistorySequence
+                || playingCount != lastObservedPlayingSourceCount
+                || musicHistoryCount != lastObservedMusicHistoryCount;
+            lastObservedRuntimeRevision = runtimeRevision;
+            lastObservedHistorySequence = historySequence;
+            lastObservedPlayingSourceCount = playingCount;
+            lastObservedMusicHistoryCount = musicHistoryCount;
+            if (!changed)
+            {
+                return false;
+            }
+
+            BumpRevision();
+            return true;
+#else
+            return false;
+#endif
+        }
+
         public object BuildSnapshotPayload()
         {
             RefreshRuntimeHistory();
@@ -193,20 +263,25 @@ namespace NineGrid.Content.Editor
                 assetPath = option.AssetPath,
             }).ToArray();
 
-            var declarations = sfxSession.Entries.Select(entry => new
+            var declarations = sfxSession.Entries.Select(entry =>
             {
-                cueId = entry.CueId,
-                note = entry.Note,
-                module = entry.Module,
-                authoritativeEmitter = entry.AuthoritativeEmitter,
-                bindingKey = entry.BindingKey,
-                hasBinding = entry.HasBinding,
-                isDirty = entry.IsDirty,
-                isUnbound = entry.IsUnbound,
-                isDisabled = entry.IsDisabled,
-                isBroken = sfxSession.IsBroken(entry),
-                authoringStatus = entry.Dto?.authoringStatus,
-                dto = entry.Dto,
+                var saved = entry.GetSavedDto();
+                return new
+                {
+                    cueId = entry.CueId,
+                    note = entry.Note,
+                    module = entry.Module,
+                    authoritativeEmitter = entry.AuthoritativeEmitter,
+                    bindingKey = entry.BindingKey,
+                    hasBinding = entry.HasBinding,
+                    isDirty = entry.IsDirty,
+                    isUnbound = entry.IsUnbound,
+                    isDisabled = entry.IsDisabled,
+                    isBroken = sfxSession.IsBroken(entry),
+                    authoringStatus = entry.Dto?.authoringStatus,
+                    savedEnabled = saved?.enabled ?? entry.Dto?.enabled ?? true,
+                    dto = entry.Dto,
+                };
             }).ToArray();
 
             var musicEntries = musicSession.Entries.Select(entry => new
@@ -226,26 +301,13 @@ namespace NineGrid.Content.Editor
                 if (audio != null)
                 {
                     var snap = audio.GetWorkbenchSnapshot();
-                    runtime = new
-                    {
-                        revision = snap.Revision,
-                        history = snap.History,
-                        playingSources = snap.PlayingSources,
-                        aggregates = snap.Aggregates,
-                    };
+                    runtime = ProjectRuntime(snap);
                 }
 
                 var music = architecture.GetSystem<IMusicSystem>();
                 if (music != null)
                 {
-                    musicRuntime = new
-                    {
-                        desired = music.DesiredState?.ToString(),
-                        current = music.CurrentState?.ToString(),
-                        history = music.History,
-                        lastAudit = music.LastAudit,
-                        anomalies = music.OverlapAnomalies,
-                    };
+                    musicRuntime = ProjectMusicRuntime(music);
                 }
 #endif
             }
@@ -274,6 +336,128 @@ namespace NineGrid.Content.Editor
                 defaultMode = IsPlayMode ? "实时抓音" : "静态绑定库",
             };
         }
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        private static object ProjectRuntime(AudioWorkbenchSnapshot snap)
+        {
+            if (snap == null)
+            {
+                return null;
+            }
+
+            return new
+            {
+                revision = snap.Revision,
+                history = (snap.History ?? Array.Empty<AudioHistoryRecord>()).Select(ProjectHistory).ToArray(),
+                playingSources = (snap.PlayingSources ?? Array.Empty<SfxTrackSourceSnapshot>())
+                    .Select(s => new
+                    {
+                        sourceId = s.SourceId,
+                        clipKey = s.ClipKey,
+                        cueId = s.CueId,
+                        playbackPositionSeconds = s.PlaybackPositionSeconds,
+                        loop = s.Loop,
+                        isPlaying = s.IsPlaying,
+                    }).ToArray(),
+                aggregates = (snap.Aggregates ?? Array.Empty<AudioCueAggregate>()).Select(a => new
+                {
+                    aggregateKey = a.AggregateKey,
+                    bindingKey = a.BindingKey,
+                    cueId = a.CueId,
+                    requested = a.Requested,
+                    played = a.Played,
+                    suppressed = a.Suppressed,
+                    cooldown = a.Cooldown,
+                    unbound = a.Unbound,
+                    backendFailure = a.BackendFailure,
+                    lastTime = a.LastTime,
+                    lastFailureReason = a.LastFailureReason,
+                    recentTimestamps = a.RecentTimestamps,
+                }).ToArray(),
+            };
+        }
+
+        private static object ProjectHistory(AudioHistoryRecord record)
+        {
+            if (record == null)
+            {
+                return null;
+            }
+
+            return new
+            {
+                sequence = record.Sequence,
+                outcome = record.Outcome.ToString(),
+                cueId = record.CueId,
+                cueNote = record.CueNote,
+                bindingKey = record.BindingKey,
+                diagnosticSource = record.DiagnosticSource,
+                cardDefId = record.CardDefId,
+                skillId = record.SkillId,
+                roomId = record.RoomId,
+                itemDefId = record.ItemDefId,
+                contentId = record.ContentId,
+                diagnosticCardUid = record.DiagnosticCardUid,
+                actualClipKey = record.ActualClipKey,
+                variantId = record.VariantId,
+                sourceId = record.SourceId,
+                failureReason = record.FailureReason,
+                scheduleKey = record.ScheduleKey,
+                scheduleDelaySeconds = record.ScheduleDelaySeconds,
+                time = record.Time,
+            };
+        }
+
+        private static object ProjectMusicRuntime(IMusicSystem music)
+        {
+            return new
+            {
+                desired = music.DesiredState?.ToString(),
+                current = music.CurrentState?.ToString(),
+                currentClipKey = music.CurrentClipKey,
+                currentMusicGeneration = music.CurrentMusicGeneration,
+                currentSourceCount = music.CurrentSourceCount,
+                retiringSourceCount = music.RetiringSourceCount,
+                currentStableSource = music.CurrentStableSource,
+                history = (music.History ?? Array.Empty<MusicHistoryRecord>()).Select(h => new
+                {
+                    outcome = h.Outcome.ToString(),
+                    state = h.State.ToString(),
+                    bindingClipKey = h.BindingClipKey,
+                    actualClipKey = h.ActualClipKey,
+                    musicGeneration = h.MusicGeneration,
+                    stableSource = h.StableSource,
+                    reason = h.Reason,
+                    time = h.Time,
+                }).ToArray(),
+                lastAudit = music.LastAudit == null ? null : new
+                {
+                    trigger = music.LastAudit.Trigger,
+                    hasUnknownSources = music.LastAudit.HasUnknownSources,
+                    claimedSourceIds = music.LastAudit.ClaimedSourceIds,
+                    unknownSources = music.LastAudit.UnknownSources?.Select(s => new
+                    {
+                        sourceId = s.SourceId,
+                        clipKey = s.ClipKey,
+                    }).ToArray(),
+                },
+                anomalies = (music.OverlapAnomalies ?? Array.Empty<MusicOverlapAnomaly>()).Select(a => new
+                {
+                    trigger = a.Trigger,
+                    musicGeneration = a.MusicGeneration,
+                    desiredState = a.DesiredState,
+                    reason = a.Trigger,
+                    claimedSourceIds = a.ClaimedSourceIds,
+                    unknownSources = a.UnknownSources?.Select(s => new
+                    {
+                        sourceId = s.SourceId,
+                        clipKey = s.ClipKey,
+                    }).ToArray(),
+                    time = a.Time,
+                }).ToArray(),
+            };
+        }
+#endif
 
         private bool EnsureMutationsAllowed(out string error)
         {

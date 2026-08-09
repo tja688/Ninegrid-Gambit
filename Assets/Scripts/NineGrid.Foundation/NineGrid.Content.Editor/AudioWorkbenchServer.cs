@@ -623,25 +623,14 @@ namespace NineGrid.Content.Editor
 
         private static object BuildDeltaEnvelope()
         {
+            // #188：delta 携带完整作者/运行时投影，避免抓音流只抬 revision 却无 history。
             var state = AudioWorkbenchEditorState.Instance;
             return new
             {
                 type = "delta",
                 protocolVersion = ProtocolVersion,
                 revision = state.LocalRevision,
-                payload = new
-                {
-                    playMode = state.IsPlayMode,
-                    conflict = state.ConflictKind.ToString(),
-                    blocksMutations = state.BlocksMutations,
-                    focusedBindingKey = state.FocusedBindingKey,
-                    statusMessage = state.StatusMessage,
-                    errorMessage = state.ErrorMessage,
-                    sfxDirtyCount = state.SfxSession.DirtyCount,
-                    musicDirtyCount = state.MusicSession.DirtyCount,
-                    sfxWorkingJson = state.SfxSession.BuildWorkingJson(),
-                    musicWorkingJson = state.MusicSession.BuildWorkingJson(),
-                },
+                payload = state.BuildSnapshotPayload(),
             };
         }
 
@@ -687,6 +676,15 @@ namespace NineGrid.Content.Editor
 
         private static void PumpMainThread()
         {
+            try
+            {
+                AudioWorkbenchEditorState.Instance.TickRuntimeObservation();
+            }
+            catch (Exception exception)
+            {
+                Debug.LogException(exception);
+            }
+
             var processed = 0;
             while (processed < MaxJobsPerTick && MainThreadJobs.TryDequeue(out var job))
             {
