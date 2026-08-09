@@ -1,11 +1,15 @@
+using NineGrid.Flow.BattleInfoPreview;
 using UnityEngine;
 
 namespace NineGrid.Flow
 {
     public enum UiOverlayHitAction
     {
+        /// <summary>吞点击；若详述开着则只关详述（面板内不关战斗信息预览）。</summary>
         Swallow = 0,
         CloseCardInspect = 1,
+        /// <summary>半黑屏：详述优先关；详述已关且预览开则关预览。</summary>
+        DimmerBackground = 2,
     }
 
     /// <summary>
@@ -69,10 +73,22 @@ namespace NineGrid.Flow
                     CardInspectOverlayPresenter.CloseIfOpen();
                     break;
                 case UiOverlayHitAction.Swallow:
-                    // 半黑屏：右键详述打开时点菜单外（BG 图范围外）也退出。
                     if (CardInspectOverlayPresenter.IsOpen)
                     {
                         CardInspectOverlayPresenter.CloseIfOpen();
+                    }
+
+                    break;
+                case UiOverlayHitAction.DimmerBackground:
+                    if (CardInspectOverlayPresenter.IsOpen)
+                    {
+                        CardInspectOverlayPresenter.CloseIfOpen();
+                        break;
+                    }
+
+                    if (BattleInfoPreviewPresenter.IsOpen)
+                    {
+                        BattleInfoPreviewPresenter.RequestDismiss();
                     }
 
                     break;

@@ -1,4 +1,5 @@
 using NineGrid.Cards;
+using NineGrid.Flow.BattleInfoPreview;
 using NineGrid.Presentation;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -79,6 +80,12 @@ namespace NineGrid.Flow
                     return;
                 }
 
+                // 战斗信息预览槽：半黑屏下可按 defId 开详述。
+                if (TryInspectBattleInfoPreviewSlot(best))
+                {
+                    return;
+                }
+
                 TryOpenCardInspect(best);
                 return;
             }
@@ -97,10 +104,15 @@ namespace NineGrid.Flow
             // 局内 UI 叠层（半黑屏）期间不拖手牌。
             // 覆层不再靠 HitSort/TypePriority 抢几何（ADR-0023）；场地可胜出后由门禁拒。
             // 详述关闭：若胜出者不是覆层表面，显式关面板（旧 Swallow 抢点职责）。
-            if (BattleUiDimmerOverlay.IsActive || CardInspectOverlayPresenter.IsOpen)
+            // 注意：关详述同一帧不 Dismiss 战斗信息预览（嵌套退回预览）。
+            if (BattleUiDimmerOverlay.IsActive
+                || CardInspectOverlayPresenter.IsOpen
+                || BattleInfoPreviewPresenter.IsOpen)
             {
+                var inspectWasOpen = CardInspectOverlayPresenter.IsOpen;
                 best?.HandlePointerDown();
-                if (CardInspectOverlayPresenter.IsOpen
+                if (inspectWasOpen
+                    && CardInspectOverlayPresenter.IsOpen
                     && (best == null
                         || best.HitTypePriority != PointerHitSurfacePriorities.Overlay))
                 {
@@ -146,6 +158,27 @@ namespace NineGrid.Flow
 
             return RelicHudHook.TryInspectRelic != null
                 && RelicHudHook.TryInspectRelic(camera, screen);
+        }
+
+        private static bool TryInspectBattleInfoPreviewSlot(IPointerHitTarget hovered)
+        {
+            if (!BattleInfoPreviewPresenter.IsOpen)
+            {
+                return false;
+            }
+
+            if (CardInspectOverlayPresenter.IsOpen)
+            {
+                CardInspectOverlayPresenter.CloseIfOpen();
+                return true;
+            }
+
+            if (hovered is not BattleInfoPreviewSlotView slot || !slot.HasContent)
+            {
+                return false;
+            }
+
+            return CardInspectOverlayPresenter.TryOpenByDefId(slot.DefId, slot.KindHint);
         }
 
         private static void TryOpenCardInspect(IPointerHitTarget hovered)

@@ -14,6 +14,7 @@ using NineGrid.Flow.RewardBoard;
 using NineGrid.Flow.RoomIcons;
 using NineGrid.Flow.ShopBoard;
 using NineGrid.Flow.TavernBoard;
+using NineGrid.Flow.BattleInfoPreview;
 using NineGrid.Flow.Transitions;
 using NineGrid.Presentation;
 using NineGrid.Presentation.Commands;
@@ -292,6 +293,17 @@ namespace NineGrid.Flow
                   + (string.IsNullOrEmpty(monsterDeckId) ? string.Empty : $" 固定牌组 {monsterDeckId}")
                   + " 真实局内入场"
                 : $"[GameFlow] 节点 {mShell.NodeIndex} 真实局内入场");
+
+            // 正式 Run：战斗信息预览硬阻塞；未关闭前不 StartBattleNodeAsync（不入场/不发牌）。
+            if (!mShell.IsQuickTestMode)
+            {
+                await BattleInfoPreviewPresenter.ShowAndWaitAsync(options, ct);
+                if (ct.IsCancellationRequested)
+                {
+                    return false;
+                }
+            }
+
             await session.StartBattleNodeAsync(options, ct);
             if (ct.IsCancellationRequested)
             {

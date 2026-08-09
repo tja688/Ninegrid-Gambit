@@ -163,7 +163,7 @@ namespace NineGrid.Flow
                 proxy = gameObject.AddComponent<UiOverlayHitProxy>();
             }
 
-            proxy.Configure(UiOverlayHitAction.Swallow, HitSort, TypePriority);
+            proxy.Configure(UiOverlayHitAction.DimmerBackground, HitSort, TypePriority);
         }
 
         private void EnsureCollider()
