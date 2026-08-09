@@ -192,11 +192,18 @@ namespace NineGrid.Content.Audio
 
         public IReadOnlyList<AudioBinding> Bindings => mBindings;
 
-        public static AudioBindingCatalog FromJson(string json)
+        /// <summary>
+        /// 严格解析：空/非法 JSON、空 DTO、null bindings 均失败且不产出 catalog。
+        /// 工作台热应用必须走此路径，避免坏补丁静默换成空 catalog。
+        /// </summary>
+        public static bool TryFromJson(string json, out AudioBindingCatalog catalog, out string error)
         {
+            catalog = null;
+            error = null;
             if (string.IsNullOrWhiteSpace(json))
             {
-                return new AudioBindingCatalog(new List<AudioBinding>());
+                error = "catalog JSON is empty.";
+                return false;
             }
 
             AudioBindingCatalogDto dto;
@@ -204,16 +211,28 @@ namespace NineGrid.Content.Audio
             {
                 dto = JsonUtility.FromJson<AudioBindingCatalogDto>(json);
             }
-            catch (Exception)
+            catch (Exception exception)
             {
-                return new AudioBindingCatalog(new List<AudioBinding>());
+                error = "catalog JSON is malformed: " + exception.Message;
+                return false;
             }
 
-            var result = new List<AudioBinding>();
-            var bindings = dto?.bindings ?? Array.Empty<AudioBindingDto>();
-            for (var i = 0; i < bindings.Length; i++)
+            if (dto == null)
             {
-                var row = bindings[i];
+                error = "catalog DTO is null.";
+                return false;
+            }
+
+            if (dto.bindings == null)
+            {
+                error = "catalog bindings collection is null.";
+                return false;
+            }
+
+            var result = new List<AudioBinding>(dto.bindings.Length);
+            for (var i = 0; i < dto.bindings.Length; i++)
+            {
+                var row = dto.bindings[i];
                 if (row == null)
                 {
                     continue;
@@ -238,7 +257,19 @@ namespace NineGrid.Content.Audio
                     row.authoringStatus));
             }
 
-            return new AudioBindingCatalog(result);
+            catalog = new AudioBindingCatalog(result);
+            return true;
+        }
+
+        /// <summary>容错加载：失败时返回空 catalog（运行时 Resources 装载用）。</summary>
+        public static AudioBindingCatalog FromJson(string json)
+        {
+            if (!TryFromJson(json, out var catalog, out _))
+            {
+                return new AudioBindingCatalog(new List<AudioBinding>());
+            }
+
+            return catalog;
         }
 
         public static AudioBindingCatalog LoadFromResources()

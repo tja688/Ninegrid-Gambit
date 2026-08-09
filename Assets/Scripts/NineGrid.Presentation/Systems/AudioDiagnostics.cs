@@ -40,6 +40,11 @@ namespace NineGrid.Presentation.Systems
     public interface IAudioPlaybackDiagnosticsAdapter
     {
         IReadOnlyList<SfxTrackSourceSnapshot> GetPlayingSfxSources();
+
+        /// <summary>
+        /// 停止指定 SFX 源。空/未知/已死 ID 返回 false；MMSoundManager 访问仅允许在 Adapter 内。
+        /// </summary>
+        bool StopSfxSource(string sourceId);
     }
 #endif
 }

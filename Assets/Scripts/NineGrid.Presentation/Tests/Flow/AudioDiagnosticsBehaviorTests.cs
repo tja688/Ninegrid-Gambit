@@ -65,6 +65,61 @@ namespace NineGrid.Presentation.Tests
             Assert.That(CountKind(PerfTraceKinds.AudioSfxTrackSnapshot), Is.EqualTo(0));
         }
 
+        [Test]
+        public void StopSfxSource_StopsKnownSourceAndRejectsEmptyUnknownOrDead()
+        {
+            var playback = new FakeDiagnosticsPlayback();
+            var system = new AudioSystem(
+                AudioBindingCatalog.FromJson(CatalogJson),
+                playback,
+                new FakeClock(),
+                randomValue: () => 0d);
+
+            system.RequestCue(AudioCueRequest.Simple("ui.test", "stop-test"));
+            var sourceId = system.History[system.History.Count - 1].SourceId;
+            Assert.That(sourceId, Is.Not.Null.And.Not.Empty);
+            Assert.That(system.GetWorkbenchSnapshot().PlayingSources.Count, Is.EqualTo(1));
+
+            Assert.IsTrue(system.StopSfxSource(sourceId));
+            Assert.IsFalse(system.StopSfxSource(sourceId));
+            Assert.IsFalse(system.StopSfxSource(string.Empty));
+            Assert.IsFalse(system.StopSfxSource("sfx-source:missing"));
+            Assert.That(system.GetWorkbenchSnapshot().PlayingSources.Count, Is.EqualTo(0));
+        }
+
+        [Test]
+        public void DisabledBinding_EmitsAudioCueSuppressedTraceWithReason()
+        {
+            ResetPerfTrace();
+            var catalogJson =
+                "{\"schemaVersion\":2,\"bindings\":["
+                + "{\"cueId\":\"ui.test\",\"enabled\":false,\"clipKey\":\"audio/SFX/click\",\"note\":\"静音测试\"}]}";
+            var system = new AudioSystem(
+                AudioBindingCatalog.FromJson(catalogJson),
+                new FakeDiagnosticsPlayback(),
+                new FakeClock(),
+                randomValue: () => 0d);
+
+            var result = system.RequestCue(new AudioCueRequest(
+                "ui.test",
+                "suppressed-trace",
+                "card.x",
+                "skill.y",
+                "room.z",
+                "item.w",
+                "content.v",
+                42));
+
+            Assert.AreEqual(AudioCueOutcome.Suppressed, result.Outcome);
+            Assert.That(CountKind(PerfTraceKinds.AudioCueSuppressed), Is.EqualTo(1));
+            var session = PerfTraceRecorder.CurrentSession;
+            var ev = session.events.First(e => e.kind == PerfTraceKinds.AudioCueSuppressed);
+            Assert.That(ev.payload["reason"], Is.EqualTo("workbench binding disabled"));
+            Assert.That(ev.payload["cardDefId"], Is.EqualTo("card.x"));
+            Assert.That(ev.payload.ContainsKey("bindingKey"), Is.True);
+            Assert.That(ev.payload["bindingKey"], Is.Not.Null.And.Not.Empty);
+        }
+
         private static void ResetPerfTrace()
         {
             PerfTraceRecorder.Clear();
@@ -86,15 +141,42 @@ namespace NineGrid.Presentation.Tests
         private sealed class FakeDiagnosticsPlayback : IAudioPlaybackAdapter, IAudioPlaybackDiagnosticsAdapter
         {
             public readonly List<SfxTrackSourceSnapshot> Sources = new List<SfxTrackSourceSnapshot>();
+            private int mNextSourceId = 1;
 
             public AudioBackendResult Play(AudioPlaybackRequest request)
             {
-                return AudioBackendResult.Success(request.ClipKey);
+                var sourceId = "sfx-source:" + mNextSourceId++;
+                Sources.Add(new SfxTrackSourceSnapshot(
+                    sourceId,
+                    request.ClipKey,
+                    request.CueId,
+                    0d,
+                    loop: false));
+                return AudioBackendResult.Success(request.ClipKey, sourceId);
             }
 
             public IReadOnlyList<SfxTrackSourceSnapshot> GetPlayingSfxSources()
             {
                 return Sources;
+            }
+
+            public bool StopSfxSource(string sourceId)
+            {
+                if (string.IsNullOrEmpty(sourceId))
+                {
+                    return false;
+                }
+
+                for (var i = 0; i < Sources.Count; i++)
+                {
+                    if (string.Equals(Sources[i].SourceId, sourceId, System.StringComparison.Ordinal))
+                    {
+                        Sources.RemoveAt(i);
+                        return true;
+                    }
+                }
+
+                return false;
             }
         }
 

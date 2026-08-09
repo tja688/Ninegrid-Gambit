@@ -13,6 +13,7 @@ namespace NineGrid.Presentation.Systems
     {
         Played,
         Unbound,
+        Suppressed,
         Cooldown,
         BackendFailure,
     }
@@ -24,6 +25,7 @@ namespace NineGrid.Presentation.Systems
         Cancelled,
         Played,
         Unbound,
+        Suppressed,
         Cooldown,
         BackendFailure,
     }
@@ -73,25 +75,27 @@ namespace NineGrid.Presentation.Systems
 
     public readonly struct AudioBackendResult
     {
-        private AudioBackendResult(bool succeeded, string actualClipKey, string failureReason)
+        private AudioBackendResult(bool succeeded, string actualClipKey, string failureReason, string sourceId)
         {
             Succeeded = succeeded;
             ActualClipKey = actualClipKey ?? string.Empty;
             FailureReason = failureReason ?? string.Empty;
+            SourceId = sourceId ?? string.Empty;
         }
 
         public bool Succeeded { get; }
         public string ActualClipKey { get; }
         public string FailureReason { get; }
+        public string SourceId { get; }
 
-        public static AudioBackendResult Success(string actualClipKey)
+        public static AudioBackendResult Success(string actualClipKey, string sourceId = null)
         {
-            return new AudioBackendResult(true, actualClipKey, string.Empty);
+            return new AudioBackendResult(true, actualClipKey, string.Empty, sourceId);
         }
 
         public static AudioBackendResult Failure(string reason)
         {
-            return new AudioBackendResult(false, string.Empty, reason);
+            return new AudioBackendResult(false, string.Empty, reason, string.Empty);
         }
     }
 
@@ -118,23 +122,77 @@ namespace NineGrid.Presentation.Systems
 
     public sealed class AudioHistoryRecord
     {
+        public long Sequence { get; internal set; }
         public AudioHistoryOutcome Outcome { get; internal set; }
         public string CueId { get; internal set; }
         public string CueNote { get; internal set; }
         public string BindingKey { get; internal set; }
         public string DiagnosticSource { get; internal set; }
+        public string CardDefId { get; internal set; }
+        public string SkillId { get; internal set; }
+        public string RoomId { get; internal set; }
+        public string ItemDefId { get; internal set; }
+        public string ContentId { get; internal set; }
+        public int DiagnosticCardUid { get; internal set; }
         public string ActualClipKey { get; internal set; }
         public string VariantId { get; internal set; }
+        public string SourceId { get; internal set; }
         public string FailureReason { get; internal set; }
         public long ScheduleKey { get; internal set; }
         public float ScheduleDelaySeconds { get; internal set; }
         public double Time { get; internal set; }
     }
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+    public sealed class AudioCueAggregate
+    {
+        public string AggregateKey { get; internal set; }
+        public string BindingKey { get; internal set; }
+        public string CueId { get; internal set; }
+        public int Requested { get; internal set; }
+        public int Played { get; internal set; }
+        public int Suppressed { get; internal set; }
+        public int Cooldown { get; internal set; }
+        public int Unbound { get; internal set; }
+        public int BackendFailure { get; internal set; }
+        public double LastTime { get; internal set; }
+        public string LastFailureReason { get; internal set; }
+        public IReadOnlyList<double> RecentTimestamps { get; internal set; }
+    }
+
+    public sealed class AudioWorkbenchSnapshot
+    {
+        public long Revision { get; internal set; }
+        public IReadOnlyList<AudioHistoryRecord> History { get; internal set; }
+        public IReadOnlyList<SfxTrackSourceSnapshot> PlayingSources { get; internal set; }
+        public IReadOnlyList<AudioCueAggregate> Aggregates { get; internal set; }
+    }
+
+    public sealed class AudioWorkbenchApplyResult
+    {
+        public bool Succeeded { get; internal set; }
+        public long Revision { get; internal set; }
+        public string Error { get; internal set; }
+    }
+
+    public sealed class AudioWorkbenchPreviewResult
+    {
+        public bool Succeeded { get; internal set; }
+        public string ActualClipKey { get; internal set; }
+        public string VariantId { get; internal set; }
+        public string SourceId { get; internal set; }
+        public string FailureReason { get; internal set; }
+    }
+#endif
+
     public interface IAudioSystem : ISystem
     {
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
         IReadOnlyList<AudioHistoryRecord> History { get; }
+        AudioWorkbenchSnapshot GetWorkbenchSnapshot();
+        AudioWorkbenchApplyResult ApplyWorkbenchCatalog(string catalogJson);
+        AudioWorkbenchPreviewResult PreviewWorkbenchBinding(string bindingKey, bool includeBindingDelay);
+        bool StopSfxSource(string sourceId);
 #endif
         AudioCueResult RequestCue(AudioCueRequest request);
         AudioScheduleKey ScheduleCue(AudioCueRequest request, float delaySeconds);
@@ -144,11 +202,13 @@ namespace NineGrid.Presentation.Systems
     public sealed class AudioSystem : AbstractSystem, IAudioSystem
     {
         public const int DefaultHistoryCapacity = 256;
+        private const int AggregateTimestampCapacity = 32;
         private const double BurstWindowSeconds = 1d;
         private const int BurstThreshold = 4;
         private const double BurstReportCooldownSeconds = 2d;
+        private const string SuppressedReason = "workbench binding disabled";
 
-        private readonly AudioBindingCatalog mCatalog;
+        private AudioBindingCatalog mCatalog;
         private readonly IAudioPlaybackAdapter mPlayback;
         private readonly IAudioClock mClock;
         private readonly IAudioCueScheduler mScheduler;
@@ -156,6 +216,10 @@ namespace NineGrid.Presentation.Systems
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
         private readonly int mHistoryCapacity;
         private readonly List<AudioHistoryRecord> mHistory;
+        private readonly Dictionary<string, AggregateState> mAggregates =
+            new Dictionary<string, AggregateState>(StringComparer.Ordinal);
+        private long mRevision;
+        private long mNextHistorySequence;
 #endif
         private readonly Dictionary<AudioBinding, double> mLastPlayedAt =
             new Dictionary<AudioBinding, double>();
@@ -230,6 +294,189 @@ namespace NineGrid.Presentation.Systems
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
         public IReadOnlyList<AudioHistoryRecord> History => mHistory;
+
+        public AudioWorkbenchSnapshot GetWorkbenchSnapshot()
+        {
+            var historyCopy = new AudioHistoryRecord[mHistory.Count];
+            for (var i = 0; i < mHistory.Count; i++)
+            {
+                historyCopy[i] = CloneHistoryRecord(mHistory[i]);
+            }
+
+            IReadOnlyList<SfxTrackSourceSnapshot> playing = Array.Empty<SfxTrackSourceSnapshot>();
+            if (mPlayback is IAudioPlaybackDiagnosticsAdapter diagnostics)
+            {
+                var live = diagnostics.GetPlayingSfxSources();
+                if (live != null && live.Count > 0)
+                {
+                    var copy = new SfxTrackSourceSnapshot[live.Count];
+                    for (var i = 0; i < live.Count; i++)
+                    {
+                        copy[i] = live[i];
+                    }
+
+                    playing = copy;
+                }
+            }
+
+            var aggregates = new AudioCueAggregate[mAggregates.Count];
+            var index = 0;
+            foreach (var pair in mAggregates)
+            {
+                aggregates[index++] = pair.Value.ToImmutable();
+            }
+
+            return new AudioWorkbenchSnapshot
+            {
+                Revision = mRevision,
+                History = historyCopy,
+                PlayingSources = playing,
+                Aggregates = aggregates,
+            };
+        }
+
+        public AudioWorkbenchApplyResult ApplyWorkbenchCatalog(string catalogJson)
+        {
+            if (!AudioBindingCatalog.TryFromJson(catalogJson, out var catalog, out var error))
+            {
+                return new AudioWorkbenchApplyResult
+                {
+                    Succeeded = false,
+                    Revision = mRevision,
+                    Error = error ?? "catalog apply failed.",
+                };
+            }
+
+            mCatalog = catalog;
+            mLastPlayedAt.Clear();
+            mLastVariantIds.Clear();
+            mRevision++;
+            return new AudioWorkbenchApplyResult
+            {
+                Succeeded = true,
+                Revision = mRevision,
+                Error = string.Empty,
+            };
+        }
+
+        public AudioWorkbenchPreviewResult PreviewWorkbenchBinding(string bindingKey, bool includeBindingDelay)
+        {
+            if (string.IsNullOrWhiteSpace(bindingKey))
+            {
+                return PreviewFailure("binding key is empty.");
+            }
+
+            if (!TryFindBindingByKey(bindingKey, out var binding) || binding == null)
+            {
+                return PreviewFailure("binding not found.");
+            }
+
+            var variant = ResolveVariant(binding);
+            if (variant == null || string.IsNullOrWhiteSpace(variant.ClipKey))
+            {
+                return PreviewFailure("声音绑定缺少有效素材。");
+            }
+
+            var playbackRequest = new AudioPlaybackRequest(
+                binding.CueId,
+                binding.Note,
+                variant.ClipKey,
+                DecibelsToLinear(binding.VolumeDb + variant.VolumeTrimDb),
+                Math.Max(0f, variant.StartOffsetSeconds),
+                includeBindingDelay ? Math.Max(0f, binding.BindingDelaySeconds) : 0f);
+
+            AudioBackendResult backend;
+            try
+            {
+                backend = mPlayback.Play(playbackRequest);
+            }
+            catch (Exception exception)
+            {
+                backend = AudioBackendResult.Failure(exception.Message);
+            }
+
+            if (!backend.Succeeded)
+            {
+                return PreviewFailure(backend.FailureReason);
+            }
+
+            return new AudioWorkbenchPreviewResult
+            {
+                Succeeded = true,
+                ActualClipKey = string.IsNullOrEmpty(backend.ActualClipKey)
+                    ? variant.ClipKey
+                    : backend.ActualClipKey,
+                VariantId = variant.VariantId,
+                SourceId = backend.SourceId,
+                FailureReason = string.Empty,
+            };
+        }
+
+        public bool StopSfxSource(string sourceId)
+        {
+            if (!(mPlayback is IAudioPlaybackDiagnosticsAdapter diagnostics))
+            {
+                return false;
+            }
+
+            return diagnostics.StopSfxSource(sourceId);
+        }
+
+        private static AudioWorkbenchPreviewResult PreviewFailure(string reason)
+        {
+            return new AudioWorkbenchPreviewResult
+            {
+                Succeeded = false,
+                ActualClipKey = string.Empty,
+                VariantId = string.Empty,
+                SourceId = string.Empty,
+                FailureReason = reason ?? string.Empty,
+            };
+        }
+
+        private bool TryFindBindingByKey(string bindingKey, out AudioBinding binding)
+        {
+            binding = null;
+            var bindings = mCatalog.Bindings;
+            for (var i = 0; i < bindings.Count; i++)
+            {
+                var candidate = bindings[i];
+                if (candidate != null
+                    && string.Equals(candidate.BindingKey, bindingKey, StringComparison.Ordinal))
+                {
+                    binding = candidate;
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private static AudioHistoryRecord CloneHistoryRecord(AudioHistoryRecord source)
+        {
+            return new AudioHistoryRecord
+            {
+                Sequence = source.Sequence,
+                Outcome = source.Outcome,
+                CueId = source.CueId,
+                CueNote = source.CueNote,
+                BindingKey = source.BindingKey,
+                DiagnosticSource = source.DiagnosticSource,
+                CardDefId = source.CardDefId,
+                SkillId = source.SkillId,
+                RoomId = source.RoomId,
+                ItemDefId = source.ItemDefId,
+                ContentId = source.ContentId,
+                DiagnosticCardUid = source.DiagnosticCardUid,
+                ActualClipKey = source.ActualClipKey,
+                VariantId = source.VariantId,
+                SourceId = source.SourceId,
+                FailureReason = source.FailureReason,
+                ScheduleKey = source.ScheduleKey,
+                ScheduleDelaySeconds = source.ScheduleDelaySeconds,
+                Time = source.Time,
+            };
+        }
 #endif
         public AudioScheduleKey ScheduleCue(AudioCueRequest request, float delaySeconds)
         {
@@ -249,15 +496,12 @@ namespace NineGrid.Presentation.Systems
             mPendingSchedules[key.Value] = new PendingScheduledCue(request, clampedDelay);
             var scheduledAt = mClock.UnscaledTime;
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
-            AddHistory(new AudioHistoryRecord
-            {
-                Outcome = AudioHistoryOutcome.Scheduled,
-                CueId = request.CueId,
-                DiagnosticSource = request.DiagnosticSource,
-                ScheduleKey = key.Value,
-                ScheduleDelaySeconds = clampedDelay,
-                Time = scheduledAt,
-            });
+            AddHistory(CreateHistoryRecord(
+                AudioHistoryOutcome.Scheduled,
+                request,
+                scheduledAt,
+                scheduleKey: key.Value,
+                scheduleDelaySeconds: clampedDelay));
 #endif
             RecordTrace(
                 PerfTraceKinds.AudioCueScheduled,
@@ -293,16 +537,14 @@ namespace NineGrid.Presentation.Systems
                 ? pending.Request
                 : AudioCueRequest.Simple(string.Empty, "AudioSystem.CancelScheduledCue");
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
-            AddHistory(new AudioHistoryRecord
-            {
-                Outcome = AudioHistoryOutcome.Cancelled,
-                CueId = request.CueId,
-                DiagnosticSource = request.DiagnosticSource,
-                ScheduleKey = key.Value,
-                ScheduleDelaySeconds = hadPending ? pending.DelaySeconds : 0f,
-                FailureReason = "explicit cancel",
-                Time = cancelledAt,
-            });
+            var cancelledRecord = CreateHistoryRecord(
+                AudioHistoryOutcome.Cancelled,
+                request,
+                cancelledAt,
+                scheduleKey: key.Value,
+                scheduleDelaySeconds: hadPending ? pending.DelaySeconds : 0f);
+            cancelledRecord.FailureReason = "explicit cancel";
+            AddHistory(cancelledRecord);
 #endif
             RecordTrace(
                 PerfTraceKinds.AudioCueCancelled,
@@ -326,16 +568,13 @@ namespace NineGrid.Presentation.Systems
                 && mCatalog.TryResolve(request, out resolvedBinding)
                 && resolvedBinding != null;
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
-            AddHistory(new AudioHistoryRecord
-            {
-                Outcome = AudioHistoryOutcome.Requested,
-                CueId = request.CueId,
-                CueNote = hasResolvedBinding ? resolvedBinding.Note : null,
-                BindingKey = hasResolvedBinding ? resolvedBinding.BindingKey : null,
-                DiagnosticSource = request.DiagnosticSource,
-                ActualClipKey = hasResolvedBinding ? resolvedBinding.ClipKey : null,
-                Time = requestedAt,
-            });
+            AddHistory(CreateHistoryRecord(
+                AudioHistoryOutcome.Requested,
+                request,
+                requestedAt,
+                cueNote: hasResolvedBinding ? resolvedBinding.Note : null,
+                bindingKey: hasResolvedBinding ? resolvedBinding.BindingKey : null,
+                actualClipKey: hasResolvedBinding ? resolvedBinding.ClipKey : null));
 #endif
             RecordTrace(
                 PerfTraceKinds.AudioCueRequest,
@@ -346,11 +585,16 @@ namespace NineGrid.Presentation.Systems
                 note: hasResolvedBinding ? resolvedBinding.Note : null,
                 reason: null);
 
-            if (!hasResolvedBinding || !resolvedBinding.Enabled)
+            if (!hasResolvedBinding)
             {
                 return RecordUnbound(request, string.IsNullOrWhiteSpace(request.CueId)
                     ? "cue ID 为空。"
-                    : "声音绑定不存在或已禁用。");
+                    : "声音绑定不存在。");
+            }
+
+            if (!resolvedBinding.Enabled)
+            {
+                return RecordSuppressed(request, resolvedBinding);
             }
 
             var variant = ResolveVariant(resolvedBinding);
@@ -366,16 +610,14 @@ namespace NineGrid.Presentation.Systems
                 && now - lastPlayedAt < resolvedBinding.MinimumIntervalSeconds)
             {
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
-                AddHistory(new AudioHistoryRecord
-                {
-                    Outcome = AudioHistoryOutcome.Cooldown,
-                    CueId = request.CueId,
-                    CueNote = resolvedBinding.Note,
-                    BindingKey = resolvedBinding.BindingKey,
-                    DiagnosticSource = request.DiagnosticSource,
-                    FailureReason = "minimum interval",
-                    Time = now,
-                });
+                var cooldownRecord = CreateHistoryRecord(
+                    AudioHistoryOutcome.Cooldown,
+                    request,
+                    now,
+                    cueNote: resolvedBinding.Note,
+                    bindingKey: resolvedBinding.BindingKey);
+                cooldownRecord.FailureReason = "minimum interval";
+                AddHistory(cooldownRecord);
 #endif
                 RecordTrace(
                     PerfTraceKinds.AudioCueCooldown,
@@ -416,18 +658,16 @@ namespace NineGrid.Presentation.Systems
             if (!backend.Succeeded)
             {
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
-                AddHistory(new AudioHistoryRecord
-                {
-                    Outcome = AudioHistoryOutcome.BackendFailure,
-                    CueId = request.CueId,
-                    CueNote = resolvedBinding.Note,
-                    BindingKey = resolvedBinding.BindingKey,
-                    DiagnosticSource = request.DiagnosticSource,
-                    ActualClipKey = variant.ClipKey,
-                    VariantId = variant.VariantId,
-                    FailureReason = backend.FailureReason,
-                    Time = now,
-                });
+                var failureRecord = CreateHistoryRecord(
+                    AudioHistoryOutcome.BackendFailure,
+                    request,
+                    now,
+                    cueNote: resolvedBinding.Note,
+                    bindingKey: resolvedBinding.BindingKey,
+                    actualClipKey: variant.ClipKey,
+                    variantId: variant.VariantId);
+                failureRecord.FailureReason = backend.FailureReason;
+                AddHistory(failureRecord);
 #endif
                 RecordTrace(
                     PerfTraceKinds.AudioCueBackendFailure,
@@ -458,17 +698,15 @@ namespace NineGrid.Presentation.Systems
                 mLastVariantIds[resolvedBinding] = variant.VariantId;
             }
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
-            AddHistory(new AudioHistoryRecord
-            {
-                Outcome = AudioHistoryOutcome.Played,
-                CueId = request.CueId,
-                CueNote = resolvedBinding.Note,
-                BindingKey = resolvedBinding.BindingKey,
-                DiagnosticSource = request.DiagnosticSource,
-                ActualClipKey = actualClipKey,
-                VariantId = variant.VariantId,
-                Time = now,
-            });
+            AddHistory(CreateHistoryRecord(
+                AudioHistoryOutcome.Played,
+                request,
+                now,
+                cueNote: resolvedBinding.Note,
+                bindingKey: resolvedBinding.BindingKey,
+                actualClipKey: actualClipKey,
+                variantId: variant.VariantId,
+                sourceId: backend.SourceId));
 #endif
             RecordTrace(
                 PerfTraceKinds.AudioCuePlayed,
@@ -505,14 +743,12 @@ namespace NineGrid.Presentation.Systems
         private AudioCueResult RecordUnbound(AudioCueRequest request, string reason)
         {
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
-            AddHistory(new AudioHistoryRecord
-            {
-                Outcome = AudioHistoryOutcome.Unbound,
-                CueId = request.CueId,
-                DiagnosticSource = request.DiagnosticSource,
-                FailureReason = reason,
-                Time = mClock.UnscaledTime,
-            });
+            var record = CreateHistoryRecord(
+                AudioHistoryOutcome.Unbound,
+                request,
+                mClock.UnscaledTime);
+            record.FailureReason = reason;
+            AddHistory(record);
 #endif
             RecordTrace(
                 PerfTraceKinds.AudioCueUnbound,
@@ -530,6 +766,74 @@ namespace NineGrid.Presentation.Systems
             };
         }
 
+        private AudioCueResult RecordSuppressed(AudioCueRequest request, AudioBinding binding)
+        {
+            var now = mClock.UnscaledTime;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            var record = CreateHistoryRecord(
+                AudioHistoryOutcome.Suppressed,
+                request,
+                now,
+                cueNote: binding.Note,
+                bindingKey: binding.BindingKey);
+            record.FailureReason = SuppressedReason;
+            AddHistory(record);
+#endif
+            RecordTrace(
+                PerfTraceKinds.AudioCueSuppressed,
+                request,
+                AudioHistoryOutcome.Suppressed,
+                now,
+                clipKey: binding.ClipKey,
+                note: binding.Note,
+                reason: SuppressedReason,
+                bindingKey: binding.BindingKey);
+            return new AudioCueResult
+            {
+                Outcome = AudioCueOutcome.Suppressed,
+                CueId = request.CueId,
+                CueNote = binding.Note,
+                BindingKey = binding.BindingKey,
+                FailureReason = SuppressedReason,
+            };
+        }
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        private AudioHistoryRecord CreateHistoryRecord(
+            AudioHistoryOutcome outcome,
+            AudioCueRequest request,
+            double time,
+            string cueNote = null,
+            string bindingKey = null,
+            string actualClipKey = null,
+            string variantId = null,
+            string sourceId = null,
+            long scheduleKey = 0L,
+            float scheduleDelaySeconds = 0f)
+        {
+            return new AudioHistoryRecord
+            {
+                Outcome = outcome,
+                CueId = request.CueId,
+                CueNote = cueNote,
+                BindingKey = bindingKey,
+                DiagnosticSource = request.DiagnosticSource,
+                CardDefId = request.CardDefId,
+                SkillId = request.SkillId,
+                RoomId = request.RoomId,
+                ItemDefId = request.ItemDefId,
+                ContentId = request.ContentId,
+                DiagnosticCardUid = request.DiagnosticCardUid,
+                ActualClipKey = actualClipKey,
+                VariantId = variantId,
+                SourceId = sourceId,
+                ScheduleKey = scheduleKey,
+                ScheduleDelaySeconds = scheduleDelaySeconds,
+                Time = time,
+            };
+        }
+#endif
+
         private void RecordTrace(
             string kind,
             AudioCueRequest request,
@@ -539,7 +843,8 @@ namespace NineGrid.Presentation.Systems
             string note,
             string reason,
             long scheduleKey = 0L,
-            float scheduleDelaySeconds = 0f)
+            float scheduleDelaySeconds = 0f,
+            string bindingKey = null)
         {
             try
             {
@@ -558,6 +863,11 @@ namespace NineGrid.Presentation.Systems
                 if (!string.IsNullOrEmpty(note))
                 {
                     payload["note"] = note;
+                }
+
+                if (!string.IsNullOrEmpty(bindingKey))
+                {
+                    payload["bindingKey"] = bindingKey;
                 }
 
                 if (!string.IsNullOrEmpty(reason))
@@ -739,12 +1049,143 @@ namespace NineGrid.Presentation.Systems
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
         private void AddHistory(AudioHistoryRecord record)
         {
+            record.Sequence = ++mNextHistorySequence;
             if (mHistory.Count >= mHistoryCapacity)
             {
                 mHistory.RemoveAt(0);
             }
 
             mHistory.Add(record);
+            UpdateAggregate(record);
+        }
+
+        private void UpdateAggregate(AudioHistoryRecord record)
+        {
+            switch (record.Outcome)
+            {
+                case AudioHistoryOutcome.Requested:
+                case AudioHistoryOutcome.Played:
+                case AudioHistoryOutcome.Suppressed:
+                case AudioHistoryOutcome.Cooldown:
+                case AudioHistoryOutcome.Unbound:
+                case AudioHistoryOutcome.BackendFailure:
+                    break;
+                default:
+                    return;
+            }
+
+            var bindingKey = record.BindingKey ?? string.Empty;
+            var cueId = record.CueId ?? string.Empty;
+            var aggregateKey = !string.IsNullOrEmpty(bindingKey) ? bindingKey : cueId;
+            if (string.IsNullOrEmpty(aggregateKey))
+            {
+                return;
+            }
+
+            if (!mAggregates.TryGetValue(aggregateKey, out var state))
+            {
+                state = new AggregateState(aggregateKey, bindingKey, cueId);
+                mAggregates[aggregateKey] = state;
+            }
+
+            state.Observe(record);
+        }
+
+        private sealed class AggregateState
+        {
+            private readonly Queue<double> mTimestamps = new Queue<double>(AggregateTimestampCapacity);
+            private readonly List<double> mTimestampBuffer = new List<double>(AggregateTimestampCapacity);
+
+            public AggregateState(string aggregateKey, string bindingKey, string cueId)
+            {
+                AggregateKey = aggregateKey ?? string.Empty;
+                BindingKey = bindingKey ?? string.Empty;
+                CueId = cueId ?? string.Empty;
+            }
+
+            public string AggregateKey { get; }
+            public string BindingKey { get; private set; }
+            public string CueId { get; private set; }
+            public int Requested { get; private set; }
+            public int Played { get; private set; }
+            public int Suppressed { get; private set; }
+            public int Cooldown { get; private set; }
+            public int Unbound { get; private set; }
+            public int BackendFailure { get; private set; }
+            public double LastTime { get; private set; }
+            public string LastFailureReason { get; private set; }
+
+            public void Observe(AudioHistoryRecord record)
+            {
+                if (!string.IsNullOrEmpty(record.BindingKey))
+                {
+                    BindingKey = record.BindingKey;
+                }
+
+                if (!string.IsNullOrEmpty(record.CueId))
+                {
+                    CueId = record.CueId;
+                }
+
+                LastTime = record.Time;
+                switch (record.Outcome)
+                {
+                    case AudioHistoryOutcome.Requested:
+                        Requested++;
+                        break;
+                    case AudioHistoryOutcome.Played:
+                        Played++;
+                        break;
+                    case AudioHistoryOutcome.Suppressed:
+                        Suppressed++;
+                        LastFailureReason = record.FailureReason ?? string.Empty;
+                        break;
+                    case AudioHistoryOutcome.Cooldown:
+                        Cooldown++;
+                        LastFailureReason = record.FailureReason ?? string.Empty;
+                        break;
+                    case AudioHistoryOutcome.Unbound:
+                        Unbound++;
+                        LastFailureReason = record.FailureReason ?? string.Empty;
+                        break;
+                    case AudioHistoryOutcome.BackendFailure:
+                        BackendFailure++;
+                        LastFailureReason = record.FailureReason ?? string.Empty;
+                        break;
+                }
+
+                while (mTimestamps.Count >= AggregateTimestampCapacity)
+                {
+                    mTimestamps.Dequeue();
+                }
+
+                mTimestamps.Enqueue(record.Time);
+            }
+
+            public AudioCueAggregate ToImmutable()
+            {
+                mTimestampBuffer.Clear();
+                foreach (var stamp in mTimestamps)
+                {
+                    mTimestampBuffer.Add(stamp);
+                }
+
+                return new AudioCueAggregate
+                {
+                    AggregateKey = AggregateKey,
+                    BindingKey = BindingKey,
+                    CueId = CueId,
+                    Requested = Requested,
+                    Played = Played,
+                    Suppressed = Suppressed,
+                    Cooldown = Cooldown,
+                    Unbound = Unbound,
+                    BackendFailure = BackendFailure,
+                    LastTime = LastTime,
+                    LastFailureReason = LastFailureReason ?? string.Empty,
+                    RecentTimestamps = mTimestampBuffer.ToArray(),
+                };
+            }
         }
 #endif
 

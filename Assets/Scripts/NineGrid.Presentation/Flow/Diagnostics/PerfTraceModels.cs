@@ -132,8 +132,10 @@ namespace NineGrid.Flow.Diagnostics
         public const string AudioCueCancelled = "AudioCueCancelled";
         /// <summary>音频绑定解析后实际播放。</summary>
         public const string AudioCuePlayed = "AudioCuePlayed";
-        /// <summary>音频提示未绑定/禁用/缺素材，静默返回。</summary>
+        /// <summary>音频提示未绑定/缺素材，静默返回。</summary>
         public const string AudioCueUnbound = "AudioCueUnbound";
+        /// <summary>工作副本绑定已禁用（临时静音或已保存禁用），仍可观察。</summary>
+        public const string AudioCueSuppressed = "AudioCueSuppressed";
         /// <summary>最短播放间隔抑制。</summary>
         public const string AudioCueCooldown = "AudioCueCooldown";
         /// <summary>MMSoundManager Adapter 播放失败。</summary>

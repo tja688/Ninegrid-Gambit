@@ -64,9 +64,12 @@ namespace NineGrid.Presentation.Systems
             }
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
+            var sourceId = GetSfxSourceId(source);
             RegisterSfxSource(source, resourcesKey, request.CueId);
-#endif
+            return AudioBackendResult.Success(resourcesKey, sourceId);
+#else
             return AudioBackendResult.Success(resourcesKey);
+#endif
         }
 
         public MusicBackendResult Play(MusicPlaybackRequest request)
@@ -246,6 +249,37 @@ namespace NineGrid.Presentation.Systems
             }
 
             return result;
+        }
+
+        public bool StopSfxSource(string sourceId)
+        {
+            if (string.IsNullOrEmpty(sourceId))
+            {
+                return false;
+            }
+
+            if (!sfxSources.TryGetValue(sourceId, out var source) || source == null)
+            {
+                sfxSources.Remove(sourceId);
+                sfxClipKeys.Remove(sourceId);
+                sfxCueIds.Remove(sourceId);
+                return false;
+            }
+
+            var manager = MMSoundManager.Instance;
+            if (manager != null)
+            {
+                manager.FreeSound(source);
+            }
+            else
+            {
+                source.Stop();
+            }
+
+            sfxSources.Remove(sourceId);
+            sfxClipKeys.Remove(sourceId);
+            sfxCueIds.Remove(sourceId);
+            return true;
         }
 
         public IReadOnlyList<MusicTrackSourceSnapshot> GetPlayingMusicSources()
