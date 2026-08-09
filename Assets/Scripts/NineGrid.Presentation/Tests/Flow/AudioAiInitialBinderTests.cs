@@ -61,12 +61,15 @@ namespace NineGrid.Presentation.Tests
             var hit = FindBase(result.Catalog.bindings, "battle.attack.hit");
             Assert.AreEqual(AudioBindingAuthoringStatuses.HumanConfirmed, press.authoringStatus);
             Assert.AreEqual(-12f, press.volumeDb, 0.001f);
+            Assert.AreEqual("audio/SFX/按钮点击", press.clipKey);
+            Assert.IsTrue(press.variants == null || press.variants.Length == 0);
             Assert.AreEqual(AudioBindingAuthoringStatuses.AiDraft, hit.authoringStatus);
             Assert.AreEqual("audio/SFX/斩击", hit.clipKey == string.Empty
                 ? hit.variants[0].clipKey
                 : hit.clipKey);
             Assert.AreEqual(0, result.Report.unmatchedCueCount);
             Assert.GreaterOrEqual(result.Report.poolAugmentedCount, 1);
+            Assert.AreEqual(1, result.Report.preservedHumanCount);
         }
 
         [Test]
@@ -156,7 +159,45 @@ namespace NineGrid.Presentation.Tests
 
             Assert.IsTrue(findings.Exists(f => f.Category == "duplicate-binding-key"));
             Assert.IsTrue(findings.Exists(f => f.Category == "missing-clip"));
-            Assert.IsTrue(findings.Exists(f => f.Category == "orphan-binding"));
+            Assert.IsTrue(findings.Exists(f => f.Category == "orphan-binding" && f.CueId == "orphan.cue"));
+            Assert.IsFalse(findings.Exists(f =>
+                f.Category == "orphan-binding"
+                && (f.CueId == "ui.action.press" || f.CueId == "battle.attack.hit")));
+        }
+
+        [Test]
+        public void Hygiene_ReportsCoverageConflict_WhenSameCueEqualSpecificityOverlaps()
+        {
+            var catalog = new AudioBindingCatalogDto
+            {
+                schemaVersion = 3,
+                bindings = new[]
+                {
+                    new AudioBindingDto
+                    {
+                        cueId = "ui.action.press",
+                        note = "by-card",
+                        clipKey = "audio/SFX/按钮点击",
+                        selectorCardDefId = "card.a",
+                        authoringStatus = AudioBindingAuthoringStatuses.AiDraft,
+                    },
+                    new AudioBindingDto
+                    {
+                        cueId = "ui.action.press",
+                        note = "by-skill",
+                        clipKey = "audio/SFX/按钮点击",
+                        selectorSkillId = "skill.b",
+                        authoringStatus = AudioBindingAuthoringStatuses.AiDraft,
+                    },
+                },
+            };
+
+            var findings = AudioBindingCatalogHygieneValidator.Validate(
+                catalog,
+                new[] { "audio/SFX/按钮点击" },
+                new[] { "ui.action.press" });
+
+            Assert.IsTrue(findings.Exists(f => f.Category == "coverage-conflict"));
         }
 
         private static AudioAiInitialBinder.ClipCandidate Clip(string key)

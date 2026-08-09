@@ -43,8 +43,9 @@ namespace NineGrid.Content.Editor
 
             var bindings = catalog.bindings ?? Array.Empty<AudioBindingDto>();
             var keys = new HashSet<string>(StringComparer.Ordinal);
-            var formal = ToSet(formalClipKeys);
-            var declared = ToSet(declaredCueIds);
+            var formal = ToClipKeySet(formalClipKeys);
+            var declared = ToCueIdSet(declaredCueIds);
+            var coverageCandidates = new List<AudioBindingDto>();
 
             for (var i = 0; i < bindings.Length; i++)
             {
@@ -81,9 +82,10 @@ namespace NineGrid.Content.Editor
                     });
                 }
 
+                var cueId = row.cueId == null ? string.Empty : row.cueId.Trim();
                 if (declared.Count > 0
-                    && !string.IsNullOrWhiteSpace(row.cueId)
-                    && !declared.Contains(row.cueId))
+                    && !string.IsNullOrWhiteSpace(cueId)
+                    && !declared.Contains(cueId))
                 {
                     findings.Add(new Finding
                     {
@@ -96,9 +98,94 @@ namespace NineGrid.Content.Editor
 
                 ValidateParams(row, key, findings);
                 ValidateClips(row, key, formal, findings);
+                coverageCandidates.Add(row);
             }
 
+            ValidateCoverageConflicts(coverageCandidates, findings);
             return findings;
+        }
+
+        /// <summary>
+        /// 同 cue、同 specificity、选择器可同时命中同一请求 → 运行时按后写入胜出，属覆盖冲突。
+        /// 与 duplicate-binding-key（完全相同 binding key）分立。
+        /// </summary>
+        private static void ValidateCoverageConflicts(
+            List<AudioBindingDto> rows,
+            List<Finding> findings)
+        {
+            for (var i = 0; i < rows.Count; i++)
+            {
+                var a = rows[i];
+                if (a == null || string.IsNullOrWhiteSpace(a.cueId))
+                {
+                    continue;
+                }
+
+                var aKey = AudioBindingEditorSession.ComputeBindingKey(a);
+                var aSpec = CountSelectorSpecificity(a);
+                for (var j = i + 1; j < rows.Count; j++)
+                {
+                    var b = rows[j];
+                    if (b == null
+                        || !string.Equals(a.cueId, b.cueId, StringComparison.Ordinal)
+                        || CountSelectorSpecificity(b) != aSpec)
+                    {
+                        continue;
+                    }
+
+                    var bKey = AudioBindingEditorSession.ComputeBindingKey(b);
+                    if (string.Equals(aKey, bKey, StringComparison.Ordinal))
+                    {
+                        continue;
+                    }
+
+                    if (!SelectorsCanBothMatch(a, b))
+                    {
+                        continue;
+                    }
+
+                    findings.Add(new Finding
+                    {
+                        Category = "coverage-conflict",
+                        BindingKey = aKey,
+                        CueId = a.cueId,
+                        Detail = "与另一条同 cue/同 specificity 绑定可同时命中：" + bKey,
+                    });
+                }
+            }
+        }
+
+        private static int CountSelectorSpecificity(AudioBindingDto row)
+        {
+            return CountNonEmpty(row.selectorCardDefId)
+                + CountNonEmpty(row.selectorSkillId)
+                + CountNonEmpty(row.selectorRoomId)
+                + CountNonEmpty(row.selectorItemDefId)
+                + CountNonEmpty(row.selectorContentId);
+        }
+
+        private static int CountNonEmpty(string value)
+        {
+            return string.IsNullOrEmpty(value) ? 0 : 1;
+        }
+
+        private static bool SelectorsCanBothMatch(AudioBindingDto a, AudioBindingDto b)
+        {
+            return SelectorPairCompatible(a.selectorCardDefId, b.selectorCardDefId)
+                && SelectorPairCompatible(a.selectorSkillId, b.selectorSkillId)
+                && SelectorPairCompatible(a.selectorRoomId, b.selectorRoomId)
+                && SelectorPairCompatible(a.selectorItemDefId, b.selectorItemDefId)
+                && SelectorPairCompatible(a.selectorContentId, b.selectorContentId);
+        }
+
+        private static bool SelectorPairCompatible(string left, string right)
+        {
+            if (string.IsNullOrEmpty(left) || string.IsNullOrEmpty(right))
+            {
+                return true;
+            }
+
+            return string.Equals(left, right, StringComparison.Ordinal);
         }
 
         private static void ValidateParams(AudioBindingDto row, string key, List<Finding> findings)
@@ -323,7 +410,8 @@ namespace NineGrid.Content.Editor
             }
         }
 
-        private static HashSet<string> ToSet(IReadOnlyCollection<string> values)
+        /// <summary>素材键：走 NormalizeKey（去扩展名 / Resources 前缀）。</summary>
+        private static HashSet<string> ToClipKeySet(IReadOnlyCollection<string> values)
         {
             var set = new HashSet<string>(StringComparer.Ordinal);
             if (values == null)
@@ -336,6 +424,29 @@ namespace NineGrid.Content.Editor
                 if (!string.IsNullOrWhiteSpace(value))
                 {
                     set.Add(AudioAssetManifestLoader.NormalizeKey(value));
+                }
+            }
+
+            return set;
+        }
+
+        /// <summary>
+        /// 声明 cueId 只 trim，禁止走 NormalizeKey：
+        /// Path.GetExtension 会把 ui.action.press 裁成 ui.action，导致孤儿误报。
+        /// </summary>
+        private static HashSet<string> ToCueIdSet(IReadOnlyCollection<string> values)
+        {
+            var set = new HashSet<string>(StringComparer.Ordinal);
+            if (values == null)
+            {
+                return set;
+            }
+
+            foreach (var value in values)
+            {
+                if (!string.IsNullOrWhiteSpace(value))
+                {
+                    set.Add(value.Trim());
                 }
             }
 

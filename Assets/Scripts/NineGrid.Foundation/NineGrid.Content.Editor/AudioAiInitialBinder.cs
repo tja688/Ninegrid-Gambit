@@ -243,6 +243,7 @@ namespace NineGrid.Content.Editor
                     && !forceRebindAll
                     && AudioBindingAuthoringStatuses.IsHumanConfirmed(existing.authoringStatus))
                 {
+                    // humanConfirmed：默认不改写 clipKey/variants（含稀疏池增强）；仅补空 note/module。
                     var preserved = Clone(existing);
                     if (string.IsNullOrWhiteSpace(preserved.note))
                     {
@@ -252,12 +253,6 @@ namespace NineGrid.Content.Editor
                     if (string.IsNullOrWhiteSpace(preserved.module))
                     {
                         preserved.module = declaration.Module;
-                    }
-
-                    if (TryAugmentSparsePool(preserved, formalClips, clipByKey))
-                    {
-                        poolAugmented++;
-                        // Pool augmentation on confirmed rows stays confirmed — human clip choice preserved.
                     }
 
                     preservedHuman++;
