@@ -67,6 +67,7 @@ namespace NineGrid.Cards.Presentation
             CardMainVisualMaskAnchor.EnsureFaceBackgroundHexMask(transform);
             ApplyName(snapshot.DisplayName);
             ApplyStats(snapshot);
+            ApplyRhythmIconMatrix(snapshot);
             ApplyBasicDescription(snapshot);
             ApplyFaceOrientation(snapshot.FaceUp);
             TryPlayIdleOrStatic(snapshot);
@@ -270,7 +271,87 @@ namespace NineGrid.Cards.Presentation
                 map[CardFaceSlotCodes.ActionIcon] = action;
             }
 
+            Sprite sync = null;
+            _templateDefaults?.TryGetValue(CardFaceSlotCodes.SyncRhythmIcon, out sync);
+            if (sync != null)
+            {
+                map[CardFaceSlotCodes.SyncRhythmIcon] = sync;
+            }
+
             return map;
+        }
+
+        /// <summary>
+        /// ADR-0038 图标矩阵：攻击模式槽 / 同步子图标显隐（占位图用模板默认）。
+        /// </summary>
+        private void ApplyRhythmIconMatrix(CardPresentationSnapshot snapshot)
+        {
+            if (snapshot == null || snapshot.Kind != CardPresentationKind.Monster)
+            {
+                return;
+            }
+
+            var hasPattern = NineGrid.Core.AttackPatternRules.ParticipatesInEnemyAction(snapshot.AttackPattern);
+            var hasSync = snapshot.HasSyncRhythmSkills;
+
+            // 攻击模式槽：有模式用模式图；仅同步则升格同步图；皆无则隐藏。
+            if (CardFaceSlotNodeMap.TryFindRenderer(transform, CardFaceSlotCodes.ActionIcon, out var patternRenderer)
+                && patternRenderer != null)
+            {
+                Sprite patternSprite = null;
+                _templateDefaults?.TryGetValue(CardFaceSlotCodes.ActionIcon, out patternSprite);
+                Sprite syncSprite = null;
+                _templateDefaults?.TryGetValue(CardFaceSlotCodes.SyncRhythmIcon, out syncSprite);
+
+                if (hasPattern)
+                {
+                    if (patternSprite != null)
+                    {
+                        patternRenderer.sprite = patternSprite;
+                    }
+
+                    patternRenderer.enabled = true;
+                    patternRenderer.gameObject.SetActive(true);
+                }
+                else if (hasSync)
+                {
+                    if (syncSprite != null)
+                    {
+                        patternRenderer.sprite = syncSprite;
+                    }
+                    else if (patternSprite != null)
+                    {
+                        patternRenderer.sprite = patternSprite;
+                    }
+
+                    patternRenderer.enabled = true;
+                    patternRenderer.gameObject.SetActive(true);
+                }
+                else
+                {
+                    patternRenderer.enabled = false;
+                    patternRenderer.gameObject.SetActive(false);
+                }
+            }
+
+            // 子图标：仅「攻击+同步」时开。
+            if (CardFaceSlotNodeMap.TryFindRenderer(transform, CardFaceSlotCodes.SyncRhythmIcon, out var syncRenderer)
+                && syncRenderer != null)
+            {
+                var showChild = hasPattern && hasSync;
+                syncRenderer.enabled = showChild;
+                syncRenderer.gameObject.SetActive(showChild);
+            }
+        }
+
+        private void SetNumericSlotVisible(string slotCode, bool visible)
+        {
+            if (!CardFaceSlotNodeMap.TryFindText(transform, slotCode, out var text) || text == null)
+            {
+                return;
+            }
+
+            text.gameObject.SetActive(visible);
         }
 
         private static string BuildIconFingerprint(
@@ -448,8 +529,18 @@ namespace NineGrid.Cards.Presentation
                     SetNumeric(CardFaceSlotCodes.Attack, snapshot.Attack);
                     SetNumeric(CardFaceSlotCodes.Armor, snapshot.Armor);
                     SetNumeric(CardFaceSlotCodes.Hp, snapshot.Hp);
-                    // 行动计数经 UpdateActionCount 指令 Commit；snapshot 缺省为 0。
-                    SetNumeric(CardFaceSlotCodes.ActionCount, snapshot.ActionCount);
+                    // 行动计数经 UpdateActionCount 指令 Commit；无活跃节奏时隐藏/写 0。
+                    if (snapshot.HasActiveRhythm)
+                    {
+                        SetNumeric(CardFaceSlotCodes.ActionCount, snapshot.ActionCount);
+                        SetNumericSlotVisible(CardFaceSlotCodes.ActionCount, true);
+                    }
+                    else
+                    {
+                        SetNumeric(CardFaceSlotCodes.ActionCount, 0);
+                        SetNumericSlotVisible(CardFaceSlotCodes.ActionCount, false);
+                    }
+
                     break;
 
                 default:

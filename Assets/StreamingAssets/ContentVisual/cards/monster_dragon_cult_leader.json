@@ -14,7 +14,7 @@
         "hp": 4,
         "armor": 0,
         "attack": 1,
-        "action": 3,
+        "action": 5,
         "recovery": 0
     },
     "sprites": {
@@ -28,7 +28,7 @@
     },
     "mainVisual": {
         "offsetX": 0.0,
-        "offsetY": -0.30000001192092898,
+        "offsetY": -0.30000001192092896,
         "uniformScale": 0.800000011920929
     },
     "animations": {
@@ -97,5 +97,7 @@
     "shopOfferCount": 0,
     "openingInjects": [],
     "iconPrefab": "",
-    "boardSlot": 0
+    "boardSlot": 0,
+    "rhythmSource": "行动计数",
+    "rhythmPeriod": 5
 }

@@ -14,7 +14,7 @@
         "hp": 6,
         "armor": 0,
         "attack": 2,
-        "action": 0,
+        "action": 5,
         "recovery": 0
     },
     "sprites": {
@@ -104,5 +104,7 @@
     "shopOfferCount": 0,
     "openingInjects": [],
     "iconPrefab": "",
-    "boardSlot": 0
+    "boardSlot": 0,
+    "rhythmSource": "行动计数",
+    "rhythmPeriod": 5
 }

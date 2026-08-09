@@ -630,6 +630,13 @@ namespace NineGrid.Core.Effects
                     result.Add("schema.range.every", path + ".every must be >= 1.");
                 }
 
+                if (Same(atom, "OnCardRhythmFire") && node.Has("every"))
+                {
+                    result.Add(
+                        "schema.trigger.every",
+                        path + ".OnCardRhythmFire must not declare every (ADR-0038).");
+                }
+
                 if (Same(atom, "OnSelfMove") && node.Has("requireAdjacentTo") && string.IsNullOrEmpty(node.Get("requireAdjacentTo").AsString(string.Empty)))
                 {
                     result.Add("schema.trigger.requireAdjacentTo", path + ".requireAdjacentTo must not be empty.");

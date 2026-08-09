@@ -23,10 +23,14 @@ namespace NineGrid.Core
         public bool IsElite { get; set; }
         public bool IsBoss { get; set; }
         public int Level { get; set; }
-        /// <summary>攻击模式频率；&gt;0 时进场写入行动倒计时。</summary>
+        /// <summary>节奏周期 X；&gt;0 且有节奏需求时进场写入共享倒计时（ADR-0038）。</summary>
         public int ActionFrequency { get; set; }
         /// <summary>攻击模式（ADR-0011）；写入 <see cref="CardInstance.AttackPattern"/>。</summary>
         public AttackPattern AttackPattern { get; set; }
+        /// <summary>卡级节奏源（ADR-0038）。</summary>
+        public CardRhythmSource RhythmSource { get; set; }
+        /// <summary>是否挂有技能同步触发。</summary>
+        public bool HasSyncRhythmSkills { get; set; }
 
         public IReadOnlyList<string> EffectIds
         {
@@ -90,12 +94,14 @@ namespace NineGrid.Core
             }
 
             card.AttackPattern = AttackPattern;
-            var frequency = ActionFrequency > 0
-                ? ActionFrequency
-                : AttackPatternRules.Frequency(AttackPattern);
-            if (AttackPatternRules.ParticipatesInEnemyAction(AttackPattern) && frequency > 0)
+            card.RhythmSource = RhythmSource;
+            card.RhythmPeriod = ActionFrequency > 0 ? ActionFrequency : 0;
+            card.HasSyncRhythmSkills = HasSyncRhythmSkills;
+            if (CardRhythmRules.NeedsRhythm(card)
+                && CardRhythmRules.HasBoundSource(card.RhythmSource)
+                && card.RhythmPeriod > 0)
             {
-                card.Counters.Set(CoreCounterKeys.AttackPatternCountdown, frequency);
+                card.Counters.Set(CoreCounterKeys.AttackPatternCountdown, card.RhythmPeriod);
             }
 
             for (var i = 0; i < mEffectIds.Count; i++)

@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using NineGrid.Cards;
 using NineGrid.Cards.Presentation;
@@ -20,6 +21,10 @@ namespace NineGrid.Flow
         public int Armor;
         public string DefId;
         public bool FaceUp;
+        public AttackPattern AttackPattern;
+        public bool HasSyncRhythmSkills;
+        public bool HasActiveRhythm;
+        public int ActionCount;
     }
 
     /// <summary>
@@ -90,6 +95,11 @@ namespace NineGrid.Flow
                 Armor = StatArmorUtility.GetCurrentArmor(card),
                 DefId = card.DefId ?? string.Empty,
                 FaceUp = card.FaceUp,
+                AttackPattern = card.AttackPattern,
+                HasSyncRhythmSkills = card.HasSyncRhythmSkills,
+                HasActiveRhythm = CardRhythmRules.HasActiveRhythm(card),
+                // ActionCount 只经 ActionCountdownChanged → UpdateActionCount Commit（ADR-0005）。
+                ActionCount = 0,
             };
             return true;
         }
@@ -156,6 +166,9 @@ namespace NineGrid.Flow
                 Armor = previous.Armor,
                 Hp = previous.Hp,
                 ActionCount = previous.ActionCount,
+                AttackPattern = previous.AttackPattern,
+                HasSyncRhythmSkills = previous.HasSyncRhythmSkills,
+                HasActiveRhythm = previous.HasActiveRhythm,
                 FaceUp = previous.FaceUp,
                 BasicDescription = previous.BasicDescription,
                 DetailDescription = previous.DetailDescription,
@@ -302,6 +315,9 @@ namespace NineGrid.Flow
                 Armor = source.Armor,
                 Hp = source.Hp,
                 ActionCount = source.ActionCount,
+                AttackPattern = source.AttackPattern,
+                HasSyncRhythmSkills = source.HasSyncRhythmSkills,
+                HasActiveRhythm = source.HasActiveRhythm,
                 FaceUp = source.FaceUp,
                 BasicDescription = source.BasicDescription ?? string.Empty,
                 DetailDescription = source.DetailDescription ?? string.Empty,
@@ -416,6 +432,9 @@ namespace NineGrid.Flow
                 Armor = Mathf.Max(0, read.Armor),
                 Hp = Mathf.Max(0, read.Hp),
                 ActionCount = 0,
+                AttackPattern = read.AttackPattern,
+                HasSyncRhythmSkills = read.HasSyncRhythmSkills,
+                HasActiveRhythm = read.HasActiveRhythm,
                 FaceUp = read.FaceUp,
             };
 
@@ -561,8 +580,62 @@ namespace NineGrid.Flow
                 CardFacePresentationBinder.PeekDescriptionIconCatalog());
 
             snapshot.FrameColor = ResolveFrameColor(dto);
+
+            // ADR-0038：预览/无 Core uid 路径从 JSON 填节奏矩阵字段。
+            if (AttackPatternRules.TryParse(dto.attackPattern, out var pattern))
+            {
+                snapshot.AttackPattern = pattern;
+            }
+
+            snapshot.HasSyncRhythmSkills = DetectSyncRhythmFromDto(dto);
+            var period = dto.rhythmPeriod > 0
+                ? dto.rhythmPeriod
+                : (dto.stats != null ? Mathf.Max(0, dto.stats.action) : 0);
+            var hasSource = CardRhythmRules.TryParse(dto.rhythmSource, out var source)
+                && CardRhythmRules.HasBoundSource(source);
+            snapshot.HasActiveRhythm = CardRhythmRules.NeedsRhythm(snapshot.AttackPattern, snapshot.HasSyncRhythmSkills)
+                && hasSource
+                && period > 0;
+            if (snapshot.HasActiveRhythm && snapshot.ActionCount <= 0)
+            {
+                snapshot.ActionCount = period;
+            }
+
             // stats 是内容作者定义的出生值，经 Catalog 造卡用；表现层投影提交不读 JSON stats。
             return true;
+        }
+
+        private static bool DetectSyncRhythmFromDto(CardPresentationConfigDto dto)
+        {
+            if (dto?.effectAssemblies == null)
+            {
+                return false;
+            }
+
+            for (var i = 0; i < dto.effectAssemblies.Length; i++)
+            {
+                var assembly = dto.effectAssemblies[i];
+                if (assembly == null || string.IsNullOrWhiteSpace(assembly.templateId))
+                {
+                    continue;
+                }
+
+                if (string.Equals(assembly.templateId.Trim(), "tpl.skill.delivery.move", StringComparison.Ordinal)
+                    || string.Equals(assembly.templateId.Trim(), "tpl.skill.gear_delivery.move", StringComparison.Ordinal))
+                {
+                    return true;
+                }
+
+                if (NineGrid.Content.EffectTemplateCatalog.TryGet(assembly.templateId.Trim(), out var template)
+                    && template != null
+                    && !string.IsNullOrEmpty(template.BodyJson)
+                    && template.BodyJson.IndexOf("OnCardRhythmFire", StringComparison.Ordinal) >= 0)
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         private static void ApplyDeckBackSprites(CardPresentationSnapshot snapshot, string deckId)

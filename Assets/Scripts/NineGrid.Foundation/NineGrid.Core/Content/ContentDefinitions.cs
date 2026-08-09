@@ -67,7 +67,7 @@ namespace NineGrid.Core.Content
         public int Attack { get; set; }
         public int Armor { get; set; }
         public int Recovery { get; set; }
-        /// <summary>攻击模式频率 N（ADR-0011）；「无」为 0，近战系 3，远程 5。</summary>
+        /// <summary>节奏周期 X（ADR-0038）；与 <see cref="CardContentDefinition.RhythmPeriod"/> 对齐，供卡面预览。</summary>
         public int Action { get; set; }
 
         public bool IsEmpty
@@ -140,6 +140,12 @@ namespace NineGrid.Core.Content
         public ContentStatLine Stats { get; private set; }
         /// <summary>怪物攻击模式（ADR-0011）；非 Monster 保持 Unspecified。</summary>
         public AttackPattern AttackPattern { get; set; }
+        /// <summary>卡级节奏源（ADR-0038）。</summary>
+        public CardRhythmSource RhythmSource { get; set; }
+        /// <summary>节奏周期 X（ADR-0038）。</summary>
+        public int RhythmPeriod { get; set; }
+        /// <summary>是否挂有技能同步触发（OnCardRhythmFire）。</summary>
+        public bool HasSyncRhythmSkills { get; set; }
 
         public IReadOnlyList<string> Tags
         {
@@ -255,11 +261,24 @@ namespace NineGrid.Core.Content
         public CardContentDefinition WithAttackPattern(AttackPattern attackPattern)
         {
             AttackPattern = attackPattern;
-            if (Kind == CardKind.Monster)
+            return this;
+        }
+
+        public CardContentDefinition WithRhythm(CardRhythmSource source, int period)
+        {
+            RhythmSource = source;
+            RhythmPeriod = period > 0 ? period : 0;
+            if (Kind == CardKind.Monster || Kind == CardKind.Trap)
             {
-                Stats.Action = AttackPatternRules.Frequency(attackPattern);
+                Stats.Action = RhythmPeriod;
             }
 
+            return this;
+        }
+
+        public CardContentDefinition WithSyncRhythmSkills(bool hasSync)
+        {
+            HasSyncRhythmSkills = hasSync;
             return this;
         }
 

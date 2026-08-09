@@ -364,6 +364,46 @@ namespace NineGrid.Core
         }
     }
 
+    /// <summary>
+    /// 打开卡级开火窗口：广播事件并 Post 触发 <see cref="TriggerPoint.OnCardRhythmFire"/>（ADR-0038）。
+    /// </summary>
+    public sealed class OpenCardRhythmFireWindowAction : GameAction
+    {
+        private static readonly TriggerPoint[] sPostTriggers =
+        {
+            TriggerPoint.AfterAction,
+            TriggerPoint.OnCardRhythmFire
+        };
+
+        public OpenCardRhythmFireWindowAction(int cardUid)
+        {
+            CardUid = cardUid;
+        }
+
+        public int CardUid { get; private set; }
+        public override string ActionName { get { return "OpenCardRhythmFireWindow"; } }
+
+        public override GameActionResult Apply(GameActionContext context)
+        {
+            CardInstance card;
+            if (!context.GetModel<CardRegistry>().TryGet(CardUid, out card) || card == null)
+            {
+                return GameActionResult.Empty;
+            }
+
+            return new GameActionResult()
+                .AddEvent(new CoreGameEvent(CoreEventType.CardRhythmFireOpened, context.ActionId, ActionName)
+                    .WithCard(card.Uid));
+        }
+
+        public override IEnumerable<TriggerPoint> GetPostTriggerPoints(
+            GameActionContext context,
+            IReadOnlyList<CoreGameEvent> events)
+        {
+            return sPostTriggers;
+        }
+    }
+
     public sealed class PickupCardAction : GameAction
     {
         private static readonly TriggerPoint[] sPostTriggers =

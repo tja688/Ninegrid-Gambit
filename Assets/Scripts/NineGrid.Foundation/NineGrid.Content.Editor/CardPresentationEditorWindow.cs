@@ -10,6 +10,7 @@ using NineGrid.Cards.Slots;
 using NineGrid.Content;
 using NineGrid.Content.CardPresentation;
 using NineGrid.Content.Editor.Ui;
+using NineGrid.Core;
 using NineGrid.Flow.Transitions;
 using NineGrid.Presentation.Editor;
 using UnityEditor;
@@ -2998,11 +2999,85 @@ namespace NineGrid.Content.Editor
                     ContentVisualWarmConsoleUi.WrapControlRow(
                         "生命",
                         BindInt(dto.stats.hp, v => { dto.stats.hp = v; OnDtoEdited(entry); }),
-                        40f),
-                    ContentVisualWarmConsoleUi.WrapControlRow(
-                        "行动",
-                        BindInt(dto.stats.action, v => { dto.stats.action = v; OnDtoEdited(entry); }),
                         40f)));
+            }
+
+            if (CardPresentationEditorSession.IsMonsterKind(dto.kind))
+            {
+                var patternLabels = new List<string>
+                {
+                    AttackPatternRules.TokenNone,
+                    AttackPatternRules.TokenOrthogonalMelee,
+                    AttackPatternRules.TokenDiagonalMelee,
+                    AttackPatternRules.TokenOmnidirectionalMelee,
+                    AttackPatternRules.TokenRanged,
+                };
+                var patternIndex = Mathf.Max(0, patternLabels.IndexOf(dto.attackPattern ?? string.Empty));
+                if (string.IsNullOrWhiteSpace(dto.attackPattern))
+                {
+                    patternIndex = 0;
+                }
+
+                var patternField = new PopupField<string>(patternLabels, patternIndex);
+                patternField.RegisterValueChangedCallback(evt =>
+                {
+                    dto.attackPattern = evt.newValue ?? AttackPatternRules.TokenNone;
+                    OnDtoEdited(entry);
+                });
+                column.Add(ContentVisualWarmConsoleUi.WrapControlRow(
+                    "攻击模式",
+                    patternField,
+                    96f,
+                    tooltip: "ADR-0011：仅几何；出手节奏见节奏源/周期。"));
+
+                var rhythmLabels = new List<string>
+                {
+                    CardRhythmRules.TokenAction,
+                    CardRhythmRules.TokenMove,
+                };
+                var rhythmIndex = 0;
+                if (CardRhythmRules.TryParse(dto.rhythmSource, out var parsedSource)
+                    && parsedSource == CardRhythmSource.Move)
+                {
+                    rhythmIndex = 1;
+                }
+
+                if (string.IsNullOrWhiteSpace(dto.rhythmSource))
+                {
+                    dto.rhythmSource = CardRhythmRules.TokenAction;
+                }
+
+                if (dto.rhythmPeriod <= 0)
+                {
+                    dto.rhythmPeriod = dto.stats != null && dto.stats.action > 0 ? dto.stats.action : 5;
+                }
+
+                var rhythmField = new PopupField<string>(rhythmLabels, rhythmIndex);
+                rhythmField.RegisterValueChangedCallback(evt =>
+                {
+                    dto.rhythmSource = evt.newValue ?? CardRhythmRules.TokenAction;
+                    OnDtoEdited(entry);
+                });
+                column.Add(ContentVisualWarmConsoleUi.CreateInlineFieldGroup(
+                    ContentVisualWarmConsoleUi.WrapControlRow(
+                        "节奏源",
+                        rhythmField,
+                        96f,
+                        tooltip: "ADR-0038：行动计数←互动；移动计数←本卡盘面换格。"),
+                    ContentVisualWarmConsoleUi.WrapControlRow(
+                        "节奏周期",
+                        BindInt(dto.rhythmPeriod, v =>
+                        {
+                            dto.rhythmPeriod = Mathf.Max(0, v);
+                            if (dto.stats != null)
+                            {
+                                dto.stats.action = dto.rhythmPeriod;
+                            }
+
+                            OnDtoEdited(entry);
+                        }),
+                        48f,
+                        tooltip: "卡级共享倒计时 X；默认 5，可按怪微调。")));
             }
 
             if (!CardPresentationEditorSession.IsRoomKind(dto.kind)
@@ -3734,7 +3809,7 @@ namespace NineGrid.Content.Editor
                 Attack = isDeckEntry ? 0 : Mathf.Max(0, stats.attack),
                 Armor = isDeckEntry ? 0 : Mathf.Max(0, stats.armor),
                 Hp = isDeckEntry ? 0 : Mathf.Max(0, stats.hp),
-                ActionCount = isDeckEntry ? 0 : Mathf.Max(0, stats.action),
+                ActionCount = isDeckEntry ? 0 : Mathf.Max(0, dto.rhythmPeriod > 0 ? dto.rhythmPeriod : stats.action),
                 FaceUp = faceUp,
             };
             return true;

@@ -27,6 +27,12 @@ namespace NineGrid.Core
         public bool FaceUp { get; set; }
         /// <summary>怪物攻击模式（ADR-0011）；非怪保持 <see cref="AttackPattern.Unspecified"/>。</summary>
         public AttackPattern AttackPattern { get; set; }
+        /// <summary>卡级节奏源（ADR-0038）；无节奏需求时可为 <see cref="CardRhythmSource.Unspecified"/>。</summary>
+        public CardRhythmSource RhythmSource { get; set; }
+        /// <summary>节奏周期 X（ADR-0038）；进场写入共享倒计时。</summary>
+        public int RhythmPeriod { get; set; }
+        /// <summary>是否挂有技能同步触发（订阅卡级开火窗口）。</summary>
+        public bool HasSyncRhythmSkills { get; set; }
         public StatBlock Stats { get; private set; }
         public CounterBag Counters { get; private set; }
         public BindableProperty<ZoneId> Zone { get; private set; }

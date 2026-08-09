@@ -67,6 +67,7 @@ namespace NineGrid.Cards.Presentation
                    || string.Equals(code, CardFaceSlotCodes.BackShirt, StringComparison.Ordinal)
                    || string.Equals(code, CardFaceSlotCodes.BackLogo, StringComparison.Ordinal)
                    || string.Equals(code, CardFaceSlotCodes.ActionIcon, StringComparison.Ordinal)
+                   || string.Equals(code, CardFaceSlotCodes.SyncRhythmIcon, StringComparison.Ordinal)
                    || string.Equals(code, CardFaceSlotCodes.Name, StringComparison.Ordinal)
                    || string.Equals(code, CardFaceSlotCodes.Attack, StringComparison.Ordinal)
                    || string.Equals(code, CardFaceSlotCodes.Armor, StringComparison.Ordinal)

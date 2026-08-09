@@ -1630,27 +1630,39 @@ namespace NineGrid.Core.Systems
                     continue;
                 }
 
-                // ADR-0016：背面冻结攻击倒计时，不报名、不 −1。
+                // ADR-0016：背面冻结共享倒计时，不报名、不 −1。
                 if (!card.FaceUp)
                 {
                     continue;
                 }
 
-                if (!AttackPatternRules.ParticipatesInEnemyAction(card.AttackPattern))
-                {
-                    continue;
-                }
-
-                var frequency = AttackPatternRules.Frequency(card.AttackPattern);
-                if (frequency <= 0)
+                if (!CardRhythmRules.HasActiveRhythm(card))
                 {
                     continue;
                 }
 
                 var remaining = card.Counters.Get(CoreCounterKeys.AttackPatternCountdown);
+
+                // 移动源：本拍只收已归零者（推进在换格路径）；行动源：互动链 −1。
+                if (card.RhythmSource == CardRhythmSource.Move)
+                {
+                    if (remaining <= 0)
+                    {
+                        pipeline.Enqueue(new SetAttackPatternCountdownAction(uid, 0));
+                        candidates.Add(uid);
+                    }
+
+                    continue;
+                }
+
+                if (!CardRhythmRules.ShouldTickOnInteract(card))
+                {
+                    continue;
+                }
+
                 if (remaining <= 0)
                 {
-                    // 已被加速到 0（或仍停在开火窗）：本拍直接进入名单，不钳回频率再 −1。
+                    // 已被加速到 0（或仍停在开火窗）：本拍直接进入名单，不钳回周期再 −1。
                     pipeline.Enqueue(new SetAttackPatternCountdownAction(uid, 0));
                     candidates.Add(uid);
                     continue;
@@ -1716,21 +1728,36 @@ namespace NineGrid.Core.Systems
                 return 0;
             }
 
-            if (IsActionBanned(statSystem, monster)
-                || !AttackPatternRules.MeetsPositionRequirement(
-                    monster.AttackPattern,
-                    monster.Slot.Value,
-                    board.AvatarSlot.Value))
+            var patternFires = AttackPatternRules.ParticipatesInEnemyAction(monster.AttackPattern);
+            if (patternFires
+                && (IsActionBanned(statSystem, monster)
+                    || !AttackPatternRules.MeetsPositionRequirement(
+                        monster.AttackPattern,
+                        monster.Slot.Value,
+                        board.AvatarSlot.Value)))
             {
+                // 错过位置窗口：整窗作废（不同步技能半触发），重置为 X。
                 return EnqueueResetAttackPatternCountdown(pipeline, monster);
             }
 
-            // 单向打击：不开交战作用域；标准伤害管线；玩家不反击（ADR-0012）。
-            pipeline.Enqueue(new DealDamageAction(
-                monster.Uid,
-                avatar.Uid,
-                GetAttackDamage(statSystem, monster)));
-            var resolved = pipeline.RunToCompletion();
+            var resolved = 0;
+            if (patternFires)
+            {
+                // 单向打击：不开交战作用域；标准伤害管线；玩家不反击（ADR-0012）。
+                pipeline.Enqueue(new DealDamageAction(
+                    monster.Uid,
+                    avatar.Uid,
+                    GetAttackDamage(statSystem, monster)));
+                resolved += pipeline.RunToCompletion();
+            }
+
+            // 同拍技能同步触发（模式=无时仅此路径）。
+            if (monster.HasSyncRhythmSkills)
+            {
+                pipeline.Enqueue(new OpenCardRhythmFireWindowAction(monster.Uid));
+                resolved += pipeline.RunToCompletion();
+            }
+
             resolved += EnqueueResetAttackPatternCountdown(pipeline, monster);
 
             if (IsTerminalPhase(CurrentPhase) || IsAvatarDefeated())
@@ -1758,20 +1785,18 @@ namespace NineGrid.Core.Systems
             IActionPipelineSystem pipeline,
             CardInstance monster)
         {
-            if (pipeline == null
-                || monster == null
-                || !AttackPatternRules.ParticipatesInEnemyAction(monster.AttackPattern))
+            if (pipeline == null || monster == null || !CardRhythmRules.HasActiveRhythm(monster))
             {
                 return 0;
             }
 
-            var frequency = AttackPatternRules.Frequency(monster.AttackPattern);
-            if (frequency <= 0)
+            var period = CardRhythmRules.GetPeriod(monster);
+            if (period <= 0)
             {
                 return 0;
             }
 
-            pipeline.Enqueue(new SetAttackPatternCountdownAction(monster.Uid, frequency));
+            pipeline.Enqueue(new SetAttackPatternCountdownAction(monster.Uid, period));
             return pipeline.RunToCompletion();
         }
 

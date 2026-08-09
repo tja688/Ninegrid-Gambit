@@ -30,6 +30,15 @@ namespace NineGrid.Cards.Presentation
         /// <summary>行动倒计时；经 UpdateActionCount 指令 Commit，缺省 0。</summary>
         public int ActionCount;
 
+        /// <summary>攻击模式（ADR-0011）；用于卡面攻击模式槽矩阵。</summary>
+        public NineGrid.Core.AttackPattern AttackPattern;
+
+        /// <summary>是否挂有技能同步触发（ADR-0038）。</summary>
+        public bool HasSyncRhythmSkills;
+
+        /// <summary>是否有活跃卡级节奏（应显示行动计数数值）。</summary>
+        public bool HasActiveRhythm;
+
         /// <summary>
         /// Core 牌面朝向镜像（明/暗）。权威在 Core；表现仅 Commit 镜像。
         /// </summary>

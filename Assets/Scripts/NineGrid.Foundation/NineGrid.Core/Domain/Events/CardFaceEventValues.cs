@@ -67,7 +67,7 @@ namespace NineGrid.Core
         {
             if (result == null
                 || card == null
-                || !AttackPatternRules.ParticipatesInEnemyAction(card.AttackPattern))
+                || !CardRhythmRules.HasActiveRhythm(card))
             {
                 return;
             }

@@ -92,7 +92,16 @@ namespace NineGrid.Core
             Entry(CoreEventType.EffectCountdownCleared, PresentationInstructionKind.ClearCountdownRemaining, PresentationEventCategory.Stat, true, true, PresentationBeat.Settled, "Effect countdown remaining cleared"),
             Entry(CoreEventType.CardFaceChanged, PresentationInstructionKind.UpdateFaceUp, PresentationEventCategory.Stat, true, true, PresentationBeat.Settled, "Card face orientation changed"),
             // Avatar 跳格由 AvatarWalkRunner 直接 hop；事件仅作规则痕迹，不经盘面批播放。
-            Entry(CoreEventType.AvatarMoved, PresentationInstructionKind.MoveAvatar, PresentationEventCategory.Move, false, false, PresentationBeat.None, "Avatar moved", "Board walk hop owned by AvatarWalkRunner — no batch playback")
+            Entry(CoreEventType.AvatarMoved, PresentationInstructionKind.MoveAvatar, PresentationEventCategory.Move, false, false, PresentationBeat.None, "Avatar moved", "Board walk hop owned by AvatarWalkRunner — no batch playback"),
+            Entry(
+                CoreEventType.CardRhythmFireOpened,
+                PresentationInstructionKind.None,
+                PresentationEventCategory.Effect,
+                false,
+                false,
+                PresentationBeat.None,
+                "Card rhythm fire window opened",
+                "Drives OnCardRhythmFire; card-face countdown via ActionCountdownChanged")
         };
 
         private static readonly Dictionary<CoreEventType, PresentationEventMapEntry> sByType = BuildLookup();

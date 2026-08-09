@@ -151,7 +151,9 @@ namespace NineGrid.Core
         OnNodeStart,
         OnNodeEnd,
         OnActionRejected,
-        OnFlip
+        OnFlip,
+        /// <summary>卡级共享开火窗口（ADR-0038）；技能同步触发订阅此点。</summary>
+        OnCardRhythmFire
     }
 
     public enum CoreEventType
@@ -199,7 +201,9 @@ namespace NineGrid.Core
         EffectCountdownChanged,
         EffectCountdownCleared,
         CardFaceChanged,
-        AvatarMoved
+        AvatarMoved,
+        /// <summary>卡级开火窗口开启（ADR-0038）；驱动 OnCardRhythmFire。</summary>
+        CardRhythmFireOpened
     }
 
     public enum PresentationEventCategory

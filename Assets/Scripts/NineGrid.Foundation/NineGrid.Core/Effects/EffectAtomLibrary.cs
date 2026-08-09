@@ -513,6 +513,35 @@ namespace NineGrid.Core.Effects
         }
     }
 
+    /// <summary>
+    /// 卡级开火窗口同步触发（ADR-0038）：不自带节奏 every，订阅共享倒计时归零。
+    /// </summary>
+    [EffectAtom("OnCardRhythmFire", EffectAtomKind.Trigger)]
+    public sealed class OnCardRhythmFireTrigger : TriggerAtomBase
+    {
+        public override TriggerPoint Point { get { return TriggerPoint.OnCardRhythmFire; } }
+
+        public override bool Matches(EffectRuntimeContext context)
+        {
+            if (!base.Matches(context) || context.OwnerUid == 0)
+            {
+                return false;
+            }
+
+            var events = context.Events;
+            for (var i = 0; i < events.Count; i++)
+            {
+                if (events[i].Type == CoreEventType.CardRhythmFireOpened
+                    && events[i].CardUid == context.OwnerUid)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+    }
+
     [EffectAtom("OnMoveToSlot", EffectAtomKind.Trigger)]
     public sealed class OnMoveToSlotTrigger : TriggerAtomBase
     {

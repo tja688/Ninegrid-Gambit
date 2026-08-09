@@ -28,7 +28,7 @@
     },
     "mainVisual": {
         "offsetX": 0.0,
-        "offsetY": -0.20000000298023225,
+        "offsetY": -0.20000000298023224,
         "uniformScale": 1.0
     },
     "animations": {
@@ -103,5 +103,7 @@
     "shopOfferCount": 0,
     "openingInjects": [],
     "iconPrefab": "",
-    "boardSlot": 0
+    "boardSlot": 0,
+    "rhythmSource": "行动计数",
+    "rhythmPeriod": 5
 }

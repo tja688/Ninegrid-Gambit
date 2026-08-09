@@ -1,5 +1,7 @@
 ---
 status: accepted
+superseded-by: null
+implemented-by: "#184"
 ---
 
 # 卡级节奏：双通道 + 共享倒计时

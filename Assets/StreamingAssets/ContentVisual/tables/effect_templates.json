@@ -602,10 +602,10 @@
  {
   "id": "tpl.skill.delivery.move",
   "state": "Implemented",
-  "design_text": "每移动5次，将相邻格上一张帮助卡（道具）与战斗卡组里一张怪物卡交换位置",
+  "design_text": "开火窗口时，将相邻格上一张帮助卡（道具）与战斗卡组里一张怪物卡交换位置",
   "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
   "conditions_json": "[]",
-  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnSelfMove\",\"every\":5},\"target\":{\"atom\":\"FilteredCards\",\"kind\":\"HelpCard\",\"zone\":\"Board\",\"adjacentTo\":\"Self\",\"random\":true,\"count\":\"{{count}}\"},\"action\":{\"atom\":\"ExchangeWithDrawPile\",\"kind\":\"Monster\"}}"
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnCardRhythmFire\"},\"target\":{\"atom\":\"FilteredCards\",\"kind\":\"HelpCard\",\"zone\":\"Board\",\"adjacentTo\":\"Self\",\"random\":true,\"count\":\"{{count}}\"},\"action\":{\"atom\":\"ExchangeWithDrawPile\",\"kind\":\"Monster\"}}"
  },
  {
   "id": "tpl.skill.offer_fire.remove",
@@ -706,10 +706,10 @@
  {
   "id": "tpl.skill.gear_delivery.move",
   "state": "Implemented",
-  "design_text": "每移动2次，使随机一张其他怪物卡攻击+1或者护甲+2",
+  "design_text": "开火窗口时，使随机一张其他怪物卡攻击+1或者护甲+2",
   "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
   "conditions_json": "[]",
-  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnSelfMove\",\"every\":2},\"target\":{\"atom\":\"FilteredCards\",\"kind\":\"Monster\",\"zone\":\"Board\",\"exclude\":[\"Self\"],\"random\":true,\"count\":\"{{count}}\"},\"action\":{\"atom\":\"WeightedRandom\",\"choices\":[{\"weight\":\"{{weight}}\",\"action\":{\"atom\":\"ModifyBaseStat\",\"stat\":\"Attack\",\"delta\":\"{{delta}}\",\"reason\":\"{{reason}}\"}},{\"weight\":\"{{weight}}\",\"action\":{\"atom\":\"ModifyBaseStat\",\"stat\":\"Armor\",\"delta\":\"{{action_choices_1_action_delta}}\",\"reason\":\"{{reason}}\"}}]}}"
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnCardRhythmFire\"},\"target\":{\"atom\":\"FilteredCards\",\"kind\":\"Monster\",\"zone\":\"Board\",\"exclude\":[\"Self\"],\"random\":true,\"count\":\"{{count}}\"},\"action\":{\"atom\":\"WeightedRandom\",\"choices\":[{\"weight\":\"{{weight}}\",\"action\":{\"atom\":\"ModifyBaseStat\",\"stat\":\"Attack\",\"delta\":\"{{delta}}\",\"reason\":\"{{reason}}\"}},{\"weight\":\"{{weight}}\",\"action\":{\"atom\":\"ModifyBaseStat\",\"stat\":\"Armor\",\"delta\":\"{{action_choices_1_action_delta}}\",\"reason\":\"{{reason}}\"}}]}}"
  },
  {
   "id": "tpl.skill.gift.move",

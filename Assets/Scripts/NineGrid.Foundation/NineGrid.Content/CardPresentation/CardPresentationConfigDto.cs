@@ -47,9 +47,15 @@ namespace NineGrid.Content.CardPresentation
         /// 必填；缺省为装配错误，不得静默当「无」。非 Monster 可空。
         /// </summary>
         public string attackPattern;
+        /// <summary>
+        /// 卡级节奏源（ADR-0038）：行动计数 / 移动计数。有节奏需求时必填。
+        /// </summary>
+        public string rhythmSource;
+        /// <summary>节奏周期 X（ADR-0038）；有节奏需求时须 &gt;0。与 stats.action 对齐。</summary>
+        public int rhythmPeriod;
         /// <summary>金币：HelpCard→Price；Monster→KillGold；其它 Price（&gt;0）。</summary>
         public int gold;
-        /// <summary>基础数值；schema≥2 投影写入；action 为攻击模式频率（ADR-0011）。</summary>
+        /// <summary>基础数值；schema≥2 投影写入；action 镜像节奏周期（ADR-0038）。</summary>
         public CardPresentationStatsDto stats;
         /// <summary>槽位图权威（有路径则不再读 ContentVisual SO）。</summary>
         public CardPresentationSpritesDto sprites;

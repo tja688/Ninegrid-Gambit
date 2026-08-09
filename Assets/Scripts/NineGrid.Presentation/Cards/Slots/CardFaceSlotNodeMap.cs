@@ -31,7 +31,11 @@ namespace NineGrid.Cards.Slots
                 { CardFaceSlotCodes.BackLogo, new[] { "logo", "Logo" } },
                 {
                     CardFaceSlotCodes.ActionIcon,
-                    new[] { "行动图标", "行动", "Action_Icon", "ActionIcon" }
+                    new[] { "攻击模式", "行动图标", "行动", "Action_Icon", "ActionIcon" }
+                },
+                {
+                    CardFaceSlotCodes.SyncRhythmIcon,
+                    new[] { "是否有技能同步触发", "技能同步触发", "Sync_Rhythm_Icon", "SyncRhythmIcon" }
                 },
             };
 
@@ -45,7 +49,7 @@ namespace NineGrid.Cards.Slots
                 { CardFaceSlotCodes.Attack, new[] { "攻击数值", "Attack" } },
                 { CardFaceSlotCodes.Armor, new[] { "护甲数值", "Armor" } },
                 { CardFaceSlotCodes.Hp, new[] { "血量数值", "Hp", "Life" } },
-                { CardFaceSlotCodes.ActionCount, new[] { "行动计数", "ActionCount", "Action_Count" } },
+                { CardFaceSlotCodes.ActionCount, new[] { "行动计数数值", "行动计数", "ActionCount", "Action_Count" } },
                 { CardFaceSlotCodes.BasicDescription, new[] { "描述", "介绍区域", "描述面板", "BasicDescription" } },
             };
 
@@ -189,6 +193,7 @@ namespace NineGrid.Cards.Slots
             Capture(faceRoot, CardFaceSlotCodes.BackShirt, map);
             Capture(faceRoot, CardFaceSlotCodes.BackLogo, map);
             Capture(faceRoot, CardFaceSlotCodes.ActionIcon, map);
+            Capture(faceRoot, CardFaceSlotCodes.SyncRhythmIcon, map);
             return map;
         }
 

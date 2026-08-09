@@ -15,6 +15,8 @@ namespace NineGrid.Cards.Slots
         public const string BackShirt = "Back_Shirt";
         public const string BackLogo = "Back_Logo";
         public const string ActionIcon = "Action_Icon";
+        /// <summary>是否有技能同步触发子图标（ADR-0038）。</summary>
+        public const string SyncRhythmIcon = "Sync_Rhythm_Icon";
         public const string Name = "Name";
         public const string Attack = "Attack";
         public const string Armor = "Armor";

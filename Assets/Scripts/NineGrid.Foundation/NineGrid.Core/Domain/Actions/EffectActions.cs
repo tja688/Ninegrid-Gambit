@@ -401,11 +401,13 @@ namespace NineGrid.Core
                 board.PlaceCard(card, ToSlot);
             }
 
-            return new GameActionResult()
+            var result = new GameActionResult()
                 .AddEvent(new CoreGameEvent(CoreEventType.CardMoved, context.ActionId, ActionName)
                     .WithCard(CardUid)
                     .WithSlots(fromSlot, ToSlot)
                     .WithSource(SourceDefId, Cause));
+            CardRhythmMoveTicks.AppendFromMovedEvents(result, context, result.Events);
+            return result;
         }
 
         public override IEnumerable<TriggerPoint> GetPostTriggerPoints(GameActionContext context, IReadOnlyList<CoreGameEvent> events)

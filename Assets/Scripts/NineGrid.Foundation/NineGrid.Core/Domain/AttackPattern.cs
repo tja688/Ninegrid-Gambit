@@ -9,17 +9,17 @@ namespace NineGrid.Core
         Unspecified = 0,
         /// <summary>无 — 显式正当取值，不开火。</summary>
         None = 1,
-        /// <summary>普通近战 — 正交相邻，频率 3。</summary>
+        /// <summary>普通近战 — 正交相邻。</summary>
         OrthogonalMelee = 2,
-        /// <summary>斜角近战 — 对角相邻，频率 3。</summary>
+        /// <summary>斜角近战 — 对角相邻。</summary>
         DiagonalMelee = 3,
-        /// <summary>全向近战 — 八向相邻，频率 3。</summary>
+        /// <summary>全向近战 — 八向相邻。</summary>
         OmnidirectionalMelee = 4,
-        /// <summary>普通远程 — 无位置条件，频率 5。</summary>
+        /// <summary>普通远程 — 无位置条件。</summary>
         Ranged = 5,
     }
 
-    /// <summary>攻击模式解析与频率表（ADR-0011）。</summary>
+    /// <summary>攻击模式解析与几何（ADR-0011；频率表已由 ADR-0038 废止）。</summary>
     public static class AttackPatternRules
     {
         public const string TokenNone = "无";
@@ -28,19 +28,14 @@ namespace NineGrid.Core
         public const string TokenOmnidirectionalMelee = "全向近战";
         public const string TokenRanged = "普通远程";
 
+        /// <summary>
+        /// 已废止：节奏周期只读卡级 <c>RhythmPeriod</c>（ADR-0038）。
+        /// 保留方法以免旧调用方编译失败；恒返回 0。
+        /// </summary>
         public static int Frequency(AttackPattern pattern)
         {
-            switch (pattern)
-            {
-                case AttackPattern.OrthogonalMelee:
-                case AttackPattern.DiagonalMelee:
-                case AttackPattern.OmnidirectionalMelee:
-                    return 3;
-                case AttackPattern.Ranged:
-                    return 5;
-                default:
-                    return 0;
-            }
+            _ = pattern;
+            return 0;
         }
 
         public static bool TryParse(string raw, out AttackPattern pattern)
@@ -74,7 +69,7 @@ namespace NineGrid.Core
             }
         }
 
-        /// <summary>非「无」/缺省即会参与行动倒计时推进。</summary>
+        /// <summary>非「无」/缺省即可在开火窗口尝试单向打击（几何资格另判）。</summary>
         public static bool ParticipatesInEnemyAction(AttackPattern pattern)
         {
             return pattern != AttackPattern.None && pattern != AttackPattern.Unspecified;

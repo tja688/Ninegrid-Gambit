@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using NineGrid.Content.CardPresentation;
+using NineGrid.Core;
 using NineGrid.Core.Content;
 using UnityEditor;
 using UnityEngine;
@@ -179,6 +180,41 @@ namespace NineGrid.Content.Editor
                     || string.Equals(m.attackPattern.Trim(), "Unspecified", StringComparison.OrdinalIgnoreCase))
                 {
                     report.Error("attack_pattern", id + " 缺少合法 attackPattern。");
+                }
+
+                var needsRhythm = AttackPatternRules.TryParse(m.attackPattern, out var pattern)
+                    && AttackPatternRules.ParticipatesInEnemyAction(pattern);
+                // 同步技能检测从简：快递模板挂载即视为有节奏需求。
+                if (!needsRhythm && m.effectAssemblies != null)
+                {
+                    for (var ai = 0; ai < m.effectAssemblies.Length; ai++)
+                    {
+                        var tid = m.effectAssemblies[ai] != null ? m.effectAssemblies[ai].templateId : null;
+                        if (string.IsNullOrEmpty(tid))
+                        {
+                            continue;
+                        }
+
+                        if (tid.IndexOf("delivery.move", StringComparison.OrdinalIgnoreCase) >= 0
+                            || tid.IndexOf("gear_delivery", StringComparison.OrdinalIgnoreCase) >= 0)
+                        {
+                            needsRhythm = true;
+                            break;
+                        }
+                    }
+                }
+
+                if (needsRhythm)
+                {
+                    if (!CardRhythmRules.TryParse(m.rhythmSource, out _))
+                    {
+                        report.Error("rhythm_source", id + " 缺少合法 rhythmSource。");
+                    }
+
+                    if (m.rhythmPeriod <= 0)
+                    {
+                        report.Error("rhythm_period", id + " 缺少合法 rhythmPeriod（须 > 0）。");
+                    }
                 }
 
                 if (string.IsNullOrWhiteSpace(m.displayName))

@@ -122,6 +122,7 @@ namespace NineGrid.Core.Systems
             ValidateEffectDefinitions(report);
             ValidateReferences(report);
             ValidateMonsterAttackPatterns(report);
+            ValidateMonsterRhythm(report);
             ValidateRoomOpeningInjects(report);
             return report;
         }
@@ -146,8 +147,12 @@ namespace NineGrid.Core.Systems
                 IsElite = definition.IsElite || definition.IsBoss,
                 Level = definition.Level,
                 IsBoss = definition.IsBoss,
-                ActionFrequency = definition.Stats.Action,
-                AttackPattern = definition.AttackPattern
+                ActionFrequency = definition.RhythmPeriod > 0
+                    ? definition.RhythmPeriod
+                    : definition.Stats.Action,
+                AttackPattern = definition.AttackPattern,
+                RhythmSource = definition.RhythmSource,
+                HasSyncRhythmSkills = definition.HasSyncRhythmSkills
             };
 
             for (var i = 0; i < definition.EffectIds.Count; i++)
@@ -389,6 +394,57 @@ namespace NineGrid.Core.Systems
                 if (card.AttackPattern == AttackPattern.Unspecified)
                 {
                     report.AddIssue("card:" + pair.Key + ":missing or invalid attackPattern");
+                }
+            }
+        }
+
+        private void ValidateMonsterRhythm(ContentValidationReport report)
+        {
+            foreach (var pair in Catalog.Cards)
+            {
+                var card = pair.Value;
+                if (card.Kind != CardKind.Monster)
+                {
+                    continue;
+                }
+
+                var needs = CardRhythmRules.NeedsRhythm(card.AttackPattern, card.HasSyncRhythmSkills);
+                if (!needs)
+                {
+                    continue;
+                }
+
+                if (!CardRhythmRules.HasBoundSource(card.RhythmSource))
+                {
+                    report.AddIssue("card:" + pair.Key + ":missing or invalid rhythmSource");
+                }
+
+                if (card.RhythmPeriod <= 0)
+                {
+                    report.AddIssue("card:" + pair.Key + ":missing or invalid rhythmPeriod");
+                }
+            }
+
+            foreach (var pair in Catalog.Effects)
+            {
+                var json = pair.Value != null ? pair.Value.Json : null;
+                if (string.IsNullOrEmpty(json))
+                {
+                    continue;
+                }
+
+                if (json.IndexOf("\"OnCardRhythmFire\"", System.StringComparison.Ordinal) < 0
+                    && json.IndexOf("OnCardRhythmFire", System.StringComparison.Ordinal) < 0)
+                {
+                    continue;
+                }
+
+                // 同步技能禁止自带节奏 every（ADR-0038）。
+                if (System.Text.RegularExpressions.Regex.IsMatch(
+                        json,
+                        "\"atom\"\\s*:\\s*\"OnCardRhythmFire\"[\\s\\S]{0,200}?\"every\"\\s*:"))
+                {
+                    report.AddIssue("effect:" + pair.Key + ":OnCardRhythmFire must not declare every");
                 }
             }
         }

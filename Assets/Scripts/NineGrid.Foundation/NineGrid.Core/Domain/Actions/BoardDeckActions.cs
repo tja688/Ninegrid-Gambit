@@ -515,6 +515,7 @@ namespace NineGrid.Core
                 .WithAmount(Clockwise ? 1 : -1)
                 .WithMessage(Clockwise ? "clockwise" : "counterClockwise")
                 .WithSource(SourceDefId, Cause));
+            CardRhythmMoveTicks.AppendFromMovedEvents(result, context, result.Events);
             CardFaceEventValues.AppendConditionalPermanentAttackFaceCommitsForBoard(
                 result,
                 context,
@@ -588,6 +589,7 @@ namespace NineGrid.Core
             result.AddEvent(new CoreGameEvent(CoreEventType.CardSwapped, context.ActionId, ActionName)
                     .WithSlots(Left, Right)
                     .WithSource(SourceDefId, Cause));
+            CardRhythmMoveTicks.AppendFromMovedEvents(result, context, result.Events);
             CardFaceEventValues.AppendConditionalPermanentAttackFaceCommitsForBoard(
                 result,
                 context,

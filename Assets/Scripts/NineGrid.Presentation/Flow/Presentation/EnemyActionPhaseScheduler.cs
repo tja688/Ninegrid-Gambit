@@ -336,7 +336,7 @@ namespace NineGrid.Flow.Presentation
                     continue;
                 }
 
-                if (AttackPatternRules.ParticipatesInEnemyAction(card.AttackPattern))
+                if (CardRhythmRules.HasActiveRhythm(card))
                 {
                     return true;
                 }

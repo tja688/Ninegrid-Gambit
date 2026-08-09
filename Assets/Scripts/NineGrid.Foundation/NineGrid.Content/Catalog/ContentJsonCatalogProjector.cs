@@ -149,6 +149,14 @@ namespace NineGrid.Content
             AddTokens(dto.tags, value => projected.AddTag(value));
             ApplyEffectMounts(dto, catalog, id => projected.AddEffect(id));
             AddTokens(dto.skillIds, value => projected.AddSkill(value));
+
+            if (kind == CardKind.Monster || kind == CardKind.Trap)
+            {
+                var hasSync = DetectSyncRhythmSkills(dto);
+                projected.WithSyncRhythmSkills(hasSync);
+                ApplyMonsterRhythm(dto, projected);
+            }
+
             return true;
         }
 
@@ -193,7 +201,100 @@ namespace NineGrid.Content
 
             // 缺省或非法：保持 Unspecified，由 ValidateCatalog 报错（不得静默当「无」）。
             card.AttackPattern = AttackPattern.Unspecified;
-            card.Stats.Action = 0;
+        }
+
+        private static void ApplyMonsterRhythm(CardPresentationConfigDto dto, CardContentDefinition card)
+        {
+            if (card == null)
+            {
+                return;
+            }
+
+            var period = dto != null && dto.rhythmPeriod > 0
+                ? dto.rhythmPeriod
+                : (dto != null && dto.stats != null ? Math.Max(0, dto.stats.action) : 0);
+
+            CardRhythmSource source;
+            if (dto != null && CardRhythmRules.TryParse(dto.rhythmSource, out source))
+            {
+                card.WithRhythm(source, period);
+                return;
+            }
+
+            // 缺源：保持 Unspecified；有节奏需求时由 ValidateCatalog 报错（禁止静默沿用旧 3/5）。
+            card.WithRhythm(CardRhythmSource.Unspecified, period);
+        }
+
+        private static bool DetectSyncRhythmSkills(CardPresentationConfigDto dto)
+        {
+            if (dto == null)
+            {
+                return false;
+            }
+
+            if (AssembliesContainSyncRhythm(dto.effectAssemblies))
+            {
+                return true;
+            }
+
+            if (dto.skillIds == null || dto.skillIds.Length == 0)
+            {
+                return false;
+            }
+
+            for (var i = 0; i < dto.skillIds.Length; i++)
+            {
+                var skillId = dto.skillIds[i];
+                if (string.IsNullOrWhiteSpace(skillId))
+                {
+                    continue;
+                }
+
+                CardPresentationConfigDto skillDto;
+                if (!CardPresentationConfigCatalog.TryGet(skillId.Trim(), out skillDto) || skillDto == null)
+                {
+                    continue;
+                }
+
+                if (AssembliesContainSyncRhythm(skillDto.effectAssemblies))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private static bool AssembliesContainSyncRhythm(EffectAssemblyDto[] assemblies)
+        {
+            if (assemblies == null || assemblies.Length == 0)
+            {
+                return false;
+            }
+
+            for (var i = 0; i < assemblies.Length; i++)
+            {
+                var assembly = assemblies[i];
+                if (assembly == null || string.IsNullOrWhiteSpace(assembly.templateId))
+                {
+                    continue;
+                }
+
+                EffectTemplateDefinition template;
+                if (!EffectTemplateCatalog.TryGet(assembly.templateId.Trim(), out template)
+                    || template == null
+                    || string.IsNullOrEmpty(template.BodyJson))
+                {
+                    continue;
+                }
+
+                if (template.BodyJson.IndexOf("OnCardRhythmFire", StringComparison.Ordinal) >= 0)
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         public static bool TryProjectSkill(CardPresentationConfigDto dto, out SkillContentDefinition skill)
