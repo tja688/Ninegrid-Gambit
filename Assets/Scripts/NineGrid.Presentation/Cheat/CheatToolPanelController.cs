@@ -35,6 +35,7 @@ namespace NineGrid.Presentation.Cheat
         private const string CloseButtonName = "关闭按钮";
         private const string ClearNodeButtonName = "一键清关选项";
         private const string AddCardButtonName = "战斗加卡选项";
+        private const string AddRelicButtonName = "添加遗物选项";
         private const string CoinsButtonName = "无限金币选项";
         private const string HealButtonName = "回复满血选项";
         private const string GodModeButtonName = "无敌模式选项";
@@ -46,9 +47,17 @@ namespace NineGrid.Presentation.Cheat
         private const string LogSecondLayerBlockerName = "log记录层命中遮罩";
         private const string OptionFontAssetPath = "Assets/Arts/Fronts/DeYiHei/SmileySans-Oblique-3 SDF.asset";
         private const string OptionFontAssetName = "SmileySans-Oblique-3 SDF";
+        private const string CardSearchPlaceholder = "输入卡名 / 卡组 / 技能…";
+        private const string RelicSearchPlaceholder = "输入遗物名 / 描述…";
         private const int CoinsPerClick = 999;
         private const float OptionRowHeight = 36f;
         private const int SecondLayerBlockerHitSort = CheatToolPanelButton.HitSort + 1;
+
+        private enum SearchCatalogMode
+        {
+            Cards,
+            Relics,
+        }
 
         private static CheatToolPanelController sInstance;
 
@@ -70,7 +79,9 @@ namespace NineGrid.Presentation.Cheat
         private TMP_FontAsset _optionFont;
         private string _logNoticeDefault;
 
-        private List<CheatToolCardSearchIndex.CardEntry> _entries;
+        private SearchCatalogMode _searchMode = SearchCatalogMode.Cards;
+        private List<CheatToolCardSearchIndex.CardEntry> _cardEntries;
+        private List<CheatToolRelicSearchIndex.RelicEntry> _relicEntries;
 
         private void Awake()
         {
@@ -249,9 +260,19 @@ namespace NineGrid.Presentation.Cheat
             Debug.Log("[CheatTool] 回复满血 → " + maxHp);
         }
 
-        // ============ 二级菜单：战斗加卡 ============
+        // ============ 二级菜单：战斗加卡 / 添加遗物（共用搜索面板） ============
 
         public void OpenAddCardMenu()
+        {
+            OpenSearchMenu(SearchCatalogMode.Cards);
+        }
+
+        public void OpenAddRelicMenu()
+        {
+            OpenSearchMenu(SearchCatalogMode.Relics);
+        }
+
+        private void OpenSearchMenu(SearchCatalogMode mode)
         {
             EnsureBindings();
             if (_secondLayer == null)
@@ -268,8 +289,11 @@ namespace NineGrid.Presentation.Cheat
                 _firstLayer.gameObject.SetActive(false);
             }
 
+            _searchMode = mode;
             _secondLayer.gameObject.SetActive(true);
-            _entries = null;
+            _cardEntries = null;
+            _relicEntries = null;
+            ApplySearchPlaceholder();
 
             if (_inputField != null)
             {
@@ -285,6 +309,18 @@ namespace NineGrid.Presentation.Cheat
             {
                 RefreshResultList();
             }
+        }
+
+        private void ApplySearchPlaceholder()
+        {
+            if (_inputField == null || !(_inputField.placeholder is TMP_Text placeholder))
+            {
+                return;
+            }
+
+            placeholder.text = _searchMode == SearchCatalogMode.Relics
+                ? RelicSearchPlaceholder
+                : CardSearchPlaceholder;
         }
 
         public void CloseAddCardMenu()
@@ -481,6 +517,93 @@ namespace NineGrid.Presentation.Cheat
             CloseAddCardMenu();
         }
 
+        private void TryAddRelicToInventory(string defId)
+        {
+            var arch = NineGridArchitecture.Interface ?? NineGridArchitecture.Current;
+            if (arch == null)
+            {
+                Debug.LogWarning("[CheatTool] 架构未就绪，加遗物失败。");
+                return;
+            }
+
+            var player = arch.GetModel<PlayerModel>();
+            if (player == null)
+            {
+                Debug.LogWarning("[CheatTool] 玩家模型未就绪，加遗物失败（需已开局）。");
+                return;
+            }
+
+            var content = arch.GetSystem<IContentSystem>();
+            if (content == null
+                || !content.HasCatalog
+                || !content.Catalog.TryGetRelic(defId, out var relic)
+                || relic == null)
+            {
+                Debug.LogWarning("[CheatTool] 找不到遗物定义 " + defId + "。");
+                return;
+            }
+
+            if (RelicDecks.IsArchive(relic.DeckId))
+            {
+                Debug.LogWarning("[CheatTool] 归档遗物不可添加：" + defId + "。");
+                return;
+            }
+
+            if (OwnsRelic(player, defId))
+            {
+                Debug.LogWarning("[CheatTool] 已拥有遗物「" + relic.DisplayName + "」。");
+                return;
+            }
+
+            if (player.IsRelicInventoryFull)
+            {
+                Debug.LogWarning("[CheatTool] 遗物栏已满（" + PlayerModel.MaxRelicSlots + "），请先丢弃。");
+                return;
+            }
+
+            var pipeline = arch.GetSystem<IActionPipelineSystem>();
+            if (pipeline == null || pipeline.EventLog == null)
+            {
+                Debug.LogWarning("[CheatTool] 动作管线未就绪，加遗物失败。");
+                return;
+            }
+
+            var start = pipeline.EventLog.Entries.Count;
+            pipeline.Enqueue(new GrantRelicAction(defId));
+            pipeline.RunToCompletion();
+            BattleBeatFlush.PresentEventLogSlice(arch, start);
+            RelicHudHook.RequestWire();
+            RelicHudHook.RequestSync();
+
+            if (!OwnsRelic(player, defId))
+            {
+                Debug.LogWarning("[CheatTool] 加遗物未生效（defId=" + defId + "）。");
+                return;
+            }
+
+            Debug.Log("[CheatTool] 已获得遗物「" + relic.DisplayName + "」（defId=" + defId + "）。");
+            CloseAddCardMenu();
+        }
+
+        private static bool OwnsRelic(PlayerModel player, string defId)
+        {
+            if (player == null || string.IsNullOrEmpty(defId))
+            {
+                return false;
+            }
+
+            var relics = player.RelicDefIds;
+            for (var i = 0; i < relics.Count; i++)
+            {
+                if (relics[i] == defId)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
         // ============ 接线 ============
 
         private void EnsureBindings()
@@ -506,6 +629,7 @@ namespace NineGrid.Presentation.Cheat
             BindHitButton(CloseButtonName, ClosePanel);
             BindHitButton(ClearNodeButtonName, ForceClearNode);
             BindHitButton(AddCardButtonName, OpenAddCardMenu);
+            BindHitButton(AddRelicButtonName, OpenAddRelicMenu);
             BindHitButton(CoinsButtonName, AddCoins);
             BindHitButton(HealButtonName, HealAvatarFull);
             BindHitButton(GodModeButtonName, CheatToolGodMode.Toggle);
@@ -623,14 +747,27 @@ namespace NineGrid.Presentation.Cheat
                 CreateHitButtonStub(CloseButtonName, first);
                 CreateHitButtonStub(ClearNodeButtonName, first);
                 CreateHitButtonStub(AddCardButtonName, first);
+                CreateHitButtonStub(AddRelicButtonName, first);
                 CreateHitButtonStub(CoinsButtonName, first);
                 CreateHitButtonStub(HealButtonName, first);
                 CreateHitButtonStub(GodModeButtonName, first);
                 CreateHitButtonStub(LogRecordButtonName, first);
             }
-            else if (FindChild(LogRecordButtonName) == null && FindChild(FirstLayerName) != null)
+            else
             {
-                CreateHitButtonStub(LogRecordButtonName, FindChild(FirstLayerName));
+                var firstLayer = FindChild(FirstLayerName);
+                if (firstLayer != null)
+                {
+                    if (FindChild(LogRecordButtonName) == null)
+                    {
+                        CreateHitButtonStub(LogRecordButtonName, firstLayer);
+                    }
+
+                    if (FindChild(AddRelicButtonName) == null)
+                    {
+                        CreateHitButtonStub(AddRelicButtonName, firstLayer);
+                    }
+                }
             }
 
             // 兼容旧自举名「作弊选项模板 (3)」：测试/旧场景若仍用旧名，补一个回复满血别名桩
@@ -872,7 +1009,7 @@ namespace NineGrid.Presentation.Cheat
             var placeholder = placeholderGo.AddComponent<TextMeshProUGUI>();
             placeholder.rectTransform.SetParent(areaRect, false);
             Stretch(placeholder.rectTransform);
-            placeholder.text = "输入卡名 / 卡组 / 技能…";
+            placeholder.text = CardSearchPlaceholder;
             placeholder.font = ResolveFont();
             placeholder.fontSize = 16f;
             placeholder.fontStyle = FontStyles.Italic;
@@ -1028,16 +1165,32 @@ namespace NineGrid.Presentation.Cheat
                 return;
             }
 
-            if (_entries == null)
-            {
-                _entries = BuildEntries();
-            }
-
             var query = _inputField != null ? _inputField.text : string.Empty;
-            var matched = CheatToolCardSearchIndex.Match(_entries, query);
-            for (var i = 0; i < matched.Count; i++)
+            if (_searchMode == SearchCatalogMode.Relics)
             {
-                CreateOptionRow(matched[i], i);
+                if (_relicEntries == null)
+                {
+                    _relicEntries = BuildRelicEntries();
+                }
+
+                var matched = CheatToolRelicSearchIndex.Match(_relicEntries, query);
+                for (var i = 0; i < matched.Count; i++)
+                {
+                    CreateRelicOptionRow(matched[i], i);
+                }
+            }
+            else
+            {
+                if (_cardEntries == null)
+                {
+                    _cardEntries = BuildCardEntries();
+                }
+
+                var matched = CheatToolCardSearchIndex.Match(_cardEntries, query);
+                for (var i = 0; i < matched.Count; i++)
+                {
+                    CreateCardOptionRow(matched[i], i);
+                }
             }
 
             LayoutRebuilder.ForceRebuildLayoutImmediate(_content);
@@ -1047,7 +1200,7 @@ namespace NineGrid.Presentation.Cheat
             }
         }
 
-        private List<CheatToolCardSearchIndex.CardEntry> BuildEntries()
+        private List<CheatToolCardSearchIndex.CardEntry> BuildCardEntries()
         {
             var arch = NineGridArchitecture.Interface ?? NineGridArchitecture.Current;
             var content = arch?.GetSystem<IContentSystem>();
@@ -1057,10 +1210,23 @@ namespace NineGrid.Presentation.Cheat
                 return new List<CheatToolCardSearchIndex.CardEntry>();
             }
 
-            return CheatToolCardSearchIndex.Build(content.Catalog, ResolveCardDescription);
+            return CheatToolCardSearchIndex.Build(content.Catalog, ResolveContentDescription);
         }
 
-        private static string ResolveCardDescription(string defId)
+        private List<CheatToolRelicSearchIndex.RelicEntry> BuildRelicEntries()
+        {
+            var arch = NineGridArchitecture.Interface ?? NineGridArchitecture.Current;
+            var content = arch?.GetSystem<IContentSystem>();
+            if (arch == null || content == null || !content.HasCatalog)
+            {
+                Debug.LogWarning("[CheatTool] 内容目录未就绪，遗物搜索不可用。");
+                return new List<CheatToolRelicSearchIndex.RelicEntry>();
+            }
+
+            return CheatToolRelicSearchIndex.Build(content.Catalog, ResolveContentDescription);
+        }
+
+        private static string ResolveContentDescription(string defId)
         {
             if (CardPresentationConfigCatalog.TryGet(defId, out var dto) && dto != null)
             {
@@ -1083,7 +1249,23 @@ namespace NineGrid.Presentation.Cheat
             }
         }
 
-        private void CreateOptionRow(CheatToolCardSearchIndex.CardEntry entry, int index)
+        private void CreateCardOptionRow(CheatToolCardSearchIndex.CardEntry entry, int index)
+        {
+            CreateOptionRow(
+                index,
+                CheatToolCardSearchIndex.BuildOptionLabel(entry),
+                () => TryAddCardToDeckTop(entry.DefId));
+        }
+
+        private void CreateRelicOptionRow(CheatToolRelicSearchIndex.RelicEntry entry, int index)
+        {
+            CreateOptionRow(
+                index,
+                CheatToolRelicSearchIndex.BuildOptionLabel(entry),
+                () => TryAddRelicToInventory(entry.DefId));
+        }
+
+        private void CreateOptionRow(int index, string labelText, Action onClick)
         {
             var row = new GameObject("option_" + index, typeof(RectTransform));
             row.transform.SetParent(_content, false);
@@ -1095,8 +1277,10 @@ namespace NineGrid.Presentation.Cheat
 
             var button = row.AddComponent<Button>();
             button.targetGraphic = image;
-            var defId = entry.DefId;
-            button.onClick.AddListener(() => TryAddCardToDeckTop(defId));
+            if (onClick != null)
+            {
+                button.onClick.AddListener(() => onClick());
+            }
 
             var label = new GameObject("label", typeof(RectTransform));
             label.transform.SetParent(row.transform, false);
@@ -1107,7 +1291,7 @@ namespace NineGrid.Presentation.Cheat
             labelRect.offsetMax = new Vector2(-8f, 0f);
 
             var text = label.AddComponent<TextMeshProUGUI>();
-            text.text = CheatToolCardSearchIndex.BuildOptionLabel(entry);
+            text.text = labelText ?? string.Empty;
             text.font = ResolveOptionFont();
             text.fontSize = 16f;
             text.color = Color.white;
