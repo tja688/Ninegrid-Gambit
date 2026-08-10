@@ -232,8 +232,8 @@
 
 ### 卡店房就地服务（#93 · ADR-0020 / ADR-0022）
 
-- Core：进 `Tavern` → `OfferTavernSession` 三项服务（`UpgradeItemStats` / `FixItem` / `ExpandItemCapacity`，各 50 金）+ 本次进店刷新价初值 10；扩容写 `ItemDeckCapacity+1`；强化写 `ItemStatBonus+3`（跨节点应用属 #97）；`RefreshShop` 同商店规则（扣本次价并翻倍，无次数上限）；`SkipHelpChoice` 出店
-- **唯一嵌套选择**：「道具卡固定」→ 池切 `tavern.fixItem`，候选为来源池**随机 3 张**（可含已固定 defId）；确认后 `AddFixedItemCard` + 扣费回主面，且本货架 `FixItem` **下架**（须再购刷新才恢复）；固定占 `ItemDeckCapacity` 预算；满预算拒购；`SkipHelpChoice` 在子池取消回主面（不扣费、不离店、不消耗本货架固定名额）
+- Core：进 `Tavern` → `OfferTavernSession` 三项服务（`UpgradeItemStats` / `FixItem` / `ExpandItemCapacity`，各 50 金）+ 本次进店刷新价初值 10；扩容写 `ItemDeckCapacity+1`；强化写 `ItemStatBonus+3`（跨节点应用属 #97）；**任一服务买一次即从本货架下架**，`RefreshShop` 清空已售并全量补货（扣本次价并翻倍，无次数上限）；`SkipHelpChoice` 出店
+- **唯一嵌套选择**：「道具卡固定」→ 池切 `tavern.fixItem`，候选为来源池**随机 3 张**（可含已固定 defId）；确认后 `AddFixedItemCard` + 扣费回主面，且本货架 `FixItem` **下架**；固定占 `ItemDeckCapacity` 预算；满预算拒购；`SkipHelpChoice` 在子池取消回主面（不扣费、不离店、不消耗本货架固定名额）
 - 表现：`TavernBoardPresenter` 落格 1/3/7 服务选项（`房间选项标准模板`）、2 刷新、8 离开；二级选择时**服务/刷新退场**，候选真卡铺格 1/3/4；确认后选中与**未选候选一并碎裂退场**再回主面；离开 tip 改「取消选择」
 - 服务/刷新选项与候选真卡均按预制体原生尺寸（#104，不 Fit）；服务·刷新·候选 `SoftBlockOnly`，离开 `WalkDestination`；扣金同商店走 `InRoomGoldPresentation`；离开监视与 **不持 ChoiceOverlay** 约定同商店；候选真卡禁用 `GroundCardHitProxy`
 - `GameFlowOrchestrator.PresentInRoomSessionAfterEnterAsync`：`IsTavernPool` / `IsTavernFixItemPool` 走卡店场地板

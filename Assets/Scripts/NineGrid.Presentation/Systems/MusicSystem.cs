@@ -115,6 +115,9 @@ namespace NineGrid.Presentation.Systems
         void FadeOut(MusicPlaybackHandle handle, float durationSeconds, Action completed);
 
         void Stop(MusicPlaybackHandle handle);
+
+        /// <summary>Clear cross-play-session adapter bookkeeping without stopping live sources.</summary>
+        void ResetPlaySession();
     }
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
@@ -266,6 +269,15 @@ namespace NineGrid.Presentation.Systems
 #endif
         }
 
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void ResetPlaySessionAcrossEnterPlayMode()
+        {
+            if (NineGridArchitecture.Interface?.GetSystem<IMusicSystem>() is MusicSystem music)
+            {
+                music.ResetPlaySessionState();
+            }
+        }
+
         public static IMusicSystem EnsureRegistered(
             IArchitecture architecture = null,
             MusicBindingCatalog catalog = null,
@@ -361,7 +373,8 @@ namespace NineGrid.Presentation.Systems
             mDesiredState = request.State;
 
             if (mCurrent != null
-                && string.Equals(mCurrent.BindingClipKey, binding.ClipKey, StringComparison.Ordinal))
+                && string.Equals(mCurrent.BindingClipKey, binding.ClipKey, StringComparison.Ordinal)
+                && IsCurrentPlaybackAlive())
             {
                 mCurrent.State = request.State;
                 mCurrent.StableSource = request.StableSource;
@@ -768,6 +781,73 @@ namespace NineGrid.Presentation.Systems
             mDiagnosticsTicker = null;
             EndPreview("MusicSystem.OnDeinit");
 #endif
+            ResetPlaySessionState();
+        }
+
+        internal void ResetPlaySessionState()
+        {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            EndPreview("MusicSystem.ResetPlaySession");
+            mDiagnosticsTicker?.Dispose();
+            mDiagnosticsTicker = null;
+            mPreview = null;
+            mPreviewSuspensions.Clear();
+            mHistory.Clear();
+            mOverlapAnomalies.Clear();
+            mLastAudit = null;
+#endif
+            mCurrent = null;
+            mRetiring = null;
+            mDesiredState = null;
+            mLastRequestSource = string.Empty;
+            mNextGeneration = 0L;
+            try
+            {
+                mPlayback.ResetPlaySession();
+            }
+            catch (Exception)
+            {
+                // 会话重置不得阻塞下一局音乐请求。
+            }
+        }
+
+        private bool IsCurrentPlaybackAlive()
+        {
+            if (mCurrent?.Handle == null)
+            {
+                return false;
+            }
+
+            if (mCurrent.Handle.NativeHandle is AudioSource source)
+            {
+                return source != null && source.isPlaying;
+            }
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            if (mPlayback is IMusicPlaybackDiagnosticsAdapter diagnostics)
+            {
+                IReadOnlyList<MusicTrackSourceSnapshot> playing;
+                try
+                {
+                    playing = diagnostics.GetPlayingMusicSources();
+                }
+                catch (Exception)
+                {
+                    return false;
+                }
+
+                for (var i = 0; i < (playing?.Count ?? 0); i++)
+                {
+                    if (IsClaimed(playing[i], mCurrent))
+                    {
+                        return playing[i].IsPlaying;
+                    }
+                }
+
+                return false;
+            }
+#endif
+            return true;
         }
 
         private MusicRequestResult ReturnResult(
@@ -1245,6 +1325,10 @@ namespace NineGrid.Presentation.Systems
             }
 
             public void Stop(MusicPlaybackHandle handle)
+            {
+            }
+
+            public void ResetPlaySession()
             {
             }
         }

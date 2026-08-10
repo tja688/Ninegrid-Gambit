@@ -1112,6 +1112,12 @@ namespace NineGrid.Core.Systems
                 pipeline.Enqueue(new ModifyGoldAction(-price, "tavernBuy:" + defId, defId));
             }
 
+            // 强化 / 扩容：买一次从本货架下架，须刷新才补货（与固定确认同规则）。
+            var pending = this.GetModel<PendingChoiceModel>();
+            pending.MarkTavernServiceSoldThisShelf(defId);
+            pipeline.Enqueue(new OfferTavernSessionAction(
+                this.GetSystem<IRewardSystem>().BuildTavernServices(pending.TavernServicesSoldThisShelf),
+                pending.ShopRefreshPriceGold.Value));
             var resolved = pipeline.RunToCompletion();
             ApplyTavernServicePurchase(defId);
             return CoreCommandResult.Accept(resolved);
@@ -1145,9 +1151,9 @@ namespace NineGrid.Core.Systems
 
             var pending = this.GetModel<PendingChoiceModel>();
             var refresh = pending.ShopRefreshPriceGold.Value;
-            pending.MarkTavernFixItemSoldThisShelf();
+            pending.MarkTavernServiceSoldThisShelf(RewardSystem.TavernFixItemDefId);
             pipeline.Enqueue(new OfferTavernSessionAction(
-                this.GetSystem<IRewardSystem>().BuildTavernServices(includeFixItem: false),
+                this.GetSystem<IRewardSystem>().BuildTavernServices(pending.TavernServicesSoldThisShelf),
                 refresh));
             var resolved = pipeline.RunToCompletion();
             player.AddFixedItemCard(defId);
@@ -1217,9 +1223,9 @@ namespace NineGrid.Core.Systems
             var nextPrice = price <= 0 ? OfferShopSessionAction.DefaultRefreshPriceGold : price * 2;
             if (PendingChoiceModel.IsTavernPool(poolId))
             {
-                pending.ClearTavernFixItemSoldThisShelf();
+                pending.ClearTavernServicesSoldThisShelf();
                 pipeline.Enqueue(new OfferTavernSessionAction(
-                    this.GetSystem<IRewardSystem>().BuildTavernServices(includeFixItem: true),
+                    this.GetSystem<IRewardSystem>().BuildTavernServices(),
                     nextPrice));
             }
             else
@@ -1241,14 +1247,13 @@ namespace NineGrid.Core.Systems
             var pending = this.GetModel<PendingChoiceModel>();
             var poolId = pending.PoolId.Value ?? string.Empty;
 
-            // 卡店二级选择取消：回到三项服务面，不离店、不扣费；已售固定仍省略。
+            // 卡店二级选择取消：回到服务面，不离店、不扣费；已售服务仍省略。
             if (PendingChoiceModel.IsTavernFixItemPool(poolId))
             {
                 var refresh = pending.ShopRefreshPriceGold.Value;
                 var pipelineCancel = this.GetSystem<IActionPipelineSystem>();
                 pipelineCancel.Enqueue(new OfferTavernSessionAction(
-                    this.GetSystem<IRewardSystem>().BuildTavernServices(
-                        includeFixItem: !pending.TavernFixItemSoldThisShelf),
+                    this.GetSystem<IRewardSystem>().BuildTavernServices(pending.TavernServicesSoldThisShelf),
                     refresh));
                 return CoreCommandResult.Accept(pipelineCancel.RunToCompletion());
             }

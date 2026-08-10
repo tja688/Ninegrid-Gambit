@@ -17,8 +17,11 @@ namespace NineGrid.Core.Systems
         /// <summary>商店四货架草案（宝箱 / 随机属性 / 药水 / 食品）。</summary>
         IReadOnlyList<RewardEntry> BuildShopShelves();
 
-        /// <summary>卡店服务草案（数值强化 / 固定 / 扩容）；<paramref name="includeFixItem"/> 为 false 时省略固定（本货架已购，须刷新才恢复）。</summary>
-        IReadOnlyList<RewardEntry> BuildTavernServices(bool includeFixItem = true);
+        /// <summary>
+        /// 卡店服务草案（数值强化 / 固定 / 扩容）。
+        /// <paramref name="excludeDefIds"/> 为本货架已购项，刷新后清空再全量补货。
+        /// </summary>
+        IReadOnlyList<RewardEntry> BuildTavernServices(IReadOnlyCollection<string> excludeDefIds = null);
 
         /// <summary>宝箱奖励房：1 宝箱 + 3 随机道具。</summary>
         IReadOnlyList<RewardEntry> BuildTreasureRewardShelves();
@@ -417,21 +420,34 @@ namespace NineGrid.Core.Systems
 
         /// <summary>
         /// 卡店服务：道具数值强化 / 道具卡固定 / 道具卡扩容（设计案房间.md · #93）。
-        /// 本货架已购「固定」时 omit FixItem，刷新货架后恢复。
+        /// 本货架已购项由 <paramref name="excludeDefIds"/> 省略，刷新货架后恢复。
         /// </summary>
-        public IReadOnlyList<RewardEntry> BuildTavernServices(bool includeFixItem = true)
+        public IReadOnlyList<RewardEntry> BuildTavernServices(IReadOnlyCollection<string> excludeDefIds = null)
         {
-            var services = new List<RewardEntry>(3)
+            var services = new List<RewardEntry>(3);
+            TryAddTavernService(services, TavernUpgradeDefId, excludeDefIds);
+            TryAddTavernService(services, TavernFixItemDefId, excludeDefIds);
+            TryAddTavernService(services, TavernExpandDefId, excludeDefIds);
+            return services;
+        }
+
+        private static void TryAddTavernService(
+            List<RewardEntry> services,
+            string defId,
+            IReadOnlyCollection<string> excludeDefIds)
+        {
+            if (excludeDefIds != null)
             {
-                new RewardEntry(TavernUpgradeDefId, CardKind.HelpCard, 1, 1),
-            };
-            if (includeFixItem)
-            {
-                services.Add(new RewardEntry(TavernFixItemDefId, CardKind.HelpCard, 1, 1));
+                foreach (var sold in excludeDefIds)
+                {
+                    if (string.Equals(sold, defId, StringComparison.Ordinal))
+                    {
+                        return;
+                    }
+                }
             }
 
-            services.Add(new RewardEntry(TavernExpandDefId, CardKind.HelpCard, 1, 1));
-            return services;
+            services.Add(new RewardEntry(defId, CardKind.HelpCard, 1, 1));
         }
 
         /// <summary>宝箱奖励房：1 宝箱卡 + 3 随机道具卡（#94）。</summary>

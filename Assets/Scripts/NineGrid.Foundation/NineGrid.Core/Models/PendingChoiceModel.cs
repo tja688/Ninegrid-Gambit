@@ -10,7 +10,7 @@ namespace NineGrid.Core
         private readonly List<RewardEntry> mRewardOptions = new List<RewardEntry>();
         private readonly List<RoomKind> mRoomOptions = new List<RoomKind>();
         private readonly List<string> mAttributeSelectedDefIds = new List<string>();
-        private bool mTavernFixItemSoldThisShelf;
+        private readonly HashSet<string> mTavernServicesSoldThisShelf = new HashSet<string>();
 
         public BindableProperty<PendingChoiceKind> Kind { get; private set; }
         public BindableProperty<string> PoolId { get; private set; }
@@ -23,11 +23,11 @@ namespace NineGrid.Core
         public BindableProperty<int> ShopRefreshPriceGold { get; private set; }
 
         /// <summary>
-        /// 卡店「道具卡固定」本货架已售出：主面不再出现 FixItem，须刷新货架才恢复。
+        /// 卡店本货架已售服务 DefId（强化 / 固定 / 扩容）；须刷新货架才恢复。
         /// </summary>
-        public bool TavernFixItemSoldThisShelf
+        public IReadOnlyCollection<string> TavernServicesSoldThisShelf
         {
-            get { return mTavernFixItemSoldThisShelf; }
+            get { return mTavernServicesSoldThisShelf; }
         }
 
         public IReadOnlyList<RewardEntry> RewardOptions
@@ -157,20 +157,34 @@ namespace NineGrid.Core
             return true;
         }
 
-        public void MarkTavernFixItemSoldThisShelf()
+        public void MarkTavernServiceSoldThisShelf(string defId)
         {
-            mTavernFixItemSoldThisShelf = true;
-            Touch();
-        }
-
-        public void ClearTavernFixItemSoldThisShelf()
-        {
-            if (!mTavernFixItemSoldThisShelf)
+            if (string.IsNullOrEmpty(defId))
             {
                 return;
             }
 
-            mTavernFixItemSoldThisShelf = false;
+            if (!mTavernServicesSoldThisShelf.Add(defId))
+            {
+                return;
+            }
+
+            Touch();
+        }
+
+        public bool IsTavernServiceSoldThisShelf(string defId)
+        {
+            return !string.IsNullOrEmpty(defId) && mTavernServicesSoldThisShelf.Contains(defId);
+        }
+
+        public void ClearTavernServicesSoldThisShelf()
+        {
+            if (mTavernServicesSoldThisShelf.Count == 0)
+            {
+                return;
+            }
+
+            mTavernServicesSoldThisShelf.Clear();
             Touch();
         }
 
@@ -186,7 +200,7 @@ namespace NineGrid.Core
             mAttributeSelectedDefIds.Clear();
             PoolId.Value = string.Empty;
             ShopRefreshPriceGold.Value = 0;
-            mTavernFixItemSoldThisShelf = false;
+            mTavernServicesSoldThisShelf.Clear();
             Touch();
         }
 
@@ -282,7 +296,7 @@ namespace NineGrid.Core
             NavigationOffer.Value = NavigationKind.None;
             SelectedNavigation.Value = NavigationKind.None;
             ShopRefreshPriceGold.Value = 0;
-            mTavernFixItemSoldThisShelf = false;
+            mTavernServicesSoldThisShelf.Clear();
             Touch();
         }
 
@@ -296,7 +310,7 @@ namespace NineGrid.Core
             NavigationOffer.Value = kind;
             SelectedNavigation.Value = NavigationKind.None;
             ShopRefreshPriceGold.Value = 0;
-            mTavernFixItemSoldThisShelf = false;
+            mTavernServicesSoldThisShelf.Clear();
             Touch();
         }
 
@@ -325,7 +339,7 @@ namespace NineGrid.Core
             NavigationOffer.Value = NavigationKind.None;
             SelectedNavigation.Value = NavigationKind.None;
             ShopRefreshPriceGold.Value = 0;
-            mTavernFixItemSoldThisShelf = false;
+            mTavernServicesSoldThisShelf.Clear();
             Touch();
         }
 
