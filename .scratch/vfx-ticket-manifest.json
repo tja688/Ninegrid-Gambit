@@ -1,0 +1,62 @@
+[
+  {
+    "slug": "01-binding",
+    "title": "VFX：稳定声明、Binding Catalog 与卫生校验",
+    "path": ".scratch\\vfx-tickets\\01-binding.md"
+  },
+  {
+    "slug": "02-runtime",
+    "title": "VFX：应用会话 Runtime、类型化 Pulse 与播放器注册表",
+    "path": ".scratch\\vfx-tickets\\02-runtime.md"
+  },
+  {
+    "slug": "03-sprite-space",
+    "title": "VFX：Sprite Sheet 播放器、空间上下文与视觉域宿主",
+    "path": ".scratch\\vfx-tickets\\03-sprite-space.md"
+  },
+  {
+    "slug": "04-persistent",
+    "title": "VFX：Persistent Slot、State Binding 与 Attached 生命周期",
+    "path": ".scratch\\vfx-tickets\\04-persistent.md"
+  },
+  {
+    "slug": "05-diagnostics",
+    "title": "VFX：全生命周期诊断、实例流与真实峰值聚合",
+    "path": ".scratch\\vfx-tickets\\05-diagnostics.md"
+  },
+  {
+    "slug": "06-transport",
+    "title": "Workbench：抽取通用 localhost Transport 并保护 Audio 行为",
+    "path": ".scratch\\vfx-tickets\\06-transport.md"
+  },
+  {
+    "slug": "07-workbench",
+    "title": "VFX：三模式 HTML 工作台、聚合钻取与临时/永久停用",
+    "path": ".scratch\\vfx-tickets\\07-workbench.md"
+  },
+  {
+    "slug": "08-gold-upstream",
+    "title": "金币演出：补来源 CardUid、改 Impact 锚点并加固 Binder",
+    "path": ".scratch\\vfx-tickets\\08-gold-upstream.md"
+  },
+  {
+    "slug": "09-gold-player",
+    "title": "VFX：gold-flight 程序化播放器与金币表现时间窗",
+    "path": ".scratch\\vfx-tickets\\09-gold-player.md"
+  },
+  {
+    "slug": "10-gold-migrate",
+    "title": "金币演出：迁移调用、HUD 时间窗数字与新 VFX Binding",
+    "path": ".scratch\\vfx-tickets\\10-gold-migrate.md"
+  },
+  {
+    "slug": "11-gold-clean",
+    "title": "金币演出：删除 GoldGainFxManager 旧实现与场景装配",
+    "path": ".scratch\\vfx-tickets\\11-gold-clean.md"
+  },
+  {
+    "slug": "12-final",
+    "title": "VFX：结构护栏、跨系统契约与端到端终验",
+    "path": ".scratch\\vfx-tickets\\12-final.md"
+  }
+]

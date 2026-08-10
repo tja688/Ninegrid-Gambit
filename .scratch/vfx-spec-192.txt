@@ -102,4 +102,17 @@ TableNine 已经有一套运作正常的 SFX 系统：稳定 Cue 声明、JSON B
 
 ## Delivery Tickets
 
-子票发布后在此维护任务清单与原生依赖关系。
+- [ ] #193 — 稳定声明、Binding Catalog 与卫生校验
+- [ ] #196 — 应用会话 Runtime、类型化 Pulse 与播放器注册表
+- [ ] #197 — Sprite Sheet 播放器、空间上下文与视觉域宿主
+- [ ] #201 — Persistent Slot、State Binding 与 Attached 生命周期
+- [ ] #194 — 全生命周期诊断、实例流与真实峰值聚合
+- [ ] #195 — 抽取通用 localhost Workbench Transport 并保护 Audio 行为
+- [ ] #202 — 三模式 HTML 工作台、聚合钻取与临时/永久停用
+- [ ] #198 — 金币来源 CardUid、Impact 锚点与 Binder 加固
+- [ ] #203 — `gold-flight` 程序化播放器与金币表现时间窗
+- [ ] #199 — 金币调用迁移、HUD 时间窗数字与新 VFX Binding
+- [ ] #204 — 删除 GoldGainFxManager 旧实现与场景装配
+- [ ] #200 — 结构护栏、跨系统契约与端到端终验
+
+GitHub 原生 sub-issue 与 blocked-by 依赖是实施顺序的权威；以上列表用于快速浏览。

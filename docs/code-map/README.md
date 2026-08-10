@@ -46,6 +46,7 @@
 | [ADR-0037](../adr/0037-inspect-detail-is-glossary-rows.md) | 右键详述效果区改词条行：`[[名字]]` 默认展开、`[code]` 图标仅 Inspect hover；告别 `design_text` 堆砌 |
 | [ADR-0038](../adr/0038-card-rhythm-dual-channel.md) | 卡级节奏：行动/移动双通道 + 节奏源/周期 + 共享倒计时；攻击模式仅几何；技能同步触发同拍；图标矩阵（**#184 Core/内容/卡面接线已落地**：`CardRhythmRules` / `OnCardRhythmFire` / 怪物 JSON `rhythmSource`+`rhythmPeriod`；机关全量改配另票） |
 | [ADR-0039](../adr/0039-avatar-hp-defeat-invariant.md) | Avatar HP≤0 必须 Defeat；终端相位粘性；`RefreshLegalCommands` 尊重存活；投影 `AvatarDefeated` 仍以 phase 为准，表现 `EnsureBattleEnded` 可兼读 HP 兜底 |
+| [ADR-0040](../adr/0040-vfx-cue-binding-persistent-state-workbench.md) | VFX Cue/State 与 Binding 单一播放决策真源；Attached/Independent 空间所有权；Persistent Slot；程序化播放器自治；三模式工作台；金币迁移（目标架构，见 Spec #192，代码事实随子票落地更新） |
 
 > ADR-0011–0013 几何、倒计时数学与敌方行动阶段已落地（#81）；**节奏频率与共用计数**以 ADR-0038 为准（部分 supersede）。旧落地方案见 `Assets/Notes/怪物攻击模式与敌方行动阶段-落地方案-2026-07-29.md`（过程笔记，非权威）。
 >
