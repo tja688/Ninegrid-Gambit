@@ -2,7 +2,7 @@
 
 ## 项目
 
-**TableNine（九宫牌局）**：Unity 6.3 LTS · URP · 2D 卡牌像素风 Roguelike，九宫格棋盘驱动的卡牌战斗。
+**Ninegrid Gambit（九宫牌局）**：Unity 6.3 LTS · URP · 2D 卡牌像素风 Roguelike，九宫格棋盘驱动的卡牌战斗。
 
 **内容代号**：`monster.skull_head`、`deck.dragon`、`SkeletonFusion*` 等主题词是历史虚构命名（不透明主键 / 类名），以实现效果为准；`deckId` 只作内部渠道（卡背 / 遭遇分组），玩家可见称呼另行映射。（[ADR-0014](docs/adr/0014-theme-ids-are-legacy-opaque.md)）
 
@@ -13,8 +13,8 @@
 | [`docs/code-map/`](docs/code-map/) | 代码现状入口（程序集、Presentation 目录、验证约定） |
 | [`docs/adr/`](docs/adr/) | 长期架构决策与行为不变量 |
 | [`CONTEXT.md`](CONTEXT.md) | 仓库当下事实 |
-| `Assets/Notes/` | 进行时过程笔记，**非权威** |
-| `Assets/Docs/九宫格登神` | 策划设计文档，可参考；与实现细节 / 开发要求冲突时，提出问题让用户确认 |
+| `Assets/Notes/` | 进行时过程笔记 |
+| `C:\Users\jinji\Desktop\文档\MyNote\游戏开发项目\九宫格登神` | 策划设计文档，可参考；与实现细节 / 开发要求冲突时，提出问题让用户确认 |
 
 ## Code Map 维护（开发后必做）
 
@@ -28,8 +28,6 @@
 | 长期行为不变量（Batch-ack、占格权威、IntentIntake、卡面 Commit 等） | 新增或修订 [`docs/adr/`](docs/adr/)，并在 code-map 中引用 |
 
 **验证门槛**（见 [`docs/code-map/tests.md`](docs/code-map/tests.md)）：硬要求——`recompile` 后 Console 无**由你的改动导致**的新增 Error / Exception / Assert；其余按任务需要手动 Play / QuickTest 验证。
-
-**测试套件（冲刺期）**：仓库内原有 EditMode / PlayMode 自动化测试已**整体清空**（有意的阶段性决定）。**不要**从 git 历史或旧文档中恢复、补全或按旧测试地图复刻护栏。若你当前任务需要写测试，可自行新增，不受本条限制。硬规则见 [`.cursor/rules/code-map-maintenance.mdc`](.cursor/rules/code-map-maintenance.mdc)。
 
 ## 工具与工作流
 

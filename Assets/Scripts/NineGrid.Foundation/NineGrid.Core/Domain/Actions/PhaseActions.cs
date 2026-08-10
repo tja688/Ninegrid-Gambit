@@ -76,12 +76,27 @@ namespace NineGrid.Core
             var statSystem = context.GetSystem<IStatSystem>();
             var avatarUid = board.AvatarUid.Value;
             CardInstance avatar;
-            if (avatarUid > 0 && registry.TryGet(avatarUid, out avatar))
+            if (avatarUid <= 0 || !registry.TryGet(avatarUid, out avatar))
             {
-                StatArmorUtility.ResetCurrentToEffective(statSystem, avatar);
+                return GameActionResult.Empty;
             }
 
-            return GameActionResult.Empty;
+            var before = StatArmorUtility.GetCurrentArmor(avatar);
+            StatArmorUtility.ResetCurrentToEffective(statSystem, avatar);
+            var after = StatArmorUtility.GetCurrentArmor(avatar);
+            if (before == after)
+            {
+                return GameActionResult.Empty;
+            }
+
+            var hp = Math.Max(0, (int)Math.Round(avatar.Stats.GetBase(StatId.Hp)));
+            return new GameActionResult()
+                .AddEvent(new CoreGameEvent(CoreEventType.ArmorChanged, context.ActionId, ActionName)
+                    .WithTarget(avatarUid)
+                    .WithCard(avatarUid)
+                    .WithDelta(after - before)
+                    .WithRemaining(hp, after)
+                    .WithMessage("resetCurrentArmor"));
         }
     }
 

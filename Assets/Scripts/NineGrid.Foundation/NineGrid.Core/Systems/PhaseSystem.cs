@@ -165,8 +165,9 @@ namespace NineGrid.Core.Systems
             pipeline.Enqueue(new ChangePhaseAction(GamePhase.ResetNode));
             pipeline.Enqueue(new ChangePhaseAction(GamePhase.DealOpeningCards));
             pipeline.Enqueue(new OpeningDealAction(options));
-            pipeline.Enqueue(new FillEmptySlotsAction());
+            // 先重置当前甲，再 FillEmptySlots（内含 AvatarAppeared），使亮相事件携带重置后绝对值。
             pipeline.Enqueue(new ResetCurrentArmorAction());
+            pipeline.Enqueue(new FillEmptySlotsAction());
             pipeline.Enqueue(new NodeStartedAction());
             pipeline.Enqueue(new ChangePhaseAction(GamePhase.InteractionLoop));
             var resolved = pipeline.RunToCompletion();

@@ -66,16 +66,37 @@ namespace NineGrid.Flow.Presentation
         {
             if (!TryResolveCard(gameEvent, out var card))
             {
+                LogResolveMiss("UpdateHp", gameEvent);
                 return;
             }
 
-            CommitNumeric(card, attack: null, armor: null, hp: Mathf.Max(0, gameEvent.RemainingHp), actionCount: null);
+            if (card.View == null)
+            {
+                LogViewMiss("UpdateHp", gameEvent, card);
+                return;
+            }
+
+            // HpChanged / Healed 均 WithRemaining(hp, armor)：同指令内顺带提交当前甲，
+            // 覆盖「ArmorChanged 未到但 HpChanged 到了」的半截批（非读内核对账）。
+            CommitNumeric(
+                card,
+                attack: null,
+                armor: Mathf.Max(0, gameEvent.RemainingArmor),
+                hp: Mathf.Max(0, gameEvent.RemainingHp),
+                actionCount: null);
         }
 
         private static void ApplyArmor(CoreGameEvent gameEvent)
         {
             if (!TryResolveCard(gameEvent, out var card))
             {
+                LogResolveMiss("UpdateArmor", gameEvent);
+                return;
+            }
+
+            if (card.View == null)
+            {
+                LogViewMiss("UpdateArmor", gameEvent, card);
                 return;
             }
 
@@ -214,6 +235,9 @@ namespace NineGrid.Flow.Presentation
                     RecordCardFaceBaseStatCommit(card, gameEvent, stat, value);
                     break;
                 case StatId.Armor:
+                    // 卡面甲 = 当前护甲；基础甲只走 HUD（PlayerInfoHudBeatHandler）。
+                    // Core 在 ModifyBaseStat(Armor) 后另发 ArmorChanged 提交当前甲。
+                    break;
                 case StatId.CurrentArmor:
                     CommitNumeric(card, attack: null, armor: value, hp: null, actionCount: null);
                     break;
@@ -230,6 +254,26 @@ namespace NineGrid.Flow.Presentation
                         actionCount: null);
                     break;
             }
+        }
+
+        private static void LogResolveMiss(string op, CoreGameEvent gameEvent)
+        {
+            Debug.LogWarning(
+                "[CardFaceStatHandler] " + op + " 找不到卡面 uid="
+                + (gameEvent != null
+                    ? (gameEvent.CardUid > 0 ? gameEvent.CardUid : gameEvent.TargetUid)
+                    : 0)
+                + " type=" + (gameEvent != null ? gameEvent.Type.ToString() : string.Empty)
+                + " source=" + (gameEvent != null ? gameEvent.SourceDefId : string.Empty));
+        }
+
+        private static void LogViewMiss(string op, CoreGameEvent gameEvent, ManagedCard card)
+        {
+            Debug.LogWarning(
+                "[CardFaceStatHandler] " + op + " 卡面无 View uid="
+                + (card != null ? card.Uid : 0)
+                + " type=" + (gameEvent != null ? gameEvent.Type.ToString() : string.Empty)
+                + " source=" + (gameEvent != null ? gameEvent.SourceDefId : string.Empty));
         }
 
         private static void RecordCardFaceBaseStatCommit(

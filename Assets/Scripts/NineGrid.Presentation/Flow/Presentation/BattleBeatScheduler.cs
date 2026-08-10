@@ -28,6 +28,7 @@ namespace NineGrid.Flow.Presentation
 
         public void OnBatchOpened(PresentationBatch batch)
         {
+            DiagnoseDiscardedPending();
             mPending.Clear();
             mActiveBatchId = batch != null ? batch.BatchId : 0;
             if (batch?.Instructions == null)
@@ -150,6 +151,8 @@ namespace NineGrid.Flow.Presentation
             var savedBatchId = mActiveBatchId;
             try
             {
+                // 所有权先挪到 savedPending，避免 OnBatchOpened 误报「开批丢弃未消费」。
+                mPending.Clear();
                 OnBatchOpened(batch);
                 ReportBeat(PresentationBeat.Impact);
                 ReportBeat(PresentationBeat.Settled);
@@ -195,6 +198,32 @@ namespace NineGrid.Flow.Presentation
                     + " seq=" + instruction.Sequence;
                 Debug.LogError(message);
                 Debug.Assert(false, message);
+            }
+        }
+
+        /// <summary>
+        /// 开批时上一批仍有未消费指令：说明该批从未 FlushBeats / Present（非 Settled 未消费）。
+        /// 只报不改，避免掩盖漏 Present。
+        /// </summary>
+        private void DiagnoseDiscardedPending()
+        {
+            if (mPending.Count == 0)
+            {
+                return;
+            }
+
+            for (var i = 0; i < mPending.Count; i++)
+            {
+                var instruction = mPending[i];
+                var type = instruction.Event != null ? instruction.Event.Type.ToString() : "?";
+                var beat = instruction.MapEntry != null ? instruction.MapEntry.Beat.ToString() : "?";
+                Debug.LogError(
+                    "[BattleBeatScheduler] Discarding unconsumed presentation instruction on new batch"
+                    + " previousBatchId=" + mActiveBatchId
+                    + " type=" + type
+                    + " beat=" + beat
+                    + " seq=" + instruction.Sequence
+                    + " kind=" + instruction.Kind);
             }
         }
     }

@@ -22,12 +22,14 @@ status: accepted
 | **有效护甲** | 基础 + Modifier（遗物/图腾等） | `IStatSystem.GetEffectiveInt(..., Armor)` |
 | **当前护甲** | 本关可消耗缓冲；受伤优先扣它，归零后扣血 | `StatId.CurrentArmor` base |
 
-关卡 / 节点开始：Avatar **当前护甲重置为有效护甲**。**无**「回合结束清甲」。局内 `GainArmor` / `TransferArmor` 只动当前护甲。
+关卡 / 节点开始：Avatar **当前护甲重置为有效护甲**（`ResetCurrentArmor` 须在开战 `AvatarAppeared` 之前；值变化时发 `ArmorChanged`）。**无**「回合结束清甲」。局内 `GainArmor` / `TransferArmor` 只动当前护甲。
+
+**`ModifyBaseStat(Armor)`（永久成长）**：在改基础甲的同时，按**实际基础变化量**同步增减 `CurrentArmor`（钳 ≥0），并追加 `ArmorChanged`（携带新当前甲绝对值）。这样「护甲+N」类内容立刻成为本关可消耗缓冲，且卡面只经当前甲指令更新，不会被基础甲 `ResultValue` 污染。
 
 显示约定（与现行表现一致）：
 
-- **卡面甲** = 当前护甲
-- **玩家信息 HUD 甲** = 有效护甲
+- **卡面甲** = 当前护甲（指令来源：`ArmorChanged` / 生成类 `RemainingArmor` / `BaseStatModified(CurrentArmor)`；**不**消费 `BaseStatModified(Armor)` 的 `ResultValue`）
+- **玩家信息 HUD 甲** = 有效护甲（基础甲成长由 `ModifyBaseStat(Armor)` 旁路写 HUD）
 - 玩家可见文案用「护甲」，**不用**「防御」指战斗属性（「防御」仅作投放功能角色粗轴，见 [CONTEXT](../../CONTEXT.md) / [ADR-0009](0009-parameterized-effect-templates.md)）
 
 ### 标准伤害公式（结算顺序）
@@ -78,6 +80,7 @@ status: accepted
   - DSL `DealDamage.ignoreArmor`（`EffectAtomLibrary.cs`）；`AddRuleModifier` 已可挂新 `RuleId`
   - EditMode：`DamageFormulaRegressionTests`
 - **不**在本决策票内改遗物 JSON（铁盾等另票）。
+- 卡面/基础甲边界加固：`ModifyBaseStat(Armor)` 同步 `CurrentArmor` + `ArmorChanged`；`CardFaceStatHandler` 不消费基础甲 `ResultValue` 写卡面（见上文显示约定）。
 
 ## 相关
 

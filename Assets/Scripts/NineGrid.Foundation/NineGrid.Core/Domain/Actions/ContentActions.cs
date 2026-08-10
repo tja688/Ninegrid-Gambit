@@ -28,6 +28,11 @@ namespace NineGrid.Core
         public override GameActionResult Apply(GameActionContext context)
         {
             var card = context.GetModel<CardRegistry>().Get(TargetUid);
+            // 基础甲变更前先读当前甲：无 CurrentArmor 键时 GetCurrentArmor 回退基础甲，
+            // 必须在 SetBase(Armor) 之前取样，再用实际基础变化量同步缓冲。
+            var currentArmorBefore = Stat == StatId.Armor
+                ? StatArmorUtility.GetCurrentArmor(card)
+                : 0;
             var previous = (int)Math.Round(card.Stats.GetBase(Stat));
             var next = Math.Max(0, previous + Delta);
             card.Stats.SetBase(Stat, next);
@@ -42,6 +47,17 @@ namespace NineGrid.Core
             {
                 var hp = (int)Math.Round(card.Stats.GetBase(StatId.Hp));
                 card.Stats.SetBase(StatId.Hp, Math.Min(hp, next));
+            }
+
+            int currentArmorAfter = currentArmorBefore;
+            int currentArmorDelta = 0;
+            if (Stat == StatId.Armor)
+            {
+                // 永久成长立刻成为本关可消耗缓冲；卡面只认 ArmorChanged，不认基础甲 ResultValue。
+                var appliedBaseDelta = next - previous;
+                currentArmorAfter = Math.Max(0, currentArmorBefore + appliedBaseDelta);
+                currentArmorDelta = currentArmorAfter - currentArmorBefore;
+                StatArmorUtility.SetCurrentArmor(card, currentArmorAfter);
             }
 
             // 攻按 ADR-0005 Permanent 有效攻旁路：ResultValue 携带含常驻/条件修饰器的有效攻
@@ -67,8 +83,20 @@ namespace NineGrid.Core
                 evt.WithRemaining(hpAfter, StatArmorUtility.GetCurrentArmor(card));
             }
 
+            var result = new GameActionResult().AddEvent(evt);
+            if (Stat == StatId.Armor && currentArmorDelta != 0)
+            {
+                var hp = Math.Max(0, (int)Math.Round(card.Stats.GetBase(StatId.Hp)));
+                result.AddEvent(new CoreGameEvent(CoreEventType.ArmorChanged, context.ActionId, ActionName)
+                    .WithTarget(TargetUid)
+                    .WithCard(TargetUid)
+                    .WithDelta(currentArmorDelta)
+                    .WithRemaining(hp, currentArmorAfter)
+                    .WithSource(SourceDefId, Reason));
+            }
+
             // ADR-0039：ModifyBaseStat 扣血/钳血至 0 须闭合 Defeat follow-up（不限 DealDamage）。
-            return AvatarDefeatFollowUp.AppendIfAvatarHpZero(card, new GameActionResult().AddEvent(evt));
+            return AvatarDefeatFollowUp.AppendIfAvatarHpZero(card, result);
         }
     }
 
