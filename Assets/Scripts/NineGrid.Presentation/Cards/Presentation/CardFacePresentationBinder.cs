@@ -550,6 +550,11 @@ namespace NineGrid.Cards.Presentation
 
                     break;
 
+                case CardPresentationKind.Trap:
+                    // 机关模板仅有血量槽；SetNumeric 找不到攻/甲/行动节点则跳过。
+                    SetNumeric(CardFaceSlotCodes.Hp, snapshot.Hp);
+                    break;
+
                 default:
                     // 道具 / 遗物：名字与主图标为主；数值槽有节点才写（通常无）。
                     break;

@@ -20,6 +20,12 @@ namespace NineGrid.Core
         {
             var run = context.GetModel<RunModel>();
             var previous = run.Phase.Value;
+            // ADR-0039：Victory/Defeat 为终端相位，禁止被交互相位等覆盖。
+            if (IsTerminalPhase(previous) && !IsTerminalPhase(NextPhase))
+            {
+                return GameActionResult.Empty;
+            }
+
             run.SetPhase(NextPhase);
 
             return new GameActionResult()
@@ -27,6 +33,11 @@ namespace NineGrid.Core
                     .WithAmount((int)NextPhase)
                     .WithDelta((int)previous)
                     .WithMessage(previous + "->" + NextPhase));
+        }
+
+        private static bool IsTerminalPhase(GamePhase phase)
+        {
+            return phase == GamePhase.Victory || phase == GamePhase.Defeat;
         }
     }
 

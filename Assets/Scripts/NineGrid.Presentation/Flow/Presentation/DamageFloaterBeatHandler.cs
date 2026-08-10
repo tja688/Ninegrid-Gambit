@@ -16,8 +16,10 @@ namespace NineGrid.Flow.Presentation
     }
 
     /// <summary>
-    /// 伤害/治疗飘字装饰处理器：在 Impact 消费 ShowDamage（飘伤害数），
-    /// 对 Healed 的 UpdateHp 只旁路飘绿色治疗数并返回 false，不占卡面/HUD 认领。
+    /// 伤害/治疗/护甲飘字装饰处理器：在 Impact 消费 ShowDamage（飘伤害数），
+    /// 对 Healed 的 UpdateHp 旁路飘绿色治疗数；对 ArmorChanged 增甲旁路飘绿灰护甲数；
+    /// 二者均 return false，不占卡面/HUD 认领。减甲飘字仍只走 ShowDamage 拆分甲伤，避免与
+    /// UpdateArmor 负 Delta 双轨重复。
     /// 拆分模式下 ShowDamage 按 DamageDealt 的护甲/血量拆分量各飘一个数字。
     /// </summary>
     public sealed class DamageFloaterBeatHandler : IBattleBeatHandler
@@ -98,6 +100,26 @@ namespace NineGrid.Flow.Presentation
                 }
 
                 DamageNumberHook.RequestSpawnHeal(pos.Value, gameEvent.Delta);
+                return false;
+            }
+
+            if (instruction.Kind == PresentationInstructionKind.UpdateArmor
+                && gameEvent.Type == CoreEventType.ArmorChanged)
+            {
+                // 旁路装饰：飘当前护甲增量（卡面 CurrentArmor）；减甲仍由 ShowDamage 甲伤承担。
+                if (gameEvent.Delta <= 0)
+                {
+                    return false;
+                }
+
+                var cardUid = gameEvent.CardUid > 0 ? gameEvent.CardUid : gameEvent.TargetUid;
+                var pos = PresentationOutputProjector.ResolveCardWorldPosition(cardUid);
+                if (!pos.HasValue)
+                {
+                    return false;
+                }
+
+                DamageNumberHook.RequestSpawnArmorDamage(pos.Value, gameEvent.Delta);
                 return false;
             }
 

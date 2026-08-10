@@ -4,6 +4,7 @@ using System.Threading;
 using Cysharp.Threading.Tasks;
 using NineGrid.Cards;
 using NineGrid.Core;
+using NineGrid.Core.Stats;
 using NineGrid.Core.Systems;
 using NineGrid.Flow.Diagnostics;
 using NineGrid.Flow.Presentation;
@@ -586,18 +587,60 @@ namespace NineGrid.Flow
 
         /// <summary>
         /// Core 已 Defeat 时收口战败：Present 早退/取消/空盘面批不得漏 Raise。
+        /// ADR-0039：兼读 Core phase / Avatar HP，避免投影旗标滞后于 0 血僵尸局。
         /// </summary>
         public void EnsureBattleEndedIfAvatarDefeated(
             PostKillBoardPresentationResult result,
             CancellationToken cancellationToken = default)
         {
-            if (!result.AvatarDefeated)
+            if (!ShouldRaiseBattleEndedForAvatarDefeat(result))
             {
                 return;
             }
 
             ResolveBattlePresentation()?.TryBeginAvatarDefeatPresentation(cancellationToken);
             RaiseBattleEnded(victory: false);
+        }
+
+        private static bool ShouldRaiseBattleEndedForAvatarDefeat(PostKillBoardPresentationResult result)
+        {
+            if (result.AvatarDefeated)
+            {
+                return true;
+            }
+
+            var arch = NineGridArchitecture.Interface ?? NineGridArchitecture.Current;
+            if (arch == null)
+            {
+                return false;
+            }
+
+            var phase = arch.GetSystem<IPhaseSystem>();
+            if (phase != null && phase.CurrentPhase == GamePhase.Defeat)
+            {
+                return true;
+            }
+
+            var board = arch.GetModel<BoardModel>();
+            var registry = arch.GetModel<CardRegistry>();
+            if (board == null || registry == null)
+            {
+                return false;
+            }
+
+            var avatarUid = board.AvatarUid.Value;
+            if (avatarUid <= 0)
+            {
+                return true;
+            }
+
+            CardInstance avatar;
+            if (!registry.TryGet(avatarUid, out avatar))
+            {
+                return true;
+            }
+
+            return (int)Math.Round(avatar.Stats.GetBase(StatId.Hp)) <= 0;
         }
 
         public bool TryResolveHandDealOrigin(string sourceDefId, out Transform origin)

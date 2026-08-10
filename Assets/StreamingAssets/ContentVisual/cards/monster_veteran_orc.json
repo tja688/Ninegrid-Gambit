@@ -8,7 +8,10 @@
     "designSlotName": "",
     "description": "[[潜伏近战]]，[[盗取]]",
     "faceIntro": "悄悄摸摸的咬掉一块肉",
+    "liveTemplate": "",
     "attackPattern": "普通近战",
+    "rhythmSource": "行动计数",
+    "rhythmPeriod": 5,
     "gold": 5,
     "stats": {
         "hp": 6,
@@ -27,7 +30,7 @@
         "backLogo": ""
     },
     "mainVisual": {
-        "offsetX": 0.0,
+        "offsetX": -0.20000000298023225,
         "offsetY": -0.07999999821186066,
         "uniformScale": 0.8999999761581421
     },
@@ -98,12 +101,11 @@
     "containerType": "",
     "deckKind": "",
     "monsterDefIds": [],
+    "usableOutsideBattle": false,
     "weight": 0,
     "rewardPoolId": "",
     "shopOfferCount": 0,
     "openingInjects": [],
     "iconPrefab": "",
-    "boardSlot": 0,
-    "rhythmSource": "行动计数",
-    "rhythmPeriod": 5
+    "boardSlot": 0
 }

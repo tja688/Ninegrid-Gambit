@@ -178,7 +178,7 @@ namespace NineGrid.Core
 
             if (newHp <= 0 && target.Kind == CardKind.Avatar)
             {
-                result.AddFollowUp(new DefeatIfAvatarDeadAction());
+                result = AvatarDefeatFollowUp.AppendIfAvatarHpZero(target, result);
             }
             else if (newHp <= 0)
             {

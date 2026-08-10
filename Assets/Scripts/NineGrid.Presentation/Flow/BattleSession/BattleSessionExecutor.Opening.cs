@@ -92,6 +92,38 @@ namespace NineGrid.Flow
         }
 
         /// <summary>
+        /// ADR-0039 诊断：StartNode 后 Core 血/相位与 HUD 快照对齐探针（仅 Editor / Development）。
+        /// </summary>
+        private static void LogAvatarDefeatProbeAfterStartNode(IArchitecture arch)
+        {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            var phase = arch.GetSystem<IPhaseSystem>();
+            var board = arch.GetModel<BoardModel>();
+            var registry = arch.GetModel<CardRegistry>();
+            var statSystem = arch.GetSystem<IStatSystem>();
+            var avatarUid = board.AvatarUid.Value;
+            var baseHp = -1;
+            var effectiveHp = -1;
+            if (avatarUid > 0 && registry.TryGet(avatarUid, out var avatar) && avatar != null)
+            {
+                baseHp = (int)Math.Round(avatar.Stats.GetBase(StatId.Hp));
+                effectiveHp = statSystem != null
+                    ? statSystem.GetEffectiveInt(avatar, StatId.Hp)
+                    : baseHp;
+            }
+
+            var hud = PlayerInfoHudPresenter.TryGetInstance();
+            var hudNote = hud != null ? "present" : "missing";
+            Debug.Log(
+                $"[AvatarDefeatProbe] AfterStartNode "
+                + $"phase={phase?.CurrentPhase} "
+                + $"avatarUid={avatarUid} baseHp={baseHp} effectiveHp={effectiveHp} "
+                + $"phaseIsDefeat={phase?.CurrentPhase == GamePhase.Defeat} "
+                + $"hud={hudNote}");
+#endif
+        }
+
+        /// <summary>
         /// 建跑并复位表现侧卡视图/卡组/场地。
         private async UniTask StartBattleNodeInternalAsync(
             NodeDeckOptions options,
@@ -173,6 +205,7 @@ namespace NineGrid.Flow
                 // StartNode 后立即对齐持久 HUD，避免 Opening 期间遗物/技能/数值栏断口。
                 RefreshPersistentInBattleUi(animate: false);
                 PlayerInfoHudPresenter.TryGetInstance()?.SyncFromCore(animate: false);
+                LogAvatarDefeatProbeAfterStartNode(arch);
 
                 try
                 {
@@ -244,6 +277,7 @@ namespace NineGrid.Flow
 
                 RefreshPersistentInBattleUi(animate: false);
                 PlayerInfoHudPresenter.TryGetInstance()?.SyncFromCore(animate: false);
+                LogAvatarDefeatProbeAfterStartNode(arch);
 
                 // 开局若已置离开机关清关标志（罕见），补走 PostKill→CompleteNodeIfCleared。
                 if (phase.CurrentPhase == GamePhase.InteractionLoop

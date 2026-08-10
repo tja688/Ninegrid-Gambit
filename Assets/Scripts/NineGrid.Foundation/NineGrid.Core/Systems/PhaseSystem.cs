@@ -172,6 +172,8 @@ namespace NineGrid.Core.Systems
             var resolved = pipeline.RunToCompletion();
             resolved += CompleteNodeIfCleared();
             resolved += this.GetSystem<IBoardStabilizationSystem>().ResolveUntilStable();
+            resolved += EnsureDefeatIfAvatarHpZeroAfterStartNode();
+            AssertStartNodeAvatarHpPhaseInvariant();
             return CoreCommandResult.Accept(resolved);
         }
 
@@ -2000,6 +2002,34 @@ namespace NineGrid.Core.Systems
             return phase == GamePhase.Victory || phase == GamePhase.Defeat;
         }
 
+        /// <summary>ADR-0039：StartNode 全链结束后 Avatar 已 0 血但相位未 Defeat 时补跑战败。</summary>
+        private int EnsureDefeatIfAvatarHpZeroAfterStartNode()
+        {
+            if (!IsAvatarDefeated() || CurrentPhase == GamePhase.Defeat)
+            {
+                return 0;
+            }
+
+            var pipeline = this.GetSystem<IActionPipelineSystem>();
+            pipeline.Enqueue(new DefeatIfAvatarDeadAction());
+            return pipeline.RunToCompletion();
+        }
+
+        [System.Diagnostics.Conditional("UNITY_EDITOR")]
+        [System.Diagnostics.Conditional("DEVELOPMENT_BUILD")]
+        private void AssertStartNodeAvatarHpPhaseInvariant()
+        {
+            if (!IsAvatarDefeated() || CurrentPhase == GamePhase.Defeat)
+            {
+                return;
+            }
+
+            System.Diagnostics.Debug.Fail(
+                "StartNode invariant violated: Avatar HP<=0 but phase is "
+                + CurrentPhase
+                + " (expected Defeat). See ADR-0039.");
+        }
+
         private bool ContainsEventSince(int startIndex, CoreEventType eventType, int cardUid)
         {
             var entries = this.GetSystem<IActionPipelineSystem>().EventLog.Entries;
@@ -2110,13 +2140,19 @@ namespace NineGrid.Core.Systems
                         mLegalCommands.Add(GameCommandKind.DiscardRelic);
                         mLegalCommands.Add(GameCommandKind.RecycleItemSlot);
                     }
-                    else
+                    else if (!IsAvatarDefeated())
                     {
                         mLegalCommands.Add(GameCommandKind.Attack);
                         mLegalCommands.Add(GameCommandKind.PickupItem);
                         mLegalCommands.Add(GameCommandKind.ClickEmpty);
                         mLegalCommands.Add(GameCommandKind.UseItem);
                         mLegalCommands.Add(GameCommandKind.RevealFace);
+                        mLegalCommands.Add(GameCommandKind.DiscardRelic);
+                        mLegalCommands.Add(GameCommandKind.RecycleItemSlot);
+                    }
+                    else
+                    {
+                        // ADR-0039：0 血僵尸局不得继续战场交互；仅保留栏位管理。
                         mLegalCommands.Add(GameCommandKind.DiscardRelic);
                         mLegalCommands.Add(GameCommandKind.RecycleItemSlot);
                     }

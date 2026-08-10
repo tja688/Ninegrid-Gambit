@@ -67,7 +67,8 @@ namespace NineGrid.Core
                 evt.WithRemaining(hpAfter, StatArmorUtility.GetCurrentArmor(card));
             }
 
-            return new GameActionResult().AddEvent(evt);
+            // ADR-0039：ModifyBaseStat 扣血/钳血至 0 须闭合 Defeat follow-up（不限 DealDamage）。
+            return AvatarDefeatFollowUp.AppendIfAvatarHpZero(card, new GameActionResult().AddEvent(evt));
         }
     }
 
