@@ -115,16 +115,24 @@ namespace NineGrid.Core.Effects
     [EffectAtom("OnEvent", EffectAtomKind.Trigger)]
     public sealed class OnEventTrigger : TriggerAtomBase
     {
-        private CoreEventType mEventType = CoreEventType.ActionStarted;
-        private bool mHasEventType;
+        private readonly List<CoreEventType> mEventTypes = new List<CoreEventType>();
 
         public override TriggerPoint Point { get { return TriggerPoint.AfterAction; } }
 
         public override void Configure(EffectDslNode config)
         {
             base.Configure(config);
-            mHasEventType = config.Has("eventType");
-            mEventType = config.Get("eventType").AsEnum(CoreEventType.ActionStarted);
+            mEventTypes.Clear();
+            if (config.Has("eventType"))
+            {
+                mEventTypes.Add(config.Get("eventType").AsEnum(CoreEventType.ActionStarted));
+            }
+
+            var eventTypes = config.Get("eventTypes").AsArray();
+            for (var i = 0; i < eventTypes.Count; i++)
+            {
+                mEventTypes.Add(eventTypes[i].AsEnum(CoreEventType.ActionStarted));
+            }
         }
 
         public override bool Matches(EffectRuntimeContext context)
@@ -134,7 +142,20 @@ namespace NineGrid.Core.Effects
                 return false;
             }
 
-            return !mHasEventType || HasEvent(context, mEventType);
+            if (mEventTypes.Count == 0)
+            {
+                return true;
+            }
+
+            for (var i = 0; i < mEventTypes.Count; i++)
+            {
+                if (HasEvent(context, mEventTypes[i]))
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
     }
 
@@ -3043,6 +3064,46 @@ namespace NineGrid.Core.Effects
                 if (targets[i] != 0)
                 {
                     result.Add(new GainArmorAction(targets[i], mAmount.Evaluate(context, targets[i]), context.SourceDefId, EffectActionSource.CauseOrEffect(context, mCause)));
+                }
+            }
+
+            return result;
+        }
+    }
+
+    [EffectAtom("SyncAdjacentBorrowedArmor", EffectAtomKind.Action)]
+    public sealed class SyncAdjacentBorrowedArmorEffectAction : IAction
+    {
+        private EffectValueExpression mAmount;
+        private string mSource = string.Empty;
+        private string mAdjacentToRef = "Self";
+
+        public void Configure(EffectDslNode config)
+        {
+            mAmount = EffectValueExpression.FromActionAmount(config);
+            mSource = config.Get("source").AsString(string.Empty);
+            mAdjacentToRef = config.Get("adjacentTo").AsString("Self");
+        }
+
+        public IReadOnlyList<GameAction> BuildActions(EffectRuntimeContext context, IReadOnlyList<int> targets)
+        {
+            var result = new List<GameAction>();
+            var sourceUid = TargetResolver.ResolveSingleCardRef(context, mAdjacentToRef);
+            if (sourceUid == 0)
+            {
+                return result;
+            }
+
+            for (var i = 0; i < targets.Count; i++)
+            {
+                if (targets[i] != 0)
+                {
+                    result.Add(new SyncAdjacentBorrowedArmorAction(
+                        targets[i],
+                        sourceUid,
+                        mAmount.Evaluate(context, targets[i]),
+                        mSource,
+                        context.SourceDefId));
                 }
             }
 

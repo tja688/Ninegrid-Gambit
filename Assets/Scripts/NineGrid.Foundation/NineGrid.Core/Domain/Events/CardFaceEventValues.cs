@@ -111,6 +111,34 @@ namespace NineGrid.Core
         }
 
         /// <summary>
+        /// CurrentArmor 变化后提交怪物卡面绝对甲（借甲光环等旁路；玩家仍走 ArmorChanged）。
+        /// </summary>
+        public static void AppendCurrentArmorFaceCommit(
+            GameActionResult result,
+            GameActionContext context,
+            CardInstance card,
+            string actionName,
+            string source = null,
+            string sourceDefId = null,
+            int delta = 0)
+        {
+            if (result == null || card == null || context == null || card.Kind != CardKind.Monster)
+            {
+                return;
+            }
+
+            var currentArmor = StatArmorUtility.GetCurrentArmor(card);
+            result.AddEvent(new CoreGameEvent(CoreEventType.BaseStatModified, context.ActionId, actionName ?? "CurrentArmorFace")
+                .WithCard(card.Uid)
+                .WithTarget(card.Uid)
+                .WithAmount((int)StatId.CurrentArmor)
+                .WithDelta(delta)
+                .WithResultValue(currentArmor)
+                .WithMessage(source ?? string.Empty)
+                .WithSource(sourceDefId ?? string.Empty, source ?? string.Empty));
+        }
+
+        /// <summary>
         /// 盘面拓扑/宿主移除后：对仍挂着「带条件的 Permanent Attack」修饰器的场上卡提交有效攻。
         /// </summary>
         public static void AppendConditionalPermanentAttackFaceCommitsForBoard(

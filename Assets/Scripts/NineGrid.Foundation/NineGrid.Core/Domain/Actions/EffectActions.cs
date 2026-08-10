@@ -1685,6 +1685,122 @@ namespace NineGrid.Core
         }
     }
 
+    /// <summary>
+    /// 邻接图腾借甲光环：邻接时 Gain CurrentArmor 并记基线；离开邻接时按基线回收未消耗部分（挡伤后不追回）。
+    /// </summary>
+    public sealed class SyncAdjacentBorrowedArmorAction : GameAction
+    {
+        private static readonly TriggerPoint[] sPostTriggers =
+        {
+            TriggerPoint.AfterAction,
+            TriggerPoint.OnArmorGained
+        };
+
+        public SyncAdjacentBorrowedArmorAction(
+            int targetUid,
+            int sourceUid,
+            int value,
+            string source,
+            string sourceDefId = null)
+        {
+            TargetUid = targetUid;
+            SourceUid = sourceUid;
+            Value = Math.Max(0, value);
+            Source = source ?? string.Empty;
+            SourceDefId = sourceDefId ?? string.Empty;
+        }
+
+        public int TargetUid { get; private set; }
+        public int SourceUid { get; private set; }
+        public int Value { get; private set; }
+        public string Source { get; private set; }
+        public string SourceDefId { get; private set; }
+        public override string ActionName { get { return "SyncAdjacentBorrowedArmor"; } }
+
+        public override GameActionResult Apply(GameActionContext context)
+        {
+            if (Value <= 0)
+            {
+                return GameActionResult.Empty;
+            }
+
+            var registry = context.GetModel<CardRegistry>();
+            CardInstance target;
+            CardInstance source;
+            if (!registry.TryGet(TargetUid, out target)
+                || target == null
+                || !registry.TryGet(SourceUid, out source)
+                || source == null)
+            {
+                return GameActionResult.Empty;
+            }
+
+            var boardSystem = context.GetSystem<IBoardSystem>();
+            var isAdjacent = boardSystem.AreAdjacent(source, target);
+            var counterKey = BorrowedArmorAuraKeys.BaselineKey(SourceUid);
+            var isTracking = BorrowedArmorAuraKeys.IsTracking(target, SourceUid);
+
+            if (isAdjacent)
+            {
+                if (isTracking)
+                {
+                    return GameActionResult.Empty;
+                }
+
+                var baseline = StatArmorUtility.GetCurrentArmor(target);
+                target.Counters.Set(counterKey, baseline);
+                var newArmor = baseline + Value;
+                StatArmorUtility.SetCurrentArmor(target, newArmor);
+                return EmitArmorChanged(context, target, Value, newArmor);
+            }
+
+            if (!isTracking)
+            {
+                return GameActionResult.Empty;
+            }
+
+            var baselineStored = target.Counters.Get(counterKey);
+            target.Counters.Remove(counterKey);
+            var current = StatArmorUtility.GetCurrentArmor(target);
+            var remove = Math.Min(Value, Math.Max(0, current - baselineStored));
+            if (remove <= 0)
+            {
+                return GameActionResult.Empty;
+            }
+
+            var reclaimedArmor = current - remove;
+            StatArmorUtility.SetCurrentArmor(target, reclaimedArmor);
+            return EmitArmorChanged(context, target, -remove, reclaimedArmor);
+        }
+
+        public override IEnumerable<TriggerPoint> GetPostTriggerPoints(GameActionContext context, IReadOnlyList<CoreGameEvent> events)
+        {
+            return sPostTriggers;
+        }
+
+        private GameActionResult EmitArmorChanged(GameActionContext context, CardInstance target, int delta, int newArmor)
+        {
+            var hp = Math.Max(0, (int)Math.Round(target.Stats.GetBase(StatId.Hp)));
+            var result = new GameActionResult()
+                .AddEvent(new CoreGameEvent(CoreEventType.ArmorChanged, context.ActionId, ActionName)
+                    .WithTarget(target.Uid)
+                    .WithCard(target.Uid)
+                    .WithDelta(delta)
+                    .WithRemaining(hp, newArmor)
+                    .WithSource(SourceDefId, Source));
+
+            CardFaceEventValues.AppendCurrentArmorFaceCommit(
+                result,
+                context,
+                target,
+                ActionName,
+                Source,
+                SourceDefId,
+                delta);
+            return result;
+        }
+    }
+
     /// <summary>#111 / ADR-0026：离开技能 — 置清关标志（#113：即 <c>IsNodeCleared</c>）。</summary>
     public sealed class MarkLeaveTrapBrokenAction : GameAction
     {

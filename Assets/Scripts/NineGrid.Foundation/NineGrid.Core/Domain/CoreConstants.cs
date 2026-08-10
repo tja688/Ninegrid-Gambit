@@ -22,4 +22,19 @@ namespace NineGrid.Core
         /// <summary>实例来自本关玩家侧装填（开局生成 / 注入）；清关时与其它帮助卡一并结算移除。</summary>
         public const string PlayerSideDeck = "playerSideDeck";
     }
+
+    /// <summary>邻接图腾借甲光环：在目标卡上按来源 uid 记录借出前的 CurrentArmor 基线。</summary>
+    public static class BorrowedArmorAuraKeys
+    {
+        public static string BaselineKey(int sourceUid)
+        {
+            return CoreCounterKeys.EffectCounterPrefix + "borrowedArmor." + sourceUid;
+        }
+
+        public static bool IsTracking(CardInstance card, int sourceUid)
+        {
+            return card != null
+                && card.Counters.Values.ContainsKey(BaselineKey(sourceUid));
+        }
+    }
 }
