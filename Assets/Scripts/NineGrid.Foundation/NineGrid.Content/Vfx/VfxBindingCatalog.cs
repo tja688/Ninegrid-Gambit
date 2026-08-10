@@ -82,6 +82,8 @@ namespace NineGrid.Content.Vfx
     public string selectorItemDefId;
     public string selectorContentId;
     public string authoringStatus;
+    public string exitMode = "immediate";
+    public int exitLoopLimit = 1;
   }
 
   public sealed class VfxCueBinding
@@ -197,6 +199,8 @@ namespace NineGrid.Content.Vfx
       SelectorItemDefId = dto.selectorItemDefId ?? string.Empty;
       SelectorContentId = dto.selectorContentId ?? string.Empty;
       AuthoringStatus = dto.authoringStatus ?? string.Empty;
+      ExitMode = dto.exitMode ?? string.Empty;
+      ExitLoopLimit = dto.exitLoopLimit > 0 ? dto.exitLoopLimit : 1;
       BindingKey = VfxBindingKey.Compose(
           StateId,
           SelectorCardDefId,
@@ -228,6 +232,8 @@ namespace NineGrid.Content.Vfx
     public string SelectorItemDefId { get; }
     public string SelectorContentId { get; }
     public string AuthoringStatus { get; }
+    public string ExitMode { get; }
+    public int ExitLoopLimit { get; }
     public string BindingKey { get; }
 
     public int SelectorSpecificity => VfxSelectorRules.CountSpecificity(

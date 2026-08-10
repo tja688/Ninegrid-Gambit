@@ -3,7 +3,7 @@ using NineGrid.Content.Vfx;
 
 namespace NineGrid.Presentation.Systems.Vfx
 {
-    public sealed class VfxSpriteSheetPlayerFactory : IVfxPulsePlayerFactory
+    public sealed class VfxSpriteSheetPlayerFactory : IVfxPlayerFactory
     {
         private readonly VfxSpriteSheetVisualPool mPool;
         private readonly IVfxMaterialFrameLoader mFrameLoader;
@@ -27,6 +27,20 @@ namespace NineGrid.Presentation.Systems.Vfx
             }
 
             player = new VfxSpriteSheetPulsePlayer(mPool, mFrameLoader);
+            return true;
+        }
+
+        public bool TryCreateStatePlayer(string playerId, out IVfxStatePlayer player, out string failureReason)
+        {
+            player = null;
+            failureReason = string.Empty;
+            if (!string.Equals(playerId, VfxPlayerRegistry.SpriteSheet, StringComparison.Ordinal))
+            {
+                failureReason = "非 sprite-sheet 播放器。";
+                return false;
+            }
+
+            player = new VfxSpriteSheetStatePlayer(mPool, mFrameLoader);
             return true;
         }
     }

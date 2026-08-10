@@ -276,7 +276,7 @@ namespace NineGrid.Presentation.Tests
             }
         }
 
-        private sealed class FakeVfxPlayerFactory : IVfxPulsePlayerFactory
+        private sealed class FakeVfxPlayerFactory : IVfxPlayerFactory
         {
             private readonly bool mCreatePlayers;
             private readonly bool mFailStart;
@@ -288,6 +288,7 @@ namespace NineGrid.Presentation.Tests
             }
 
             public readonly List<FakeVfxPulsePlayer> Players = new List<FakeVfxPulsePlayer>();
+            public readonly List<FakeVfxStatePlayer> StatePlayers = new List<FakeVfxStatePlayer>();
             public int CreatedCount => Players.Count;
 
             public bool TryCreatePulsePlayer(string playerId, out IVfxPulsePlayer player, out string failureReason)
@@ -304,6 +305,34 @@ namespace NineGrid.Presentation.Tests
                 player = created;
                 failureReason = string.Empty;
                 return true;
+            }
+
+            public bool TryCreateStatePlayer(string playerId, out IVfxStatePlayer player, out string failureReason)
+            {
+                player = null;
+                failureReason = "state not used in cue tests";
+                return false;
+            }
+        }
+
+        private sealed class FakeVfxStatePlayer : IVfxStatePlayer
+        {
+            public VfxPlayerStartResult StartState(VfxStateStartRequest request)
+            {
+                return VfxPlayerStartResult.Success("unused");
+            }
+
+            public void BeginExit(bool immediate, int exitLoopLimit)
+            {
+            }
+
+            public void Cancel()
+            {
+            }
+
+            public bool Tick(float deltaTime)
+            {
+                return false;
             }
         }
 

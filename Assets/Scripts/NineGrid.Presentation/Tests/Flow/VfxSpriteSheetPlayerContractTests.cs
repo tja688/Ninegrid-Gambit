@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using NineGrid.Content.Vfx;
+using NineGrid.Presentation.Systems;
 using NineGrid.Presentation.Systems.Vfx;
 using NUnit.Framework;
 using UnityEngine;
@@ -8,6 +9,63 @@ namespace NineGrid.Presentation.Tests
 {
     public sealed class VfxSpriteSheetPlayerContractTests
     {
+        [Test]
+        public void Playback_InfiniteLoop_DoesNotComplete()
+        {
+            var frames = new[] { CreateSprite("spritesheet_0"), CreateSprite("spritesheet_1") };
+            var playback = new VfxSpriteSheetPlayback();
+            playback.Configure(frames, fps: 10f, speed: 1f, loopLimit: 0, startOffsetSeconds: 0f, useUnscaledTime: false);
+
+            for (var i = 0; i < 20; i++)
+            {
+                Assert.IsFalse(playback.Tick(0.1f, 0.1f));
+            }
+
+            Assert.IsFalse(playback.IsComplete);
+        }
+
+        [Test]
+        public void StatePlayer_InfiniteLoop_RemainsActiveUntilExit()
+        {
+            var factory = new VfxSpriteSheetPlayerFactory(
+                new VfxSpriteSheetVisualPool(),
+                new FakeFrameLoader(CreateFrames(2)));
+            factory.TryCreateStatePlayer(VfxPlayerRegistry.SpriteSheet, out var player, out _);
+
+            var binding = BuildStateBinding();
+            var request = new VfxStateStartRequest(
+                new VfxStateRequest("vfx.state.test", "test", string.Empty, string.Empty, string.Empty, string.Empty, string.Empty),
+                binding,
+                "default",
+                "fx/test",
+                10f,
+                1f,
+                1f,
+                0f,
+                Color.white,
+                false,
+                VfxSpatialContext.Empty);
+
+            Assert.IsTrue(player.StartState(request).Succeeded);
+            Assert.IsFalse(player.Tick(0.1f));
+            player.BeginExit(immediate: true, exitLoopLimit: 1);
+            Assert.IsTrue(player.Tick(0.1f));
+        }
+
+        private static VfxStateBinding BuildStateBinding()
+        {
+            var dto = new VfxStateBindingDto
+            {
+                stateId = "vfx.state.test",
+                enabled = true,
+                playerId = VfxPlayerRegistry.SpriteSheet,
+                materialKey = "fx/test",
+                spatialOwnership = "independent",
+                exitMode = "immediate",
+            };
+            return new VfxStateBinding(dto);
+        }
+
         [Test]
         public void FrameOrder_SpritesheetNumericSort_IsStable()
         {

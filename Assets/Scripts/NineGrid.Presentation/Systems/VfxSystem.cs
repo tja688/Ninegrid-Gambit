@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using NineGrid.Content.Vfx;
 using NineGrid.Core;
 using NineGrid.Presentation.Systems.Vfx;
@@ -97,6 +98,13 @@ namespace NineGrid.Presentation.Systems
         VfxCueResult RequestCue(VfxCueRequest request, VfxSpatialContext spatialContext = default);
         VfxScheduleKey ScheduleCue(VfxCueRequest request, float delaySeconds, VfxSpatialContext spatialContext = default);
         bool CancelScheduledCue(VfxScheduleKey key);
+        VfxStateSlotResult SetSlot(
+            IVfxSlotOwner owner,
+            string slot,
+            string desiredState,
+            VfxSpatialContext spatialContext = default);
+        VfxStateSlotResult ClearSlotIf(IVfxSlotOwner owner, string slot, string expectedState);
+        void ReleaseOwner(IVfxSlotOwner owner);
         void Tick(float deltaTime);
         void ClearSceneInstances();
     }
@@ -107,7 +115,7 @@ namespace NineGrid.Presentation.Systems
         private const string SuppressedReason = "binding disabled";
 
         private VfxBindingCatalog mCatalog;
-        private readonly IVfxPulsePlayerFactory mPlayerFactory;
+        private readonly IVfxPlayerFactory mPlayerFactory;
         private readonly IAudioClock mClock;
         private readonly IVfxCueScheduler mScheduler;
         private readonly IVfxDomainHostResolver mDomainHostResolver;
@@ -124,10 +132,13 @@ namespace NineGrid.Presentation.Systems
         private readonly Dictionary<long, PendingScheduledCue> mPendingSchedules =
             new Dictionary<long, PendingScheduledCue>();
         private readonly List<ActivePulseInstance> mActiveInstances = new List<ActivePulseInstance>();
+        private readonly Dictionary<VfxSlotKey, ActiveStateSlot> mActiveStateSlots =
+            new Dictionary<VfxSlotKey, ActiveStateSlot>();
+        private readonly List<ActiveStateSlot> mExitingStateSlots = new List<ActiveStateSlot>();
 
         public VfxSystem(
             VfxBindingCatalog catalog,
-            IVfxPulsePlayerFactory playerFactory,
+            IVfxPlayerFactory playerFactory,
             IAudioClock clock,
             int historyCapacity = DefaultHistoryCapacity,
             IVfxCueScheduler scheduler = null,
@@ -135,7 +146,7 @@ namespace NineGrid.Presentation.Systems
             Func<double> randomValue = null)
         {
             mCatalog = catalog ?? VfxBindingCatalog.FromJson(string.Empty);
-            mPlayerFactory = playerFactory ?? new NullVfxPulsePlayerFactory();
+            mPlayerFactory = playerFactory ?? new NullVfxPlayerFactory();
             mClock = clock ?? new RealtimeAudioClock();
             mScheduler = scheduler;
             mDomainHostResolver = domainHostResolver;
@@ -149,7 +160,7 @@ namespace NineGrid.Presentation.Systems
         public static IVfxSystem EnsureRegistered(
             IArchitecture architecture = null,
             VfxBindingCatalog catalog = null,
-            IVfxPulsePlayerFactory playerFactory = null,
+            IVfxPlayerFactory playerFactory = null,
             IAudioClock clock = null)
         {
             var arch = architecture ?? NineGridArchitecture.Interface;
@@ -166,7 +177,7 @@ namespace NineGrid.Presentation.Systems
 
             var created = new VfxSystem(
                 catalog ?? VfxBindingCatalog.LoadFromResources(),
-                playerFactory ?? new DefaultVfxPulsePlayerFactory(),
+                playerFactory ?? new DefaultVfxPlayerFactory(),
                 clock ?? new RealtimeAudioClock());
             arch.RegisterSystem<IVfxSystem>(created);
             return created;
@@ -234,6 +245,105 @@ namespace NineGrid.Presentation.Systems
                 failureReason: "explicit cancel"));
 #endif
             return true;
+        }
+
+        public VfxStateSlotResult SetSlot(
+            IVfxSlotOwner owner,
+            string slot,
+            string desiredState,
+            VfxSpatialContext spatialContext = default)
+        {
+            if (owner == null)
+            {
+                return new VfxStateSlotResult
+                {
+                    Outcome = VfxStateSlotOutcome.InvalidBinding,
+                    FailureReason = "owner 为空。",
+                };
+            }
+
+            if (string.IsNullOrWhiteSpace(slot))
+            {
+                return new VfxStateSlotResult
+                {
+                    Outcome = VfxStateSlotOutcome.InvalidBinding,
+                    FailureReason = "slot 为空。",
+                };
+            }
+
+            var key = new VfxSlotKey(owner, slot);
+            if (string.IsNullOrWhiteSpace(desiredState))
+            {
+                return ClearSlotInternal(key, expectedState: null, conditional: false);
+            }
+
+            mActiveStateSlots.TryGetValue(key, out var existing);
+            if (existing != null
+                && string.Equals(existing.DesiredStateId, desiredState, StringComparison.Ordinal)
+                && !existing.Exiting)
+            {
+                return new VfxStateSlotResult
+                {
+                    Outcome = VfxStateSlotOutcome.NoOp,
+                    StateId = desiredState,
+                    BindingKey = existing.BindingKey,
+                    PlayerId = existing.PlayerId,
+                    InstanceId = existing.InstanceId,
+                };
+            }
+
+            if (existing != null)
+            {
+                BeginStateExit(existing, forReplace: true);
+            }
+
+            return StartResolvedState(owner, slot, desiredState, spatialContext);
+        }
+
+        public VfxStateSlotResult ClearSlotIf(IVfxSlotOwner owner, string slot, string expectedState)
+        {
+            if (owner == null || string.IsNullOrWhiteSpace(slot))
+            {
+                return new VfxStateSlotResult
+                {
+                    Outcome = VfxStateSlotOutcome.InvalidBinding,
+                    FailureReason = "owner 或 slot 无效。",
+                };
+            }
+
+            if (string.IsNullOrWhiteSpace(expectedState))
+            {
+                return new VfxStateSlotResult
+                {
+                    Outcome = VfxStateSlotOutcome.InvalidBinding,
+                    FailureReason = "expectedState 为空。",
+                };
+            }
+
+            var key = new VfxSlotKey(owner, slot);
+            return ClearSlotInternal(key, expectedState, conditional: true);
+        }
+
+        public void ReleaseOwner(IVfxSlotOwner owner)
+        {
+            if (owner == null)
+            {
+                return;
+            }
+
+            var keys = new List<VfxSlotKey>(mActiveStateSlots.Count);
+            foreach (var pair in mActiveStateSlots)
+            {
+                if (ReferenceEquals(pair.Key.Owner, owner))
+                {
+                    keys.Add(pair.Key);
+                }
+            }
+
+            for (var i = 0; i < keys.Count; i++)
+            {
+                ClearSlotInternal(keys[i], expectedState: null, conditional: false);
+            }
         }
 
         public VfxCueResult RequestCue(VfxCueRequest request, VfxSpatialContext spatialContext = default)
@@ -315,23 +425,45 @@ namespace NineGrid.Presentation.Systems
 
         public void Tick(float deltaTime)
         {
-            if (mActiveInstances.Count == 0)
+            if (mActiveInstances.Count > 0)
+            {
+                for (var i = mActiveInstances.Count - 1; i >= 0; i--)
+                {
+                    var instance = mActiveInstances[i];
+                    if (instance.Player == null)
+                    {
+                        mActiveInstances.RemoveAt(i);
+                        continue;
+                    }
+
+                    if (instance.Player.Tick(deltaTime))
+                    {
+                        mActiveInstances.RemoveAt(i);
+                    }
+                }
+            }
+
+            if (mActiveStateSlots.Count == 0 && mExitingStateSlots.Count == 0)
             {
                 return;
             }
 
-            for (var i = mActiveInstances.Count - 1; i >= 0; i--)
+            foreach (var slot in mActiveStateSlots.Values)
             {
-                var instance = mActiveInstances[i];
-                if (instance.Player == null)
+                if (slot.Player == null)
                 {
-                    mActiveInstances.RemoveAt(i);
                     continue;
                 }
 
-                if (instance.Player.Tick(deltaTime))
+                slot.Player.Tick(deltaTime);
+            }
+
+            for (var i = mExitingStateSlots.Count - 1; i >= 0; i--)
+            {
+                var slot = mExitingStateSlots[i];
+                if (slot.Player == null || slot.Player.Tick(deltaTime))
                 {
-                    mActiveInstances.RemoveAt(i);
+                    mExitingStateSlots.RemoveAt(i);
                 }
             }
         }
@@ -349,6 +481,21 @@ namespace NineGrid.Presentation.Systems
                 instance.Player?.Cancel();
                 mActiveInstances.RemoveAt(i);
             }
+
+            var attachedKeys = new List<VfxSlotKey>();
+            foreach (var pair in mActiveStateSlots)
+            {
+                if (pair.Value.Binding != null
+                    && pair.Value.Binding.SpatialOwnership == VfxSpatialOwnership.Attached)
+                {
+                    attachedKeys.Add(pair.Key);
+                }
+            }
+
+            for (var i = 0; i < attachedKeys.Count; i++)
+            {
+                ClearSlotInternal(attachedKeys[i], expectedState: null, conditional: false);
+            }
         }
 
         protected override void OnInit()
@@ -359,6 +506,8 @@ namespace NineGrid.Presentation.Systems
         {
             mActiveInstances.Clear();
             mPendingSchedules.Clear();
+            mActiveStateSlots.Clear();
+            mExitingStateSlots.Clear();
         }
 
         private VfxCueResult StartResolvedCue(
@@ -577,6 +726,339 @@ namespace NineGrid.Presentation.Systems
             }
 
             return eligible[eligible.Count - 1];
+        }
+
+        private VfxStateSlotResult ClearSlotInternal(
+            VfxSlotKey key,
+            string expectedState,
+            bool conditional)
+        {
+            if (!mActiveStateSlots.TryGetValue(key, out var slot))
+            {
+                return new VfxStateSlotResult
+                {
+                    Outcome = VfxStateSlotOutcome.NoOp,
+                    StateId = expectedState ?? string.Empty,
+                };
+            }
+
+            if (conditional
+                && !string.Equals(slot.DesiredStateId, expectedState, StringComparison.Ordinal))
+            {
+                return new VfxStateSlotResult
+                {
+                    Outcome = VfxStateSlotOutcome.NoOp,
+                    StateId = slot.DesiredStateId,
+                    BindingKey = slot.BindingKey,
+                    PlayerId = slot.PlayerId,
+                    InstanceId = slot.InstanceId,
+                };
+            }
+
+            var clearedState = slot.DesiredStateId;
+            BeginStateExit(slot, forReplace: false);
+            return new VfxStateSlotResult
+            {
+                Outcome = VfxStateSlotOutcome.Cleared,
+                StateId = clearedState,
+                BindingKey = slot.BindingKey,
+                PlayerId = slot.PlayerId,
+                InstanceId = slot.InstanceId,
+            };
+        }
+
+        private void BeginStateExit(ActiveStateSlot slot, bool forReplace)
+        {
+            if (slot == null)
+            {
+                return;
+            }
+
+            mActiveStateSlots.Remove(slot.Key);
+            slot.Exiting = true;
+            var immediate = forReplace
+                || slot.Binding == null
+                || !VfxStateExitMode.IsSegment(slot.Binding.ExitMode);
+            var exitLoops = slot.Binding?.ExitLoopLimit ?? 1;
+            slot.Player?.BeginExit(immediate, exitLoops);
+            if (immediate)
+            {
+                slot.Player?.Cancel();
+                return;
+            }
+
+            mExitingStateSlots.Add(slot);
+        }
+
+        private VfxStateSlotResult StartResolvedState(
+            IVfxSlotOwner owner,
+            string slot,
+            string desiredState,
+            VfxSpatialContext spatialContext)
+        {
+            var request = owner.BuildStateRequest(desiredState);
+            if (!mCatalog.TryResolveStateStrict(request, out var binding, out var resolveError))
+            {
+                if (resolveError != null && resolveError.Code == VfxBindingResolveCode.Ambiguous)
+                {
+                    return RecordStateInvalidBinding(request, resolveError);
+                }
+
+                var reason = resolveError?.Message ?? "持续视觉状态绑定不存在。";
+                return RecordStateUnbound(request, reason);
+            }
+
+            if (!binding.Enabled)
+            {
+                return RecordStateSuppressed(request, binding);
+            }
+
+            if (!VfxPlayerRegistry.SupportsState(binding.PlayerId))
+            {
+                return RecordStatePlayerUnavailable(request, binding, "播放器未注册或不支持 State。");
+            }
+
+            if (binding.SpatialOwnership == VfxSpatialOwnership.Attached
+                && !TryAcceptAttachedSpatial(spatialContext, out var attachedFailure))
+            {
+                return RecordStateDomainUnavailable(request, binding, attachedFailure);
+            }
+
+            var acceptedSpatial = AcceptStateSpatial(binding, spatialContext);
+            if (!mPlayerFactory.TryCreateStatePlayer(binding.PlayerId, out var player, out var factoryReason))
+            {
+                return RecordStatePlayerUnavailable(request, binding, factoryReason);
+            }
+
+            string variantId = string.Empty;
+            string materialKey = string.Empty;
+            float fps = binding.Fps;
+            float speed = VfxBindingPlayback.ResolveSpeed(binding.Speed);
+            float scale = binding.Scale;
+            float startOffset = binding.StartOffsetSeconds;
+            var tint = binding.Tint;
+            var useUnscaledTime = binding.UseUnscaledTime;
+
+            if (VfxPlayerRegistry.IsMaterialPlayer(binding.PlayerId))
+            {
+                var variant = ResolveStateVariant(binding);
+                if (variant == null || string.IsNullOrWhiteSpace(variant.materialKey))
+                {
+                    return RecordStateUnbound(request, "视觉特效绑定缺少有效素材。");
+                }
+
+                variantId = variant.variantId ?? string.Empty;
+                materialKey = variant.materialKey;
+                fps = binding.Fps + variant.fpsTrim;
+                scale = binding.Scale + variant.scaleTrim;
+                startOffset = Math.Max(0f, variant.startOffsetSeconds);
+            }
+
+            var startRequest = new VfxStateStartRequest(
+                request,
+                binding,
+                variantId,
+                materialKey,
+                fps,
+                speed,
+                scale,
+                startOffset,
+                tint,
+                useUnscaledTime,
+                acceptedSpatial);
+
+            VfxPlayerStartResult backend;
+            try
+            {
+                backend = player.StartState(startRequest);
+            }
+            catch (Exception exception)
+            {
+                backend = VfxPlayerStartResult.Failure(exception.Message);
+            }
+
+            if (!backend.Succeeded)
+            {
+                return RecordStateBackendFailure(
+                    request,
+                    binding,
+                    variantId,
+                    materialKey,
+                    backend.FailureReason);
+            }
+
+            var key = new VfxSlotKey(owner, slot);
+            var activeSlot = new ActiveStateSlot
+            {
+                Key = key,
+                DesiredStateId = desiredState,
+                Binding = binding,
+                BindingKey = binding.BindingKey,
+                PlayerId = binding.PlayerId,
+                InstanceId = backend.InstanceId,
+                Player = player,
+                SpatialOwnership = binding.SpatialOwnership,
+            };
+            mActiveStateSlots[key] = activeSlot;
+
+            return new VfxStateSlotResult
+            {
+                Outcome = VfxStateSlotOutcome.Applied,
+                StateId = desiredState,
+                BindingKey = binding.BindingKey,
+                PlayerId = binding.PlayerId,
+                InstanceId = backend.InstanceId,
+            };
+        }
+
+        private static VfxSpatialContext AcceptStateSpatial(
+            VfxStateBinding binding,
+            VfxSpatialContext spatialContext)
+        {
+            if (binding.SpatialOwnership == VfxSpatialOwnership.Independent)
+            {
+                return new VfxSpatialContext(
+                    spatialContext.SemanticRole,
+                    null,
+                    spatialContext.PositionSnapshot,
+                    spatialContext.DiagnosticOwnerUid);
+            }
+
+            return spatialContext;
+        }
+
+        private VfxMaterialVariantDto ResolveStateVariant(VfxStateBinding binding)
+        {
+            var variants = binding.Variants;
+            if (variants == null || variants.Count == 0)
+            {
+                if (string.IsNullOrWhiteSpace(binding.MaterialKey))
+                {
+                    return null;
+                }
+
+                return new VfxMaterialVariantDto
+                {
+                    variantId = "default",
+                    materialKey = binding.MaterialKey,
+                    weight = 1f,
+                };
+            }
+
+            var candidates = new List<VfxMaterialVariantDto>();
+            var totalWeight = 0f;
+            for (var i = 0; i < variants.Count; i++)
+            {
+                var row = variants[i];
+                if (row == null || string.IsNullOrWhiteSpace(row.materialKey) || row.weight <= 0f)
+                {
+                    continue;
+                }
+
+                candidates.Add(row);
+                totalWeight += row.weight;
+            }
+
+            if (candidates.Count == 0)
+            {
+                return null;
+            }
+
+            var pickWeight = (float)(mRandomValue() * totalWeight);
+            var cursor = 0f;
+            for (var i = 0; i < candidates.Count; i++)
+            {
+                cursor += candidates[i].weight;
+                if (pickWeight <= cursor)
+                {
+                    return candidates[i];
+                }
+            }
+
+            return candidates[candidates.Count - 1];
+        }
+
+        private VfxStateSlotResult RecordStateUnbound(VfxStateRequest request, string reason)
+        {
+            return new VfxStateSlotResult
+            {
+                Outcome = VfxStateSlotOutcome.Unbound,
+                StateId = request.StateId,
+                FailureReason = reason,
+            };
+        }
+
+        private VfxStateSlotResult RecordStateInvalidBinding(
+            VfxStateRequest request,
+            VfxBindingResolveError resolveError)
+        {
+            var reason = resolveError?.Message ?? "绑定解析歧义。";
+            return new VfxStateSlotResult
+            {
+                Outcome = VfxStateSlotOutcome.InvalidBinding,
+                StateId = request.StateId,
+                BindingKey = resolveError?.BindingKey ?? string.Empty,
+                FailureReason = reason,
+            };
+        }
+
+        private VfxStateSlotResult RecordStateSuppressed(VfxStateRequest request, VfxStateBinding binding)
+        {
+            return new VfxStateSlotResult
+            {
+                Outcome = VfxStateSlotOutcome.Suppressed,
+                StateId = request.StateId,
+                BindingKey = binding.BindingKey,
+                PlayerId = binding.PlayerId,
+                FailureReason = SuppressedReason,
+            };
+        }
+
+        private VfxStateSlotResult RecordStatePlayerUnavailable(
+            VfxStateRequest request,
+            VfxStateBinding binding,
+            string reason)
+        {
+            return new VfxStateSlotResult
+            {
+                Outcome = VfxStateSlotOutcome.PlayerUnavailable,
+                StateId = request.StateId,
+                BindingKey = binding.BindingKey,
+                PlayerId = binding.PlayerId,
+                FailureReason = reason,
+            };
+        }
+
+        private VfxStateSlotResult RecordStateDomainUnavailable(
+            VfxStateRequest request,
+            VfxStateBinding binding,
+            string reason)
+        {
+            return new VfxStateSlotResult
+            {
+                Outcome = VfxStateSlotOutcome.DomainUnavailable,
+                StateId = request.StateId,
+                BindingKey = binding.BindingKey,
+                PlayerId = binding.PlayerId,
+                FailureReason = reason,
+            };
+        }
+
+        private VfxStateSlotResult RecordStateBackendFailure(
+            VfxStateRequest request,
+            VfxStateBinding binding,
+            string variantId,
+            string materialKey,
+            string reason)
+        {
+            return new VfxStateSlotResult
+            {
+                Outcome = VfxStateSlotOutcome.BackendFailure,
+                StateId = request.StateId,
+                BindingKey = binding.BindingKey,
+                PlayerId = binding.PlayerId,
+                FailureReason = reason,
+            };
         }
 
         private VfxCueResult RecordUnbound(VfxCueRequest request, string reason)
@@ -799,6 +1281,51 @@ namespace NineGrid.Presentation.Systems
         }
 #endif
 
+        private sealed class ActiveStateSlot
+        {
+            public VfxSlotKey Key;
+            public string DesiredStateId;
+            public VfxStateBinding Binding;
+            public string BindingKey;
+            public string PlayerId;
+            public string InstanceId;
+            public IVfxStatePlayer Player;
+            public VfxSpatialOwnership SpatialOwnership;
+            public bool Exiting;
+        }
+
+        private readonly struct VfxSlotKey : IEquatable<VfxSlotKey>
+        {
+            public VfxSlotKey(IVfxSlotOwner owner, string slot)
+            {
+                Owner = owner;
+                Slot = slot ?? string.Empty;
+            }
+
+            public IVfxSlotOwner Owner { get; }
+            public string Slot { get; }
+
+            public bool Equals(VfxSlotKey other)
+            {
+                return ReferenceEquals(Owner, other.Owner)
+                    && string.Equals(Slot, other.Slot, StringComparison.Ordinal);
+            }
+
+            public override bool Equals(object obj)
+            {
+                return obj is VfxSlotKey other && Equals(other);
+            }
+
+            public override int GetHashCode()
+            {
+                unchecked
+                {
+                    return (RuntimeHelpers.GetHashCode(Owner) * 397)
+                        ^ StringComparer.Ordinal.GetHashCode(Slot);
+                }
+            }
+        }
+
         private sealed class PendingScheduledCue
         {
             public PendingScheduledCue(VfxCueRequest request, VfxSpatialContext spatial, float delaySeconds)
@@ -825,7 +1352,7 @@ namespace NineGrid.Presentation.Systems
             public double UnscaledTime => Time.realtimeSinceStartup;
         }
 
-        private sealed class NullVfxPulsePlayerFactory : IVfxPulsePlayerFactory
+        private sealed class NullVfxPlayerFactory : IVfxPlayerFactory
         {
             public bool TryCreatePulsePlayer(string playerId, out IVfxPulsePlayer player, out string failureReason)
             {
@@ -833,9 +1360,16 @@ namespace NineGrid.Presentation.Systems
                 failureReason = "VFX player factory is not configured.";
                 return false;
             }
+
+            public bool TryCreateStatePlayer(string playerId, out IVfxStatePlayer player, out string failureReason)
+            {
+                player = null;
+                failureReason = "VFX player factory is not configured.";
+                return false;
+            }
         }
 
-        public sealed class DefaultVfxPulsePlayerFactory : IVfxPulsePlayerFactory
+        public sealed class DefaultVfxPlayerFactory : IVfxPlayerFactory
         {
             private readonly VfxSpriteSheetPlayerFactory mSpriteSheetFactory = new VfxSpriteSheetPlayerFactory();
 
@@ -852,6 +1386,25 @@ namespace NineGrid.Presentation.Systems
                 if (string.Equals(playerId, VfxPlayerRegistry.SpriteSheet, StringComparison.Ordinal))
                 {
                     return mSpriteSheetFactory.TryCreatePulsePlayer(playerId, out player, out failureReason);
+                }
+
+                failureReason = "播放器尚未实现。";
+                return false;
+            }
+
+            public bool TryCreateStatePlayer(string playerId, out IVfxStatePlayer player, out string failureReason)
+            {
+                player = null;
+                failureReason = string.Empty;
+                if (!VfxPlayerRegistry.SupportsState(playerId))
+                {
+                    failureReason = "播放器未注册或不支持 State。";
+                    return false;
+                }
+
+                if (string.Equals(playerId, VfxPlayerRegistry.SpriteSheet, StringComparison.Ordinal))
+                {
+                    return mSpriteSheetFactory.TryCreateStatePlayer(playerId, out player, out failureReason);
                 }
 
                 failureReason = "播放器尚未实现。";

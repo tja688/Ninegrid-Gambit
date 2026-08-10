@@ -5,6 +5,8 @@ namespace NineGrid.Presentation.Systems.Vfx
     /// <summary>精灵表帧推进逻辑；默认有限循环 1 次，scaled 时间基。</summary>
     public sealed class VfxSpriteSheetPlayback
     {
+        public const int InfiniteLoops = 0;
+
         public Sprite[] Frames = System.Array.Empty<Sprite>();
         public int FrameIndex;
         public float Elapsed;
@@ -29,7 +31,7 @@ namespace NineGrid.Presentation.Systems.Vfx
             Frames = frames ?? System.Array.Empty<Sprite>();
             Fps = Mathf.Max(0.01f, fps);
             Speed = Mathf.Max(0.01f, speed);
-            LoopLimit = Mathf.Max(1, loopLimit);
+            LoopLimit = loopLimit <= 0 ? InfiniteLoops : Mathf.Max(1, loopLimit);
             StartOffsetSeconds = Mathf.Max(0f, startOffsetSeconds);
             UseUnscaledTime = useUnscaledTime;
             FrameIndex = 0;
@@ -91,6 +93,11 @@ namespace NineGrid.Presentation.Systems.Vfx
 
             if (Frames.Length == 1)
             {
+                if (LoopLimit == InfiniteLoops)
+                {
+                    return false;
+                }
+
                 var singleDuration = 1f / (Fps * Speed);
                 Elapsed += delta;
                 if (Elapsed >= singleDuration)
@@ -112,7 +119,7 @@ namespace NineGrid.Presentation.Systems.Vfx
                 if (FrameIndex >= Frames.Length)
                 {
                     CompletedLoops++;
-                    if (CompletedLoops >= LoopLimit)
+                    if (LoopLimit != InfiniteLoops && CompletedLoops >= LoopLimit)
                     {
                         FrameIndex = Frames.Length - 1;
                         IsComplete = true;
