@@ -67,9 +67,12 @@ namespace NineGrid.Presentation.Systems
 
         UniTask DrainPostKillBoardAsync(
             PostKillBoardPresentationResult result,
-            CancellationToken cancellationToken = default);
+            CancellationToken cancellationToken = default,
+            int[] occupancyPendingVacateUids = null);
 
         UniTask FlushPendingShuffleIntoPresentationAsync(CancellationToken cancellationToken = default);
+
+        void AssertHitPresentOccupancySync();
 
         CombatHitPresentationResult ApplyCombatHit(int attackerUid, int targetUid);
 

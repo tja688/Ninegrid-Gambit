@@ -618,9 +618,18 @@ namespace NineGrid.Flow
 
         public UniTask DrainPostKillBoardAsync(
             PostKillBoardPresentationResult result,
-            CancellationToken cancellationToken)
+            CancellationToken cancellationToken,
+            int[] occupancyPendingVacateUids = null)
         {
-            return BoardPlayer.DrainPostKillBoardAsync(result, cancellationToken);
+            return BoardPlayer.DrainPostKillBoardAsync(
+                result,
+                cancellationToken,
+                occupancyPendingVacateUids);
+        }
+
+        internal void AssertHitPresentOccupancySync()
+        {
+            BoardPlayer.AssertHitPresentOccupancySync();
         }
 
         public void PresentShuffleIntoDeckFromEventLog(int startIndex)

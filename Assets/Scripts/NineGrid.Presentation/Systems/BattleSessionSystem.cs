@@ -130,9 +130,18 @@ namespace NineGrid.Presentation.Systems
 
         public UniTask DrainPostKillBoardAsync(
             PostKillBoardPresentationResult result,
-            CancellationToken cancellationToken = default)
+            CancellationToken cancellationToken = default,
+            int[] occupancyPendingVacateUids = null)
         {
-            return mExecutor.DrainPostKillBoardAsync(result, cancellationToken);
+            return mExecutor.DrainPostKillBoardAsync(
+                result,
+                cancellationToken,
+                occupancyPendingVacateUids);
+        }
+
+        public void AssertHitPresentOccupancySync()
+        {
+            mExecutor.AssertHitPresentOccupancySync();
         }
 
         public UniTask FlushPendingShuffleIntoPresentationAsync(

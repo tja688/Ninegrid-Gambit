@@ -51,7 +51,8 @@ namespace NineGrid.Flow
         /// </summary>
         public async UniTask DrainPostKillBoardAsync(
             PostKillBoardPresentationResult result,
-            CancellationToken cancellationToken)
+            CancellationToken cancellationToken,
+            int[] occupancyPendingVacateUids = null)
         {
             if (!result.Accepted)
             {
@@ -84,7 +85,10 @@ namespace NineGrid.Flow
                 ChoreoTraceContext.BoardQueueDepth = 0;
                 try
                 {
-                    await DrainPostKillBoardCoreAsync(result, cancellationToken);
+                    await DrainPostKillBoardCoreAsync(
+                        result,
+                        cancellationToken,
+                        occupancyPendingVacateUids);
                 }
                 catch (OperationCanceledException)
                 {
@@ -119,9 +123,25 @@ namespace NineGrid.Flow
         /// 位移类 Step 经 <see cref="BoardMotionStepScheduler"/> 供给执行层；就位由五次收敛 + 栅栏保证，无硬 snap。
         /// 锁由队列泵或外层交战流程持有，本方法不再重复加解锁。
         /// </summary>
+        /// <summary>
+        /// 命中 Present 主目标 Vacate 之后的最终占格断言（中间 Drain 可能豁免待 Vacate 尸体）。
+        /// </summary>
+        internal void AssertHitPresentOccupancySync()
+        {
+            var fieldManager = Field;
+            if (fieldManager == null)
+            {
+                return;
+            }
+
+            FieldTraceHelper.RecordOccupancySnapshot("hitPresentAfterVacate");
+            HandleDrainAfterOccupancyDesync(fieldManager, _boardPresentationRequestId);
+        }
+
         private async UniTask DrainPostKillBoardCoreAsync(
             PostKillBoardPresentationResult result,
-            CancellationToken cancellationToken)
+            CancellationToken cancellationToken,
+            int[] occupancyPendingVacateUids = null)
         {
             if (!result.Accepted)
             {
@@ -229,7 +249,10 @@ namespace NineGrid.Flow
 
                         fieldManager.RefreshSlotHitColliders();
                         FieldTraceHelper.RecordOccupancySnapshot("drainAfter");
-                        HandleDrainAfterOccupancyDesync(fieldManager, requestId);
+                        HandleDrainAfterOccupancyDesync(
+                            fieldManager,
+                            requestId,
+                            occupancyPendingVacateUids);
                         FieldTraceHelper.RecordDrainEnd(
                             moveCount,
                             dealCount,
@@ -611,11 +634,28 @@ namespace NineGrid.Flow
         /// <summary>
         /// drainAfter 若仍有 Core↔Pres 分叉：只 Latch + 断言，禁止末端 relocate/repair 自愈（ADR-0001 / #51）。
         /// </summary>
-        private void HandleDrainAfterOccupancyDesync(GroundFieldView fieldManager, int requestId)
+        private void HandleDrainAfterOccupancyDesync(
+            GroundFieldView fieldManager,
+            int requestId,
+            int[] occupancyPendingVacateUids = null)
         {
             if (fieldManager == null
-                || !FieldTraceHelper.TryGetOccupancyDiff(out var diffSlots)
-                || string.IsNullOrEmpty(diffSlots))
+                || !FieldTraceHelper.TryGetOccupancyDiff(out var diffSlots))
+            {
+                ChoreoTraceContext.ClearOccupancyDesyncLatch("drainAfter.clean");
+                return;
+            }
+
+            if (!string.IsNullOrEmpty(diffSlots)
+                && occupancyPendingVacateUids != null
+                && occupancyPendingVacateUids.Length > 0)
+            {
+                diffSlots = FilterOccupancyDiffForPendingVacate(
+                    diffSlots,
+                    occupancyPendingVacateUids);
+            }
+
+            if (string.IsNullOrEmpty(diffSlots))
             {
                 ChoreoTraceContext.ClearOccupancyDesyncLatch("drainAfter.clean");
                 return;
@@ -626,6 +666,104 @@ namespace NineGrid.Flow
             BattleSessionExecutor.AssertOccupancySyncForbidden(
                 "drainAfterStickyDiff",
                 diffSlots);
+        }
+
+        /// <summary>
+        /// 命中 Present 中间 Drain：主目标 Remove 已剥离，Core 已空但表现仍占格（待 Vacate）不算 desync。
+        /// </summary>
+        private static string FilterOccupancyDiffForPendingVacate(
+            string diffSlots,
+            int[] pendingVacateUids)
+        {
+            if (string.IsNullOrEmpty(diffSlots)
+                || pendingVacateUids == null
+                || pendingVacateUids.Length == 0)
+            {
+                return diffSlots ?? string.Empty;
+            }
+
+            var parts = diffSlots.Split(',');
+            var kept = new List<string>(parts.Length);
+            for (var i = 0; i < parts.Length; i++)
+            {
+                var part = parts[i];
+                if (string.IsNullOrEmpty(part))
+                {
+                    continue;
+                }
+
+                if (TryParseOccupancyDiffEntry(part, out var coreUid, out var presUid)
+                    && coreUid == 0
+                    && IsPendingVacateUid(presUid, pendingVacateUids))
+                {
+                    continue;
+                }
+
+                kept.Add(part);
+            }
+
+            return kept.Count > 0 ? string.Join(",", kept) : string.Empty;
+        }
+
+        private static bool TryParseOccupancyDiffEntry(
+            string entry,
+            out int coreUid,
+            out int presUid)
+        {
+            coreUid = 0;
+            presUid = 0;
+            var colonIdx = entry.IndexOf(':');
+            if (colonIdx <= 0)
+            {
+                return false;
+            }
+
+            var slashIdx = entry.IndexOf('/', colonIdx + 1);
+            if (slashIdx <= colonIdx + 1 || slashIdx + 1 >= entry.Length)
+            {
+                return false;
+            }
+
+            var corePart = entry.Substring(colonIdx + 1, slashIdx - colonIdx - 1);
+            if (corePart.Length < 2 || corePart[0] != 'C')
+            {
+                return false;
+            }
+
+            var presPart = entry.Substring(slashIdx + 1);
+            if (presPart.Length < 2 || presPart[0] != 'P')
+            {
+                return false;
+            }
+
+            return int.TryParse(
+                       corePart.Substring(1),
+                       System.Globalization.NumberStyles.Integer,
+                       System.Globalization.CultureInfo.InvariantCulture,
+                       out coreUid)
+                   && int.TryParse(
+                       presPart.Substring(1),
+                       System.Globalization.NumberStyles.Integer,
+                       System.Globalization.CultureInfo.InvariantCulture,
+                       out presUid);
+        }
+
+        private static bool IsPendingVacateUid(int uid, int[] pendingVacateUids)
+        {
+            if (uid <= 0 || pendingVacateUids == null)
+            {
+                return false;
+            }
+
+            for (var i = 0; i < pendingVacateUids.Length; i++)
+            {
+                if (pendingVacateUids[i] == uid)
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         private static int FindCoreBoardSlotOfUid(int uid)

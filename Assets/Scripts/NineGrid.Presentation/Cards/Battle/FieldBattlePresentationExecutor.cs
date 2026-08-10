@@ -433,12 +433,16 @@ namespace NineGrid.Cards
                 // OnBattle（逃避 Swap 等）与技能移除写在同一 CombatHit EventLog 窗；
                 // 必须在 Vacate 前 Drain，否则 Core 已换位而表现占格仍旧 → OccupancyDesync。
                 // 交战主目标尸体仍走下方 Vacate，不进 Remove 步。
+                var killed = HasRemovedUid(hitProjection, combatVictim.Uid) || combatVictim.IsFieldDead;
                 var hitBoardDelta = BoardPresentationMerge.ForHitPresentDrain(
                     hitProjection,
                     combatVictim.Uid);
-                await DrainCombatHitBoardDeltaFromProjectionAsync(hitBoardDelta, ct);
+                var pendingVacateUids = killed ? new[] { combatVictim.Uid } : null;
+                await DrainCombatHitBoardDeltaFromProjectionAsync(
+                    hitBoardDelta,
+                    ct,
+                    pendingVacateUids);
 
-                var killed = HasRemovedUid(hitProjection, combatVictim.Uid) || combatVictim.IsFieldDead;
                 if (!hitProjection.AvatarDefeated && killed)
                 {
                     // Swap 后主目标可能已不在点击格；以 Drain 后的表现占格为准。
@@ -457,6 +461,7 @@ namespace NineGrid.Cards
                         startExplore: false);
                     CardEntityLifecycleHook.CardsOrNull()?.StageFieldDeadCorpseOffAnchor(combatVictim);
                     FinalizeLethalVictimAsync(combatVictim, ct).Forget();
+                    ResolveBattleSession()?.AssertHitPresentOccupancySync();
                 }
 
                 await FlushPendingShuffleAsync(ct);
@@ -539,7 +544,8 @@ namespace NineGrid.Cards
 
         private static async UniTask DrainCombatHitBoardDeltaFromProjectionAsync(
             PostKillBoardPresentationResult projection,
-            CancellationToken cancellationToken)
+            CancellationToken cancellationToken,
+            int[] occupancyPendingVacateUids = null)
         {
             if (!projection.Accepted || IsEmptyBoardProjection(projection))
             {
@@ -552,7 +558,10 @@ namespace NineGrid.Cards
                 return;
             }
 
-            await session.DrainPostKillBoardAsync(projection, cancellationToken);
+            await session.DrainPostKillBoardAsync(
+                projection,
+                cancellationToken,
+                occupancyPendingVacateUids);
         }
 
         private static async UniTask FlushPendingShuffleAsync(CancellationToken cancellationToken)

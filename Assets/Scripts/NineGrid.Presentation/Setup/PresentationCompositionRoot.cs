@@ -46,10 +46,10 @@ namespace NineGrid.Presentation.Setup
             var dispatcher = new CoreCommandDispatcher(architecture);
 
             var explorePresentChannel = new QueuedBoardPresentChannel(
-                session.DrainPostKillBoardAsync,
+                (result, token) => session.DrainPostKillBoardAsync(result, token),
                 session.EnsurePresentationToken);
             var attackBoardPresentChannel = new QueuedBoardPresentChannel(
-                session.DrainPostKillBoardAsync,
+                (result, token) => session.DrainPostKillBoardAsync(result, token),
                 session.EnsurePresentationToken);
 
             var battlePresentation = architecture.GetSystem<IFieldBattlePresentationSystem>();
@@ -88,7 +88,7 @@ namespace NineGrid.Presentation.Setup
                 },
                 session.EnsurePresentationToken);
             var useItemBoardPresentChannel = new QueuedBoardPresentChannel(
-                session.DrainPostKillBoardAsync,
+                (result, token) => session.DrainPostKillBoardAsync(result, token),
                 session.EnsurePresentationToken);
             var useItemPresentChannel = new UseItemPresentChannel(
                 session.PlayDirectorUseItemPresentAsync,
