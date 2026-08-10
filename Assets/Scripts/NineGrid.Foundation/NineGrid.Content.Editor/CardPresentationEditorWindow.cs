@@ -11,6 +11,7 @@ using NineGrid.Content;
 using NineGrid.Content.CardPresentation;
 using NineGrid.Content.Editor.Ui;
 using NineGrid.Core;
+using NineGrid.Flow;
 using NineGrid.Flow.Transitions;
 using NineGrid.Presentation.Editor;
 using UnityEditor;
@@ -1328,31 +1329,6 @@ namespace NineGrid.Content.Editor
                         UpdateStatus();
                     });
                     column.Add(descriptionField);
-
-                    if (CardDescriptionTokenRules.IsInScopeKind(dto.kind))
-                    {
-                        var liveTemplateField = new TextField
-                        {
-                            multiline = true,
-                            value = dto.liveTemplate ?? string.Empty,
-                        };
-                        liveTemplateField.style.minHeight = 56;
-                        liveTemplateField.style.maxHeight = 96;
-                        liveTemplateField.tooltip =
-                            "局内描述投影模板（ADR-0035）：实例可见表面（场上/手牌/道具格/遗物栏）与店/奖/鉴预览的体感句，" +
-                            "可含 {装配id.键}；空 = 无动态，与检查描述同文。右键检查永不展示本框。倒计时/耐久卡必填。描述格 ≤26。";
-                        liveTemplateField.RegisterValueChangedCallback(evt =>
-                        {
-                            dto.liveTemplate = evt.newValue ?? string.Empty;
-                            session.MarkDirty(dto.contentId);
-                            InvalidateAndRefreshPreview(entry);
-                            UpdateStatus();
-                        });
-                        column.Add(ContentVisualWarmConsoleUi.WrapControl(
-                            "局内描述投影",
-                            "实例/预览渲染层；空则与检查描述同文；右键检查不展示",
-                            liveTemplateField));
-                    }
                 });
             descriptionCard.style.flexGrow = 1;
             descriptionCard.style.flexBasis = 0;
@@ -3794,7 +3770,6 @@ namespace NineGrid.Content.Editor
                     : CardFaceDescriptionProjector.Project(
                         CardDescriptionProjectionMode.Instance,
                         dto.description ?? string.Empty,
-                        dto.liveTemplate,
                         dto.effectAssemblies),
                 RoomIconPrefabPath = dto.iconPrefab ?? string.Empty,
                 MainIcon = isDeckEntry
@@ -3812,6 +3787,14 @@ namespace NineGrid.Content.Editor
                 ActionCount = isDeckEntry ? 0 : Mathf.Max(0, dto.rhythmPeriod > 0 ? dto.rhythmPeriod : stats.action),
                 FaceUp = faceUp,
             };
+
+            if (!isDeckEntry && kind == CardPresentationKind.Trap)
+            {
+                var trapVisual = CoreCardPresentationMapper.BuildVisualSnapshotFromDefId(dto.contentId, kind);
+                request.ActionCount = trapVisual.ActionCount;
+                request.ShowActionCount = trapVisual.ShowActionCount;
+            }
+
             return true;
         }
 
@@ -3880,7 +3863,6 @@ namespace NineGrid.Content.Editor
                 dto.deckId,
                 dto.displayName,
                 dto.description,
-                dto.liveTemplate,
                 assemblyFp,
                 dto.gold,
                 stats.hp,

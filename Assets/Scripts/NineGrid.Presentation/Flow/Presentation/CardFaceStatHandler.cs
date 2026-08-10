@@ -120,8 +120,7 @@ namespace NineGrid.Flow.Presentation
 
         /// <summary>
         /// 效果倒计时剩余提交（ADR-0035）：事件 Message 为完整「装配id.键」投影令牌键，
-        /// ResultValue 为剩余次数；写入卡面已提交剩余并重投影局内描述（Instance 模式）。
-        /// 剩余只经本 Settled 指令到达，View 不直读 Core 计数器。
+        /// ResultValue 为剩余次数；机关写 ActionCount 槽，遗物走路由栏。描述保持静态。
         /// </summary>
         private static void ApplyCountdownRemaining(CoreGameEvent gameEvent)
         {
@@ -150,8 +149,8 @@ namespace NineGrid.Flow.Presentation
         }
 
         /// <summary>
-        /// 效果倒计时投影清除（ADR-0035 / #157）：效果卸载/离战重置后移除已提交剩余键并重投影，
-        /// 回退静态/初始（Instance 模式）。剩余只经本 Settled 指令到达，View 不直读 Core 计数器。
+        /// 效果倒计时投影清除（ADR-0035 / #157）：效果卸载/离战重置后移除已提交剩余键，
+        /// 机关 ActionCount 槽回退初值或隐藏。剩余只经本 Settled 指令到达。
         /// </summary>
         private static void ApplyCountdownCleared(CoreGameEvent gameEvent)
         {
@@ -488,6 +487,7 @@ namespace NineGrid.Flow.Presentation
                 AttackPattern = source.AttackPattern,
                 HasSyncRhythmSkills = source.HasSyncRhythmSkills,
                 HasActiveRhythm = source.HasActiveRhythm,
+                ShowActionCount = source.ShowActionCount,
                 FaceUp = source.FaceUp,
                 BasicDescription = source.BasicDescription ?? string.Empty,
                 DetailDescription = source.DetailDescription ?? string.Empty,

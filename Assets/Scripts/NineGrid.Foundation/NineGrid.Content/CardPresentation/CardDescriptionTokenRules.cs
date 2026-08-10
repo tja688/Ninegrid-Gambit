@@ -6,8 +6,8 @@ using NineGrid.Content;
 namespace NineGrid.Content.CardPresentation
 {
     /// <summary>
-    /// ADR-0035：卡面描述投影的令牌契约与描述格计量（静态通路 / #154，#155 起含局内模板）。
-    /// 检查描述、局内描述投影模板与卡面介绍里的玩家可见数值一律 <c>{装配id.键}</c>
+    /// ADR-0035：卡面描述投影的令牌契约与描述格计量（静态通路 / #154）。
+    /// 检查描述与卡面介绍里的玩家可见数值一律 <c>{装配id.键}</c>
     /// （限定符必须精确等于某条装配的 id）；简单式 <c>{value}</c>/<c>{amount}</c> 与
     /// <c>{卡defId.键}</c> 前缀式在范围内卡（机关 / 遗物 / 道具）上为错误。
     /// 描述格：普通字符、每个 <c>{…}</c>、每个 <c>[…]</c>、每个 <c>[[…]]</c> 各算 1 格；硬上限 26。
@@ -101,9 +101,9 @@ namespace NineGrid.Content.CardPresentation
         /// <summary>
         /// 单卡校验（ADR-0035 静态通路契约，#154 / #155）。范围外卡（非机关/遗物/道具，或归档卡组）恒返回空；
         /// 范围内卡报告：装配缺稳定 id、简单式 / defId 前缀式 / templateId 限定式令牌、令牌键不存在、
-        /// 检查描述 / 局内模板 / 介绍超 26 格。
-        /// 倒计时投影契约（#156）：装配实参 <c>projectKey</c>（投影令牌键）必须等于「本装配id.键」限定式，
-        /// 且局内模板必须引用该令牌（否则 Settled 剩余永远无法上卡面）。
+        /// 检查描述 / 介绍超 26 格。
+        /// 倒计时投影契约（#156）：装配实参 <c>projectKey</c>（投影令牌键）必须等于「本装配id.键」限定式；
+        /// 剩余改走机关 ActionCount 槽 / 遗物栏计数，不再要求局内描述模板。
         /// </summary>
         public static List<string> ValidateCard(CardPresentationConfigDto dto)
         {
@@ -114,7 +114,6 @@ namespace NineGrid.Content.CardPresentation
             }
 
             var assemblies = dto.effectAssemblies;
-            var projectKeys = new List<string>();
             if (assemblies != null)
             {
                 for (var i = 0; i < assemblies.Length; i++)
@@ -126,38 +125,21 @@ namespace NineGrid.Content.CardPresentation
                         continue;
                     }
 
-                    ValidateProjectKey(errors, projectKeys, "assembly[" + i + "]", assembly);
+                    ValidateProjectKey(errors, "assembly[" + i + "]", assembly);
                 }
             }
 
             ValidateText(errors, "description", dto.description, assemblies);
-            ValidateText(errors, "liveTemplate", dto.liveTemplate, assemblies);
             ValidateText(errors, "faceIntro", dto.faceIntro, assemblies);
-            if (projectKeys.Count > 0 && string.IsNullOrWhiteSpace(dto.liveTemplate))
-            {
-                errors.Add("liveTemplate 为空：含 projectKey 的倒计时装配必须作者局内模板（ADR-0035）");
-            }
-            else
-            {
-                for (var i = 0; i < projectKeys.Count; i++)
-                {
-                    var token = "{" + projectKeys[i] + "}";
-                    if (dto.liveTemplate == null || dto.liveTemplate.IndexOf(token, StringComparison.Ordinal) < 0)
-                    {
-                        errors.Add("liveTemplate 未引用投影令牌 " + token + "（Settled 剩余无法上卡面）");
-                    }
-                }
-            }
 
             return errors;
         }
 
         /// <summary>
-        /// 装配实参 projectKey 契约：非空时必须等于「本装配id.键」限定式；合法键登记供局内模板引用校验。
+        /// 装配实参 projectKey 契约：非空时必须等于「本装配id.键」限定式；合法键登记供倒计时 UI 路由。
         /// </summary>
         private static void ValidateProjectKey(
             List<string> errors,
-            List<string> projectKeys,
             string prefix,
             EffectAssemblyDto assembly)
         {
@@ -184,10 +166,7 @@ namespace NineGrid.Content.CardPresentation
             if (!string.Equals(qualifier, assembly.id.Trim(), StringComparison.OrdinalIgnoreCase))
             {
                 errors.Add(prefix + " projectKey 限定符必须等于本装配 id（{" + projectKey + "} ≠ " + assembly.id + "）");
-                return;
             }
-
-            projectKeys.Add(projectKey);
         }
 
         private static void ValidateText(

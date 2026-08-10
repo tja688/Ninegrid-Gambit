@@ -169,6 +169,7 @@ namespace NineGrid.Flow
                 AttackPattern = previous.AttackPattern,
                 HasSyncRhythmSkills = previous.HasSyncRhythmSkills,
                 HasActiveRhythm = previous.HasActiveRhythm,
+                ShowActionCount = previous.ShowActionCount,
                 FaceUp = previous.FaceUp,
                 BasicDescription = previous.BasicDescription,
                 DetailDescription = previous.DetailDescription,
@@ -183,13 +184,13 @@ namespace NineGrid.Flow
             snapshot.Armor = previous.Armor;
             snapshot.Hp = previous.Hp;
             snapshot.ActionCount = previous.ActionCount;
+            snapshot.ShowActionCount = previous.ShowActionCount;
             card.CommitPresentation(snapshot);
         }
 
         /// <summary>
-        /// Settled 倒计时剩余提交（ADR-0035 / 倒计时票）：把已提交剩余写入卡面投影快照并
-        /// 携带重投影局内描述（Instance 模式，命中 liveTemplate 的「N 次后…」键即替换）。
-        /// 剩余只经结算指令到达本出口，禁止 View 直读 Core 计数器；检查侧（Inspect）不消费。
+        /// Settled 倒计时剩余提交（ADR-0035 / 倒计时票）：把已提交剩余写入卡面投影快照；
+        /// 机关同步 ActionCount 槽，描述保持静态。剩余只经结算指令到达本出口。
         /// </summary>
         public static void CommitCountdownRemaining(ManagedCard card, string tokenKey, string remaining)
         {
@@ -206,32 +207,14 @@ namespace NineGrid.Flow
             var committed = CopyCommittedRemaining(snapshot.CommittedCountdownRemaining);
             committed[tokenKey] = remaining ?? "0";
             snapshot.CommittedCountdownRemaining = committed;
-
-            if (CardPresentationConfigCatalog.TryGet(card.DefId, out var dto) && dto != null)
-            {
-                var projected = CardFaceDescriptionProjector.Project(
-                    CardDescriptionProjectionMode.Instance,
-                    dto.description,
-                    dto.liveTemplate,
-                    dto.effectAssemblies,
-                    snapshot.CommittedCountdownRemaining);
-                if (!string.IsNullOrWhiteSpace(projected))
-                {
-                    snapshot.BasicDescription = projected;
-                }
-
-                snapshot.DetailDescription = CardDetailDescriptionComposer.Compose(
-                    snapshot.BasicDescription,
-                    CardFacePresentationBinder.PeekDescriptionIconCatalog());
-            }
+            ApplyTrapEffectCountdown(snapshot);
 
             card.CommitPresentation(snapshot);
         }
 
         /// <summary>
-        /// Settled 倒计时投影清除（ADR-0035 / #157）：效果卸载或离战重置后移除该投影键的
-        /// 已提交剩余并重投影局内描述（Instance 模式）。键不命中则 no-op；
-        /// 剩余只经结算指令到达本出口，禁止 View 直读 Core 计数器；检查侧（Inspect）不消费。
+        /// Settled 倒计时投影清除（ADR-0035 / #157）：效果卸载或离战重置后移除该投影键；
+        /// 机关 ActionCount 槽回退初值或隐藏。剩余只经结算指令到达本出口。
         /// </summary>
         public static void ClearCountdownRemaining(ManagedCard card, string tokenKey)
         {
@@ -254,24 +237,7 @@ namespace NineGrid.Flow
 
             var snapshot = CloneForCountdownCommit(previous);
             snapshot.CommittedCountdownRemaining = committed;
-
-            if (CardPresentationConfigCatalog.TryGet(card.DefId, out var dto) && dto != null)
-            {
-                var projected = CardFaceDescriptionProjector.Project(
-                    CardDescriptionProjectionMode.Instance,
-                    dto.description,
-                    dto.liveTemplate,
-                    dto.effectAssemblies,
-                    snapshot.CommittedCountdownRemaining);
-                if (!string.IsNullOrWhiteSpace(projected))
-                {
-                    snapshot.BasicDescription = projected;
-                }
-
-                snapshot.DetailDescription = CardDetailDescriptionComposer.Compose(
-                    snapshot.BasicDescription,
-                    CardFacePresentationBinder.PeekDescriptionIconCatalog());
-            }
+            ApplyTrapEffectCountdown(snapshot);
 
             card.CommitPresentation(snapshot);
         }
@@ -318,6 +284,7 @@ namespace NineGrid.Flow
                 AttackPattern = source.AttackPattern,
                 HasSyncRhythmSkills = source.HasSyncRhythmSkills,
                 HasActiveRhythm = source.HasActiveRhythm,
+                ShowActionCount = source.ShowActionCount,
                 FaceUp = source.FaceUp,
                 BasicDescription = source.BasicDescription ?? string.Empty,
                 DetailDescription = source.DetailDescription ?? string.Empty,
@@ -558,15 +525,11 @@ namespace NineGrid.Flow
                 ApplyJsonSprite(ref snapshot.Banner, dto.sprites.banner);
             }
 
-            // ADR-0035 投影缝：实例/预览表面走统一投影层；无局内模板时与检查描述同文。
-            // 右键检查侧不消费本出口（见 CardInspectOverlayPresenter 的 Inspect 再投影）。
-            // 已提交倒计时剩余（Settled 写入）随快照携带，投影时命中即盖过初始装配实参。
+            // ADR-0035：实例/预览表面与检查描述同文（静态装配实参插值）。
             var filledDescription = CardFaceDescriptionProjector.Project(
                 CardDescriptionProjectionMode.Instance,
                 dto.description,
-                dto.liveTemplate,
-                dto.effectAssemblies,
-                snapshot.CommittedCountdownRemaining);
+                dto.effectAssemblies);
             if (!string.IsNullOrWhiteSpace(filledDescription))
             {
                 snapshot.BasicDescription = filledDescription;
@@ -601,8 +564,34 @@ namespace NineGrid.Flow
                 snapshot.ActionCount = period;
             }
 
+            ApplyTrapEffectCountdown(snapshot);
+
             // stats 是内容作者定义的出生值，经 Catalog 造卡用；表现层投影提交不读 JSON stats。
             return true;
+        }
+
+        private static void ApplyTrapEffectCountdown(CardPresentationSnapshot snapshot)
+        {
+            if (snapshot == null
+                || snapshot.Kind != CardPresentationKind.Trap
+                || string.IsNullOrEmpty(snapshot.DefId))
+            {
+                return;
+            }
+
+            if (EffectCountdownProjection.TryResolveActionCount(
+                    snapshot.DefId,
+                    snapshot.CommittedCountdownRemaining,
+                    out var count,
+                    out var show))
+            {
+                snapshot.ActionCount = count;
+                snapshot.ShowActionCount = show;
+            }
+            else
+            {
+                snapshot.ShowActionCount = false;
+            }
         }
 
         private static bool DetectSyncRhythmFromDto(CardPresentationConfigDto dto)

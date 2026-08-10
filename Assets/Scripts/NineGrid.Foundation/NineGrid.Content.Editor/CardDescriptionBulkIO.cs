@@ -37,7 +37,6 @@ namespace NineGrid.Content.Editor
             public string kind;
             public string faceIntro;
             public string description;
-            public string liveTemplate;
         }
 
         [MenuItem("NineGrid/Content/导出卡面描述（测试）")]
@@ -102,7 +101,6 @@ namespace NineGrid.Content.Editor
                         "kind",
                         "faceIntro",
                         "description",
-                        "liveTemplate",
                     },
                     entries = entries,
                 };
@@ -167,7 +165,6 @@ namespace NineGrid.Content.Editor
                     dto.displayName = entry.displayName ?? string.Empty;
                     dto.faceIntro = entry.faceIntro ?? string.Empty;
                     dto.description = entry.description ?? string.Empty;
-                    dto.liveTemplate = entry.liveTemplate ?? string.Empty;
                     CardPresentationJsonIO.SaveAuthoring(dto);
                     updated++;
                 }
@@ -241,7 +238,6 @@ namespace NineGrid.Content.Editor
                     kind = dto.kind ?? string.Empty,
                     faceIntro = dto.faceIntro ?? string.Empty,
                     description = dto.description ?? string.Empty,
-                    liveTemplate = dto.liveTemplate ?? string.Empty,
                 });
             }
 

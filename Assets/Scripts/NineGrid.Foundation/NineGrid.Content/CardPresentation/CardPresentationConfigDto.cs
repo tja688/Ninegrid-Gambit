@@ -36,13 +36,6 @@ namespace NineGrid.Content.CardPresentation
         /// </summary>
         public string faceIntro;
         /// <summary>
-        /// 局内描述投影模板（ADR-0035）：实例可见表面（场上/手牌/道具格/遗物栏）与
-        /// 店/奖/鉴预览渲染用的体感句，可含 <c>{装配id.键}</c> 装配参数引用；
-        /// 空 = 无动态，投影与检查描述（<see cref="description"/>）同文。
-        /// 右键检查永不展示本字段；倒计时/耐久卡必填（作者义务）。描述格硬上限 26。
-        /// </summary>
-        public string liveTemplate;
-        /// <summary>
         /// 怪物攻击模式（ADR-0011）：普通近战 / 斜角近战 / 全向近战 / 普通远程 / 无。
         /// 必填；缺省为装配错误，不得静默当「无」。非 Monster 可空。
         /// </summary>

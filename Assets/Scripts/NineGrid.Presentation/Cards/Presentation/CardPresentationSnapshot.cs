@@ -39,8 +39,11 @@ namespace NineGrid.Cards.Presentation
         /// <summary>是否挂有技能同步触发（ADR-0038）。</summary>
         public bool HasSyncRhythmSkills;
 
-        /// <summary>是否有活跃卡级节奏（应显示行动计数数值）。</summary>
+        /// <summary>是否有活跃卡级节奏（怪物应显示行动计数数值）。</summary>
         public bool HasActiveRhythm;
+
+        /// <summary>机关效果倒计时应显示行动计数槽（与怪物节奏语义分立）。</summary>
+        public bool ShowActionCount;
 
         /// <summary>
         /// Core 牌面朝向镜像（明/暗）。权威在 Core；表现仅 Commit 镜像。

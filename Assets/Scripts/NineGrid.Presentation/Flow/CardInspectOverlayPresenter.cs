@@ -765,7 +765,6 @@ namespace NineGrid.Flow
                 return CardFaceDescriptionProjector.Project(
                     CardDescriptionProjectionMode.Inspect,
                     dto.description,
-                    dto.liveTemplate,
                     dto.effectAssemblies);
             }
 
@@ -797,6 +796,7 @@ namespace NineGrid.Flow
                     AttackPattern = source.AttackPattern,
                     HasSyncRhythmSkills = source.HasSyncRhythmSkills,
                     HasActiveRhythm = source.HasActiveRhythm,
+                    ShowActionCount = source.ShowActionCount,
                     FaceUp = true,
                     BasicDescription = source.BasicDescription,
                     DetailDescription = source.DetailDescription,

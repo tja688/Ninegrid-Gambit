@@ -493,6 +493,7 @@ namespace NineGrid.Flow
                 AttackPattern = source.AttackPattern,
                 HasSyncRhythmSkills = source.HasSyncRhythmSkills,
                 HasActiveRhythm = source.HasActiveRhythm,
+                ShowActionCount = source.ShowActionCount,
                 FaceUp = source.FaceUp,
                 BasicDescription = source.BasicDescription,
                 DetailDescription = source.DetailDescription,

@@ -551,8 +551,18 @@ namespace NineGrid.Cards.Presentation
                     break;
 
                 case CardPresentationKind.Trap:
-                    // 机关模板仅有血量槽；SetNumeric 找不到攻/甲/行动节点则跳过。
                     SetNumeric(CardFaceSlotCodes.Hp, snapshot.Hp);
+                    if (snapshot.ShowActionCount)
+                    {
+                        SetNumeric(CardFaceSlotCodes.ActionCount, snapshot.ActionCount);
+                        SetNumericSlotVisible(CardFaceSlotCodes.ActionCount, true);
+                    }
+                    else
+                    {
+                        SetNumeric(CardFaceSlotCodes.ActionCount, 0);
+                        SetNumericSlotVisible(CardFaceSlotCodes.ActionCount, false);
+                    }
+
                     break;
 
                 default:

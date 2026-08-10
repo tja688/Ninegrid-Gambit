@@ -27,6 +27,7 @@ namespace NineGrid.Presentation.Editor
         public int Armor;
         public int Hp;
         public int ActionCount;
+        public bool ShowActionCount;
         public bool FaceUp = true;
 
         public CardPresentationSnapshot ToSnapshot()
@@ -46,6 +47,7 @@ namespace NineGrid.Presentation.Editor
                 Armor = Mathf.Max(0, Armor),
                 Hp = Mathf.Max(0, Hp),
                 ActionCount = Mathf.Max(0, ActionCount),
+                ShowActionCount = ShowActionCount,
                 FaceUp = FaceUp,
             };
         }
