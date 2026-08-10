@@ -583,7 +583,37 @@ namespace NineGrid.Presentation.Systems.Vfx
                 Time = mNow,
             });
         }
+#else
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void AppendRecord(
+            long correlationId,
+            VfxLifecyclePhase phase,
+            VfxEndReason endReason,
+            bool isIssue,
+            bool isPulse,
+            string cueOrStateId,
+            string bindingKey,
+            string playerId,
+            string variantId,
+            string materialKey,
+            string instanceId,
+            string spatialOwnership,
+            string domainLabel,
+            string ownerSlotKey,
+            string diagnosticSource,
+            string cardDefId,
+            string skillId,
+            string roomId,
+            string itemDefId,
+            string contentId,
+            int diagnosticCardUid,
+            string overrideSummary,
+            string failureReason)
+        {
+        }
+#endif
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
         private void AppendFrame(int created, int completed, int active)
         {
             if (mFrames.Count >= mFrameCapacity)
