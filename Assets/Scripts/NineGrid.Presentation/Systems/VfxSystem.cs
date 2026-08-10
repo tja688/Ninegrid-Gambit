@@ -294,7 +294,7 @@ namespace NineGrid.Presentation.Systems
 
             if (existing != null)
             {
-                BeginStateExit(existing, forReplace: true);
+                BeginStateExit(existing);
             }
 
             return StartResolvedState(owner, slot, desiredState, spatialContext);
@@ -443,19 +443,35 @@ namespace NineGrid.Presentation.Systems
                 }
             }
 
-            if (mActiveStateSlots.Count == 0 && mExitingStateSlots.Count == 0)
+            if (mActiveStateSlots.Count > 0)
             {
-                return;
-            }
-
-            foreach (var slot in mActiveStateSlots.Values)
-            {
-                if (slot.Player == null)
+                List<VfxSlotKey> completedKeys = null;
+                foreach (var pair in mActiveStateSlots)
                 {
-                    continue;
+                    var slot = pair.Value;
+                    if (slot.Player == null || slot.Player.Tick(deltaTime))
+                    {
+                        if (completedKeys == null)
+                        {
+                            completedKeys = new List<VfxSlotKey>();
+                        }
+
+                        completedKeys.Add(pair.Key);
+                    }
                 }
 
-                slot.Player.Tick(deltaTime);
+                if (completedKeys != null)
+                {
+                    for (var i = 0; i < completedKeys.Count; i++)
+                    {
+                        mActiveStateSlots.Remove(completedKeys[i]);
+                    }
+                }
+            }
+
+            if (mExitingStateSlots.Count == 0)
+            {
+                return;
             }
 
             for (var i = mExitingStateSlots.Count - 1; i >= 0; i--)
@@ -756,7 +772,7 @@ namespace NineGrid.Presentation.Systems
             }
 
             var clearedState = slot.DesiredStateId;
-            BeginStateExit(slot, forReplace: false);
+            BeginStateExit(slot);
             return new VfxStateSlotResult
             {
                 Outcome = VfxStateSlotOutcome.Cleared,
@@ -767,7 +783,7 @@ namespace NineGrid.Presentation.Systems
             };
         }
 
-        private void BeginStateExit(ActiveStateSlot slot, bool forReplace)
+        private void BeginStateExit(ActiveStateSlot slot)
         {
             if (slot == null)
             {
@@ -776,8 +792,7 @@ namespace NineGrid.Presentation.Systems
 
             mActiveStateSlots.Remove(slot.Key);
             slot.Exiting = true;
-            var immediate = forReplace
-                || slot.Binding == null
+            var immediate = slot.Binding == null
                 || !VfxStateExitMode.IsSegment(slot.Binding.ExitMode);
             var exitLoops = slot.Binding?.ExitLoopLimit ?? 1;
             slot.Player?.BeginExit(immediate, exitLoops);

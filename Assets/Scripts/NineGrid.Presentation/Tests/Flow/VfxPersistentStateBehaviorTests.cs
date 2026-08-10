@@ -53,6 +53,40 @@ namespace NineGrid.Presentation.Tests
         }
 
         [Test]
+        public void SetSlot_NewState_RespectsSegmentExitOnReplace()
+        {
+            var factory = new FakeVfxPlayerFactory();
+            var system = CreateSystem(factory);
+            var owner = new FakeSlotOwner();
+
+            system.SetSlot(owner, "aura", "vfx.state.b");
+            system.SetSlot(owner, "aura", "vfx.state.a");
+
+            Assert.IsTrue(factory.StatePlayers[0].ExitRequested);
+            Assert.IsFalse(factory.StatePlayers[0].ExitImmediate);
+            Assert.AreEqual(2, factory.StatePlayers[0].ExitLoopLimit);
+        }
+
+        [Test]
+        public void Tick_AttachedHostLost_ReleasesActiveSlot()
+        {
+            var host = new FakeDomainHost { IsAvailable = true };
+            var factory = new FakeVfxPlayerFactory();
+            var system = CreateSystem(factory);
+            var owner = new FakeSlotOwner();
+            var spatial = new VfxSpatialContext("slot", host, Vector3.zero);
+
+            system.SetSlot(owner, "aura", "vfx.state.attached", spatial);
+            factory.StatePlayers[0].CompleteOnNextTick = true;
+            system.Tick(0.1f);
+
+            var replay = system.SetSlot(owner, "aura", "vfx.state.attached", spatial);
+
+            Assert.AreEqual(VfxStateSlotOutcome.Applied, replay.Outcome);
+            Assert.AreEqual(2, factory.StatePlayers.Count);
+        }
+
+        [Test]
         public void ClearSlotIf_OnlyClearsMatchingState()
         {
             var factory = new FakeVfxPlayerFactory();
@@ -302,6 +336,7 @@ namespace NineGrid.Presentation.Tests
             public bool ExitRequested { get; private set; }
             public bool ExitImmediate { get; private set; }
             public int ExitLoopLimit { get; private set; }
+            public bool CompleteOnNextTick { get; set; }
 
             public VfxPlayerStartResult StartState(VfxStateStartRequest request)
             {
@@ -327,6 +362,12 @@ namespace NineGrid.Presentation.Tests
 
             public bool Tick(float deltaTime)
             {
+                if (CompleteOnNextTick)
+                {
+                    CompleteOnNextTick = false;
+                    return true;
+                }
+
                 return false;
             }
         }
