@@ -35,8 +35,14 @@ namespace NineGrid.Content.Vfx
     public string spatialOwnership = "independent";
     public string materialKey;
     public float fps;
+    public float speed = 1f;
     public float scale;
     public float startOffsetSeconds;
+    public float tintR = 1f;
+    public float tintG = 1f;
+    public float tintB = 1f;
+    public float tintA = 1f;
+    public string timeBase = "scaled";
     public float bindingDelaySeconds;
     public float minimumIntervalSeconds;
     public VfxMaterialVariantDto[] variants;
@@ -60,8 +66,14 @@ namespace NineGrid.Content.Vfx
     public string spatialOwnership = "attached";
     public string materialKey;
     public float fps;
+    public float speed = 1f;
     public float scale;
     public float startOffsetSeconds;
+    public float tintR = 1f;
+    public float tintG = 1f;
+    public float tintB = 1f;
+    public float tintA = 1f;
+    public string timeBase = "scaled";
     public VfxMaterialVariantDto[] variants;
     public string[] paramOverrideWhitelist;
     public string selectorCardDefId;
@@ -85,8 +97,11 @@ namespace NineGrid.Content.Vfx
       SpatialOwnership = VfxBindingCatalog.ParseSpatialOwnership(dto.spatialOwnership);
       MaterialKey = dto.materialKey ?? string.Empty;
       Fps = dto.fps;
+      Speed = dto.speed;
       Scale = dto.scale;
       StartOffsetSeconds = dto.startOffsetSeconds;
+      Tint = VfxBindingPlayback.ResolveTint(dto.tintR, dto.tintG, dto.tintB, dto.tintA);
+      UseUnscaledTime = VfxBindingPlayback.IsUnscaledTimeBase(dto.timeBase);
       BindingDelaySeconds = dto.bindingDelaySeconds;
       MinimumIntervalSeconds = dto.minimumIntervalSeconds;
       Variants = dto.variants ?? Array.Empty<VfxMaterialVariantDto>();
@@ -115,8 +130,11 @@ namespace NineGrid.Content.Vfx
     public VfxSpatialOwnership SpatialOwnership { get; }
     public string MaterialKey { get; }
     public float Fps { get; }
+    public float Speed { get; }
     public float Scale { get; }
     public float StartOffsetSeconds { get; }
+    public Color Tint { get; }
+    public bool UseUnscaledTime { get; }
     public float BindingDelaySeconds { get; }
     public float MinimumIntervalSeconds { get; }
     public IReadOnlyList<VfxMaterialVariantDto> Variants { get; }
@@ -166,8 +184,11 @@ namespace NineGrid.Content.Vfx
       SpatialOwnership = VfxBindingCatalog.ParseSpatialOwnership(dto.spatialOwnership);
       MaterialKey = dto.materialKey ?? string.Empty;
       Fps = dto.fps;
+      Speed = dto.speed;
       Scale = dto.scale;
       StartOffsetSeconds = dto.startOffsetSeconds;
+      Tint = VfxBindingPlayback.ResolveTint(dto.tintR, dto.tintG, dto.tintB, dto.tintA);
+      UseUnscaledTime = VfxBindingPlayback.IsUnscaledTimeBase(dto.timeBase);
       Variants = dto.variants ?? Array.Empty<VfxMaterialVariantDto>();
       ParamOverrideWhitelist = dto.paramOverrideWhitelist ?? Array.Empty<string>();
       SelectorCardDefId = dto.selectorCardDefId ?? string.Empty;
@@ -194,8 +215,11 @@ namespace NineGrid.Content.Vfx
     public VfxSpatialOwnership SpatialOwnership { get; }
     public string MaterialKey { get; }
     public float Fps { get; }
+    public float Speed { get; }
     public float Scale { get; }
     public float StartOffsetSeconds { get; }
+    public Color Tint { get; }
+    public bool UseUnscaledTime { get; }
     public IReadOnlyList<VfxMaterialVariantDto> Variants { get; }
     public IReadOnlyList<string> ParamOverrideWhitelist { get; }
     public string SelectorCardDefId { get; }

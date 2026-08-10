@@ -58,10 +58,10 @@ namespace NineGrid.Presentation.Systems.Vfx
             mPlayback.Configure(
                 frames,
                 request.Fps,
-                1f,
+                VfxBindingPlayback.ResolveSpeed(request.Speed),
                 1,
                 request.StartOffsetSeconds,
-                useUnscaledTime: false);
+                request.UseUnscaledTime);
             mActive = true;
             ApplyCurrentFrame();
             return VfxPlayerStartResult.Success(mInstanceId);
@@ -230,8 +230,7 @@ namespace NineGrid.Presentation.Systems.Vfx
 
         private static Color ResolveTint(VfxPulseStartRequest request)
         {
-            // 绑定层尚未开放色调字段；保持白色调，后续白名单扩展。
-            return Color.white;
+            return request.Tint;
         }
     }
 }

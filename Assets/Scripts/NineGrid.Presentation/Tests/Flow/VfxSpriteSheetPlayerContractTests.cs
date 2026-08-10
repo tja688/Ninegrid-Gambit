@@ -98,7 +98,10 @@ namespace NineGrid.Presentation.Tests
                 "fx/test",
                 10f,
                 1f,
+                1f,
                 0f,
+                Color.white,
+                false,
                 new VfxSpatialContext("slot", host, Vector3.zero));
 
             var start = player.StartPulse(request);
@@ -124,7 +127,10 @@ namespace NineGrid.Presentation.Tests
                 "fx/test",
                 10f,
                 1f,
+                1f,
                 0f,
+                Color.white,
+                false,
                 new VfxSpatialContext("impact", host, new Vector3(1f, 2f, 0f)));
 
             Assert.IsTrue(player.StartPulse(request).Succeeded);

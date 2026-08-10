@@ -45,8 +45,14 @@ namespace NineGrid.Content.Vfx
       {
         case "materialKey":
         case "fps":
+        case "speed":
         case "scale":
         case "startOffsetSeconds":
+        case "timeBase":
+        case "tintR":
+        case "tintG":
+        case "tintB":
+        case "tintA":
           return true;
         default:
           return false;

@@ -217,7 +217,35 @@ namespace NineGrid.Presentation.Tests
 
         private sealed class FakeDomainHost : IVfxDomainHost
         {
+            private readonly GameObject mRoot = new GameObject("FakeDomainHost");
+            private readonly Transform mAttachment = new GameObject("Attachment").transform;
+
+            public FakeDomainHost()
+            {
+                mAttachment.SetParent(mRoot.transform, false);
+            }
+
             public bool IsAvailable { get; set; }
+            public Transform AttachmentParent => mAttachment;
+            public SpriteMask Mask => null;
+
+            public bool TryWorldToLocal(Vector3 worldPosition, out Vector3 localPosition)
+            {
+                localPosition = mAttachment.InverseTransformPoint(worldPosition);
+                return true;
+            }
+
+            public bool TryGetFollowTarget(out Transform followTarget)
+            {
+                followTarget = mAttachment;
+                return true;
+            }
+
+            public bool TryGetSortingBounds(out VfxSortingBounds bounds)
+            {
+                bounds = new VfxSortingBounds("Main", 100, 200);
+                return true;
+            }
         }
 
         private sealed class FakeVfxScheduler : IVfxCueScheduler

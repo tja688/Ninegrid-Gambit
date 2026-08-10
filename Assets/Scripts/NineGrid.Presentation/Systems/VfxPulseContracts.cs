@@ -1,4 +1,5 @@
 using NineGrid.Content.Vfx;
+using UnityEngine;
 
 namespace NineGrid.Presentation.Systems
 {
@@ -10,8 +11,11 @@ namespace NineGrid.Presentation.Systems
             string variantId,
             string materialKey,
             float fps,
+            float speed,
             float scale,
             float startOffsetSeconds,
+            Color tint,
+            bool useUnscaledTime,
             VfxSpatialContext acceptedSpatial)
         {
             CueRequest = cueRequest;
@@ -19,8 +23,11 @@ namespace NineGrid.Presentation.Systems
             VariantId = variantId ?? string.Empty;
             MaterialKey = materialKey ?? string.Empty;
             Fps = fps;
+            Speed = speed;
             Scale = scale;
             StartOffsetSeconds = startOffsetSeconds;
+            Tint = tint;
+            UseUnscaledTime = useUnscaledTime;
             AcceptedSpatial = acceptedSpatial;
         }
 
@@ -29,8 +36,11 @@ namespace NineGrid.Presentation.Systems
         public string VariantId { get; }
         public string MaterialKey { get; }
         public float Fps { get; }
+        public float Speed { get; }
         public float Scale { get; }
         public float StartOffsetSeconds { get; }
+        public Color Tint { get; }
+        public bool UseUnscaledTime { get; }
         public VfxSpatialContext AcceptedSpatial { get; }
     }
 

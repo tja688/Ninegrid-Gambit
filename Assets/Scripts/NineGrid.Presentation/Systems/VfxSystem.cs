@@ -375,8 +375,11 @@ namespace NineGrid.Presentation.Systems
             string variantId = string.Empty;
             string materialKey = string.Empty;
             float fps = binding.Fps;
+            float speed = VfxBindingPlayback.ResolveSpeed(binding.Speed);
             float scale = binding.Scale;
             float startOffset = binding.StartOffsetSeconds;
+            var tint = binding.Tint;
+            var useUnscaledTime = binding.UseUnscaledTime;
 
             if (VfxPlayerRegistry.IsMaterialPlayer(binding.PlayerId))
             {
@@ -399,8 +402,11 @@ namespace NineGrid.Presentation.Systems
                 variantId,
                 materialKey,
                 fps,
+                speed,
                 scale,
                 startOffset,
+                tint,
+                useUnscaledTime,
                 acceptedSpatial);
 
             VfxPlayerStartResult backend;
