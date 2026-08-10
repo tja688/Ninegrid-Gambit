@@ -94,7 +94,7 @@ namespace NineGrid.Core
             get { return mItemSourcePoolDefIds; }
         }
 
-        /// <summary>固定卡列表（卡店「道具卡固定」）；每关生成时追加。</summary>
+        /// <summary>固定卡列表（卡店「道具卡固定」）；每关生成时占 ItemDeckCapacity 预算格。</summary>
         public IReadOnlyList<string> FixedItemCardDefIds
         {
             get { return mFixedItemCardDefIds; }

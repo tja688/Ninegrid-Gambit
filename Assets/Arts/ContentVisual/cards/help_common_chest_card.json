@@ -94,7 +94,7 @@
     "containerType": "",
     "deckKind": "",
     "monsterDefIds": [],
-    "usableOutsideBattle": false,
+    "usableOutsideBattle": true,
     "weight": 0,
     "rewardPoolId": "",
     "shopOfferCount": 0,

@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using NineGrid.Core.Content;
 using NineGrid.Core.Utilities;
@@ -24,6 +25,11 @@ namespace NineGrid.Core.Systems
 
         /// <summary>道具奖励房：2 属性道具 + 3 随机道具。</summary>
         IReadOnlyList<RewardEntry> BuildItemRewardShelves();
+
+        /// <summary>
+        /// 卡店「道具卡固定」二级候选：从来源池均匀随机抽 N 张（可重复、可含已固定 defId）。
+        /// </summary>
+        IReadOnlyList<RewardEntry> BuildTavernFixItemCandidates(int count = 3);
 
         /// <summary>
         /// 遗物三选一结算后：未选中的遗物记入「连续再出现」降权，仅作用于下一次遗物池抽取。
@@ -445,6 +451,35 @@ namespace NineGrid.Core.Systems
             return shelves;
         }
 
+        public IReadOnlyList<RewardEntry> BuildTavernFixItemCandidates(int count = 3)
+        {
+            if (count <= 0)
+            {
+                return new List<RewardEntry>();
+            }
+
+            var pool = this.GetModel<PlayerModel>().ItemSourcePoolDefIds;
+            if (pool == null || pool.Count == 0)
+            {
+                return new List<RewardEntry>();
+            }
+
+            var rng = this.GetUtility<IRngUtility>();
+            var list = new List<RewardEntry>(count);
+            for (var i = 0; i < count; i++)
+            {
+                var defId = pool[rng.Range(0, pool.Count)];
+                if (string.IsNullOrEmpty(defId))
+                {
+                    continue;
+                }
+
+                list.Add(new RewardEntry(defId, CardKind.HelpCard, 1, 1));
+            }
+
+            return list;
+        }
+
         public const string ShopChestDefId = "help.common_chest_card";
         public const string ShopPotionDefId = "help.healing_potion";
         public const string ShopFoodDefId = "help.food_card";
@@ -551,25 +586,28 @@ namespace NineGrid.Core.Systems
             var content = this.GetSystem<IContentSystem>();
             var rng = this.GetUtility<IRngUtility>();
 
-            // 1) 按容量从来源池随机生成
-            var pool = player.ItemSourcePoolDefIds;
-            if (pool.Count > 0 && player.ItemDeckCapacity > 0)
+            var fixedCards = player.FixedItemCardDefIds;
+            var fixedCount = fixedCards.Count;
+            var randomCount = Math.Max(0, player.ItemDeckCapacity - fixedCount);
+
+            // 1) 固定卡占塞卡预算（ItemDeckCapacity）；扩容加总量、固定加可控性，二者互斥权衡。
+            for (var i = 0; i < fixedCount; i++)
             {
-                for (var i = 0; i < player.ItemDeckCapacity; i++)
+                TryAddPlayerCard(catalog, content, options, fixedCards[i]);
+            }
+
+            // 2) 剩余预算从来源池随机生成
+            var pool = player.ItemSourcePoolDefIds;
+            if (pool.Count > 0 && randomCount > 0)
+            {
+                for (var i = 0; i < randomCount; i++)
                 {
                     var defId = pool[rng.Range(0, pool.Count)];
                     TryAddPlayerCard(catalog, content, options, defId);
                 }
             }
 
-            // 2) 叠固定卡
-            var fixedCards = player.FixedItemCardDefIds;
-            for (var i = 0; i < fixedCards.Count; i++)
-            {
-                TryAddPlayerCard(catalog, content, options, fixedCards[i]);
-            }
-
-            // 3) 叠房间注入卡（ADR-0022 / #95）
+            // 3) 房间注入卡不占 ItemDeckCapacity（ADR-0022 / #95）
             AppendRoomOpeningInjectPlayerCards(catalog, content, options);
         }
 

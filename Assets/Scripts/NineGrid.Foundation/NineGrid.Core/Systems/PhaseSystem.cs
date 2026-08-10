@@ -1084,7 +1084,13 @@ namespace NineGrid.Core.Systems
             var defId = entry != null ? entry.DefId : null;
             if (string.Equals(defId, RewardSystem.TavernFixItemDefId, System.StringComparison.Ordinal))
             {
-                var candidates = BuildTavernFixItemCandidates();
+                var player = this.GetModel<PlayerModel>();
+                if (player.FixedItemCardDefIds.Count >= player.ItemDeckCapacity)
+                {
+                    return Reject(GameCommandKind.SelectReward, "Item deck budget full", SlotId.None, 0);
+                }
+
+                var candidates = this.GetSystem<IRewardSystem>().BuildTavernFixItemCandidates();
                 if (candidates.Count == 0)
                 {
                     return Reject(GameCommandKind.SelectReward, "No item source pool", SlotId.None, 0);
@@ -1119,6 +1125,12 @@ namespace NineGrid.Core.Systems
                 return Reject(GameCommandKind.SelectReward, "Reward option index is out of range.", SlotId.None, 0);
             }
 
+            var player = this.GetModel<PlayerModel>();
+            if (player.FixedItemCardDefIds.Count >= player.ItemDeckCapacity)
+            {
+                return Reject(GameCommandKind.SelectReward, "Item deck budget full", SlotId.None, 0);
+            }
+
             var price = ResolveTavernServicePrice(RewardSystem.TavernFixItemDefId);
             if (price > 0)
             {
@@ -1136,7 +1148,7 @@ namespace NineGrid.Core.Systems
                 this.GetSystem<IRewardSystem>().BuildTavernServices(),
                 refresh));
             var resolved = pipeline.RunToCompletion();
-            this.GetModel<PlayerModel>().AddFixedItemCard(defId);
+            player.AddFixedItemCard(defId);
             return CoreCommandResult.Accept(resolved);
         }
 
@@ -1153,26 +1165,6 @@ namespace NineGrid.Core.Systems
             {
                 player.AddItemStatBonus(RewardSystem.TavernUpgradeStatDelta);
             }
-        }
-
-        private List<RewardEntry> BuildTavernFixItemCandidates()
-        {
-            // 表现侧最多铺 6 个空格（格 1/3/4/6/7/9）；超出截断，避免 Pending 索引与点击索引错位。
-            const int maxCandidates = 6;
-            var pool = this.GetModel<PlayerModel>().ItemSourcePoolDefIds;
-            var list = new List<RewardEntry>(maxCandidates);
-            for (var i = 0; i < pool.Count && list.Count < maxCandidates; i++)
-            {
-                var id = pool[i];
-                if (string.IsNullOrEmpty(id))
-                {
-                    continue;
-                }
-
-                list.Add(new RewardEntry(id, CardKind.HelpCard, 1, 1));
-            }
-
-            return list;
         }
 
         private int ResolveTavernServicePrice(string defId)
