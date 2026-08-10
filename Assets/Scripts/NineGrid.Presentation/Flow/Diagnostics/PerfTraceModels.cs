@@ -175,6 +175,17 @@ namespace NineGrid.Flow.Diagnostics
         public const string DustPlace = "DustPlace";
         /// <summary>卡牌边沿尘雾拖尾触预算并回收最旧粒子。</summary>
         public const string DustTrailBudget = "DustTrailBudget";
+
+        /// <summary>VFX 生命周期：请求进入。</summary>
+        public const string VfxLifecycleRequest = "VfxLifecycleRequest";
+        /// <summary>VFX 生命周期：绑定解析完成。</summary>
+        public const string VfxLifecycleResolve = "VfxLifecycleResolve";
+        /// <summary>VFX 生命周期：播放器创建。</summary>
+        public const string VfxLifecycleCreate = "VfxLifecycleCreate";
+        /// <summary>VFX 生命周期：实例开始播放。</summary>
+        public const string VfxLifecycleStart = "VfxLifecycleStart";
+        /// <summary>VFX 生命周期：实例或请求结束。</summary>
+        public const string VfxLifecycleComplete = "VfxLifecycleComplete";
     }
 
     public static class PerfTraceSites
@@ -217,6 +228,7 @@ namespace NineGrid.Flow.Diagnostics
         public const string CardEdgeDustPlace = "CardEdgeDust.Place";
         public const string CardEdgeDustTrail = "CardEdgeDust.Trail";
         public const string AudioSystemCue = "Audio.System.Cue";
+        public const string VfxSystemLifecycle = "Vfx.System.Lifecycle";
     }
 
     public static class PerfTraceAnomalyCodes

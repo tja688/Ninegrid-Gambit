@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Runtime.CompilerServices;
 using NineGrid.Content.Vfx;
 using NineGrid.Core;
@@ -94,7 +95,9 @@ namespace NineGrid.Presentation.Systems
     {
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
         IReadOnlyList<VfxHistoryRecord> History { get; }
+        VfxDiagnosticsSnapshot GetDiagnosticsSnapshot();
 #endif
+        VfxReleaseCounters ReleaseCounters { get; }
         VfxCueResult RequestCue(VfxCueRequest request, VfxSpatialContext spatialContext = default);
         VfxScheduleKey ScheduleCue(VfxCueRequest request, float delaySeconds, VfxSpatialContext spatialContext = default);
         bool CancelScheduledCue(VfxScheduleKey key);
@@ -120,6 +123,7 @@ namespace NineGrid.Presentation.Systems
         private readonly IVfxCueScheduler mScheduler;
         private readonly IVfxDomainHostResolver mDomainHostResolver;
         private readonly Func<double> mRandomValue;
+        private readonly VfxDiagnosticsTracker mDiagnostics;
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
         private readonly int mHistoryCapacity;
         private readonly List<VfxHistoryRecord> mHistory;
@@ -151,6 +155,7 @@ namespace NineGrid.Presentation.Systems
             mScheduler = scheduler;
             mDomainHostResolver = domainHostResolver;
             mRandomValue = randomValue ?? (() => UnityEngine.Random.value);
+            mDiagnostics = new VfxDiagnosticsTracker(historyCapacity);
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
             mHistoryCapacity = Math.Max(1, historyCapacity);
             mHistory = new List<VfxHistoryRecord>(mHistoryCapacity);
@@ -185,7 +190,14 @@ namespace NineGrid.Presentation.Systems
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
         public IReadOnlyList<VfxHistoryRecord> History => mHistory;
+
+        public VfxDiagnosticsSnapshot GetDiagnosticsSnapshot()
+        {
+            return mDiagnostics.GetSnapshot();
+        }
 #endif
+
+        public VfxReleaseCounters ReleaseCounters => mDiagnostics.ReleaseCounters;
 
         public VfxScheduleKey ScheduleCue(
             VfxCueRequest request,
@@ -274,7 +286,7 @@ namespace NineGrid.Presentation.Systems
             var key = new VfxSlotKey(owner, slot);
             if (string.IsNullOrWhiteSpace(desiredState))
             {
-                return ClearSlotInternal(key, expectedState: null, conditional: false);
+                return ClearSlotInternal(key, expectedState: null, conditional: false, VfxEndReason.SlotCleared);
             }
 
             mActiveStateSlots.TryGetValue(key, out var existing);
@@ -294,7 +306,7 @@ namespace NineGrid.Presentation.Systems
 
             if (existing != null)
             {
-                BeginStateExit(existing);
+                BeginStateExit(existing, VfxEndReason.SlotReplaced);
             }
 
             return StartResolvedState(owner, slot, desiredState, spatialContext);
@@ -321,7 +333,7 @@ namespace NineGrid.Presentation.Systems
             }
 
             var key = new VfxSlotKey(owner, slot);
-            return ClearSlotInternal(key, expectedState, conditional: true);
+            return ClearSlotInternal(key, expectedState, conditional: true, VfxEndReason.SlotCleared);
         }
 
         public void ReleaseOwner(IVfxSlotOwner owner)
@@ -342,13 +354,26 @@ namespace NineGrid.Presentation.Systems
 
             for (var i = 0; i < keys.Count; i++)
             {
-                ClearSlotInternal(keys[i], expectedState: null, conditional: false);
+                ClearSlotInternal(keys[i], expectedState: null, conditional: false, VfxEndReason.OwnerReleased);
             }
         }
 
         public VfxCueResult RequestCue(VfxCueRequest request, VfxSpatialContext spatialContext = default)
         {
             var requestedAt = mClock.UnscaledTime;
+            mDiagnostics.SetClock(requestedAt);
+            var correlationId = mDiagnostics.BeginCorrelation();
+            mDiagnostics.RecordRequest(
+                correlationId,
+                request.CueId,
+                isPulse: true,
+                request.DiagnosticSource,
+                request.CardDefId,
+                request.SkillId,
+                request.RoomId,
+                request.ItemDefId,
+                request.ContentId,
+                request.DiagnosticCardUid);
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
             AddHistory(CreateHistoryRecord(
                 VfxHistoryOutcome.Requested,
@@ -360,41 +385,87 @@ namespace NineGrid.Presentation.Systems
             {
                 if (resolveError != null && resolveError.Code == VfxBindingResolveCode.Ambiguous)
                 {
-                    return RecordInvalidBinding(request, resolveError);
+                    mDiagnostics.RecordResolve(
+                        correlationId,
+                        request.CueId,
+                        isPulse: true,
+                        resolved: false,
+                        resolveError.BindingKey ?? string.Empty,
+                        playerId: string.Empty,
+                        request.DiagnosticSource,
+                        request.CardDefId,
+                        request.SkillId,
+                        request.RoomId,
+                        request.ItemDefId,
+                        request.ContentId,
+                        request.DiagnosticCardUid,
+                        resolveError.Message ?? "绑定解析歧义。");
+                    return RecordInvalidBinding(request, correlationId, resolveError);
                 }
 
                 var reason = resolveError?.Message ?? "视觉特效 cue 绑定不存在。";
-                return RecordUnbound(request, reason);
+                mDiagnostics.RecordResolve(
+                    correlationId,
+                    request.CueId,
+                    isPulse: true,
+                    resolved: false,
+                    bindingKey: string.Empty,
+                    playerId: string.Empty,
+                    request.DiagnosticSource,
+                    request.CardDefId,
+                    request.SkillId,
+                    request.RoomId,
+                    request.ItemDefId,
+                    request.ContentId,
+                    request.DiagnosticCardUid,
+                    reason);
+                return RecordUnbound(request, correlationId, reason);
             }
 
+            mDiagnostics.RecordResolve(
+                correlationId,
+                request.CueId,
+                isPulse: true,
+                resolved: true,
+                binding.BindingKey,
+                binding.PlayerId,
+                request.DiagnosticSource,
+                request.CardDefId,
+                request.SkillId,
+                request.RoomId,
+                request.ItemDefId,
+                request.ContentId,
+                request.DiagnosticCardUid,
+                failureReason: string.Empty);
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
             PatchLatestRequested(binding);
 #endif
 
             if (!binding.Enabled)
             {
-                return RecordSuppressed(request, binding);
+                return RecordSuppressed(request, correlationId, binding);
             }
 
             if (!VfxPlayerRegistry.SupportsPulse(binding.PlayerId))
             {
-                return RecordPlayerUnavailable(request, binding, "播放器未注册或不支持 Pulse。");
+                return RecordPlayerUnavailable(request, correlationId, binding, "播放器未注册或不支持 Pulse。");
             }
 
             if (binding.SpatialOwnership == VfxSpatialOwnership.Attached
                 && !TryAcceptAttachedSpatial(spatialContext, out var attachedFailure))
             {
-                return RecordDomainUnavailable(request, binding, attachedFailure);
+                return RecordDomainUnavailable(request, correlationId, binding, attachedFailure);
             }
 
             var acceptedSpatial = AcceptSpatial(binding, spatialContext);
             var now = mClock.UnscaledTime;
+            mDiagnostics.SetClock(now);
             if (binding.MinimumIntervalSeconds > 0f
                 && mLastPlayedAt.TryGetValue(binding, out var lastPlayedAt)
                 && now >= lastPlayedAt
                 && now - lastPlayedAt < binding.MinimumIntervalSeconds)
             {
-                return RecordSuppressed(request, binding, "minimum interval");
+                return RecordSuppressed(request, correlationId, binding, "minimum interval");
             }
 
             if (binding.BindingDelaySeconds > 0f)
@@ -405,7 +476,7 @@ namespace NineGrid.Presentation.Systems
                 VfxScheduleKey delayKey = default;
                 delayKey = scheduler.Schedule(binding.BindingDelaySeconds, () =>
                 {
-                    StartResolvedCue(request, capturedBinding, capturedSpatial, mClock.UnscaledTime);
+                    StartResolvedCue(request, capturedBinding, capturedSpatial, mClock.UnscaledTime, correlationId);
                 });
                 if (delayKey.IsValid)
                 {
@@ -420,7 +491,7 @@ namespace NineGrid.Presentation.Systems
                 }
             }
 
-            return StartResolvedCue(request, binding, acceptedSpatial, now);
+            return StartResolvedCue(request, binding, acceptedSpatial, now, correlationId);
         }
 
         public void Tick(float deltaTime)
@@ -432,12 +503,25 @@ namespace NineGrid.Presentation.Systems
                     var instance = mActiveInstances[i];
                     if (instance.Player == null)
                     {
+                        CompletePulseInstance(instance, VfxEndReason.NaturalComplete);
+                        mActiveInstances.RemoveAt(i);
+                        continue;
+                    }
+
+                    if (instance.Ownership == VfxSpatialOwnership.Attached
+                        && instance.SpatialContext.HasDomainHost
+                        && (instance.SpatialContext.DomainHost == null
+                            || !instance.SpatialContext.DomainHost.IsAvailable))
+                    {
+                        instance.Player.Cancel();
+                        CompletePulseInstance(instance, VfxEndReason.AttachedHostLost);
                         mActiveInstances.RemoveAt(i);
                         continue;
                     }
 
                     if (instance.Player.Tick(deltaTime))
                     {
+                        CompletePulseInstance(instance, VfxEndReason.NaturalComplete);
                         mActiveInstances.RemoveAt(i);
                     }
                 }
@@ -449,13 +533,42 @@ namespace NineGrid.Presentation.Systems
                 foreach (var pair in mActiveStateSlots)
                 {
                     var slot = pair.Value;
-                    if (slot.Player == null || slot.Player.Tick(deltaTime))
+                    if (slot.Player == null)
                     {
                         if (completedKeys == null)
                         {
                             completedKeys = new List<VfxSlotKey>();
                         }
 
+                        CompleteStateSlot(slot, VfxEndReason.NaturalComplete);
+                        completedKeys.Add(pair.Key);
+                        continue;
+                    }
+
+                    if (slot.SpatialOwnership == VfxSpatialOwnership.Attached
+                        && slot.SpatialContext.HasDomainHost
+                        && (slot.SpatialContext.DomainHost == null
+                            || !slot.SpatialContext.DomainHost.IsAvailable))
+                    {
+                        slot.Player.Cancel();
+                        if (completedKeys == null)
+                        {
+                            completedKeys = new List<VfxSlotKey>();
+                        }
+
+                        CompleteStateSlot(slot, VfxEndReason.AttachedHostLost);
+                        completedKeys.Add(pair.Key);
+                        continue;
+                    }
+
+                    if (slot.Player.Tick(deltaTime))
+                    {
+                        if (completedKeys == null)
+                        {
+                            completedKeys = new List<VfxSlotKey>();
+                        }
+
+                        CompleteStateSlot(slot, VfxEndReason.NaturalComplete);
                         completedKeys.Add(pair.Key);
                     }
                 }
@@ -469,19 +582,21 @@ namespace NineGrid.Presentation.Systems
                 }
             }
 
-            if (mExitingStateSlots.Count == 0)
+            if (mExitingStateSlots.Count > 0)
             {
-                return;
-            }
-
-            for (var i = mExitingStateSlots.Count - 1; i >= 0; i--)
-            {
-                var slot = mExitingStateSlots[i];
-                if (slot.Player == null || slot.Player.Tick(deltaTime))
+                for (var i = mExitingStateSlots.Count - 1; i >= 0; i--)
                 {
-                    mExitingStateSlots.RemoveAt(i);
+                    var slot = mExitingStateSlots[i];
+                    if (slot.Player == null || slot.Player.Tick(deltaTime))
+                    {
+                        CompleteStateSlot(slot, VfxEndReason.NaturalComplete);
+                        mExitingStateSlots.RemoveAt(i);
+                    }
                 }
             }
+
+            mDiagnostics.SetClock(mClock.UnscaledTime);
+            mDiagnostics.OnFrameEnd(CountActiveInstances());
         }
 
         public void ClearSceneInstances()
@@ -495,6 +610,7 @@ namespace NineGrid.Presentation.Systems
                 }
 
                 instance.Player?.Cancel();
+                CompletePulseInstance(instance, VfxEndReason.SceneExit);
                 mActiveInstances.RemoveAt(i);
             }
 
@@ -510,7 +626,7 @@ namespace NineGrid.Presentation.Systems
 
             for (var i = 0; i < attachedKeys.Count; i++)
             {
-                ClearSlotInternal(attachedKeys[i], expectedState: null, conditional: false);
+                ClearSlotInternal(attachedKeys[i], expectedState: null, conditional: false, VfxEndReason.SceneExit);
             }
         }
 
@@ -530,12 +646,45 @@ namespace NineGrid.Presentation.Systems
             VfxCueRequest request,
             VfxCueBinding binding,
             VfxSpatialContext acceptedSpatial,
-            double now)
+            double now,
+            long correlationId)
         {
+            mDiagnostics.SetClock(now);
             if (!mPlayerFactory.TryCreatePulsePlayer(binding.PlayerId, out var player, out var factoryReason))
             {
-                return RecordPlayerUnavailable(request, binding, factoryReason);
+                mDiagnostics.RecordCreate(
+                    correlationId,
+                    request.CueId,
+                    isPulse: true,
+                    binding.BindingKey,
+                    binding.PlayerId,
+                    succeeded: false,
+                    request.DiagnosticSource,
+                    request.CardDefId,
+                    request.SkillId,
+                    request.RoomId,
+                    request.ItemDefId,
+                    request.ContentId,
+                    request.DiagnosticCardUid,
+                    factoryReason);
+                return RecordPlayerUnavailable(request, correlationId, binding, factoryReason);
             }
+
+            mDiagnostics.RecordCreate(
+                correlationId,
+                request.CueId,
+                isPulse: true,
+                binding.BindingKey,
+                binding.PlayerId,
+                succeeded: true,
+                request.DiagnosticSource,
+                request.CardDefId,
+                request.SkillId,
+                request.RoomId,
+                request.ItemDefId,
+                request.ContentId,
+                request.DiagnosticCardUid,
+                failureReason: string.Empty);
 
             string variantId = string.Empty;
             string materialKey = string.Empty;
@@ -551,7 +700,7 @@ namespace NineGrid.Presentation.Systems
                 var variant = ResolveVariant(binding);
                 if (variant == null || string.IsNullOrWhiteSpace(variant.materialKey))
                 {
-                    return RecordUnbound(request, "视觉特效绑定缺少有效素材。");
+                    return RecordUnbound(request, correlationId, "视觉特效绑定缺少有效素材。");
                 }
 
                 variantId = variant.variantId ?? string.Empty;
@@ -588,6 +737,7 @@ namespace NineGrid.Presentation.Systems
             {
                 return RecordBackendFailure(
                     request,
+                    correlationId,
                     binding,
                     variantId,
                     materialKey,
@@ -600,10 +750,26 @@ namespace NineGrid.Presentation.Systems
                 mLastVariantIds[binding] = variantId;
             }
 
+            var diagnosticContext = BuildPulseDiagnosticContext(
+                request,
+                binding,
+                acceptedSpatial,
+                variantId,
+                materialKey,
+                fps,
+                speed,
+                scale,
+                backend.InstanceId,
+                ownerSlotKey: string.Empty);
+            mDiagnostics.RecordStart(correlationId, diagnosticContext);
+
             mActiveInstances.Add(new ActivePulseInstance
             {
+                CorrelationId = correlationId,
                 InstanceId = backend.InstanceId,
                 Ownership = binding.SpatialOwnership,
+                SpatialContext = acceptedSpatial,
+                DiagnosticContext = diagnosticContext,
                 Player = player,
             });
 
@@ -747,7 +913,8 @@ namespace NineGrid.Presentation.Systems
         private VfxStateSlotResult ClearSlotInternal(
             VfxSlotKey key,
             string expectedState,
-            bool conditional)
+            bool conditional,
+            VfxEndReason exitReason)
         {
             if (!mActiveStateSlots.TryGetValue(key, out var slot))
             {
@@ -772,7 +939,7 @@ namespace NineGrid.Presentation.Systems
             }
 
             var clearedState = slot.DesiredStateId;
-            BeginStateExit(slot);
+            BeginStateExit(slot, exitReason);
             return new VfxStateSlotResult
             {
                 Outcome = VfxStateSlotOutcome.Cleared,
@@ -783,7 +950,7 @@ namespace NineGrid.Presentation.Systems
             };
         }
 
-        private void BeginStateExit(ActiveStateSlot slot)
+        private void BeginStateExit(ActiveStateSlot slot, VfxEndReason exitReason)
         {
             if (slot == null)
             {
@@ -799,6 +966,7 @@ namespace NineGrid.Presentation.Systems
             if (immediate)
             {
                 slot.Player?.Cancel();
+                CompleteStateSlot(slot, exitReason);
                 return;
             }
 
@@ -812,38 +980,134 @@ namespace NineGrid.Presentation.Systems
             VfxSpatialContext spatialContext)
         {
             var request = owner.BuildStateRequest(desiredState);
+            var now = mClock.UnscaledTime;
+            mDiagnostics.SetClock(now);
+            var correlationId = mDiagnostics.BeginCorrelation();
+            mDiagnostics.RecordRequest(
+                correlationId,
+                request.StateId,
+                isPulse: false,
+                request.DiagnosticSource,
+                request.CardDefId,
+                request.SkillId,
+                request.RoomId,
+                request.ItemDefId,
+                request.ContentId,
+                request.DiagnosticCardUid);
+
             if (!mCatalog.TryResolveStateStrict(request, out var binding, out var resolveError))
             {
                 if (resolveError != null && resolveError.Code == VfxBindingResolveCode.Ambiguous)
                 {
-                    return RecordStateInvalidBinding(request, resolveError);
+                    mDiagnostics.RecordResolve(
+                        correlationId,
+                        request.StateId,
+                        isPulse: false,
+                        resolved: false,
+                        resolveError.BindingKey ?? string.Empty,
+                        playerId: string.Empty,
+                        request.DiagnosticSource,
+                        request.CardDefId,
+                        request.SkillId,
+                        request.RoomId,
+                        request.ItemDefId,
+                        request.ContentId,
+                        request.DiagnosticCardUid,
+                        resolveError.Message ?? "绑定解析歧义。");
+                    return RecordStateInvalidBinding(request, correlationId, resolveError);
                 }
 
                 var reason = resolveError?.Message ?? "持续视觉状态绑定不存在。";
-                return RecordStateUnbound(request, reason);
+                mDiagnostics.RecordResolve(
+                    correlationId,
+                    request.StateId,
+                    isPulse: false,
+                    resolved: false,
+                    bindingKey: string.Empty,
+                    playerId: string.Empty,
+                    request.DiagnosticSource,
+                    request.CardDefId,
+                    request.SkillId,
+                    request.RoomId,
+                    request.ItemDefId,
+                    request.ContentId,
+                    request.DiagnosticCardUid,
+                    reason);
+                return RecordStateUnbound(request, correlationId, reason);
             }
+
+            mDiagnostics.RecordResolve(
+                correlationId,
+                request.StateId,
+                isPulse: false,
+                resolved: true,
+                binding.BindingKey,
+                binding.PlayerId,
+                request.DiagnosticSource,
+                request.CardDefId,
+                request.SkillId,
+                request.RoomId,
+                request.ItemDefId,
+                request.ContentId,
+                request.DiagnosticCardUid,
+                failureReason: string.Empty);
 
             if (!binding.Enabled)
             {
-                return RecordStateSuppressed(request, binding);
+                return RecordStateSuppressed(request, correlationId, binding);
             }
 
             if (!VfxPlayerRegistry.SupportsState(binding.PlayerId))
             {
-                return RecordStatePlayerUnavailable(request, binding, "播放器未注册或不支持 State。");
+                return RecordStatePlayerUnavailable(
+                    request,
+                    correlationId,
+                    binding,
+                    "播放器未注册或不支持 State。");
             }
 
             if (binding.SpatialOwnership == VfxSpatialOwnership.Attached
                 && !TryAcceptAttachedSpatial(spatialContext, out var attachedFailure))
             {
-                return RecordStateDomainUnavailable(request, binding, attachedFailure);
+                return RecordStateDomainUnavailable(request, correlationId, binding, attachedFailure);
             }
 
             var acceptedSpatial = AcceptStateSpatial(binding, spatialContext);
             if (!mPlayerFactory.TryCreateStatePlayer(binding.PlayerId, out var player, out var factoryReason))
             {
-                return RecordStatePlayerUnavailable(request, binding, factoryReason);
+                mDiagnostics.RecordCreate(
+                    correlationId,
+                    request.StateId,
+                    isPulse: false,
+                    binding.BindingKey,
+                    binding.PlayerId,
+                    succeeded: false,
+                    request.DiagnosticSource,
+                    request.CardDefId,
+                    request.SkillId,
+                    request.RoomId,
+                    request.ItemDefId,
+                    request.ContentId,
+                    request.DiagnosticCardUid,
+                    factoryReason);
+                return RecordStatePlayerUnavailable(request, correlationId, binding, factoryReason);
             }
+
+            mDiagnostics.RecordCreate(
+                correlationId,
+                request.StateId,
+                isPulse: false,
+                binding.BindingKey,
+                binding.PlayerId,
+                succeeded: true,
+                request.DiagnosticSource,
+                request.CardDefId,
+                request.SkillId,
+                request.RoomId,
+                request.ItemDefId,
+                request.ContentId,
+                request.DiagnosticCardUid,
+                failureReason: string.Empty);
 
             string variantId = string.Empty;
             string materialKey = string.Empty;
@@ -859,7 +1123,7 @@ namespace NineGrid.Presentation.Systems
                 var variant = ResolveStateVariant(binding);
                 if (variant == null || string.IsNullOrWhiteSpace(variant.materialKey))
                 {
-                    return RecordStateUnbound(request, "视觉特效绑定缺少有效素材。");
+                    return RecordStateUnbound(request, correlationId, "视觉特效绑定缺少有效素材。");
                 }
 
                 variantId = variant.variantId ?? string.Empty;
@@ -896,16 +1160,32 @@ namespace NineGrid.Presentation.Systems
             {
                 return RecordStateBackendFailure(
                     request,
+                    correlationId,
                     binding,
                     variantId,
                     materialKey,
                     backend.FailureReason);
             }
 
+            var ownerSlotKey = BuildOwnerSlotKey(owner, slot);
+            var diagnosticContext = BuildStateDiagnosticContext(
+                request,
+                binding,
+                acceptedSpatial,
+                variantId,
+                materialKey,
+                fps,
+                speed,
+                scale,
+                backend.InstanceId,
+                ownerSlotKey);
+            mDiagnostics.RecordStart(correlationId, diagnosticContext);
+
             var key = new VfxSlotKey(owner, slot);
             var activeSlot = new ActiveStateSlot
             {
                 Key = key,
+                CorrelationId = correlationId,
                 DesiredStateId = desiredState,
                 Binding = binding,
                 BindingKey = binding.BindingKey,
@@ -913,6 +1193,8 @@ namespace NineGrid.Presentation.Systems
                 InstanceId = backend.InstanceId,
                 Player = player,
                 SpatialOwnership = binding.SpatialOwnership,
+                SpatialContext = acceptedSpatial,
+                DiagnosticContext = diagnosticContext,
             };
             mActiveStateSlots[key] = activeSlot;
 
@@ -993,8 +1275,23 @@ namespace NineGrid.Presentation.Systems
             return candidates[candidates.Count - 1];
         }
 
-        private VfxStateSlotResult RecordStateUnbound(VfxStateRequest request, string reason)
+        private VfxStateSlotResult RecordStateUnbound(VfxStateRequest request, long correlationId, string reason)
         {
+            mDiagnostics.RecordTerminalFailure(
+                correlationId,
+                request.StateId,
+                isPulse: false,
+                VfxEndReason.Unbound,
+                bindingKey: string.Empty,
+                playerId: string.Empty,
+                request.DiagnosticSource,
+                request.CardDefId,
+                request.SkillId,
+                request.RoomId,
+                request.ItemDefId,
+                request.ContentId,
+                request.DiagnosticCardUid,
+                reason);
             return new VfxStateSlotResult
             {
                 Outcome = VfxStateSlotOutcome.Unbound,
@@ -1005,9 +1302,25 @@ namespace NineGrid.Presentation.Systems
 
         private VfxStateSlotResult RecordStateInvalidBinding(
             VfxStateRequest request,
+            long correlationId,
             VfxBindingResolveError resolveError)
         {
             var reason = resolveError?.Message ?? "绑定解析歧义。";
+            mDiagnostics.RecordTerminalFailure(
+                correlationId,
+                request.StateId,
+                isPulse: false,
+                VfxEndReason.InvalidBinding,
+                resolveError?.BindingKey ?? string.Empty,
+                playerId: string.Empty,
+                request.DiagnosticSource,
+                request.CardDefId,
+                request.SkillId,
+                request.RoomId,
+                request.ItemDefId,
+                request.ContentId,
+                request.DiagnosticCardUid,
+                reason);
             return new VfxStateSlotResult
             {
                 Outcome = VfxStateSlotOutcome.InvalidBinding,
@@ -1017,8 +1330,26 @@ namespace NineGrid.Presentation.Systems
             };
         }
 
-        private VfxStateSlotResult RecordStateSuppressed(VfxStateRequest request, VfxStateBinding binding)
+        private VfxStateSlotResult RecordStateSuppressed(
+            VfxStateRequest request,
+            long correlationId,
+            VfxStateBinding binding)
         {
+            mDiagnostics.RecordTerminalFailure(
+                correlationId,
+                request.StateId,
+                isPulse: false,
+                VfxEndReason.Suppressed,
+                binding.BindingKey,
+                binding.PlayerId,
+                request.DiagnosticSource,
+                request.CardDefId,
+                request.SkillId,
+                request.RoomId,
+                request.ItemDefId,
+                request.ContentId,
+                request.DiagnosticCardUid,
+                SuppressedReason);
             return new VfxStateSlotResult
             {
                 Outcome = VfxStateSlotOutcome.Suppressed,
@@ -1031,9 +1362,25 @@ namespace NineGrid.Presentation.Systems
 
         private VfxStateSlotResult RecordStatePlayerUnavailable(
             VfxStateRequest request,
+            long correlationId,
             VfxStateBinding binding,
             string reason)
         {
+            mDiagnostics.RecordTerminalFailure(
+                correlationId,
+                request.StateId,
+                isPulse: false,
+                VfxEndReason.PlayerUnavailable,
+                binding.BindingKey,
+                binding.PlayerId,
+                request.DiagnosticSource,
+                request.CardDefId,
+                request.SkillId,
+                request.RoomId,
+                request.ItemDefId,
+                request.ContentId,
+                request.DiagnosticCardUid,
+                reason);
             return new VfxStateSlotResult
             {
                 Outcome = VfxStateSlotOutcome.PlayerUnavailable,
@@ -1046,9 +1393,25 @@ namespace NineGrid.Presentation.Systems
 
         private VfxStateSlotResult RecordStateDomainUnavailable(
             VfxStateRequest request,
+            long correlationId,
             VfxStateBinding binding,
             string reason)
         {
+            mDiagnostics.RecordTerminalFailure(
+                correlationId,
+                request.StateId,
+                isPulse: false,
+                VfxEndReason.DomainUnavailable,
+                binding.BindingKey,
+                binding.PlayerId,
+                request.DiagnosticSource,
+                request.CardDefId,
+                request.SkillId,
+                request.RoomId,
+                request.ItemDefId,
+                request.ContentId,
+                request.DiagnosticCardUid,
+                reason);
             return new VfxStateSlotResult
             {
                 Outcome = VfxStateSlotOutcome.DomainUnavailable,
@@ -1061,11 +1424,27 @@ namespace NineGrid.Presentation.Systems
 
         private VfxStateSlotResult RecordStateBackendFailure(
             VfxStateRequest request,
+            long correlationId,
             VfxStateBinding binding,
             string variantId,
             string materialKey,
             string reason)
         {
+            mDiagnostics.RecordTerminalFailure(
+                correlationId,
+                request.StateId,
+                isPulse: false,
+                VfxEndReason.BackendFailure,
+                binding.BindingKey,
+                binding.PlayerId,
+                request.DiagnosticSource,
+                request.CardDefId,
+                request.SkillId,
+                request.RoomId,
+                request.ItemDefId,
+                request.ContentId,
+                request.DiagnosticCardUid,
+                reason);
             return new VfxStateSlotResult
             {
                 Outcome = VfxStateSlotOutcome.BackendFailure,
@@ -1076,8 +1455,23 @@ namespace NineGrid.Presentation.Systems
             };
         }
 
-        private VfxCueResult RecordUnbound(VfxCueRequest request, string reason)
+        private VfxCueResult RecordUnbound(VfxCueRequest request, long correlationId, string reason)
         {
+            mDiagnostics.RecordTerminalFailure(
+                correlationId,
+                request.CueId,
+                isPulse: true,
+                VfxEndReason.Unbound,
+                bindingKey: string.Empty,
+                playerId: string.Empty,
+                request.DiagnosticSource,
+                request.CardDefId,
+                request.SkillId,
+                request.RoomId,
+                request.ItemDefId,
+                request.ContentId,
+                request.DiagnosticCardUid,
+                reason);
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
             var record = CreateHistoryRecord(VfxHistoryOutcome.Unbound, request, mClock.UnscaledTime);
             record.FailureReason = reason;
@@ -1091,9 +1485,27 @@ namespace NineGrid.Presentation.Systems
             };
         }
 
-        private VfxCueResult RecordInvalidBinding(VfxCueRequest request, VfxBindingResolveError resolveError)
+        private VfxCueResult RecordInvalidBinding(
+            VfxCueRequest request,
+            long correlationId,
+            VfxBindingResolveError resolveError)
         {
             var reason = resolveError?.Message ?? "绑定解析歧义。";
+            mDiagnostics.RecordTerminalFailure(
+                correlationId,
+                request.CueId,
+                isPulse: true,
+                VfxEndReason.InvalidBinding,
+                resolveError?.BindingKey ?? string.Empty,
+                playerId: string.Empty,
+                request.DiagnosticSource,
+                request.CardDefId,
+                request.SkillId,
+                request.RoomId,
+                request.ItemDefId,
+                request.ContentId,
+                request.DiagnosticCardUid,
+                reason);
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
             var record = CreateHistoryRecord(
                 VfxHistoryOutcome.InvalidBinding,
@@ -1114,9 +1526,25 @@ namespace NineGrid.Presentation.Systems
 
         private VfxCueResult RecordSuppressed(
             VfxCueRequest request,
+            long correlationId,
             VfxCueBinding binding,
             string reason = SuppressedReason)
         {
+            mDiagnostics.RecordTerminalFailure(
+                correlationId,
+                request.CueId,
+                isPulse: true,
+                VfxEndReason.Suppressed,
+                binding.BindingKey,
+                binding.PlayerId,
+                request.DiagnosticSource,
+                request.CardDefId,
+                request.SkillId,
+                request.RoomId,
+                request.ItemDefId,
+                request.ContentId,
+                request.DiagnosticCardUid,
+                reason);
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
             var record = CreateHistoryRecord(
                 VfxHistoryOutcome.Suppressed,
@@ -1141,9 +1569,25 @@ namespace NineGrid.Presentation.Systems
 
         private VfxCueResult RecordPlayerUnavailable(
             VfxCueRequest request,
+            long correlationId,
             VfxCueBinding binding,
             string reason)
         {
+            mDiagnostics.RecordTerminalFailure(
+                correlationId,
+                request.CueId,
+                isPulse: true,
+                VfxEndReason.PlayerUnavailable,
+                binding.BindingKey,
+                binding.PlayerId,
+                request.DiagnosticSource,
+                request.CardDefId,
+                request.SkillId,
+                request.RoomId,
+                request.ItemDefId,
+                request.ContentId,
+                request.DiagnosticCardUid,
+                reason);
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
             var record = CreateHistoryRecord(
                 VfxHistoryOutcome.PlayerUnavailable,
@@ -1168,9 +1612,25 @@ namespace NineGrid.Presentation.Systems
 
         private VfxCueResult RecordDomainUnavailable(
             VfxCueRequest request,
+            long correlationId,
             VfxCueBinding binding,
             string reason)
         {
+            mDiagnostics.RecordTerminalFailure(
+                correlationId,
+                request.CueId,
+                isPulse: true,
+                VfxEndReason.DomainUnavailable,
+                binding.BindingKey,
+                binding.PlayerId,
+                request.DiagnosticSource,
+                request.CardDefId,
+                request.SkillId,
+                request.RoomId,
+                request.ItemDefId,
+                request.ContentId,
+                request.DiagnosticCardUid,
+                reason);
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
             var record = CreateHistoryRecord(
                 VfxHistoryOutcome.DomainUnavailable,
@@ -1195,11 +1655,27 @@ namespace NineGrid.Presentation.Systems
 
         private VfxCueResult RecordBackendFailure(
             VfxCueRequest request,
+            long correlationId,
             VfxCueBinding binding,
             string variantId,
             string materialKey,
             string reason)
         {
+            mDiagnostics.RecordTerminalFailure(
+                correlationId,
+                request.CueId,
+                isPulse: true,
+                VfxEndReason.BackendFailure,
+                binding.BindingKey,
+                binding.PlayerId,
+                request.DiagnosticSource,
+                request.CardDefId,
+                request.SkillId,
+                request.RoomId,
+                request.ItemDefId,
+                request.ContentId,
+                request.DiagnosticCardUid,
+                reason);
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
             var record = CreateHistoryRecord(
                 VfxHistoryOutcome.BackendFailure,
@@ -1224,6 +1700,110 @@ namespace NineGrid.Presentation.Systems
                 VariantId = variantId,
                 FailureReason = reason,
             };
+        }
+
+        private static VfxInstanceDiagnosticContext BuildPulseDiagnosticContext(
+            VfxCueRequest request,
+            VfxCueBinding binding,
+            VfxSpatialContext spatial,
+            string variantId,
+            string materialKey,
+            float fps,
+            float speed,
+            float scale,
+            string instanceId,
+            string ownerSlotKey)
+        {
+            return new VfxInstanceDiagnosticContext(
+                instanceId,
+                request.CueId,
+                isPulse: true,
+                binding.BindingKey,
+                binding.PlayerId,
+                variantId,
+                materialKey,
+                binding.SpatialOwnership,
+                VfxDiagnosticFormatting.BuildDomainLabel(spatial),
+                ownerSlotKey,
+                request.DiagnosticSource,
+                request.CardDefId,
+                request.SkillId,
+                request.RoomId,
+                request.ItemDefId,
+                request.ContentId,
+                request.DiagnosticCardUid,
+                VfxDiagnosticFormatting.BuildOverrideSummary(fps, speed, scale));
+        }
+
+        private static VfxInstanceDiagnosticContext BuildStateDiagnosticContext(
+            VfxStateRequest request,
+            VfxStateBinding binding,
+            VfxSpatialContext spatial,
+            string variantId,
+            string materialKey,
+            float fps,
+            float speed,
+            float scale,
+            string instanceId,
+            string ownerSlotKey)
+        {
+            return new VfxInstanceDiagnosticContext(
+                instanceId,
+                request.StateId,
+                isPulse: false,
+                binding.BindingKey,
+                binding.PlayerId,
+                variantId,
+                materialKey,
+                binding.SpatialOwnership,
+                VfxDiagnosticFormatting.BuildDomainLabel(spatial),
+                ownerSlotKey,
+                request.DiagnosticSource,
+                request.CardDefId,
+                request.SkillId,
+                request.RoomId,
+                request.ItemDefId,
+                request.ContentId,
+                request.DiagnosticCardUid,
+                VfxDiagnosticFormatting.BuildOverrideSummary(fps, speed, scale));
+        }
+
+        private void CompletePulseInstance(ActivePulseInstance instance, VfxEndReason endReason)
+        {
+            if (instance == null || instance.Completed)
+            {
+                return;
+            }
+
+            instance.Completed = true;
+            mDiagnostics.RecordComplete(instance.CorrelationId, instance.DiagnosticContext, endReason);
+        }
+
+        private void CompleteStateSlot(ActiveStateSlot slot, VfxEndReason endReason)
+        {
+            if (slot == null || slot.Completed)
+            {
+                return;
+            }
+
+            slot.Completed = true;
+            mDiagnostics.RecordComplete(slot.CorrelationId, slot.DiagnosticContext, endReason);
+        }
+
+        private int CountActiveInstances()
+        {
+            return mActiveInstances.Count + mActiveStateSlots.Count + mExitingStateSlots.Count;
+        }
+
+        private static string BuildOwnerSlotKey(IVfxSlotOwner owner, string slot)
+        {
+            if (owner == null)
+            {
+                return string.Empty;
+            }
+
+            return RuntimeHelpers.GetHashCode(owner).ToString(CultureInfo.InvariantCulture)
+                + ":" + (slot ?? string.Empty);
         }
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
@@ -1299,6 +1879,7 @@ namespace NineGrid.Presentation.Systems
         private sealed class ActiveStateSlot
         {
             public VfxSlotKey Key;
+            public long CorrelationId;
             public string DesiredStateId;
             public VfxStateBinding Binding;
             public string BindingKey;
@@ -1306,7 +1887,10 @@ namespace NineGrid.Presentation.Systems
             public string InstanceId;
             public IVfxStatePlayer Player;
             public VfxSpatialOwnership SpatialOwnership;
+            public VfxSpatialContext SpatialContext;
+            public VfxInstanceDiagnosticContext DiagnosticContext;
             public bool Exiting;
+            public bool Completed;
         }
 
         private readonly struct VfxSlotKey : IEquatable<VfxSlotKey>
@@ -1357,9 +1941,13 @@ namespace NineGrid.Presentation.Systems
 
         private sealed class ActivePulseInstance
         {
+            public long CorrelationId;
             public string InstanceId;
             public VfxSpatialOwnership Ownership;
+            public VfxSpatialContext SpatialContext;
+            public VfxInstanceDiagnosticContext DiagnosticContext;
             public IVfxPulsePlayer Player;
+            public bool Completed;
         }
 
         private sealed class RealtimeAudioClock : IAudioClock
