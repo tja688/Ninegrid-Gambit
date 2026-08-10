@@ -784,7 +784,7 @@ namespace NineGrid.Presentation.Systems
             ResetPlaySessionState();
         }
 
-        internal void ResetPlaySessionState()
+        public void ResetPlaySessionState()
         {
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
             EndPreview("MusicSystem.ResetPlaySession");

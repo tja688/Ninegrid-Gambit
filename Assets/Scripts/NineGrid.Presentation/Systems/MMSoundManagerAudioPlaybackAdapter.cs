@@ -178,6 +178,14 @@ namespace NineGrid.Presentation.Systems
 #endif
         }
 
+        public void ResetPlaySession()
+        {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            musicSources.Clear();
+            musicClipKeys.Clear();
+#endif
+        }
+
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
         public MusicBackendResult PlayPreview(MusicPreviewRequest request)
         {

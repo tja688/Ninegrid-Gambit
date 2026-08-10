@@ -3358,11 +3358,7 @@ namespace NineGrid.Core.Effects
             var result = new List<GameAction>();
             if (targets == null || targets.Count == 0)
             {
-                if (context != null && context.OwnerUid != 0)
-                {
-                    result.Add(new FlipCardAction(context.OwnerUid, context.SourceDefId, context.EffectId));
-                }
-
+                // EventCards 排除 Self 后无目标时不翻 Owner（刺客领袖开局批内仅层主一张怪时的自翻兜底）。
                 return result;
             }
 

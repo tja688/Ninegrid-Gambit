@@ -194,6 +194,37 @@ namespace NineGrid.Presentation.Tests
             Assert.AreEqual(12.5d, adapter.ResumedPositions[0], 0.001d);
         }
 
+        [Test]
+        public void RequestState_SameClipKeyButDeadSource_ReplaysInsteadOfNoOp()
+        {
+            var adapter = new FakeDiagnosticsAdapter();
+            var system = CreateSystem(adapter);
+            system.RequestState(new MusicStateRequest(DesiredMusicState.MainMenu, "main-menu"));
+            Assert.AreEqual(1, adapter.Played.Count);
+
+            adapter.SimulateDeadPlayback = true;
+            var replay = system.RequestState(new MusicStateRequest(DesiredMusicState.MainMenu, "main-menu-again"));
+
+            Assert.AreEqual(2, adapter.Played.Count);
+            Assert.AreEqual(MusicRequestOutcome.Played, replay.Outcome);
+        }
+
+        [Test]
+        public void ResetPlaySessionState_ClearsCurrentOwnershipSoNextRequestPlays()
+        {
+            var adapter = new FakeDiagnosticsAdapter();
+            var system = CreateSystem(adapter);
+            system.RequestState(new MusicStateRequest(DesiredMusicState.MainMenu, "main-menu"));
+            Assert.AreEqual(DesiredMusicState.MainMenu, system.CurrentState);
+
+            system.ResetPlaySessionState();
+            Assert.IsNull(system.CurrentState);
+
+            system.RequestState(new MusicStateRequest(DesiredMusicState.MainMenu, "main-menu-restart"));
+            Assert.AreEqual(2, adapter.Played.Count);
+            Assert.AreEqual(DesiredMusicState.MainMenu, system.CurrentState);
+        }
+
         private static MusicSystem CreateSystem(FakeDiagnosticsAdapter adapter)
         {
             return new MusicSystem(
@@ -234,6 +265,7 @@ namespace NineGrid.Presentation.Tests
             private int mNextSourceId;
 
             public bool DeferFades { get; set; }
+            public bool SimulateDeadPlayback { get; set; }
 
             public string HandleSourceId { get; private set; } = string.Empty;
 
@@ -261,6 +293,11 @@ namespace NineGrid.Presentation.Tests
                 StoppedPlaybackHandles.Add(handle);
             }
 
+            public void ResetPlaySession()
+            {
+                MusicTrackSources.Clear();
+            }
+
             public MusicBackendResult PlayPreview(MusicPreviewRequest request)
             {
                 HandleSourceId = "preview-" + (++mNextSourceId);
@@ -276,6 +313,11 @@ namespace NineGrid.Presentation.Tests
 
             public IReadOnlyList<MusicTrackSourceSnapshot> GetPlayingMusicSources()
             {
+                if (SimulateDeadPlayback)
+                {
+                    return Array.Empty<MusicTrackSourceSnapshot>();
+                }
+
                 return MusicTrackSources.ToArray();
             }
 
