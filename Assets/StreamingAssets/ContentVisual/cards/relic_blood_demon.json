@@ -82,7 +82,7 @@
             "id": "relic.blood_demon.damage",
             "templateId": "tpl.relic.blood_demon.damage",
             "containerType": "Relic",
-            "argsJson": "{\"delta\":1,\"reason\":\"relic.blood_demon\",\"threshold\":5}"
+            "argsJson": "{\"delta\":1,\"reason\":\"relic.blood_demon\",\"threshold\":5,\"projectKey\":\"relic.blood_demon.damage.threshold\"}"
         }
     ],
     "effectIds": [],

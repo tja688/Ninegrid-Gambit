@@ -89,7 +89,7 @@
             "id": "relic.punch_card_knife.remove",
             "templateId": "tpl.relic.punch_card_knife.remove",
             "containerType": "Relic",
-            "argsJson": "{\"count\":1,\"threshold\":5}"
+            "argsJson": "{\"count\":1,\"threshold\":5,\"projectKey\":\"relic.punch_card_knife.remove.threshold\"}"
         }
     ],
     "effectIds": [],

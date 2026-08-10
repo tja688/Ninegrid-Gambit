@@ -82,7 +82,7 @@
             "id": "relic.rotation_trick.remove",
             "templateId": "tpl.relic.rotation_trick.remove",
             "containerType": "Relic",
-            "argsJson": "{\"count\":1,\"threshold\":6}"
+            "argsJson": "{\"count\":1,\"threshold\":6,\"projectKey\":\"relic.rotation_trick.remove.threshold\"}"
         }
     ],
     "effectIds": [],

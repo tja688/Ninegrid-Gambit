@@ -88,7 +88,7 @@
             "id": "relic.body_potential.hp_lost",
             "templateId": "tpl.relic.body_potential.hp_lost",
             "containerType": "Relic",
-            "argsJson": "{\"count\":1,\"threshold\":10}"
+            "argsJson": "{\"count\":1,\"threshold\":10,\"projectKey\":\"relic.body_potential.hp_lost.threshold\"}"
         }
     ],
     "effectIds": [],

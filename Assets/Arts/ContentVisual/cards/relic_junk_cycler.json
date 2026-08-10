@@ -82,7 +82,7 @@
             "id": "relic.junk_cycler.use",
             "templateId": "tpl.relic.junk_cycler.use",
             "containerType": "Relic",
-            "argsJson": "{\"count\":1,\"threshold\":9}"
+            "argsJson": "{\"count\":1,\"threshold\":9,\"projectKey\":\"relic.junk_cycler.use.threshold\"}"
         }
     ],
     "effectIds": [],

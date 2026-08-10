@@ -1525,7 +1525,7 @@
   "design_text": "[受到伤害时] 每10点血量伤害洗入随机道具卡",
   "requires_json": "[\"NoOwnerEntity\"]",
   "conditions_json": "[]",
-  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnCumulative\",\"metric\":\"hpLost\",\"threshold\":10,\"targetIsPlayer\":true,\"counterKey\":\"relic.body_potential.hp\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"ShuffleRandomContent\",\"kind\":\"HelpCard\",\"count\":\"{{count}}\",\"top\":false}}"
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnCumulative\",\"metric\":\"hpLost\",\"threshold\":\"{{threshold}}\",\"targetIsPlayer\":true,\"counterKey\":\"relic.body_potential.hp\",\"projectKey\":\"{{projectKey}}\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"ShuffleRandomContent\",\"kind\":\"HelpCard\",\"count\":\"{{count}}\",\"top\":false}}"
  },
  {
   "id": "tpl.relic.beyond_dimension.battle",
@@ -1661,7 +1661,7 @@
   "design_text": "[击杀怪物时] 每移除5张怪物卡，随机洗入一张常规道具卡到战斗卡组",
   "requires_json": "[\"NoOwnerEntity\"]",
   "conditions_json": "[]",
-  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnCumulative\",\"metric\":\"monsterRemoved\",\"threshold\":5,\"counterKey\":\"relic.punch_card_knife.remove\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"ShuffleRandomContent\",\"kind\":\"HelpCard\",\"count\":\"{{count}}\",\"top\":false}}"
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnCumulative\",\"metric\":\"monsterRemoved\",\"threshold\":\"{{threshold}}\",\"counterKey\":\"relic.punch_card_knife.remove\",\"projectKey\":\"{{projectKey}}\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"ShuffleRandomContent\",\"kind\":\"HelpCard\",\"count\":\"{{count}}\",\"top\":false}}"
  },
  {
   "id": "tpl.relic.rotation_trick.remove",
@@ -1669,7 +1669,7 @@
   "design_text": "[击杀怪物时] 每移除6张怪物卡，洗入一张旋转轮到战斗卡组",
   "requires_json": "[\"NoOwnerEntity\"]",
   "conditions_json": "[]",
-  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnCumulative\",\"metric\":\"monsterRemoved\",\"threshold\":6,\"counterKey\":\"relic.rotation_trick.remove\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"ShuffleInto\",\"defId\":\"help.rotation_wheel\",\"kind\":\"HelpCard\",\"count\":\"{{count}}\",\"top\":false}}"
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnCumulative\",\"metric\":\"monsterRemoved\",\"threshold\":\"{{threshold}}\",\"counterKey\":\"relic.rotation_trick.remove\",\"projectKey\":\"{{projectKey}}\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"ShuffleInto\",\"defId\":\"help.rotation_wheel\",\"kind\":\"HelpCard\",\"count\":\"{{count}}\",\"top\":false}}"
  },
  {
   "id": "tpl.relic.terror_mask.remove",
@@ -1685,7 +1685,7 @@
   "design_text": "[使用道具卡时] 每使用9张道具卡，随机洗入一张道具卡到战斗卡组",
   "requires_json": "[\"NoOwnerEntity\"]",
   "conditions_json": "[]",
-  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnCumulative\",\"metric\":\"helpCardUsed\",\"threshold\":9,\"counterKey\":\"relic.junk_cycler.use\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"ShuffleRandomContent\",\"kind\":\"HelpCard\",\"count\":\"{{count}}\",\"top\":false}}"
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnCumulative\",\"metric\":\"helpCardUsed\",\"threshold\":\"{{threshold}}\",\"counterKey\":\"relic.junk_cycler.use\",\"projectKey\":\"{{projectKey}}\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"ShuffleRandomContent\",\"kind\":\"HelpCard\",\"count\":\"{{count}}\",\"top\":false}}"
  },
  {
   "id": "tpl.relic.junk_body.use",
@@ -1693,7 +1693,7 @@
   "design_text": "[使用道具卡时] 每使用3张道具卡，获得1点血量上限",
   "requires_json": "[\"NoOwnerEntity\"]",
   "conditions_json": "[]",
-  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnCumulative\",\"metric\":\"helpCardUsed\",\"threshold\":3,\"counterKey\":\"relic.junk_body.use\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"ModifyBaseStat\",\"stat\":\"MaxHp\",\"delta\":\"{{delta}}\",\"reason\":\"{{reason}}\"}}"
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnCumulative\",\"metric\":\"helpCardUsed\",\"threshold\":\"{{threshold}}\",\"counterKey\":\"relic.junk_body.use\",\"projectKey\":\"{{projectKey}}\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"ModifyBaseStat\",\"stat\":\"MaxHp\",\"delta\":\"{{delta}}\",\"reason\":\"{{reason}}\"}}"
  },
  {
   "id": "tpl.relic.blood_demon.damage",
@@ -1701,7 +1701,7 @@
   "design_text": "[受到伤害时] 每受到5点伤害，获得1点血量上限",
   "requires_json": "[\"NoOwnerEntity\"]",
   "conditions_json": "[]",
-  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnCumulative\",\"metric\":\"damageTaken\",\"threshold\":5,\"targetIsPlayer\":true,\"counterKey\":\"relic.blood_demon.damage\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"ModifyBaseStat\",\"stat\":\"MaxHp\",\"delta\":\"{{delta}}\",\"reason\":\"{{reason}}\"}}"
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnCumulative\",\"metric\":\"damageTaken\",\"threshold\":\"{{threshold}}\",\"targetIsPlayer\":true,\"counterKey\":\"relic.blood_demon.damage\",\"projectKey\":\"{{projectKey}}\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"ModifyBaseStat\",\"stat\":\"MaxHp\",\"delta\":\"{{delta}}\",\"reason\":\"{{reason}}\"}}"
  },
  {
   "id": "tpl.relic.terror_mask.node_start",

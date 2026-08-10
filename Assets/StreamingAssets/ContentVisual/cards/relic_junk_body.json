@@ -83,7 +83,7 @@
             "id": "relic.junk_body.use",
             "templateId": "tpl.relic.junk_body.use",
             "containerType": "Relic",
-            "argsJson": "{\"delta\":1,\"reason\":\"relic.junk_body\",\"threshold\":3}"
+            "argsJson": "{\"delta\":1,\"reason\":\"relic.junk_body\",\"threshold\":3,\"projectKey\":\"relic.junk_body.use.threshold\"}"
         }
     ],
     "effectIds": [],
