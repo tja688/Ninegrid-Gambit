@@ -11,13 +11,13 @@ namespace NineGrid.Presentation.Tests
     {
         private const string CatalogJson =
             "{\"schemaVersion\":1,\"ticket\":\"#196\",\"cueBindings\":["
-            + "{\"cueId\":\"vfx.test\",\"enabled\":true,\"playerId\":\"test-player\",\"materialKey\":\"fx/test\","
-            + "\"bindingDelaySeconds\":0.4,\"minimumIntervalSeconds\":1,\"spatialOwnership\":\"independent\"},"
-            + "{\"cueId\":\"vfx.attached\",\"enabled\":true,\"playerId\":\"test-player\",\"materialKey\":\"fx/attached\","
+            + "{\"cueId\":\"vfx.test\",\"enabled\":true,\"playerId\":\"" + VfxPlayerRegistry.SpriteSheet + "\",\"materialKey\":\"fx/test\","
+            + "\"spatialOwnership\":\"independent\"},"
+            + "{\"cueId\":\"vfx.attached\",\"enabled\":true,\"playerId\":\"" + VfxPlayerRegistry.SpriteSheet + "\",\"materialKey\":\"fx/attached\","
             + "\"spatialOwnership\":\"attached\"},"
-            + "{\"cueId\":\"vfx.ambiguous\",\"enabled\":true,\"playerId\":\"test-player\",\"materialKey\":\"fx/a\","
+            + "{\"cueId\":\"vfx.ambiguous\",\"enabled\":true,\"playerId\":\"" + VfxPlayerRegistry.SpriteSheet + "\",\"materialKey\":\"fx/a\","
             + "\"selectorCardDefId\":\"card.a\"},"
-            + "{\"cueId\":\"vfx.ambiguous\",\"enabled\":true,\"playerId\":\"test-player\",\"materialKey\":\"fx/b\","
+            + "{\"cueId\":\"vfx.ambiguous\",\"enabled\":true,\"playerId\":\"" + VfxPlayerRegistry.SpriteSheet + "\",\"materialKey\":\"fx/b\","
             + "\"selectorCardDefId\":\"card.a\"}"
             + "],\"stateBindings\":[]}";
 
@@ -56,7 +56,7 @@ namespace NineGrid.Presentation.Tests
         {
             var catalogJson =
                 "{\"schemaVersion\":1,\"cueBindings\":["
-                + "{\"cueId\":\"vfx.mute\",\"enabled\":false,\"playerId\":\"test-player\",\"materialKey\":\"fx/mute\"}"
+                + "{\"cueId\":\"vfx.mute\",\"enabled\":false,\"playerId\":\"" + VfxPlayerRegistry.SpriteSheet + "\",\"materialKey\":\"fx/mute\"}"
                 + "],\"stateBindings\":[]}";
             var factory = new FakeVfxPlayerFactory();
             var system = CreateSystem(factory, catalogJson);
@@ -193,7 +193,7 @@ namespace NineGrid.Presentation.Tests
 
         private const string DisabledTestCatalogJson =
             "{\"schemaVersion\":1,\"cueBindings\":["
-            + "{\"cueId\":\"vfx.test\",\"enabled\":false,\"playerId\":\"test-player\",\"materialKey\":\"fx/test\","
+            + "{\"cueId\":\"vfx.test\",\"enabled\":false,\"playerId\":\"" + VfxPlayerRegistry.SpriteSheet + "\",\"materialKey\":\"fx/test\","
             + "\"spatialOwnership\":\"independent\"}"
             + "],\"stateBindings\":[]}";
 

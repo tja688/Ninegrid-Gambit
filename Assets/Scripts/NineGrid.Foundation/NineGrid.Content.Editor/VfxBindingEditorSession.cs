@@ -459,7 +459,7 @@ namespace NineGrid.Content.Editor
         return presentation;
       }
 
-      return typeof(VfxCue).Assembly;
+      return typeof(VfxCueAttribute).Assembly;
     }
 
     private static string ResolveAbsolutePath(string assetPath)

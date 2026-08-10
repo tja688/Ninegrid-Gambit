@@ -813,6 +813,11 @@ namespace NineGrid.Presentation.Systems
             public IVfxPulsePlayer Player;
         }
 
+        private sealed class RealtimeAudioClock : IAudioClock
+        {
+            public double UnscaledTime => Time.realtimeSinceStartup;
+        }
+
         private sealed class NullVfxPulsePlayerFactory : IVfxPulsePlayerFactory
         {
             public bool TryCreatePulsePlayer(string playerId, out IVfxPulsePlayer player, out string failureReason)
