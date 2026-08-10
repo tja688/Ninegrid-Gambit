@@ -7,7 +7,7 @@
     "displayName": "传送",
     "designSlotName": "",
     "description": "选择除玩家外的{help.teleport_card.use.count}张卡牌洗回卡组",
-    "faceIntro": "找不到的东西一般都去了别处",
+    "faceIntro": "起飞...",
     "liveTemplate": "",
     "attackPattern": "",
     "rhythmSource": "",
