@@ -3,8 +3,11 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Text;
+using NineGrid.Content;
 using NineGrid.Content.Vfx;
+using NineGrid.Flow.Presentation;
 using UnityEditor;
 using UnityEngine;
 
@@ -35,10 +38,16 @@ namespace NineGrid.Content.Editor
       diskPath = path;
     }
 
-    public void LoadFromJson(string json)
+    public bool LoadFromJson(string json)
     {
-      diskJson = json ?? string.Empty;
-      diskCatalog = ParseCatalog(diskJson);
+      var candidate = json ?? string.Empty;
+      if (!TryParseCatalogDto(candidate, out var parsed))
+      {
+        return false;
+      }
+
+      diskJson = candidate;
+      diskCatalog = parsed;
       diskPath = string.Empty;
       workingCueRows.Clear();
       workingStateRows.Clear();
@@ -60,6 +69,8 @@ namespace NineGrid.Content.Editor
           workingStateRows.Add(CloneStateDto(stateRows[i]));
         }
       }
+
+      return true;
     }
 
     public VfxBindingCatalogDto BuildWorkingCatalog()
@@ -86,31 +97,53 @@ namespace NineGrid.Content.Editor
         return true;
       }
 
-      MarkHumanConfirmedCue(dto);
+      var candidateCueRows = BuildCueRowsForSave(dto);
+      var candidateStateRows = workingStateRows.Select(CloneStateDto).ToList();
+      if (!ValidateRows(candidateCueRows, candidateStateRows, out error))
+      {
+        return false;
+      }
+
       var key = ComputeCueBindingKey(dto);
       var index = workingCueRows.FindIndex(row => string.Equals(ComputeCueBindingKey(row), key, StringComparison.Ordinal));
+      var saved = CloneCueDto(dto);
+      MarkHumanConfirmedCue(saved);
       if (index < 0)
       {
-        workingCueRows.Add(CloneCueDto(dto));
+        workingCueRows.Add(saved);
       }
       else
       {
-        workingCueRows[index] = CloneCueDto(dto);
+        workingCueRows[index] = saved;
       }
 
-      if (!ValidateAllKeys(out error) || !TryWriteCatalog(out var json, out error))
+      dto.authoringStatus = saved.authoringStatus;
+
+      if (!TryWriteCatalog(out var json, out error))
       {
         return false;
       }
 
       diskJson = json;
-      diskCatalog = ParseCatalog(json);
+      if (!TryParseCatalogDto(json, out diskCatalog))
+      {
+        error = "保存后 VFX 绑定 JSON 无法解析。";
+        return false;
+      }
+
       return true;
     }
 
     public bool TrySaveAll(out string error)
     {
       error = null;
+      var candidateCueRows = workingCueRows.Select(CloneCueDto).ToList();
+      var candidateStateRows = workingStateRows.Select(CloneStateDto).ToList();
+      if (!ValidateRows(candidateCueRows, candidateStateRows, out error))
+      {
+        return false;
+      }
+
       for (var i = 0; i < workingCueRows.Count; i++)
       {
         MarkHumanConfirmedCue(workingCueRows[i]);
@@ -121,13 +154,18 @@ namespace NineGrid.Content.Editor
         MarkHumanConfirmedState(workingStateRows[i]);
       }
 
-      if (!ValidateAllKeys(out error) || !TryWriteCatalog(out var json, out error))
+      if (!TryWriteCatalog(out var json, out error))
       {
         return false;
       }
 
       diskJson = json;
-      diskCatalog = ParseCatalog(json);
+      if (!TryParseCatalogDto(json, out diskCatalog))
+      {
+        error = "保存后 VFX 绑定 JSON 无法解析。";
+        return false;
+      }
+
       return true;
     }
 
@@ -179,13 +217,47 @@ namespace NineGrid.Content.Editor
       }
     }
 
-    private bool ValidateAllKeys(out string error)
+    private List<VfxCueBindingDto> BuildCueRowsForSave(VfxCueBindingDto candidate)
+    {
+      var rows = workingCueRows.Select(CloneCueDto).ToList();
+      if (candidate == null)
+      {
+        return rows;
+      }
+
+      var key = ComputeCueBindingKey(candidate);
+      var index = rows.FindIndex(row => string.Equals(ComputeCueBindingKey(row), key, StringComparison.Ordinal));
+      var clone = CloneCueDto(candidate);
+      if (index < 0)
+      {
+        rows.Add(clone);
+      }
+      else
+      {
+        rows[index] = clone;
+      }
+
+      return rows;
+    }
+
+    private bool ValidateRows(
+        IReadOnlyList<VfxCueBindingDto> cueRows,
+        IReadOnlyList<VfxStateBindingDto> stateRows,
+        out string error)
     {
       error = null;
-      var keys = new HashSet<string>(StringComparer.Ordinal);
-      for (var i = 0; i < workingCueRows.Count; i++)
+      var catalog = new VfxBindingCatalogDto
       {
-        var key = ComputeCueBindingKey(workingCueRows[i]);
+        schemaVersion = Math.Max(1, diskCatalog?.schemaVersion ?? 1),
+        ticket = diskCatalog?.ticket ?? "#193",
+        cueBindings = cueRows?.Select(CloneCueDto).ToArray() ?? Array.Empty<VfxCueBindingDto>(),
+        stateBindings = stateRows?.Select(CloneStateDto).ToArray() ?? Array.Empty<VfxStateBindingDto>(),
+      };
+
+      var keys = new HashSet<string>(StringComparer.Ordinal);
+      for (var i = 0; i < catalog.cueBindings.Length; i++)
+      {
+        var key = ComputeCueBindingKey(catalog.cueBindings[i]);
         if (!string.IsNullOrEmpty(key) && !keys.Add(key))
         {
           error = "保存失败：多个 cue 绑定使用相同的 cue/内容选择器。";
@@ -194,9 +266,9 @@ namespace NineGrid.Content.Editor
       }
 
       keys.Clear();
-      for (var i = 0; i < workingStateRows.Count; i++)
+      for (var i = 0; i < catalog.stateBindings.Length; i++)
       {
-        var key = ComputeStateBindingKey(workingStateRows[i]);
+        var key = ComputeStateBindingKey(catalog.stateBindings[i]);
         if (!string.IsNullOrEmpty(key) && !keys.Add(key))
         {
           error = "保存失败：多个 state 绑定使用相同的 state/内容选择器。";
@@ -204,33 +276,62 @@ namespace NineGrid.Content.Editor
         }
       }
 
+      var declaredCueIds = CollectDeclaredCueIds();
+      var declaredStateIds = CollectDeclaredStateIds();
+      var materialIds = CollectFormalMaterialIds();
       var cueFindings = VfxBindingCatalogHygieneValidator.ValidateCueBindings(
-          BuildWorkingCatalog(),
-          Array.Empty<string>(),
-          Array.Empty<string>());
+          catalog,
+          declaredCueIds,
+          materialIds);
+      var stateFindings = VfxBindingCatalogHygieneValidator.ValidateStateBindings(
+          catalog,
+          declaredStateIds,
+          materialIds);
+
       for (var i = 0; i < cueFindings.Count; i++)
       {
-        if (cueFindings[i].Category == "coverage-conflict")
+        if (IsSaveBlockingCategory(cueFindings[i].Category))
         {
-          error = "保存失败：cue 绑定存在同 specificity 覆盖冲突。";
+          error = "保存失败：" + cueFindings[i];
           return false;
         }
       }
 
-      var stateFindings = VfxBindingCatalogHygieneValidator.ValidateStateBindings(
-          BuildWorkingCatalog(),
-          Array.Empty<string>(),
-          Array.Empty<string>());
       for (var i = 0; i < stateFindings.Count; i++)
       {
-        if (stateFindings[i].Category == "coverage-conflict")
+        if (IsSaveBlockingCategory(stateFindings[i].Category))
         {
-          error = "保存失败：state 绑定存在同 specificity 覆盖冲突。";
+          error = "保存失败：" + stateFindings[i];
           return false;
         }
       }
 
       return true;
+    }
+
+    private static bool IsSaveBlockingCategory(string category)
+    {
+      switch (category)
+      {
+        case "duplicate-binding-key":
+        case "coverage-conflict":
+        case "orphan-binding":
+        case "missing-material":
+        case "missing-player":
+        case "empty-cue":
+        case "empty-state":
+        case "empty-note":
+        case "forbidden-overrides":
+        case "param-range":
+        case "authoring-status":
+        case "catalog-null":
+        case "null-row":
+        case "empty-pool":
+          return true;
+        default:
+          return category != null
+              && category.IndexOf("forbidden", StringComparison.OrdinalIgnoreCase) >= 0;
+      }
     }
 
     private bool TryWriteCatalog(out string json, out string error)
@@ -243,6 +344,12 @@ namespace NineGrid.Content.Editor
       }
 
       json = JsonUtility.ToJson(output, true);
+      if (!TryParseCatalogDto(json, out _))
+      {
+        error = "工作副本无法序列化为合法 VFX Catalog。";
+        return false;
+      }
+
       if (string.IsNullOrEmpty(diskPath))
       {
         return true;
@@ -267,28 +374,92 @@ namespace NineGrid.Content.Editor
       }
     }
 
-    private static VfxBindingCatalogDto ParseCatalog(string json)
+    private static bool TryParseCatalogDto(string json, out VfxBindingCatalogDto catalog)
     {
-      if (string.IsNullOrWhiteSpace(json))
+      catalog = null;
+      if (!VfxBindingCatalog.TryFromJson(json ?? string.Empty, out _, out _))
       {
-        return new VfxBindingCatalogDto
-        {
-          schemaVersion = 1,
-          ticket = "#193",
-          cueBindings = Array.Empty<VfxCueBindingDto>(),
-          stateBindings = Array.Empty<VfxStateBindingDto>(),
-        };
+        return false;
       }
 
-      var catalog = JsonUtility.FromJson<VfxBindingCatalogDto>(json);
+      try
+      {
+        catalog = JsonUtility.FromJson<VfxBindingCatalogDto>(json);
+      }
+      catch
+      {
+        return false;
+      }
+
       if (catalog == null)
       {
-        throw new InvalidDataException("JsonUtility returned null.");
+        return false;
       }
 
       catalog.cueBindings ??= Array.Empty<VfxCueBindingDto>();
       catalog.stateBindings ??= Array.Empty<VfxStateBindingDto>();
-      return catalog;
+      return true;
+    }
+
+    private static HashSet<string> CollectDeclaredCueIds()
+    {
+      var ids = new HashSet<string>(StringComparer.Ordinal);
+      var scan = VfxDeclarationScanner.Scan(ResolvePresentationAssembly());
+      for (var i = 0; i < scan.CueDeclarations.Count; i++)
+      {
+        var cueId = scan.CueDeclarations[i]?.Attribute?.CueId;
+        if (!string.IsNullOrWhiteSpace(cueId))
+        {
+          ids.Add(cueId.Trim());
+        }
+      }
+
+      return ids;
+    }
+
+    private static HashSet<string> CollectDeclaredStateIds()
+    {
+      var ids = new HashSet<string>(StringComparer.Ordinal);
+      var scan = VfxDeclarationScanner.Scan(ResolvePresentationAssembly());
+      for (var i = 0; i < scan.StateDeclarations.Count; i++)
+      {
+        var stateId = scan.StateDeclarations[i]?.Attribute?.StateId;
+        if (!string.IsNullOrWhiteSpace(stateId))
+        {
+          ids.Add(stateId.Trim());
+        }
+      }
+
+      return ids;
+    }
+
+    private static HashSet<string> CollectFormalMaterialIds()
+    {
+      var ids = new HashSet<string>(StringComparer.Ordinal);
+      foreach (var entry in VisualEffectCatalog.All)
+      {
+        if (!string.IsNullOrWhiteSpace(entry?.id))
+        {
+          ids.Add(entry.id.Trim());
+        }
+      }
+
+      return ids;
+    }
+
+    private static Assembly ResolvePresentationAssembly()
+    {
+      var presentation = AppDomain.CurrentDomain.GetAssemblies()
+          .FirstOrDefault(assembly => string.Equals(
+              assembly.GetName().Name,
+              "NineGrid.Presentation",
+              StringComparison.Ordinal));
+      if (presentation != null)
+      {
+        return presentation;
+      }
+
+      return typeof(VfxCue).Assembly;
     }
 
     private static string ResolveAbsolutePath(string assetPath)

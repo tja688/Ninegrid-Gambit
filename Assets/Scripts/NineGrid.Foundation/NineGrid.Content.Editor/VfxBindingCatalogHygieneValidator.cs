@@ -115,6 +115,8 @@ namespace NineGrid.Content.Editor
         ValidateCommonRow(
             key,
             row.cueId,
+            row.note,
+            row.authoringStatus,
             row.playerId,
             row.materialKey,
             row.fps,
@@ -190,6 +192,8 @@ namespace NineGrid.Content.Editor
         ValidateCommonRow(
             key,
             row.stateId,
+            row.note,
+            row.authoringStatus,
             row.playerId,
             row.materialKey,
             row.fps,
@@ -211,6 +215,8 @@ namespace NineGrid.Content.Editor
     private static void ValidateCommonRow(
         string key,
         string identityId,
+        string note,
+        string authoringStatus,
         string playerId,
         string materialKey,
         float fps,
@@ -224,6 +230,30 @@ namespace NineGrid.Content.Editor
         bool supportsPulse,
         List<Finding> findings)
     {
+      if (string.IsNullOrWhiteSpace(note))
+      {
+        findings.Add(new Finding
+        {
+          Category = "empty-note",
+          BindingKey = key,
+          IdentityId = identityId,
+          Detail = "视觉特效绑定缺少中文说明。",
+        });
+      }
+
+      if (!string.IsNullOrWhiteSpace(authoringStatus)
+          && !VfxBindingAuthoringStatuses.IsAiDraft(authoringStatus)
+          && !VfxBindingAuthoringStatuses.IsHumanConfirmed(authoringStatus))
+      {
+        findings.Add(new Finding
+        {
+          Category = "authoring-status",
+          BindingKey = key,
+          IdentityId = identityId,
+          Detail = "未知 authoringStatus：" + authoringStatus,
+        });
+      }
+
       if (string.IsNullOrWhiteSpace(playerId) || !VfxPlayerRegistry.IsKnownPlayerId(playerId))
       {
         findings.Add(new Finding

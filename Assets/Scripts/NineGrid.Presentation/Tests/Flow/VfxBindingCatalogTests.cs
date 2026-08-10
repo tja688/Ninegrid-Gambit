@@ -178,6 +178,20 @@ namespace NineGrid.Presentation.Tests
     }
 
     [Test]
+    public void EditorSession_LoadFromJson_RejectsInvalidWithoutReplacingWorkingCopy()
+    {
+      var session = new VfxBindingEditorSession();
+      Assert.IsTrue(session.LoadFromJson(PriorityCatalogJson));
+      Assert.AreEqual(4, session.BuildWorkingCatalog().cueBindings.Length);
+
+      Assert.IsFalse(session.LoadFromJson("{not-json"));
+      Assert.AreEqual(4, session.BuildWorkingCatalog().cueBindings.Length);
+
+      Assert.IsFalse(session.LoadFromJson(string.Empty));
+      Assert.AreEqual(4, session.BuildWorkingCatalog().cueBindings.Length);
+    }
+
+    [Test]
     public void EditorSession_RejectsCoverageConflictOnSave()
     {
       var session = new VfxBindingEditorSession();

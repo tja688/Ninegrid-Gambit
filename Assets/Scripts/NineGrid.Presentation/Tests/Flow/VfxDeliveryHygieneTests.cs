@@ -4,6 +4,7 @@ using System.Text;
 using NineGrid.Content;
 using NineGrid.Content.Editor;
 using NineGrid.Content.Vfx;
+using NineGrid.Flow.Presentation;
 using NUnit.Framework;
 using UnityEngine;
 
@@ -53,7 +54,7 @@ namespace NineGrid.Presentation.Tests
     public void Declarations_HaveUniqueIdsAndNonEmptyNotes()
     {
       var catalog = VfxBindingCatalog.LoadFromResources();
-      var scan = VfxDeclarationScanner.Scan(catalog, typeof(VfxBindingCatalogTests).Assembly);
+      var scan = VfxDeclarationScanner.Scan(catalog, typeof(VfxCue).Assembly);
 
       var critical = scan.Findings
           .Where(f =>
@@ -107,7 +108,7 @@ namespace NineGrid.Presentation.Tests
     private static System.Collections.Generic.HashSet<string> CollectDeclaredCueIds()
     {
       var ids = new System.Collections.Generic.HashSet<string>(System.StringComparer.Ordinal);
-      var scan = VfxDeclarationScanner.Scan(typeof(VfxBindingCatalogTests).Assembly);
+      var scan = VfxDeclarationScanner.Scan(typeof(VfxCue).Assembly);
       foreach (var declaration in scan.CueDeclarations)
       {
         var cueId = declaration?.Attribute?.CueId;
@@ -123,7 +124,7 @@ namespace NineGrid.Presentation.Tests
     private static System.Collections.Generic.HashSet<string> CollectDeclaredStateIds()
     {
       var ids = new System.Collections.Generic.HashSet<string>(System.StringComparer.Ordinal);
-      var scan = VfxDeclarationScanner.Scan(typeof(VfxBindingCatalogTests).Assembly);
+      var scan = VfxDeclarationScanner.Scan(typeof(VfxCue).Assembly);
       foreach (var declaration in scan.StateDeclarations)
       {
         var stateId = declaration?.Attribute?.StateId;
