@@ -166,6 +166,7 @@ namespace NineGrid.Presentation.Setup
             if (mBindings != null)
             {
                 TriggerPulseOutputHook.RequestResetFx();
+                NineGridArchitecture.Interface?.GetSystem<IVfxSystem>()?.ClearSceneInstances();
                 var session = NineGridArchitecture.Interface?.GetSystem<IBattleSessionSystem>();
                 session?.ClearPresentChannels();
             }

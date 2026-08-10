@@ -1,5 +1,6 @@
 using System;
 using NineGrid.Content.Audio;
+using NineGrid.Content.Vfx;
 using NineGrid.Flow.Diagnostics;
 
 namespace NineGrid.Flow.Presentation
@@ -13,8 +14,10 @@ namespace NineGrid.Flow.Presentation
 
         private static ITriggerPulseSink sFx = NullTriggerPulseSink.Instance;
         private static ITriggerPulseSink sAudio = NullTriggerPulseSink.Instance;
+        private static IVfxCuePulseSink sVfx = NullVfxCuePulseSink.Instance;
         private static bool sFxEnabled = true;
         private static bool sAudioEnabled = true;
+        private static bool sVfxEnabled = true;
 
         public static bool FxEnabled
         {
@@ -28,6 +31,12 @@ namespace NineGrid.Flow.Presentation
             set { sAudioEnabled = value; }
         }
 
+        public static bool VfxEnabled
+        {
+            get { return sVfxEnabled; }
+            set { sVfxEnabled = value; }
+        }
+
         public static ITriggerPulseSink Fx
         {
             get { return sFx; }
@@ -38,19 +47,30 @@ namespace NineGrid.Flow.Presentation
             get { return sAudio; }
         }
 
-        /// <summary>生产装配：FX + 带 debounce 的音效 sink。</summary>
-        public static void Configure(ITriggerPulseSink fx, ITriggerPulseSink audio)
+        public static IVfxCuePulseSink Vfx
+        {
+            get { return sVfx; }
+        }
+
+        /// <summary>生产装配：旧 FX + 带 debounce 的音效 sink + 类型化 VFX。</summary>
+        public static void Configure(
+            ITriggerPulseSink fx,
+            ITriggerPulseSink audio,
+            IVfxCuePulseSink vfx = null)
         {
             sFx = fx ?? NullTriggerPulseSink.Instance;
             sAudio = audio ?? NullTriggerPulseSink.Instance;
+            sVfx = vfx ?? NullVfxCuePulseSink.Instance;
         }
 
         public static void ResetToNull()
         {
             sFx = NullTriggerPulseSink.Instance;
             sAudio = NullTriggerPulseSink.Instance;
+            sVfx = NullVfxCuePulseSink.Instance;
             sFxEnabled = true;
             sAudioEnabled = true;
+            sVfxEnabled = true;
         }
 
         /// <summary>
@@ -92,6 +112,22 @@ namespace NineGrid.Flow.Presentation
             SafePulse(sAudio, request);
         }
 
+        public static void PulseVfx(VfxCueRequest request)
+        {
+            PulseVfx(request, VfxSpatialContext.Empty);
+        }
+
+        public static void PulseVfx(VfxCueRequest request, VfxSpatialContext spatialContext)
+        {
+            if (!sVfxEnabled)
+            {
+                DirectorTrace.TriggerPulse(request.CueId, "vfx", degraded: true);
+                return;
+            }
+
+            SafePulseVfx(sVfx, request, spatialContext);
+        }
+
         private static void SafePulse(ITriggerPulseSink sink, string triggerId, string channel)
         {
             try
@@ -124,6 +160,22 @@ namespace NineGrid.Flow.Presentation
             catch (Exception)
             {
                 DirectorTrace.TriggerPulse(request.CueId, "audio", degraded: true);
+            }
+        }
+
+        private static void SafePulseVfx(
+            IVfxCuePulseSink sink,
+            VfxCueRequest request,
+            VfxSpatialContext spatialContext)
+        {
+            try
+            {
+                sink.Pulse(request, spatialContext);
+                DirectorTrace.TriggerPulse(request.CueId, "vfx", degraded: false);
+            }
+            catch (Exception)
+            {
+                DirectorTrace.TriggerPulse(request.CueId, "vfx", degraded: true);
             }
         }
     }

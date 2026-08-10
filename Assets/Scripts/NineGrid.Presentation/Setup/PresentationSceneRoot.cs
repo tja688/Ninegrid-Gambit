@@ -71,6 +71,9 @@ namespace NineGrid.Presentation.Setup
             {
                 runtime.Tick(Time.deltaTime);
             }
+
+            var vfx = this.GetSystem<IVfxSystem>();
+            vfx?.Tick(Time.deltaTime);
         }
 
         /// <summary>局内开始时幂等安装生产 Runtime；返回导演是否已启动。</summary>
@@ -105,8 +108,9 @@ namespace NineGrid.Presentation.Setup
             // Player preferences are persisted separately from the bundled author defaults.
             // Registering here re-applies them after the runtime MMSoundManager host is available.
             PlayerAudioSettingsSystem.EnsureRegistered();
-            // 音频跨主菜单到跑图保持应用会话；先注册唯一期望音乐 System，再绑定流程壳。
+            // 音频与 VFX 跨主菜单到跑图保持应用会话；先注册唯一期望音乐 System，再绑定流程壳。
             MusicSystem.EnsureRegistered();
+            VfxSystem.EnsureRegistered();
             if (inBattle != null)
             {
                 inBattle.BindSceneHosts(

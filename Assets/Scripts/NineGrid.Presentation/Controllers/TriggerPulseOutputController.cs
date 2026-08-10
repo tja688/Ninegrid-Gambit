@@ -71,11 +71,13 @@ namespace NineGrid.Presentation.Controllers
         public void ConfigureProductionDefaults()
         {
             var audio = AudioSystem.EnsureRegistered();
+            var vfx = VfxSystem.EnsureRegistered();
             TriggerPulseHub.Configure(
                 new CardEffectTriggerPulseSink(),
                 new DebouncingTriggerPulseSink(
                     new AudioTriggerPulseSink(audio),
-                    TriggerPulseHub.DefaultAudioDebounceSeconds));
+                    TriggerPulseHub.DefaultAudioDebounceSeconds),
+                new VfxTriggerPulseSink(vfx));
             mConfigured = true;
         }
 
