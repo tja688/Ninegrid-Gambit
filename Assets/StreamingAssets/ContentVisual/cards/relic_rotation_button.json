@@ -7,8 +7,11 @@
     "displayName": "旋转符文",
     "designSlotName": "",
     "description": "进入战斗时将{relic.rotation_button.node_start.count}张旋转轮置入到手牌",
-    "faceIntro": "开局一转，转到手牌",
+    "faceIntro": "看久了会怀疑地板在动",
+    "liveTemplate": "",
     "attackPattern": "",
+    "rhythmSource": "",
+    "rhythmPeriod": 0,
     "gold": 0,
     "stats": {
         "hp": 0,

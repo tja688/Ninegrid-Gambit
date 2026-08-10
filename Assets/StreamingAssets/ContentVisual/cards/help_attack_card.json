@@ -7,8 +7,11 @@
     "displayName": "皮质手套",
     "designSlotName": "",
     "description": "基础[attack]+{help.attack_card.use.delta}",
-    "faceIntro": "让你持剑更加顺手",
+    "faceIntro": "戴上后总想试试桌子结不结实",
+    "liveTemplate": "",
     "attackPattern": "",
+    "rhythmSource": "",
+    "rhythmPeriod": 0,
     "gold": 50,
     "stats": {
         "hp": 0,

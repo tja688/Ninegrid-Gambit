@@ -7,8 +7,11 @@
     "displayName": "回收铁背心",
     "designSlotName": "",
     "description": "每使用{relic.junk_coating.use.every}张道具卡，获得{relic.junk_coating.use.amount}点[armor]",
-    "faceIntro": "糊上一层，也是一层",
+    "faceIntro": "上辈子是 Mac Pro",
+    "liveTemplate": "",
     "attackPattern": "",
+    "rhythmSource": "",
+    "rhythmPeriod": 0,
     "gold": 0,
     "stats": {
         "hp": 0,

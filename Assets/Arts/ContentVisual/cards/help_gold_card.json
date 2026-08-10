@@ -7,8 +7,11 @@
     "displayName": "钱袋子",
     "designSlotName": "",
     "description": "获取{help.gold_card.use.delta}[money]",
-    "faceIntro": "叮当一声，钱包鼓了",
+    "faceIntro": "听声音就让人安心",
+    "liveTemplate": "",
     "attackPattern": "",
+    "rhythmSource": "",
+    "rhythmPeriod": 0,
     "gold": 30,
     "stats": {
         "hp": 0,

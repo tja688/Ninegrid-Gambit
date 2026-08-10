@@ -7,8 +7,11 @@
     "displayName": "回收弹弓",
     "designSlotName": "",
     "description": "每使用{relic.junk_launcher.use.every}张道具卡，对随机{relic.junk_launcher.use.random}张怪物造成{relic.junk_launcher.use.amount}点伤害",
-    "faceIntro": "捡到什么，砸什么",
+    "faceIntro": "橡皮筋是新的，其他不保证",
+    "liveTemplate": "",
     "attackPattern": "",
+    "rhythmSource": "",
+    "rhythmPeriod": 0,
     "gold": 0,
     "stats": {
         "hp": 0,

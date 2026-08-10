@@ -7,8 +7,11 @@
     "displayName": "交换",
     "designSlotName": "",
     "description": "选择除玩家外的{help.swap_card.use.count}张卡牌互换位置",
-    "faceIntro": "你到我这来，我到你那去",
+    "faceIntro": "把问题换个位置，问题还是问题",
+    "liveTemplate": "",
     "attackPattern": "",
+    "rhythmSource": "",
+    "rhythmPeriod": 0,
     "gold": 50,
     "stats": {
         "hp": 0,

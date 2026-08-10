@@ -7,8 +7,11 @@
     "displayName": "顺劈斧",
     "designSlotName": "",
     "description": "[attack]+{relic.rotten_cleave_axe.base.value}，普通攻击改为对目标[adjacent]范围造成{relic.rotten_cleave_axe.cleave.amount}点伤害",
-    "faceIntro": "顺劈带风，四座皆惊",
+    "faceIntro": "转起来！",
+    "liveTemplate": "",
     "attackPattern": "",
+    "rhythmSource": "",
+    "rhythmPeriod": 0,
     "gold": 0,
     "stats": {
         "hp": 0,

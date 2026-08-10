@@ -7,8 +7,11 @@
     "displayName": "血盾",
     "designSlotName": "",
     "description": "血量上限+{relic.blood_burst.max_hp.value}，受伤时对随机怪物：反伤",
-    "faceIntro": "挨打？还你一记",
+    "faceIntro": "你掉血，它替你记仇",
+    "liveTemplate": "",
     "attackPattern": "",
+    "rhythmSource": "",
+    "rhythmPeriod": 0,
     "gold": 0,
     "stats": {
         "hp": 0,

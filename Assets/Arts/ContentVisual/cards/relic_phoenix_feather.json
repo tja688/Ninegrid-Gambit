@@ -7,8 +7,11 @@
     "displayName": "凤凰羽毛",
     "designSlotName": "",
     "description": "[MHP]+{relic.phoenix_feather.max_hp.delta}，[HP]小于等于{relic.phoenix_feather.fatal.hp}时，恢复{relic.phoenix_feather.fatal.pct}%[HP]并[death]",
-    "faceIntro": "浴火重生，不死鸟",
+    "faceIntro": "凤凰会秃头吗？",
+    "liveTemplate": "",
     "attackPattern": "",
+    "rhythmSource": "",
+    "rhythmPeriod": 0,
     "gold": 0,
     "stats": {
         "hp": 0,

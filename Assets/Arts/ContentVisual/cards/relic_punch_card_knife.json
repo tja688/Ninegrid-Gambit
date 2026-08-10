@@ -7,8 +7,11 @@
     "displayName": "造物之镰",
     "designSlotName": "",
     "description": "[attack]+{relic.punch_card_knife.attack.value}，每击杀{relic.punch_card_knife.remove.threshold}只怪物，添加{relic.punch_card_knife.remove.count}张常规道具卡到卡组",
-    "faceIntro": "打卡五杀，奖励新卡",
+    "faceIntro": "收割之后总会掉点别的东西出来",
+    "liveTemplate": "",
     "attackPattern": "",
+    "rhythmSource": "",
+    "rhythmPeriod": 0,
     "gold": 0,
     "stats": {
         "hp": 0,

@@ -7,8 +7,11 @@
     "displayName": "药水袋",
     "designSlotName": "",
     "description": "进入战斗时将{relic.potion_bag.node_start.count}张恢复药水加入到卡组",
-    "faceIntro": "开战先灌一口",
+    "faceIntro": "总有一瓶不知道什么时候塞进去的",
+    "liveTemplate": "",
     "attackPattern": "",
+    "rhythmSource": "",
+    "rhythmPeriod": 0,
     "gold": 0,
     "stats": {
         "hp": 0,

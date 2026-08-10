@@ -7,8 +7,11 @@
     "displayName": "悬赏令",
     "designSlotName": "",
     "description": "击杀层主时将{relic.lucky_coin.boss_kill.count}张金币卡添加到卡组",
-    "faceIntro": "头目倒地，金币入袋",
+    "faceIntro": "上面的画像画得不太像",
+    "liveTemplate": "",
     "attackPattern": "",
+    "rhythmSource": "",
+    "rhythmPeriod": 0,
     "gold": 0,
     "stats": {
         "hp": 0,

@@ -7,8 +7,11 @@
     "displayName": "爆弹",
     "designSlotName": "",
     "description": "对所有怪物造成{help.bomb.use.amount}点伤害",
-    "faceIntro": "轰的一声，烦恼全消",
+    "faceIntro": "点着以后再看说明书就晚了",
+    "liveTemplate": "",
     "attackPattern": "",
+    "rhythmSource": "",
+    "rhythmPeriod": 0,
     "gold": 50,
     "stats": {
         "hp": 0,

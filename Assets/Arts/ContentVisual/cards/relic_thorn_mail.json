@@ -7,8 +7,11 @@
     "displayName": "尖刺",
     "designSlotName": "",
     "description": "基础[armor]+{relic.thorn_mail.base.value}，玩家损失[armor]时，对攻击者造成等量伤害",
-    "faceIntro": "碰我一下，反弹一生",
+    "faceIntro": "最好的防守是让别人也疼",
+    "liveTemplate": "",
     "attackPattern": "",
+    "rhythmSource": "",
+    "rhythmPeriod": 0,
     "gold": 0,
     "stats": {
         "hp": 0,

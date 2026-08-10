@@ -7,9 +7,11 @@
     "displayName": "撞击",
     "designSlotName": "",
     "description": "对目标怪物造成等同于玩家当前[HP]的伤害",
-    "faceIntro": "传说有人可以靠肚皮来撞死敌人",
+    "faceIntro": "头铁也是一种装备",
     "liveTemplate": "",
     "attackPattern": "",
+    "rhythmSource": "",
+    "rhythmPeriod": 0,
     "gold": 80,
     "stats": {
         "hp": 0,

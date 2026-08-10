@@ -8,7 +8,10 @@
     "designSlotName": "",
     "description": "[[普通近战]]，[[死亡之主]]",
     "faceIntro": "亡灵法师不总是一个眼冒鬼火的骷髅架子",
+    "liveTemplate": "",
     "attackPattern": "普通近战",
+    "rhythmSource": "行动计数",
+    "rhythmPeriod": 5,
     "gold": 5,
     "stats": {
         "hp": 30,
@@ -28,7 +31,7 @@
     },
     "mainVisual": {
         "offsetX": 0.0,
-        "offsetY": -0.44999998807907104,
+        "offsetY": -0.44999998807907107,
         "uniformScale": 1.0
     },
     "animations": {
@@ -92,12 +95,11 @@
     "containerType": "",
     "deckKind": "",
     "monsterDefIds": [],
+    "usableOutsideBattle": false,
     "weight": 0,
     "rewardPoolId": "",
     "shopOfferCount": 0,
     "openingInjects": [],
     "iconPrefab": "",
-    "boardSlot": 0,
-    "rhythmSource": "行动计数",
-    "rhythmPeriod": 5
+    "boardSlot": 0
 }

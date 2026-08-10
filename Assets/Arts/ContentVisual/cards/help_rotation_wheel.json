@@ -7,8 +7,11 @@
     "displayName": "旋转轮",
     "designSlotName": "",
     "description": "逆时针旋转一次",
-    "faceIntro": "转一圈，换个方向再来",
+    "faceIntro": "只认逆时针",
+    "liveTemplate": "",
     "attackPattern": "",
+    "rhythmSource": "",
+    "rhythmPeriod": 0,
     "gold": 20,
     "stats": {
         "hp": 0,

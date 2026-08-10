@@ -7,8 +7,11 @@
     "displayName": "血魔徽章",
     "designSlotName": "",
     "description": "每受到{relic.blood_demon.damage.threshold}点伤害，获得{relic.blood_demon.damage.delta}点[MHP]",
-    "faceIntro": "流血越多，命越长",
+    "faceIntro": "挨打也是一种长期投资",
+    "liveTemplate": "",
     "attackPattern": "",
+    "rhythmSource": "",
+    "rhythmPeriod": 0,
     "gold": 0,
     "stats": {
         "hp": 0,

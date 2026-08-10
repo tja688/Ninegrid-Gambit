@@ -7,8 +7,11 @@
     "displayName": "暗器",
     "designSlotName": "",
     "description": "当怪物移动到格{relic.trap_cell.move.slot}时，对该怪物造成{relic.trap_cell.move.amount}点伤害",
-    "faceIntro": "踩上格一，吃我一记",
+    "faceIntro": "看招！",
+    "liveTemplate": "",
     "attackPattern": "",
+    "rhythmSource": "",
+    "rhythmPeriod": 0,
     "gold": 0,
     "stats": {
         "hp": 0,

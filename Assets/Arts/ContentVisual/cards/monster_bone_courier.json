@@ -8,7 +8,10 @@
     "designSlotName": "",
     "description": "[[神圣决斗]]，[[逃避]]",
     "faceIntro": "静待时机...",
+    "liveTemplate": "",
     "attackPattern": "无",
+    "rhythmSource": "行动计数",
+    "rhythmPeriod": 5,
     "gold": 5,
     "stats": {
         "hp": 4,
@@ -98,12 +101,11 @@
     "containerType": "",
     "deckKind": "",
     "monsterDefIds": [],
+    "usableOutsideBattle": false,
     "weight": 0,
     "rewardPoolId": "",
     "shopOfferCount": 0,
     "openingInjects": [],
     "iconPrefab": "",
-    "boardSlot": 0,
-    "rhythmSource": "行动计数",
-    "rhythmPeriod": 5
+    "boardSlot": 0
 }

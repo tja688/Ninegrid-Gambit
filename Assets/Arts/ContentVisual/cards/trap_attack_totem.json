@@ -7,8 +7,11 @@
     "displayName": "攻击图腾",
     "designSlotName": "",
     "description": "[adjacent]的怪物和玩家[attack]+{trap.attack_totem.aura.value}",
-    "faceIntro": "战意高涨，图腾长鸣",
+    "faceIntro": "40米长刀",
+    "liveTemplate": "",
     "attackPattern": "无",
+    "rhythmSource": "",
+    "rhythmPeriod": 0,
     "gold": 0,
     "stats": {
         "hp": 6,

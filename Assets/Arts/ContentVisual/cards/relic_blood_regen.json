@@ -7,8 +7,11 @@
     "displayName": "血色项链",
     "designSlotName": "",
     "description": "[MHP]+{relic.blood_regen.max_hp.value}；低于半血时，恢复{relic.blood_regen.battle.amount}[HP]",
-    "faceIntro": "半血之下，快速回春",
+    "faceIntro": "只在你脸色不太好时开始工作",
+    "liveTemplate": "",
     "attackPattern": "",
+    "rhythmSource": "",
+    "rhythmPeriod": 0,
     "gold": 0,
     "stats": {
         "hp": 0,

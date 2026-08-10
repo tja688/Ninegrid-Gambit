@@ -8,7 +8,10 @@
     "designSlotName": "",
     "description": "[[普通近战]]，[[刺客领袖]]，[[起来]]",
     "faceIntro": "嘘，都给我悄悄的",
+    "liveTemplate": "",
     "attackPattern": "普通近战",
+    "rhythmSource": "行动计数",
+    "rhythmPeriod": 5,
     "gold": 5,
     "stats": {
         "hp": 30,
@@ -98,12 +101,11 @@
     "containerType": "",
     "deckKind": "",
     "monsterDefIds": [],
+    "usableOutsideBattle": false,
     "weight": 0,
     "rewardPoolId": "",
     "shopOfferCount": 0,
     "openingInjects": [],
     "iconPrefab": "",
-    "boardSlot": 0,
-    "rhythmSource": "行动计数",
-    "rhythmPeriod": 5
+    "boardSlot": 0
 }

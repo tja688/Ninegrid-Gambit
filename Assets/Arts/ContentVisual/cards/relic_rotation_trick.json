@@ -7,8 +7,11 @@
     "displayName": "旋转之源",
     "designSlotName": "",
     "description": "每击杀{relic.rotation_trick.remove.threshold}张怪物卡，添加{relic.rotation_trick.remove.count}张旋转轮到卡组",
-    "faceIntro": "六杀一转，好戏开场",
+    "faceIntro": "转久了会觉得世界本来就是歪的",
+    "liveTemplate": "",
     "attackPattern": "",
+    "rhythmSource": "",
+    "rhythmPeriod": 0,
     "gold": 0,
     "stats": {
         "hp": 0,

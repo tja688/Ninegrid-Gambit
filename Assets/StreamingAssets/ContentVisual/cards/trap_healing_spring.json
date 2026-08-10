@@ -7,8 +7,11 @@
     "displayName": "疗愈之光",
     "designSlotName": "",
     "description": "每移动{trap.healing_spring.heal_on_move.every}次，若玩家在[adjacent]则恢复{trap.healing_spring.heal_on_move.amount}点血量",
-    "faceIntro": "清泉汩汩，伤痛自愈",
+    "faceIntro": "遮阳伞有害",
+    "liveTemplate": "",
     "attackPattern": "无",
+    "rhythmSource": "",
+    "rhythmPeriod": 0,
     "gold": 0,
     "stats": {
         "hp": 6,

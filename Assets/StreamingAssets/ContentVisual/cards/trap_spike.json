@@ -7,8 +7,11 @@
     "displayName": "刺藤",
     "designSlotName": "",
     "description": "每移动{trap.spike.move.every}次，[adjacent]的怪物和玩家各受到{trap.spike.move.amount}点伤害",
-    "faceIntro": "荆棘遍野，寸步难行",
+    "faceIntro": "园艺失败的最终形态",
+    "liveTemplate": "",
     "attackPattern": "无",
+    "rhythmSource": "",
+    "rhythmPeriod": 0,
     "gold": 0,
     "stats": {
         "hp": 6,

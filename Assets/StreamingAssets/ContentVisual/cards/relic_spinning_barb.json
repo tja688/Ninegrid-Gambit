@@ -7,8 +7,11 @@
     "displayName": "毒鞭",
     "designSlotName": "",
     "description": "怪物每移动{relic.spinning_barb.move.every}次，受到{relic.spinning_barb.move.amount}点伤害",
-    "faceIntro": "走一步，扎一下",
+    "faceIntro": "SM最爱",
+    "liveTemplate": "",
     "attackPattern": "",
+    "rhythmSource": "",
+    "rhythmPeriod": 0,
     "gold": 0,
     "stats": {
         "hp": 0,

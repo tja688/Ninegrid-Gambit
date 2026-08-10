@@ -7,8 +7,11 @@
     "displayName": "传送",
     "designSlotName": "",
     "description": "选择除玩家外的{help.teleport_card.use.count}张卡牌洗回卡组",
-    "faceIntro": "一步到位，人卡两安",
+    "faceIntro": "找不到的东西一般都去了别处",
+    "liveTemplate": "",
     "attackPattern": "",
+    "rhythmSource": "",
+    "rhythmPeriod": 0,
     "gold": 30,
     "stats": {
         "hp": 0,

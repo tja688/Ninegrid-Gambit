@@ -7,8 +7,11 @@
     "displayName": "黄金鱼竿",
     "designSlotName": "",
     "description": "获得本遗物时，将{relic.golden_coffer.grant.count}张金色宝箱卡加入卡组",
-    "faceIntro": "箱子里都是金色传说",
+    "faceIntro": "唯独钓不到鱼",
+    "liveTemplate": "",
     "attackPattern": "",
+    "rhythmSource": "",
+    "rhythmPeriod": 0,
     "gold": 0,
     "stats": {
         "hp": 0,

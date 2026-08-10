@@ -7,8 +7,11 @@
     "displayName": "黑暗长戟",
     "designSlotName": "",
     "description": "[attack]+{relic.sharp_longsword.base.value}；每次击杀玩家[attack]+{relic.sharp_longsword.kill.value}，维持到战斗结束",
-    "faceIntro": "越杀越利，越利越杀",
+    "faceIntro": "越打越来劲",
+    "liveTemplate": "",
     "attackPattern": "",
+    "rhythmSource": "",
+    "rhythmPeriod": 0,
     "gold": 0,
     "stats": {
         "hp": 0,

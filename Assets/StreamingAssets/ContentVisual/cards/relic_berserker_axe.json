@@ -7,8 +7,11 @@
     "displayName": "狂战",
     "designSlotName": "",
     "description": "攻击+{relic.berserker_axe.base.value}，血量低于一半时玩家攻击翻倍",
-    "faceIntro": "血越少，斧越狠",
+    "faceIntro": "半条命之后才进入工作状态",
+    "liveTemplate": "",
     "attackPattern": "",
+    "rhythmSource": "",
+    "rhythmPeriod": 0,
     "gold": 0,
     "stats": {
         "hp": 0,

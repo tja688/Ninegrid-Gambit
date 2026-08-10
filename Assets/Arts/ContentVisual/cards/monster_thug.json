@@ -8,7 +8,10 @@
     "designSlotName": "",
     "description": "[[链接近战]]，[[链接战术]]",
     "faceIntro": "跑得快，通常兼任传信官",
+    "liveTemplate": "",
     "attackPattern": "普通近战",
+    "rhythmSource": "行动计数",
+    "rhythmPeriod": 5,
     "gold": 5,
     "stats": {
         "hp": 6,
@@ -27,8 +30,8 @@
         "backLogo": ""
     },
     "mainVisual": {
-        "offsetX": 0.20000000298023224,
-        "offsetY": -0.30000001192092896,
+        "offsetX": 0.20000000298023225,
+        "offsetY": -0.30000001192092898,
         "uniformScale": 0.8799999952316284
     },
     "animations": {
@@ -104,12 +107,11 @@
     "containerType": "",
     "deckKind": "",
     "monsterDefIds": [],
+    "usableOutsideBattle": false,
     "weight": 0,
     "rewardPoolId": "",
     "shopOfferCount": 0,
     "openingInjects": [],
     "iconPrefab": "",
-    "boardSlot": 0,
-    "rhythmSource": "行动计数",
-    "rhythmPeriod": 5
+    "boardSlot": 0
 }

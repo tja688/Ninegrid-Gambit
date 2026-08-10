@@ -7,8 +7,11 @@
     "displayName": "血之暴力",
     "designSlotName": "",
     "description": "[MHP]+{relic.blood_violence.max_hp.value}；当[HP]低于[MHP]的{relic.blood_violence.atk.pct}%时，玩家[attack]+{relic.blood_violence.atk.value}",
-    "faceIntro": "垂死反扑，越险越狂",
+    "faceIntro": "血越少，脾气越大",
+    "liveTemplate": "",
     "attackPattern": "",
+    "rhythmSource": "",
+    "rhythmPeriod": 0,
     "gold": 0,
     "stats": {
         "hp": 0,

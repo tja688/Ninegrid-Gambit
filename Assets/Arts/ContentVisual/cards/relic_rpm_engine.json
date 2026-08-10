@@ -7,8 +7,11 @@
     "displayName": "转速甲",
     "designSlotName": "",
     "description": "基础[armor]+{relic.rpm_engine.base.value}，旋转时多旋转{relic.rpm_engine.rotate.count}次",
-    "faceIntro": "一转不够，再来一转",
+    "faceIntro": "轻盈加护！",
+    "liveTemplate": "",
     "attackPattern": "",
+    "rhythmSource": "",
+    "rhythmPeriod": 0,
     "gold": 0,
     "stats": {
         "hp": 0,

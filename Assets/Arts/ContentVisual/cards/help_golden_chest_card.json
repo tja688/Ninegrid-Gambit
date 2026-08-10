@@ -7,8 +7,11 @@
     "displayName": "高级宝箱",
     "designSlotName": "",
     "description": "挑选并获取一个高级的遗物",
-    "faceIntro": "金光一闪，好运到家",
+    "faceIntro": "箱子本身已经很努力地显贵了",
+    "liveTemplate": "",
     "attackPattern": "",
+    "rhythmSource": "",
+    "rhythmPeriod": 0,
     "gold": 400,
     "stats": {
         "hp": 0,

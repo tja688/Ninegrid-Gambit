@@ -7,8 +7,11 @@
     "displayName": "复合盔甲",
     "designSlotName": "",
     "description": "每关卡开始时，每有{relic.composite_armor.node_start.every}点[attack]，获得{relic.composite_armor.node_start.gain}点[armor]",
-    "faceIntro": "力大，壳也厚",
+    "faceIntro": "肌肉负责吓人，盔甲负责当真",
+    "liveTemplate": "",
     "attackPattern": "",
+    "rhythmSource": "",
+    "rhythmPeriod": 0,
     "gold": 0,
     "stats": {
         "hp": 0,

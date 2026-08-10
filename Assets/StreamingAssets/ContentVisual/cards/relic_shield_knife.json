@@ -8,7 +8,10 @@
     "designSlotName": "",
     "description": "击杀时获得{relic.shield_knife.kill.amount}点[armor]",
     "faceIntro": "可攻可守",
+    "liveTemplate": "",
     "attackPattern": "",
+    "rhythmSource": "",
+    "rhythmPeriod": 0,
     "gold": 0,
     "stats": {
         "hp": 0,

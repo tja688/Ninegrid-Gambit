@@ -7,8 +7,11 @@
     "displayName": "回收腰带",
     "designSlotName": "",
     "description": "每使用{relic.junk_amplifier.use.every}张道具卡，本场战斗[attack]+{relic.junk_amplifier.use.value}",
-    "faceIntro": "用道具，涨攻势",
+    "faceIntro": "垃圾堆里捡到的",
+    "liveTemplate": "",
     "attackPattern": "",
+    "rhythmSource": "",
+    "rhythmPeriod": 0,
     "gold": 0,
     "stats": {
         "hp": 0,

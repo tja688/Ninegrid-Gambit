@@ -7,8 +7,11 @@
     "displayName": "回收棒槌",
     "designSlotName": "",
     "description": "[attack]+{relic.junk_sword.base.value},击杀时恢复{relic.junk_sword.kill.amount}点[HP]",
-    "faceIntro": "钝剑也斩，废料也回",
+    "faceIntro": "二手，但上一任主人已经联系不上了",
+    "liveTemplate": "",
     "attackPattern": "",
+    "rhythmSource": "",
+    "rhythmPeriod": 0,
     "gold": 0,
     "stats": {
         "hp": 0,

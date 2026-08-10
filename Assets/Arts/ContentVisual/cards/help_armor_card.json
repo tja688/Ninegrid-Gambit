@@ -7,8 +7,11 @@
     "displayName": "头甲",
     "designSlotName": "",
     "description": "基础[armor]+{help.armor_card.use.delta}",
-    "faceIntro": "还算有用",
+    "faceIntro": "说明书第一页：别戴反",
+    "liveTemplate": "",
     "attackPattern": "",
+    "rhythmSource": "",
+    "rhythmPeriod": 0,
     "gold": 50,
     "stats": {
         "hp": 0,

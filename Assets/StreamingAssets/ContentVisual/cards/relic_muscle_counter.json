@@ -7,8 +7,11 @@
     "displayName": "狼牙棒",
     "designSlotName": "",
     "description": "[MHP]+{relic.muscle_counter.max_hp.value}；每拥有{relic.muscle_counter.battle.every}点[MHP]，对怪物多造成{relic.muscle_counter.battle.gain}点伤害",
-    "faceIntro": "块头大，拳头疼",
+    "faceIntro": "狼牙是装饰，棒才是重点",
+    "liveTemplate": "",
     "attackPattern": "",
+    "rhythmSource": "",
+    "rhythmPeriod": 0,
     "gold": 0,
     "stats": {
         "hp": 0,

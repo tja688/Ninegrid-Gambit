@@ -8,7 +8,10 @@
     "designSlotName": "boss5",
     "description": "[[链接近战]]，[[链接准备]]，[[链接护甲]]",
     "faceIntro": "猪是借来的",
+    "liveTemplate": "",
     "attackPattern": "普通近战",
+    "rhythmSource": "行动计数",
+    "rhythmPeriod": 5,
     "gold": 5,
     "stats": {
         "hp": 30,
@@ -27,9 +30,9 @@
         "backLogo": ""
     },
     "mainVisual": {
-        "offsetX": 0.30000001192092896,
+        "offsetX": 0.30000001192092898,
         "offsetY": -0.4000000059604645,
-        "uniformScale": 1.2000000476837158
+        "uniformScale": 1.2000000476837159
     },
     "animations": {
         "defaultFps": 8.0,
@@ -104,12 +107,11 @@
     "containerType": "",
     "deckKind": "",
     "monsterDefIds": [],
+    "usableOutsideBattle": false,
     "weight": 0,
     "rewardPoolId": "",
     "shopOfferCount": 0,
     "openingInjects": [],
     "iconPrefab": "",
-    "boardSlot": 0,
-    "rhythmSource": "行动计数",
-    "rhythmPeriod": 5
+    "boardSlot": 0
 }

@@ -7,8 +7,11 @@
     "displayName": "铁盾",
     "designSlotName": "",
     "description": "基础[armor]+{relic.iron_shield.base.value}；获得{relic.iron_shield.reduction.value}层：伤害减免",
-    "faceIntro": "盾沉如山，减免一切",
+    "faceIntro": "没有花纹，因为花纹不挡刀",
+    "liveTemplate": "",
     "attackPattern": "",
+    "rhythmSource": "",
+    "rhythmPeriod": 0,
     "gold": 0,
     "stats": {
         "hp": 0,

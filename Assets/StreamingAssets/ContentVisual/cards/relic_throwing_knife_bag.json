@@ -7,8 +7,11 @@
     "displayName": "飞刀袋",
     "designSlotName": "",
     "description": "进入战斗时将{relic.throwing_knife_bag.node_start.count}张飞刀加入到卡组",
-    "faceIntro": "开局撒刀，刀刀入袋",
+    "faceIntro": "里面的数量总比你记得的多",
+    "liveTemplate": "",
     "attackPattern": "",
+    "rhythmSource": "",
+    "rhythmPeriod": 0,
     "gold": 0,
     "stats": {
         "hp": 0,

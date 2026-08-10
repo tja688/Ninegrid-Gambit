@@ -7,9 +7,11 @@
     "displayName": "复活石",
     "designSlotName": "",
     "description": "[action]{trap.revive_stone.interact.every}次后[death]，将{trap.revive_stone.remove.count}张重生骷髅打出到同格",
-    "faceIntro": "待机六次，替身归来",
+    "faceIntro": "花费75阳光铲除它",
     "liveTemplate": "剩余{trap.revive_stone.interact.every}次互动后[death]，将{trap.revive_stone.remove.count}张重生骷髅打出到同格",
     "attackPattern": "无",
+    "rhythmSource": "",
+    "rhythmPeriod": 0,
     "gold": 5,
     "stats": {
         "hp": 6,

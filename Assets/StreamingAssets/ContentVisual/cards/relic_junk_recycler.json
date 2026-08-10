@@ -7,8 +7,11 @@
     "displayName": "回收食物",
     "designSlotName": "",
     "description": "每使用{relic.junk_recycler.use.every}张道具卡，恢复{relic.junk_recycler.use.amount}点[HP]",
-    "faceIntro": "废物利用，回点老血",
+    "faceIntro": "并非食物",
+    "liveTemplate": "",
     "attackPattern": "",
+    "rhythmSource": "",
+    "rhythmPeriod": 0,
     "gold": 0,
     "stats": {
         "hp": 0,

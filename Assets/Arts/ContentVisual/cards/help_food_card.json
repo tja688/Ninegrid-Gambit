@@ -7,8 +7,11 @@
     "displayName": "生日蛋糕",
     "designSlotName": "",
     "description": "将[HP]完整恢复",
-    "faceIntro": "吹蜡烛前，先吃饱",
+    "faceIntro": "蜡烛数量已做隐私处理",
+    "liveTemplate": "",
     "attackPattern": "",
+    "rhythmSource": "",
+    "rhythmPeriod": 0,
     "gold": 50,
     "stats": {
         "hp": 0,

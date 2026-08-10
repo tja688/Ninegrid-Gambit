@@ -8,7 +8,10 @@
     "designSlotName": "",
     "description": "[[潜伏近战]]，[[跳杀]]",
     "faceIntro": "哎，扎死你呀哈哈哈哈",
+    "liveTemplate": "",
     "attackPattern": "普通近战",
+    "rhythmSource": "行动计数",
+    "rhythmPeriod": 5,
     "gold": 5,
     "stats": {
         "hp": 4,
@@ -98,12 +101,11 @@
     "containerType": "",
     "deckKind": "",
     "monsterDefIds": [],
+    "usableOutsideBattle": false,
     "weight": 0,
     "rewardPoolId": "",
     "shopOfferCount": 0,
     "openingInjects": [],
     "iconPrefab": "",
-    "boardSlot": 0,
-    "rhythmSource": "行动计数",
-    "rhythmPeriod": 5
+    "boardSlot": 0
 }

@@ -7,8 +7,11 @@
     "displayName": "交换之书",
     "designSlotName": "",
     "description": "进入战斗时将{relic.swap_button.node_start.count}张交换置入手牌",
-    "faceIntro": "开局一换，换出新局",
+    "faceIntro": "为他人着想！",
+    "liveTemplate": "",
     "attackPattern": "",
+    "rhythmSource": "",
+    "rhythmPeriod": 0,
     "gold": 0,
     "stats": {
         "hp": 0,

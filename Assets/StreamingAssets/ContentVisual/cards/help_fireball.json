@@ -7,8 +7,11 @@
     "displayName": "火球术",
     "designSlotName": "",
     "description": "对选中怪物造成等同于玩家[attack]的伤害",
-    "faceIntro": "火球不大，心意很烫",
+    "faceIntro": "搓的时候不要问原理",
+    "liveTemplate": "",
     "attackPattern": "",
+    "rhythmSource": "",
+    "rhythmPeriod": 0,
     "gold": 30,
     "stats": {
         "hp": 0,

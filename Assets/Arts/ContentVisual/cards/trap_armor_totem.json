@@ -7,8 +7,11 @@
     "displayName": "护甲图腾",
     "designSlotName": "",
     "description": "[adjacent]的怪物和玩家[armor]+{trap.armor_totem.aura.value}",
-    "faceIntro": "铁甲图腾，护你周全",
+    "faceIntro": "借给你的护甲是要还的",
+    "liveTemplate": "",
     "attackPattern": "无",
+    "rhythmSource": "",
+    "rhythmPeriod": 0,
     "gold": 0,
     "stats": {
         "hp": 6,

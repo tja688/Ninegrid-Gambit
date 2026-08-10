@@ -7,8 +7,11 @@
     "displayName": "木剑",
     "designSlotName": "",
     "description": "[attack]+{relic.wood_sword.base.value}，木质套装：[attack]额外+{relic.wood_sword.set.value}",
-    "faceIntro": "木剑虽钝，套装锋利",
+    "faceIntro": "认真削过，所以算武器",
+    "liveTemplate": "",
     "attackPattern": "",
+    "rhythmSource": "",
+    "rhythmPeriod": 0,
     "gold": 0,
     "stats": {
         "hp": 0,

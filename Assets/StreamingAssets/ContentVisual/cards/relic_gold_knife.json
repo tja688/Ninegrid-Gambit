@@ -7,8 +7,11 @@
     "displayName": "打金刀",
     "designSlotName": "",
     "description": "击杀怪物时，获得{relic.gold_knife.kill.delta}[money]",
-    "faceIntro": "刀起金落",
+    "faceIntro": "刀刃上沾着一点职业规划",
+    "liveTemplate": "",
     "attackPattern": "",
+    "rhythmSource": "",
+    "rhythmPeriod": 0,
     "gold": 0,
     "stats": {
         "hp": 0,

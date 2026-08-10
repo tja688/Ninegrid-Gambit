@@ -7,8 +7,11 @@
     "displayName": "金血圣杯",
     "designSlotName": "",
     "description": "[MHP]+{relic.gold_blood.max_hp.value}，每损失{relic.gold_blood.taken.every}点[HP]，获得等量[money]",
-    "faceIntro": "流血也流金",
+    "faceIntro": "一边流血，一边结算工资",
+    "liveTemplate": "",
     "attackPattern": "",
+    "rhythmSource": "",
+    "rhythmPeriod": 0,
     "gold": 0,
     "stats": {
         "hp": 0,

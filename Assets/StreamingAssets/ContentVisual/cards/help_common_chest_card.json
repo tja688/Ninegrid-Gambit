@@ -7,8 +7,11 @@
     "displayName": "普通宝箱",
     "designSlotName": "",
     "description": "挑选并获取一个普通的遗物",
-    "faceIntro": "旧木箱，也可能藏着惊喜",
+    "faceIntro": "很普通，所以没什么心理负担",
+    "liveTemplate": "",
     "attackPattern": "",
+    "rhythmSource": "",
+    "rhythmPeriod": 0,
     "gold": 100,
     "stats": {
         "hp": 0,

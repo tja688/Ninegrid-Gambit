@@ -7,8 +7,11 @@
     "displayName": "金色三叶草",
     "designSlotName": "",
     "description": "[MHP]+{help.hp_card.use.delta}",
-    "faceIntro": "三叶一摇，血上限变高",
+    "faceIntro": "少一片，反而更稀有——店家是这么说的",
+    "liveTemplate": "",
     "attackPattern": "",
+    "rhythmSource": "",
+    "rhythmPeriod": 0,
     "gold": 50,
     "stats": {
         "hp": 0,

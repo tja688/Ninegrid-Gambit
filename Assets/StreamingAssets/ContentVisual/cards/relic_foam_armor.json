@@ -7,8 +7,11 @@
     "displayName": "泡沫盔甲",
     "designSlotName": "",
     "description": "基础[armor]+{relic.foam_armor.base.value}，每场战斗第一次破甲后获得伤害护盾",
-    "faceIntro": "破甲一次，护盾随行",
+    "faceIntro": "第一眼像玩具，第二下再说",
+    "liveTemplate": "",
     "attackPattern": "",
+    "rhythmSource": "",
+    "rhythmPeriod": 0,
     "gold": 0,
     "stats": {
         "hp": 0,

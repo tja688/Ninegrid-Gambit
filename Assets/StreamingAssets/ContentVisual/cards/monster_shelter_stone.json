@@ -8,7 +8,10 @@
     "designSlotName": "",
     "description": "[[吞云吐雾]]，[[生生不息]]",
     "faceIntro": "烈焰一族的王者",
+    "liveTemplate": "",
     "attackPattern": "无",
+    "rhythmSource": "行动计数",
+    "rhythmPeriod": 5,
     "gold": 5,
     "stats": {
         "hp": 30,
@@ -28,7 +31,7 @@
     },
     "mainVisual": {
         "offsetX": 0.0,
-        "offsetY": -0.30000001192092896,
+        "offsetY": -0.30000001192092898,
         "uniformScale": 1.0
     },
     "animations": {
@@ -98,12 +101,11 @@
     "containerType": "",
     "deckKind": "",
     "monsterDefIds": [],
+    "usableOutsideBattle": false,
     "weight": 0,
     "rewardPoolId": "",
     "shopOfferCount": 0,
     "openingInjects": [],
     "iconPrefab": "",
-    "boardSlot": 0,
-    "rhythmSource": "行动计数",
-    "rhythmPeriod": 5
+    "boardSlot": 0
 }
