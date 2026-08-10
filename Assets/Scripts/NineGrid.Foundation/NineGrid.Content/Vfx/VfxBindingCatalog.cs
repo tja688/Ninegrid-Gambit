@@ -82,7 +82,7 @@ namespace NineGrid.Content.Vfx
       Module = dto.module ?? string.Empty;
       Enabled = dto.enabled;
       PlayerId = dto.playerId ?? string.Empty;
-      SpatialOwnership = ParseSpatialOwnership(dto.spatialOwnership);
+      SpatialOwnership = VfxBindingCatalog.ParseSpatialOwnership(dto.spatialOwnership);
       MaterialKey = dto.materialKey ?? string.Empty;
       Fps = dto.fps;
       Scale = dto.scale;
@@ -163,7 +163,7 @@ namespace NineGrid.Content.Vfx
       Module = dto.module ?? string.Empty;
       Enabled = dto.enabled;
       PlayerId = dto.playerId ?? string.Empty;
-      SpatialOwnership = ParseSpatialOwnership(dto.spatialOwnership);
+      SpatialOwnership = VfxBindingCatalog.ParseSpatialOwnership(dto.spatialOwnership);
       MaterialKey = dto.materialKey ?? string.Empty;
       Fps = dto.fps;
       Scale = dto.scale;
