@@ -22,7 +22,7 @@ using UnityEngine.Rendering;
 namespace NineGrid.Flow.TavernBoard
 {
     /// <summary>
-    /// 卡店房场地：3 就地服务选项 + 刷新 + 离开；「道具卡固定」二级选择铺空格候选（#93 / ADR-0020）。
+    /// 卡店房场地：服务选项 + 刷新 + 离开；「道具卡固定」二级时隐藏主面、铺候选；确认后未选碎裂并下架 FixItem 直至刷新（#93 / ADR-0020）。
     /// </summary>
     public sealed class TavernBoardPresenter
     {
@@ -207,11 +207,18 @@ namespace NineGrid.Flow.TavernBoard
                 RegisterOccupancy(pending);
                 if (PendingChoiceModel.IsTavernFixItemPool(pending.PoolId.Value))
                 {
+                    // 二级选择：隐藏服务/刷新，只留候选 + 取消离开。
+                    HideMainSurfaceExceptLeave();
+                    EnsureLeave(arch, nested: true);
                     await ResyncCandidatesAsync(arch, pending, ct);
                 }
                 else
                 {
+                    // 回主面：清掉候选（确认时已碎裂的跳过），重建服务/刷新。
+                    ClearCandidatesQuiet();
                     await ResyncServicesAsync(arch, pending, ct);
+                    EnsureRefresh(arch, pending.ShopRefreshPriceGold.Value);
+                    EnsureLeave(arch, nested: false);
                     RefreshRefreshTip(pending);
                 }
 
@@ -750,6 +757,8 @@ namespace NineGrid.Flow.TavernBoard
 
             var logStart = InRoomGoldPresentation.CaptureEventLogCount(arch);
             var pendingBefore = arch.GetModel<PendingChoiceModel>();
+            var wasNested = pendingBefore != null
+                            && PendingChoiceModel.IsTavernFixItemPool(pendingBefore.PoolId.Value);
             var contentId = string.Empty;
             if (pendingBefore != null
                 && optionIndex >= 0
@@ -773,6 +782,10 @@ namespace NineGrid.Flow.TavernBoard
                 {
                     ShowNotice("暂无可固定的道具卡");
                 }
+                else if (string.Equals(reason, "Item deck budget full", StringComparison.Ordinal))
+                {
+                    ShowNotice("塞卡预算已满");
+                }
                 else if (!string.IsNullOrEmpty(reason))
                 {
                     ShowNotice(reason);
@@ -786,14 +799,16 @@ namespace NineGrid.Flow.TavernBoard
                 "TavernBoardPresenter.TrySelect",
                 contentId);
             InRoomGoldPresentation.PresentGoldChangesSince(arch, logStart);
-            // 消耗表演：服务购买（扩容/强化）与「道具卡固定」确认走标准 Death 碎裂，勿凭空消失。
-            var pending = arch.GetModel<PendingChoiceModel>();
-            if (pending != null && PendingChoiceModel.IsTavernFixItemPool(pending.PoolId.Value))
+
+            if (wasNested)
             {
+                // 确认固定：选中卡碎裂，剩余未选候选一并碎裂退场，再回主面（FixItem 已从货架移除）。
                 ConsumeCandidate(optionIndex);
+                ShatterRemainingCandidates();
             }
             else
             {
+                // 消耗表演：服务购买（扩容/强化）走标准 Death；点「固定」进二级时直接退场该选项。
                 ConsumeService(optionIndex);
             }
 
@@ -835,6 +850,11 @@ namespace NineGrid.Flow.TavernBoard
 
             var card = mCandidateCards[optionIndex];
             mCandidateCards[optionIndex] = null;
+            if (optionIndex < mCandidateDefIds.Count)
+            {
+                mCandidateDefIds[optionIndex] = null;
+            }
+
             if (card == null)
             {
                 return;
@@ -844,6 +864,114 @@ namespace NineGrid.Flow.TavernBoard
             var cards = CardEntityLifecycleHook.CardsOrNull()
                         ?? UnityEngine.Object.FindFirstObjectByType<CardManagerSingleton>();
             cards?.Release(card, "TavernBoard.FixConsumed");
+        }
+
+        /// <summary>确认固定后：剩余未选候选一律碎裂退场。</summary>
+        private void ShatterRemainingCandidates()
+        {
+            var cards = CardEntityLifecycleHook.CardsOrNull()
+                        ?? UnityEngine.Object.FindFirstObjectByType<CardManagerSingleton>();
+            for (var i = 0; i < mCandidateCards.Count; i++)
+            {
+                var card = mCandidateCards[i];
+                if (card == null)
+                {
+                    continue;
+                }
+
+                mCandidateCards[i] = null;
+                if (i < mCandidateDefIds.Count)
+                {
+                    mCandidateDefIds[i] = null;
+                }
+
+                InRoomShelfAnimation.PlayConsumeDeath(card);
+                cards?.Release(card, "TavernBoard.FixUnselectedShatter");
+            }
+
+            mCandidateCards.Clear();
+            mCandidateDefIds.Clear();
+        }
+
+        /// <summary>回主面 / 取消二级：静默释放仍在场的候选（确认路径已碎裂过的会是空槽）。</summary>
+        private void ClearCandidatesQuiet()
+        {
+            var cards = CardEntityLifecycleHook.CardsOrNull()
+                        ?? UnityEngine.Object.FindFirstObjectByType<CardManagerSingleton>();
+            for (var i = 0; i < mCandidateCards.Count; i++)
+            {
+                var card = mCandidateCards[i];
+                if (card == null)
+                {
+                    continue;
+                }
+
+                cards?.Release(card, "TavernBoard.ClearCandidates");
+            }
+
+            mCandidateCards.Clear();
+            mCandidateDefIds.Clear();
+        }
+
+        /// <summary>进入二级选择：销毁服务选项与刷新，保留离开（tip 改为取消）。</summary>
+        private void HideMainSurfaceExceptLeave()
+        {
+            for (var i = 0; i < mServiceGos.Count; i++)
+            {
+                if (mServiceGos[i] != null)
+                {
+                    UnityEngine.Object.Destroy(mServiceGos[i]);
+                }
+            }
+
+            mServiceGos.Clear();
+            mServiceDefIds.Clear();
+
+            if (mRefreshGo != null)
+            {
+                UnityEngine.Object.Destroy(mRefreshGo);
+                mExtras.Remove(mRefreshGo);
+                mRefreshGo = null;
+            }
+        }
+
+        private void EnsureRefresh(IArchitecture arch, int refreshPrice)
+        {
+            if (mRefreshGo != null)
+            {
+                return;
+            }
+
+            var geometry = arch?.GetSystem<IGroundFieldGeometrySystem>();
+            if (geometry == null)
+            {
+                return;
+            }
+
+            SpawnRefresh(geometry, refreshPrice);
+        }
+
+        private void EnsureLeave(IArchitecture arch, bool nested)
+        {
+            var geometry = arch?.GetSystem<IGroundFieldGeometrySystem>();
+            if (geometry == null)
+            {
+                return;
+            }
+
+            if (mLeaveGo == null)
+            {
+                SpawnLeave(geometry, nested);
+                return;
+            }
+
+            var tip = nested ? CancelNestedTip : BoardBriefTipCopy.LeaveTip;
+            AttachBriefTipOnly(mLeaveGo, tip, TavernBoardSlotResolver.LeaveSlot, geometry);
+            RoomIconOccupancy.Current.Register(
+                TavernBoardSlotResolver.LeaveSlot,
+                -2,
+                TavernBoardSlotResolver.LeaveContentId,
+                RoomIconWalkRole.WalkDestination);
         }
 
         private void TryRefresh()

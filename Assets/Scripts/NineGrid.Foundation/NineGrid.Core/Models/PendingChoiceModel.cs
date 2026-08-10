@@ -10,6 +10,7 @@ namespace NineGrid.Core
         private readonly List<RewardEntry> mRewardOptions = new List<RewardEntry>();
         private readonly List<RoomKind> mRoomOptions = new List<RoomKind>();
         private readonly List<string> mAttributeSelectedDefIds = new List<string>();
+        private bool mTavernFixItemSoldThisShelf;
 
         public BindableProperty<PendingChoiceKind> Kind { get; private set; }
         public BindableProperty<string> PoolId { get; private set; }
@@ -20,6 +21,14 @@ namespace NineGrid.Core
 
         /// <summary>商店刷新价（金币）；仅本次进店有效，离开后清零。</summary>
         public BindableProperty<int> ShopRefreshPriceGold { get; private set; }
+
+        /// <summary>
+        /// 卡店「道具卡固定」本货架已售出：主面不再出现 FixItem，须刷新货架才恢复。
+        /// </summary>
+        public bool TavernFixItemSoldThisShelf
+        {
+            get { return mTavernFixItemSoldThisShelf; }
+        }
 
         public IReadOnlyList<RewardEntry> RewardOptions
         {
@@ -148,6 +157,23 @@ namespace NineGrid.Core
             return true;
         }
 
+        public void MarkTavernFixItemSoldThisShelf()
+        {
+            mTavernFixItemSoldThisShelf = true;
+            Touch();
+        }
+
+        public void ClearTavernFixItemSoldThisShelf()
+        {
+            if (!mTavernFixItemSoldThisShelf)
+            {
+                return;
+            }
+
+            mTavernFixItemSoldThisShelf = false;
+            Touch();
+        }
+
         public void ClearRewardChoices()
         {
             mRewardOptions.Clear();
@@ -160,6 +186,7 @@ namespace NineGrid.Core
             mAttributeSelectedDefIds.Clear();
             PoolId.Value = string.Empty;
             ShopRefreshPriceGold.Value = 0;
+            mTavernFixItemSoldThisShelf = false;
             Touch();
         }
 
@@ -255,6 +282,7 @@ namespace NineGrid.Core
             NavigationOffer.Value = NavigationKind.None;
             SelectedNavigation.Value = NavigationKind.None;
             ShopRefreshPriceGold.Value = 0;
+            mTavernFixItemSoldThisShelf = false;
             Touch();
         }
 
@@ -268,6 +296,7 @@ namespace NineGrid.Core
             NavigationOffer.Value = kind;
             SelectedNavigation.Value = NavigationKind.None;
             ShopRefreshPriceGold.Value = 0;
+            mTavernFixItemSoldThisShelf = false;
             Touch();
         }
 
@@ -296,6 +325,7 @@ namespace NineGrid.Core
             NavigationOffer.Value = NavigationKind.None;
             SelectedNavigation.Value = NavigationKind.None;
             ShopRefreshPriceGold.Value = 0;
+            mTavernFixItemSoldThisShelf = false;
             Touch();
         }
 

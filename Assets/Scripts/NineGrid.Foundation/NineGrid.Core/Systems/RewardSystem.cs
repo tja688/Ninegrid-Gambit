@@ -17,8 +17,8 @@ namespace NineGrid.Core.Systems
         /// <summary>商店四货架草案（宝箱 / 随机属性 / 药水 / 食品）。</summary>
         IReadOnlyList<RewardEntry> BuildShopShelves();
 
-        /// <summary>卡店三项服务草案（数值强化 / 固定 / 扩容）。</summary>
-        IReadOnlyList<RewardEntry> BuildTavernServices();
+        /// <summary>卡店服务草案（数值强化 / 固定 / 扩容）；<paramref name="includeFixItem"/> 为 false 时省略固定（本货架已购，须刷新才恢复）。</summary>
+        IReadOnlyList<RewardEntry> BuildTavernServices(bool includeFixItem = true);
 
         /// <summary>宝箱奖励房：1 宝箱 + 3 随机道具。</summary>
         IReadOnlyList<RewardEntry> BuildTreasureRewardShelves();
@@ -416,16 +416,22 @@ namespace NineGrid.Core.Systems
         }
 
         /// <summary>
-        /// 卡店三项服务：道具数值强化 / 道具卡固定 / 道具卡扩容（设计案房间.md · #93）。
+        /// 卡店服务：道具数值强化 / 道具卡固定 / 道具卡扩容（设计案房间.md · #93）。
+        /// 本货架已购「固定」时 omit FixItem，刷新货架后恢复。
         /// </summary>
-        public IReadOnlyList<RewardEntry> BuildTavernServices()
+        public IReadOnlyList<RewardEntry> BuildTavernServices(bool includeFixItem = true)
         {
-            return new List<RewardEntry>(3)
+            var services = new List<RewardEntry>(3)
             {
                 new RewardEntry(TavernUpgradeDefId, CardKind.HelpCard, 1, 1),
-                new RewardEntry(TavernFixItemDefId, CardKind.HelpCard, 1, 1),
-                new RewardEntry(TavernExpandDefId, CardKind.HelpCard, 1, 1),
             };
+            if (includeFixItem)
+            {
+                services.Add(new RewardEntry(TavernFixItemDefId, CardKind.HelpCard, 1, 1));
+            }
+
+            services.Add(new RewardEntry(TavernExpandDefId, CardKind.HelpCard, 1, 1));
+            return services;
         }
 
         /// <summary>宝箱奖励房：1 宝箱卡 + 3 随机道具卡（#94）。</summary>

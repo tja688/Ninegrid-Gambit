@@ -1143,9 +1143,11 @@ namespace NineGrid.Core.Systems
                 pipeline.Enqueue(new ModifyGoldAction(-price, "tavernBuy:FixItem", defId));
             }
 
-            var refresh = this.GetModel<PendingChoiceModel>().ShopRefreshPriceGold.Value;
+            var pending = this.GetModel<PendingChoiceModel>();
+            var refresh = pending.ShopRefreshPriceGold.Value;
+            pending.MarkTavernFixItemSoldThisShelf();
             pipeline.Enqueue(new OfferTavernSessionAction(
-                this.GetSystem<IRewardSystem>().BuildTavernServices(),
+                this.GetSystem<IRewardSystem>().BuildTavernServices(includeFixItem: false),
                 refresh));
             var resolved = pipeline.RunToCompletion();
             player.AddFixedItemCard(defId);
@@ -1215,8 +1217,9 @@ namespace NineGrid.Core.Systems
             var nextPrice = price <= 0 ? OfferShopSessionAction.DefaultRefreshPriceGold : price * 2;
             if (PendingChoiceModel.IsTavernPool(poolId))
             {
+                pending.ClearTavernFixItemSoldThisShelf();
                 pipeline.Enqueue(new OfferTavernSessionAction(
-                    this.GetSystem<IRewardSystem>().BuildTavernServices(),
+                    this.GetSystem<IRewardSystem>().BuildTavernServices(includeFixItem: true),
                     nextPrice));
             }
             else
@@ -1238,13 +1241,14 @@ namespace NineGrid.Core.Systems
             var pending = this.GetModel<PendingChoiceModel>();
             var poolId = pending.PoolId.Value ?? string.Empty;
 
-            // 卡店二级选择取消：回到三项服务面，不离店、不扣费。
+            // 卡店二级选择取消：回到三项服务面，不离店、不扣费；已售固定仍省略。
             if (PendingChoiceModel.IsTavernFixItemPool(poolId))
             {
                 var refresh = pending.ShopRefreshPriceGold.Value;
                 var pipelineCancel = this.GetSystem<IActionPipelineSystem>();
                 pipelineCancel.Enqueue(new OfferTavernSessionAction(
-                    this.GetSystem<IRewardSystem>().BuildTavernServices(),
+                    this.GetSystem<IRewardSystem>().BuildTavernServices(
+                        includeFixItem: !pending.TavernFixItemSoldThisShelf),
                     refresh));
                 return CoreCommandResult.Accept(pipelineCancel.RunToCompletion());
             }
