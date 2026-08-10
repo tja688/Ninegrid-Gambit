@@ -11,7 +11,7 @@ status: accepted
 3. **双套描述、三词分立。** **卡面介绍**（`faceIntro`，风味短句）≠ **卡面基础描述**（检查用静态规则概括）≠ **局内描述投影**（实例/预览渲染层）。右键检查永远静态检查描述；卡面等实例表面与店/奖/鉴预览一律走投影层——无动态时投影与检查描述同文。
 4. **倒计时/耐久卡必填局内模板。** 静态侧保留「每〈事件〉N〈单位〉 / …次后」；局内模板可改写为体感句（如「N 次后…」）。剩余次数只经结算指令在 **Settled** 提交到投影，禁止 View 直读内核。Run 作用域跨战斗忠实剩余；Battle 作用域离战真重置（提醒不跨场）。作用域标记玩家不可见。
 5. **描述格硬上限 26。** 基础描述、介绍、局内投影共用：字符 / 每个 `{…}` / 每个 `[…]` 各算 1 格。
-6. **范围。** 本决策只约束真实接线的机关卡 / 遗物 / 道具卡（HelpCard）；怪物攻击行动倒计时仍走既有行动计数槽（[ADR-0013](0013-action-countdown-unified.md)），不在本双套描述范围内。归档弃用内容不改。
+6. **范围。** 本决策只约束真实接线的机关卡 / 遗物 / 道具卡（HelpCard）；怪物攻击行动倒计时仍走既有行动计数槽（[ADR-0013](0013-action-countdown-unified.md)），不在本双套描述范围内。归档弃用内容不改。**主要内容卡牌**（批量描述导出/导入语境）：`Monster` / `Relic` / `HelpCard` / `Trap` 四类；表现层编辑器里所属卡组显示名含「归档」的成员及 `deck.relic_archive` / `deck.help_archive` / `deck.transition` / 怪物 `isReserve` 不算正式接线（见 `CONTEXT.md` · `CardPresentationPrimaryCardRules`）。
 7. **迁移工艺。** 逐卡对照内核原子与人手文案审计，禁止盲脚本替换；保留手写句子，只修写死/错线；顺手补 `faceIntro`（简洁有趣，≤26 格，后人手打磨）。
 8. **遗物栏图标计数（addendum）。** 遗物 `ActivateRelic` 的 OwnerUid=0，倒计时计数器落在 Avatar 上；`CommitEffectCountdownRemaining` / `ClearEffectCountdownRemaining` 在 CardUid=0 时读 Avatar 计数器，并以 `SourceDefId=relic.*` 广播。表现层：`SourceDefId` 以 `relic.` 开头时**优先**路由到遗物栏 HUD（勿写入 Avatar 卡面）；图标裸数字只吃 Settled 已提交剩余（未提交前用装配 `threshold`/`every` 初值）。Collider 仍在锚点，显示壳为「标准遗物图标模板」。
 
