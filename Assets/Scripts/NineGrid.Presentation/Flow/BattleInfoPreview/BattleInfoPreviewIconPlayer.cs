@@ -209,6 +209,7 @@ namespace NineGrid.Flow.BattleInfoPreview
 
             BattleInfoSlotArtFit.ApplyMainVisual(
                 Target,
+                new Vector2(BattleInfoSlotArtFit.FallbackSlotSize, BattleInfoSlotArtFit.FallbackSlotSize),
                 _mainVisual,
                 _slotOffsetX,
                 _slotOffsetY,

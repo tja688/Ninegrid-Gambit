@@ -26,7 +26,7 @@ superseded_in_part_by: ADR-0025, ADR-0026
 - **非战斗节点（4 / 7）不进 `InteractionLoop`**：没有发牌、没有怪、没有清关判定。节点 4 靠离开图标推进；节点 7 放出层主房图标供走格进入，进入后 `AdvanceNode` 至节点 8 开战（给玩家心理准备，不再直接开战）。
 - **困难房出现条件按层重新数**：每层节点 5、6 清关时放出的战斗房选项里才可能含困难房。
 - **无清关三选一**：`CompleteNodeIfCleared` 里的 `OfferRewardChoiceAction("help.choice", 3)` 删除；清关直接放房间图标。
-- **清关条件与收场（已修正）**：战斗房清关条件见 [ADR-0026](0026-leave-trap-sole-clear-condition.md)（离开机关击破，而非真怪物清零）。清关收场清掉场上残留且**不兑金**；道具卡格按 [ADR-0025](0025-item-slots-run-persistent-hold.md) 跨节点保留。~~旧条款「清关即全量结算场上+道具卡格每张 +10」废止。~~
+- **清关条件与收场（已修正）**：战斗房清关条件见 [ADR-0026](0026-leave-trap-sole-clear-condition.md)（离开机关击破，而非真怪物清零）。清关收场：怪/机关残留不兑金；场上未拾取道具仅当开局真怪已全部击破时自动兑金；道具卡格按 [ADR-0025](0025-item-slots-run-persistent-hold.md) 跨节点保留。~~旧条款「清关即全量结算场上+道具卡格每张 +10」废止。~~
 - **通关**：第 3 层节点 8 清关后踩下楼图标（或等价推进）触发 `GamePhase.Victory`，沿用 `RunModel.AdvanceNode()`。
 
 ## 为什么

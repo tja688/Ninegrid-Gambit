@@ -120,6 +120,37 @@ namespace NineGrid.Cards.Anim
             return visualWorldPosition + delta;
         }
 
+        /// <summary>
+        /// 在父节点局部空间内，将已赋 sprite/scale 的 visual 按锚点模式对齐到给定 mask 包围盒。
+        /// 供无 MonoBehaviour Mask（如战前预览槽框）复用卡面 BottomCenter 语义。
+        /// </summary>
+        public static Vector3 GetAnchoredLocalPositionInParentSpace(
+            SpriteRenderer visual,
+            Bounds maskInParent,
+            CardMainVisualAnchorMode mode = CardMainVisualAnchorMode.BottomCenter)
+        {
+            if (visual == null)
+            {
+                return Vector3.zero;
+            }
+
+            if (mode == CardMainVisualAnchorMode.TransformOrigin || visual.sprite == null)
+            {
+                return visual.transform.localPosition;
+            }
+
+            var visualLocal = Matrix4x4.TRS(
+                visual.transform.localPosition,
+                visual.transform.localRotation,
+                visual.transform.localScale);
+            var contentInParent = TransformBounds(visualLocal, visual.sprite.bounds);
+            return ComputeWorldPositionForAnchor(
+                visual.transform.localPosition,
+                contentInParent,
+                maskInParent,
+                mode);
+        }
+
         public void ApplyMaskInteraction(SpriteRenderer visual)
         {
             if (visual == null)
@@ -449,16 +480,7 @@ namespace NineGrid.Cards.Anim
             }
 
             var maskInParent = TransformBounds(maskToParent, maskSprite.bounds);
-            var visualLocal = Matrix4x4.TRS(
-                visual.transform.localPosition,
-                visual.transform.localRotation,
-                visual.transform.localScale);
-            var contentInParent = TransformBounds(visualLocal, visual.sprite.bounds);
-            local = ComputeWorldPositionForAnchor(
-                visual.transform.localPosition,
-                contentInParent,
-                maskInParent,
-                mode);
+            local = GetAnchoredLocalPositionInParentSpace(visual, maskInParent, mode);
             return true;
         }
 

@@ -1888,7 +1888,7 @@ namespace NineGrid.Core.Systems
             // ADR-0035 / #157：离开战斗（清关）重置 Battle 作用域倒计时为阈值（authority + projection）。
             pipeline.Enqueue(new ResetBattleScopedCountdownsAction());
             var resolved = pipeline.RunToCompletion();
-            // ADR-0026 / #113：清关清场残留（帮助/怪/机关）不兑金；道具卡格保留；不再走 help.choice。
+            // ADR-0026 / #113：清关清场残留；全怪击破时场上道具按回收价兑金，否则仅移除；道具卡格保留。
             resolved += this.GetSystem<IEconomySystem>().SettleUnusedHelpCards();
             resolved += this.GetSystem<IEconomySystem>().ClearResidualTraps();
             pipeline.Enqueue(new ChangePhaseAction(GamePhase.RoomChoice));

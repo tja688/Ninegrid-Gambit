@@ -90,9 +90,8 @@ namespace NineGrid.Core.Systems
 
         public int SettleUnusedHelpCards()
         {
-            // ADR-0026 / #113：清关清场未拾取帮助卡，但不兑金；道具卡格由 RemoveLingeringHelpCards 跳过。
-            RemoveLingeringHelpCards();
-            return 0;
+            var battle = this.GetModel<BattleContextModel>();
+            return RemoveLingeringHelpCards(battle.AreAllOpeningMonstersDefeated());
         }
 
         public int ClearResidualTraps()
@@ -221,34 +220,58 @@ namespace NineGrid.Core.Systems
                 || evt.Cause == "clearResidualTrap";
         }
 
-        private void RemoveLingeringHelpCards()
+        private int RemoveLingeringHelpCards(bool sellBoardResidual)
         {
             var registry = this.GetModel<CardRegistry>();
             var board = this.GetModel<BoardModel>();
             var deck = this.GetModel<DeckModel>();
             var seen = new HashSet<int>();
-            var targets = new List<int>();
+            var deckTargets = new List<int>();
+            var boardTargets = new List<int>();
 
-            CollectHelpCardUids(registry, deck.DrawPileUids, seen, targets);
-            CollectHelpCardUids(registry, deck.PlayerCardPoolUids, seen, targets);
+            CollectHelpCardUids(registry, deck.DrawPileUids, seen, deckTargets);
+            CollectHelpCardUids(registry, deck.PlayerCardPoolUids, seen, deckTargets);
             // ADR-0025 / #107：道具卡格跑图内持续持有，清关不兑不清。
             foreach (var uid in board.BoardCardUids())
             {
-                CollectHelpCardUid(registry, uid, seen, targets);
+                CollectHelpCardUid(registry, uid, seen, boardTargets);
             }
 
-            if (targets.Count == 0)
+            if (deckTargets.Count == 0 && boardTargets.Count == 0)
             {
-                return;
+                return 0;
             }
 
+            var catalog = CatalogOrNull();
+            var goldPerCard = catalog != null && catalog.Economy != null
+                ? catalog.Economy.RecycleItemSlotGold
+                : 0;
             var pipeline = this.GetSystem<IActionPipelineSystem>();
-            for (var i = 0; i < targets.Count; i++)
+            var resolved = 0;
+
+            if (sellBoardResidual && goldPerCard > 0)
             {
-                pipeline.Enqueue(new RemoveCardAction(targets[i], ZoneId.Removed, "settleRemove"));
+                for (var i = 0; i < boardTargets.Count; i++)
+                {
+                    pipeline.Enqueue(new ModifyGoldAction(goldPerCard, "settleSell"));
+                    pipeline.Enqueue(new RemoveCardAction(boardTargets[i], ZoneId.Removed, "settleSell"));
+                }
+            }
+            else
+            {
+                for (var i = 0; i < boardTargets.Count; i++)
+                {
+                    pipeline.Enqueue(new RemoveCardAction(boardTargets[i], ZoneId.Removed, "settleRemove"));
+                }
             }
 
-            pipeline.RunToCompletion();
+            for (var i = 0; i < deckTargets.Count; i++)
+            {
+                pipeline.Enqueue(new RemoveCardAction(deckTargets[i], ZoneId.Removed, "settleRemove"));
+            }
+
+            resolved += pipeline.RunToCompletion();
+            return resolved;
         }
 
         private static void CollectHelpCardUids(

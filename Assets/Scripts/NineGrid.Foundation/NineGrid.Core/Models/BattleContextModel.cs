@@ -146,5 +146,15 @@ namespace NineGrid.Core
             var threshold = (OpeningTrueMonsterCount + 1) / 2;
             return DefeatedTrueMonsterCount >= threshold;
         }
+
+        /// <summary>
+        /// 本节点开局编入的真怪是否已全部击破（N=0 视为已清完）。
+        /// 清关时据此决定是否自动兑金场上残留道具卡（ADR-0026）。
+        /// </summary>
+        public bool AreAllOpeningMonstersDefeated()
+        {
+            return OpeningTrueMonsterCount <= 0
+                || DefeatedTrueMonsterCount >= OpeningTrueMonsterCount;
+        }
     }
 }

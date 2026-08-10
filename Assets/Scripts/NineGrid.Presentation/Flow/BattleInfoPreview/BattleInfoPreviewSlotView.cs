@@ -124,6 +124,7 @@ namespace NineGrid.Flow.BattleInfoPreview
 
             BattleInfoSlotArtFit.ApplyMainVisual(
                 iconRenderer,
+                SlotLocalSize,
                 mainVisual,
                 slotOffsetX,
                 slotOffsetY,

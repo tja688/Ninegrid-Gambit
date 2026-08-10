@@ -60,6 +60,58 @@ namespace NineGrid.Cards.Anim
             target.transform.localPosition = local;
         }
 
+        /// <summary>
+        /// 在父节点局部空间的 mask 包围盒内摆放主视图（无 MonoBehaviour Mask 时，如战前预览槽框）。
+        /// </summary>
+        public static void ApplyToRendererWithMaskBounds(
+            SpriteRenderer target,
+            Bounds maskInParent,
+            Sprite referenceSprite,
+            float uniformScale,
+            float offsetX,
+            float offsetY,
+            CardMainVisualAnchorMode anchorMode = CardMainVisualAnchorMode.BottomCenter,
+            bool mirrorX = false)
+        {
+            if (target == null)
+            {
+                return;
+            }
+
+            var scale = uniformScale > 0.0001f ? uniformScale : 1f;
+            var scaleX = mirrorX ? -scale : scale;
+            target.transform.localScale = new Vector3(scaleX, scale, 1f);
+
+            if (referenceSprite != null)
+            {
+                target.sprite = referenceSprite;
+            }
+
+            Vector3 local;
+            if (target.sprite != null)
+            {
+                local = CardMainVisualMaskAnchor.GetAnchoredLocalPositionInParentSpace(
+                    target,
+                    maskInParent,
+                    anchorMode);
+                local.x += offsetX;
+                local.y += offsetY;
+            }
+            else
+            {
+                local = target.transform.localPosition;
+                local.x = offsetX;
+                local.y = offsetY;
+            }
+
+            if (!IsFinite(local))
+            {
+                return;
+            }
+
+            target.transform.localPosition = local;
+        }
+
         private static bool IsFinite(Vector3 value)
         {
             return IsFinite(value.x) && IsFinite(value.y) && IsFinite(value.z);

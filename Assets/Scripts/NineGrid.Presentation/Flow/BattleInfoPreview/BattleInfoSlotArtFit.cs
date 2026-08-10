@@ -5,15 +5,17 @@ using UnityEngine;
 namespace NineGrid.Flow.BattleInfoPreview
 {
     /// <summary>
-    /// 战斗信息槽图标摆放：直接复用卡面 <c>mainVisual</c>（+ idle 槽偏移），再乘面板分类外部缩放。
-    /// 不再做 Cover 铺满 / pivot·zoom 倒推。
+    /// 战斗信息槽图标摆放：复用卡面 <c>mainVisual</c>（+ idle 槽偏移），
+    /// 以槽框为 Mask 做 BottomCenter 锚定，再乘面板分类外部缩放。
     /// </summary>
     public static class BattleInfoSlotArtFit
     {
         private const float MinScale = 0.0001f;
+        public const float FallbackSlotSize = 0.8f;
 
         public static void ApplyMainVisual(
             SpriteRenderer art,
+            Vector2 slotLocalSize,
             CardPresentationMainVisualDto mainVisual,
             float slotOffsetX,
             float slotOffsetY,
@@ -36,16 +38,16 @@ namespace NineGrid.Flow.BattleInfoPreview
 
             var offsetX = ((mainVisual != null ? mainVisual.offsetX : 0f) + slotOffsetX) * ext;
             var offsetY = ((mainVisual != null ? mainVisual.offsetY : 0f) + slotOffsetY) * ext;
+            var maskInParent = BuildMaskBounds(slotLocalSize);
 
-            // 无卡面 Mask：offset 即本地坐标；与编辑器调好的 scale/偏移一致后再叠外部缩放。
-            CardMainVisualPlacement.ApplyToRenderer(
+            CardMainVisualPlacement.ApplyToRendererWithMaskBounds(
                 art,
-                maskAnchor: null,
+                maskInParent,
                 referenceSprite: null,
                 uniformScale: scale,
                 offsetX: offsetX,
                 offsetY: offsetY,
-                anchorMode: CardMainVisualAnchorMode.TransformOrigin);
+                anchorMode: CardMainVisualAnchorMode.BottomCenter);
         }
 
         public static void ResetArtTransform(SpriteRenderer art)
@@ -57,6 +59,13 @@ namespace NineGrid.Flow.BattleInfoPreview
 
             art.transform.localPosition = Vector3.zero;
             art.transform.localScale = Vector3.one;
+        }
+
+        private static Bounds BuildMaskBounds(Vector2 slotLocalSize)
+        {
+            var width = slotLocalSize.x > MinScale ? slotLocalSize.x : FallbackSlotSize;
+            var height = slotLocalSize.y > MinScale ? slotLocalSize.y : FallbackSlotSize;
+            return new Bounds(Vector3.zero, new Vector3(width, height, 0.01f));
         }
     }
 }
