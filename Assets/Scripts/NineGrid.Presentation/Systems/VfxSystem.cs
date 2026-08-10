@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using NineGrid.Content.Vfx;
 using NineGrid.Core;
+using NineGrid.Presentation.Systems.Vfx;
 using QFramework;
 using UnityEngine;
 
@@ -830,6 +831,8 @@ namespace NineGrid.Presentation.Systems
 
         public sealed class DefaultVfxPulsePlayerFactory : IVfxPulsePlayerFactory
         {
+            private readonly VfxSpriteSheetPlayerFactory mSpriteSheetFactory = new VfxSpriteSheetPlayerFactory();
+
             public bool TryCreatePulsePlayer(string playerId, out IVfxPulsePlayer player, out string failureReason)
             {
                 player = null;
@@ -838,6 +841,11 @@ namespace NineGrid.Presentation.Systems
                 {
                     failureReason = "播放器未注册。";
                     return false;
+                }
+
+                if (string.Equals(playerId, VfxPlayerRegistry.SpriteSheet, StringComparison.Ordinal))
+                {
+                    return mSpriteSheetFactory.TryCreatePulsePlayer(playerId, out player, out failureReason);
                 }
 
                 failureReason = "播放器尚未实现。";
