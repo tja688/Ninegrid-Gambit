@@ -1,0 +1,105 @@
+## Problem Statement
+
+TableNine 已经有一套运作正常的 SFX 系统：稳定 Cue 声明、JSON Binding、运行时解析与播放、历史诊断以及 localhost HTML 调音工作台。视觉特效目前只有 182 条序列帧素材目录和若干分散的旧实现，没有稳定 VFX Cue、持久 Binding、统一运行时、持续状态生命周期或实时观察工具。现有 `fx.card.{uid}` 只按运行时卡实例触发旧卡面脉冲，不能承担可维护的内容绑定。
+
+直接复制 AudioSystem 会错误继承音频总线、realtime 调度、AudioSource 生命周期和文件级 manifest 等音频特有假设；一开始抽取万能 Effect Framework 又会把尚未共同验证的差异强行统一。VFX 还必须处理音效没有的空间、遮罩、排序、宿主跟随、独立实例和持续状态。
+
+金币获取演出是当前真实缺口：`GoldModified` 缺少来源 `CardUid`，又在尸体已经 Vacate 后的 `Settled` 才消费，导致飞币起点丢失。旧 `GoldGainFxManagerSingleton` 同时耦合飞币、HUD 图标和数字追赶，需迁入新系统并清理旧实现。
+
+## Solution
+
+建立与 SFX 四层结构同构、但语义和运行时独立的 VFX 系统：
+
+1. 稳定 `VfxCue` 与 `PersistentVfxState` 声明。
+2. `vfx_bindings.json` 持久化 Cue/State 到稳定 `playerId` 的播放决策。
+3. 应用会话级 VFX Runtime，支持一次性 Pulse 与 `owner + slot + state` 持续视觉状态。
+4. 素材型 `sprite-sheet` 播放器和自治的程序化播放器注册表。
+5. 全生命周期诊断、真实累计与峰值观测。
+6. 三模式 localhost HTML 工作台：实时实例、静态 Binding、持续状态。
+
+新 VFX 继续使用既有 `TriggerPulseHub`，增加类型化 `PulseVfx(VfxCueRequest)`；旧 `PulseFx(string)` 与 Audio 通道保留。VFX 不成为规则权威，不占主线 ack。失败不播放回退或占位效果，必须留下可归因错误，但不得中断游戏流程。
+
+`vfx_bindings.json` 是“是否播放、调用哪个播放器”的运行时单一真源。现有 `visual_effects.json` 只作为 Editor 素材索引。素材型播放器的真实公共参数可由 Binding 提供；程序化播放器自治内部算法、参数、资源和完成条件，总控不伪造万能参数 schema。
+
+空间所有权分为两类：`Attached` 依赖受控视觉域宿主，宿主丢失即正常结束；`Independent` 在请求接纳时确定空间，开始后自然播完，停用 Binding 只阻止后续请求。持续状态使用幂等期望槽 API，同值 no-op、新值替换、空值清除，支持立即或有限退出段。
+
+工作台抽取 Audio 已验证的通用 loopback transport，但 Audio/VFX 的 DTO、命令、页面和诊断保持独立。Pulse 实例只观察，不强杀；Pulse Binding 停用只抑制后续请求。持续状态可停止单个 owner/slot，也可全局停用 State Binding 并结束当前投影。临时停用热应用，显式保存后写入 `enabled=false`。
+
+金币迁移作为首个真实程序化 Independent Pulse：先修正 CardUid、Impact 锚点与 Binder 订阅，再迁移飞币生成、散布、飞行、缩放和 HUD 图标吞噬。金币播放器按批次一次性给出首达至末达时间窗；HUD 在该窗口内独立推进数字并精确收敛，不建立逐金币回调。最后删除 `GoldGainFxManagerSingleton` 及旧场景/DevTest 装配。
+
+## User Stories
+
+1. 作为特效作者，我可以从稳定中文语义 Cue 找到并编辑实际 VFX Binding，而不搜索业务调用点。
+2. 作为特效作者，我可以把同一 Cue 按卡牌、技能、房间、道具或内容稳定 ID 配置专属覆盖。
+3. 作为特效作者，我可以使用序列帧素材，也可以选择自治的程序化播放器。
+4. 作为特效作者，我可以在 Play Mode 观察每个实例从请求到自然结束的完整生命周期。
+5. 作为特效作者，我可以按实例、Binding、Cue/State、Player/素材切换聚合视图并查看真实峰值。
+6. 作为特效作者，我可以临时停用某个 Binding，并在保存后永久停用后续播放。
+7. 作为维护者，我可以从错误记录区分未绑定、非法 Binding、播放器缺失、视觉域缺失和后端失败。
+8. 作为维护者，我不会因为 VFX 失败而破坏规则结算或主线输入解锁。
+9. 作为表现开发者，我可以用视觉空间上下文表达语义角色、宿主、格位与位置快照，而不把运行时 UID 写进 Binding Key。
+10. 作为表现开发者，我可以提交 `owner + slot + state` 的持续视觉期望，并安全处理重复提交、替换、清除、宿主释放和场景退出。
+11. 作为玩家，我获得的飞币从正确来源位置飞向金币 UI，且数字从第一枚抵达开始到最后一枚抵达结束平滑收敛。
+12. 作为维护者，我可以保留现有旧 FX 路径，新旧效果显式叠加，而新工作台只对新系统负责。
+
+## Implementation Decisions
+
+- 新系统按 SFX 的 Cue→Binding→Runtime→Workbench 四层同构，但不抽取万能 Audio/VFX Runtime。
+- Audio Cue 与 VFX Cue 身份独立，调用点分别发射。
+- `TriggerPulseHub` 增加类型化 VFX 通道；不得新增第二个业务静态 Hub。
+- Cue/State 声明包含稳定 ID、中文说明、模块、权威发射者和允许上下文。
+- Binding Catalog 在一个文件内分 `cueBindings[]` 与 `stateBindings[]`。
+- 复用固定选择器：`cardDefId`、`skillId`、`roomId`、`itemDefId`、`contentId`。
+- 最高特异性匹配；同特异性歧义阻止保存，运行时确定性记录错误。
+- 运行时 UID、Transform、坐标和 owner 只进请求与诊断，不进持久 Binding Key。
+- `visual_effects.json` 保留为 Editor 素材浏览/导入索引；运行时播放决策只读 `vfx_bindings.json`。
+- 素材变体池使用表现层 RNG、默认避免立即重复，不消费 Core RNG；同 Binding 变体保持相同 player/lifecycle 契约。
+- 素材型覆盖仅限 Binding 显式开放的真实字段；播放器类型、生命周期、空间类型和视觉域契约不可由调用方覆盖。
+- 程序化播放器自治内部参数、资源、完成条件与池化策略；总控只检查注册、Pulse/State 能力、Attached/Independent 和所需域能力。
+- Pulse 支持 Binding 延迟、最短间隔与显式可取消排期；持续状态不使用冷却。
+- `sprite-sheet` 默认池化；程序化播放器自行声明是否可安全复用。
+- 不设置实例预算、主动丢弃、自动降质或性能告警阈值；只保存事实、累计与峰值。
+- Editor/Development 保留有界实例历史、不淘汰的累计/峰值和 PerfTrace；Release 只保留轻量错误与累计。
+- VFX Runtime 覆盖应用会话；视觉域宿主、实例和持续槽随场景/战斗装配清理。
+- Persistent Runtime 首版完整实现，但不制造虚构业务内容；使用契约测试与工作台预览验证。
+- 新工作台抽取 Audio transport；作者状态、DTO、页面和命令保持 VFX 独立。
+- 旧 FX 默认不纳入新诊断、工作台或控制，也不强制迁移；金币是显式例外。
+- 金币仍走统一 BattleBeatScheduler，不恢复 EventLog 生产旁路，也不进入主线 ack。
+
+## Testing Decisions
+
+- Catalog 契约覆盖声明扫描、重复 ID、空说明、五维选择器、专属覆盖、歧义、孤儿 Binding、非法 playerId 与参数范围。
+- Runtime 以注入播放器、时钟、调度器和视觉域宿主测试，不依赖真实场景对象。
+- Pulse 覆盖请求、延迟、冷却、排期取消、变体选择、自然完成、Independent 宿主消失不取消及失败可见但流程继续。
+- Persistent 覆盖幂等 SetSlot、新状态替换、条件清除、立即/有限退出、Attached 宿主丢失、owner 释放和场景清理。
+- 诊断覆盖请求→解析→创建→开始→结束原因、逐帧计数、累计与峰值，不断言任意“多少算多”阈值。
+- Workbench transport 必须先用契约测试保护现有 Audio 行为，再接入 VFX host。
+- Workbench 测试覆盖实例流、聚合层级、临时/永久停用、SessionState 恢复、磁盘冲突门禁和持续状态停止。
+- 金币覆盖击杀赏金、默认移除赏金、帮助卡结算、回收、商店/酒馆、扣金即时对齐和 Keypad9 等价入口。
+- 金币数字窗口验证从首达开始、末达收敛；不建立逐粒子事件断言。
+- 删除旧金币组件后两处场景无 Missing Script，项目无 `GoldGainFxManagerSingleton` 生产引用。
+- 每张实施票遵守仓库门槛：Unity recompile 完成，Console 无本票新增 Error/Exception/Assert；最终票执行真实场景 Play 验收。
+
+## Out of Scope
+
+- 把 Audio 与 VFX Runtime 抽成万能 Effect Framework。
+- 强制迁移、观察或控制所有旧 `CardEffectSO`、死亡燃烧和其它旧 FX。
+- 为不存在的“蓄势待发/大招预备”规则创建虚构持续状态内容。
+- 让 VFX 成为 Core 状态成立、伤害结算、输入解锁或 Batch ack 的前置条件。
+- 为程序化特效定义臃肿的通用参数 schema。
+- 运行时实例预算、自动丢弃、动态降质、软告警阈值或自适应性能策略。
+- BGM 式播放代数、幽灵 VFX 轮询、自动纠偏或场景 Renderer 扫描。
+- Release 构建启动 localhost 作者工作台。
+- 逐金币实例驱动 HUD 数字。
+
+## Further Notes
+
+- 架构决策见 `docs/adr/0040-vfx-cue-binding-persistent-state-workbench.md`。
+- 领域词汇已写入 `CONTEXT.md`。
+- 音效参照见 ADR-0036；统一表演管线见 ADR-0001/0007；视觉因果见 ADR-0018。
+- 金币断线取证见 `Assets/Notes/金币获取特效断线探查.md`。
+- `docs/code-map/` 只记录已落地事实，由各实施票在代码落地时同步更新。
+
+## Delivery Tickets
+
+子票发布后在此维护任务清单与原生依赖关系。
