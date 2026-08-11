@@ -6,7 +6,7 @@ using UnityEngine;
 namespace NineGrid.Flow.Presentation
 {
     /// <summary>
-    /// 金币装饰处理器：在 Settled 消费 UpdateGold，广播飞币/HUD，不占主线就位回执。
+    /// 金币装饰处理器：在 Impact 消费 UpdateGold（尸体 Vacate 前保出生点），广播飞币/HUD，不占主线就位回执。
     /// </summary>
     public sealed class GoldGainBeatHandler : IBattleBeatHandler
     {

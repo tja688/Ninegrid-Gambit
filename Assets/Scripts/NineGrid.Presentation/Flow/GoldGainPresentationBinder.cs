@@ -15,6 +15,7 @@ namespace NineGrid.Flow
     {
         private static GoldGainPresentationBinder sInstance;
         private IUnRegister mEventUnRegister;
+        private bool mRetrySubscriptionPending;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         private static void ResetStatics()
@@ -22,22 +23,26 @@ namespace NineGrid.Flow
             sInstance = null;
         }
 
+        /// <summary>
+        /// 确保存在且已订阅：已有实例也补订阅；架构暂不可用时延后重试，避免事件发出时无人听。
+        /// </summary>
         public static void EnsureInstalled()
         {
-            if (sInstance != null)
+            if (sInstance == null)
             {
-                return;
+                var existing = FindFirstObjectByType<GoldGainPresentationBinder>();
+                if (existing != null)
+                {
+                    sInstance = existing;
+                }
+                else
+                {
+                    var host = new GameObject(nameof(GoldGainPresentationBinder));
+                    sInstance = host.AddComponent<GoldGainPresentationBinder>();
+                }
             }
 
-            var existing = FindFirstObjectByType<GoldGainPresentationBinder>();
-            if (existing != null)
-            {
-                sInstance = existing;
-                return;
-            }
-
-            var host = new GameObject(nameof(GoldGainPresentationBinder));
-            sInstance = host.AddComponent<GoldGainPresentationBinder>();
+            sInstance.EnsureSubscribed();
         }
 
         private void Awake()
@@ -49,7 +54,15 @@ namespace NineGrid.Flow
             }
 
             sInstance = this;
-            RegisterEvents();
+            EnsureSubscribed();
+        }
+
+        private void Update()
+        {
+            if (mRetrySubscriptionPending)
+            {
+                EnsureSubscribed();
+            }
         }
 
         private void OnDestroy()
@@ -61,15 +74,29 @@ namespace NineGrid.Flow
             }
         }
 
-        private void RegisterEvents()
+        private void EnsureSubscribed()
         {
-            UnregisterEvents();
-            var arch = NineGridArchitecture.Interface;
-            if (arch == null)
+            if (mEventUnRegister != null)
             {
+                mRetrySubscriptionPending = false;
                 return;
             }
 
+            RegisterEvents();
+        }
+
+        private void RegisterEvents()
+        {
+            UnregisterEvents();
+            var arch = NineGridArchitecture.Interface ?? NineGridArchitecture.Current;
+            if (arch == null)
+            {
+                // 架构暂不可用：挂起重试，不静默永久丢失订阅。
+                mRetrySubscriptionPending = true;
+                return;
+            }
+
+            mRetrySubscriptionPending = false;
             mEventUnRegister = arch.RegisterEvent<GoldGainPresentationRequested>(OnGoldGainPresentationRequested);
         }
 

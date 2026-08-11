@@ -489,7 +489,7 @@ namespace NineGrid.Core
             result.AddFollowUp(new DeactivateOwnerEffectsAction(CardUid, "pickup"));
             if (goldReward != 0)
             {
-                result.AddFollowUp(new ModifyGoldAction(goldReward, "pickup:" + card.DefId));
+                result.AddFollowUp(new ModifyGoldAction(goldReward, "pickup:" + card.DefId, sourceCardUid: CardUid));
             }
 
             return result;

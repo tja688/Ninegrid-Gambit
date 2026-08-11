@@ -201,7 +201,7 @@ namespace NineGrid.Core.Systems
                     continue;
                 }
 
-                result.Add(new ModifyGoldAction(amount, "remove:" + card.DefId));
+                result.Add(new ModifyGoldAction(amount, "remove:" + card.DefId, sourceCardUid: card.Uid));
             }
 
             return result;
@@ -253,7 +253,7 @@ namespace NineGrid.Core.Systems
             {
                 for (var i = 0; i < boardTargets.Count; i++)
                 {
-                    pipeline.Enqueue(new ModifyGoldAction(goldPerCard, "settleSell"));
+                    pipeline.Enqueue(new ModifyGoldAction(goldPerCard, "settleSell", sourceCardUid: boardTargets[i]));
                     pipeline.Enqueue(new RemoveCardAction(boardTargets[i], ZoneId.Removed, "settleSell"));
                 }
             }

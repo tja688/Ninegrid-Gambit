@@ -445,16 +445,19 @@ namespace NineGrid.Core
             TriggerPoint.OnGoldChanged
         };
 
-        public ModifyGoldAction(int delta, string reason, string sourceDefId = null)
+        public ModifyGoldAction(int delta, string reason, string sourceDefId = null, int sourceCardUid = 0)
         {
             Delta = delta;
             Reason = reason ?? string.Empty;
             SourceDefId = sourceDefId ?? string.Empty;
+            SourceCardUid = sourceCardUid;
         }
 
         public int Delta { get; private set; }
         public string Reason { get; private set; }
         public string SourceDefId { get; private set; }
+        /// <summary>可选来源卡（击杀/移除赏金、拾取等）：写入 <see cref="CoreGameEvent.CardUid"/> 供表现层解析出生点。</summary>
+        public int SourceCardUid { get; private set; }
         public override string ActionName { get { return "ModifyGold"; } }
 
         public override GameActionResult Apply(GameActionContext context)
@@ -467,7 +470,8 @@ namespace NineGrid.Core
                     .WithDelta(Delta)
                     .WithAmount(player.Coins.Value)
                     .WithMessage(Reason)
-                    .WithSource(SourceDefId, Reason));
+                    .WithSource(SourceDefId, Reason)
+                    .WithCard(SourceCardUid));
         }
 
         public override IEnumerable<TriggerPoint> GetPostTriggerPoints(GameActionContext context, IReadOnlyList<CoreGameEvent> events)
@@ -617,7 +621,7 @@ namespace NineGrid.Core
             // ADR-0017：Trap 无击杀赏金（含显式 GoldReward 计数器）。
             if (goldReward != 0 && CardCombatRules.IsTrueMonster(target.Kind))
             {
-                result.AddFollowUp(new ModifyGoldAction(goldReward, "kill:" + target.DefId));
+                result.AddFollowUp(new ModifyGoldAction(goldReward, "kill:" + target.DefId, sourceCardUid: TargetUid));
             }
 
             CardFaceEventValues.AppendConditionalPermanentAttackFaceCommitsForBoard(

@@ -35,6 +35,7 @@ ADR-0005 消灭了卡面直读 Core，但伤害飘字、FX 脉冲、金币、Pla
 - `PresentationBeat` / `NoneReason` 文档措辞改为表演消费归属；组合根注册卡面 + 飘字/FX/金币/Avatar HUD 处理器（#60/#61）；Bounce OfferReward 由 `CardFaceStatHandler` 消费（#62）。
 - #60：`PresentEffectTriggersFromEventLog` / `SpawnDamagePopups` 生产旁路删除，`DamageDealt`/`EffectTriggered` → Impact。
 - #61：`PresentGoldGainsFromEventLog` 生产旁路删除，`GoldModified` → Settled；排期器 `SyncFromCore` 衔接补丁删除；非锁步路径经 `BattleBeatFlush.PresentEventLogSlice`。
+- #198：金币装饰锚点由 `Settled` 改至 `Impact`——尸体 Vacate 前消费 `UpdateGold` 保出生点（对齐 ADR-0018 飘字保坐标精神）；`ModifyGoldAction` 可选来源卡并把 `CardUid` 写入 `GoldModified`，击杀/移除赏金与拾取加金传递正确来源 uid；非战斗 EventLog slice 仍走 FlushBeats 的 Impact，行为不回归。
 - #62：`RewardOffered` → Settled；`RewardEntry` 投影绝对值；Bounce 删除 `ApplyVisualsByDefId(..., clearCombatStats: true)` 数值旁路。仍遗留：Relic HUD 直读。
 
 ## 相关
