@@ -30,6 +30,9 @@ namespace NineGrid.Flow
         [Tooltip("主菜单「退出」按钮；留空则运行时查找 MainPanel/QuitGame。")]
         [SerializeField] private Collider2D quitGameHit;
 
+        [Tooltip("主菜单「设置」按钮；留空则运行时查找 MainPanel/SettingsScreen。")]
+        [SerializeField] private Collider2D settingsHit;
+
         [Tooltip("点选相机；留空则运行时取 Camera.main。")]
         [SerializeField] private Camera worldCamera;
 
@@ -66,7 +69,10 @@ namespace NineGrid.Flow
         public int NodeIndex => ResolveShell()?.NodeIndex ?? 0;
         public bool CanAcceptQuickTestEntry => ResolveShell()?.CanAcceptQuickTestEntry ?? false;
 
+        private const float MenuHoverScale = 1.08f;
+
         private Collider2D hoveredMenuHit;
+        private Vector3 hoveredMenuBaseScale = Vector3.one;
 
         private static readonly AudioCueRequest StartHoverRequest = CreateMenuRequest(
             InteractionAudioCues.MainMenuHover,
@@ -96,6 +102,14 @@ namespace NineGrid.Flow
             InteractionAudioCues.MainMenuCancel,
             "GameFlowController.MainMenu.QuitCancel",
             "main_menu.quit");
+        private static readonly AudioCueRequest SettingsHoverRequest = CreateMenuRequest(
+            InteractionAudioCues.MainMenuHover,
+            "GameFlowController.MainMenu.SettingsHover",
+            "main_menu.settings");
+        private static readonly AudioCueRequest SettingsPressRequest = CreateMenuRequest(
+            InteractionAudioCues.MainMenuPress,
+            "GameFlowController.MainMenu.SettingsPress",
+            "main_menu.settings");
 
         private void Awake()
         {
@@ -161,7 +175,19 @@ namespace NineGrid.Flow
                 }
 
                 PulseMenuRequest(StartPressRequest);
-                BeginFormalRun();
+                // 正式开局前先过人物选择面板；场景缺预置时回退直接开局。
+                if (!NineGrid.Presentation.Ui.CharacterSelectPanel.RequestOpen())
+                {
+                    BeginFormalRun();
+                }
+
+                return;
+            }
+
+            if (WorldPointerUtility.TryOverlapColliderOnPlane(worldCamera, settingsHit))
+            {
+                PulseMenuRequest(SettingsPressRequest);
+                NineGrid.Presentation.Ui.PlayerAudioSettingsPanel.RequestOpen();
                 return;
             }
 
@@ -259,6 +285,15 @@ namespace NineGrid.Flow
                     quitGameHit = quit.GetComponent<Collider2D>();
                 }
             }
+
+            if (settingsHit == null)
+            {
+                var settings = FindDeep("SettingsScreen");
+                if (settings != null)
+                {
+                    settingsHit = settings.GetComponent<Collider2D>();
+                }
+            }
         }
 
         public void ShowNotice(string message)
@@ -320,6 +355,10 @@ namespace NineGrid.Flow
             {
                 next = startRunHit;
             }
+            else if (WorldPointerUtility.TryOverlapColliderOnPlane(worldCamera, settingsHit))
+            {
+                next = settingsHit;
+            }
             else if (WorldPointerUtility.TryOverlapColliderOnPlane(worldCamera, quitGameHit))
             {
                 next = quitGameHit;
@@ -330,16 +369,30 @@ namespace NineGrid.Flow
                 return;
             }
 
+            RestoreHoveredMenuScale();
             hoveredMenuHit = next;
             if (next != null)
             {
-                PulseMenuRequest(next == startRunHit ? StartHoverRequest : QuitHoverRequest);
+                hoveredMenuBaseScale = next.transform.localScale;
+                next.transform.localScale = hoveredMenuBaseScale * MenuHoverScale;
+                PulseMenuRequest(next == startRunHit
+                    ? StartHoverRequest
+                    : (next == settingsHit ? SettingsHoverRequest : QuitHoverRequest));
             }
         }
 
         private void ClearMenuHover()
         {
+            RestoreHoveredMenuScale();
             hoveredMenuHit = null;
+        }
+
+        private void RestoreHoveredMenuScale()
+        {
+            if (hoveredMenuHit != null)
+            {
+                hoveredMenuHit.transform.localScale = hoveredMenuBaseScale;
+            }
         }
 
         private static void PulseMenuRequest(AudioCueRequest request)
