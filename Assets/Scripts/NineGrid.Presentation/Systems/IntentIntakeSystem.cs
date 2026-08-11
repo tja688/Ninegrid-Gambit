@@ -264,11 +264,17 @@ namespace NineGrid.Presentation.Systems
 
         private static void Reject(InputIntent intent, string reason, bool mainlineBusy)
         {
-            DirectorTrace.IntentRejected(intent.Kind, intent.TargetId, reason);
+            var arch = NineGridArchitecture.Interface;
+            var probe = BoardIntentGateDiagnostics.MapIntentKindToCommand(intent.Kind);
+            var diagnostics = BoardIntentGateDiagnostics.Collect(arch, probe);
+            var suffix = BoardIntentGateDiagnostics.FormatReasonSuffix(diagnostics);
+            var enrichedReason = string.IsNullOrEmpty(suffix) ? reason : reason + " | " + suffix;
+
+            DirectorTrace.IntentRejected(intent.Kind, intent.TargetId, enrichedReason, diagnostics);
             Debug.LogWarning(
                 "[IntentIntake] Reject kind=" + intent.Kind
                 + " target=" + intent.TargetId
-                + " reason=" + reason
+                + " reason=" + enrichedReason
                 + " mainlineBusy=" + mainlineBusy
                 + " owner=" + PresentationInputGates.CurrentOwner);
         }

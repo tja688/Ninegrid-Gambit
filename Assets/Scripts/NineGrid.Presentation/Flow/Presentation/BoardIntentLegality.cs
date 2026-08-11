@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using NineGrid.Core;
 using NineGrid.Core.Content;
 using NineGrid.Core.Systems;
+using NineGrid.Flow.Diagnostics;
 using QFramework;
 
 namespace NineGrid.Flow.Presentation
@@ -450,6 +451,7 @@ namespace NineGrid.Flow.Presentation
             }
 
             rejectReason = "notLegal phase=" + phase.CurrentPhase + " pendingChoice=" + pending;
+            BoardIntentGateDiagnostics.AppendPhaseReject(ref rejectReason, arch, command);
             return false;
         }
 

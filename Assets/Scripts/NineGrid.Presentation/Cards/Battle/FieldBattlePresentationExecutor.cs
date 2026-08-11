@@ -4,7 +4,9 @@ using System.Threading;
 using Cysharp.Threading.Tasks;
 using NineGrid.Cards.Convergence;
 using NineGrid.Core;
+using NineGrid.Core.Systems;
 using NineGrid.Flow;
+using NineGrid.Flow.Diagnostics;
 using NineGrid.Flow.Presentation;
 using NineGrid.Presentation;
 using NineGrid.Presentation.Systems;
@@ -59,34 +61,56 @@ namespace NineGrid.Cards
             var adapter = EnsureAdapter();
             if (card == null || adapter == null || geometry == null)
             {
+                LogBattleClickReject(card, "missing-adapter-or-geometry");
                 return false;
             }
 
             // 轴二：攻击目标表面为受保护场地。轴一互斥只认 MainlineBusy（IntentIntake/#51）。
             if (!PresentationInputGates.OwnsProtectedField)
             {
+                LogBattleClickReject(card, "not-protected-field-owner=" + PresentationInputGates.CurrentOwner);
                 return false;
             }
 
             if (card.IsFieldDead)
             {
+                LogBattleClickReject(card, "field-dead");
                 return false;
             }
 
             if (!geometry.TryGetSlotOf(card.Uid, out var slot)
                 || !geometry.IsAvatarOrthogonalBattleSlot(slot))
             {
+                LogBattleClickReject(card, "not-ortho-slot");
                 return false;
             }
 
             RegistryTraceSink.NotifyUserInteraction?.Invoke("BattleClick");
             if (AttackInputHook.TrySubmitAttack == null)
             {
+                LogBattleClickReject(card, "attack-hook-unwired");
                 Debug.LogWarning("[FieldBattle] AttackInputHook.TrySubmitAttack 未装配，交战点击不可用。");
                 return false;
             }
 
-            return AttackInputHook.TrySubmitAttack(slot);
+            if (!AttackInputHook.TrySubmitAttack(slot))
+            {
+                LogBattleClickReject(card, "attack-submit-false slot=" + slot);
+                return false;
+            }
+
+            return true;
+        }
+
+        private static void LogBattleClickReject(ManagedCard card, string detail)
+        {
+            var uid = card != null ? card.Uid : 0;
+            var defId = card != null ? card.DefId : "?";
+            BoardIntentGateDiagnostics.LogConsole(
+                "BattleClick",
+                "reject uid=" + uid + " defId=" + defId + " detail=" + detail,
+                NineGridArchitecture.Current,
+                GameCommandKind.Attack);
         }
 
         public UniTask RequestBasicAttackAtSlotAsync(
