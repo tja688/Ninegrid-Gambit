@@ -65,7 +65,7 @@ namespace NineGrid.Flow
         [Tooltip("满血图标 SpriteRenderer；默认隐藏，悬停血条时与最大血量数值一同显示。")]
         [SerializeField] private SpriteRenderer maxHpIcon;
 
-        [Tooltip("基础护甲（挂给玩家的基础护甲）TMP；与玩家卡面显示的真实护甲值区分。")]
+        [Tooltip("基础护甲（有效护甲，ADR-0028）TMP；与玩家卡面显示的真实护甲（当前护甲）区分。")]
         [SerializeField] private TMP_Text armorText;
 
         [Tooltip("金币 TMP；增益演出可由 GoldGainFx 接管。")]
@@ -906,9 +906,11 @@ namespace NineGrid.Flow
             var stats = arch.GetSystem<IStatSystem>();
             hp = Mathf.Max(0, stats.GetEffectiveInt(avatar, StatId.Hp));
             maxHp = Mathf.Max(hp, stats.GetEffectiveInt(avatar, StatId.MaxHp));
-            // 基础护甲 HUD 只显示静态基础护甲（每回合进入战斗时挂给玩家的量），
-            // 与玩家卡面显示的真实护甲（当前护甲）区分。
-            armor = StatArmorUtility.GetBaseArmor(avatar);
+            // ADR-0028：玩家信息 HUD 甲 = 有效护甲（基础 + 遗物/图腾等 Modifier），
+            // 与玩家卡面显示的真实护甲（当前护甲）区分。遗物「基础护甲+N」经
+            // Persistent Modifier 进有效护甲，StatId.Armor 基础值本身不变，
+            // 故不能只读 GetBaseArmor，否则遗物加成在 HUD 上永不显现。
+            armor = StatArmorUtility.GetEffectiveArmor(stats, avatar);
             return true;
         }
 

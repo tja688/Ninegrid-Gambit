@@ -58,6 +58,10 @@ namespace NineGrid.Presentation.Controllers
         public void HandleSyncFromCore()
         {
             ResolveRelicManager()?.SyncFromCore();
+            // 遗物会经 Persistent Modifier 改 Avatar 有效护甲（ADR-0028）：遗物栏同步
+            // 是遗物授予（宝箱/商店/奖池）与丢弃（回收区）的共同收口，一并刷新玩家
+            // 信息 HUD，否则「基础护甲+N」遗物在 HUD 上不即时显现。
+            PlayerInfoHudPresenter.TryGetInstance()?.SyncFromCore(animate: false);
         }
 
         public void HandleClear()
