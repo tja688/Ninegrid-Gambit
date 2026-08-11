@@ -3,7 +3,10 @@ using Cysharp.Threading.Tasks;
 using NineGrid.Core;
 using NineGrid.Core.Commands;
 using NineGrid.Core.Systems;
+using NineGrid.Flow.RewardBoard;
 using NineGrid.Flow.RoomIcons;
+using NineGrid.Flow.ShopBoard;
+using NineGrid.Flow.TavernBoard;
 using NineGrid.Presentation;
 using NineGrid.Presentation.Systems;
 using QFramework;
@@ -153,16 +156,55 @@ namespace NineGrid.Flow.Presentation
                         RoomIconBoardPresenter.Current.TrySpawnFromPending(arch);
                     }
                 }
+                else if (phase != null && phase.CurrentPhase == GamePhase.RewardItemChoice)
+                {
+                    // 房内开宝箱：Core 已恢复挂起的商店/卡店/特殊房 Pending，重刷场地板。
+                    ResyncConsumerBoardAfterNestedRelic(arch);
+                }
             }
             catch (OperationCanceledException)
             {
             }
         }
 
+        private static void ResyncConsumerBoardAfterNestedRelic(IArchitecture arch)
+        {
+            if (arch == null)
+            {
+                return;
+            }
+
+            var pending = arch.GetModel<PendingChoiceModel>();
+            if (pending == null
+                || pending.Kind.Value != PendingChoiceKind.Reward
+                || !PendingChoiceModel.IsConsumerBoardPool(pending.PoolId.Value))
+            {
+                return;
+            }
+
+            var poolId = pending.PoolId.Value;
+            if (PendingChoiceModel.IsShopPool(poolId))
+            {
+                ShopBoardPresenter.Current.ResyncFromPending(arch);
+                return;
+            }
+
+            if (PendingChoiceModel.IsTavernPool(poolId)
+                || PendingChoiceModel.IsTavernFixItemPool(poolId))
+            {
+                TavernBoardPresenter.Current.ResyncFromPending(arch);
+                return;
+            }
+
+            if (PendingChoiceModel.IsSpecialRewardPool(poolId))
+            {
+                RewardBoardPresenter.Current.ResyncFromPending(arch);
+            }
+        }
+
         private static bool IsRelicRewardPool(string poolId)
         {
-            return !string.IsNullOrEmpty(poolId)
-                && poolId.StartsWith("relic.", StringComparison.Ordinal);
+            return PendingChoiceModel.IsRelicRewardPool(poolId);
         }
     }
 }

@@ -192,10 +192,21 @@ namespace NineGrid.Flow.TavernBoard
 
             Bind(arch);
             var pending = arch?.GetModel<PendingChoiceModel>();
-            if (pending == null
-                || !PendingChoiceModel.IsConsumerBoardPool(pending.PoolId.Value)
+            if (pending == null)
+            {
+                DespawnAll();
+                return;
+            }
+
+            // 房内开宝箱遗物三选一：卡店 Pending 被挂起，勿拆板。
+            if (!PendingChoiceModel.IsConsumerBoardPool(pending.PoolId.Value)
                 || PendingChoiceModel.IsShopPool(pending.PoolId.Value))
             {
+                if (pending.HasSuspendedConsumerSession)
+                {
+                    return;
+                }
+
                 DespawnAll();
                 return;
             }

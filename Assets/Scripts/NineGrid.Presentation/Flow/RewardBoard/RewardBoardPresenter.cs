@@ -151,8 +151,20 @@ namespace NineGrid.Flow.RewardBoard
 
             Bind(arch);
             var pending = arch?.GetModel<PendingChoiceModel>();
-            if (pending == null || !PendingChoiceModel.IsSpecialRewardPool(pending.PoolId.Value))
+            if (pending == null)
             {
+                DespawnAll();
+                return;
+            }
+
+            // 房内开宝箱遗物三选一：特殊房 Pending 被挂起，勿拆板。
+            if (!PendingChoiceModel.IsSpecialRewardPool(pending.PoolId.Value))
+            {
+                if (pending.HasSuspendedConsumerSession)
+                {
+                    return;
+                }
+
                 DespawnAll();
                 return;
             }

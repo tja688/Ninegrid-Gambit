@@ -1001,6 +1001,19 @@ namespace NineGrid.Core.Systems
                 return CoreCommandResult.Accept(resolvedStay);
             }
 
+            // 房内开宝箱遗物三选一：选完恢复挂起的商店/卡店/特殊房货架，勿 AdvanceNode 离店。
+            if (IsRelicRewardPool(poolId) && pending.HasSuspendedConsumerSession)
+            {
+                var resolvedNested = pipeline.RunToCompletion();
+                if (!pending.TryRestoreSuspendedConsumerSession())
+                {
+                    pipeline.Enqueue(new ClearPendingRewardChoiceAction());
+                    resolvedNested = ResolvePostRewardChoiceFlow(pipeline, resolvedNested);
+                }
+
+                return CoreCommandResult.Accept(resolvedNested);
+            }
+
             pipeline.Enqueue(new ClearPendingRewardChoiceAction());
             var resolved = ResolvePostRewardChoiceFlow(pipeline, 0);
             return CoreCommandResult.Accept(resolved);
@@ -1271,6 +1284,23 @@ namespace NineGrid.Core.Systems
             if (IsRelicRewardPool(poolId))
             {
                 this.GetSystem<IRewardSystem>().RememberUnselectedRelics(pending.RewardOptions, null);
+            }
+
+            // 房内开宝箱遗物三选一跳过：发 SkipRelicChoiceGold，恢复挂起货架/服务面，勿离店。
+            if (IsRelicRewardPool(poolId) && pending.HasSuspendedConsumerSession)
+            {
+                var economyNested = this.GetSystem<IEconomySystem>();
+                var resolvedNested = economyNested.AwardSkipRelicChoice();
+                var pipelineNested = this.GetSystem<IActionPipelineSystem>();
+                pipelineNested.Enqueue(new SkipRewardChoiceAction());
+                resolvedNested += pipelineNested.RunToCompletion();
+                if (!pending.TryRestoreSuspendedConsumerSession())
+                {
+                    pipelineNested.Enqueue(new ClearPendingRewardChoiceAction());
+                    resolvedNested = ResolvePostRewardChoiceFlow(pipelineNested, resolvedNested);
+                }
+
+                return CoreCommandResult.Accept(resolvedNested);
             }
 
             // 商店/卡店/特殊奖励房离开：不发跳过帮助卡选择的 +金币；通关帮助三选一跳过仍发。
@@ -1917,8 +1947,7 @@ namespace NineGrid.Core.Systems
 
         private static bool IsRelicRewardPool(string poolId)
         {
-            return !string.IsNullOrEmpty(poolId)
-                && poolId.StartsWith("relic.", System.StringComparison.Ordinal);
+            return PendingChoiceModel.IsRelicRewardPool(poolId);
         }
 
         private int ResolveShopPrice(string defId)

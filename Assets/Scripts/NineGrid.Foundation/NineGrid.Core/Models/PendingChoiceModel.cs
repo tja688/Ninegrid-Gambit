@@ -11,6 +11,11 @@ namespace NineGrid.Core
         private readonly List<RoomKind> mRoomOptions = new List<RoomKind>();
         private readonly List<string> mAttributeSelectedDefIds = new List<string>();
         private readonly HashSet<string> mTavernServicesSoldThisShelf = new HashSet<string>();
+        private readonly List<RewardEntry> mSuspendedRewardOptions = new List<RewardEntry>();
+        private readonly HashSet<string> mSuspendedTavernServicesSoldThisShelf = new HashSet<string>();
+        private string mSuspendedPoolId = string.Empty;
+        private int mSuspendedShopRefreshPriceGold;
+        private bool mHasSuspendedConsumerSession;
 
         public BindableProperty<PendingChoiceKind> Kind { get; private set; }
         public BindableProperty<string> PoolId { get; private set; }
@@ -28,6 +33,14 @@ namespace NineGrid.Core
         public IReadOnlyCollection<string> TavernServicesSoldThisShelf
         {
             get { return mTavernServicesSoldThisShelf; }
+        }
+
+        /// <summary>
+        /// 房内会话被宝箱遗物三选一覆盖时是否挂起了商店/卡店/特殊房 Pending。
+        /// </summary>
+        public bool HasSuspendedConsumerSession
+        {
+            get { return mHasSuspendedConsumerSession; }
         }
 
         public IReadOnlyList<RewardEntry> RewardOptions
@@ -71,6 +84,8 @@ namespace NineGrid.Core
 
         public void OfferRewards(string poolId, IReadOnlyList<RewardEntry> options)
         {
+            TrySuspendConsumerSessionForRelicOverlay(poolId);
+
             mRewardOptions.Clear();
             mRoomOptions.Clear();
             if (options != null)
@@ -95,6 +110,56 @@ namespace NineGrid.Core
             }
 
             Touch();
+        }
+
+        /// <summary>
+        /// 遗物三选一结束后恢复挂起的房内货架/服务面；无挂起则返回 false。
+        /// </summary>
+        public bool TryRestoreSuspendedConsumerSession()
+        {
+            if (!mHasSuspendedConsumerSession)
+            {
+                return false;
+            }
+
+            var poolId = mSuspendedPoolId ?? string.Empty;
+            var refresh = mSuspendedShopRefreshPriceGold < 0 ? 0 : mSuspendedShopRefreshPriceGold;
+            var options = new List<RewardEntry>(mSuspendedRewardOptions.Count);
+            for (var i = 0; i < mSuspendedRewardOptions.Count; i++)
+            {
+                if (mSuspendedRewardOptions[i] != null)
+                {
+                    options.Add(mSuspendedRewardOptions[i]);
+                }
+            }
+
+            mTavernServicesSoldThisShelf.Clear();
+            foreach (var sold in mSuspendedTavernServicesSoldThisShelf)
+            {
+                if (!string.IsNullOrEmpty(sold))
+                {
+                    mTavernServicesSoldThisShelf.Add(sold);
+                }
+            }
+
+            ClearSuspendedConsumerSession();
+
+            // 恢复时勿再次挂起：直接写回选项，不经 OfferRewards 的 relic 覆盖分支。
+            mRewardOptions.Clear();
+            mRoomOptions.Clear();
+            for (var i = 0; i < options.Count; i++)
+            {
+                mRewardOptions.Add(options[i]);
+            }
+
+            Kind.Value = PendingChoiceKind.Reward;
+            PoolId.Value = poolId;
+            SelectedRoom.Value = RoomKind.None;
+            NavigationOffer.Value = NavigationKind.None;
+            SelectedNavigation.Value = NavigationKind.None;
+            ShopRefreshPriceGold.Value = KeepsVisitRefreshPrice(poolId) ? refresh : 0;
+            Touch();
+            return true;
         }
 
         /// <summary>商店货架会话：4 货架 + 本次进店刷新价。</summary>
@@ -201,6 +266,7 @@ namespace NineGrid.Core
             PoolId.Value = string.Empty;
             ShopRefreshPriceGold.Value = 0;
             mTavernServicesSoldThisShelf.Clear();
+            ClearSuspendedConsumerSession();
             Touch();
         }
 
@@ -211,6 +277,13 @@ namespace NineGrid.Core
         public const string ItemRewardPoolId = "reward.item";
         /// <summary>属性房三选二会话（#136）。</summary>
         public const string AttributePickPoolId = "attribute.pick";
+
+        /// <summary>宝箱遗物三选一奖池（poolId 以 relic. 开头）。</summary>
+        public static bool IsRelicRewardPool(string poolId)
+        {
+            return !string.IsNullOrEmpty(poolId)
+                && poolId.StartsWith("relic.", System.StringComparison.Ordinal);
+        }
 
         public static bool IsShopPool(string poolId)
         {
@@ -297,6 +370,7 @@ namespace NineGrid.Core
             SelectedNavigation.Value = NavigationKind.None;
             ShopRefreshPriceGold.Value = 0;
             mTavernServicesSoldThisShelf.Clear();
+            ClearSuspendedConsumerSession();
             Touch();
         }
 
@@ -311,6 +385,7 @@ namespace NineGrid.Core
             SelectedNavigation.Value = NavigationKind.None;
             ShopRefreshPriceGold.Value = 0;
             mTavernServicesSoldThisShelf.Clear();
+            ClearSuspendedConsumerSession();
             Touch();
         }
 
@@ -340,7 +415,50 @@ namespace NineGrid.Core
             SelectedNavigation.Value = NavigationKind.None;
             ShopRefreshPriceGold.Value = 0;
             mTavernServicesSoldThisShelf.Clear();
+            ClearSuspendedConsumerSession();
             Touch();
+        }
+
+        private void TrySuspendConsumerSessionForRelicOverlay(string incomingPoolId)
+        {
+            if (mHasSuspendedConsumerSession
+                || Kind.Value != PendingChoiceKind.Reward
+                || !IsConsumerBoardPool(PoolId.Value)
+                || !IsRelicRewardPool(incomingPoolId))
+            {
+                return;
+            }
+
+            mSuspendedRewardOptions.Clear();
+            for (var i = 0; i < mRewardOptions.Count; i++)
+            {
+                if (mRewardOptions[i] != null)
+                {
+                    mSuspendedRewardOptions.Add(mRewardOptions[i]);
+                }
+            }
+
+            mSuspendedTavernServicesSoldThisShelf.Clear();
+            foreach (var sold in mTavernServicesSoldThisShelf)
+            {
+                if (!string.IsNullOrEmpty(sold))
+                {
+                    mSuspendedTavernServicesSoldThisShelf.Add(sold);
+                }
+            }
+
+            mSuspendedPoolId = PoolId.Value ?? string.Empty;
+            mSuspendedShopRefreshPriceGold = ShopRefreshPriceGold.Value;
+            mHasSuspendedConsumerSession = true;
+        }
+
+        private void ClearSuspendedConsumerSession()
+        {
+            mHasSuspendedConsumerSession = false;
+            mSuspendedPoolId = string.Empty;
+            mSuspendedShopRefreshPriceGold = 0;
+            mSuspendedRewardOptions.Clear();
+            mSuspendedTavernServicesSoldThisShelf.Clear();
         }
 
         private void Touch()

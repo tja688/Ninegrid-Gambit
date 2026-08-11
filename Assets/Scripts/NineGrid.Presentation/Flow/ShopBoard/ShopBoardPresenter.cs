@@ -176,8 +176,20 @@ namespace NineGrid.Flow.ShopBoard
 
             Bind(arch);
             var pending = arch?.GetModel<PendingChoiceModel>();
-            if (pending == null || !PendingChoiceModel.IsShopPool(pending.PoolId.Value))
+            if (pending == null)
             {
+                DespawnAll();
+                return;
+            }
+
+            // 房内开宝箱遗物三选一：商店 Pending 被挂起，勿拆板。
+            if (!PendingChoiceModel.IsShopPool(pending.PoolId.Value))
+            {
+                if (pending.HasSuspendedConsumerSession)
+                {
+                    return;
+                }
+
                 DespawnAll();
                 return;
             }
