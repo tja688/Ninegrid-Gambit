@@ -15,7 +15,8 @@ namespace NineGrid.Presentation.Systems
             double playbackPositionSeconds,
             bool loop,
             bool isPlaying = true,
-            bool claimed = true)
+            bool claimed = true,
+            bool workbenchPreview = false)
         {
             SourceId = sourceId ?? string.Empty;
             ClipKey = clipKey ?? string.Empty;
@@ -24,6 +25,7 @@ namespace NineGrid.Presentation.Systems
             Loop = loop;
             IsPlaying = isPlaying;
             Claimed = claimed;
+            WorkbenchPreview = workbenchPreview;
         }
 
         public string SourceId { get; }
@@ -38,6 +40,11 @@ namespace NineGrid.Presentation.Systems
         /// False means MMSoundManager Sfx-track playback that Adapter did not own (escape hatch).
         /// </summary>
         public bool Claimed { get; }
+
+        /// <summary>
+        /// True when this source was started by Audio Workbench preview (not gameplay).
+        /// </summary>
+        public bool WorkbenchPreview { get; }
 
         public string DisplayName => string.IsNullOrEmpty(ClipKey)
             ? SourceId

@@ -221,6 +221,8 @@ namespace NineGrid.Presentation.Systems
         private readonly List<AudioHistoryRecord> mHistory;
         private readonly Dictionary<string, AggregateState> mAggregates =
             new Dictionary<string, AggregateState>(StringComparer.Ordinal);
+        private readonly HashSet<string> mWorkbenchPreviewSourceIds =
+            new HashSet<string>(StringComparer.Ordinal);
         private long mRevision;
         private long mNextHistorySequence;
 #endif
@@ -313,13 +315,29 @@ namespace NineGrid.Presentation.Systems
                 var live = diagnostics.GetPlayingSfxSources();
                 if (live != null && live.Count > 0)
                 {
+                    PruneWorkbenchPreviewSourceIds(live);
                     var copy = new SfxTrackSourceSnapshot[live.Count];
                     for (var i = 0; i < live.Count; i++)
                     {
-                        copy[i] = live[i];
+                        var src = live[i];
+                        var isPreview = !string.IsNullOrEmpty(src.SourceId)
+                            && mWorkbenchPreviewSourceIds.Contains(src.SourceId);
+                        copy[i] = new SfxTrackSourceSnapshot(
+                            src.SourceId,
+                            src.ClipKey,
+                            src.CueId,
+                            src.PlaybackPositionSeconds,
+                            src.Loop,
+                            src.IsPlaying,
+                            src.Claimed,
+                            workbenchPreview: isPreview);
                     }
 
                     playing = copy;
+                }
+                else
+                {
+                    mWorkbenchPreviewSourceIds.Clear();
                 }
 
                 var liveOrphans = diagnostics.GetSceneAudioOrphans();
@@ -421,6 +439,11 @@ namespace NineGrid.Presentation.Systems
                 return PreviewFailure(backend.FailureReason);
             }
 
+            if (!string.IsNullOrEmpty(backend.SourceId))
+            {
+                mWorkbenchPreviewSourceIds.Add(backend.SourceId);
+            }
+
             return new AudioWorkbenchPreviewResult
             {
                 Succeeded = true,
@@ -435,6 +458,11 @@ namespace NineGrid.Presentation.Systems
 
         public bool StopSfxSource(string sourceId)
         {
+            if (!string.IsNullOrEmpty(sourceId))
+            {
+                mWorkbenchPreviewSourceIds.Remove(sourceId);
+            }
+
             if (!(mPlayback is IAudioPlaybackDiagnosticsAdapter diagnostics))
             {
                 return false;
@@ -445,12 +473,32 @@ namespace NineGrid.Presentation.Systems
 
         public int StopAllSfxSources()
         {
+            mWorkbenchPreviewSourceIds.Clear();
             if (!(mPlayback is IAudioPlaybackDiagnosticsAdapter diagnostics))
             {
                 return 0;
             }
 
             return diagnostics.StopAllSfxSources();
+        }
+
+        private void PruneWorkbenchPreviewSourceIds(IReadOnlyList<SfxTrackSourceSnapshot> live)
+        {
+            if (mWorkbenchPreviewSourceIds.Count == 0 || live == null)
+            {
+                return;
+            }
+
+            var liveIds = new HashSet<string>(StringComparer.Ordinal);
+            for (var i = 0; i < live.Count; i++)
+            {
+                if (!string.IsNullOrEmpty(live[i].SourceId))
+                {
+                    liveIds.Add(live[i].SourceId);
+                }
+            }
+
+            mWorkbenchPreviewSourceIds.RemoveWhere(id => !liveIds.Contains(id));
         }
 
         private static AudioWorkbenchPreviewResult PreviewFailure(string reason)

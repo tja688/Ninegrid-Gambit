@@ -359,6 +359,7 @@
         pos: s.playbackPositionSeconds,
         claimed: s.claimed !== false,
         kind: "sfx",
+        workbenchPreview: !!s.workbenchPreview,
       });
     });
     ((state.musicRuntime && state.musicRuntime.playingSources) || []).forEach((s) => {
@@ -416,13 +417,22 @@
     return "orphan:" + (row.track || "") + ":" + (row.clipKey || "") + ":" + (row.cueId || "");
   }
 
+  const REACTIVATE_GAP_MS = 600;
+
   function syncLiveBubbles() {
     const now = Date.now();
     const live = collectLiveSourceRows();
     const seen = new Set();
     let activated = false;
+    const previewIds = new Set();
+    if (lastPreviewSourceId) previewIds.add(lastPreviewSourceId);
 
     live.forEach((row) => {
+      // Workbench audition must not pollute the gameplay bubble stage.
+      if (row.workbenchPreview || (row.sourceId && previewIds.has(row.sourceId))) {
+        return;
+      }
+
       const id = atomicLiveId(row);
       seen.add(id);
       const hist = findHistoryEnrichment(row);
@@ -448,6 +458,7 @@
         playing: true,
         firstSeenAt: prev ? prev.firstSeenAt : now,
         lastActivatedAt: prev ? prev.lastActivatedAt : now,
+        lastSeenPlayingAt: now,
         activationCount: prev ? prev.activationCount : 1,
       };
       if (!prev) {
@@ -457,10 +468,19 @@
         bumpUntil.set(id + ":new", now + 450);
         activated = true;
       } else if (!wasPlaying) {
-        rec.lastActivatedAt = now;
-        rec.activationCount = (prev.activationCount || 1) + 1;
-        bumpUntil.set(id, now + 700);
-        activated = true;
+        const gap = now - (prev.lastSeenPlayingAt || 0);
+        const clipChanged = (prev.clipKey || "") !== (rec.clipKey || "")
+          || (prev.cueId || "") !== (rec.cueId || "");
+        // Ignore brief isPlaying flicker / pool reuse noise from workbench audition.
+        if (clipChanged || gap >= REACTIVATE_GAP_MS) {
+          rec.lastActivatedAt = now;
+          rec.activationCount = (prev.activationCount || 1) + 1;
+          bumpUntil.set(id, now + 700);
+          activated = true;
+        } else {
+          rec.lastActivatedAt = prev.lastActivatedAt;
+          rec.activationCount = prev.activationCount || 1;
+        }
       } else {
         rec.lastActivatedAt = prev.lastActivatedAt;
         rec.activationCount = prev.activationCount || 1;
@@ -470,7 +490,10 @@
 
     liveBubbles.forEach((rec, id) => {
       if (!seen.has(id) && rec.playing) {
-        liveBubbles.set(id, Object.assign({}, rec, { playing: false }));
+        liveBubbles.set(id, Object.assign({}, rec, {
+          playing: false,
+          lastSeenPlayingAt: rec.lastSeenPlayingAt || now,
+        }));
       }
     });
 
@@ -990,7 +1013,16 @@
       const res = await command("previewBinding", { bindingKey: decl.bindingKey, includeBindingDelay: false });
       lastPreviewSourceId = (res.payload && (res.payload.SourceId || res.payload.sourceId)) || "";
       const snap = await api("/api/snapshot");
-      applyEnvelope(snap);
+      if (snap && typeof snap.revision === "number") revision = snap.revision;
+      state = Object.assign({}, state || {}, (snap && snap.payload) || snap || {});
+      // Soft refresh: keep bubble stage stable; audition must not remount/reorder gameplay bubbles.
+      if (mode === "实时抓音" && document.getElementById("bubbleRiver")) {
+        refreshCaptureLive();
+        const detail = document.getElementById("detailHost");
+        if (detail) renderDetail(detail);
+      } else {
+        applyEnvelope(snap);
+      }
       return;
     }
     if (act === "ping-clip") {

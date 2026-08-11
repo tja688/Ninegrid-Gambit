@@ -1238,7 +1238,7 @@ namespace NineGrid.Core
                     .WithMessage(Source)
                     .WithSource(SourceDefId, Source));
 
-            // Permanent Attack 光环旁路提交有效攻；Temporary 交战加成不上卡面（ADR-0005 / PresentationEventMap）。
+            // Permanent Attack 光环旁路提交有效攻（ADR-0005 / PresentationEventMap）。
             if (Stat == StatId.Attack && Scope == ModifierScope.Permanent)
             {
                 CardFaceEventValues.AppendPermanentAttackFaceCommit(

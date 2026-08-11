@@ -10,7 +10,7 @@ namespace NineGrid.Core
     /// <para>
     /// Permanent 有效攻旁路：Conditional/常驻光环会改有效攻但不经血甲事件；
     /// Core 主动发 <see cref="CoreEventType.BaseStatModified"/>（仍走 Settled 指令，表现层不对账）。
-    /// Temporary 交战加成默认不上卡面；玩家下一次对怪的规则乘区（如暴力卡 DamageMultiplier）经
+    /// 玩家下一次对怪的规则乘区（如暴力卡 DamageMultiplier）经
     /// <see cref="AppendProjectedBattleAttackFaceCommit"/> 投影到攻击槽，与 ADR-0028 结算一致。
     /// </para>
     /// </summary>

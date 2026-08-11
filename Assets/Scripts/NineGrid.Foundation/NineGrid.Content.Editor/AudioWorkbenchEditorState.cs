@@ -431,6 +431,7 @@ namespace NineGrid.Content.Editor
                         loop = s.Loop,
                         isPlaying = s.IsPlaying,
                         claimed = s.Claimed,
+                        workbenchPreview = s.WorkbenchPreview,
                     }).ToArray(),
                 sceneOrphans = (snap.SceneOrphans ?? Array.Empty<SceneAudioOrphanSnapshot>())
                     .Select(o => new
