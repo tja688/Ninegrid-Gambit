@@ -6,7 +6,7 @@ namespace NineGrid.Cards.Presentation
 {
     /// <summary>
     /// 怪物卡面攻击模式槽图标（临时接线，ADR-0038 图标矩阵子集）。
-    /// 覆盖普通近战 / 斜角近战 / 全向近战；普通远程复用全向近战图标；节奏源行动计数图标切换待后续 Catalog。
+    /// 覆盖普通近战 / 斜角近战 / 全向近战；节奏源行动计数图标切换待后续 Catalog。
     /// 素材：<c>Assets/Resources/ContentArt/Multiple/1786242411378_d.png</c> 子 Sprite。
     /// </summary>
     public static class CardFaceAttackPatternIconResolver
@@ -26,7 +26,6 @@ namespace NineGrid.Cards.Presentation
                 { AttackPattern.OrthogonalMelee, OrthogonalMeleeSpriteName },
                 { AttackPattern.OmnidirectionalMelee, OmnidirectionalMeleeSpriteName },
                 { AttackPattern.DiagonalMelee, DiagonalMeleeSpriteName },
-                { AttackPattern.Ranged, OmnidirectionalMeleeSpriteName },
             };
 
         private static Dictionary<string, Sprite> sSpritesByName;
@@ -34,7 +33,7 @@ namespace NineGrid.Cards.Presentation
 
         /// <summary>
         /// 解析局内怪物 <see cref="AttackPattern"/> 对应的攻击模式槽 Sprite。
-        /// 未接线模式（如普通远程）返回 false，由 Binder 回退模板默认。
+        /// 未接线模式（如「无」）返回 false，由 Binder 回退模板默认。
         /// </summary>
         public static bool TryGet(AttackPattern pattern, out Sprite sprite)
         {

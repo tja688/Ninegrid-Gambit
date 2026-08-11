@@ -9,13 +9,13 @@
     "description": "[[普通近战]]，[[转动]]",
     "faceIntro": "反复纠正他没有在读研究生",    "attackPattern": "普通近战",
     "rhythmSource": "行动计数",
-    "rhythmPeriod": 5,
+    "rhythmPeriod": 3,
     "gold": 5,
     "stats": {
         "hp": 14,
         "armor": 0,
         "attack": 2,
-        "action": 5,
+        "action": 3,
         "recovery": 0
     },
     "sprites": {

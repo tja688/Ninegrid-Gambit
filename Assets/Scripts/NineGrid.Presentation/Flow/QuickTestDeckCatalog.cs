@@ -124,7 +124,7 @@ namespace NineGrid.Flow
 
         public static int GetDefaultNodeIndexForDeckKind(MonsterDeckKind kind)
         {
-            // ADR-0022：deck_kind 不再分档；任意主题卡组默认从节点 1 开测。
+            // QuickTest 默认从节点 1 开测；deck_kind 决定正式 Run 进哪一层随机池。
             return 1;
         }
 

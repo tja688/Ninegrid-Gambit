@@ -33,7 +33,8 @@ status: partially superseded by ADR-0038
 | 普通近战 | 正交 | 3 | 6 拍 | 3.5 拍 |
 | 斜角近战 | 对角 | 3 | 6 拍 | 3.5 拍 |
 | 全向近战 | 八向 | 3 | 3 拍 | 3 拍 |
-| 普通远程 | 无条件 | 5 | 5 拍 | 5 拍 |
+
+（已废止的 `普通远程` 几何模式见 ADR-0011 修订说明；远程改由 `远程武器` 技能表达。）
 
 **关于「错过窗口是否浪费了时间」**：玩家确实可以通过控制旋转（砍不死就不旋转）压制某只怪的窗口，但这不是免费的——砍不死的怪每拍都会回击。玩家是用血量买压制，时间被兑换到了别处（详见 [ADR-0012](0012-enemy-action-phase-volley.md)）。
 
@@ -61,7 +62,7 @@ status: partially superseded by ADR-0038
 
 ## 相关
 
-- [ADR-0011](0011-monster-attack-pattern-intrinsic.md) — 攻击模式几何（五个取值）
+- [ADR-0011](0011-monster-attack-pattern-intrinsic.md) — 攻击模式几何（四个取值）
 - [ADR-0012](0012-enemy-action-phase-volley.md) — 敌方行动阶段：报名扣减与资格复核发生的地方
 - [ADR-0038](0038-card-rhythm-dual-channel.md) — 双通道 + 卡级共享倒计时（部分 supersede 本文）
 - [ADR-0009](0009-parameterized-effect-templates.md) — 参数化效果模板：受 `every` 语义迁移影响的内容面

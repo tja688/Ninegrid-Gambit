@@ -15,8 +15,6 @@ namespace NineGrid.Core
         DiagonalMelee = 3,
         /// <summary>全向近战 — 八向相邻。</summary>
         OmnidirectionalMelee = 4,
-        /// <summary>普通远程 — 无位置条件。</summary>
-        Ranged = 5,
     }
 
     /// <summary>攻击模式解析与几何（ADR-0011；频率表已由 ADR-0038 废止）。</summary>
@@ -26,7 +24,6 @@ namespace NineGrid.Core
         public const string TokenOrthogonalMelee = "普通近战";
         public const string TokenDiagonalMelee = "斜角近战";
         public const string TokenOmnidirectionalMelee = "全向近战";
-        public const string TokenRanged = "普通远程";
 
         /// <summary>
         /// 已废止：节奏周期只读卡级 <c>RhythmPeriod</c>（ADR-0038）。
@@ -60,9 +57,6 @@ namespace NineGrid.Core
                 case TokenOmnidirectionalMelee:
                     pattern = AttackPattern.OmnidirectionalMelee;
                     return true;
-                case TokenRanged:
-                    pattern = AttackPattern.Ranged;
-                    return true;
                 default:
                     pattern = AttackPattern.Unspecified;
                     return false;
@@ -92,8 +86,6 @@ namespace NineGrid.Core
                 case AttackPattern.OmnidirectionalMelee:
                     return monsterSlot.IsAdjacentTo(avatarSlot)
                         || monsterSlot.IsDiagonallyAdjacentTo(avatarSlot);
-                case AttackPattern.Ranged:
-                    return true;
                 default:
                     return false;
             }

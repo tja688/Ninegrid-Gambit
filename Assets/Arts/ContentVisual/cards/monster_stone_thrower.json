@@ -7,7 +7,7 @@
     "displayName": "仙人掌花",
     "description": "",
     "faceIntro": "充满尖刺",
-    "attackPattern": "普通远程",
+    "attackPattern": "全向近战",
     "gold": 5,
     "stats": {
         "hp": 2,

@@ -393,7 +393,7 @@ namespace NineGrid.Content.Editor
                     "theme_count",
                     "非 Reserve 主题卡组仅 " + themeCount + " 套，交付至少需要 "
                     + MinThemeDecksForDelivery
-                    + " 套（建议 7）。请把已填满的主题卡组 deck_kind 改为 Unknown。");
+                    + " 套（建议 7）。请为已填满的主题卡组设置 deck_kind（WeakElite/StrongElite/Boss）。");
             }
         }
 

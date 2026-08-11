@@ -5,6 +5,8 @@
 - 方法：设计案（`Assets/Docs/九宫格登神`）↔ 权威文档（`CONTEXT.md` / `docs/adr/`）↔ 代码实施与内容数据（`NineGrid.Core` / `NineGrid.Content` / `Assets/Arts/ContentVisual/cards/*.json`）三方比对
 - 数据快照：工作区当前 HEAD（`e5428ff06`）下的 `Assets/Arts/ContentVisual/cards/`（与 `Assets/StreamingAssets/ContentVisual/cards/` 逐字节一致，抽查 7 张序列 1 卡 MD5 全等）
 
+> **2026-08-11 注**：下文涉及的 `普通远程` 攻击模式枚举已废止（见 ADR-0011 修订）；远程改由 `全向近战` + `远程武器` 技能表达。本报告其余段落保留当时快照语义。
+
 ---
 
 ## 结论摘要

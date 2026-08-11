@@ -284,7 +284,7 @@ namespace NineGrid.Cards.Presentation
         /// <summary>
         /// ADR-0038 图标矩阵：攻击模式槽 / 同步子图标显隐。
         /// 临时接线：有攻击模式时按 <see cref="CardFaceAttackPatternIconResolver"/> 换三档近战图标；
-        /// 普通远程、节奏源行动计数图标、完整 Catalog 待后续票。
+        /// 节奏源行动计数图标、完整 Catalog 待后续票。
         /// </summary>
         private void ApplyRhythmIconMatrix(CardPresentationSnapshot snapshot)
         {

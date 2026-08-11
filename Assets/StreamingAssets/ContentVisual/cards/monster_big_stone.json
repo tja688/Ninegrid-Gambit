@@ -13,7 +13,7 @@
     "gold": 5,
     "stats": {
         "hp": 4,
-        "armor": 2,
+        "armor": 0,
         "attack": 1,
         "action": 5,
         "recovery": 0

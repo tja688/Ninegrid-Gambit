@@ -310,8 +310,12 @@ _Avoid_: 复用右键详述面板讲房间、把简要解释写进卡面槽、�
 _Avoid_: 恢复「描述区与道具卡格互斥」、战斗内隐藏简要解释仅因占位冲突
 
 **主题怪物卡组**：
-一套 5 张、按序列 1–5 排列的怪物卡集合；每层开局随机绑定一套未用过的。`deck.*` 主题英文是历史残留不透明主键（[ADR-0014](docs/adr/0014-theme-ids-are-legacy-opaque.md)），不是玩家叙事阵营。七套正式卡组的稳定槽位契约见 `ThemeDeckStableMapping`（#127 / [ADR-0029](docs/adr/0029-content-guardrail-stable-theme-deck-mapping.md)）：映射正确 ≠ 正式可达。
-_Avoid_: 按强弱分档挑卡组（`MonsterDeckKind` 已降级为仅标 `Reserve`）、同一套卡组在多层复用
+一套 5 张、按序列 1–5 排列的怪物卡集合；**每层开局**从**本层难度档**随机绑定一套未用过的（普通→第 1 层、中等→第 2 层、困难→第 3 层；`monster_decks.json` 的 `deck_kind`）。`deck.*` 主题英文是历史残留不透明主键（[ADR-0014](docs/adr/0014-theme-ids-are-legacy-opaque.md)），不是玩家叙事阵营。七套正式卡组的稳定槽位契约见 `ThemeDeckStableMapping`（#127 / [ADR-0029](docs/adr/0029-content-guardrail-stable-theme-deck-mapping.md)）；难度档契约见 `ThemeDeckFloorTierMapping`（[ADR-0022](docs/adr/0022-node-loadout-model.md)）。
+_Avoid_: 把 `Unknown` 卡组放进正式层池、同一套卡组在多层复用（用尽后同层档内才允许回退复用）
+
+**怪物层数数值叠加**：
+相对第 1 层 JSON 基准，每提升一层所有怪物卡攻击 +1、血量 +2；在 `ContentSystem.CreateDraft` 按 `RunModel.Floor` 注入，对任意主题卡组生效。
+_Avoid_: 在卡面 JSON 里手填层数加成、仅部分卡组享受叠加
 
 **序列**：
 怪物卡在其主题卡组内的梯队位次（1–5），序列 5 即该套的层主。节点规则表按序列规定各抽几张。七套每套五个序列槽位的稳定 contentId 契约见 `ThemeDeckStableMapping`（#127 / ADR-0029）。
@@ -400,7 +404,7 @@ _Avoid_: 战斗（过宽）、把单向打击当成交战、用「攻击」指�
 _Avoid_: 怪物反击、怪物回合、先攻、把它当成一次交战
 
 **攻击模式**：
-每张怪物卡必填的内生几何属性，规定「从哪些格位打得到玩家」（普通近战 / 斜角近战 / 全向近战 / 普通远程 / 无）；出手节奏由卡级节奏源与节奏周期决定，不进效果装配、不写入卡面描述，也不可被运行时效果改写。详见 [ADR-0011](docs/adr/0011-monster-attack-pattern-intrinsic.md)、[ADR-0038](docs/adr/0038-card-rhythm-dual-channel.md)。
+每张怪物卡必填的内生几何属性，规定「从哪些格位打得到玩家」（普通近战 / 斜角近战 / 全向近战 / 无）；远程射击由 [[远程武器]] 等技能表达，不是独立攻击模式。出手节奏由卡级节奏源与节奏周期决定，不进效果装配、不写入卡面描述，也不可被运行时效果改写。详见 [ADR-0011](docs/adr/0011-monster-attack-pattern-intrinsic.md)、[ADR-0038](docs/adr/0038-card-rhythm-dual-channel.md)。
 _Avoid_: 怪物技能、主动技能、把频率当成模式的一部分、缺省即「无」
 
 **开火窗口**：

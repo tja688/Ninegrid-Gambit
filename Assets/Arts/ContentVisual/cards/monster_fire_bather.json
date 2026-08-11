@@ -9,13 +9,13 @@
     "description": "[[神圣决斗]]，[[损耗]]",
     "faceIntro": "第40k届决斗者争霸赛冠军",    "attackPattern": "无",
     "rhythmSource": "行动计数",
-    "rhythmPeriod": 5,
+    "rhythmPeriod": 0,
     "gold": 5,
     "stats": {
         "hp": 150,
         "armor": 0,
         "attack": 10,
-        "action": 5,
+        "action": 0,
         "recovery": 0
     },
     "sprites": {

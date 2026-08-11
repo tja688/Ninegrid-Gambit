@@ -29,7 +29,7 @@ namespace NineGrid.Content
                 }
 
                 var deckId = row.deck_id.Trim();
-                var kind = ParseEnum(row.deck_kind, MonsterDeckKind.Unknown);
+                var kind = ParseDeckKind(row.deck_kind);
                 var displayName = !string.IsNullOrWhiteSpace(row.display_name)
                     ? row.display_name.Trim()
                     : ResolvePresentationDisplayName(deckId);
@@ -73,6 +73,34 @@ namespace NineGrid.Content
             }
 
             return deckId;
+        }
+
+        private static MonsterDeckKind ParseDeckKind(string value)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                return MonsterDeckKind.Unknown;
+            }
+
+            var normalized = value.Trim();
+            switch (normalized.ToLowerInvariant())
+            {
+                case "normal":
+                case "weakelite":
+                    return MonsterDeckKind.WeakElite;
+                case "medium":
+                case "strongelite":
+                    return MonsterDeckKind.StrongElite;
+                case "hard":
+                case "boss":
+                    return MonsterDeckKind.Boss;
+                case "reserve":
+                    return MonsterDeckKind.Reserve;
+                case "unknown":
+                    return MonsterDeckKind.Unknown;
+                default:
+                    return ParseEnum(normalized, MonsterDeckKind.Unknown);
+            }
         }
 
         private static T ParseEnum<T>(string value, T fallback) where T : struct

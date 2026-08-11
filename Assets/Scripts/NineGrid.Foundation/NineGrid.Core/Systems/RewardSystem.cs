@@ -979,6 +979,37 @@ namespace NineGrid.Core.Systems
             return null;
         }
 
+        private static List<MonsterDeckDefinition> CollectFloorMonsterDeckCandidates(
+            GameContentCatalog catalog,
+            RunModel run,
+            int floor,
+            bool excludeUsed)
+        {
+            var matches = new List<MonsterDeckDefinition>();
+            foreach (var pair in catalog.MonsterDecks)
+            {
+                var deck = pair.Value;
+                if (deck == null || !MonsterDeckFloorPool.IsPlayableDifficulty(deck.Kind))
+                {
+                    continue;
+                }
+
+                if (!MonsterDeckFloorPool.MatchesFloor(deck.Kind, floor))
+                {
+                    continue;
+                }
+
+                if (excludeUsed && run.IsMonsterDeckUsed(deck.Id))
+                {
+                    continue;
+                }
+
+                matches.Add(deck);
+            }
+
+            return matches;
+        }
+
         private MonsterDeckDefinition FindMonsterDeck(GameContentCatalog catalog, string deckId)
         {
             MonsterDeckDefinition deck;
@@ -994,32 +1025,13 @@ namespace NineGrid.Core.Systems
                 return deck;
             }
 
-            var matches = new List<MonsterDeckDefinition>();
-            foreach (var pair in catalog.MonsterDecks)
-            {
-                if (pair.Value == null || pair.Value.Kind == MonsterDeckKind.Reserve)
-                {
-                    continue;
-                }
-
-                if (run.IsMonsterDeckUsed(pair.Value.Id))
-                {
-                    continue;
-                }
-
-                matches.Add(pair.Value);
-            }
+            var floor = run.Floor != null ? run.Floor.Value : 1;
+            var matches = CollectFloorMonsterDeckCandidates(catalog, run, floor, excludeUsed: true);
 
             if (matches.Count == 0)
             {
-                // 主题卡组用尽时回退：任意非 Reserve（仍避免重复优先已失败）。
-                foreach (var pair in catalog.MonsterDecks)
-                {
-                    if (pair.Value != null && pair.Value.Kind != MonsterDeckKind.Reserve)
-                    {
-                        matches.Add(pair.Value);
-                    }
-                }
+                // 本层难度池用尽时回退：同层难度档内允许复用（仍排除 Reserve / Unknown）。
+                matches = CollectFloorMonsterDeckCandidates(catalog, run, floor, excludeUsed: false);
             }
 
             if (matches.Count == 0)

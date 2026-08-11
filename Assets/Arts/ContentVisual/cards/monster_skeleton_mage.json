@@ -7,7 +7,7 @@
     "displayName": "巨齿蜘蛛",
     "description": "",
     "faceIntro": "比起结网更喜欢撕咬敌人",
-    "attackPattern": "普通远程",
+    "attackPattern": "全向近战",
     "gold": 5,
     "stats": {
         "hp": 6,
