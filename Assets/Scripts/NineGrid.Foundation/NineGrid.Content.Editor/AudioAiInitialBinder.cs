@@ -695,6 +695,9 @@ namespace NineGrid.Content.Editor
                 case "card.lifecycle.shuffle":
                     clipKey = "audio/SFX/洗牌_短版";
                     return true;
+                case "card.lifecycle.deck_entry":
+                    clipKey = "audio/SFX/洗牌";
+                    return true;
                 case "card.lifecycle.flip":
                     clipKey = "audio/SFX/翻牌";
                     return true;

@@ -1,4 +1,5 @@
 using System;
+using NineGrid.Content.Audio;
 
 namespace NineGrid.Flow.Presentation
 {
@@ -131,6 +132,9 @@ namespace NineGrid.Flow.Presentation
         [AudioCue("card.lifecycle.shuffle", "洗牌入组", "Cards", "BoardPresentationPlayer.PresentOneShuffleIntoDeckAsync", AudioCueContexts.CardDefId)]
         public const string Shuffle = "card.lifecycle.shuffle";
 
+        [AudioCue("card.lifecycle.deck_entry", "开局卡组入场", "Cards", "CardDeckManagerSingleton.BeginEntryInternalAsync", AudioCueContexts.None)]
+        public const string DeckEntry = "card.lifecycle.deck_entry";
+
         [AudioCue("card.lifecycle.into_hand", "卡牌入手就位", "Cards", "CardDeckManagerSingleton.DealCardToHandAsync", AudioCueContexts.CardDefId)]
         public const string IntoHand = "card.lifecycle.into_hand";
 
@@ -185,6 +189,51 @@ namespace NineGrid.Flow.Presentation
                 case NineGrid.Cards.BoardPresentationStepKind.Move:
                     Pulse(Move, diagnosticSource);
                     break;
+            }
+        }
+
+        /// <summary>
+        /// 开局卡组入场：首脉冲立即播；长入场按估算墙钟时长补排跟随脉冲，覆盖不同牌组张数。
+        /// </summary>
+        public static void PulseDeckEntry(string diagnosticSource, float entryDurationSeconds)
+        {
+            Pulse(DeckEntry, diagnosticSource);
+            if (entryDurationSeconds < 0.75f)
+            {
+                return;
+            }
+
+            const float followUpSpacingSeconds = 0.48f;
+            const int maxFollowUps = 3;
+            var followUpCount = Math.Min(
+                maxFollowUps,
+                (int)Math.Floor((entryDurationSeconds - 0.2f) / followUpSpacingSeconds));
+            if (followUpCount <= 0)
+            {
+                return;
+            }
+
+            try
+            {
+                var audio = NineGrid.Presentation.Systems.AudioSystem.EnsureRegistered();
+                for (var i = 1; i <= followUpCount; i++)
+                {
+                    var delay = i * followUpSpacingSeconds;
+                    if (delay >= entryDurationSeconds - 0.05f)
+                    {
+                        break;
+                    }
+
+                    audio.ScheduleCue(
+                        AudioCueRequest.Simple(
+                            DeckEntry,
+                            diagnosticSource + ".followUp"),
+                        delay);
+                }
+            }
+            catch (Exception)
+            {
+                // 音频系统未就绪时不干扰入场表演。
             }
         }
     }

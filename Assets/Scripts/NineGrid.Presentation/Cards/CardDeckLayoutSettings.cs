@@ -45,6 +45,25 @@ namespace NineGrid.Cards
         [Tooltip("每向右一个槽位 sortingOrder 的递减量。")]
         public int sortingOrderStep = 1;
 
+        /// <summary>
+        /// 与 <see cref="CardDeckManagerSingleton"/> Entry 滑入 + Ripple 对齐的墙钟时长估算（秒）。
+        /// </summary>
+        public float EstimateEntryDuration(int cardCount)
+        {
+            if (cardCount <= 0)
+            {
+                return 0f;
+            }
+
+            var slidePhase = cardCount > 1
+                ? (cardCount - 1) * entryDealInterval + moveDuration
+                : moveDuration;
+            var ripplePhase = cardCount > 1
+                ? (cardCount - 1) * rippleDelayPerSlot + moveDuration
+                : moveDuration;
+            return slidePhase + ripplePhase;
+        }
+
         [Header("Hover")]
         [Tooltip("牌组最左卡（slot 0）hover 命中框尺寸（世界单位），用于显示卡牌描述。")]
         public Vector2 deckHoverHitBoxSize = new(1.6f, 2.2f);
