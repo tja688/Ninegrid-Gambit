@@ -1145,7 +1145,7 @@ namespace NineGrid.Cards
             CurrentMode = CardDeckMode.Entry;
 
             var entryDuration = layoutSettings.EstimateEntryDuration(_pendingEntryCards.Count);
-            CardLifecycleAudioCues.PulseDeckEntry(
+            var deckEntryAudio = CardLifecycleAudioCues.BeginDeckEntryAudio(
                 "CardDeckManagerSingleton.BeginEntryInternalAsync",
                 entryDuration);
 
@@ -1199,6 +1199,7 @@ namespace NineGrid.Cards
             }
             finally
             {
+                deckEntryAudio.Complete();
                 _isBusy = false;
             }
         }

@@ -1,5 +1,7 @@
 using System;
+using System.Collections.Generic;
 using NineGrid.Content.Audio;
+using NineGrid.Presentation.Systems;
 
 namespace NineGrid.Flow.Presentation
 {
@@ -193,11 +195,32 @@ namespace NineGrid.Flow.Presentation
         }
 
         /// <summary>
-        /// 开局卡组入场：首脉冲立即播；长入场按估算墙钟时长补排跟随脉冲，覆盖不同牌组张数。
+        /// 开局卡组入场：首脉冲立即播；长入场补排跟随脉冲；<see cref="DeckEntryAudioSession.Complete"/> 取消未播排期并淡出尾巴。
         /// </summary>
-        public static void PulseDeckEntry(string diagnosticSource, float entryDurationSeconds)
+        public static DeckEntryAudioSession BeginDeckEntryAudio(
+            string diagnosticSource,
+            float entryDurationSeconds)
         {
-            Pulse(DeckEntry, diagnosticSource);
+            return new DeckEntryAudioSession(diagnosticSource, entryDurationSeconds);
+        }
+    }
+
+    /// <summary>开局卡组入场音效会话：动画收束时淡出仍在播的洗牌声，避免拖尾。</summary>
+    public sealed class DeckEntryAudioSession
+    {
+        public const float DefaultTailFadeOutSeconds = 0.12f;
+
+        private readonly string mDiagnosticSource;
+        private readonly List<AudioScheduleKey> mPendingSchedules = new List<AudioScheduleKey>();
+        private bool mCompleted;
+
+        internal DeckEntryAudioSession(string diagnosticSource, float entryDurationSeconds)
+        {
+            mDiagnosticSource = diagnosticSource ?? string.Empty;
+            CardLifecycleAudioCues.Pulse(
+                CardLifecycleAudioCues.DeckEntry,
+                mDiagnosticSource);
+
             if (entryDurationSeconds < 0.75f)
             {
                 return;
@@ -215,7 +238,7 @@ namespace NineGrid.Flow.Presentation
 
             try
             {
-                var audio = NineGrid.Presentation.Systems.AudioSystem.EnsureRegistered();
+                var audio = AudioSystem.EnsureRegistered();
                 for (var i = 1; i <= followUpCount; i++)
                 {
                     var delay = i * followUpSpacingSeconds;
@@ -224,12 +247,42 @@ namespace NineGrid.Flow.Presentation
                         break;
                     }
 
-                    audio.ScheduleCue(
+                    var key = audio.ScheduleCue(
                         AudioCueRequest.Simple(
-                            DeckEntry,
-                            diagnosticSource + ".followUp"),
+                            CardLifecycleAudioCues.DeckEntry,
+                            mDiagnosticSource + ".followUp"),
                         delay);
+                    if (key.IsValid)
+                    {
+                        mPendingSchedules.Add(key);
+                    }
                 }
+            }
+            catch (Exception)
+            {
+                // 音频系统未就绪时不干扰入场表演。
+            }
+        }
+
+        public void Complete(float fadeOutSeconds = DefaultTailFadeOutSeconds)
+        {
+            if (mCompleted)
+            {
+                return;
+            }
+
+            mCompleted = true;
+            try
+            {
+                var audio = AudioSystem.EnsureRegistered();
+                for (var i = 0; i < mPendingSchedules.Count; i++)
+                {
+                    audio.CancelScheduledCue(mPendingSchedules[i]);
+                }
+
+                audio.FadeOutPlayingSfxForCue(
+                    CardLifecycleAudioCues.DeckEntry,
+                    Math.Max(0f, fadeOutSeconds));
             }
             catch (Exception)
             {

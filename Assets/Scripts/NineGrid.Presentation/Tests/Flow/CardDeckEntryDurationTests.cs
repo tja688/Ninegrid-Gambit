@@ -22,13 +22,14 @@ namespace NineGrid.Presentation.Tests
         }
 
         [Test]
-        public void PulseDeckEntry_EmitsImmediateCueWithoutFollowUpForShortEntry()
+        public void BeginDeckEntryAudio_EmitsImmediateCueWithoutFollowUpForShortEntry()
         {
             TriggerPulseHub.ResetToNull();
             var sink = new CaptureSink();
             TriggerPulseHub.Configure(NullTriggerPulseSink.Instance, sink);
 
-            CardLifecycleAudioCues.PulseDeckEntry("test", entryDurationSeconds: 0.56f);
+            var session = CardLifecycleAudioCues.BeginDeckEntryAudio("test", entryDurationSeconds: 0.56f);
+            session.Complete();
 
             CollectionAssert.AreEqual(
                 new[] { CardLifecycleAudioCues.DeckEntry },

@@ -104,6 +104,11 @@ namespace NineGrid.Presentation.Systems
         AudioBackendResult Play(AudioPlaybackRequest request);
     }
 
+    public interface IAudioSfxTailAdapter
+    {
+        int FadeOutPlayingForCue(string cueId, float fadeOutSeconds);
+    }
+
     public interface IAudioClock
     {
         double UnscaledTime { get; }
@@ -200,6 +205,7 @@ namespace NineGrid.Presentation.Systems
         AudioCueResult RequestCue(AudioCueRequest request);
         AudioScheduleKey ScheduleCue(AudioCueRequest request, float delaySeconds);
         bool CancelScheduledCue(AudioScheduleKey key);
+        int FadeOutPlayingSfxForCue(string cueId, float fadeOutSeconds);
     }
 
     public sealed class AudioSystem : AbstractSystem, IAudioSystem
@@ -636,6 +642,21 @@ namespace NineGrid.Presentation.Systems
                 scheduleKey: key.Value,
                 scheduleDelaySeconds: hadPending ? pending.DelaySeconds : 0f);
             return true;
+        }
+
+        public int FadeOutPlayingSfxForCue(string cueId, float fadeOutSeconds)
+        {
+            if (string.IsNullOrEmpty(cueId) || fadeOutSeconds < 0f)
+            {
+                return 0;
+            }
+
+            if (mPlayback is IAudioSfxTailAdapter tail)
+            {
+                return tail.FadeOutPlayingForCue(cueId, fadeOutSeconds);
+            }
+
+            return 0;
         }
 
 

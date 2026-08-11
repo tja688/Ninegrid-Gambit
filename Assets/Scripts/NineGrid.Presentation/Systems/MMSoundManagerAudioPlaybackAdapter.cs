@@ -12,22 +12,23 @@ namespace NineGrid.Presentation.Systems
     public sealed class MMSoundManagerAudioPlaybackAdapter
         : IAudioPlaybackAdapter,
             IMusicPlaybackDiagnosticsAdapter,
-            IAudioPlaybackDiagnosticsAdapter
+            IAudioPlaybackDiagnosticsAdapter,
+            IAudioSfxTailAdapter
 #else
-    public sealed class MMSoundManagerAudioPlaybackAdapter : IAudioPlaybackAdapter, IMusicPlaybackAdapter
+    public sealed class MMSoundManagerAudioPlaybackAdapter : IAudioPlaybackAdapter, IMusicPlaybackAdapter, IAudioSfxTailAdapter
 #endif
     {
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
-        private readonly Dictionary<string, AudioSource> musicSources =
-            new Dictionary<string, AudioSource>(StringComparer.Ordinal);
-        private readonly Dictionary<AudioClip, string> musicClipKeys =
-            new Dictionary<AudioClip, string>();
         private readonly Dictionary<string, AudioSource> sfxSources =
             new Dictionary<string, AudioSource>(StringComparer.Ordinal);
         private readonly Dictionary<string, string> sfxClipKeys =
             new Dictionary<string, string>(StringComparer.Ordinal);
         private readonly Dictionary<string, string> sfxCueIds =
             new Dictionary<string, string>(StringComparer.Ordinal);
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        private readonly Dictionary<string, AudioSource> musicSources =
+            new Dictionary<string, AudioSource>(StringComparer.Ordinal);
+        private readonly Dictionary<AudioClip, string> musicClipKeys =
+            new Dictionary<AudioClip, string>();
         private readonly HashSet<string> sfxOwnedIds = new HashSet<string>(StringComparer.Ordinal);
 #endif
 
@@ -64,13 +65,9 @@ namespace NineGrid.Presentation.Systems
                 return AudioBackendResult.Failure("MMSoundManager Sfx 播放失败：" + resourcesKey);
             }
 
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
             var sourceId = GetSfxSourceId(source);
             RegisterSfxSource(source, resourcesKey, request.CueId, owned: true);
             return AudioBackendResult.Success(resourcesKey, sourceId);
-#else
-            return AudioBackendResult.Success(resourcesKey);
-#endif
         }
 
         public MusicBackendResult Play(MusicPlaybackRequest request)
@@ -603,7 +600,67 @@ namespace NineGrid.Presentation.Systems
         }
 #endif
 
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        public int FadeOutPlayingForCue(string cueId, float fadeOutSeconds)
+        {
+            if (string.IsNullOrEmpty(cueId))
+            {
+                return 0;
+            }
+
+            var manager = MMSoundManager.Instance;
+            if (manager == null)
+            {
+                return 0;
+            }
+
+            var toFade = new List<AudioSource>();
+            foreach (var pair in sfxCueIds)
+            {
+                if (!string.Equals(pair.Value, cueId, StringComparison.Ordinal))
+                {
+                    continue;
+                }
+
+                if (!sfxSources.TryGetValue(pair.Key, out var source) || source == null || !source.isPlaying)
+                {
+                    continue;
+                }
+
+                toFade.Add(source);
+            }
+
+            if (toFade.Count == 0)
+            {
+                return 0;
+            }
+
+            var clampedFade = Mathf.Max(0f, fadeOutSeconds);
+            MusicFadeRunner fadeRunner = null;
+            if (clampedFade > 0f)
+            {
+                fadeRunner = manager.gameObject.GetComponent<MusicFadeRunner>();
+                if (fadeRunner == null)
+                {
+                    fadeRunner = manager.gameObject.AddComponent<MusicFadeRunner>();
+                }
+            }
+
+            for (var i = 0; i < toFade.Count; i++)
+            {
+                var source = toFade[i];
+                if (clampedFade <= 0f)
+                {
+                    manager.FreeSound(source);
+                    UnregisterSfxSource(source);
+                    continue;
+                }
+
+                fadeRunner.Schedule(source, clampedFade, () => UnregisterSfxSource(source));
+            }
+
+            return toFade.Count;
+        }
+
         private void RegisterSfxSource(AudioSource source, string resourcesKey, string cueId, bool owned)
         {
             if (source == null)
@@ -623,12 +680,31 @@ namespace NineGrid.Presentation.Systems
                 sfxCueIds[sourceId] = cueId;
             }
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
             if (owned)
             {
                 sfxOwnedIds.Add(sourceId);
             }
+#endif
         }
 
+        private void UnregisterSfxSource(AudioSource source)
+        {
+            if (source == null)
+            {
+                return;
+            }
+
+            var sourceId = GetSfxSourceId(source);
+            sfxSources.Remove(sourceId);
+            sfxClipKeys.Remove(sourceId);
+            sfxCueIds.Remove(sourceId);
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            sfxOwnedIds.Remove(sourceId);
+#endif
+        }
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
         private AudioSource FindLiveSfxSource(string sourceId)
         {
             var manager = MMSoundManager.Instance;
