@@ -1,6 +1,16 @@
 {
     "schemaVersion": 1,
     "ticket": "#193",
-    "cueBindings": [],
+    "cueBindings": [
+        {
+            "cueId": "economy.gold_flight",
+            "note": "金币飞入演出",
+            "module": "Economy",
+            "enabled": true,
+            "playerId": "gold-flight",
+            "spatialOwnership": "independent",
+            "timeBase": "unscaled"
+        }
+    ],
     "stateBindings": []
 }

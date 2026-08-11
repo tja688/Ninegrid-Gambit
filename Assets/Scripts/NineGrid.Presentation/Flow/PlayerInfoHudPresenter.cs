@@ -298,6 +298,8 @@ namespace NineGrid.Flow
 
             goldText ??= FindTmp(playerInfoRoot, GoldValueName);
 
+            GoldHudDomainHost.EnsureInstalled();
+
             // 悬停碰撞盒：优先用血条根上已配置的（场景布局大热区，绝不覆写尺寸）；
             // 没有才运行时在血槽上补一个并随槽宽同步。
             if (bloodSlotCollider == null && bloodBarRoot != null)

@@ -28,6 +28,7 @@ namespace NineGrid.Flow
         /// </summary>
         public static void EnsureInstalled()
         {
+            GoldHudDomainHost.EnsureInstalled();
             if (sInstance == null)
             {
                 var existing = FindFirstObjectByType<GoldGainPresentationBinder>();

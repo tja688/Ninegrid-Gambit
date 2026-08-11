@@ -44,27 +44,56 @@ namespace NineGrid.Presentation.Systems
         public VfxSpatialContext AcceptedSpatial { get; }
     }
 
+    public readonly struct VfxPresentationPlan
+    {
+        public static readonly VfxPresentationPlan None = new VfxPresentationPlan(0f, 0f);
+
+        public VfxPresentationPlan(float firstArrivalDelay, float lastArrivalDelay)
+        {
+            FirstArrivalDelay = firstArrivalDelay;
+            LastArrivalDelay = lastArrivalDelay;
+        }
+
+        /// <summary>首枚金币抵达并消失的延迟（秒）；HUD 在此之后开始推进数字。</summary>
+        public float FirstArrivalDelay { get; }
+
+        /// <summary>末枚金币抵达并消失的延迟（秒）；HUD 在此精确收敛到 AmountAfter。</summary>
+        public float LastArrivalDelay { get; }
+
+        public bool IsValid => FirstArrivalDelay >= 0f && LastArrivalDelay >= FirstArrivalDelay;
+    }
+
     public readonly struct VfxPlayerStartResult
     {
-        private VfxPlayerStartResult(bool succeeded, string instanceId, string failureReason)
+        private VfxPlayerStartResult(
+            bool succeeded,
+            string instanceId,
+            string failureReason,
+            VfxPresentationPlan plan)
         {
             Succeeded = succeeded;
             InstanceId = instanceId ?? string.Empty;
             FailureReason = failureReason ?? string.Empty;
+            PresentationPlan = plan;
         }
 
         public bool Succeeded { get; }
         public string InstanceId { get; }
         public string FailureReason { get; }
 
-        public static VfxPlayerStartResult Success(string instanceId)
+        /// <summary>程序化播放器一次性给出的批次表现计划；仅金牌玩家提供。</summary>
+        public VfxPresentationPlan PresentationPlan { get; }
+
+        public bool HasPresentationPlan => PresentationPlan.IsValid;
+
+        public static VfxPlayerStartResult Success(string instanceId, VfxPresentationPlan plan = default)
         {
-            return new VfxPlayerStartResult(true, instanceId, string.Empty);
+            return new VfxPlayerStartResult(true, instanceId, string.Empty, plan);
         }
 
         public static VfxPlayerStartResult Failure(string reason)
         {
-            return new VfxPlayerStartResult(false, string.Empty, reason);
+            return new VfxPlayerStartResult(false, string.Empty, reason, VfxPresentationPlan.None);
         }
     }
 

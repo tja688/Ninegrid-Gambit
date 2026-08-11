@@ -15,18 +15,23 @@ namespace NineGrid.Content.Vfx
             string semanticRole,
             IVfxDomainHost domainHost,
             Vector3? positionSnapshot,
-            int diagnosticOwnerUid = 0)
+            int diagnosticOwnerUid = 0,
+            int amount = 0)
         {
             SemanticRole = semanticRole ?? string.Empty;
             DomainHost = domainHost;
             PositionSnapshot = positionSnapshot;
             DiagnosticOwnerUid = diagnosticOwnerUid > 0 ? diagnosticOwnerUid : 0;
+            Amount = amount;
         }
 
         public string SemanticRole { get; }
         public IVfxDomainHost DomainHost { get; }
         public Vector3? PositionSnapshot { get; }
         public int DiagnosticOwnerUid { get; }
+
+        /// <summary>可选语义数量（如金币增量）；程序化播放器按需消费，不进绑定主键。</summary>
+        public int Amount { get; }
 
         public bool HasDomainHost => DomainHost != null;
     }

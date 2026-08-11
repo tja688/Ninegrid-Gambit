@@ -63,6 +63,11 @@ namespace NineGrid.Presentation.Systems
         public string VariantId { get; internal set; }
         public string InstanceId { get; internal set; }
         public string FailureReason { get; internal set; }
+
+        /// <summary>程序化播放器一次性给出的批次表现计划（如首达/末达窗口）；非金牌播放器为空。</summary>
+        public VfxPresentationPlan PresentationPlan { get; internal set; }
+
+        public bool HasPresentationPlan => PresentationPlan.IsValid;
     }
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
@@ -1330,6 +1335,7 @@ namespace NineGrid.Presentation.Systems
                 MaterialKey = materialKey,
                 VariantId = variantId,
                 InstanceId = backend.InstanceId,
+                PresentationPlan = backend.PresentationPlan,
             };
         }
 
@@ -1341,7 +1347,8 @@ namespace NineGrid.Presentation.Systems
                     spatialContext.SemanticRole,
                     null,
                     spatialContext.PositionSnapshot,
-                    spatialContext.DiagnosticOwnerUid);
+                    spatialContext.DiagnosticOwnerUid,
+                    spatialContext.Amount);
             }
 
             return spatialContext;
@@ -1752,7 +1759,8 @@ namespace NineGrid.Presentation.Systems
                     spatialContext.SemanticRole,
                     null,
                     spatialContext.PositionSnapshot,
-                    spatialContext.DiagnosticOwnerUid);
+                    spatialContext.DiagnosticOwnerUid,
+                    spatialContext.Amount);
             }
 
             return spatialContext;
@@ -2510,6 +2518,7 @@ namespace NineGrid.Presentation.Systems
         public sealed class DefaultVfxPlayerFactory : IVfxPlayerFactory
         {
             private readonly VfxSpriteSheetPlayerFactory mSpriteSheetFactory = new VfxSpriteSheetPlayerFactory();
+            private readonly VfxGoldFlightPlayerFactory mGoldFlightFactory = new VfxGoldFlightPlayerFactory();
 
             public bool TryCreatePulsePlayer(string playerId, out IVfxPulsePlayer player, out string failureReason)
             {
@@ -2524,6 +2533,11 @@ namespace NineGrid.Presentation.Systems
                 if (string.Equals(playerId, VfxPlayerRegistry.SpriteSheet, StringComparison.Ordinal))
                 {
                     return mSpriteSheetFactory.TryCreatePulsePlayer(playerId, out player, out failureReason);
+                }
+
+                if (string.Equals(playerId, VfxPlayerRegistry.GoldFlight, StringComparison.Ordinal))
+                {
+                    return mGoldFlightFactory.TryCreatePulsePlayer(playerId, out player, out failureReason);
                 }
 
                 failureReason = "播放器尚未实现。";
