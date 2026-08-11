@@ -146,6 +146,7 @@ namespace NineGrid.Flow.Presentation
                         if (geometry != null)
                         {
                             await geometry.HopAvatarToSlotAsync(from.Index, next.Index, ct);
+                            AvatarWalkAudioCues.PulseStep("AvatarWalkRunner.RunLoopAsync");
                         }
                     }
                     finally
