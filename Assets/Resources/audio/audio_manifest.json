@@ -159,6 +159,15 @@
             "loadPolicy": "first_use_cached"
         },
         {
+            "guid": "dcae6fbb296e8d846aa5eedd18633486",
+            "assetPath": "Assets/Resources/audio/SFX/Break_Explosions2.wav",
+            "resourcesKey": "audio/SFX/Break_Explosions2",
+            "sha256": "8d5ac0cd74760ae294b724191bba871350c7442a1e12536b610763f62c748c88",
+            "sizeBytes": 93420,
+            "kind": "SFX",
+            "loadPolicy": "first_use_cached"
+        },
+        {
             "guid": "53c365509d61f1742bbfb226f402d56c",
             "assetPath": "Assets/Resources/audio/SFX/DefeatTheme.mp3",
             "resourcesKey": "audio/SFX/DefeatTheme",

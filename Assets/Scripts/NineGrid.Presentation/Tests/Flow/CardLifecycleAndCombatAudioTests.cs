@@ -45,6 +45,31 @@ namespace NineGrid.Presentation.Tests
         }
 
         [Test]
+        public void CombatOutcome_HelpCardDamage_SkipsMeleeHitButKeepsSplitResults()
+        {
+            var sink = CaptureAudio();
+
+            PresentationEventMap.TryGet(CoreEventType.DamageDealt, out var map);
+            var gameEvent = new CoreGameEvent(CoreEventType.DamageDealt, 1, "HelpBomb")
+                .WithTarget(7)
+                .WithAmount(4)
+                .WithSource("help.bomb", "help.bomb.use")
+                .WithDamageSplit(armorDamage: 1, hpDamage: 3);
+            var instruction = new PresentationInstruction(gameEvent, map);
+
+            Assert.IsTrue(new DamageFloaterBeatHandler().TryApply(instruction));
+
+            CollectionAssert.AreEqual(
+                new[]
+                {
+                    BattleCombatAudioCues.ArmorAbsorb,
+                    BattleCombatAudioCues.HpDamage,
+                },
+                sink.CueIds);
+            CollectionAssert.DoesNotContain(sink.CueIds, BattleCombatAudioCues.AttackHit);
+        }
+
+        [Test]
         public void CombatOutcome_FullArmorBlock_EmitsHitAndBlockNotHp()
         {
             var sink = CaptureAudio();

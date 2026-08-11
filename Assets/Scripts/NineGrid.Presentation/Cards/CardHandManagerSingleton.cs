@@ -1489,7 +1489,14 @@ namespace NineGrid.Cards
                 // Choice 路径可能先把手牌 scale 置 0；
                 // SetDisplayMode(RemovedMode) 会把缩放弹回 1.08，造成「用完后又闪一下」。
                 var alreadyHidden = card.Transform.localScale.sqrMagnitude <= 0.0001f;
-                if (!alreadyHidden)
+                if (alreadyHidden)
+                {
+                    CardLifecycleAudioCues.Pulse(
+                        CardLifecycleAudioCues.ItemUse,
+                        "CardHandManagerSingleton.VanishCardAfterApplyAsync",
+                        card.DefId);
+                }
+                else
                 {
                     CardEntityLifecycleHook.CardsOrNull()?.SetDisplayMode(card, CardDisplayMode.RemovedMode);
                     if (card.TryGetEffectManager(out var effectManager))
@@ -1498,6 +1505,10 @@ namespace NineGrid.Cards
                     }
                     else
                     {
+                        CardLifecycleAudioCues.Pulse(
+                            CardLifecycleAudioCues.ItemUse,
+                            "CardHandManagerSingleton.VanishCardAfterApplyAsync",
+                            card.DefId);
                         var initialScale = card.Transform.localScale;
                         await RunViewTweenAsync(
                             CardViewTween.ScaleDisappear(

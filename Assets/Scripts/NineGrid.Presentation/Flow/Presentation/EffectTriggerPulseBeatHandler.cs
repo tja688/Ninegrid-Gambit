@@ -24,15 +24,15 @@ namespace NineGrid.Flow.Presentation
                 return true;
             }
 
-            if (!IsCoreCardOnBoard(gameEvent.CardUid))
+            // FX 脉冲仍要求卡在场（Board）；手牌/道具槽 HelpCard 的 OnSelfUsed 不在此列。
+            if (IsCoreCardOnBoard(gameEvent.CardUid))
             {
-                return true;
+                var fxId = CardEffectTriggerPulseSink.IdForCard(gameEvent.CardUid);
+                TriggerPulseHub.PulseFx(fxId);
             }
 
-            var fxId = CardEffectTriggerPulseSink.IdForCard(gameEvent.CardUid);
-            TriggerPulseHub.PulseFx(fxId);
-
             // 单一权威音频出口：按内容种类选一个稳定 cue，禁止再发 sfx.effect.<CardUid> 或第二条内容路径。
+            // 音频不受棋盘门禁：爆弹等道具槽触发的效果仍需专属释放音。
             SkillEffectTrapRelicAudioCues.PulseTrigger(
                 gameEvent.SourceDefId,
                 gameEvent.Cause,

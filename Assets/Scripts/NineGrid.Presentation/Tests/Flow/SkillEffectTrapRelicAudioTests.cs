@@ -147,6 +147,48 @@ namespace NineGrid.Presentation.Tests
         }
 
         [Test]
+        public void EffectTrigger_HelpCard_UsesEffectTriggerCueForOffHandReleaseAudio()
+        {
+            var sink = CaptureAudio();
+
+            PresentationEventMap.TryGet(CoreEventType.EffectTriggered, out var map);
+            var gameEvent = new CoreGameEvent(CoreEventType.EffectTriggered, 1, "Activate")
+                .WithCard(99)
+                .WithSource("help.bomb", "help.bomb.use");
+            var instruction = new PresentationInstruction(gameEvent, map);
+
+            Assert.IsTrue(new EffectTriggerPulseBeatHandler().TryApply(instruction));
+            Assert.AreEqual(1, sink.Requests.Count);
+            Assert.AreEqual(SkillEffectTrapRelicAudioCues.EffectTrigger, sink.Requests[0].CueId);
+            Assert.AreEqual("help.bomb", sink.Requests[0].CardDefId);
+            Assert.AreEqual("help.bomb.use", sink.Requests[0].SkillId);
+        }
+
+        [Test]
+        public void BindingResolve_HelpBombEffectTrigger_PrefersCardSpecificExplosion()
+        {
+            var catalog = AudioBindingCatalog.FromJson(
+                "{\"schemaVersion\":3,\"bindings\":["
+                + "{\"cueId\":\"sfx.effect.trigger\",\"enabled\":true,\"clipKey\":\"\",\"variants\":["
+                + "{\"variantId\":\"v1\",\"clipKey\":\"audio/SFX/准备法术增强.FG\",\"weight\":1}]},"
+                + "{\"cueId\":\"sfx.effect.trigger\",\"enabled\":true,\"clipKey\":\"audio/SFX/Break_Explosions2\","
+                + "\"selectorCardDefId\":\"help.bomb\"}"
+                + "]}");
+
+            Assert.IsTrue(catalog.TryResolve(
+                new AudioCueRequest(
+                    SkillEffectTrapRelicAudioCues.EffectTrigger,
+                    "test",
+                    "help.bomb",
+                    "help.bomb.use",
+                    string.Empty,
+                    string.Empty,
+                    string.Empty),
+                out var binding));
+            Assert.AreEqual("audio/SFX/Break_Explosions2", binding.ClipKey);
+        }
+
+        [Test]
         public void BindingDelay_MustPlayViaAdapter_DoesNotUseCancellableSchedule()
         {
             var clock = new FakeClock();

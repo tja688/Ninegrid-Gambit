@@ -328,7 +328,11 @@ namespace NineGrid.Flow.Presentation
             }
 
             var cardDefId = gameEvent.SourceDefId;
-            BattleCombatAudioCues.Pulse(BattleCombatAudioCues.AttackHit, diagnosticSource, cardDefId);
+            // 道具卡范围伤不走普攻斩击池，避免盖过 help.* 专属释放音（如爆弹）。
+            if (!IsHelpCardSource(cardDefId))
+            {
+                BattleCombatAudioCues.Pulse(BattleCombatAudioCues.AttackHit, diagnosticSource, cardDefId);
+            }
 
             var armorDamage = gameEvent.ArmorDamage;
             var hpDamage = gameEvent.HpDamage;
@@ -360,6 +364,12 @@ namespace NineGrid.Flow.Presentation
                 BattleCombatAudioCues.Heal,
                 diagnosticSource,
                 gameEvent.SourceDefId);
+        }
+
+        private static bool IsHelpCardSource(string sourceDefId)
+        {
+            return !string.IsNullOrEmpty(sourceDefId)
+                && sourceDefId.StartsWith("help.", StringComparison.Ordinal);
         }
     }
 

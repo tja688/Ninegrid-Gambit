@@ -1466,6 +1466,24 @@
             "authoringStatus": "humanConfirmed"
         },
         {
+            "cueId": "sfx.effect.trigger",
+            "note": "爆弹释放（爆炸声，效果 Impact 对齐）",
+            "module": "Battle",
+            "enabled": true,
+            "clipKey": "audio/SFX/Break_Explosions2",
+            "volumeDb": -2,
+            "startOffsetSeconds": 0,
+            "bindingDelaySeconds": 0,
+            "minimumIntervalSeconds": 0.12,
+            "variants": [],
+            "selectorCardDefId": "help.bomb",
+            "selectorSkillId": "",
+            "selectorRoomId": "",
+            "selectorItemDefId": "",
+            "selectorContentId": "",
+            "authoringStatus": "humanConfirmed"
+        },
+        {
             "cueId": "reward.relic_option_pop",
             "note": "遗物三选一选项弹出（抽牌声）",
             "module": "Reward",
