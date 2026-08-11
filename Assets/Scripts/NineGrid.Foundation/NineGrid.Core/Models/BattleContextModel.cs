@@ -7,7 +7,7 @@ namespace NineGrid.Core
     /// 追踪玩家当前交战敌人与交战窗口是否打开。
     /// EngagedEnemyUid 供 UntilEnemyChanges；IsEngagementActive 供 OnBattle 门禁（#78 / ADR-0012）。
     /// IsLeaveTrapBroken 即战斗房清关标志（#113 / ADR-0026；<c>IDeckSystem.IsNodeCleared</c> 读此位）。
-    /// 开局真怪 N / 击破进度 / 离开机关是否已洗入供 #112 插入（ADR-0026：默认 ⌈N/2⌉；层主房改为击破开局层主）。
+    /// 开局真怪 N / 击破进度 / 离开机关是否已编入或洗入（ADR-0026：普通房开局编入；层主房击破开局层主后洗入）。
     /// </summary>
     public sealed class BattleContextModel : AbstractModel
     {
@@ -123,28 +123,17 @@ namespace NineGrid.Core
         }
 
         /// <summary>
-        /// 非层主房：⌈N/2⌉（N=0 永不触发）。
         /// 层主房（<paramref name="bossRoom"/>）：须已击破开局层主。
+        /// 普通战斗房在 <c>BuildNodeDeckOptions</c> 开局编入，此处恒 false。
         /// </summary>
         public bool ShouldInsertLeaveTrap(bool bossRoom)
         {
-            if (IsLeaveTrapInserted)
+            if (IsLeaveTrapInserted || !bossRoom)
             {
                 return false;
             }
 
-            if (bossRoom)
-            {
-                return IsOpeningBossDefeated;
-            }
-
-            if (OpeningTrueMonsterCount <= 0)
-            {
-                return false;
-            }
-
-            var threshold = (OpeningTrueMonsterCount + 1) / 2;
-            return DefeatedTrueMonsterCount >= threshold;
+            return IsOpeningBossDefeated;
         }
 
         /// <summary>

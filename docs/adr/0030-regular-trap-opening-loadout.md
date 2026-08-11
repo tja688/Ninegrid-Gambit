@@ -12,7 +12,7 @@ status: accepted
 - **排除项**：离开机关（`trap.leave`，唯一清关手段）与技能/遗物专用特殊机关（烈焰/治疗泉 Red、复活石 None）绝不出现在初始随机三张内。
 - **抽取语义**：无放回（同一场不重复）；不足三张按池量注入，池空注入零张；抽取顺序由 `IRngUtility` 种子决定，同种子同顺序可复现。
 - **不借用 QuickTest 通道**：QuickTest `trapContentIds` 仅 `\1–\9` 定向注入，叠加在 Core 三张之上；`\0` 与正式镜像一致（同为 Core 注入三张，无额外注入）。
-- **与离开机关插入正交**：常规机关仍不算真怪物（无击杀赏金、不计 ⌈N/2⌉ 分母）；离开机关继续按 ⌈开局真怪数/2⌉（普通战斗房）或击破开局层主（层主房）动态洗入。
+- **与离开机关插入正交**：常规机关仍不算真怪物（无击杀赏金）；离开机关在普通战斗房由 `AppendOpeningLeaveTrapCard` 开局编入（层主房仍击破开局层主后洗入，见 ADR-0026）。
 
 ## 为什么
 
@@ -28,5 +28,5 @@ status: accepted
 ## 相关
 
 - [ADR-0017](0017-trap-card-kind-and-dual-bucket.md) — Trap 双桶；无赏金；静默 CounterAttackBanned
-- [ADR-0026](0026-leave-trap-sole-clear-condition.md) — 离开机关为唯一清关手段；⌈N/2⌉ / 层主房洗入
+- [ADR-0026](0026-leave-trap-sole-clear-condition.md) — 离开机关为唯一清关手段；普通房开局编入 / 层主房洗入
 - [ADR-0022](0022-node-loadout-model.md) — 节点装填模型（`BuildNodeDeckOptions`）

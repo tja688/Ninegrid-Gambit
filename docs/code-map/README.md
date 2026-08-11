@@ -32,7 +32,7 @@
 | [ADR-0021](../adr/0021-run-progression-in-core.md) | 跑图进度与节点编排归 Core；8 节点/层；4/7 非战斗（清关兑金条款见 ADR-0025/0026） |
 | [ADR-0022](../adr/0022-node-loadout-model.md) | 关卡装填：主题序列 + 玩家侧重生成；携带卡包已退役（ADR-0025） |
 | [ADR-0025](../adr/0025-item-slots-run-persistent-hold.md) | 道具卡格跑图内持续持有；双容量；商店升级；回收；携带卡包退役 |
-| [ADR-0026](../adr/0026-leave-trap-sole-clear-condition.md) | 离开机关为战斗房唯一清关；门/离开；默认 ⌈N/2⌉ 洗入，层主房改击破开局层主 |
+| [ADR-0026](../adr/0026-leave-trap-sole-clear-condition.md) | 离开机关为战斗房唯一清关；门/离开；普通房开局编入，层主房改击破开局层主 |
 | [ADR-0027](../adr/0027-relic-drag-recycle-and-rmb-inspect.md) | 遗物栏拖入回收区丢弃 + 右键详述 |
 | [ADR-0028](../adr/0028-damage-formula-armor-and-reduction.md) | 标准伤害公式：三层护甲、伤害减免、无视护甲（公式层已落地；遗物内容另票） |
 | [ADR-0029](../adr/0029-content-guardrail-stable-theme-deck-mapping.md) | 内容护栏：七套稳定 ID—策划槽位—sequence 映射契约（#127；`ThemeDeckStableMapping` + 映射正确 / 正式可达两层校验 + 禁 displayName 断言） |

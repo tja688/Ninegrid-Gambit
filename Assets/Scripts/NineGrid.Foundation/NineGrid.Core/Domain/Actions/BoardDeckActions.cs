@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using NineGrid.Core.Content;
 using NineGrid.Core.Systems;
 using NineGrid.Core.Utilities;
 
@@ -49,10 +50,17 @@ namespace NineGrid.Core
                         .WithSource(card.DefId, "setupNodeDeck"));
             }
 
+            var openingLeaveTrap = false;
             for (var i = 0; i < Options.EnemyCards.Count; i++)
             {
-                var card = CreateConfiguredCard(context, Options.EnemyCards[i], registry);
+                var draft = Options.EnemyCards[i];
+                var card = CreateConfiguredCard(context, draft, registry);
                 deck.AddToEnemyCardPool(card);
+                if (string.Equals(draft.DefId, RegularTrapPool.LeaveTrapDefId, StringComparison.Ordinal))
+                {
+                    openingLeaveTrap = true;
+                }
+
                 if (CardCombatRules.IsTrueMonster(card.Kind))
                 {
                     var isBoss = card.Counters.Get(CoreCounterKeys.Boss) > 0;
@@ -66,6 +74,11 @@ namespace NineGrid.Core
                         .WithCard(card.Uid)
                         .WithMessage(card.DefId)
                         .WithSource(card.DefId, "setupNodeDeck"));
+            }
+
+            if (openingLeaveTrap)
+            {
+                battle.MarkLeaveTrapInserted();
             }
 
             var deactivation = BuildDeactivationResult(context, deactivatedEffects);

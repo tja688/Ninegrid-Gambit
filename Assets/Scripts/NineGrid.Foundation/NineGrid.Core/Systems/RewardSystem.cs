@@ -304,6 +304,7 @@ namespace NineGrid.Core.Systems
                 var fallback = new NodeDeckOptions();
                 AddRunPlayerSideCards(catalog, fallback);
                 AppendRegularTrapCards(catalog, fallback);
+                AppendOpeningLeaveTrapCard(catalog, fallback);
                 return fallback;
             }
 
@@ -313,6 +314,7 @@ namespace NineGrid.Core.Systems
                 var fallback = new NodeDeckOptions();
                 AddRunPlayerSideCards(catalog, fallback);
                 AppendRegularTrapCards(catalog, fallback);
+                AppendOpeningLeaveTrapCard(catalog, fallback);
                 return fallback;
             }
 
@@ -333,6 +335,7 @@ namespace NineGrid.Core.Systems
 
             AppendRoomOpeningInjectMonsterCards(catalog, deck, options);
             AppendRegularTrapCards(catalog, options);
+            AppendOpeningLeaveTrapCard(catalog, options);
             return options;
         }
 
@@ -752,6 +755,32 @@ namespace NineGrid.Core.Systems
                     options.AddEnemyCard(content.CreateDraft(defIds[j]));
                 }
             }
+        }
+
+        /// <summary>
+        /// #112 / ADR-0026：普通战斗房开局编入离开机关（层主房改击破开局层主后洗入）。
+        /// </summary>
+        private void AppendOpeningLeaveTrapCard(GameContentCatalog catalog, NodeDeckOptions options)
+        {
+            if (catalog == null || options == null)
+            {
+                return;
+            }
+
+            var run = this.GetModel<RunModel>();
+            if (run.Room.Value == RoomKind.Boss)
+            {
+                return;
+            }
+
+            var content = this.GetSystem<IContentSystem>();
+            var draft = content.CreateDraft(RegularTrapPool.LeaveTrapDefId);
+            if (draft == null || draft.Kind != CardKind.Trap)
+            {
+                return;
+            }
+
+            options.AddEnemyCard(draft);
         }
 
         /// <summary>
