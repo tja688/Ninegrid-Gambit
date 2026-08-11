@@ -322,7 +322,7 @@ namespace NineGrid.Core.Systems
             {
                 PlayerOpeningCount = 3,
                 EnemyOpeningCount = 3,
-                // 序列 5 = 层主；开局必含层主时 OpeningDeal 走 RequireElite（Boss Counter 亦计 Elite）。
+                // 序列 5 = 层主；RequireElite 时 OpeningDeal 必选全部层主（精英）且第一波直摆上盘（Boss Counter 亦计 Elite）。
                 RequireElite = rule.Seq5Count > 0
             };
 

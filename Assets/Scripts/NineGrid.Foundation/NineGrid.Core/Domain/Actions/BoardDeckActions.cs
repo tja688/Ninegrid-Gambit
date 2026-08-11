@@ -214,13 +214,17 @@ namespace NineGrid.Core
             var rng = context.Architecture.GetUtility<IRngUtility>();
 
             // Step 1: place player-side cards directly on the board (soft guarantee).
-            var playerPlaced = PlacePlayerCardsDirectly(deck, board, registry, rng, Options.PlayerOpeningCount);
+            var playerPlaced = PlaceCardsDirectly(deck, board, registry, rng, deck.PlayerCardPoolUids, Options.PlayerOpeningCount);
 
             // Step 2: select enemy cards.
+            // 设计案发牌机制：怪物侧选出的卡直接放置上盘（存在层主则必定抽出）。
+            // 层主对战时所有层主必须第一波发牌上场，不得洗入抽牌堆随缘补出（ADR-0026「开局编入的层主」以本关首次发牌在场为前提）。
             var selected = new List<int>();
             SelectCards(selected, deck.EnemyCardPoolUids, registry, Options.EnemyOpeningCount, Options.RequireElite);
+            var enemyPlaced = PlaceCardsDirectly(deck, board, registry, rng, selected, selected.Count);
 
-            for (var i = 0; i < selected.Count; i++)
+            // 盘面放不下时（理论不可达）剩余选中卡退回抽牌堆，避免吞卡。
+            for (var i = enemyPlaced; i < selected.Count; i++)
             {
                 var card = registry.Get(selected[i]);
                 deck.AddToDrawPile(card, false);
@@ -235,7 +239,7 @@ namespace NineGrid.Core
 
             return new GameActionResult()
                 .AddEvent(new CoreGameEvent(CoreEventType.CardDealt, context.ActionId, ActionName)
-                    .WithAmount(playerPlaced + selected.Count)
+                    .WithAmount(playerPlaced + enemyPlaced)
                     .WithMessage("opening"));
         }
 
@@ -244,15 +248,15 @@ namespace NineGrid.Core
             return sPostTriggers;
         }
 
-        private static int PlacePlayerCardsDirectly(
+        private static int PlaceCardsDirectly(
             DeckModel deck,
             BoardModel board,
             CardRegistry registry,
             IRngUtility rng,
+            IReadOnlyList<int> uids,
             int maxCount)
         {
-            var poolUids = new List<int>(deck.PlayerCardPoolUids);
-            if (poolUids.Count == 0 || maxCount <= 0)
+            if (uids.Count == 0 || maxCount <= 0)
             {
                 return 0;
             }
@@ -268,10 +272,17 @@ namespace NineGrid.Core
             }
 
             var placed = 0;
-            var count = poolUids.Count < maxCount ? poolUids.Count : maxCount;
+            // 拷贝入参：玩家侧传的是活池列表，RemoveUid 会边放边变（原 PlacePlayerCardsDirectly 同款保护）。
+            var orderedUids = new List<int>(uids.Count);
+            for (var i = 0; i < uids.Count; i++)
+            {
+                orderedUids.Add(uids[i]);
+            }
+
+            var count = orderedUids.Count < maxCount ? orderedUids.Count : maxCount;
             for (var i = 0; i < count && availableSlots.Count > 0; i++)
             {
-                var card = registry.Get(poolUids[i]);
+                var card = registry.Get(orderedUids[i]);
                 var slotIdx = rng.Range(0, availableSlots.Count);
                 var slot = availableSlots[slotIdx];
                 availableSlots.RemoveAt(slotIdx);
@@ -291,27 +302,24 @@ namespace NineGrid.Core
                 return;
             }
 
-            var selectedFromPool = 0;
             if (requireElite)
             {
+                // 层主（精英）全部必选：层主对战时所有层主必须第一波发牌上场。
                 for (var i = 0; i < pool.Count; i++)
                 {
                     var card = registry.Get(pool[i]);
                     if (card.Counters.Get(CoreCounterKeys.Elite) > 0)
                     {
                         selected.Add(card.Uid);
-                        selectedFromPool++;
-                        break;
                     }
                 }
             }
 
-            for (var i = 0; i < pool.Count && selectedFromPool < count; i++)
+            for (var i = 0; i < pool.Count && selected.Count < count; i++)
             {
                 if (!selected.Contains(pool[i]))
                 {
                     selected.Add(pool[i]);
-                    selectedFromPool++;
                 }
             }
         }
