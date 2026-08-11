@@ -59,6 +59,9 @@ namespace NineGrid.Flow.Presentation
                     return true;
                 }
 
+                // 与飘字同缝的受击视觉脉冲：格挡/护甲碎裂/血飞溅（独立型，不占主线）。
+                CombatOutcomeVfx.PulseShowDamage(gameEvent, pos.Value, "DamageFloaterBeatHandler.TryApply");
+
                 if (DisplayMode == DamageFloaterDisplayMode.SplitDamage)
                 {
                     // 拆分：血伤红字 + 甲伤绿灰字（甲吸收部分含金甲代偿；IgnoreArmor 时甲伤为 0）。
@@ -99,6 +102,7 @@ namespace NineGrid.Flow.Presentation
                     return false;
                 }
 
+                CombatOutcomeVfx.PulseHeal(gameEvent, pos.Value, "DamageFloaterBeatHandler.TryApply");
                 DamageNumberHook.RequestSpawnHeal(pos.Value, gameEvent.Delta);
                 return false;
             }
@@ -119,6 +123,7 @@ namespace NineGrid.Flow.Presentation
                     return false;
                 }
 
+                CombatOutcomeVfx.PulseArmorGain(gameEvent, pos.Value, "DamageFloaterBeatHandler.TryApply");
                 DamageNumberHook.RequestSpawnArmorDamage(pos.Value, gameEvent.Delta);
                 return false;
             }

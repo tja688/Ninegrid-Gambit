@@ -106,6 +106,10 @@ namespace NineGrid.Cards
                 cueId,
                 "CardEffectManager.PlayDeathAsync",
                 ResolveOwnerDefId());
+            CardLifecycleVfxCues.PulseDeathOrExit(
+                cueId,
+                transform.position,
+                ResolveOwnerDefId());
             return PlayAsync(
                 CardEffectInvokeContext.ForDeath(selfSlot, selfDirection),
                 cancellationToken);
@@ -118,6 +122,9 @@ namespace NineGrid.Cards
             CardLifecycleAudioCues.Pulse(
                 CardLifecycleAudioCues.ItemUse,
                 "CardEffectManager.PlayUseAsync",
+                ResolveOwnerDefId());
+            CardLifecycleVfxCues.PulseItemUse(
+                transform.position,
                 ResolveOwnerDefId());
             return PlayAsync(
                 CardEffectInvokeContext.ForUse(selfDirection),

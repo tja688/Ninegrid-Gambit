@@ -977,6 +977,9 @@ namespace NineGrid.Flow
             FlowRoomEconomyAudioCues.Pulse(
                 victory ? FlowRoomEconomyAudioCues.Victory : FlowRoomEconomyAudioCues.Defeat,
                 "GameFlowOrchestrator.ShowBattleEndAndReturnAsync");
+            FlowBattleEndVfxCues.PulseBattleEnd(
+                victory,
+                "GameFlowOrchestrator.ShowBattleEndAndReturnAsync");
             var view = mShell.View;
             view?.EnsureViewBindings();
             view?.ShowInRunShell();

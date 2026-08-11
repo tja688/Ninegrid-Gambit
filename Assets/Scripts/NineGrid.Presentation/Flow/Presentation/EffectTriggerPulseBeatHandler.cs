@@ -29,6 +29,18 @@ namespace NineGrid.Flow.Presentation
             {
                 var fxId = CardEffectTriggerPulseSink.IdForCard(gameEvent.CardUid);
                 TriggerPulseHub.PulseFx(fxId);
+
+                // 类型化触发 VFX：与音频同一分诊（效果/技能/机关/遗物），位置取触发持有卡。
+                var pos = NineGrid.Flow.PresentationOutputProjector.ResolveCardWorldPosition(gameEvent.CardUid);
+                if (pos.HasValue)
+                {
+                    SkillEffectTrapRelicVfxCues.PulseTrigger(
+                        gameEvent.SourceDefId,
+                        gameEvent.Cause,
+                        pos.Value,
+                        "EffectTriggerPulseBeatHandler.TryApply",
+                        gameEvent.CardUid);
+                }
             }
 
             // 单一权威音频出口：按内容种类选一个稳定 cue，禁止再发 sfx.effect.<CardUid> 或第二条内容路径。

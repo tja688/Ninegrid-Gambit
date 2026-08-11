@@ -1,0 +1,285 @@
+						|
+Armor	ChoiceOption	护甲+1		永久+1护甲		
+Attack	ChoiceOption	攻击+1		永久+1攻击		
+Attribute	Room	属性房		开局从属性道具卡加权抽2张（可重复）		
+avatar.default	Avatar	战士			深入地下城的战士，渴望建功立业	
+Boss	Room	层主房		层主战前缓冲图标：走格进入后推进至层主战		
+deck.dragon	Deck	基础怪物卡组				
+deck.help_archive	Deck	道具卡归档卡组		非策划现行道具卡（破击锤/血液转换/倍增塔/盾击教程/属性提升/庇佑/瞭望塔）参考保留；不参与奖池、道具来源池与房间注入接线。		
+deck.help	Deck	道具卡组				
+deck.insect	Deck	召唤怪物卡组				
+deck.npc	Deck	NPC卡组				
+deck.orc_legion	Deck	旋转怪物卡组 				
+deck.player	Deck	玩家卡组				
+deck.relic_archive	Deck	遗物归档卡组		错位旧遗物参考保留；不参与奖池与授予接线。		
+deck.relic	Deck	遗物卡组				
+deck.skeleton_legion	Deck	翻面怪物卡组				
+deck.smallanimal	Deck	链接怪物卡组				
+deck.stone_legion	Deck	烈焰怪物卡组				
+deck.transition	Deck	怪物归档卡组		已归档（#134）：还原后的暂存怪物保留在此，全员 isReserve，不再参与正式遭遇抽卡；新怪物改挂正式七套卡组		
+deck.trap	Deck	机关卡组				
+deck.void	Deck	决斗怪物卡组				
+deck.wandering_legion	Deck	动物牌组				
+Elite	Room	困难房		开局抽2张奖励卡（不可重复）并注入序列3/4怪物		
+ExpandItemCapacity	ChoiceOption	道具卡扩容		提高1点玩家侧卡组容量		
+ExpandItemSlots	ChoiceOption	道具牌格升级		提高1点道具卡格容量		
+FixItem	ChoiceOption	道具卡固定		固定生成一张选定的道具卡		
+Fountain	Room	恢复房		开局加入食品卡		
+GoDown	Room	下楼		场地导航图标：踏上前往下一层		
+Gold	Room	金币房		开局加入金币卡		
+GoUp	Room	上楼		场地导航图标：踏上前往上一层		
+help.armor_breaking_hammer	HelpCard	破击锤	White	[使用时] 将目标怪物卡护甲降低{amount}点		tpl.help.armor_breaking_hammer.use|{"count":1,"amount":10,"cause":"help.armor_breaking_hammer"}
+help.armor_card	HelpCard	头甲	Gold	基础[armor]+{help.armor_card.use.delta}	说明书第一页：别戴反	tpl.help.armor_card.use|{"delta":1,"reason":"help.armor_card"}
+help.attack_card	HelpCard	皮质手套	Gold	基础[attack]+{help.attack_card.use.delta}	戴上后总想试试桌子结不结实	tpl.help.attack_card.use|{"delta":1,"reason":"help.attack_card"}
+help.blood_conversion	HelpCard	血液转换	White	[使用时] 扣除{delta}点血量上限并随机获得攻击+{weight}、护甲+1、50金币或随机遗物		tpl.help.blood_conversion.use|{"delta":-5,"reason":"bloodConversion","weight":1,"action_actions_1_choices_0_action_delta":1,"action_actions_1_choices_0_action_reason":"bloodConversion.attack","action_actions_1_choices_1_action_delta":1,"action_actions_1_choices_1_action_reason":"bloodConversion.armor","action_actions_1_choices_2_action_delta":50,"action_actions_1_choices_2_action_reason":"bloodConversion.gold","poolId":"relic.blood_conversion"}
+help.blue_chest_card	HelpCard	进阶宝箱	Gold	挑选并获取一个进阶的遗物	普通宝箱进修归来	tpl.shared.3.help_blue_chest_card_use|{"poolId":"relic.blue_chest"}
+help.bomb	HelpCard	爆弹	White	对所有怪物造成{help.bomb.use.amount}点伤害	点着以后再看说明书就晚了	tpl.help.bomb.use|{"amount":4}
+help.brutality_card	HelpCard	暴力	White	玩家下一次对怪物造成的普通攻击伤害翻倍	一天不吃，浑身难受	tpl.help.brutality_card.use|{"value":2,"source":"help.brutality_card","sourceAction":"DealDamage","excludeSourcePrefix":"help."}
+help.common_chest_card	HelpCard	普通宝箱	Blue	挑选并获取一个普通的遗物	箱子外壳更加值钱	tpl.shared.3.help_blue_chest_card_use|{"poolId":"relic.common_chest"}
+help.doubling_tower	HelpCard	倍增塔	Gold	[场上] 处于格1时，对怪物卡使用的帮助卡触发两次；[道具牌格] 对玩家卡使用的帮助卡生效两次，触发后永久移除本卡		tpl.help.doubling_tower.board_monster|{} ;; tpl.help.doubling_tower.item_player|{}
+help.fireball	HelpCard	火球术	White	对选中怪物造成等同于玩家[attack]的伤害	法师把他开源了所以人人都会用	tpl.help.fireball.use|{"count":1,"source":"Player"}
+help.food_card	HelpCard	生日蛋糕	White	将[HP]完整恢复	蜡烛数量已做隐私处理	tpl.help.food_card.use|{"source":"Player"}
+help.gold_card	HelpCard	钱袋子	Blue	获取{help.gold_card.use.delta}[money]	听声音就让人安心	tpl.help.gold_card.use|{"delta":50,"reason":"goldCard"}
+help.golden_chest_card	HelpCard	高级宝箱	Red	挑选并获取一个高级的遗物	昂贵的礼品	tpl.shared.3.help_blue_chest_card_use|{"poolId":"relic.golden_chest"}
+help.healing_potion	HelpCard	恢复药水	White	恢复{help.healing_potion.use.amount}点[HP]	味道像药，至少这点很专业	tpl.heal_player_on_use_help_card|{"amount":10}
+help.hp_card	HelpCard	金色三叶草	Gold	[MHP]+{help.hp_card.use.delta}	长生不老	tpl.help.hp_card.use|{"delta":2,"reason":"help.hp_card"}
+help.impact_tutorial	HelpCard	撞击	White	对目标怪物造成等同于玩家当前[HP]的伤害	头铁也是一种装备	tpl.help.impact_tutorial.use|{"count":1,"source":"Player"}
+help.kidnapping	HelpCard	绑票	White	破坏{help.kidnapping.use.count}张常规怪物，并偷取其[armor]	绳子是赠品	tpl.help.kidnapping.use|{"count":1,"cause":"help.kidnapping","reason":"help.kidnapping"}
+help.rotation_wheel	HelpCard	旋转轮	White	逆时针旋转一次	给我回来！	tpl.help.rotation_wheel.use|{}
+help.shield_bash_tutorial	HelpCard	盾击教程	Blue			tpl.help.shield_bash_tutorial.use|{"count":1,"source":"Player"}
+help.stat_boost_card	HelpCard	属性提升	Gold	[使用时] 选择攻击+{delta}、护甲+1或血量上限与当前血量+2		tpl.help.stat_boost_card.use|{"option":"Attack","delta":1,"reason":"statBoost.attack","action_elseAction_condition_option":"Armor","action_elseAction_action_reason":"statBoost.armor","action_elseAction_elseAction_condition_option":"Hp","action_elseAction_elseAction_action_delta":2,"action_elseAction_elseAction_action_reason":"statBoost.hp"}
+help.sturdy_shield	HelpCard	耐用盾牌	White	玩家获得{help.sturdy_shield.use.amount}点[armor]	经得起大多数推销员的演示	tpl.gain_armor_on_use_help_card|{"amount":5}
+help.swap_card	HelpCard	交换	White	选择除玩家外的{help.swap_card.use.count}张卡牌互换位置	妙用无穷~	tpl.help.swap_card.use|{"count":2}
+help.teleport_card	HelpCard	传送	White	选择除玩家外的{help.teleport_card.use.count}张卡牌洗回卡组	起飞...	tpl.help.teleport_card.use|{"count":1}
+help.throwing_knife	HelpCard	飞刀	White	对目标怪物造成{help.throwing_knife.use.amount}点伤害	不包回收	tpl.help.throwing_knife.use|{"count":1,"amount":6}
+help.ward_magic_card	HelpCard	庇佑	White	[使用时] 下一次玩家受到伤害时，该次伤害变为{value}		tpl.help.ward_magic_card.use|{"value":0,"source":"help.ward_magic_card"}
+help.watchtower	HelpCard	瞭望塔	Gold	[场上] 移动到角格时，对随机怪物造成{amount}点伤害；触发{count}次后移除本卡；[道具牌格] 玩家与怪物战斗时，对随机一张怪物卡造成{amount}点伤害；[使用时] 直接移除本卡，不触发其他效果		tpl.help.watchtower.board_corner|{"count":1,"amount":3,"reason":"help.watchtower.self"} ;; tpl.help.watchtower.item_battle|{"sourceAction":"DealDamage","amount":2} ;; tpl.shared.3.help_healing_spring_use|{"reason":"help.watchtower.use"}
+Hp	ChoiceOption	血量+2		永久+2血量上限		
+ItemReward	Room	道具奖励房		房内铺 2 属性道具 + 3 随机道具；点击拿走，离开放弃		
+Leave	Room	离开		场地导航图标：踏上即离开当前房/选项上下文		
+monster.beggar	Monster	人面莱姆	None	[[普通近战]]，[[吸收]]	其实是由六只莱姆组合成的	tpl.skill.absorb.remove|{"weight":1,"delta":1,"reason":"skill.absorb","action_choices_1_action_delta":2,"action_choices_2_action_delta":4}
+monster.big_orc	Monster	棕熊1	None	[move]	曾任职于马戏团，现灵活就业	
+monster.big_skeleton_reborn	Monster	双球莱姆	None	[[全向近战]]，[[远程武器]]	偶像是豌豆射手	tpl.skill.ranged_weapon.activate|{"value":1,"source":"skill.ranged_weapon"}
+monster.big_skeleton	Monster	巨剑骷髅	None	[[全向近战]]	蝉联三年最帅骷髅的称号	
+monster.big_stone	Monster	小蜜蜂	None	[[斜角近战]]	是CS高手	
+monster.bone_club_skeleton	Monster	拳击决斗者	None	[[神圣决斗]]	绝不打假赛	tpl.skill.holy_duel.activate|{"value":1,"source":"skill.holy_duel"}
+monster.bone_courier	Monster	灵巧决斗者	None	[[神圣决斗]]，[[逃避]]	静待时机...	tpl.skill.holy_duel.activate|{"value":1,"source":"skill.holy_duel"} ;; tpl.skill.evade.battle|{"sourceAction":"DealDamage"}
+monster.brainless_orc	Monster	食人花	None	[[全向近战]]，[[远程武器]]，[[起来]]	躲在密林间阴险地发射火球	tpl.skill.ranged_weapon.activate|{"value":1,"source":"skill.ranged_weapon"} ;; tpl.skill.rise_up.damage|{"count":1}
+monster.dragon_cult_leader	Monster	蓝焰	None	[[普通近战]]，[[献火]]	烈焰一族的中坚力量	tpl.skill.offer_fire.remove|{"count":1}
+monster.dragon_follower	Monster	幽灵炎	None	[[普通近战]]，[[剧烈燃烧]]	会灼烧灵魂	tpl.skill.intense_burning.flame_deal|{"count":1}
+monster.executioner	Monster	灰狼	None		他究其一生没能找到属于自己的狈	
+monster.fire_bather	Monster	爆裂决斗者	None	[[神圣决斗]]，[[损耗]]	第40k届决斗者争霸赛冠军	tpl.skill.holy_duel.activate|{"value":1,"source":"skill.holy_duel"} ;; tpl.skill.attrition.remove|{"delta":-1,"reason":"skill.attrition","action_actions_1_delta":-10}
+monster.fire_cult_leader	Monster	红蛙	None		根据常规的游戏逻辑，绿色蛙才有毒，红蛙也是这样想的	
+monster.fire_dragon	Monster	莫西干鸟	None	[[普通近战]]，[[快递]]	他的发型是他的生命	tpl.skill.delivery.move|{"count":1}
+monster.fire_priest	Monster	挥砍决斗者	None	[[神圣决斗]]，[[历战]]	以前是个经验丰富的伐木工	tpl.skill.holy_duel.activate|{"value":1,"source":"skill.holy_duel"} ;; tpl.skill.battle_hardened.damage|{"delta":1,"reason":"skill.battle_hardened"}
+monster.fire_swallower	Monster	敲击决斗者	None	[[神圣决斗]]，[[嘲讽]]	会讲笑话，虽然决斗者们的笑话从来不好笑	tpl.skill.holy_duel.activate|{"value":1,"source":"skill.holy_duel"} ;; tpl.skill.taunt.rule|{"value":0}
+monster.friendly_ancient	Monster	双角毛猪	None		由于毛太长了，不太看得清路	
+monster.giant_skeleton	Monster	干枯树桩	None		他始终不明白那个头顶火炬的兄弟是怎么当成柴火烧干净的	
+monster.growing_stone	Monster	红伞伞	None		正在寻找他的好朋友白杆杆	
+monster.headless_skeleton	Monster	钢铁莱姆	None	[[普通近战]][[叠甲]]	很耐揍	tpl.skill.stack_armor.interact|{"amount":6}
+monster.hoodlum	Monster	火把哥布	None	[[普通近战]]，[[天涯若比邻]]	主要起到照明作用	tpl.skill.world_as_neighbors.rule|{"value":1}
+monster.killer	Monster	黑背狼	None		他不喜欢别人叫他地包天	
+monster.megalith	Monster	蜂巢	None		不收快递	
+monster.melee_3	Monster	小小莱姆	None	[[普通近战]]	人畜无害	
+monster.melee_6	Monster	近战6	None			
+monster.mist	Monster	绿莱姆	None		人畜无害，娇小可爱	
+monster.multi_bone_worm	Monster	沙虫	None		会吐口水（就是沙子）	
+monster.observer	Monster	人面莱姆	None		其实是三只史莱姆史套娃	
+monster.old_orc	Monster	野猪	None		横冲直撞！	
+monster.orc_boss	Monster	野牛	None		冲锋！！！！！！！！！！！！！！！	
+monster.orc_commander	Monster	潜水鳄	None	[[普通近战]]，[[刺客领袖]]，[[起来]]	嘘，都给我悄悄的	tpl.skill.assassin_leader.rule|{} ;; tpl.skill.rise_up.damage|{"count":1}
+monster.orc_quartermaster	Monster	大葱袋熊	None		他说他背的是剑，但是外号已经传出去了	
+monster.orc_warrior	Monster	狼骑哥布	None		哥布族的精英，机动性极强	
+monster.pickpocket	Monster	狼骑哥布	None	[[全向近战]]，[[远程武器]]，[[链接]]	在第三次射箭大赛中完胜轻弓骷髅	tpl.skill.link_attack_bonus.rule|{"value":1,"source":"skill.link_attack_bonus"} ;; tpl.skill.ranged_weapon.activate|{"value":1,"source":"skill.ranged_weapon"}
+monster.ringleader	Monster	巨棒哥布	None	[[链接近战]]	会狠狠的给对面来上一棍子	tpl.skill.link_attack_bonus.rule|{"value":1,"source":"skill.link_attack_bonus"}
+monster.rogue	Monster	亡灵法师	None	[[普通近战]]，[[死亡之主]]	亡灵法师不总是一个眼冒鬼火的骷髅架子	tpl.skill.lord_of_death.remove|{"count":1}
+monster.rolling_stone_man	Monster	黄贝蜗牛	None		他认为他是蜗牛一族唯一没有跑过兔兔的，在他知道书上都是骗人的之前	
+monster.rotating_cub	Monster	双球绿莱姆	None		头上的洞其实是屁眼	
+monster.salamander	Monster	小蓝焰	None	[[全向近战]]，[[远程武器]]，[[烈焰沸腾]]	会把自己发射出去灼伤敌人	tpl.skill.ranged_weapon.activate|{"value":1,"source":"skill.ranged_weapon"} ;; tpl.skill.flame_boiling.rule|{"value":1,"source":"skill.flame_boiling"}
+monster.sharp_stone	Monster	紫壳蝎	None		有人说他像螃蟹，这属实把他给气坏了	
+monster.shelter_stone	Monster	烈焰	None	[[吞云吐雾]]，[[生生不息]]	烈焰一族的王者	tpl.skill.cloud_breath.interact|{"reason":"skill.cloud_breath"} ;; tpl.skill.endless_flame.remove|{"count":1}
+monster.skeleton_king	Monster	紫袍鹰王	None	[[普通近战]]，[[空间掌握]]	不会飞是因为吃太胖了	tpl.skill.space_mastery.battle|{"sourceAction":"DealDamage","count":1}
+monster.skeleton_mage	Monster	巨齿蜘蛛	None		比起结网更喜欢撕咬敌人	
+monster.skeleton_taunter	Monster	独眼蝙蝠	None	[[普通近战]]，[[转动]]	反复纠正他没有在读研究生	tpl.skill.turn_world.enter|{"count":1}
+monster.skull_head	Monster	负伤莱姆	None	[[普通近战]]，[[献身]]	随时做好奉献自己的准备	tpl.skill.sacrifice.remove|{"delta":1,"reason":"skill.sacrifice"}
+monster.sky_eye	Monster	大黄蜂	None	[[普通近战]]，[[远程武器]]，[[逃避]]	不会变形	tpl.skill.ranged_weapon.activate|{"value":1,"source":"skill.ranged_weapon"} ;; tpl.skill.evade.battle|{"sourceAction":"DealDamage"}
+monster.smart_orc	Monster	紫蝎	None	[[普通近战]]，[[跳杀]]，[[潜伏]]	哎，扎死你呀哈哈哈哈	tpl.skill.ambush_melee.interact|{} ;; tpl.skill.leap_kill.flip|{}
+monster.smuggler	Monster	轻弓骷髅	None	[[全向近战]]，[[远程武器]]，[[提速]]	准头不是很高	tpl.skill.ranged_weapon.activate|{"value":1,"source":"skill.ranged_weapon"} ;; tpl.skill.speed_up.damage|{"delta":-1}
+monster.space_master	Monster	花花莱姆	None		头顶的花是他的伙伴	
+monster.stepwalker	Monster	棕毛兔	None		站得更高，看得更远	
+monster.stone_golem	Monster	石傀儡	None		分到植物类主要是因为他头上的草	
+monster.stone_man	Monster	黄莱姆	None		莱姆一族的巨人，擅长包裹住敌人	
+monster.stone_shrimp	Monster	石蟹	None		不是寄居蟹	
+monster.stone_swallower	Monster	宝石蜥	None		他背上的宝石价值千金	
+monster.stone_thrower	Monster	仙人掌花	None		充满尖刺	
+monster.summon.special_omni	Monster	重生骷髅	None			
+monster.thug	Monster	小刀哥布	None	[[链接近战]]，[[链接战术]]	跑得快，通常兼任传信官	tpl.skill.link_attack_bonus.rule|{"value":1,"source":"skill.link_attack_bonus"} ;; tpl.skill.link_tactics.activate|{"value":1,"source":"skill.link_tactics"} ;; tpl.skill.link_tactics.refresh|{"value":1,"source":"skill.link_tactics"}
+monster.vagrant	Monster	哥布将军	None	[[链接近战]]，[[链接准备]]，[[链接护甲]]	猪是借来的	tpl.skill.link_attack_bonus.rule|{"value":1,"source":"skill.link_attack_bonus"} ;; tpl.skill.link_prep.move|{"reason":"skill.link_prep"} ;; tpl.skill.link_armor.interact|{"amount":1}
+monster.veteran_orc	Monster	沙虫	None	[[普通近战]]，[[盗取]]，[[潜伏]]	悄悄摸摸的咬掉一块肉	tpl.skill.ambush_melee.interact|{} ;; tpl.skill.steal.flip|{"count":1,"reason":"skill.steal"}
+monster.void_cub	Monster	宝宝莱姆	None			
+monster.void_lost	Monster	小火焰	None	[[普通近战]]，[[呼唤]]	烈焰一族的小宝贝	tpl.skill.call_melee6.interact|{"count":1}
+monster.wandering_child	Monster	巨斧骷髅	None	[[普通近战]]，[[死亡召唤]]	骷髅没肌肉怎么举起武器是困扰骷髅届百年的问题	tpl.skill.death_summon.remove|{"count":1}
+monster.world_turning_hand	Monster	短剑骷髅	None	[[普通近战]]，[[吟唱]]	剑是捡的	tpl.skill.chant.interact|{"count":1}
+monster.young_orc	Monster	仙人掌	None	[[普通近战]]，[[休养]]，[[潜伏]]	别碰我	tpl.skill.ambush_melee.interact|{} ;; tpl.skill.recuperate.flip|{"delta":1,"armor":2,"reason":"skill.recuperate"}
+RefreshShop	ChoiceOption	刷新货物		刷新商店/卡店货物，每次适用开销翻倍		
+relic.armor_strip_knife	Relic	破甲	White	攻击时若目标当前[armor]大于{relic.armor_strip_knife.battle.value}，攻击伤害+{relic.armor_strip_knife.armor_hit.value}	专挑穿得厚的下手	tpl.relic.armor_strip_knife.battle|{"sourceAction":"DealDamage","value":0,"source":"relic.armor_strip_knife"} ;; tpl.relic.armor_strip_knife.armor_hit|{"value":3,"source":"relic.armor_strip_knife"}
+relic.arsenal	Relic	军械库	Blue	[每关卡结束时] 加入飞刀/爆弹/破击锤之{weight}		tpl.relic.arsenal.node_end|{"weight":1}
+relic.battle_hardened	Relic	历战	Blue	[战斗时] 攻击+{value}（仅对当前敌人有效）		tpl.relic.battle_hardened.battle|{"sourceAction":"DealDamage","value":2,"source":"relic.battle_hardened"}
+relic.berserker_axe	Relic	狂战	Gold	攻击+{relic.berserker_axe.base.value}，血量低于一半时玩家攻击翻倍	半条命之后才进入工作状态	tpl.relic.wood_sword.base|{"value":1} ;; tpl.relic.berserker_axe.double|{"value":2,"source":"relic.berserker_axe"}
+relic.beyond_dimension	Relic	超越维度	Gold	攻击+{relic.beyond_dimension.base.value}，攻击后旋转{relic.beyond_dimension.battle.count}次	打完一拳顺便换个角度理解世界	tpl.relic.rotten_cleave_axe.base|{"value":1} ;; tpl.relic.beyond_dimension.battle|{"sourceAction":"DealDamage","count":1}
+relic.blood_burst	Relic	血盾	Blue	血量上限+{relic.blood_burst.max_hp.value}，受伤时对随机怪物：反伤	你掉血，它替你记仇	tpl.relic.wood_armor.base|{"value":4} ;; tpl.relic.blood_burst.taken|{}
+relic.blood_cycle	Relic	血圣杯	Blue	血量上限+{relic.blood_cycle.max_hp.value}，受到伤害时恢复{relic.blood_cycle.taken.amount}点血量	漏出去一点，它又给你倒回来一点	tpl.relic.wood_armor.base|{"value":4} ;; tpl.relic.blood_cycle.taken|{"amount":2}
+relic.blood_demon	Relic	血魔徽章	White	每受到{relic.blood_demon.damage.threshold}点伤害，获得{relic.blood_demon.damage.delta}点[MHP]	挨打也是一种长期投资	tpl.relic.blood_demon.damage|{"delta":1,"reason":"relic.blood_demon","threshold":5,"projectKey":"relic.blood_demon.damage.threshold"}
+relic.blood_regen	Relic	血色项链	Blue	[MHP]+{relic.blood_regen.max_hp.value}；低于半血时，恢复{relic.blood_regen.battle.amount}[HP]	只在你脸色不太好时开始工作	tpl.relic.wood_armor.base|{"value":4} ;; tpl.relic.blood_regen.battle|{"amount":2,"sourceAction":"DealDamage"}
+relic.blood_shockwave	Relic	血液冲击波	Gold	血量上限+{delta}；[每关卡开始时] 将一张撞击教程放入道具牌格；[每关卡开始时] 当前血量低于50%时再放入一张撞击教程		tpl.shared.5.relic_blood_shockwave_max_hp|{"delta":4,"reason":"relic.blood_shockwave.max_hp"} ;; tpl.relic.blood_shockwave.node_start|{} ;; tpl.relic.blood_shockwave.node_start_low_hp|{}
+relic.blood_violence	Relic	血之暴力	Blue	[MHP]+{relic.blood_violence.max_hp.value}；当[HP]低于[MHP]的{relic.blood_violence.atk.pct}%时，玩家[attack]+{relic.blood_violence.atk.value}	血越少，脾气越大	tpl.relic.wood_armor.base|{"value":4} ;; tpl.relic.blood_violence.atk|{"value":2,"source":"relic.blood_violence","pct":50}
+relic.body_potential	Relic	大力腰带	White	[MHP]+{relic.body_potential.max_hp.value}；[HP]每累计减少{relic.body_potential.hp_lost.threshold}点，添加{relic.body_potential.hp_lost.count}张道具到卡组	系紧一点，力气就有地方放了	tpl.relic.wood_armor.base|{"value":2} ;; tpl.relic.body_potential.hp_lost|{"count":1,"threshold":10,"projectKey":"relic.body_potential.hp_lost.threshold"}
+relic.composite_armor	Relic	复合盔甲	White	每关卡开始时，每有{relic.composite_armor.node_start.every}点[attack]，获得{relic.composite_armor.node_start.gain}点[armor]	肌肉负责吓人，盔甲负责当真	tpl.relic.composite_armor.node_start|{"every":3,"gain":1}
+relic.craving	Relic	渴望	Gold	[MHP]+{relic.craving.max_hp.delta}，所有恢复血量的效果翻倍	喝多少都觉得还差一口	tpl.shared.5.relic_blood_shockwave_max_hp|{"delta":10,"reason":"relic.craving.max_hp"} ;; tpl.relic.craving.rule|{"value":2}
+relic.dragon_scale_armor	Relic	龙鳞甲	Gold	基础[armor]+{relic.dragon_scale_armor.base.value}，[MHP]+{relic.dragon_scale_armor.max_hp.delta}，所有怪物的[attack]{relic.dragon_scale_armor.rule.value}	龙本人对此没有发表意见	tpl.shared.4.relic_dragon_scale_armor_base|{"value":1} ;; tpl.shared.5.relic_blood_shockwave_max_hp|{"delta":6,"reason":"relic.dragon_scale_armor.max_hp"} ;; tpl.relic.dragon_scale_armor.rule|{"value":-1}
+relic.easy_road	Relic	轻车熟路	Blue	[每关卡结束时] 进行一次白色帮助卡三选一		tpl.relic.easy_road.node_end|{"poolId":"help.white.choice"}
+relic.even_hatred	Relic	偶数仇恨	Blue	[战斗时] 若目标怪物卡等级为偶数，玩家造成双倍伤害		tpl.relic.even_hatred.rule|{"value":2,"source":"relic.even_hatred"}
+relic.foam_armor	Relic	泡沫盔甲	White	基础[armor]+{relic.foam_armor.base.value}，每场战斗第一次破甲后获得伤害护盾	第一眼像玩具，第二下再说	tpl.shared.4.relic_dragon_scale_armor_base|{"value":1} ;; tpl.relic.foam_armor.activate|{} ;; tpl.relic.foam_armor.node_start|{} ;; tpl.relic.foam_armor.arm|{"value":0,"source":"relic.foam_armor"}
+relic.forge_tool	Relic	锻造器具	Blue	基础[armor]+{relic.forge_tool.init.value}，进入战斗时吞噬{relic.forge_tool.node_start.threshold}点[armor]使基础[armor]永久+{relic.forge_tool.node_start.delta}	先拆一点，再说这是升级	tpl.relic.forge_tool.init|{"value":2} ;; tpl.relic.forge_tool.node_start|{"threshold":5,"amount":5,"delta":1,"cause":"relic.forge_tool"}
+relic.gold_armor	Relic	金币盔甲	White	基础[armor]+{relic.gold_armor.base.value}，每{relic.gold_armor.rule.every}点[money]视作{relic.gold_armor.rule.value}点[armor]	钱包也是身体的一部分	tpl.shared.4.relic_dragon_scale_armor_base|{"value":1} ;; tpl.relic.gold_armor.rule|{"value":1,"every":5}
+relic.gold_blood	Relic	金血圣杯	White	[MHP]+{relic.gold_blood.max_hp.value}，每损失{relic.gold_blood.taken.every}点[HP]，获得等量[money]	一边流血，一边结算工资	tpl.relic.wood_armor.base|{"value":2} ;; tpl.relic.gold_blood.taken|{"reason":"goldBlood","every":1}
+relic.gold_knife	Relic	打金刀	White	击杀怪物时，获得{relic.gold_knife.kill.delta}[money]	刀刃上沾着一点职业规划	tpl.relic.gold_knife.kill|{"delta":2,"reason":"goldKnife"}
+relic.golden_coffer	Relic	黄金鱼竿	Gold	获得本遗物时，将{relic.golden_coffer.grant.count}张金色宝箱卡加入卡组	唯独钓不到鱼	tpl.relic.golden_coffer.grant|{"count":2}
+relic.golden_sword	Relic	机械巨弩	Gold	[attack]+{relic.golden_sword.init.value}，[[普通攻击]]时[attack]-1，击杀时[attack]+1	需要战果给齿轮上油	tpl.relic.golden_sword.init|{"value":8} ;; tpl.relic.golden_sword.battle|{"sourceAction":"DealDamage","delta":-1} ;; tpl.relic.golden_sword.kill|{"delta":1}
+relic.hard_skin	Relic	硬皮	Blue			tpl.shared.5.relic_blood_shockwave_max_hp|{"delta":10,"reason":"relic.hard_skin.max_hp"} ;; tpl.shared.2.relic_hard_skin_node_end|{"amount":10}
+relic.heavy_armor	Relic	重盔甲	White	基础[armor]+{relic.heavy_armor.base.value}，进入战斗时每有{relic.heavy_armor.node_start.every}点基础[armor]就获得{relic.heavy_armor.node_start.gain}点[armor]	穿上以后楼梯突然变长了	tpl.shared.4.relic_dragon_scale_armor_base|{"value":1} ;; tpl.relic.heavy_armor.node_start|{"source":"Player","every":2,"gain":1}
+relic.iron_shield	Relic	铁盾	Blue	基础[armor]+{relic.iron_shield.base.value}；获得{relic.iron_shield.reduction.value}层：伤害减免	没有花纹，因为花纹不挡刀	tpl.shared.4.relic_dragon_scale_armor_base|{"value":2} ;; tpl.relic.iron_shield.reduction|{"value":1,"source":"relic.iron_shield"}
+relic.junk_amplifier	Relic	回收腰带	Blue	每使用{relic.junk_amplifier.use.every}张道具卡，本场战斗[attack]+{relic.junk_amplifier.use.value}	垃圾堆里捡到的	tpl.relic.junk_amplifier.use|{"value":1,"source":"relic.junk_amplifier","every":1}
+relic.junk_body	Relic	回收衣物	Blue	每使用{relic.junk_body.use.threshold}张道具卡，获得{relic.junk_body.use.delta}点[MHP]	缝缝补补，居然还能长身体	tpl.relic.junk_body.use|{"delta":1,"reason":"relic.junk_body","threshold":3,"projectKey":"relic.junk_body.use.threshold"}
+relic.junk_coating	Relic	回收铁背心	White	每使用{relic.junk_coating.use.every}张道具卡，获得{relic.junk_coating.use.amount}点[armor]	上辈子是 Mac Pro	tpl.relic.junk_coating.use|{"amount":1,"every":1}
+relic.junk_cycler	Relic	回收手链	Blue	每使用{relic.junk_cycler.use.threshold}张道具卡，添加{relic.junk_cycler.use.count}张道具卡到卡组	环保！	tpl.relic.junk_cycler.use|{"count":1,"threshold":9,"projectKey":"relic.junk_cycler.use.threshold"}
+relic.junk_launcher	Relic	回收弹弓	White	每使用{relic.junk_launcher.use.every}张道具卡，对随机{relic.junk_launcher.use.random}张怪物造成{relic.junk_launcher.use.amount}点伤害	橡皮筋是新的，其他不保证	tpl.relic.junk_launcher.use|{"amount":2,"every":1,"random":1}
+relic.junk_recycler	Relic	回收食物	White	每使用{relic.junk_recycler.use.every}张道具卡，恢复{relic.junk_recycler.use.amount}点[HP]	并非食物	tpl.relic.junk_recycler.use|{"amount":2,"every":1}
+relic.junk_slot_machine	Relic	废物老虎机	Gold			tpl.relic.junk_slot_machine.use|{"weight":1,"delta":9,"reason":"slot","action_choices_1_weight":0,"amount":1,"action_choices_2_weight":0,"action_choices_3_weight":0,"action_choices_4_weight":0,"action_choices_5_weight":0,"action_choices_6_weight":0,"action_choices_7_weight":0,"action_choices_7_action_delta":1,"action_choices_8_weight":0,"count":1}
+relic.junk_sword	Relic	回收棒槌	Blue	[attack]+{relic.junk_sword.base.value},击杀时恢复{relic.junk_sword.kill.amount}点[HP]	二手，但上一任主人已经联系不上了	tpl.relic.wood_sword.base|{"value":2} ;; tpl.relic.junk_sword.kill|{"amount":2}
+relic.lucky_coin	Relic	悬赏令	White	击杀层主时将{relic.lucky_coin.boss_kill.count}张金币卡添加到卡组	上面的画像画得不太像	tpl.relic.lucky_coin.boss_kill|{"count":1}
+relic.metal_blood	Relic	凝血护甲	Gold	受到伤害时，将损失的[HP]转换为等量的[armor]	流出来的不能浪费	tpl.relic.metal_blood.taken|{}
+relic.muscle_counter	Relic	狼牙棒	White	[MHP]+{relic.muscle_counter.max_hp.value}；每拥有{relic.muscle_counter.battle.every}点[MHP]，对怪物多造成{relic.muscle_counter.battle.gain}点伤害	狼牙是装饰，棒才是重点	tpl.relic.wood_armor.base|{"value":2} ;; tpl.relic.muscle_counter.battle|{"sourceAction":"DealDamage","every":10,"gain":1}
+relic.phoenix_feather	Relic	凤凰羽毛	Gold	[MHP]+{relic.phoenix_feather.max_hp.delta}，[HP]小于等于{relic.phoenix_feather.fatal.hp}时，恢复{relic.phoenix_feather.fatal.pct}%[HP]并[death]	凤凰会秃头吗？	tpl.shared.5.relic_blood_shockwave_max_hp|{"delta":8,"reason":"relic.phoenix_feather.max_hp"} ;; tpl.relic.phoenix_feather.fatal|{"source":"Player","hp":0,"pct":50}
+relic.potion_bag	Relic	药水袋	White	进入战斗时将{relic.potion_bag.node_start.count}张恢复药水加入到卡组	总有一瓶不知道什么时候塞进去的	tpl.relic.potion_bag.node_start|{"count":2}
+relic.punch_card_knife	Relic	造物之镰	White	[attack]+{relic.punch_card_knife.attack.value}，每击杀{relic.punch_card_knife.remove.threshold}只怪物，添加{relic.punch_card_knife.remove.count}张常规道具卡到卡组	收割之后总会掉点别的东西出来	tpl.relic.wood_sword.base|{"value":1} ;; tpl.relic.punch_card_knife.remove|{"count":1,"threshold":5,"projectKey":"relic.punch_card_knife.remove.threshold"}
+relic.rotation_button	Relic	旋转符文	White	进入战斗时将{relic.rotation_button.node_start.count}张旋转轮置入到手牌	看久了会怀疑地板在动	tpl.relic.rotation_button.node_start|{"count":1}
+relic.rotation_trick	Relic	旋转之源	White	每击杀{relic.rotation_trick.remove.threshold}张怪物卡，添加{relic.rotation_trick.remove.count}张旋转轮到卡组	转久了会觉得世界本来就是歪的	tpl.relic.rotation_trick.remove|{"count":1,"threshold":6,"projectKey":"relic.rotation_trick.remove.threshold"}
+relic.rotten_cleave_axe	Relic	顺劈斧	Red	[attack]+{relic.rotten_cleave_axe.base.value}，普通攻击改为对目标[adjacent]范围造成{relic.rotten_cleave_axe.cleave.amount}点伤害	转起来！	tpl.relic.rotten_cleave_axe.base|{"value":1} ;; tpl.relic.rotten_cleave_axe.cleave|{"sourceAction":"DealDamage","amount":1}
+relic.rpm_engine	Relic	转速甲	White	基础[armor]+{relic.rpm_engine.base.value}，旋转时多旋转{relic.rpm_engine.rotate.count}次	轻盈加护！	tpl.shared.4.relic_dragon_scale_armor_base|{"value":1} ;; tpl.relic.rpm_engine.rotate|{"count":1}
+relic.sharp_longsword	Relic	黑暗长戟	Blue	[attack]+{relic.sharp_longsword.base.value}；每次击杀玩家[attack]+{relic.sharp_longsword.kill.value}，维持到战斗结束	越打越来劲	tpl.relic.wood_sword.base|{"value":1} ;; tpl.relic.sharp_longsword.kill|{"value":1,"source":"relic.sharp_longsword"}
+relic.shield_knife	Relic	双截棍	White	击杀时获得{relic.shield_knife.kill.amount}点[armor]	可攻可守	tpl.relic.shield_knife.kill|{"amount":1}
+relic.sling	Relic	轻弓	White	击杀时对随机{relic.sling.kill.random}只怪物造成{relic.sling.kill.amount}点伤害	声音很轻，后果不一定	tpl.relic.sling.kill|{"amount":4,"random":1}
+relic.spinning_barb	Relic	毒鞭	Blue	怪物每移动{relic.spinning_barb.move.every}次，受到{relic.spinning_barb.move.amount}点伤害	SM最爱	tpl.relic.spinning_barb.move|{"amount":1,"every":1}
+relic.swap_button	Relic	交换之书	White	进入战斗时将{relic.swap_button.node_start.count}张交换置入手牌	为他人着想！	tpl.relic.swap_button.node_start|{"count":1}
+relic.terror_mask	Relic	死亡面罩	Blue	[attack]+{relic.terror_mask.attack.value}，本场战斗每击杀{relic.terror_mask.remove.threshold}，随机破坏{relic.terror_mask.remove.count}只常规怪物	戴上后看谁都像已经死了	tpl.relic.wood_sword.base|{"value":1} ;; tpl.relic.terror_mask.node_start|{} ;; tpl.relic.terror_mask.remove|{"count":1,"reason":"relic.terror_mask","threshold":6,"projectKey":"relic.terror_mask.remove.threshold"}
+relic.thorn_mail	Relic	尖刺	Blue	基础[armor]+{relic.thorn_mail.base.value}，玩家损失[armor]时，对攻击者造成等量伤害	最好的防守是让别人也疼	tpl.shared.4.relic_dragon_scale_armor_base|{"value":2} ;; tpl.relic.thorn_mail.reflect|{}
+relic.thorn_skin	Relic	刺皮	Blue			tpl.relic.thorn_skin.battle|{"sourceAction":"DealDamage","source":"Target"}
+relic.throwing_knife_bag	Relic	飞刀袋	White	进入战斗时将{relic.throwing_knife_bag.node_start.count}张飞刀加入到卡组	里面的数量总比你记得的多	tpl.relic.throwing_knife_bag.node_start|{"count":2}
+relic.tower_child	Relic	塔之子	Blue			tpl.relic.tower_child.node_start|{}
+relic.trap_cell	Relic	暗器	White	当怪物移动到格{relic.trap_cell.move.slot}时，对该怪物造成{relic.trap_cell.move.amount}点伤害	看招！	tpl.relic.trap_cell.move|{"amount":4,"slot":1}
+relic.vitality_amulet	Relic	活力探险帽	Blue	[MHP]+{relic.vitality_amulet.max_hp.delta}；每场战斗结束时恢复{relic.vitality_amulet.node_end.amount}点[HP]	伟大的冒险即将启程！	tpl.shared.5.relic_blood_shockwave_max_hp|{"delta":6,"reason":"relic.vitality_amulet.max_hp"} ;; tpl.shared.2.relic_hard_skin_node_end|{"amount":6}
+relic.wood_armor	Relic	木甲	White	[MHP]+{relic.wood_armor.base.value}，木质套装：[MHP]额外+{relic.wood_armor.set.value}	木匠坚持认为这不是他的作品	tpl.relic.wood_armor.base|{"value":2} ;; tpl.relic.wood_armor.set|{"value":8}
+relic.wood_shield	Relic	木盾	White	基础[armor]+{relic.wood_shield.base.value}，木质套装：基础[armor]额外+{relic.wood_shield.set.value}	曾经是一张门板	tpl.shared.4.relic_dragon_scale_armor_base|{"value":1} ;; tpl.relic.wood_shield.set|{"value":2}
+relic.wood_sword	Relic	木剑	White	[attack]+{relic.wood_sword.base.value}，木质套装：[attack]额外+{relic.wood_sword.set.value}	认真削过，所以算武器	tpl.relic.wood_sword.base|{"value":1} ;; tpl.relic.wood_sword.set|{"value":2}
+Shop	Room	商店		出售道具/宝箱等（货架复用 HelpCard）		
+skill.absorb_bone	Skill	吸骨		相邻怪物被移除时获得其移除前攻击和护甲		tpl.skill.absorb_bone.remove|{"source":"Event","reason":"skill.absorb_bone.attack","action_actions_1_reason":"skill.absorb_bone.armor"}
+skill.absorb_stone	Skill	吸石		每次移动吸取相邻怪物全部护甲		tpl.skill.absorb_stone.move|{"cause":"skill.absorb_stone"}
+skill.absorb	Skill	吸收		相邻怪物被移除时随机强化本卡		tpl.skill.absorb.remove|{"weight":1,"delta":1,"reason":"skill.absorb","action_choices_1_action_delta":2,"action_choices_2_action_delta":4}
+skill.air_strike	Skill	空中打击		移动到角格时对玩家造成2点伤害		tpl.shared.2.skill_air_strike_slot1|{"amount":2} ;; tpl.skill.air_strike.slot3|{"amount":2} ;; tpl.skill.air_strike.slot7|{"amount":2} ;; tpl.skill.air_strike.slot9|{"amount":2}
+skill.ambush_melee	Skill	潜伏近战		[场上]卡级开火窗口时，若本卡正面且与玩家卡正交相邻，对玩家造成等同本卡攻击的伤害并翻面		tpl.skill.ambush_melee.interact|{}
+skill.assassin_leader	Skill	刺客领袖		[场上]若本卡处于正面，怪物打出到格后立刻翻面		tpl.skill.assassin_leader.rule|{}
+skill.attrition	Skill	损耗		怪物被移除时本卡攻击-1血量-10		tpl.skill.attrition.remove|{"delta":-1,"reason":"skill.attrition","action_actions_1_delta":-10}
+skill.battle_hardened	Skill	历战		[战斗时]每累计对玩家造成2点伤害，本卡攻击+1		tpl.skill.battle_hardened.damage|{"delta":1,"reason":"skill.battle_hardened"}
+skill.beggar_bond	Skill	丐帮同心		每移动5次洗入乞丐		tpl.skill.beggar_bond.move|{"count":1}
+skill.blessing	Skill	庇佑		下一次受到伤害时，该次伤害变为0		tpl.skill.blessing.rule|{"value":0}
+skill.bloodthirst	Skill	嗜血		战斗时每造成2点伤害，本卡攻击+1		tpl.skill.bloodthirst.damage|{"delta":1,"reason":"skill.bloodthirst"}
+skill.breathe_fire	Skill	喷火		每移动3次放烈焰		tpl.skill.breathe_fire.move|{"count":1}
+skill.call_followers	Skill	呼唤信徒		每移动3次加入龙信徒		tpl.skill.call_followers.move|{"count":1}
+skill.call_melee6	Skill	呼唤		每互动5次将近战6加入战斗卡组		tpl.skill.call_melee6.interact|{"count":1}
+skill.chant	Skill	吟唱		每互动6次将近战3加入战斗卡组		tpl.skill.chant.interact|{"count":1}
+skill.cloud_breath	Skill	吞云吐雾		每互动5次移除场上烈焰并按数造成伤害		tpl.skill.cloud_breath.interact|{"reason":"skill.cloud_breath"}
+skill.death_summon	Skill	死亡召唤		[场上] [被移除时]，将一张复活石打出到同格		tpl.skill.death_summon.remove|{"count":1}
+skill.delivery	Skill	快递		每移动5次，将相邻帮助卡（道具）与战斗卡组怪物交换		tpl.skill.delivery.move|{"count":1}
+skill.endless_flame	Skill	生生不息		烈焰被移除时再洗入一张烈焰		tpl.skill.endless_flame.remove|{"count":1}
+skill.evade	Skill	逃避		[战斗后]在格1/3/7/9中有非本卡的卡牌时，随机与其中一张交换位置；全无则不触发；致死伤后不触发		tpl.skill.evade.battle|{"sourceAction":"DealDamage"}
+skill.fall_apart	Skill	散架		被移除时洗入骷髅头与无头骷髅		tpl.skill.fall_apart.remove|{"count":1}
+skill.falling_rocks	Skill	落石		累计损失10护甲洗入石人		tpl.skill.falling_rocks.cumulative|{"weight":1,"count":1}
+skill.fight_me	Skill	和我打！		相邻玩家与其他怪物战斗时改为与本卡战斗		tpl.skill.fight_me.battle|{"sourceAction":"DealDamage"}
+skill.find_weakness	Skill	发现弱点		福地达到3后下一次移动造成99伤害		tpl.skill.find_weakness.move|{"amount":99}
+skill.fire_power	Skill	火之力		每有一张烈焰，本卡攻击+2		tpl.skill.fire_power.aura|{"source":"CardCount"}
+skill.first_strike	Skill	先手还击		持有先手还击技能		tpl.skill.first_strike.rule|{"value":1}
+skill.flame_boiling	Skill	烈焰沸腾		[场上]玩家卡每互动5次，烈焰造成伤害再+1（可叠加）		tpl.skill.flame_boiling.rule|{"value":1,"source":"skill.flame_boiling"}
+skill.flame_breath	Skill	烈焰吐息		每移动4次移除其他普通怪物并按数量加入烈焰		tpl.skill.flame_breath.move|{"reason":"skill.flame_breath","count":1}
+skill.fracture_fall_apart	Skill	折损散架		被移除时洗入多骨虫和等级2随机怪物		tpl.skill.fracture_fall_apart.remove|{"count":1}
+skill.gear_delivery	Skill	发装备了！		每移动2次随机强化其他怪物		tpl.skill.gear_delivery.move|{"count":1,"weight":1,"delta":1,"reason":"skill.gear_delivery","action_choices_1_action_delta":2}
+skill.gift	Skill	礼物		每移动3次放旋转轮		tpl.skill.gift.move|{}
+skill.give_punch	Skill	给你一拳		登场在偶数边位时伤害玩家		tpl.skill.give_punch.enter2|{"amount":2} ;; tpl.skill.give_punch.enter4|{"amount":2} ;; tpl.skill.give_punch.enter6|{"amount":2} ;; tpl.skill.give_punch.enter8|{"amount":2}
+skill.guide	Skill	引路		每移动3次创建福地，怪物进入福地获得护甲和攻击		tpl.skill.guide.create_blessed|{"count":1} ;; tpl.skill.guide.blessed_enter|{"amount":2,"delta":1,"reason":"skill.guide"}
+skill.hard	Skill	坚硬		左列战斗时按损失护甲伤害玩家		tpl.skill.hard.slot1|{"source":"Event"} ;; tpl.skill.hard.slot4|{"source":"Event"} ;; tpl.skill.hard.slot7|{"source":"Event"}
+skill.holy_duel	Skill	神圣决斗		[场上]当玩家卡与本卡[战斗后]，与其他怪物卡战斗，则对玩家卡造成2点伤害；持有者翻面或离场清标记		tpl.skill.holy_duel.activate|{"value":1,"source":"skill.holy_duel"}
+skill.hoodlum	Skill	混的人		每次移动到格1时对玩家造成2点伤害		tpl.shared.2.skill_air_strike_slot1|{"amount":2}
+skill.hot_observation	Skill	灼热观察		怪物卡因怪物技能位移时伤害玩家		tpl.skill.hot_observation.observe|{"amount":1}
+skill.intense_burning	Skill	剧烈燃烧		每有一张烈焰加入战斗卡组，额外加入一张且不递归		tpl.skill.intense_burning.flame_deal|{"count":1}
+skill.leap_kill	Skill	跳杀		[场上] [翻面后] 若正面朝上且正交邻接玩家，对玩家造成等同本卡攻击的伤害		tpl.skill.leap_kill.flip|{}
+skill.learning_growth	Skill	学习成长		其他怪物获得攻击时本卡攻击+1		tpl.skill.learning_growth.gain|{"delta":1,"reason":"skill.learning_growth"}
+skill.link_armor	Skill	链接护甲		每互动3次邻接怪物护甲+1		tpl.skill.link_armor.interact|{"amount":1}
+skill.link_attack_bonus	Skill	邻接攻击+1		邻接有其他怪物时攻击伤害+1		tpl.skill.link_attack_bonus.rule|{"value":1,"source":"skill.link_attack_bonus"}
+skill.link_prep	Skill	链接准备		每互动5次移除相邻道具卡		tpl.skill.link_prep.move|{"reason":"skill.link_prep"}
+skill.link_tactics	Skill	链接战术		[场上]邻接怪物攻击+1；离开邻接后失效（常驻光环）		tpl.skill.link_tactics.activate|{"value":1,"source":"skill.link_tactics"} ;; tpl.skill.link_tactics.refresh|{"value":1,"source":"skill.link_tactics"}
+skill.lord_of_death	Skill	死亡之主		[场上] 每有一张怪物卡[被移除时]，将一张复活石打出到同格（自己死不补）		tpl.skill.lord_of_death.remove|{"count":1}
+skill.love_fire	Skill	恋火		有烈焰时攻击+4		tpl.skill.love_fire.aura|{"value":4}
+skill.mixed_bones	Skill	混合骨头		每移动5次移除随机两张其他怪物并洗入等级2/3随机怪物		tpl.skill.mixed_bones.move|{"count":2,"reason":"skill.mixed_bones","action_actions_1_count":1}
+skill.monster_battle_hardened	Skill	历战怪物		战斗时本卡攻击+2		tpl.skill.monster_battle_hardened.battle|{"sourceAction":"DealDamage","value":2,"source":"skill.monster_battle_hardened"}
+skill.offer_fire	Skill	献火		被移除时加入烈焰		tpl.skill.offer_fire.remove|{"count":1}
+skill.orc_tactics	Skill	兽人战术		每移动1次，相邻怪物攻击+1		tpl.skill.orc_tactics.move|{"value":1,"source":"skill.orc_tactics"}
+skill.otherworld_help	Skill	异界帮助		每移动9次从其他怪物牌组加入普通怪物		tpl.skill.otherworld_help.move|{"count":1}
+skill.purge_followers	Skill	献祭		每移动2次，移除九宫格上所有的龙信徒		tpl.skill.purge_followers.move|{"reason":"skill.purge_followers"}
+skill.random_walk	Skill	乱步		每移动3次与随机帮助卡交换		tpl.skill.random_walk.move|{"count":1}
+skill.range_expand	Skill	范围扩大		所有怪物卡视为与本卡正交相邻		tpl.skill.range_expand.rule|{"value":1}
+skill.ranged_weapon	Skill	远程武器		[战斗时]玩家交战本卡时，本卡不先手也不反击（齐射不受影响）		tpl.skill.ranged_weapon.activate|{"value":1,"source":"skill.ranged_weapon"}
+skill.rascality	Skill	痞气		每损失3点护甲，相邻怪物攻击+1		tpl.skill.rascality.armor_lost|{"value":1,"source":"skill.rascality"}
+skill.recombine_body	Skill	重新组合身		相邻无头骷髅组合		tpl.skill.recombine_body.move|{"count":1}
+skill.recombine_head	Skill	重新组合头		相邻骷髅头组合		tpl.skill.recombine_head.move|{"count":1}
+skill.recuperate	Skill	休养		[场上][翻面后]若正面朝上，本卡攻击+1、护甲+2		tpl.skill.recuperate.flip|{"delta":1,"armor":2,"reason":"skill.recuperate"}
+skill.relentless_chase	Skill	不休追击		移动到玩家相邻格时强制战斗		tpl.skill.relentless_chase.move|{}
+skill.rise_up	Skill	起来		[场上]本卡对玩家造成一次伤害后，随机使一张其他正面怪物卡翻面为背面		tpl.skill.rise_up.damage|{"count":1}
+skill.rolling_crush	Skill	滚动碾压		移动到格3时移除格6帮助卡		tpl.skill.rolling_crush.slot3|{"reason":"skill.rolling_crush"}
+skill.rotate_lover	Skill	爱好旋转		每移动3次旋转		tpl.skill.rotate_lover.move|{"count":1}
+skill.sacrifice	Skill	献身		[场上] [被移除时]，使[场上]其他怪物卡攻击+1		tpl.skill.sacrifice.remove|{"delta":1,"reason":"skill.sacrifice"}
+skill.sharp_stone	Skill	尖石		护甲归零时伤害玩家		tpl.skill.sharp_stone.armor_break|{"amount":1}
+skill.smart	Skill	大聪明		每次获得攻击时，本卡额外攻击+1且不递归		tpl.skill.smart.gain|{"delta":1,"reason":"skill.smart"}
+skill.space_mastery	Skill	空间掌握		玩家与本卡战斗后旋转一次		tpl.skill.space_mastery.battle|{"sourceAction":"DealDamage","count":1}
+skill.speed_up	Skill	提速		[场上]每次本卡对玩家卡造成一次伤害，其他怪物卡的互动次数+1（倒计时-1）		tpl.skill.speed_up.damage|{"delta":-1}
+skill.stack_armor	Skill	叠甲		每互动6次其他怪物护甲+2		tpl.skill.stack_armor.interact|{"amount":2}
+skill.steal	Skill	盗取		[场上] [翻面后] 若正面朝上，随机移除邻接格子上一张帮助卡		tpl.skill.steal.flip|{"count":1,"reason":"skill.steal"}
+skill.stocking	Skill	进货		累计移动到玩家相邻3次时移除帮助卡并获得护甲		tpl.skill.stocking.move|{"reason":"skill.stocking","count":1,"amount":5}
+skill.stone_growth	Skill	石增长		移动到左列时其他怪物获得2点护甲		tpl.skill.stone_growth.slot1|{"amount":2} ;; tpl.skill.stone_growth.slot4|{"amount":2} ;; tpl.skill.stone_growth.slot7|{"amount":2}
+skill.stone_lover	Skill	石头爱好者		玩家卡和怪物卡损失护甲时本卡攻击+1		tpl.skill.stone_lover.armor_lost|{"delta":1,"reason":"skill.stone_lover"}
+skill.stone_shelter	Skill	石庇护		其他怪物卡受到的伤害减少1点		tpl.skill.stone_shelter.rule|{"value":-1,"source":"skill.stone_shelter"}
+skill.stray_cub	Skill	流浪幼崽		格6攻击+2并获得先手还击		tpl.skill.stray_cub.slot6|{"value":2} ;; tpl.skill.stray_cub.first_strike|{"value":1}
+skill.stroll	Skill	漫步		每移动1次攻击+2		tpl.skill.stroll.move|{"value":2,"source":"skill.stroll"}
+skill.strong_combo	Skill	强力组合		移动时与相邻两张怪物合成为巨大骷髅		tpl.skill.strong_combo.move|{"reason":"skill.strong_combo.self","action_actions_1_reason":"skill.strong_combo.material","count":2,"action_actions_2_count":1}
+skill.survival_wisdom	Skill	生存智慧		战斗时恢复1且攻击+1		tpl.skill.survival_wisdom.battle|{"sourceAction":"DealDamage","value":1,"amount":1,"source":"skill.survival_wisdom"}
+skill.swallow_stone	Skill	吞石		每移动2次吸相邻怪物护甲		tpl.skill.swallow_stone.move|{"amount":1,"cause":"skill.swallow_stone"}
+skill.taunt	Skill	嘲讽		相邻时只能与本卡战斗		tpl.skill.taunt.rule|{"value":0}
+skill.throw_stone	Skill	丢石头		每移动2次消耗本卡2护甲并伤害玩家		tpl.skill.throw_stone.move|{"value":2,"amount":2,"cause":"skill.throw_stone"}
+skill.turn_world	Skill	转动		登场旋转一次		tpl.skill.turn_world.enter|{"count":1}
+skill.unstable	Skill	不稳定		每移动3次随机交换怪物		tpl.skill.unstable.move|{"count":1}
+skill.violence_maniac	Skill	暴力狂		每移动2次，移除相邻格子上的怪物卡和帮助卡		tpl.skill.violence_maniac.move|{"reason":"skill.violence_maniac"}
+skill.violence_nutrition	Skill	暴力即养分		依靠暴力狂移除怪物得攻击，移除帮助卡得护甲		tpl.skill.violence_nutrition.monster_remove|{"delta":3,"reason":"skill.violence_nutrition"} ;; tpl.skill.violence_nutrition.help_remove|{"delta":5,"reason":"skill.violence_nutrition"}
+skill.world_as_neighbors	Skill	天涯若比邻		[场上]所有怪物卡视为正交相邻（仅技能邻接判定；不影响攻击距离）		tpl.skill.world_as_neighbors.rule|{"value":1}
+Tavern	Room	卡店		道具卡强化/固定/扩容		
+trap.armor_totem	Trap	护甲图腾	White	[adjacent]的怪物和玩家[armor]+{trap.armor_totem.aura.value}	借给你的护甲是要还的	tpl.trap.armor_totem.aura|{"value":1,"source":"trap.armor_totem"} ;; tpl.trap.armor_totem.refresh|{"value":1,"source":"trap.armor_totem"} ;; tpl.trap.armor_totem.aura_player|{"value":1,"source":"trap.armor_totem"} ;; tpl.trap.armor_totem.refresh_player|{"value":1,"source":"trap.armor_totem"}
+trap.attack_totem	Trap	攻击图腾	White	[adjacent]的怪物和玩家[attack]+{trap.attack_totem.aura.value}	40米长刀	tpl.trap.attack_totem.aura|{"value":1,"source":"trap.attack_totem"} ;; tpl.trap.attack_totem.refresh|{"value":1,"source":"trap.attack_totem"} ;; tpl.trap.attack_totem.aura_player|{"value":1,"source":"trap.attack_totem"} ;; tpl.trap.attack_totem.refresh_player|{"value":1,"source":"trap.attack_totem"}
+trap.bear_trap	Trap	捕熊陷阱	White	对下张[adjacent]的怪物/道具造成{trap.bear_trap.fill.amount}点伤害/移除，触发后[death]	唯独捕不到熊	tpl.trap.bear_trap.fill|{"amount":10,"reason":"trap.bear_trap"}
+trap.flame	Trap	烈焰	Red	每移动{trap.flame.move.every}次，对[adjacent]的玩家造成{trap.flame.move.amount}点伤害，{trap.flame.remove.every}次后[death]	除草一流	tpl.trap.flame.move|{"amount":1,"every":1} ;; tpl.trap.flame.remove|{"reason":"trap.flame","every":3,"projectKey":"trap.flame.remove.every"}
+trap.healing_spring	Trap	疗愈之光	Red	每移动{trap.healing_spring.heal_on_move.every}次，若玩家在[adjacent]则恢复{trap.healing_spring.heal_on_move.amount}点血量	遮阳伞有害	tpl.trap.healing_spring.heal_on_move|{"amount":1,"every":1}
+trap.leave	Trap	离开机关	None	魔免；只可被交战击破，[death]后离开房间	放我出去！！！！！	tpl.trap.door|{} ;; tpl.trap.magic_immunity|{} ;; tpl.trap.leave|{}
+trap.recovery_totem	Trap	恢复图腾	White	每移动{trap.recovery_totem.heal_on_move.every}次，[adjacent]的怪物和玩家各恢复{trap.recovery_totem.heal_on_move.amount}点血量	医者仁心	tpl.trap.recovery_totem.heal_on_move|{"amount":1,"every":1} ;; tpl.trap.recovery_totem.heal_player_on_move|{"amount":1}
+trap.revive_stone	Trap	复活石	None	[action]{trap.revive_stone.interact.every}次后[death]，将{trap.revive_stone.remove.count}张重生骷髅打出到同格	花费75阳光铲除它	tpl.trap.revive_stone.interact|{"reason":"trap.revive_stone","every":6,"projectKey":"trap.revive_stone.interact.every"} ;; tpl.trap.revive_stone.remove|{"count":1}
+trap.rolling_stone	Trap	滚石	White	移动到格{trap.rolling_stone.slot3.slot}时，移除格{trap.rolling_stone.slot3.targetSlot}上的常规怪物/道具/机关	泡沫做的	tpl.trap.rolling_stone.slot3|{"reason":"trap.rolling_stone","slot":3,"targetSlot":6}
+trap.spike	Trap	刺藤	White	每移动{trap.spike.move.every}次，[adjacent]的怪物和玩家各受到{trap.spike.move.amount}点伤害	园艺失败的最终形态	tpl.trap.spike.move|{"amount":1,"every":1} ;; tpl.trap.spike.move_player|{"amount":1}
+Treasure	Room	宝箱房		开局加入宝箱卡		
+TreasureReward	Room	宝箱奖励房		房内铺 1 宝箱 + 3 随机道具；点击拿走，离开放弃		
+UpgradeItemStats	ChoiceOption	道具强化		提升所有道具卡数值3点		
