@@ -1380,12 +1380,29 @@ namespace NineGrid.Core
             var modifier = new RuleModifier(Rule, Op, Value, Layer, new ModifierSource(Source), Scope, condition);
             context.GetSystem<IStatSystem>().RuleModifiers.Add(modifier);
 
-            return new GameActionResult()
+            var result = new GameActionResult()
                 .AddEvent(new CoreGameEvent(CoreEventType.EffectModifierApplied, context.ActionId, ActionName)
                     .WithCard(TargetUid)
                     .WithAmount((int)Rule)
                     .WithDelta((int)Math.Round(Value))
                     .WithMessage(Source));
+
+            CardInstance targetCard;
+            if (Rule == RuleId.DamageMultiplier
+                && context.GetModel<CardRegistry>().TryGet(TargetUid, out targetCard)
+                && targetCard != null
+                && targetCard.Kind == CardKind.Avatar)
+            {
+                CardFaceEventValues.AppendProjectedBattleAttackFaceCommit(
+                    result,
+                    context,
+                    targetCard,
+                    ActionName,
+                    Source,
+                    SourceDefId);
+            }
+
+            return result;
         }
     }
 

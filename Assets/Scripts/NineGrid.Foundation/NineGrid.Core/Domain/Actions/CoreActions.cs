@@ -90,11 +90,15 @@ namespace NineGrid.Core
                 ? Math.Max(0, (int)Math.Round(statSystem.EvaluateRule(RuleId.DamageReduction, 0f, statContext)))
                 : 0;
             var damage = Math.Max(0, afterRules - damageReduction);
+            var consumedDamageMultiplier = new List<RuleModifier>();
             if (baseDamage > 0)
             {
-                var consumed = new List<RuleModifier>();
-                statSystem.RuleModifiers.Consume(RuleId.DamageMultiplier, ModifierScope.Once, statContext, consumed);
-                DeactivateConsumedEffects(context, consumed);
+                statSystem.RuleModifiers.Consume(
+                    RuleId.DamageMultiplier,
+                    ModifierScope.Once,
+                    statContext,
+                    consumedDamageMultiplier);
+                DeactivateConsumedEffects(context, consumedDamageMultiplier);
             }
 
             var armor = StatArmorUtility.GetCurrentArmor(target);
@@ -183,6 +187,23 @@ namespace NineGrid.Core
             else if (newHp <= 0)
             {
                 result.AddFollowUp(new KillIfDeadAction(ActorUid, TargetUid));
+            }
+
+            if (baseDamage > 0 && consumedDamageMultiplier.Count > 0)
+            {
+                CardInstance actor;
+                if (registry.TryGet(ActorUid, out actor)
+                    && actor != null
+                    && actor.Kind == CardKind.Avatar)
+                {
+                    CardFaceEventValues.AppendPermanentAttackFaceCommit(
+                        result,
+                        context,
+                        actor,
+                        ActionName,
+                        "DamageMultiplierConsumed",
+                        SourceDefId);
+                }
             }
 
             return result;
