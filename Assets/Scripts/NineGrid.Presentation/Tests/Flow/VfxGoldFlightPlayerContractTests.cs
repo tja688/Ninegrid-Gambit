@@ -151,7 +151,7 @@ namespace NineGrid.Presentation.Tests
                 {
                     system.Tick(0.05f);
                     guard++;
-                    if (system.GetDiagnosticsSnapshot().ActiveInstances.Length == 0)
+                    if (system.GetDiagnosticsSnapshot().ActiveInstances.Count == 0)
                     {
                         break;
                     }
