@@ -84,7 +84,7 @@
 ### 道具卡格回收（#110 / ADR-0025）
 
 - **Core**：`RecycleItemSlot` / `ApplyRecycleItemSlot` ⇒ 移除 ItemSlots 卡 + `RecycleItemSlotGold`（默认 10）
-- **意图**：`InputIntentKinds.RecycleItem` 为 board action；主线 busy → `BufferToDirector`（不拒收）
+- **意图**：`InputIntentKinds.RecycleItem` 为 board action；主线 busy → `Reject`（ADR-0004 strict-drop）
 - **装配**：`RecycleItemIntentScriptFactory`（`ApplyRecycleItemSlotCommand`）经 `PresentationCompositionRoot` 路由
 - **拖放**：`CardHandManagerSingleton` 拖起激活 `CardRecycleNotice`（半透明黑底 + 图标 + `标准世界文字 (2)` 价值 TMP）+ `HandcardRecycleZone`；落入回收区优先于 ApplyZone；提交 `SubmitRecycleItemIntentCommand`
 - **叠层**：回收 UI 激活期间 `CardDeckManagerSingleton.SetRecycleBackgroundSuppressed(true)` 把卡组卡临时切到 Sorting Layer `BG`，Notice 留在 `Main` 压住卡组；手牌拖拽 / 遗物 ghost 仍在 `Main` 更高 order，压住 Notice。`CardDeckSlotContainer.ApplySortingOrder` **每次**入槽都 `PropagateSortingLayerFromGroup`（不只在 layer 名变化时）；`CardManagerSingleton.ApplyDisplayMode` 对已入槽 `CardDeckMode` 委托 `EnsureDeckSorting`（对齐手牌 `EnsureHandSorting`），避免 `RefreshDisplayMode` 把序打回默认 -30 / 子节点逃出 BG
@@ -110,7 +110,7 @@
 | `ICardEntityLifecycleSystem` / `CardEntityLifecycleSystem` | 卡实体生命周期 |
 | `IGameFlowShellSystem` / `GameFlowShellSystem` | 流程壳相位权威 |
 | `IPresentationInputStateSystem` / `PresentationInputStateSystem` | 输入所有权轴只读投影（`CurrentOwner`）+ MainlineBusy |
-| `IIntentIntake` / `IntentIntakeSystem` | 唯一意图收口：两轴门禁 + 合法性 + Director 缓冲；忙时 `IAccelerationSink` |
+| `IIntentIntake` / `IntentIntakeSystem` | 唯一意图收口：两轴门禁 + 合法性；主线忙时拒收（strict-drop）；忙时 `IAccelerationSink` |
 | `IAvatarWalkSystem` / `AvatarWalkSystem` | 非战斗跳格门禁 + `AvatarWalkRunner`（BFS 连跳 / 改目标） |
 | `BoardSelectionSystem` | 棋盘选择模式 |
 | `ChoicePresentationSystem` | 房间/奖励选择表现 |

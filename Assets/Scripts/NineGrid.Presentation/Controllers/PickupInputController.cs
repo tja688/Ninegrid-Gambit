@@ -9,7 +9,7 @@ using UnityEngine;
 namespace NineGrid.Presentation.Controllers
 {
     /// <summary>
-    /// 场地拾取输入 Controller：经 IntentIntake 门禁后发 Apply Command（busy 时缓冲进 Director）。
+    /// 场地拾取输入 Controller：经 IntentIntake 门禁后发 Apply Command。
     /// </summary>
     public sealed class PickupInputController : PresentationController
     {
@@ -34,7 +34,7 @@ namespace NineGrid.Presentation.Controllers
         /// <summary>
         /// 场地格拾取入口（Hook 与 EditMode 直驱共用）。
         /// idle：IntentIntake Allow → ExternalHold → Core Apply（不得先改 Core 再抢锁）；
-        /// busy：BufferToDirector（latest-wins），Apply 由主线 flush 剧本承担。
+        /// busy：Reject，不缓冲。
         /// </summary>
         public PickupItemPresentationResult HandlePickupRequested(int groundSlot)
         {
@@ -45,15 +45,6 @@ namespace NineGrid.Presentation.Controllers
                 new InputIntent(InputIntentKinds.Pickup, groundSlot),
                 InputOwner.ProtectedField,
                 out preview);
-
-            if (disposition == IntentDisposition.BufferToDirector)
-            {
-                return new PickupItemPresentationResult
-                {
-                    Accepted = false,
-                    Reason = "buffered",
-                };
-            }
 
             if (disposition != IntentDisposition.Allow)
             {

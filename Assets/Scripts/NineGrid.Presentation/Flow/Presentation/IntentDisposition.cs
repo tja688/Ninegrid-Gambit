@@ -8,7 +8,7 @@ namespace NineGrid.Flow.Presentation
         /// <summary>主线 idle：已交给 Director 建脚本，或模式/模态可立即执行。</summary>
         Allow = 0,
 
-        /// <summary>主线 busy：已 latest-wins 缓冲进 Director。</summary>
+        /// <summary>已退役：主线 busy 时不再缓冲进 Director（ADR-0004 strict-drop）。</summary>
         BufferToDirector = 1,
 
         /// <summary>两轴门禁或合法性拒绝；不缓冲。</summary>

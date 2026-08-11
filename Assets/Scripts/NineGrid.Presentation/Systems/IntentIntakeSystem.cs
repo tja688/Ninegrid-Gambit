@@ -131,23 +131,16 @@ namespace NineGrid.Presentation.Systems
                 return IntentDisposition.Reject;
             }
 
-            // Pickup：idle 时 Allow，由调用方 ExternalHold→Apply；busy 时 Director latest-wins 缓冲。
+            if (mainlineBusy)
+            {
+                Reject(intent, "mainlineBusy", mainlineBusy: true);
+                return IntentDisposition.Reject;
+            }
+
+            // Pickup：idle 时 Allow，由调用方 ExternalHold→Apply。
             if (string.Equals(intent.Kind, InputIntentKinds.Pickup, StringComparison.Ordinal))
             {
-                if (!mainlineBusy)
-                {
-                    return IntentDisposition.Allow;
-                }
-
-                var pickupRuntime = this.GetSystem<IPresentationRuntimeSystem>();
-                if (pickupRuntime == null || !pickupRuntime.IsStarted)
-                {
-                    Reject(intent, "runtimeNotStarted(pickupBuffer)", mainlineBusy: true);
-                    return IntentDisposition.Reject;
-                }
-
-                pickupRuntime.TrySubmitIntent(intent, out uiPickPreview);
-                return IntentDisposition.BufferToDirector;
+                return IntentDisposition.Allow;
             }
 
             var runtime = this.GetSystem<IPresentationRuntimeSystem>();
@@ -155,12 +148,6 @@ namespace NineGrid.Presentation.Systems
             {
                 Reject(intent, "runtimeNotStarted", mainlineBusy);
                 return IntentDisposition.Reject;
-            }
-
-            if (mainlineBusy)
-            {
-                runtime.TrySubmitIntent(intent, out uiPickPreview);
-                return IntentDisposition.BufferToDirector;
             }
 
             runtime.TrySubmitIntent(intent, out uiPickPreview);
