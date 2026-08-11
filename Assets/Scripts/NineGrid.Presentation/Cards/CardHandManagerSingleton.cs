@@ -182,6 +182,7 @@ namespace NineGrid.Cards
         {
             CancelHandWork();
             ClearDragSession();
+            SetRecycleUiActive(false);
             ClearHandHoverState(_hoveredCard);
             _hoveredCard = null;
             _slotContainer?.Clear();
@@ -457,6 +458,11 @@ namespace NineGrid.Cards
         public bool TryBeginDragFromHand(ManagedCard card)
         {
             if (card == null || IsBusy || IsDragging)
+            {
+                return false;
+            }
+
+            if (PresentationInputGates.OpeningPresentationActive)
             {
                 return false;
             }

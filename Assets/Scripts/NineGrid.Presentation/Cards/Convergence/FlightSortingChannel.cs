@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using NineGrid.Cards.Anim;
 using UnityEngine;
 using UnityEngine.Rendering;
 
@@ -12,6 +13,8 @@ namespace NineGrid.Cards.Convergence
     /// </summary>
     public static class FlightSortingChannel
     {
+        private const string MainSortingLayerName = "Main";
+
         /// <summary>全局飞行层：远高于场地默认序（GroundCardSortingOrder = -10）。</summary>
         public const int GlobalFlightSortingOrder = 80;
 
@@ -211,10 +214,19 @@ namespace NineGrid.Cards.Convergence
             }
 
             var group = card.View.GetComponent<SortingGroup>();
-            if (group != null)
+            if (group == null)
             {
-                group.sortingOrder = order;
+                return;
             }
+
+            if (card.DisplayMode != CardDisplayMode.CardDeckMode
+                && group.sortingLayerName != MainSortingLayerName)
+            {
+                group.sortingLayerName = MainSortingLayerName;
+                CardMainVisualMaskAnchor.PropagateSortingLayerFromGroup(group);
+            }
+
+            group.sortingOrder = order;
         }
     }
 }
