@@ -116,6 +116,8 @@ namespace NineGrid.Flow.Presentation
                     return false;
                 }
 
+                CombatOutcomeAudio.PulseArmorGain(gameEvent, "DamageFloaterBeatHandler.TryApply");
+
                 var cardUid = gameEvent.CardUid > 0 ? gameEvent.CardUid : gameEvent.TargetUid;
                 var pos = PresentationOutputProjector.ResolveCardWorldPosition(cardUid);
                 if (!pos.HasValue)

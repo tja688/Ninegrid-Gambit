@@ -306,6 +306,9 @@ namespace NineGrid.Flow.Presentation
         [AudioCue("battle.combat.heal", "治疗生效", "Battle", "DamageFloaterBeatHandler.TryApply", AudioCueContexts.CardDefId)]
         public const string Heal = "battle.combat.heal";
 
+        [AudioCue("battle.combat.armor_gain", "护甲获得", "Battle", "DamageFloaterBeatHandler.TryApply", AudioCueContexts.CardDefId)]
+        public const string ArmorGain = "battle.combat.armor_gain";
+
         [AudioCue("battle.combat.death", "单位死亡退场", "Battle", "CardEffectManager.PlayDeathAsync", AudioCueContexts.CardDefId)]
         public const string Death = "battle.combat.death";
 
@@ -362,6 +365,19 @@ namespace NineGrid.Flow.Presentation
 
             BattleCombatAudioCues.Pulse(
                 BattleCombatAudioCues.Heal,
+                diagnosticSource,
+                gameEvent.SourceDefId);
+        }
+
+        public static void PulseArmorGain(NineGrid.Core.CoreGameEvent gameEvent, string diagnosticSource)
+        {
+            if (gameEvent == null || gameEvent.Delta <= 0)
+            {
+                return;
+            }
+
+            BattleCombatAudioCues.Pulse(
+                BattleCombatAudioCues.ArmorGain,
                 diagnosticSource,
                 gameEvent.SourceDefId);
         }
