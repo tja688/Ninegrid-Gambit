@@ -60,6 +60,16 @@ namespace NineGrid.Presentation.Tests
             var result = player.StartPulse(BuildRequest(amount: 10));
             Assert.IsFalse(result.Succeeded);
             Assert.IsFalse(string.IsNullOrEmpty(result.FailureReason));
+            Assert.IsFalse(result.HasPresentationPlan);
+        }
+
+        [Test]
+        public void PresentationPlan_NoneAndDefaultAndFailure_HaveNoPlan()
+        {
+            Assert.IsFalse(VfxPresentationPlan.None.IsValid);
+            Assert.IsFalse(default(VfxPresentationPlan).IsValid);
+            Assert.IsFalse(VfxPlayerStartResult.Failure("no host").HasPresentationPlan);
+            Assert.IsFalse(VfxPlayerStartResult.Success("id").HasPresentationPlan);
         }
 
         [Test]

@@ -46,7 +46,7 @@ namespace NineGrid.Presentation.Systems
 
     public readonly struct VfxPresentationPlan
     {
-        public static readonly VfxPresentationPlan None = new VfxPresentationPlan(0f, 0f);
+        public static readonly VfxPresentationPlan None = new VfxPresentationPlan(-1f, -1f);
 
         public VfxPresentationPlan(float firstArrivalDelay, float lastArrivalDelay)
         {
@@ -60,7 +60,7 @@ namespace NineGrid.Presentation.Systems
         /// <summary>末枚金币抵达并消失的延迟（秒）；HUD 在此精确收敛到 AmountAfter。</summary>
         public float LastArrivalDelay { get; }
 
-        public bool IsValid => FirstArrivalDelay >= 0f && LastArrivalDelay >= FirstArrivalDelay;
+        public bool IsValid => FirstArrivalDelay > 0f && LastArrivalDelay >= FirstArrivalDelay;
     }
 
     public readonly struct VfxPlayerStartResult

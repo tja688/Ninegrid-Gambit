@@ -27,6 +27,7 @@ namespace NineGrid.Flow
         private const string ArmorRootName = "基础护甲";
         private const string ArmorValueName = "护甲数值";
         private const string GoldValueName = "金币数值";
+        private const string GoldIconName = "金币图标";
 
         // 场景默认：血槽 size.x=1.8、血条≈1.48；布局可伸至 3.2 / 2.9（共增约 1.4）。
         // 旧参 0.05×封顶 5.5 约 74 点 MaxHp 增量触顶；新增长位 1.4 → 1.4/74≈0.019，触顶 MaxHp≈84。
@@ -70,6 +71,9 @@ namespace NineGrid.Flow
 
         [Tooltip("金币 TMP；增益演出可由 GoldGainFx 接管。")]
         [SerializeField] private TMP_Text goldText;
+
+        [Tooltip("金币图标（吞噬终点/缩放复位目标）；留空则按「玩家信息」根下子节点查找。")]
+        [SerializeField] private Transform goldIcon;
 
         [Header("血槽血管")]
         [Tooltip("血槽（血管）SpriteRenderer；Sliced，左 pivot。")]
@@ -297,8 +301,9 @@ namespace NineGrid.Flow
             }
 
             goldText ??= FindTmp(playerInfoRoot, GoldValueName);
+            goldIcon ??= FindChild(playerInfoRoot, GoldIconName);
 
-            GoldHudDomainHost.EnsureInstalled();
+            GoldHudDomainHost.Install(playerInfoRoot, goldIcon);
 
             // 悬停碰撞盒：优先用血条根上已配置的（场景布局大热区，绝不覆写尺寸）；
             // 没有才运行时在血槽上补一个并随槽宽同步。

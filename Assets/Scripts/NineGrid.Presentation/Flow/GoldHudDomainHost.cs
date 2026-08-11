@@ -6,8 +6,8 @@ namespace NineGrid.Flow
 {
     /// <summary>
     /// 金币 HUD 域宿主（#203）：向 gold-flight 播放器提供父级、起终点转换、排序边界与图标吞噬/复位反馈。
-    /// 由 <see cref="PlayerInfoHudPresenter"/> 在绑定 HUD 后幂等安装；播放器经 <see cref="Instance"/>
-    /// 使用，不自行搜索或任意修改场景。
+    /// 由 <see cref="PlayerInfoHudPresenter"/> 在绑定 HUD 后经 <see cref="Install"/> 显式安装；
+    /// 播放器经 <see cref="Instance"/> 使用，不自行搜索或任意修改场景。
     /// </summary>
     public interface IGoldHudDomainHost : IVfxDomainHost
     {
@@ -32,9 +32,6 @@ namespace NineGrid.Flow
 
     public sealed class GoldHudDomainHost : IGoldHudDomainHost
     {
-        private const string PlayerInfoRootName = "玩家信息";
-        private const string GoldIconName = "金币图标";
-
         private const float PunchPerCoin = 0.12f;
         private const float MaxPunchScale = 1.85f;
         private const float PunchStackWindow = 0.55f;
@@ -61,7 +58,7 @@ namespace NineGrid.Flow
         public static IGoldHudDomainHost Instance =>
             sInstance != null && sInstance.IsAvailable ? sInstance : null;
 
-        /// <summary>测试/HUD Presenter 显式安装：不再按名搜索。</summary>
+        /// <summary>HUD Presenter 显式安装 root/icon（幂等）；不按名搜索场景。</summary>
         public static bool Install(Transform root, Transform icon)
         {
             if (root == null || icon == null)
@@ -70,33 +67,15 @@ namespace NineGrid.Flow
                 return false;
             }
 
-            sInstance = new GoldHudDomainHost(root, icon);
-            sInstance.CaptureBaseScale();
-            return true;
-        }
-
-        /// <summary>幂等安装：按「玩家信息」根绑定金币图标；缺图标时返回 false 不注册。</summary>
-        public static bool EnsureInstalled()
-        {
-            if (sInstance != null && sInstance.IsAvailable)
+            if (sInstance != null
+                && sInstance.IsAvailable
+                && ReferenceEquals(sInstance.mRoot, root)
+                && ReferenceEquals(sInstance.mIcon, icon))
             {
                 return true;
             }
 
-            sInstance = null;
-            var rootGo = GameObject.Find(PlayerInfoRootName);
-            if (rootGo == null)
-            {
-                return false;
-            }
-
-            var icon = FindChild(rootGo.transform, GoldIconName);
-            if (icon == null)
-            {
-                return false;
-            }
-
-            sInstance = new GoldHudDomainHost(rootGo.transform, icon);
+            sInstance = new GoldHudDomainHost(root, icon);
             sInstance.CaptureBaseScale();
             return true;
         }
@@ -276,24 +255,6 @@ namespace NineGrid.Flow
             }
 
             mHasBaseScale = true;
-        }
-
-        private static Transform FindChild(Transform root, string childName)
-        {
-            if (root == null || string.IsNullOrEmpty(childName))
-            {
-                return null;
-            }
-
-            foreach (var t in root.GetComponentsInChildren<Transform>(true))
-            {
-                if (t != null && t.name == childName)
-                {
-                    return t;
-                }
-            }
-
-            return null;
         }
     }
 }
