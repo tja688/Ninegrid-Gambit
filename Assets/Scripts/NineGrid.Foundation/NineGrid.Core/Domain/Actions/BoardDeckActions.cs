@@ -411,7 +411,8 @@ namespace NineGrid.Core
 
             var ordered = new List<int>(pile);
             ordered.RemoveAt(leaveIndex);
-            ordered.Insert(targetIndex, leaveUid);
+            var insertIndex = leaveIndex < targetIndex ? targetIndex - 1 : targetIndex;
+            ordered.Insert(insertIndex, leaveUid);
             deck.ReorderDrawPile(ordered);
         }
     }
