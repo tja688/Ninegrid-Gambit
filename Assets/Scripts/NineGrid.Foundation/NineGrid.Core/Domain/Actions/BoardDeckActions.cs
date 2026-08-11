@@ -231,6 +231,7 @@ namespace NineGrid.Core
             DrainStagingPool(deck, registry, deck.EnemyCardPoolUids);
 
             ShuffleDrawPile(deck, rng);
+            LeaveTrapDrawPileRules.EnsureInSecondHalf(deck, registry, rng);
 
             return new GameActionResult()
                 .AddEvent(new CoreGameEvent(CoreEventType.CardDealt, context.ActionId, ActionName)
@@ -346,6 +347,64 @@ namespace NineGrid.Core
             }
 
             deck.ReorderDrawPile(shuffled);
+        }
+    }
+
+    /// <summary>
+    /// 离开机关在抽牌堆中的落点契约（ADR-0026）：普通房开局编入后必在后半段；层主房击破层主后置顶。
+    /// </summary>
+    internal static class LeaveTrapDrawPileRules
+    {
+        public static void EnsureInSecondHalf(DeckModel deck, CardRegistry registry, IRngUtility rng)
+        {
+            if (deck == null || registry == null || rng == null)
+            {
+                return;
+            }
+
+            var pile = deck.DrawPileUids;
+            var count = pile.Count;
+            if (count <= 1)
+            {
+                return;
+            }
+
+            var secondHalfStart = (count + 1) / 2;
+            if (secondHalfStart >= count)
+            {
+                return;
+            }
+
+            var leaveIndex = -1;
+            var leaveUid = 0;
+            for (var i = 0; i < count; i++)
+            {
+                var card = registry.Get(pile[i]);
+                if (string.Equals(card.DefId, RegularTrapPool.LeaveTrapDefId, StringComparison.Ordinal))
+                {
+                    leaveIndex = i;
+                    leaveUid = card.Uid;
+                    break;
+                }
+            }
+
+            if (leaveUid == 0)
+            {
+                return;
+            }
+
+            var targetIndex = leaveIndex >= secondHalfStart
+                ? leaveIndex
+                : rng.Range(secondHalfStart, count);
+            if (targetIndex == leaveIndex)
+            {
+                return;
+            }
+
+            var ordered = new List<int>(pile);
+            ordered.RemoveAt(leaveIndex);
+            ordered.Insert(targetIndex, leaveUid);
+            deck.ReorderDrawPile(ordered);
         }
     }
 

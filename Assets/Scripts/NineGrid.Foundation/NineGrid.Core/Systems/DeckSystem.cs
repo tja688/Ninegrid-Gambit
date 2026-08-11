@@ -136,7 +136,7 @@ namespace NineGrid.Core.Systems
             battle.MarkLeaveTrapInserted();
             return new GameAction[]
             {
-                new ShuffleIntoDrawPileAction(LeaveTrapDefId, CardKind.Trap, 1, false, "leaveTrap.insert")
+                new ShuffleIntoDrawPileAction(LeaveTrapDefId, CardKind.Trap, 1, true, "leaveTrap.insert")
             };
         }
 
