@@ -1,11 +1,18 @@
 using System.Collections.Generic;
+using System.Threading;
+using Cysharp.Threading.Tasks;
 using NineGrid.Cards;
 using NineGrid.Cards.Presentation;
 using NineGrid.Core;
 using NineGrid.Core.Content;
 using NineGrid.Core.Stats;
 using NineGrid.Core.Systems;
+using NineGrid.Flow;
+using NineGrid.Flow.BattleInfoPreview;
+using NineGrid.Flow.BoardBriefTip;
 using NineGrid.Flow.Presentation;
+using NineGrid.Flow.RoomIcons;
+using NineGrid.Flow.Transitions;
 using NineGrid.Presentation;
 using NineGrid.Presentation.Systems;
 using QFramework;
@@ -18,6 +25,8 @@ namespace NineGrid.Flow
     /// </summary>
     public static class BattleSessionCheat
     {
+        private static bool sCrossFloorRunning;
+
         public static bool TrySetAvatarHp(int hp)
         {
             if (hp <= 0)
@@ -403,6 +412,137 @@ namespace NineGrid.Flow
 
             slot = SlotId.None;
             return false;
+        }
+
+        /// <summary>
+        /// 作弊跨层：Round 黑屏过场 → 落至下一层首关战前信息预览（由主循环 <see cref="GameFlowOrchestrator"/> 承接）。
+        /// 第三层不可用；需已开局。
+        /// </summary>
+        public static bool TryBeginCrossFloor()
+        {
+            if (sCrossFloorRunning)
+            {
+                Debug.LogWarning("[BattleSessionCheat] 一键跨层进行中，请稍候。");
+                return false;
+            }
+
+            var arch = NineGridArchitecture.Current;
+            var shell = GameFlowShellSystem.EnsureRegistered(arch);
+            if (arch == null
+                || shell.State.Value == GameFlowShellState.MainMenu
+                || !shell.IsBusy)
+            {
+                Debug.LogWarning("[BattleSessionCheat] 一键跨层失败：需在对局中。");
+                return false;
+            }
+
+            var run = arch.GetModel<RunModel>();
+            if (run == null || run.Floor.Value >= RunModel.FinalFloor)
+            {
+                Debug.LogWarning("[BattleSessionCheat] 一键跨层失败：第三层无法跨层。");
+                return false;
+            }
+
+            RunCrossFloorAsync().Forget();
+            return true;
+        }
+
+        private static async UniTaskVoid RunCrossFloorAsync()
+        {
+            sCrossFloorRunning = true;
+            var arch = NineGridArchitecture.Current;
+            var shell = GameFlowShellSystem.EnsureRegistered(arch);
+            var session = BattleSessionSystem.EnsureRegistered();
+            var transition = RunSceneTransitionService.InstanceOrNull;
+            var useTransition = transition != null && transition.IsEnabled;
+
+            try
+            {
+                if (useTransition)
+                {
+                    await transition.BeginCoverAsync(crossFloor: true, CancellationToken.None);
+                }
+
+                CancelCrossFloorPresentationWork(arch, session, shell);
+
+                var nextFloor = arch.GetModel<RunModel>().Floor.Value + 1;
+                ApplyCrossFloorCoreState(arch, shell, nextFloor);
+                ClearResidualCombatFieldViews(arch);
+                session.TryEnterNodeSettlement();
+                shell.Signal(GameFlowSignal.SettlementReady());
+
+                if (useTransition)
+                {
+                    await transition.CompleteRevealAsync(CancellationToken.None);
+                }
+
+                Debug.Log(
+                    "[BattleSessionCheat] 一键跨层 → 楼层 "
+                    + nextFloor
+                    + " 节点 "
+                    + (arch.GetModel<RunModel>().NodeIndex.Value + 1)
+                    + "（战前预览由主循环承接）。");
+            }
+            catch (System.OperationCanceledException)
+            {
+                transition?.ForceClearFaders();
+            }
+            catch (System.Exception ex)
+            {
+                transition?.ForceClearFaders();
+                Debug.LogWarning("[BattleSessionCheat] 一键跨层异常：" + ex.Message);
+            }
+            finally
+            {
+                sCrossFloorRunning = false;
+            }
+        }
+
+        private static void CancelCrossFloorPresentationWork(
+            IArchitecture arch,
+            IBattleSessionSystem session,
+            GameFlowShellSystem shell)
+        {
+            PresentationInputGates.ForceEndExternalHold("CheatCrossFloor");
+            BoardCardSelectModeController.RequestAbort("cheat-cross-floor");
+            arch?.GetSystem<IFieldBattlePresentationSystem>()?.CancelBattleWork();
+            arch?.GetSystem<IAvatarWalkSystem>()?.Cancel();
+            arch?.GetSystem<IAvatarWalkSystem>()?.SetEnabled(false);
+            arch?.GetSystem<IPresentationSyncSystem>()?.Clear();
+
+            if (BattleInfoPreviewPresenter.IsOpen)
+            {
+                BattleInfoPreviewPresenter.RequestDismiss();
+            }
+
+            session.CancelPresentationWork();
+            RoomIconBoardPresenter.Current?.DespawnAll();
+            shell.View?.HideAllOverlays();
+            BoardBriefTipPresenter.InstanceOrNull()?.HardClear();
+        }
+
+        private static void ApplyCrossFloorCoreState(
+            IArchitecture arch,
+            GameFlowShellSystem shell,
+            int nextFloor)
+        {
+            var run = arch.GetModel<RunModel>();
+            run.Floor.Value = nextFloor;
+            run.NodeIndex.Value = 0;
+            run.FloorMonsterDeckId.Value = string.Empty;
+            run.Room.Value = RoomKind.None;
+
+            arch.GetModel<BattleContextModel>()?.ResetLeaveTrapProgress();
+
+            var pipeline = arch.GetSystem<IActionPipelineSystem>();
+            if (pipeline != null)
+            {
+                pipeline.Enqueue(new ClearPendingChoicesAction());
+                pipeline.Enqueue(new ChangePhaseAction(GamePhase.NodeCompleted));
+                pipeline.RunToCompletion();
+            }
+
+            shell.SyncShellNodeIndexForCheat(nextFloor, 0);
         }
 
         public static bool TryForceNodeVictory()

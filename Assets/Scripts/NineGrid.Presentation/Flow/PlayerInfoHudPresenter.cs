@@ -382,22 +382,63 @@ namespace NineGrid.Flow
                 return;
             }
 
-            bloodBarRoot ??= FindChild(playerInfoRoot, BloodBarName);
-            bloodSlot ??= FindChild(playerInfoRoot, BloodSlotName)?.GetComponent<SpriteRenderer>();
-            bloodFill ??= FindChild(playerInfoRoot, BloodFillName)?.GetComponent<SpriteRenderer>();
-            currentHpText ??= FindTmp(playerInfoRoot, CurrentHpName);
-            currentHpIcon ??= FindChild(playerInfoRoot, CurrentHpIconName)?.GetComponent<SpriteRenderer>();
-            maxHpText ??= FindTmp(playerInfoRoot, MaxHpName);
-            maxHpIcon ??= FindChild(playerInfoRoot, MaxHpIconName)?.GetComponent<SpriteRenderer>();
-            armorText ??= FindTmp(playerInfoRoot, ArmorValueName);
+            // Unity fake-null：Destroyed/Missing 对 ??= 仍算「有值」，DisableDomainReload 下会卡死旧引用。
+            // 一律用 Unity 的 == null 再解析。
+            if (bloodBarRoot == null)
+            {
+                bloodBarRoot = FindChild(playerInfoRoot, BloodBarName);
+            }
+
+            if (bloodSlot == null)
+            {
+                bloodSlot = FindChild(playerInfoRoot, BloodSlotName)?.GetComponent<SpriteRenderer>();
+            }
+
+            if (bloodFill == null)
+            {
+                bloodFill = FindChild(playerInfoRoot, BloodFillName)?.GetComponent<SpriteRenderer>();
+            }
+
+            if (currentHpText == null)
+            {
+                currentHpText = FindTmp(playerInfoRoot, CurrentHpName);
+            }
+
+            if (currentHpIcon == null)
+            {
+                currentHpIcon = FindChild(playerInfoRoot, CurrentHpIconName)?.GetComponent<SpriteRenderer>();
+            }
+
+            if (maxHpText == null)
+            {
+                maxHpText = FindTmp(playerInfoRoot, MaxHpName);
+            }
+
+            if (maxHpIcon == null)
+            {
+                maxHpIcon = FindChild(playerInfoRoot, MaxHpIconName)?.GetComponent<SpriteRenderer>();
+            }
+
+            if (armorText == null)
+            {
+                armorText = FindTmp(playerInfoRoot, ArmorValueName);
+            }
+
             if (armorText == null)
             {
                 var armorRoot = FindChild(playerInfoRoot, ArmorRootName);
                 armorText = FindTmp(armorRoot, "数值");
             }
 
-            goldText ??= FindTmp(playerInfoRoot, GoldValueName);
-            goldIcon ??= FindChild(playerInfoRoot, GoldIconName);
+            if (goldText == null)
+            {
+                goldText = FindTmp(playerInfoRoot, GoldValueName);
+            }
+
+            if (goldIcon == null)
+            {
+                goldIcon = FindChild(playerInfoRoot, GoldIconName);
+            }
 
             GoldHudDomainHost.Install(playerInfoRoot, goldIcon);
 

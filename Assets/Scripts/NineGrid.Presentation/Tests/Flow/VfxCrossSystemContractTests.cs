@@ -96,11 +96,31 @@ namespace NineGrid.Presentation.Tests
         public void GoldFlightCoinSprite_ExistsUnderFormalResourcesPath()
         {
             var projectRoot = new DirectoryInfo(Application.dataPath).Parent.FullName;
-            var png = Path.Combine(projectRoot, "Assets", "Resources", "VFX", "GoldFlightCoin.png");
-            Assert.IsTrue(File.Exists(png), "缺少正式飞币素材 Assets/Resources/VFX/GoldFlightCoin.png");
+            var png = Path.Combine(
+                projectRoot,
+                "Assets",
+                "Resources",
+                "ContentArt",
+                "Multiple",
+                "icons_full_32.png");
+            Assert.IsTrue(
+                File.Exists(png),
+                "缺少正式飞币素材 Assets/Resources/ContentArt/Multiple/icons_full_32.png");
 
-            var sprite = Resources.Load<Sprite>("VFX/GoldFlightCoin");
-            Assert.IsNotNull(sprite, "Resources.Load<Sprite>(\"VFX/GoldFlightCoin\") 失败");
+            var sheet = Resources.LoadAll<Sprite>("ContentArt/Multiple/icons_full_32");
+            Assert.IsNotNull(sheet, "Resources.LoadAll<Sprite>(\"ContentArt/Multiple/icons_full_32\") 失败");
+            Assert.Greater(sheet.Length, 0, "icons_full_32 未切出子 Sprite");
+            Sprite coin = null;
+            for (var i = 0; i < sheet.Length; i++)
+            {
+                if (sheet[i] != null && sheet[i].name == "icons_full_32_9")
+                {
+                    coin = sheet[i];
+                    break;
+                }
+            }
+
+            Assert.IsNotNull(coin, "缺少飞币子图 icons_full_32_9");
         }
 
         [Test]

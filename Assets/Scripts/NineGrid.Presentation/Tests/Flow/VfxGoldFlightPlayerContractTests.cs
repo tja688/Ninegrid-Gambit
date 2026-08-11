@@ -31,11 +31,32 @@ namespace NineGrid.Presentation.Tests
             {
                 var visualCount = GoldFlightTiming.ResolveVisualCount(count);
                 var plan = GoldFlightTiming.Plan(visualCount);
+                var timing = GoldFlightTiming.Compute(visualCount);
                 Assert.IsTrue(plan.IsValid, "plan invalid for count " + count);
-                Assert.GreaterOrEqual(plan.FirstArrivalDelay, GoldFlightTiming.MinFlyDuration);
+                Assert.GreaterOrEqual(
+                    plan.FirstArrivalDelay,
+                    GoldFlightTiming.MinBurstDuration
+                        + GoldFlightTiming.MinCoastDuration
+                        + GoldFlightTiming.MinFlyDuration);
+                Assert.AreEqual(timing.FirstArrival, plan.FirstArrivalDelay, 1e-4f);
                 Assert.GreaterOrEqual(plan.LastArrivalDelay, plan.FirstArrivalDelay);
                 Assert.LessOrEqual(plan.LastArrivalDelay, GoldFlightTiming.MaxPresentationDuration);
             }
+        }
+
+        [Test]
+        public void Timing_LargeBatch_CompressesUnderHardCap()
+        {
+            var timing = GoldFlightTiming.Compute(GoldFlightTiming.MaxVisualCoins);
+            var last = timing.FirstArrival
+                + timing.Stagger * Mathf.Max(0, GoldFlightTiming.MaxVisualCoins - 1);
+            Assert.LessOrEqual(last, GoldFlightTiming.MaxPresentationDuration + 1e-4f);
+            Assert.Less(
+                last,
+                GoldFlightTiming.DefaultBurstDuration
+                    + GoldFlightTiming.DefaultCoastDuration
+                    + GoldFlightTiming.DefaultFlyDuration
+                    + GoldFlightTiming.DefaultSpawnStagger * (GoldFlightTiming.MaxVisualCoins - 1));
         }
 
         [Test]

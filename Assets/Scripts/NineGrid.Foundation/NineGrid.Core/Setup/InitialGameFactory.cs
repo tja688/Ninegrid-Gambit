@@ -1,3 +1,4 @@
+using System;
 using System.Text;
 using NineGrid.Core.Content;
 using NineGrid.Core.Effects;
@@ -11,6 +12,7 @@ namespace NineGrid.Core
     {
         public InitialGameOptions()
         {
+            // 默认 Seed=1 仅供测试夹具 / 显式复现；正式与编辑器新开局请用 CreateForNewRun。
             Seed = 1UL;
             ProfessionId = ProfessionCatalog.Jester;
             AvatarDefId = "avatar.default";
@@ -27,6 +29,26 @@ namespace NineGrid.Core
         public int AvatarAttack { get; set; }
         public int AvatarArmor { get; set; }
         public int AvatarRecovery { get; set; }
+
+        /// <summary>
+        /// 新一局入口：生成非 0 随机种子，使层难度池卡组 / 房间 / 抽卡随局变化
+        /// （含编辑器 Play）。需要复现时仍可 new 后手写 <see cref="Seed"/>。
+        /// </summary>
+        public static InitialGameOptions CreateForNewRun()
+        {
+            return new InitialGameOptions
+            {
+                Seed = GenerateRunSeed(),
+            };
+        }
+
+        public static ulong GenerateRunSeed()
+        {
+            // Guid 足够打散；避开 0（部分诊断把 0 当「未设置」）。
+            var bytes = Guid.NewGuid().ToByteArray();
+            var seed = BitConverter.ToUInt64(bytes, 0);
+            return seed == 0UL ? 1UL : seed;
+        }
     }
 
     public sealed class InitialGameSnapshot

@@ -34,6 +34,7 @@ namespace NineGrid.Presentation.Cheat
         private const string LogSecondLayerName = "第二层_log记录面板";
         private const string CloseButtonName = "关闭按钮";
         private const string ClearNodeButtonName = "一键清关选项";
+        private const string CrossFloorButtonName = "一键跨层选项";
         private const string AddCardButtonName = "战斗加卡选项";
         private const string AddRelicButtonName = "添加遗物选项";
         private const string CoinsButtonName = "无限金币选项";
@@ -214,6 +215,15 @@ namespace NineGrid.Presentation.Cheat
             if (!BattleSessionCheat.TryForceNodeVictory())
             {
                 Debug.LogWarning("[CheatTool] 一键清关失败（仅战斗/结算阶段可用）。");
+            }
+        }
+
+        private void ForceCrossFloor()
+        {
+            ClosePanel();
+            if (!BattleSessionCheat.TryBeginCrossFloor())
+            {
+                Debug.LogWarning("[CheatTool] 一键跨层失败（需对局中且非第三层）。");
             }
         }
 
@@ -628,6 +638,7 @@ namespace NineGrid.Presentation.Cheat
 
             BindHitButton(CloseButtonName, ClosePanel);
             BindHitButton(ClearNodeButtonName, ForceClearNode);
+            BindHitButton(CrossFloorButtonName, ForceCrossFloor);
             BindHitButton(AddCardButtonName, OpenAddCardMenu);
             BindHitButton(AddRelicButtonName, OpenAddRelicMenu);
             BindHitButton(CoinsButtonName, AddCoins);
@@ -746,6 +757,7 @@ namespace NineGrid.Presentation.Cheat
                 first.SetParent(transform, false);
                 CreateHitButtonStub(CloseButtonName, first);
                 CreateHitButtonStub(ClearNodeButtonName, first);
+                CreateHitButtonStub(CrossFloorButtonName, first);
                 CreateHitButtonStub(AddCardButtonName, first);
                 CreateHitButtonStub(AddRelicButtonName, first);
                 CreateHitButtonStub(CoinsButtonName, first);

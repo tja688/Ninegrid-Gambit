@@ -7,10 +7,17 @@ namespace NineGrid.Presentation.Systems.Vfx
     {
         private static Transform sRoot;
 
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void ResetStatics()
+        {
+            sRoot = null;
+        }
+
         public static Transform Root
         {
             get
             {
+                // Unity == null：Destroyed DDOL 根在 DisableDomainReload 下仍可能占着静态引用。
                 if (sRoot != null)
                 {
                     return sRoot;

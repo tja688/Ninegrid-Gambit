@@ -55,12 +55,19 @@ namespace NineGrid.Flow
             mIcon = icon;
         }
 
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void ResetStatics()
+        {
+            sInstance = null;
+        }
+
         public static IGoldHudDomainHost Instance =>
             sInstance != null && sInstance.IsAvailable ? sInstance : null;
 
         /// <summary>HUD Presenter 显式安装 root/icon（幂等）；不按名搜索场景。</summary>
         public static bool Install(Transform root, Transform icon)
         {
+            // Unity == null：吞掉 Destroyed/Missing，避免 DisableDomainReload 下装上失效宿主。
             if (root == null || icon == null)
             {
                 sInstance = null;

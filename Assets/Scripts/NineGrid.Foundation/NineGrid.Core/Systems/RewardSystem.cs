@@ -1007,6 +1007,8 @@ namespace NineGrid.Core.Systems
                 matches.Add(deck);
             }
 
+            // Dictionary 枚举序依赖装载插入；按 Id 排序后同种子跨平台抽组一致。
+            matches.Sort((a, b) => string.CompareOrdinal(a.Id, b.Id));
             return matches;
         }
 

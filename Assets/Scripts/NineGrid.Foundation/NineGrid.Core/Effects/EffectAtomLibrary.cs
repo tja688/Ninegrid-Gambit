@@ -3178,7 +3178,10 @@ namespace NineGrid.Core.Effects
         {
             var avatarUid = context == null ? 0 : context.AvatarUid;
             var delta = mUseValue ? mValue.Evaluate(context, avatarUid) : mDelta;
-            return new[] { new ModifyGoldAction(delta, mReason, context.SourceDefId) };
+            // OwnerUid 写入 GoldModified.CardUid：钱袋子等用牌加金从卡面位置爆开，而非默认屏幕中心。
+            var sourceDefId = context == null ? null : context.SourceDefId;
+            var sourceCardUid = context == null ? 0 : context.OwnerUid;
+            return new[] { new ModifyGoldAction(delta, mReason, sourceDefId, sourceCardUid) };
         }
     }
 

@@ -292,6 +292,16 @@ namespace NineGrid.Flow
             if (preserveRunInventory)
             {
                 inventory = CaptureRunInventory(NineGridArchitecture.Current);
+                // 跨关硬清会 Reset RNG；必须沿用本局种子，避免被默认 Seed=1 锁死遭遇池。
+                if (options == null && inventory != null)
+                {
+                    options = new InitialGameOptions { Seed = inventory.Seed };
+                }
+            }
+            else if (options == null)
+            {
+                // 新开局（正式 / 编辑器 Play / QuickTest）：每局新种子，层难度池才真正随机。
+                options = InitialGameOptions.CreateForNewRun();
             }
 
             TeardownPresentationRuntime(IntentClearReason.LayerChange);
@@ -299,9 +309,7 @@ namespace NineGrid.Flow
             CoreCardPresentationMapper.EnsureContentCatalogLoaded();
 
             var arch = NineGridArchitecture.Current;
-            var snapshot = options != null
-                ? InitialGameFactory.Create(arch, options)
-                : InitialGameFactory.Create(arch);
+            var snapshot = InitialGameFactory.Create(arch, options);
 
             if (inventory != null)
             {
@@ -326,7 +334,7 @@ namespace NineGrid.Flow
             }
 
             Debug.Log(
-                $"[BattleSession] BootstrapRun 完成 avatar=#{snapshot.AvatarUid} @{snapshot.AvatarSlot}"
+                $"[BattleSession] BootstrapRun 完成 seed={snapshot.Seed} avatar=#{snapshot.AvatarUid} @{snapshot.AvatarSlot}"
                 + (preserveRunInventory ? " preserveRunInventory=true" : string.Empty));
             return snapshot;
         }

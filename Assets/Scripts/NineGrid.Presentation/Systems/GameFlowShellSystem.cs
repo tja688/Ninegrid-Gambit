@@ -241,6 +241,14 @@ namespace NineGrid.Presentation.Systems
             mNodeIndex++;
         }
 
+        /// <summary>
+        /// 作弊跨层：把壳层全局节点序号对齐到指定楼层/层内节点（与 <see cref="RewardSystem.BuildNodeDeckOptions"/> 全局序一致）。
+        /// </summary>
+        internal void SyncShellNodeIndexForCheat(int floor, int nodeIndex)
+        {
+            mNodeIndex = (floor - 1) * RunModel.NodesPerFloor + nodeIndex + 1;
+        }
+
         internal void PrepareQuickTest(QuickTestRunOptions options)
         {
             var qt = options ?? new QuickTestRunOptions();
