@@ -554,6 +554,12 @@ namespace NineGrid.Core
             card.Zone.Value = DestinationZone;
             card.Slot.Value = SlotId.None;
 
+            // 机关效果（滚石等 trap.*）移除场上卡：该格后续补牌不触发「补牌触发型」效果（捕熊陷阱）。
+            if (fromSlot.IsBoardSlot && IsTrapEffectSource(SourceDefId))
+            {
+                board.MarkTrapVacated(fromSlot);
+            }
+
             var result = new GameActionResult()
                 .AddEvent(new CoreGameEvent(CoreEventType.CardRemoved, context.ActionId, ActionName)
                     .WithCard(CardUid)
@@ -575,6 +581,12 @@ namespace NineGrid.Core
             return Reason == "clearResidualBoard" || Reason == "clearResidualTrap"
                 ? sClearResidualPostTriggers
                 : sPostTriggers;
+        }
+
+        private static bool IsTrapEffectSource(string sourceDefId)
+        {
+            return sourceDefId != null
+                && sourceDefId.StartsWith("trap.", StringComparison.OrdinalIgnoreCase);
         }
     }
 

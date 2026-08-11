@@ -438,6 +438,9 @@ namespace NineGrid.Core
             TriggerPoint.OnEnter
         };
 
+        /// <summary>机关效果（滚石等）移除卡造成的空位补牌事件 cause；捕熊陷阱等以该 cause 排除响应。</summary>
+        public const string TrapVacatedRefillCause = "refillAfterTrapRemoval";
+
         public override string ActionName { get { return "FillEmptySlots"; } }
 
         public static IReadOnlyList<SlotId> FillOrder { get { return sFillOrder; } }
@@ -463,32 +466,55 @@ namespace NineGrid.Core
                         .WithSlots(SlotId.None, board.AvatarSlot.Value));
             }
 
-            for (var i = 0; i < fillOrder.Count; i++)
+            // 两遍填充：先正常空位，后机关效果空位（trap-vacated）。
+            // 机关效果（滚石等）移除卡造成的空位补牌不算「补牌触发」事件：捕熊陷阱等通过
+            // EventFilterExcludeCause(cause=refillAfterTrapRemoval) 不响应；且两遍分派保证
+            // 机关空位的 CardDealt 事件与正常补牌同批时也保持语义正确（事件携带 cause）。
+            for (var pass = 0; pass < 2; pass++)
             {
-                var slot = fillOrder[i];
-                if (slot == board.AvatarSlot.Value || !board.IsEmpty(slot))
+                var trapVacatedPass = pass == 1;
+                var pileEmpty = false;
+                for (var i = 0; i < fillOrder.Count; i++)
                 {
-                    continue;
+                    var slot = fillOrder[i];
+                    if (slot == board.AvatarSlot.Value || !board.IsEmpty(slot))
+                    {
+                        continue;
+                    }
+
+                    if (trapVacatedPass != board.IsTrapVacated(slot))
+                    {
+                        continue;
+                    }
+
+                    int uid;
+                    if (!deck.TryPeekDrawPile(out uid))
+                    {
+                        pileEmpty = true;
+                        break;
+                    }
+
+                    var card = registry.Get(uid);
+                    deck.RemoveUid(uid);
+                    board.PlaceCard(card, slot);
+                    filled++;
+
+                    var dealt = new CoreGameEvent(CoreEventType.CardDealt, context.ActionId, ActionName)
+                        .WithCard(uid)
+                        .WithSlots(SlotId.None, slot)
+                        .WithAmount(filled);
+                    if (trapVacatedPass)
+                    {
+                        dealt = dealt.WithSource(string.Empty, TrapVacatedRefillCause);
+                    }
+
+                    result.AddWithFaceAbsolutes(context, card, dealt);
                 }
 
-                int uid;
-                if (!deck.TryPeekDrawPile(out uid))
+                if (pileEmpty)
                 {
                     break;
                 }
-
-                var card = registry.Get(uid);
-                deck.RemoveUid(uid);
-                board.PlaceCard(card, slot);
-                filled++;
-
-                result.AddWithFaceAbsolutes(
-                    context,
-                    card,
-                    new CoreGameEvent(CoreEventType.CardDealt, context.ActionId, ActionName)
-                        .WithCard(uid)
-                        .WithSlots(SlotId.None, slot)
-                        .WithAmount(filled));
             }
 
             result.AddEvent(new CoreGameEvent(CoreEventType.SlotsFilled, context.ActionId, ActionName)

@@ -8,6 +8,7 @@ namespace NineGrid.Core
     {
         private readonly int[] mCardUidsBySlot = new int[SlotId.MaxBoardIndex + 1];
         private readonly bool[] mBlessedSlots = new bool[SlotId.MaxBoardIndex + 1];
+        private readonly bool[] mTrapVacatedSlots = new bool[SlotId.MaxBoardIndex + 1];
 
         public BindableProperty<int> Version { get; private set; }
         public BindableProperty<int> AvatarUid { get; private set; }
@@ -75,6 +76,7 @@ namespace NineGrid.Core
 
             ClearPreviousBoardSlot(card.Uid);
             mCardUidsBySlot[slot.Index] = card.Uid;
+            mTrapVacatedSlots[slot.Index] = false;
             card.Zone.Value = ZoneId.Board;
             card.Slot.Value = slot;
             Touch();
@@ -153,12 +155,30 @@ namespace NineGrid.Core
             return count;
         }
 
+        /// <summary>
+        /// 机关效果（如滚石）移除场上卡造成的空位标记：该格的补牌不触发「补牌触发型」效果（捕熊陷阱）。
+        /// 标记在格位被任何卡牌占用（含补牌/旋转/打出）时消费。
+        /// </summary>
+        public void MarkTrapVacated(SlotId slot)
+        {
+            EnsureBoardSlot(slot);
+            mTrapVacatedSlots[slot.Index] = true;
+            Touch();
+        }
+
+        public bool IsTrapVacated(SlotId slot)
+        {
+            EnsureBoardSlot(slot);
+            return mTrapVacatedSlots[slot.Index];
+        }
+
         public void ClearBoardCards()
         {
             for (var i = SlotId.MinBoardIndex; i <= SlotId.MaxBoardIndex; i++)
             {
                 mCardUidsBySlot[i] = 0;
                 mBlessedSlots[i] = false;
+                mTrapVacatedSlots[i] = false;
             }
 
             Touch();
