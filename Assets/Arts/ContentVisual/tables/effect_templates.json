@@ -1242,10 +1242,10 @@
  {
   "id": "tpl.skill.ambush_melee.interact",
   "state": "Implemented",
-  "design_text": "[场上]玩家卡每互动5次，若本卡正面且与玩家卡正交相邻，对玩家造成等同本卡攻击的伤害并翻面",
+  "design_text": "[场上]卡级开火窗口时，若本卡正面且与玩家卡正交相邻，对玩家造成等同本卡攻击的伤害并翻面",
   "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
   "conditions_json": "[\"IsFaceUp:target=Self\", \"Adjacent:left=Self:right=Player\"]",
-  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnInteract\",\"every\":5},\"conditions\":[{\"atom\":\"IsFaceUp\",\"target\":\"Self\"},{\"atom\":\"Adjacent\",\"left\":\"Self\",\"right\":\"Player\"}],\"target\":{\"atom\":\"Self\"},\"action\":{\"atom\":\"Sequence\",\"actions\":[{\"atom\":\"DealDamage\",\"value\":{\"source\":\"Self\",\"stat\":\"Attack\"},\"actor\":\"Self\",\"target\":{\"atom\":\"Player\"}},{\"atom\":\"Flip\",\"target\":{\"atom\":\"Self\"}}]}}"
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnCardRhythmFire\"},\"conditions\":[{\"atom\":\"IsFaceUp\",\"target\":\"Self\"},{\"atom\":\"Adjacent\",\"left\":\"Self\",\"right\":\"Player\"}],\"target\":{\"atom\":\"Self\"},\"action\":{\"atom\":\"Sequence\",\"actions\":[{\"atom\":\"DealDamage\",\"value\":{\"source\":\"Self\",\"stat\":\"Attack\"},\"actor\":\"Self\",\"target\":{\"atom\":\"Player\"}},{\"atom\":\"Flip\",\"target\":{\"atom\":\"Self\"}}]}}"
  },
  {
   "id": "tpl.trap.revive_stone.interact",
