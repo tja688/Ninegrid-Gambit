@@ -480,6 +480,31 @@ namespace NineGrid.Content.Editor
             var path = context.Request.Url.AbsolutePath;
             var method = context.Request.HttpMethod ?? "GET";
 
+            if (path.Equals("/api/asset", StringComparison.OrdinalIgnoreCase) && method == "GET")
+            {
+                if (!(host is IEditorWorkbenchAssetHost assetHost))
+                {
+                    WriteText(context, 404, "text/plain", "asset host unavailable");
+                    return;
+                }
+
+                var query = context.Request.QueryString;
+                var result = RunOnMainThread(() =>
+                {
+                    var ok = assetHost.TryGetAsset(query, out var bytes, out var contentType, out var assetError);
+                    return (ok, bytes, contentType, assetError);
+                });
+
+                if (!result.ok || result.bytes == null)
+                {
+                    WriteText(context, 404, "text/plain", result.assetError ?? "asset not found");
+                    return;
+                }
+
+                WriteBinary(context, result.contentType ?? "application/octet-stream", result.bytes);
+                return;
+            }
+
             if (path.Equals("/api/snapshot", StringComparison.OrdinalIgnoreCase) && method == "GET")
             {
                 var envelope = RunOnMainThread(() => BuildSnapshotEnvelope());
@@ -888,7 +913,19 @@ namespace NineGrid.Content.Editor
             context.Response.StatusCode = 200;
             context.Response.ContentType = contentType;
             context.Response.Headers["Content-Security-Policy"] =
-                "default-src 'self'; connect-src 'self'; script-src 'self'; style-src 'self'; object-src 'none'; base-uri 'none'";
+                "default-src 'self'; connect-src 'self'; script-src 'self'; style-src 'self'; "
+                + "img-src 'self' blob: data:; object-src 'none'; base-uri 'none'";
+            context.Response.Headers["X-Content-Type-Options"] = "nosniff";
+            context.Response.Headers["Cache-Control"] = "no-store";
+            context.Response.ContentLength64 = bytes.Length;
+            context.Response.OutputStream.Write(bytes, 0, bytes.Length);
+            context.Response.OutputStream.Close();
+        }
+
+        private static void WriteBinary(HttpListenerContext context, string contentType, byte[] bytes)
+        {
+            context.Response.StatusCode = 200;
+            context.Response.ContentType = contentType;
             context.Response.Headers["X-Content-Type-Options"] = "nosniff";
             context.Response.Headers["Cache-Control"] = "no-store";
             context.Response.ContentLength64 = bytes.Length;

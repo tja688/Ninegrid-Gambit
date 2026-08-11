@@ -107,6 +107,37 @@ namespace NineGrid.Presentation.Editor
             }
         }
 
+        /// <summary>离屏渲染当前预览为 PNG（loopback 工作台等非 IMGUI 消费方用）。</summary>
+        public bool TryRenderStaticPng(int width, int height, out byte[] png)
+        {
+            png = null;
+            if (_disposed || _build?.Root == null || _previewUtility == null)
+            {
+                return false;
+            }
+
+            width = Mathf.Clamp(width, 8, 2048);
+            height = Mathf.Clamp(height, 8, 2048);
+            _previewUtility.BeginStaticPreview(new Rect(0f, 0f, width, height));
+            _previewUtility.camera.Render();
+            var texture = _previewUtility.EndStaticPreview();
+            if (texture == null)
+            {
+                return false;
+            }
+
+            try
+            {
+                png = texture.EncodeToPNG();
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(texture);
+            }
+
+            return png != null && png.Length > 0;
+        }
+
         /// <summary>
         /// 将预览相机世界坐标映射到 <see cref="Draw"/> 所用的 GUI 矩形（假定 StretchToFill / RT 与 rect 同宽高比）。
         /// </summary>
