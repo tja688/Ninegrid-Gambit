@@ -195,43 +195,43 @@ namespace NineGrid.Flow.Presentation
         }
 
         /// <summary>
-        /// 开局卡组入场：首脉冲立即播；长入场补排跟随脉冲；<see cref="DeckEntryAudioSession.Complete"/> 取消未播排期并淡出尾巴。
+        /// 开局卡组入场：滑入每触发一次 <see cref="PulseSlideBeat"/>；收束由表演代码在末张启动滑入后调用 <see cref="Complete"/>。
         /// </summary>
-        public static DeckEntryAudioSession BeginDeckEntryAudio(
-            string diagnosticSource,
-            float entryDurationSeconds)
+        public static DeckEntryAudioSession BeginDeckEntryAudio(string diagnosticSource)
         {
-            return new DeckEntryAudioSession(diagnosticSource, entryDurationSeconds);
+            return new DeckEntryAudioSession(diagnosticSource);
         }
     }
 
-    /// <summary>开局卡组入场音效会话：动画收束时淡出仍在播的洗牌声，避免拖尾。</summary>
+    /// <summary>开局卡组入场音效会话：极短切片跟随滑入节拍；末张启动滑入后收束。</summary>
     public sealed class DeckEntryAudioSession
     {
-        public const float DefaultTailFadeOutSeconds = 0.12f;
+        public const float DefaultTailFadeOutSeconds = 0.08f;
 
         private readonly string mDiagnosticSource;
         private readonly List<AudioScheduleKey> mPendingSchedules = new List<AudioScheduleKey>();
         private bool mCompleted;
 
-        internal DeckEntryAudioSession(string diagnosticSource, float entryDurationSeconds)
+        internal DeckEntryAudioSession(string diagnosticSource)
         {
             mDiagnosticSource = diagnosticSource ?? string.Empty;
-            CardLifecycleAudioCues.Pulse(
-                CardLifecycleAudioCues.DeckEntry,
-                mDiagnosticSource);
+        }
 
-            if (entryDurationSeconds < 0.75f)
+        public void PulseSlideBeat()
+        {
+            if (mCompleted)
             {
                 return;
             }
 
-            const float followUpSpacingSeconds = 0.48f;
-            const int maxFollowUps = 3;
-            var followUpCount = Math.Min(
-                maxFollowUps,
-                (int)Math.Floor((entryDurationSeconds - 0.2f) / followUpSpacingSeconds));
-            if (followUpCount <= 0)
+            CardLifecycleAudioCues.Pulse(
+                CardLifecycleAudioCues.DeckEntry,
+                mDiagnosticSource + ".slide");
+        }
+
+        public void ScheduleRippleBeats(int cardCount, float rippleDelayPerSlot)
+        {
+            if (mCompleted || cardCount <= 0 || rippleDelayPerSlot < 0f)
             {
                 return;
             }
@@ -239,19 +239,13 @@ namespace NineGrid.Flow.Presentation
             try
             {
                 var audio = AudioSystem.EnsureRegistered();
-                for (var i = 1; i <= followUpCount; i++)
+                for (var i = 0; i < cardCount; i++)
                 {
-                    var delay = i * followUpSpacingSeconds;
-                    if (delay >= entryDurationSeconds - 0.05f)
-                    {
-                        break;
-                    }
-
                     var key = audio.ScheduleCue(
                         AudioCueRequest.Simple(
                             CardLifecycleAudioCues.DeckEntry,
-                            mDiagnosticSource + ".followUp"),
-                        delay);
+                            mDiagnosticSource + ".ripple"),
+                        i * rippleDelayPerSlot);
                     if (key.IsValid)
                     {
                         mPendingSchedules.Add(key);

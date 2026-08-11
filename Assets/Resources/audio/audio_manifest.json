@@ -690,6 +690,15 @@
             "loadPolicy": "first_use_cached"
         },
         {
+            "guid": "3fd0064a96bce104e915b43d06b5b18c",
+            "assetPath": "Assets/Resources/audio/SFX/洗牌极短切分.wav",
+            "resourcesKey": "audio/SFX/洗牌极短切分",
+            "sha256": "30932c83c50b6bfff2374ff54968b135923577c01d875c774b93dd1969ff49fc",
+            "sizeBytes": 10098,
+            "kind": "SFX",
+            "loadPolicy": "first_use_cached"
+        },
+        {
             "guid": "60fc8825c482703489cbebe6ac0b77b1",
             "assetPath": "Assets/Resources/audio/SFX/添加卡牌.mp3",
             "resourcesKey": "audio/SFX/添加卡牌",

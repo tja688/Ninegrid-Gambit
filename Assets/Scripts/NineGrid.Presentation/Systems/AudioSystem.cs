@@ -1401,7 +1401,7 @@ namespace NineGrid.Presentation.Systems
             {
                 if (delaySeconds > 0f)
                 {
-                    yield return new WaitForSecondsRealtime(delaySeconds);
+                    yield return new WaitForSeconds(delaySeconds);
                 }
 
                 mPending.Remove(key);

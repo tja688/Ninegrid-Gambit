@@ -680,9 +680,9 @@
             "cueId": "card.lifecycle.deck_entry",
             "note": "开局卡组入场",
             "module": "Cards",
-            "clipKey": "audio/SFX/洗牌",
+            "clipKey": "audio/SFX/洗牌极短切分",
             "volumeDb": -3,
-            "minimumIntervalSeconds": 0.35,
+            "minimumIntervalSeconds": 0.04,
             "authoringStatus": "aiDraft"
         },
         {

@@ -1144,10 +1144,8 @@ namespace NineGrid.Cards
             _isBusy = true;
             CurrentMode = CardDeckMode.Entry;
 
-            var entryDuration = layoutSettings.EstimateEntryDuration(_pendingEntryCards.Count);
             var deckEntryAudio = CardLifecycleAudioCues.BeginDeckEntryAudio(
-                "CardDeckManagerSingleton.BeginEntryInternalAsync",
-                entryDuration);
+                "CardDeckManagerSingleton.BeginEntryInternalAsync");
 
             try
             {
@@ -1179,6 +1177,13 @@ namespace NineGrid.Cards
                         card.Transform,
                         target.Value,
                         layoutSettings.moveDuration);
+                    deckEntryAudio.PulseSlideBeat();
+
+                    if (i == _pendingEntryCards.Count - 1)
+                    {
+                        // 滑入段最后一张牌启动后即收束洗牌音；Ripple 仅视觉，不再排期音效。
+                        deckEntryAudio.Complete();
+                    }
 
                     if (i < _pendingEntryCards.Count - 1)
                     {
