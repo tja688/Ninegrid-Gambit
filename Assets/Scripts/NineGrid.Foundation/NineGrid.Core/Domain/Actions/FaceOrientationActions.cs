@@ -65,6 +65,70 @@ namespace NineGrid.Core
     }
 
     /// <summary>
+    /// 盖面：仅正面→背面；已背面则 no-op。怪物技能「起来」等单向伏面语义用此动作，不用 toggle 式 <see cref="FlipCardAction"/>。
+    /// </summary>
+    public sealed class ConcealFaceAction : GameAction
+    {
+        private static readonly TriggerPoint[] sPostTriggers =
+        {
+            TriggerPoint.AfterAction,
+            TriggerPoint.OnFlip
+        };
+
+        public ConcealFaceAction(int cardUid)
+            : this(cardUid, null, null)
+        {
+        }
+
+        public ConcealFaceAction(int cardUid, string sourceDefId, string cause)
+        {
+            CardUid = cardUid;
+            SourceDefId = sourceDefId ?? string.Empty;
+            Cause = cause ?? string.Empty;
+        }
+
+        public int CardUid { get; private set; }
+        public string SourceDefId { get; private set; }
+        public string Cause { get; private set; }
+        public override string ActionName { get { return "ConcealFace"; } }
+
+        public override GameActionResult Apply(GameActionContext context)
+        {
+            CardInstance card;
+            if (!context.GetModel<CardRegistry>().TryGet(CardUid, out card) || card == null)
+            {
+                return GameActionResult.Empty;
+            }
+
+            if (!card.FaceUp)
+            {
+                return GameActionResult.Empty;
+            }
+
+            card.FaceUp = false;
+            context.GetSystem<IEffectSystem>().SyncOwnerFaceSuppression(CardUid);
+
+            if (context.GetModel<PlayerModel>().DuelMarkMonsterUid == CardUid)
+            {
+                context.GetModel<PlayerModel>().ClearDuelMark();
+            }
+
+            return new GameActionResult()
+                .AddEvent(new CoreGameEvent(CoreEventType.CardFaceChanged, context.ActionId, ActionName)
+                    .WithCard(CardUid)
+                    .WithResultValue(0)
+                    .WithSource(SourceDefId, Cause));
+        }
+
+        public override IEnumerable<TriggerPoint> GetPostTriggerPoints(
+            GameActionContext context,
+            IReadOnlyList<CoreGameEvent> events)
+        {
+            return sPostTriggers;
+        }
+    }
+
+    /// <summary>
     /// 主动翻开：仅背面→正面；已正面则 no-op。
     /// </summary>
     public sealed class RevealFaceAction : GameAction

@@ -3375,6 +3375,36 @@ namespace NineGrid.Core.Effects
     }
 
     /// <summary>
+    /// 单向盖面：正面→背面；已背面 no-op（与 <see cref="RevealFaceAction"/> 对称）。
+    /// </summary>
+    [EffectAtom("ConcealFace", EffectAtomKind.Action)]
+    public sealed class ConcealFaceEffectAction : IAction
+    {
+        public void Configure(EffectDslNode config)
+        {
+        }
+
+        public IReadOnlyList<GameAction> BuildActions(EffectRuntimeContext context, IReadOnlyList<int> targets)
+        {
+            var result = new List<GameAction>();
+            if (targets == null || targets.Count == 0)
+            {
+                return result;
+            }
+
+            for (var i = 0; i < targets.Count; i++)
+            {
+                if (targets[i] != 0)
+                {
+                    result.Add(new ConcealFaceAction(targets[i], context.SourceDefId, context.EffectId));
+                }
+            }
+
+            return result;
+        }
+    }
+
+    /// <summary>
     /// 倒计时加减速（ADR-0013 §6）：对每个目标怪的行动倒计时（attackPattern.countdown）
     /// 增加 delta（提速传 -1）。跳过背面目标——背面期间倒计时冻结（ADR-0016）。
     /// </summary>

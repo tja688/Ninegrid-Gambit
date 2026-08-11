@@ -4,7 +4,7 @@
   "kind": "Skill",
   "deckId": "",
   "displayName": "起来",
-  "description": "[场上]本卡对玩家造成一次伤害后，随机翻面一张其他怪物卡",
+  "description": "[场上]本卡对玩家造成一次伤害后，随机使一张其他正面怪物卡翻面为背面",
   "gold": 0,
   "stats": {
     "hp": 0,

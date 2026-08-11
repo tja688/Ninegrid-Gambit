@@ -954,10 +954,10 @@
  {
   "id": "tpl.skill.rise_up.damage",
   "state": "Implemented",
-  "design_text": "[场上]本卡对玩家造成一次伤害后，随机翻面一张其他怪物卡",
+  "design_text": "[场上]本卡对玩家造成一次伤害后，随机使一张其他正面怪物卡翻面为背面",
   "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
   "conditions_json": "[]",
-  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnSelfDamageDealtToPlayerCumulative\",\"threshold\":1},\"target\":{\"atom\":\"FilteredCards\",\"kind\":\"Monster\",\"zone\":\"Board\",\"exclude\":[\"Self\"],\"random\":true,\"count\":\"{{count}}\"},\"action\":{\"atom\":\"Flip\"}}"
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnSelfDamageDealtToPlayerCumulative\",\"threshold\":1},\"target\":{\"atom\":\"FilteredCards\",\"kind\":\"Monster\",\"zone\":\"Board\",\"exclude\":[\"Self\"],\"random\":true,\"count\":\"{{count}}\"},\"action\":{\"atom\":\"ConcealFace\"}}"
  },
  {
   "id": "tpl.skill.purge_followers.move",
