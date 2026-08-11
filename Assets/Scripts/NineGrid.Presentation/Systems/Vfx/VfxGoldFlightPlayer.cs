@@ -16,7 +16,8 @@ namespace NineGrid.Presentation.Systems.Vfx
         private const string CoinSpriteResourcesKey = "VFX/GoldFlightCoin";
         private const string FallbackSortingLayer = "Main";
         private const int FallbackSortingOrder = 20;
-        private const float CoinSettleScale = 0.65f;
+        private const float CoinBaseScale = 0.5f;
+        private const float CoinSettleScale = 0.65f * CoinBaseScale;
 
         private static long sNextInstanceId = 1;
 
@@ -187,11 +188,12 @@ namespace NineGrid.Presentation.Systems.Vfx
             var go = new GameObject("gold-coin");
             go.transform.SetParent(VfxIndependentSpatialRoot.Root, false);
             go.transform.position = worldPosition;
-            go.transform.localScale = Vector3.one;
+            go.transform.localScale = new Vector3(CoinBaseScale, CoinBaseScale, 1f);
             var renderer = go.AddComponent<SpriteRenderer>();
             renderer.sprite = mCoinSprite;
             renderer.sortingLayerName = sorting.layer;
-            renderer.sortingOrder = sorting.order;
+            // 飞币略高于金币图标层，避免被 HUD 图标盖住。
+            renderer.sortingOrder = sorting.order + 1;
             return go;
         }
 
@@ -211,7 +213,7 @@ namespace NineGrid.Presentation.Systems.Vfx
 
             var tr = coin.Visual.transform;
             tr.position = Vector3.LerpUnclamped(coin.From, coin.To, EaseInCubic(t));
-            var scale = Mathf.Lerp(1f, CoinSettleScale, EaseInQuad(t));
+            var scale = Mathf.Lerp(CoinBaseScale, CoinSettleScale, EaseInQuad(t));
             tr.localScale = new Vector3(scale, scale, 1f);
         }
 
@@ -222,7 +224,7 @@ namespace NineGrid.Presentation.Systems.Vfx
             if (coin.Visual != null)
             {
                 mVisuals.Remove(coin.Visual);
-                UnityEngine.Object.Destroy(coin.Visual);
+                DestroyVisual(coin.Visual);
                 coin.Visual = null;
             }
 
@@ -244,13 +246,30 @@ namespace NineGrid.Presentation.Systems.Vfx
                 var visual = mVisuals[i];
                 if (visual != null)
                 {
-                    UnityEngine.Object.Destroy(visual);
+                    DestroyVisual(visual);
                 }
             }
 
             mVisuals.Clear();
             mCoins.Clear();
             mRemaining = 0;
+        }
+
+        private static void DestroyVisual(GameObject visual)
+        {
+            if (visual == null)
+            {
+                return;
+            }
+
+            if (Application.isPlaying)
+            {
+                UnityEngine.Object.Destroy(visual);
+            }
+            else
+            {
+                UnityEngine.Object.DestroyImmediate(visual);
+            }
         }
 
         private static float EaseInCubic(float t)

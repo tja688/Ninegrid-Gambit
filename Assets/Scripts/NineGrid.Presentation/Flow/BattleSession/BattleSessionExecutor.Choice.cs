@@ -436,7 +436,6 @@ namespace NineGrid.Flow
                 Deck?.TryDetachByUid(card.Uid, out _);
             }
 
-            var goldFx = UnityEngine.Object.FindFirstObjectByType<GoldGainFxManagerSingleton>();
             var before = Math.Max(0, amountAfter - totalDelta);
             var credited = 0;
 
@@ -456,7 +455,6 @@ namespace NineGrid.Flow
                     slice,
                     before + credited,
                     UnusedHelpCardStaggerSeconds * i,
-                    goldFx,
                     cancellationToken));
             }
 
@@ -464,7 +462,10 @@ namespace NineGrid.Flow
 
             if (credited < totalDelta)
             {
-                goldFx?.PlayGain(totalDelta - credited, amountAfter, ResolveDeckGoldOriginWorld());
+                GoldGainPresentationBinder.PresentGainVisual(
+                    totalDelta - credited,
+                    amountAfter,
+                    ResolveDeckGoldOriginWorld());
             }
         }
 
@@ -474,7 +475,6 @@ namespace NineGrid.Flow
             int goldSlice,
             int goldTargetAfterSlice,
             float startDelaySeconds,
-            GoldGainFxManagerSingleton goldFx,
             CancellationToken cancellationToken)
         {
             if (startDelaySeconds > 0f)
@@ -486,7 +486,8 @@ namespace NineGrid.Flow
 
             if (goldSlice > 0)
             {
-                goldFx?.PlayGain(goldSlice, goldTargetAfterSlice, origin);
+                // 保留卸视图前 origin 快照，改发 gold-flight VFX（#199）。
+                GoldGainPresentationBinder.PresentGainVisual(goldSlice, goldTargetAfterSlice, origin);
             }
 
             await VanishAndReleaseHelpCardAsync(card, cancellationToken);

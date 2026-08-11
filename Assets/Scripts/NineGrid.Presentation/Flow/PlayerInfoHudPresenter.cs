@@ -69,7 +69,7 @@ namespace NineGrid.Flow
         [Tooltip("基础护甲（有效护甲，ADR-0028）TMP；与玩家卡面显示的真实护甲（当前护甲）区分。")]
         [SerializeField] private TMP_Text armorText;
 
-        [Tooltip("金币 TMP；增益演出可由 GoldGainFx 接管。")]
+        [Tooltip("金币 TMP；增益数字由本 HUD 独占（#199 时间窗），不由 VFX 直写。")]
         [SerializeField] private TMP_Text goldText;
 
         [Tooltip("金币图标（吞噬终点/缩放复位目标）；留空则按「玩家信息」根下子节点查找。")]
@@ -93,6 +93,19 @@ namespace NineGrid.Flow
 
         private readonly StatSlot _armor = new();
         private readonly StatSlot _gold = new();
+
+        private int _displayedGold;
+        private int _targetGold;
+        private bool _hasGoldDisplay;
+        private bool _goldWindowActive;
+        private Coroutine _goldWindowRoutine;
+        private int _goldWindowAmountBefore;
+        private float _goldWindowFirstDelay;
+        private float _goldWindowLastDelay;
+        private float _goldWindowElapsed;
+        private Tween _goldFlashTween;
+        private Color _goldBaseColor = Color.white;
+        private bool _hasGoldBaseColor;
 
         /// <summary>悬停碰撞盒是否为运行时在血槽上自建的（自建的才随槽宽改写尺寸）。</summary>
         private bool _autoHoverCollider;
@@ -153,6 +166,15 @@ namespace NineGrid.Flow
             return _instance;
         }
 
+        /// <summary>当前 HUD 已显示的金币（可能落后于内核目标）。</summary>
+        public int DisplayedGold => _displayedGold;
+
+        /// <summary>数字窗追赶中的目标金币。</summary>
+        public int TargetGold => _targetGold;
+
+        /// <summary>是否正在按首达→末达窗口推进金币数字。</summary>
+        public bool IsGoldWindowActive => _goldWindowActive;
+
         private void Awake()
         {
             if (_instance != null && _instance != this)
@@ -170,6 +192,8 @@ namespace NineGrid.Flow
         private void OnDestroy()
         {
             KillHpTweens();
+            StopGoldWindow(snapToTarget: false);
+            KillGoldFlash();
             if (_maxHpPulseRoutine != null)
             {
                 StopCoroutine(_maxHpPulseRoutine);
@@ -258,6 +282,74 @@ namespace NineGrid.Flow
             ApplyIntStat(_armor, armorText, Mathf.Max(0, armor), Mathf.Max(0, armor).ToString(), shouldAnimate);
         }
 
+        /// <summary>扣金 / 失败收敛 / 首刷：瞬时对齐金币数字与图标缩放。</summary>
+        public void SnapGold(int amountAfter)
+        {
+            EnsureBindings();
+            amountAfter = Mathf.Max(0, amountAfter);
+            StopGoldWindow(snapToTarget: false);
+            _displayedGold = amountAfter;
+            _targetGold = amountAfter;
+            _hasGoldDisplay = true;
+            _gold.Value = amountAfter;
+            _gold.HasValue = true;
+            ApplyGoldText(amountAfter, flash: false);
+            GoldHudDomainHost.Instance?.SnapIconToBase();
+        }
+
+        /// <summary>
+        /// 按 VFX 批次首达→末达窗口推进金币数字；末端精确收敛到 amountAfter。
+        /// 无效计划时立即 Snap。并行批次合并：抬目标并扩展末达，不中断进行中的单调整数曲线。
+        /// </summary>
+        public void PresentGoldGainWindow(
+            int delta,
+            int amountAfter,
+            NineGrid.Presentation.Systems.VfxPresentationPlan plan)
+        {
+            EnsureBindings();
+            amountAfter = Mathf.Max(0, amountAfter);
+            delta = Mathf.Max(0, delta);
+            if (!plan.IsValid || !GoldHudNumberWindow.IsValidWindow(plan.FirstArrivalDelay, plan.LastArrivalDelay))
+            {
+                SnapGold(amountAfter);
+                return;
+            }
+
+            if (!_hasGoldDisplay)
+            {
+                _displayedGold = Mathf.Max(0, amountAfter - delta);
+                _targetGold = _displayedGold;
+                _hasGoldDisplay = true;
+                ApplyGoldText(_displayedGold, flash: false);
+            }
+
+            _targetGold = Mathf.Max(_targetGold, amountAfter);
+            _gold.Value = _targetGold;
+            _gold.HasValue = true;
+
+            if (_goldWindowActive)
+            {
+                // 相对当前已过时间合并新批次：末达取更晚者；若尚未首达，首达取更早者。
+                _goldWindowLastDelay = Mathf.Max(
+                    _goldWindowLastDelay,
+                    _goldWindowElapsed + plan.LastArrivalDelay);
+                if (_goldWindowElapsed < _goldWindowFirstDelay)
+                {
+                    _goldWindowFirstDelay = Mathf.Min(
+                        _goldWindowFirstDelay,
+                        _goldWindowElapsed + plan.FirstArrivalDelay);
+                }
+
+                return;
+            }
+
+            _goldWindowAmountBefore = _displayedGold;
+            _goldWindowFirstDelay = plan.FirstArrivalDelay;
+            _goldWindowLastDelay = plan.LastArrivalDelay;
+            _goldWindowElapsed = 0f;
+            _goldWindowRoutine = StartCoroutine(GoldGainWindowRoutine());
+        }
+
         public void ClearSnapshot()
         {
             _hasSnapshot = false;
@@ -268,6 +360,10 @@ namespace NineGrid.Flow
             _armor.Reset();
             _gold.Reset();
             KillHpTweens();
+            StopGoldWindow(snapToTarget: false);
+            _hasGoldDisplay = false;
+            _displayedGold = 0;
+            _targetGold = 0;
         }
 
         private void EnsureBindings()
@@ -761,16 +857,111 @@ namespace NineGrid.Flow
 
         private void ApplyGold(int gold, bool animate)
         {
-            var goldFx = UnityEngine.Object.FindFirstObjectByType<GoldGainFxManagerSingleton>();
-            if (goldFx != null
-                && goldFx.TryHandleGoldSync(gold, animate))
+            gold = Mathf.Max(0, gold);
+            _gold.Value = gold;
+            _gold.HasValue = true;
+
+            // 数字窗推进中：只抬目标，避免 Sync 双写抢戏。
+            if (_goldWindowActive && gold >= _displayedGold)
             {
-                _gold.Value = gold;
-                _gold.HasValue = true;
+                _targetGold = Mathf.Max(_targetGold, gold);
                 return;
             }
 
-            ApplyIntStat(_gold, goldText, gold, gold.ToString(), animate);
+            // 扣金或静默 / 无飞币窗口的 Sync：即时对齐（飞币增益由 Binder 驱动窗口）。
+            if (!animate || gold <= _displayedGold || !_hasGoldDisplay)
+            {
+                SnapGold(gold);
+                return;
+            }
+
+            SnapGold(gold);
+        }
+
+        private IEnumerator GoldGainWindowRoutine()
+        {
+            _goldWindowActive = true;
+            var lastWritten = _goldWindowAmountBefore;
+
+            while (_goldWindowElapsed < _goldWindowLastDelay)
+            {
+                _goldWindowElapsed += Time.unscaledDeltaTime;
+                var sample = GoldHudNumberWindow.SampleDisplayed(
+                    _goldWindowAmountBefore,
+                    _targetGold,
+                    _goldWindowFirstDelay,
+                    _goldWindowLastDelay,
+                    _goldWindowElapsed);
+                if (sample != lastWritten)
+                {
+                    _displayedGold = sample;
+                    ApplyGoldText(sample, flash: sample > lastWritten);
+                    lastWritten = sample;
+                }
+
+                yield return null;
+            }
+
+            _displayedGold = _targetGold;
+            ApplyGoldText(_targetGold, flash: false);
+            _goldWindowActive = false;
+            _goldWindowRoutine = null;
+        }
+
+        private void StopGoldWindow(bool snapToTarget)
+        {
+            if (_goldWindowRoutine != null)
+            {
+                StopCoroutine(_goldWindowRoutine);
+                _goldWindowRoutine = null;
+            }
+
+            _goldWindowActive = false;
+            if (snapToTarget && _hasGoldDisplay)
+            {
+                _displayedGold = _targetGold;
+                ApplyGoldText(_targetGold, flash: false);
+            }
+        }
+
+        private void ApplyGoldText(int gold, bool flash)
+        {
+            if (goldText == null)
+            {
+                return;
+            }
+
+            goldText.text = gold.ToString();
+            if (!_hasGoldBaseColor)
+            {
+                _goldBaseColor = goldText.color;
+                _hasGoldBaseColor = true;
+            }
+
+            if (!flash)
+            {
+                KillGoldFlash();
+                goldText.color = _goldBaseColor;
+                return;
+            }
+
+            KillGoldFlash();
+            var flashColor = Color.Lerp(_goldBaseColor, Color.white, 0.55f);
+            goldText.color = flashColor;
+            _goldFlashTween = DOTween
+                .To(() => goldText.color, c => goldText.color = c, _goldBaseColor, 0.1f)
+                .SetUpdate(true)
+                .SetLink(goldText.gameObject, LinkBehaviour.KillOnDestroy);
+        }
+
+        private void KillGoldFlash()
+        {
+            if (_goldFlashTween != null && _goldFlashTween.IsActive())
+            {
+                _goldFlashTween.Kill();
+            }
+
+            _goldFlashTween = null;
         }
 
         private void ApplyIntStat(

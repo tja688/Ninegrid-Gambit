@@ -130,7 +130,7 @@ namespace NineGrid.Presentation.Tests
             {
                 var system = new VfxSystem(
                     VfxBindingCatalog.FromJson(GoldCatalogJson),
-                    new VfxSystem.DefaultVfxPlayerFactory(),
+                    new VfxGoldFlightPlayerFactory(),
                     new FakeClock(),
                     randomValue: () => 0.5d);
                 var spatial = new VfxSpatialContext(

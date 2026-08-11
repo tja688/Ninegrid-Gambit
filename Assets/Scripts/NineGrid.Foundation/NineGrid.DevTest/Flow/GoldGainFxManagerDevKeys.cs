@@ -8,25 +8,7 @@ namespace NineGrid.DevTest.Flow
     [DisallowMultipleComponent]
     public sealed class GoldGainFxManagerDevKeys : TestKeyModuleBehaviour
     {
-        [Tooltip("运行时查找场景中的 GoldGainFxManagerSingleton；也可手动拖入覆盖。")]
-        [SerializeField] private GoldGainFxManagerSingleton goldGainFxManager;
-
         protected override string ModuleId => "gold-gain-fx";
-
-        protected override void OnEnable()
-        {
-            if (goldGainFxManager == null)
-            {
-                goldGainFxManager = GetComponent<GoldGainFxManagerSingleton>();
-            }
-
-            if (goldGainFxManager == null)
-            {
-                goldGainFxManager = UnityEngine.Object.FindFirstObjectByType<GoldGainFxManagerSingleton>();
-            }
-
-            base.OnEnable();
-        }
 
         protected override void ConfigureBindings(TestKeyRegistrationBuilder builder)
         {
@@ -35,29 +17,27 @@ namespace NineGrid.DevTest.Flow
 
         private void SpawnTenAtScreenCenter()
         {
-            var manager = ResolveManager();
-            if (manager == null)
-            {
-                return;
-            }
-
-            manager.PlayVisualGainAtScreenCenter(10);
+            GoldGainPresentationBinder.EnsureInstalled();
+            var hud = PlayerInfoHudPresenter.TryGetInstance();
+            var before = hud != null ? hud.DisplayedGold : 0;
+            GoldGainPresentationBinder.PresentGainVisual(10, before + 10, ResolveScreenCenterWorld());
         }
 
-        private GoldGainFxManagerSingleton ResolveManager()
+        private static Vector3 ResolveScreenCenterWorld()
         {
-            if (goldGainFxManager != null)
+            var camera = Camera.main;
+            if (camera != null)
             {
-                return goldGainFxManager;
+                var depth = camera.orthographic
+                    ? Mathf.Abs(camera.transform.position.z)
+                    : camera.nearClipPlane;
+                var world = camera.ScreenToWorldPoint(
+                    new Vector3(Screen.width * 0.5f, Screen.height * 0.5f, depth));
+                world.z = 0f;
+                return world;
             }
 
-            goldGainFxManager = UnityEngine.Object.FindFirstObjectByType<GoldGainFxManagerSingleton>();
-            if (goldGainFxManager == null)
-            {
-                Debug.LogWarning("[GoldGainFxManagerDevKeys] 未找到 GoldGainFxManagerSingleton。");
-            }
-
-            return goldGainFxManager;
+            return Vector3.zero;
         }
     }
 }

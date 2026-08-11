@@ -2,6 +2,7 @@ using System;
 using NineGrid.Content.Audio;
 using NineGrid.Content.Vfx;
 using NineGrid.Flow.Diagnostics;
+using NineGrid.Presentation.Systems;
 
 namespace NineGrid.Flow.Presentation
 {
@@ -112,20 +113,26 @@ namespace NineGrid.Flow.Presentation
             SafePulse(sAudio, request);
         }
 
-        public static void PulseVfx(VfxCueRequest request)
+        public static VfxCueResult PulseVfx(VfxCueRequest request)
         {
-            PulseVfx(request, VfxSpatialContext.Empty);
+            return PulseVfx(request, VfxSpatialContext.Empty);
         }
 
-        public static void PulseVfx(VfxCueRequest request, VfxSpatialContext spatialContext)
+        public static VfxCueResult PulseVfx(VfxCueRequest request, VfxSpatialContext spatialContext)
         {
             if (!sVfxEnabled)
             {
                 DirectorTrace.TriggerPulse(request.CueId, "vfx", degraded: true);
-                return;
+                return new VfxCueResult
+                {
+                    Outcome = VfxCueOutcome.Suppressed,
+                    CueId = request.CueId,
+                    FailureReason = "vfx disabled",
+                    PresentationPlan = VfxPresentationPlan.None,
+                };
             }
 
-            SafePulseVfx(sVfx, request, spatialContext);
+            return SafePulseVfx(sVfx, request, spatialContext);
         }
 
         private static void SafePulse(ITriggerPulseSink sink, string triggerId, string channel)
@@ -163,19 +170,33 @@ namespace NineGrid.Flow.Presentation
             }
         }
 
-        private static void SafePulseVfx(
+        private static VfxCueResult SafePulseVfx(
             IVfxCuePulseSink sink,
             VfxCueRequest request,
             VfxSpatialContext spatialContext)
         {
             try
             {
-                sink.Pulse(request, spatialContext);
+                var result = sink.Pulse(request, spatialContext) ?? new VfxCueResult
+                {
+                    Outcome = VfxCueOutcome.BackendFailure,
+                    CueId = request.CueId,
+                    FailureReason = "vfx sink returned null",
+                    PresentationPlan = VfxPresentationPlan.None,
+                };
                 DirectorTrace.TriggerPulse(request.CueId, "vfx", degraded: false);
+                return result;
             }
-            catch (Exception)
+            catch (Exception ex)
             {
                 DirectorTrace.TriggerPulse(request.CueId, "vfx", degraded: true);
+                return new VfxCueResult
+                {
+                    Outcome = VfxCueOutcome.BackendFailure,
+                    CueId = request.CueId,
+                    FailureReason = ex.Message,
+                    PresentationPlan = VfxPresentationPlan.None,
+                };
             }
         }
     }

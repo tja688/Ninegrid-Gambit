@@ -1,18 +1,22 @@
 using System.Collections.Generic;
+using NineGrid.Content.Vfx;
 using NineGrid.Core;
 using NineGrid.Flow.Diagnostics;
 using NineGrid.Flow.Presentation;
+using NineGrid.Presentation.Systems;
 using QFramework;
 using UnityEngine;
 
 namespace NineGrid.Flow
 {
     /// <summary>
-    /// 消费 <see cref="GoldGainPresentationRequested"/>：驱动飞币/HUD，并写 FlowTrace。
-    /// UI/FX 单向消费，不回写 PlayerModel。
+    /// 消费 <see cref="GoldGainPresentationRequested"/>：发稳定 gold-flight VFX Cue、驱动 HUD 数字窗，并写 FlowTrace。
+    /// UI/FX 单向消费，不回写 PlayerModel；VFX 失败时 HUD 立即收敛，不占主线 ack。
     /// </summary>
     public sealed class GoldGainPresentationBinder : MonoBehaviour
     {
+        private const string GoldFlightSemanticRole = "gold-flight";
+
         private static GoldGainPresentationBinder sInstance;
         private IUnRegister mEventUnRegister;
         private bool mRetrySubscriptionPending;
@@ -43,6 +47,17 @@ namespace NineGrid.Flow
             }
 
             sInstance.EnsureSubscribed();
+        }
+
+        /// <summary>
+        /// 直连增益视觉（未用帮助卡 / DevTest 等）：发 gold-flight VFX + HUD 数字窗 + 增益音效，不写 FlowTrace。
+        /// </summary>
+        public static VfxCueResult PresentGainVisual(int delta, int amountAfter, Vector3? originWorld)
+        {
+            FlowRoomEconomyAudioCues.PulseGoldPresentation(
+                isSpend: false,
+                "GoldGainPresentationBinder.PresentGainVisual");
+            return RequestGoldFlightAndDriveHud(delta, amountAfter, originWorld);
         }
 
         private void Awake()
@@ -111,10 +126,12 @@ namespace NineGrid.Flow
             FlowRoomEconomyAudioCues.PulseGoldPresentation(
                 e.IsSpend,
                 "GoldGainPresentationBinder.OnGoldGainPresentationRequested");
-            var goldFx = UnityEngine.Object.FindFirstObjectByType<GoldGainFxManagerSingleton>();
+
             if (e.IsSpend)
             {
-                goldFx?.SnapToCore(e.AmountAfter);
+                var hud = PlayerInfoHudPresenter.TryGetInstance();
+                hud?.SnapGold(e.AmountAfter);
+                GoldHudDomainHost.Instance?.SnapIconToBase();
                 RecordGoldChangedFlow(
                     FlowTraceNames.GoldSpent,
                     e.Delta,
@@ -125,7 +142,7 @@ namespace NineGrid.Flow
                 return;
             }
 
-            goldFx?.PlayGain(e.Delta, e.AmountAfter, e.OriginWorld);
+            RequestGoldFlightAndDriveHud(e.Delta, e.AmountAfter, e.OriginWorld);
             RecordGoldChangedFlow(
                 FlowTraceNames.GoldGained,
                 e.Delta,
@@ -133,6 +150,51 @@ namespace NineGrid.Flow
                 e.Reason,
                 e.SourceDefId,
                 e.ActionName);
+        }
+
+        private static VfxCueResult RequestGoldFlightAndDriveHud(
+            int delta,
+            int amountAfter,
+            Vector3? originWorld)
+        {
+            amountAfter = Mathf.Max(0, amountAfter);
+            var hud = PlayerInfoHudPresenter.TryGetInstance();
+            var gainDelta = Mathf.Max(0, delta);
+            if (gainDelta <= 0)
+            {
+                hud?.SnapGold(amountAfter);
+                return new VfxCueResult
+                {
+                    Outcome = VfxCueOutcome.Played,
+                    CueId = GoldGainVfxCues.FlyIn,
+                    PresentationPlan = VfxPresentationPlan.None,
+                };
+            }
+
+            var spatial = new VfxSpatialContext(
+                GoldFlightSemanticRole,
+                GoldHudDomainHost.Instance,
+                originWorld,
+                diagnosticOwnerUid: 0,
+                amount: gainDelta);
+
+            var result = TriggerPulseHub.PulseVfx(
+                VfxCueRequest.Simple(
+                    GoldGainVfxCues.FlyIn,
+                    "GoldGainPresentationBinder.RequestGoldFlightAndDriveHud"),
+                spatial);
+
+            if (result != null && result.HasPresentationPlan)
+            {
+                hud?.PresentGoldGainWindow(gainDelta, amountAfter, result.PresentationPlan);
+            }
+            else
+            {
+                // 播放器创建失败：HUD 立即收敛；VFX issue 已由 Runtime 记录，不等待主线。
+                hud?.SnapGold(amountAfter);
+            }
+
+            return result;
         }
 
         public static void RecordGoldChangedFlow(

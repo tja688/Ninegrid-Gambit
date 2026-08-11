@@ -11,7 +11,11 @@ namespace NineGrid.Presentation.Systems.Vfx
         public VfxSpriteSheetVisualPool()
         {
             var host = new GameObject("VfxSpriteSheetPool");
-            Object.DontDestroyOnLoad(host);
+            if (Application.isPlaying)
+            {
+                Object.DontDestroyOnLoad(host);
+            }
+
             host.hideFlags = HideFlags.HideAndDontSave;
             mPoolRoot = host.transform;
         }

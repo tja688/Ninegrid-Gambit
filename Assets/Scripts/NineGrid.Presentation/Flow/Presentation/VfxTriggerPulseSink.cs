@@ -1,10 +1,11 @@
 using NineGrid.Content.Vfx;
+using NineGrid.Presentation.Systems;
 
 namespace NineGrid.Flow.Presentation
 {
     public interface IVfxCuePulseSink
     {
-        void Pulse(VfxCueRequest request, VfxSpatialContext spatialContext = default);
+        VfxCueResult Pulse(VfxCueRequest request, VfxSpatialContext spatialContext = default);
     }
 
     public sealed class NullVfxCuePulseSink : IVfxCuePulseSink
@@ -15,24 +16,31 @@ namespace NineGrid.Flow.Presentation
         {
         }
 
-        public void Pulse(VfxCueRequest request, VfxSpatialContext spatialContext = default)
+        public VfxCueResult Pulse(VfxCueRequest request, VfxSpatialContext spatialContext = default)
         {
+            return new VfxCueResult
+            {
+                Outcome = VfxCueOutcome.BackendFailure,
+                CueId = request.CueId,
+                FailureReason = "vfx sink unavailable",
+                PresentationPlan = VfxPresentationPlan.None,
+            };
         }
     }
 
     public sealed class VfxTriggerPulseSink : IVfxCuePulseSink
     {
-        private readonly NineGrid.Presentation.Systems.IVfxSystem mVfx;
+        private readonly IVfxSystem mVfx;
 
-        public VfxTriggerPulseSink(NineGrid.Presentation.Systems.IVfxSystem vfx = null)
+        public VfxTriggerPulseSink(IVfxSystem vfx = null)
         {
             mVfx = vfx;
         }
 
-        public void Pulse(VfxCueRequest request, VfxSpatialContext spatialContext = default)
+        public VfxCueResult Pulse(VfxCueRequest request, VfxSpatialContext spatialContext = default)
         {
-            var vfx = mVfx ?? NineGrid.Presentation.Systems.VfxSystem.EnsureRegistered();
-            vfx.RequestCue(request, spatialContext);
+            var vfx = mVfx ?? VfxSystem.EnsureRegistered();
+            return vfx.RequestCue(request, spatialContext);
         }
     }
 }

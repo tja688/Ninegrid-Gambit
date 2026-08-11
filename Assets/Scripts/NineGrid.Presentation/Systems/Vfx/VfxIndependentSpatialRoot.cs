@@ -17,7 +17,11 @@ namespace NineGrid.Presentation.Systems.Vfx
                 }
 
                 var host = new GameObject("VfxIndependentSpatialRoot");
-                Object.DontDestroyOnLoad(host);
+                if (Application.isPlaying)
+                {
+                    Object.DontDestroyOnLoad(host);
+                }
+
                 sRoot = host.transform;
                 return sRoot;
             }
