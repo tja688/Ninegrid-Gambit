@@ -107,7 +107,7 @@ namespace NineGrid.Presentation.Systems.Vfx
                 return true;
             }
 
-            if (mExiting && mRig.IsFinished)
+            if (mExiting && mRig.IsDrained)
             {
                 CancelInternal();
                 return true;

@@ -82,7 +82,17 @@ namespace NineGrid.Content.Editor
 
         public bool IsBroken(IReadOnlyCollection<string> knownMaterialIds)
         {
-            if (Dto == null || !VfxPlayerRegistry.IsMaterialPlayer(Dto.playerId))
+            if (Dto == null)
+            {
+                return false;
+            }
+
+            if (VfxPlayerRegistry.IsParticlePlayer(Dto.playerId))
+            {
+                return !VfxBindingParticlePresetRules.HasAnyKnownPresetKey(Dto.materialKey, Dto.variants);
+            }
+
+            if (!VfxPlayerRegistry.IsMaterialPlayer(Dto.playerId))
             {
                 return false;
             }
@@ -185,7 +195,17 @@ namespace NineGrid.Content.Editor
 
         public bool IsBroken(IReadOnlyCollection<string> knownMaterialIds)
         {
-            if (Dto == null || !VfxPlayerRegistry.IsMaterialPlayer(Dto.playerId))
+            if (Dto == null)
+            {
+                return false;
+            }
+
+            if (VfxPlayerRegistry.IsParticlePlayer(Dto.playerId))
+            {
+                return !VfxBindingParticlePresetRules.HasAnyKnownPresetKey(Dto.materialKey, Dto.variants);
+            }
+
+            if (!VfxPlayerRegistry.IsMaterialPlayer(Dto.playerId))
             {
                 return false;
             }

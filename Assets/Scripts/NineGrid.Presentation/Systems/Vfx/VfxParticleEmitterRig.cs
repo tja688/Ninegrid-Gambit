@@ -60,7 +60,33 @@ namespace NineGrid.Presentation.Systems.Vfx
                     return true;
                 }
 
-                return !mSystem.IsAlive(withChildren: true);
+                if (!mSystem.IsAlive(withChildren: true))
+                {
+                    return true;
+                }
+
+                // 暂停态（编辑器 Simulate / 外部暂停）IsAlive 恒真；用粒子数、发射态与时间轴兜底。
+                if (mSystem.particleCount > 0 || mSystem.isEmitting)
+                {
+                    return false;
+                }
+
+                var main = mSystem.main;
+                return !main.loop && mSystem.time >= main.duration - 0.0001f;
+            }
+        }
+
+        /// <summary>发射已停且场上无存活粒子（State 退出段排空判定）。</summary>
+        public bool IsDrained
+        {
+            get
+            {
+                if (mRoot == null || mSystem == null)
+                {
+                    return true;
+                }
+
+                return !mSystem.isEmitting && mSystem.particleCount == 0;
             }
         }
 

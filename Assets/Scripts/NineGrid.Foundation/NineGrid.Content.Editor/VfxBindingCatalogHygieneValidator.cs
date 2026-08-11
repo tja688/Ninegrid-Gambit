@@ -289,6 +289,10 @@ namespace NineGrid.Content.Editor
       {
         ValidateMaterialBinding(key, identityId, materialKey, variants, materials, findings);
       }
+      else if (VfxPlayerRegistry.IsParticlePlayer(playerId))
+      {
+        ValidateParticlePresetBinding(key, identityId, materialKey, variants, supportsPulse, findings);
+      }
 
       if (fps < 0f || scale < 0f || startOffsetSeconds < 0f
           || bindingDelaySeconds < 0f || minimumIntervalSeconds < 0f)
@@ -377,6 +381,100 @@ namespace NineGrid.Content.Editor
           BindingKey = key,
           IdentityId = identityId,
           Detail = "素材变体池没有任何有效条目。",
+        });
+      }
+    }
+
+    private static void ValidateParticlePresetBinding(
+        string key,
+        string identityId,
+        string materialKey,
+        VfxMaterialVariantDto[] variants,
+        bool supportsPulse,
+        List<Finding> findings)
+    {
+      var pool = variants ?? Array.Empty<VfxMaterialVariantDto>();
+      if (pool.Length == 0)
+      {
+        if (string.IsNullOrWhiteSpace(materialKey))
+        {
+          findings.Add(new Finding
+          {
+            Category = "missing-material",
+            BindingKey = key,
+            IdentityId = identityId,
+            Detail = "粒子型绑定缺少预设 materialKey。",
+          });
+          return;
+        }
+
+        ValidateSingleParticlePresetKey(key, identityId, materialKey, supportsPulse, findings);
+        return;
+      }
+
+      var hasValid = false;
+      for (var i = 0; i < pool.Length; i++)
+      {
+        var variant = pool[i];
+        if (variant == null || variant.weight <= 0f || string.IsNullOrWhiteSpace(variant.materialKey))
+        {
+          continue;
+        }
+
+        hasValid = true;
+        ValidateSingleParticlePresetKey(key, identityId, variant.materialKey, supportsPulse, findings);
+      }
+
+      if (!hasValid)
+      {
+        findings.Add(new Finding
+        {
+          Category = "empty-pool",
+          BindingKey = key,
+          IdentityId = identityId,
+          Detail = "粒子预设变体池没有任何有效条目。",
+        });
+      }
+    }
+
+    private static void ValidateSingleParticlePresetKey(
+        string key,
+        string identityId,
+        string presetKey,
+        bool supportsPulse,
+        List<Finding> findings)
+    {
+      if (!VfxParticlePresetIds.IsKnown(presetKey))
+      {
+        findings.Add(new Finding
+        {
+          Category = "missing-material",
+          BindingKey = key,
+          IdentityId = identityId,
+          Detail = "materialKey 不是已知粒子预设：" + presetKey,
+        });
+        return;
+      }
+
+      var isLoop = VfxParticlePresetIds.IsLoopPreset(presetKey);
+      if (supportsPulse && isLoop)
+      {
+        findings.Add(new Finding
+        {
+          Category = "missing-material",
+          BindingKey = key,
+          IdentityId = identityId,
+          Detail = "loop 粒子预设不可用于 Pulse 绑定：" + presetKey,
+        });
+      }
+      else if (!supportsPulse && !isLoop)
+      {
+        findings.Add(new Finding
+        {
+          Category = "missing-material",
+          BindingKey = key,
+          IdentityId = identityId,
+          Detail = "State 绑定只接受 particle.loop.* 预设：" + presetKey,
         });
       }
     }

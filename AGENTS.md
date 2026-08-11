@@ -50,6 +50,7 @@
 | 日志分析 | 战斗 / 流程 / 表现日志（Play 结束导出至 `Assets/Notes/Logs/`） | `.cursor/skills/table-nine-battlelog-analysis/` |
 | 像素描边 | 像素画 snap 且不糊 SDF / TMP 文本 | `.cursor/skills/sprite-owned-pixel-snap/` |
 | QuickTest 通道 | 主菜单 `\` + `\0`–`\9` 效果体验通道（JSON 空怪、动态技能组装、卡面技能描述；近义技能占位规则） | `.cursor/skills/quick-test-effect-channels/` |
+| Live Lab 运行时协作 | 人 Play 游玩、agent 经 `execute_code` 注入探针/补丁边玩边调音画手感；痕迹重放与落地 | `.cursor/skills/live-lab/` |
 | Issue tracker | 本项目 Issue 走 GitHub Issues（`gh`） | `docs/agents/issue-tracker.md` |
 | Triage labels | 标签词表：`needs-triage`、`needs-info`、`ready-for-agent`、`ready-for-human`、`wontfix` | `docs/agents/triage-labels.md` |
 | Domain docs | 单一上下文：根 `CONTEXT.md` + `docs/adr/` | `docs/agents/domain.md` |
