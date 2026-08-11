@@ -215,9 +215,10 @@ namespace NineGrid.Core
 
     /// <summary>
     /// 离开战斗时重置 Battle 作用域倒计时（ADR-0035 / #157）：遍历激活的效果实例，
-    /// 对 <see cref="ICountdownProjectionTrigger"/> 且作用域为 Battle 的倒计时，
+    /// 对 <see cref="ICountdownProjectionTrigger"/> 且有效作用域为 Battle 的倒计时，
     /// 把持有者计数器复位到阈值（period）并广播剩余提交（投影同步回阈值）。
-    /// Run 作用域不动（跨战斗忠实剩余）。作用域标记仅作者/系统可见，绝不进入玩家文本。
+    /// 机关默认 Battle；遗物累计计数默认 Run（跨战斗保留），仅显式 <c>scope:battle</c> 时离战重置。
+    /// 作用域标记仅作者/系统可见，绝不进入玩家文本。
     /// </summary>
     public sealed class ResetBattleScopedCountdownsAction : GameAction
     {
@@ -239,7 +240,7 @@ namespace NineGrid.Core
 
                 var countdown = instance.Trigger as ICountdownProjectionTrigger;
                 if (countdown == null
-                    || countdown.Scope != CountdownScope.Battle
+                    || CountdownScopePolicy.ResolveResetScope(instance.Owner, countdown) != CountdownScope.Battle
                     || string.IsNullOrEmpty(countdown.CountdownProjectionKey)
                     || instance.Owner == null)
                 {
