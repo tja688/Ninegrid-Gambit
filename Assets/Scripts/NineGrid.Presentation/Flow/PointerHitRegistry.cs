@@ -29,6 +29,26 @@ namespace NineGrid.Flow
             }
 
             Targets.Remove(target);
+            PruneDestroyedTargets();
+        }
+
+        /// <summary>移除已销毁的 Unity 命中代理，避免 Router 每帧踩 MissingReference。</summary>
+        private static void PruneDestroyedTargets()
+        {
+            for (var i = Targets.Count - 1; i >= 0; i--)
+            {
+                var target = Targets[i];
+                if (target == null)
+                {
+                    Targets.RemoveAt(i);
+                    continue;
+                }
+
+                if (target is UnityEngine.Object unityObject && !unityObject)
+                {
+                    Targets.RemoveAt(i);
+                }
+            }
         }
 
         /// <summary>EditMode 清理。</summary>

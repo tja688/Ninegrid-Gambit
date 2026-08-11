@@ -971,6 +971,7 @@ namespace NineGrid.Cards
             }
 
             driver?.SnapToDisplayMode();
+            SyncHitProxyForDisplayMode(card, mode);
 
             if (modeChanged)
             {
@@ -990,6 +991,26 @@ namespace NineGrid.Cards
             mode == CardDisplayMode.CardDeckMode
             || mode == CardDisplayMode.HandCardMode
             || mode == CardDisplayMode.RemovedMode;
+
+        /// <summary>
+        /// 场地卡不得保留 Hand 命中代理：其 sort 会压过 <see cref="GroundFieldHitSurface"/>，
+        /// 吞掉房内货架/固定道具的格位点击（ADR-0023）。
+        /// </summary>
+        private static void SyncHitProxyForDisplayMode(ManagedCard card, CardDisplayMode mode)
+        {
+            if (card?.View == null)
+            {
+                return;
+            }
+
+            var go = card.View.gameObject;
+            var handHit = go.GetComponent<HandCardHitProxy>();
+            if (handHit != null)
+            {
+                handHit.enabled = mode == CardDisplayMode.HandCardMode
+                                  || mode == CardDisplayMode.DragCardMode;
+            }
+        }
 
         private static void SetSortingOrder(SortingGroup sortingGroup, int sortingOrder)
         {

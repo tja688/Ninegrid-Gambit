@@ -58,7 +58,7 @@ namespace NineGrid.Flow
             var best = ResolveBestTarget(cam, screen);
             if (!ReferenceEquals(best, _hovered))
             {
-                if (_hovered != null)
+                if (_hovered != null && IsTargetAlive(_hovered))
                 {
                     _hovered.HandlePointerExit();
                 }
@@ -224,7 +224,11 @@ namespace NineGrid.Flow
                 return;
             }
 
-            _hovered.HandlePointerExit();
+            if (IsTargetAlive(_hovered))
+            {
+                _hovered.HandlePointerExit();
+            }
+
             _hovered = null;
         }
 
@@ -255,7 +259,7 @@ namespace NineGrid.Flow
             for (var i = 0; i < targets.Count; i++)
             {
                 var target = targets[i];
-                if (target == null || !TryOverlapTarget(target, camera, screen))
+                if (!IsTargetAlive(target) || !TryOverlapTarget(target, camera, screen))
                 {
                     continue;
                 }
@@ -291,8 +295,23 @@ namespace NineGrid.Flow
             return best;
         }
 
+        private static bool IsTargetAlive(IPointerHitTarget target)
+        {
+            if (target == null)
+            {
+                return false;
+            }
+
+            return target is not UnityEngine.Object unityObject || unityObject;
+        }
+
         private static bool TryOverlapTarget(IPointerHitTarget target, Camera camera, Vector2 screen)
         {
+            if (!IsTargetAlive(target))
+            {
+                return false;
+            }
+
             if (target is IMultiColliderPointerHitTarget multi)
             {
                 return multi.TryOverlapScreenPoint(camera, screen, out _);

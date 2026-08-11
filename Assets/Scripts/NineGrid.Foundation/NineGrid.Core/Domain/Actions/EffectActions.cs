@@ -430,6 +430,13 @@ namespace NineGrid.Core
             TriggerPoint.OnMoveToSlot
         };
 
+        private static readonly TriggerPoint[] sDealPostTriggers =
+        {
+            TriggerPoint.AfterAction,
+            TriggerPoint.OnDeal,
+            TriggerPoint.OnEnter
+        };
+
         public MoveCardAction(int cardUid, SlotId toSlot)
             : this(cardUid, toSlot, null, null)
         {
@@ -467,17 +474,41 @@ namespace NineGrid.Core
                 board.PlaceCard(card, ToSlot);
             }
 
-            var result = new GameActionResult()
-                .AddEvent(new CoreGameEvent(CoreEventType.CardMoved, context.ActionId, ActionName)
-                    .WithCard(CardUid)
-                    .WithSlots(fromSlot, ToSlot)
-                    .WithSource(SourceDefId, Cause));
+            // 入场落地不是盘面换格：发牌应走 CardDealt，避免移动位置效果误触发。
+            var isDeal = card.Kind != CardKind.Avatar
+                && !fromSlot.IsBoardSlot
+                && ToSlot.IsBoardSlot;
+            var eventType = isDeal ? CoreEventType.CardDealt : CoreEventType.CardMoved;
+            var gameEvent = new CoreGameEvent(eventType, context.ActionId, ActionName)
+                .WithCard(CardUid)
+                .WithSlots(fromSlot, ToSlot)
+                .WithSource(SourceDefId, Cause);
+            var result = new GameActionResult();
+            if (isDeal)
+            {
+                result.AddWithFaceAbsolutes(context, card, gameEvent);
+            }
+            else
+            {
+                result.AddEvent(gameEvent);
+            }
+
             CardRhythmMoveTicks.AppendFromMovedEvents(result, context, result.Events);
             return result;
         }
-
         public override IEnumerable<TriggerPoint> GetPostTriggerPoints(GameActionContext context, IReadOnlyList<CoreGameEvent> events)
         {
+            if (events != null)
+            {
+                for (var i = 0; i < events.Count; i++)
+                {
+                    if (events[i].Type == CoreEventType.CardDealt)
+                    {
+                        return sDealPostTriggers;
+                    }
+                }
+            }
+
             return sPostTriggers;
         }
     }

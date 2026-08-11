@@ -118,6 +118,13 @@ namespace NineGrid.Flow.Presentation
                 return false;
             }
 
+            var occupancy = RoomIcons.RoomIconOccupancy.Current;
+            if (occupancy != null && occupancy.IsSoftBlocked(slot))
+            {
+                rejectReason = "softBlockedPresentationOccupancy";
+                return false;
+            }
+
             return true;
         }
 

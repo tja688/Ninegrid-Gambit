@@ -16,7 +16,19 @@ namespace NineGrid.Cards
         private BoxCollider2D _collider;
         private CardVisualDriver _driver;
 
-        public Collider2D HitCollider => _collider != null ? _collider : (_collider = GetComponent<BoxCollider2D>());
+        public Collider2D HitCollider
+        {
+            get
+            {
+                // 销毁后仍可能被 PointerHitRegistry 扫到；勿再 GetComponent。
+                if (!this)
+                {
+                    return null;
+                }
+
+                return _collider != null ? _collider : (_collider = GetComponent<BoxCollider2D>());
+            }
+        }
 
         public int HitSortOrder => ResolveHitSortOrder();
 
