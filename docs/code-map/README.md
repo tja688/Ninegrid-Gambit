@@ -47,6 +47,7 @@
 | [ADR-0038](../adr/0038-card-rhythm-dual-channel.md) | 卡级节奏：行动/移动双通道 + 节奏源/周期 + 共享倒计时；攻击模式仅几何；技能同步触发同拍；图标矩阵（**#184 Core/内容/卡面接线已落地**：`CardRhythmRules` / `OnCardRhythmFire` / 怪物 JSON `rhythmSource`+`rhythmPeriod`；机关全量改配另票） |
 | [ADR-0039](../adr/0039-avatar-hp-defeat-invariant.md) | Avatar HP≤0 必须 Defeat；终端相位粘性；`RefreshLegalCommands` 尊重存活；投影 `AvatarDefeated` 仍以 phase 为准，表现 `EnsureBattleEnded` 可兼读 HP 兜底 |
 | [ADR-0040](../adr/0040-vfx-cue-binding-persistent-state-workbench.md) | VFX Cue/State 与 Binding 单一播放决策真源；Attached/Independent 空间所有权；Persistent Slot；程序化播放器自治；三模式工作台；金币迁移（**#193–#204 已落地**；**#200 已落地**结构护栏、跨系统契约与终验记录 `Assets/Notes/Logs/VfxAudit/vfx-e2e-verification-200.md`） |
+| [ADR-0041](../adr/0041-run-save-battle-start-checkpoint.md) | 跑图存档：战斗开始检查点（BuildNodeDeckOptions 前捕获 + RNG 状态恢复 = 发牌复现）；自动存档每战斗刷新、终局清除；`RunSaveSnapshot`/`RunSaveGame` 在 Core，落盘经 `IRunSaveStore` → ES3 桥（`NineGrid.SaveBridge`，Assembly-CSharp 装配缝）；局内功能菜单存档/读档模块接线 |
 
 > ADR-0011–0013 几何、倒计时数学与敌方行动阶段已落地（#81）；**节奏频率与共用计数**以 ADR-0038 为准（部分 supersede）。旧落地方案见 `Assets/Notes/怪物攻击模式与敌方行动阶段-落地方案-2026-07-29.md`（过程笔记，非权威）。
 >
@@ -65,6 +66,7 @@
 | `NineGrid.Presentation.Editor` | `…/Editor/` | 编辑器工具 |
 | `NineGrid.DevTest` | `Assets/Scripts/NineGrid.Foundation/NineGrid.DevTest/` | 小键盘 DevKeys；主菜单 QuickTest 入口（`QuickTestEntryInputHandler`）；**无**局内 `\` 调速；`DevTestSceneInstaller` 为 MainScene 唯一序列化的 DevTest 宿主（#126，Release 空壳 / Dev 运行时安装） |
 | `NineGrid.VisualFxLab`（+ `.Editor`） | `Assets/Scripts/VisualFxLab/` | **画面实验室（试验性，非正式接线）**：一键装配/还原的视觉效果试装场——F9 总开关、F10 循环 5 个全屏 Look（CRT/烛光/辉光/地牢/胶片，`NineGridFxLabFeature` 挂 Renderer2D 事件 600、未装配时零 Pass）、F6/F7/F8 机关光环/氛围粒子/卡面流光（运行时程序化生成，卸载即拆净）。仅 Editor/Dev 自举（`FxLabHotkeyHost`）；彻底移除走菜单 `NineGrid/画面实验室/移除全屏渲染特性` + 删目录与 `Assets/Arts/VisualProfiles/NineGridFxLab*.shader`。使用说明见 `Assets/Notes/画面实验室-视觉效果试装-2026-08-11.md` |
+| `NineGrid.SaveBridge`（无 asmdef → Assembly-CSharp） | `Assets/Scripts/NineGrid.SaveBridge/` | 跑图存档的 Easy Save 3 落盘桥（[ADR-0041](../adr/0041-run-save-battle-start-checkpoint.md)）：`Es3RunSaveStore` 实现表现层 `IRunSaveStore`，`RuntimeInitializeOnLoad(SubsystemRegistration)` 经 `RunSaveStoreHook.Set` 注册。ES3 插件无 asmdef、只能从 Assembly-CSharp 调用——本目录**必须保持无 asmdef**。存档文件在 persistentDataPath `NineGridSaves/slot_{id}.es3` |
 
 旧程序集 `NineGrid.Flow` / `NineGrid.Cards` 的 **asmdef 已删除**；源码仍以 `Flow/`、`Cards/` **目录 + 命名空间** 共存于 `NineGrid.Presentation` 内（见 presentation.md）。
 

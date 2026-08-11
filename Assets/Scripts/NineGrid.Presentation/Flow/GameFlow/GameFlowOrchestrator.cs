@@ -35,6 +35,8 @@ namespace NineGrid.Flow
         private CancellationTokenSource mLoopCts;
         private CancellationTokenSource mBattleEndCts;
         private UniTaskCompletionSource mSettlementTcs;
+        /// <summary>读档恢复：Start 已完成恢复版 Bootstrap，首个战斗节点不得再 BootstrapRun 覆盖。</summary>
+        private bool mRestoredBootstrapPending;
 
         public GameFlowOrchestrator(GameFlowShellSystem shell)
         {
@@ -129,7 +131,59 @@ namespace NineGrid.Flow
                     + FormatSkillIdsNote(mShell.QuickTestSkillIds));
             }
 
+            // 读档恢复：先做恢复版 Bootstrap（Create + 快照覆盖 + RNG 还原），
+            // 再启动节点循环，首迭代 Increment 后正好落在快照捕获的全局节点上。
+            mRestoredBootstrapPending = false;
+            if (options != null && options.RestoreMode)
+            {
+                if (!TryBootstrapRestoredRun(options.RestoreSnapshot))
+                {
+                    Debug.LogError("[GameFlow] 读档恢复失败，回主菜单。");
+                    EnterMainMenuImmediate();
+                    return;
+                }
+            }
+
             RunNodeCycleAsync(mLoopCts.Token).Forget();
+        }
+
+        /// <summary>
+        /// 读档恢复 Bootstrap：以快照种子重建初始局 → Core 覆盖恢复（含 RNG 状态）→
+        /// 壳层全局节点序号对齐到目标节点前一格 → 刷新跑图持久 HUD（遗物栏 / 玩家信息）。
+        /// </summary>
+        private bool TryBootstrapRestoredRun(RunSaveSnapshot snapshot)
+        {
+            if (snapshot == null)
+            {
+                return false;
+            }
+
+            var session = ResolveSession();
+            if (session == null || !session.IsBound)
+            {
+                Debug.LogError("[GameFlow] 读档恢复：未绑定 IBattleSessionSystem。");
+                return false;
+            }
+
+            try
+            {
+                session.BootstrapRun(new InitialGameOptions { Seed = snapshot.SeedValue });
+                RunSaveGame.RestoreAfterCreate(NineGridArchitecture.Current, snapshot);
+                mShell.SetNodeProgressBeforeRestoredNode(snapshot.shellGlobalNodeIndex);
+                mRestoredBootstrapPending = true;
+                session.RefreshPersistentInBattleUi(animate: false);
+                PlayerInfoHudPresenter.TryGetInstance()?.SyncFromCore(animate: false);
+                Debug.Log(
+                    $"[GameFlow] 读档恢复完成 层{snapshot.floor} 节点{snapshot.DisplayNode}"
+                    + $"（全局{snapshot.shellGlobalNodeIndex}） seed={snapshot.seed}"
+                    + $" 金币={snapshot.coins} HP={snapshot.metaHp}/{snapshot.metaMaxHp}");
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError("[GameFlow] 读档恢复异常：" + ex);
+                return false;
+            }
         }
 
         public void Signal(GameFlowSignal signal)
@@ -264,6 +318,13 @@ namespace NineGrid.Flow
             var arch = NineGridArchitecture.Current;
             var phase = arch.GetSystem<IPhaseSystem>();
             EnsureBattleNodeBootstrap(session, phase);
+
+            // 存档检查点：正式局在 BuildNodeDeckOptions 消耗 RNG 之前捕获，
+            // 恢复时以同一 RNG 状态重跑发牌即可复现「本场对战开始」。
+            if (!mShell.IsQuickTestMode)
+            {
+                RunSaveService.CaptureCheckpoint(mShell.NodeIndex);
+            }
 
             CoreCardPresentationMapper.EnsureContentCatalogLoaded();
 
@@ -968,6 +1029,8 @@ namespace NineGrid.Flow
 
         private async UniTask ShowBattleEndAndReturnAsync(bool victory, CancellationToken ct)
         {
+            // run 终局：清内存检查点并删除自动存档（手动槽保留）。
+            RunSaveService.HandleRunEnded();
             CancelLoopWork();
             ResolveSession()?.ClearCardPresentationSurface();
             ResolveSession()?.RefreshPersistentInBattleUi(animate: false);
@@ -986,7 +1049,6 @@ namespace NineGrid.Flow
             var message = victory
                 ? (view == null || string.IsNullOrWhiteSpace(view.VictoryMessage) ? "胜利" : view.VictoryMessage)
                 : (view == null || string.IsNullOrWhiteSpace(view.DefeatMessage) ? "失败" : view.DefeatMessage);
-            view?.ShowNotice(message);
             try
             {
                 FlowTraceRecorder.Record(
@@ -1006,17 +1068,29 @@ namespace NineGrid.Flow
             }
 
             Debug.Log(victory
-                ? "[GameFlow] 整局胜利，准备回主菜单。"
-                : "[GameFlow] 战斗失败，准备回主菜单。");
-            var seconds = victory
-                ? Mathf.Max(0.2f, view?.VictoryNoticeSeconds ?? 1f)
-                : Mathf.Max(0.2f, view?.DefeatNoticeSeconds ?? 1f);
-            await UniTask.Delay(TimeSpan.FromSeconds(seconds), cancellationToken: ct);
+                ? "[GameFlow] 整局胜利，展示结算面板后回主菜单。"
+                : "[GameFlow] 战斗失败，展示结算面板后回主菜单。");
+
+            // 结算面板：只读展示本局数据（ClearRunSession 之前快照），等玩家确认返回。
+            // 场景缺预置时回退旧 Notice + 延时路径，不阻断流程。
+            var summaryShown = await NineGrid.Presentation.Ui.RunSummaryPanel
+                .TryShowAndWaitAsync(victory, ct);
+            if (!summaryShown)
+            {
+                view?.ShowNotice(message);
+                var seconds = victory
+                    ? Mathf.Max(0.2f, view?.VictoryNoticeSeconds ?? 1f)
+                    : Mathf.Max(0.2f, view?.DefeatNoticeSeconds ?? 1f);
+                await UniTask.Delay(TimeSpan.FromSeconds(seconds), cancellationToken: ct);
+            }
+
             EnterMainMenuImmediate();
         }
 
         private void EnterMainMenuImmediate()
         {
+            // 强退（Stop）路径可能未走结算面板 finally；兜底收起，避免面板挂在主菜单上。
+            NineGrid.Presentation.Ui.RunSummaryPanel.CloseIfOpen();
             var view = mShell.View;
             view?.EnsureViewBindings();
             view?.HideNotice();
@@ -1212,6 +1286,20 @@ namespace NineGrid.Flow
 
         private void EnsureBattleNodeBootstrap(IBattleSessionSystem session, IPhaseSystem phase)
         {
+            // 读档恢复：Start 已完成恢复版 Bootstrap（NodeCompleted 相位下 StartNode 已合法），
+            // 首个战斗节点若再 BootstrapRun 会把恢复状态清成新局。
+            if (mRestoredBootstrapPending)
+            {
+                mRestoredBootstrapPending = false;
+                if (phase.CanExecute(GameCommandKind.StartNode))
+                {
+                    return;
+                }
+
+                Debug.LogWarning(
+                    "[GameFlow] 读档恢复后 StartNode 仍非法 phase=" + phase.CurrentPhase + "，走常规兜底。");
+            }
+
             if (mShell.NodeIndex <= 1)
             {
                 session.BootstrapRun();

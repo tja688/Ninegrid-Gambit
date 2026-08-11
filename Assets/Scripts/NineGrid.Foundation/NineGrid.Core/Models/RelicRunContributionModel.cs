@@ -64,6 +64,39 @@ namespace NineGrid.Core
             mValues.Clear();
         }
 
+        /// <summary>存档捕获用：原始条目（键为 <c>relicDefId|statInt</c>，见 <see cref="TryParseKey"/>）。</summary>
+        public IReadOnlyDictionary<string, int> RawEntries
+        {
+            get { return mValues; }
+        }
+
+        /// <summary>解析 <see cref="RawEntries"/> 键；relicDefId 不含 '|'，从末位分隔符拆分。</summary>
+        public static bool TryParseKey(string key, out string relicDefId, out StatId stat)
+        {
+            relicDefId = string.Empty;
+            stat = default(StatId);
+            if (string.IsNullOrEmpty(key))
+            {
+                return false;
+            }
+
+            var split = key.LastIndexOf('|');
+            if (split <= 0 || split >= key.Length - 1)
+            {
+                return false;
+            }
+
+            int statValue;
+            if (!int.TryParse(key.Substring(split + 1), out statValue))
+            {
+                return false;
+            }
+
+            relicDefId = key.Substring(0, split);
+            stat = (StatId)statValue;
+            return true;
+        }
+
         public static string BuildModifierSourceId(string relicDefId, StatId stat)
         {
             return (relicDefId ?? string.Empty) + ".run." + stat;

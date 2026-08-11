@@ -228,6 +228,10 @@ namespace NineGrid.Presentation.Ui
                 mPanelRoot.transform.Find(QuitGameButtonPath),
                 RequestQuitGame);
 
+            // 存档/读档模块（名字含 '/'，不能走 transform.Find 路径语义）。
+            RunSaveLoadPanel.EnsureBound(
+                FindDirectChildNamed(mPanelRoot.transform, RunSaveLoadPanel.ModuleName));
+
             var volume = mPanelRoot.transform.Find(VolumeModuleName);
             if (volume != null)
             {
@@ -262,6 +266,8 @@ namespace NineGrid.Presentation.Ui
 
         private void SetOpen(bool open)
         {
+            // 域重载后静态实例可能带着未赋值的 mPanelRoot 直接被 RequestOpen；先归位再绑定。
+            EnsureInstanceState();
             EnsureBound();
             if (mPanelRoot == null)
             {
@@ -590,6 +596,25 @@ namespace NineGrid.Presentation.Ui
         private static bool IsDecoratorNode(Transform node)
         {
             return node != null && node.name.StartsWith("__", StringComparison.Ordinal);
+        }
+
+        private static Transform FindDirectChildNamed(Transform parent, string childName)
+        {
+            if (parent == null)
+            {
+                return null;
+            }
+
+            for (var i = 0; i < parent.childCount; i++)
+            {
+                var child = parent.GetChild(i);
+                if (child != null && string.Equals(child.name, childName, StringComparison.Ordinal))
+                {
+                    return child;
+                }
+            }
+
+            return null;
         }
 
         private VolumeSliderBinder WireSlider(Transform track, PlayerAudioBus bus, string contentId)

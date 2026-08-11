@@ -136,6 +136,39 @@ namespace NineGrid.Core
             return false;
         }
 
+        /// <summary>
+        /// 存档恢复（RunSaveGame）：整体覆写跑图进度与已用主题卡组。
+        /// 只供读档路径调用；相位由调用方另行 SetPhase。
+        /// </summary>
+        public void RestoreProgress(
+            int floor,
+            int nodeIndex,
+            ulong seed,
+            RoomKind room,
+            string floorMonsterDeckId,
+            IReadOnlyList<string> usedMonsterDeckIds)
+        {
+            Floor.Value = floor < 1 ? 1 : floor;
+            NodeIndex.Value = nodeIndex < 0 ? 0 : nodeIndex;
+            Seed.Value = seed;
+            Room.Value = room;
+            FloorMonsterDeckId.Value = floorMonsterDeckId ?? string.Empty;
+            mUsedMonsterDeckIds.Clear();
+            if (usedMonsterDeckIds != null)
+            {
+                for (var i = 0; i < usedMonsterDeckIds.Count; i++)
+                {
+                    var deckId = usedMonsterDeckIds[i];
+                    if (!string.IsNullOrEmpty(deckId) && !mUsedMonsterDeckIds.Contains(deckId))
+                    {
+                        mUsedMonsterDeckIds.Add(deckId);
+                    }
+                }
+            }
+
+            Touch();
+        }
+
         public bool AdvanceNode()
         {
             var nextNodeIndex = NodeIndex.Value + 1;

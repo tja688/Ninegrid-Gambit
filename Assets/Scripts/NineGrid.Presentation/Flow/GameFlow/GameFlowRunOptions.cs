@@ -1,15 +1,23 @@
+using NineGrid.Core;
+
 namespace NineGrid.Flow
 {
     /// <summary>
     /// 开局选项；QuickTest 细节复用 <see cref="QuickTestRunOptions"/>。
-    /// 正式开局用 <see cref="CreateFormal"/>；QuickTest 镜像/通道用 <see cref="CreateQuickTest"/>。
+    /// 正式开局用 <see cref="CreateFormal"/>；QuickTest 镜像/通道用 <see cref="CreateQuickTest"/>；
+    /// 读档恢复用 <see cref="CreateRestore"/>（正式模式 + 恢复快照，从快照战斗节点入场）。
     /// QuickTest 模式由 <see cref="QuickTest"/> 载荷是否非空推导，调用方不再手拼布尔组合。
     /// </summary>
     public sealed class GameFlowRunOptions
     {
         public QuickTestRunOptions QuickTest { get; private set; }
 
+        /// <summary>读档恢复快照；非空表示本次开局是恢复模式（RunSave）。</summary>
+        public RunSaveSnapshot RestoreSnapshot { get; private set; }
+
         public bool QuickTestMode => QuickTest != null;
+
+        public bool RestoreMode => RestoreSnapshot != null;
 
         /// <summary>正式开局：无 QuickTest 标志 / 无作弊 / 无动态装配。</summary>
         public static GameFlowRunOptions CreateFormal()
@@ -23,6 +31,15 @@ namespace NineGrid.Flow
             return new GameFlowRunOptions
             {
                 QuickTest = quickTest ?? new QuickTestRunOptions(),
+            };
+        }
+
+        /// <summary>读档恢复开局：正式模式，Core 状态与 RNG 由快照覆盖，从快照战斗节点开始。</summary>
+        public static GameFlowRunOptions CreateRestore(RunSaveSnapshot snapshot)
+        {
+            return new GameFlowRunOptions
+            {
+                RestoreSnapshot = snapshot,
             };
         }
     }

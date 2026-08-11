@@ -249,6 +249,16 @@ namespace NineGrid.Presentation.Systems
             mNodeIndex = (floor - 1) * RunModel.NodesPerFloor + nodeIndex + 1;
         }
 
+        /// <summary>
+        /// 读档恢复：把壳层全局节点序号设为「目标节点的前一格」，
+        /// 使节点循环首次 <see cref="IncrementNodeIndex"/> 后正好落在快照捕获时的全局序号
+        /// （BuildNodeDeckOptions 的内容节点序号由此对齐，保证发牌复现）。
+        /// </summary>
+        internal void SetNodeProgressBeforeRestoredNode(int shellGlobalNodeIndex)
+        {
+            mNodeIndex = shellGlobalNodeIndex > 0 ? shellGlobalNodeIndex - 1 : 0;
+        }
+
         internal void PrepareQuickTest(QuickTestRunOptions options)
         {
             var qt = options ?? new QuickTestRunOptions();
