@@ -227,7 +227,7 @@
 
 - Core：进 `Shop` → `OfferShopSession` 固定 4 货架（宝箱 / 随机属性道具 / 恢复药水 / 食品）+ 容量未满时追加 `ExpandItemSlots`（道具牌格升级，50 金）+ 本次进店刷新价初值 10；`SelectReward` 扣 `Price`、直写道具卡格（满则拒）、**留店**；升级选项扣 50 金写 `ItemSlotsCapacity+1`（不发卡、不改 `ItemDeckCapacity`），满 5 后选项移除/不再出现；`RefreshShop` 扣刷新价并翻倍；`SkipHelpChoice` 出店（不加 skip 金）
 - 刷新价作用域：**本次进店**（离开清零；再进店重新从 10 起）
-- 表现：`ShopBoardPresenter` 落格 1/3/7/9 货架、4 升级选项（未满级）、2 刷新、8 离开；Avatar 硬切格 5；货架/刷新/升级任意距离点击；离开驻留 1s；金币不足写简要解释 Notice
+- 表现：`ShopBoardPresenter` 偏好落格 `{1,3,7,9,4}`（第 5 项为 `ExpandItemSlots`）、2 刷新、8 离开；Avatar 硬切格 5；**购后粘性**：仍在售项保持原 assigned 格不换格、已购格留空；**进店/刷新**经 `InRoomOfferSlotPlanner` 重排——避开 Avatar 站位并保证 PreferEmpty 空路到离开格 8
 - 货架真卡 `GroundCardMode`（预制体原生尺寸，与战斗卡同尺度）；升级/刷新就地选项 / 离开图标同按预制体根缩放（#104 / ADR-0024，已删 `RoomIconVisualFit`）；货架·刷新·升级登记 `SoftBlockOnly`，离开 `WalkDestination`
   - 落格只写世界位置、不 SetParent 到 `GroundAnchors/slotN`（`BoardSlotWorldPlacement`）；避免继承锚点 ×2 缩放
 - 扣金后经 `InRoomGoldPresentation` 推 EventLog→HUD（非战斗无 GoldGainBeat）；**房内会话不持 ChoiceOverlay**（场地=ProtectedField，否则 BoardWalk ownerMismatch 全点不动）；Presenter 内勿嵌套 Set/清门；局内宝箱 Bounce 仍短暂持 overlay
@@ -240,7 +240,7 @@
 
 - Core：进 `Tavern` → `OfferTavernSession` 三项服务（`UpgradeItemStats` / `FixItem` / `ExpandItemCapacity`，各 50 金）+ 本次进店刷新价初值 10；扩容写 `ItemDeckCapacity+1`；强化写 `ItemStatBonus+3`（跨节点应用属 #97）；**任一服务买一次即从本货架下架**，`RefreshShop` 清空已售并全量补货（扣本次价并翻倍，无次数上限）；`SkipHelpChoice` 出店
 - **唯一嵌套选择**：「道具卡固定」→ 池切 `tavern.fixItem`，候选为来源池**随机 3 张**（可含已固定 defId）；确认后 `AddFixedItemCard` + 扣费回主面，且本货架 `FixItem` **下架**；固定占 `ItemDeckCapacity` 预算；满预算拒购；`SkipHelpChoice` 在子池取消回主面（不扣费、不离店、不消耗本货架固定名额）
-- 表现：`TavernBoardPresenter` 落格 1/3/7 服务选项（`房间选项标准模板`）、2 刷新、8 离开；二级选择时**服务/刷新退场**，候选真卡铺格 1/3/4；确认后选中与**未选候选一并碎裂退场**再回主面；离开 tip 改「取消选择」
+- 表现：`TavernBoardPresenter` 服务家格 `UpgradeItemStats→1` / `FixItem→3` / `ExpandItemCapacity→7`、2 刷新、8 离开；**购后粘性**：已购家格留空、其余服务不换格；**进店/刷新**经 `InRoomOfferSlotPlanner` 若家格与 Avatar 冲突则改落备选格并保到离开格空路；二级选择时**服务/刷新退场**，候选偏好 `{1,3,4}` 同样走 planner；确认后选中与**未选候选一并碎裂退场**再回主面；离开 tip 改「取消选择」；二级取消后仍站格 8 可重武装驻留出店
 - 服务/刷新选项与候选真卡均按预制体原生尺寸（#104，不 Fit）；服务·刷新·候选 `SoftBlockOnly`，离开 `WalkDestination`；扣金同商店走 `InRoomGoldPresentation`；离开监视与 **不持 ChoiceOverlay** 约定同商店；候选真卡禁用 `GroundCardHitProxy`
 - `GameFlowOrchestrator.PresentInRoomSessionAfterEnterAsync`：`IsTavernPool` / `IsTavernFixItemPool` 走卡店场地板
 

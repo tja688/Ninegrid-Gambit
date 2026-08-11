@@ -31,8 +31,10 @@ namespace NineGrid.Flow.ShopBoard
         private readonly List<ManagedCard> mShelfCards = new List<ManagedCard>(5);
         private readonly List<GameObject> mShelfOptionGos = new List<GameObject>(5);
         private readonly List<string> mShelfDefIds = new List<string>(5);
+        private readonly List<int> mShelfSlots = new List<int>(5);
         private readonly List<GameObject> mExtras = new List<GameObject>(2);
         private readonly RoomIconDwellSession mLeaveDwell = new RoomIconDwellSession();
+        private bool mReplanShelfSlots;
         private GameObject mRefreshGo;
         private GameObject mLeaveGo;
         private CancellationTokenSource mResyncCts;
@@ -104,6 +106,8 @@ namespace NineGrid.Flow.ShopBoard
             }
 
             mShelfOptionGos.Clear();
+            mShelfSlots.Clear();
+            mReplanShelfSlots = false;
 
             for (var i = 0; i < mExtras.Count; i++)
             {
@@ -216,8 +220,14 @@ namespace NineGrid.Flow.ShopBoard
                     continue;
                 }
 
+                var slot = ResolveShelfSlot(i, entry.DefId);
+                if (slot <= 0)
+                {
+                    continue;
+                }
+
                 RoomIconOccupancy.Current.Register(
-                    ShopBoardSlotResolver.ShelfSlotAt(i),
+                    slot,
                     i,
                     entry.DefId,
                     RoomIconWalkRole.SoftBlockOnly);
@@ -233,6 +243,61 @@ namespace NineGrid.Flow.ShopBoard
                 -2,
                 ShopBoardSlotResolver.LeaveContentId,
                 RoomIconWalkRole.WalkDestination);
+        }
+
+        private int ResolveAvatarSlot()
+        {
+            var board = mArch?.GetModel<BoardModel>() ?? NineGridArchitecture.Current?.GetModel<BoardModel>();
+            if (board != null && board.AvatarSlot.Value.IsBoardSlot)
+            {
+                return board.AvatarSlot.Value.Index;
+            }
+
+            return ShopBoardSlotResolver.AvatarSlot;
+        }
+
+        private int ResolveShelfSlot(int shelfIndex, string defId)
+        {
+            if (shelfIndex >= 0 && shelfIndex < mShelfSlots.Count && mShelfSlots[shelfIndex] > 0)
+            {
+                return mShelfSlots[shelfIndex];
+            }
+
+            if (shelfIndex >= 0 && shelfIndex < ShopBoardSlotResolver.ShelfSlots.Length)
+            {
+                return ShopBoardSlotResolver.ShelfSlotAt(shelfIndex);
+            }
+
+            return 0;
+        }
+
+        private void PlanShelfSlots(PendingChoiceModel pending)
+        {
+            mShelfSlots.Clear();
+            var options = pending.RewardOptions;
+            var preferred = new List<int>(options.Count);
+            for (var i = 0; i < options.Count; i++)
+            {
+                preferred.Add(i < ShopBoardSlotResolver.ShelfSlots.Length
+                    ? ShopBoardSlotResolver.ShelfSlotAt(i)
+                    : 0);
+            }
+
+            var board = mArch?.GetModel<BoardModel>() ?? NineGridArchitecture.Current?.GetModel<BoardModel>();
+            var avatarSlot = ResolveAvatarSlot();
+            var planned = InRoomOfferSlotPlanner.Plan(
+                board,
+                options.Count,
+                avatarSlot,
+                preferred,
+                ShopBoardSlotResolver.ShelfFallbackPool,
+                ShopBoardSlotResolver.LeaveSlot,
+                ShopBoardSlotResolver.RefreshSlot);
+
+            for (var i = 0; i < planned.Length; i++)
+            {
+                mShelfSlots.Add(planned[i]);
+            }
         }
 
         private void RefreshRefreshTip(PendingChoiceModel pending)
@@ -266,12 +331,50 @@ namespace NineGrid.Flow.ShopBoard
             var oldCards = new List<ManagedCard>(mShelfCards);
             var oldOptionGos = new List<GameObject>(mShelfOptionGos);
             var oldDefIds = new List<string>(mShelfDefIds);
+            var oldSlots = new List<int>(mShelfSlots);
             var keptOld = new bool[oldCards.Count];
+            var replan = mReplanShelfSlots;
+
+            if (replan)
+            {
+                PlanShelfSlots(pending);
+                mReplanShelfSlots = false;
+            }
+            else
+            {
+                mShelfSlots.Clear();
+                for (var i = 0; i < newOptions.Count; i++)
+                {
+                    mShelfSlots.Add(0);
+                }
+
+                for (var i = 0; i < newOptions.Count; i++)
+                {
+                    var entry = newOptions[i];
+                    if (entry == null || string.IsNullOrEmpty(entry.DefId))
+                    {
+                        continue;
+                    }
+
+                    var oldIndex = InRoomShelfAnimation.TryMatchOldIndex(oldDefIds, keptOld, entry.DefId, i);
+                    if (oldIndex >= 0 && oldIndex < oldSlots.Count && oldSlots[oldIndex] > 0)
+                    {
+                        mShelfSlots[i] = oldSlots[oldIndex];
+                    }
+                    else
+                    {
+                        mShelfSlots[i] = i < ShopBoardSlotResolver.ShelfSlots.Length
+                            ? ShopBoardSlotResolver.ShelfSlotAt(i)
+                            : 0;
+                    }
+                }
+            }
 
             var newCards = new List<ManagedCard>(newOptions.Count);
             var newOptionGos = new List<GameObject>(newOptions.Count);
             var newDefIds = new List<string>(newOptions.Count);
             var animTasks = new List<UniTask>(newOptions.Count);
+            keptOld = new bool[oldCards.Count];
 
             for (var i = 0; i < newOptions.Count; i++)
             {
@@ -284,44 +387,35 @@ namespace NineGrid.Flow.ShopBoard
                     continue;
                 }
 
-                var slot = ShopBoardSlotResolver.ShelfSlotAt(i);
-                var oldIndex = InRoomShelfAnimation.TryMatchOldIndex(oldDefIds, keptOld, entry.DefId, i);
-                if (oldIndex >= 0
-                    && oldIndex < oldCards.Count
-                    && (oldCards[oldIndex] != null || oldOptionGos[oldIndex] != null))
+                var slot = ResolveShelfSlot(i, entry.DefId);
+                if (!replan)
                 {
-                    var oldSlot = ShopBoardSlotResolver.ShelfSlotAt(oldIndex);
-                    var tip = BuildShelfTip(entry.DefId, content);
-                    if (oldOptionGos[oldIndex] != null)
+                    var oldIndex = InRoomShelfAnimation.TryMatchOldIndex(oldDefIds, keptOld, entry.DefId, i);
+                    if (oldIndex >= 0
+                        && oldIndex < oldCards.Count
+                        && (oldCards[oldIndex] != null || oldOptionGos[oldIndex] != null))
                     {
-                        var go = oldOptionGos[oldIndex];
-                        newOptionGos.Add(go);
-                        newCards.Add(null);
-                        newDefIds.Add(entry.DefId);
-                        AttachClickProxy(go, ShopBoardHitKind.BuyShelf, i, tip, slot);
-                        if (oldSlot != slot)
+                        var tip = BuildShelfTip(entry.DefId, content);
+                        if (oldOptionGos[oldIndex] != null)
                         {
-                            animTasks.Add(
-                                InRoomShelfAnimation.HopOptionGoAsync(go, geometry, slot, ct));
+                            var go = oldOptionGos[oldIndex];
+                            newOptionGos.Add(go);
+                            newCards.Add(null);
+                            newDefIds.Add(entry.DefId);
+                            AttachClickProxy(go, ShopBoardHitKind.BuyShelf, i, tip, slot);
+                            continue;
                         }
 
+                        var card = oldCards[oldIndex];
+                        newCards.Add(card);
+                        newOptionGos.Add(null);
+                        newDefIds.Add(entry.DefId);
+                        AttachClickProxy(card.View.gameObject, ShopBoardHitKind.BuyShelf, i, tip, slot);
                         continue;
                     }
-
-                    var card = oldCards[oldIndex];
-                    newCards.Add(card);
-                    newOptionGos.Add(null);
-                    newDefIds.Add(entry.DefId);
-                    AttachClickProxy(card.View.gameObject, ShopBoardHitKind.BuyShelf, i, tip, slot);
-                    if (oldSlot != slot)
-                    {
-                        animTasks.Add(InRoomShelfAnimation.HopToSlotAsync(card, geometry, slot, ct));
-                    }
-
-                    continue;
                 }
 
-                // 新建：刷新换货 / 被购能力卡仍在售（重建补位）。
+                // 新建：刷新换货。
                 newDefIds.Add(entry.DefId);
                 if (IsShopSlotUpgradeOption(entry.DefId))
                 {
@@ -402,10 +496,13 @@ namespace NineGrid.Flow.ShopBoard
             IGroundFieldGeometrySystem geometry,
             IContentSystem content)
         {
+            PlanShelfSlots(pending);
+            mReplanShelfSlots = false;
+
             var cards = CardEntityLifecycleHook.CardsOrNull()
                         ?? UnityEngine.Object.FindFirstObjectByType<CardManagerSingleton>();
             var options = pending.RewardOptions;
-            for (var i = 0; i < options.Count && i < ShopBoardSlotResolver.ShelfSlots.Length; i++)
+            for (var i = 0; i < options.Count; i++)
             {
                 var entry = options[i];
                 mShelfDefIds.Add(entry == null ? null : entry.DefId);
@@ -416,7 +513,14 @@ namespace NineGrid.Flow.ShopBoard
                     continue;
                 }
 
-                var slot = ShopBoardSlotResolver.ShelfSlotAt(i);
+                var slot = ResolveShelfSlot(i, entry.DefId);
+                if (slot <= 0)
+                {
+                    mShelfCards.Add(null);
+                    mShelfOptionGos.Add(null);
+                    continue;
+                }
+
                 RoomIconOccupancy.Current.Register(
                     slot, i, entry.DefId, RoomIconWalkRole.SoftBlockOnly);
 
@@ -772,6 +876,7 @@ namespace NineGrid.Flow.ShopBoard
                 "ShopBoardPresenter.TryRefresh");
             Debug.Log("[ShopBoard] Refresh accepted");
             InRoomGoldPresentation.PresentGoldChangesSince(arch, logStart);
+            mReplanShelfSlots = true;
             ResyncFromPending(arch);
         }
 

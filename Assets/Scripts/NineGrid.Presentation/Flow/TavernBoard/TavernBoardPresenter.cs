@@ -35,7 +35,10 @@ namespace NineGrid.Flow.TavernBoard
         private readonly List<GameObject> mServiceGos = new List<GameObject>(3);
         private readonly List<string> mServiceDefIds = new List<string>(3);
         private readonly List<GameObject> mExtras = new List<GameObject>(2);
+        private readonly Dictionary<string, int> mServiceSlotByDefId = new Dictionary<string, int>(3);
+        private readonly List<int> mCandidateSlots = new List<int>(6);
         private readonly RoomIconDwellSession mLeaveDwell = new RoomIconDwellSession();
+        private bool mReplanServiceSlots;
         private GameObject mRefreshGo;
         private GameObject mLeaveGo;
         private CancellationTokenSource mResyncCts;
@@ -108,6 +111,9 @@ namespace NineGrid.Flow.TavernBoard
 
             mServiceGos.Clear();
             mServiceDefIds.Clear();
+            mServiceSlotByDefId.Clear();
+            mCandidateSlots.Clear();
+            mReplanServiceSlots = false;
 
             for (var i = 0; i < mExtras.Count; i++)
             {
@@ -152,6 +158,7 @@ namespace NineGrid.Flow.TavernBoard
             }
             else if (PendingChoiceModel.IsTavernPool(poolId))
             {
+                mReplanServiceSlots = true;
                 SpawnServices(pending, geometry, content);
                 SpawnRefresh(geometry, pending.ShopRefreshPriceGold.Value);
                 SpawnLeave(geometry, nested: false);
@@ -248,8 +255,13 @@ namespace NineGrid.Flow.TavernBoard
                 }
 
                 var slot = nested
-                    ? TavernBoardSlotResolver.CandidateSlotAt(i)
-                    : TavernBoardSlotResolver.ServiceSlotAt(i);
+                    ? ResolveCandidateSlot(i)
+                    : ResolveServiceSlot(entry.DefId);
+                if (slot <= 0)
+                {
+                    continue;
+                }
+
                 RoomIconOccupancy.Current.Register(
                     slot,
                     i,
@@ -273,6 +285,104 @@ namespace NineGrid.Flow.TavernBoard
                 RoomIconWalkRole.WalkDestination);
         }
 
+        private int ResolveAvatarSlot()
+        {
+            var board = mArch?.GetModel<BoardModel>() ?? NineGridArchitecture.Current?.GetModel<BoardModel>();
+            if (board != null && board.AvatarSlot.Value.IsBoardSlot)
+            {
+                return board.AvatarSlot.Value.Index;
+            }
+
+            return TavernBoardSlotResolver.AvatarSlot;
+        }
+
+        private int ResolveServiceSlot(string defId)
+        {
+            if (string.IsNullOrEmpty(defId))
+            {
+                return 0;
+            }
+
+            if (mServiceSlotByDefId.TryGetValue(defId, out var assigned))
+            {
+                return assigned;
+            }
+
+            return TavernBoardSlotResolver.HomeSlotForService(defId);
+        }
+
+        private int ResolveCandidateSlot(int candidateIndex)
+        {
+            if (candidateIndex >= 0 && candidateIndex < mCandidateSlots.Count)
+            {
+                return mCandidateSlots[candidateIndex];
+            }
+
+            return TavernBoardSlotResolver.CandidateSlotAt(candidateIndex);
+        }
+
+        private void PlanServiceSlots(PendingChoiceModel pending)
+        {
+            mServiceSlotByDefId.Clear();
+            var options = pending.RewardOptions;
+            var preferred = new List<int>(options.Count);
+            for (var i = 0; i < options.Count; i++)
+            {
+                var entry = options[i];
+                preferred.Add(entry == null ? 0 : TavernBoardSlotResolver.HomeSlotForService(entry.DefId));
+            }
+
+            var board = mArch?.GetModel<BoardModel>() ?? NineGridArchitecture.Current?.GetModel<BoardModel>();
+            var avatarSlot = ResolveAvatarSlot();
+            var planned = InRoomOfferSlotPlanner.Plan(
+                board,
+                options.Count,
+                avatarSlot,
+                preferred,
+                TavernBoardSlotResolver.ServiceSlots,
+                TavernBoardSlotResolver.LeaveSlot,
+                TavernBoardSlotResolver.RefreshSlot);
+
+            for (var i = 0; i < options.Count && i < planned.Length; i++)
+            {
+                var entry = options[i];
+                if (entry == null || string.IsNullOrEmpty(entry.DefId) || planned[i] <= 0)
+                {
+                    continue;
+                }
+
+                mServiceSlotByDefId[entry.DefId] = planned[i];
+            }
+        }
+
+        private void PlanCandidateSlots(PendingChoiceModel pending)
+        {
+            mCandidateSlots.Clear();
+            var options = pending.RewardOptions;
+            var preferred = new List<int>(options.Count);
+            for (var i = 0; i < options.Count; i++)
+            {
+                preferred.Add(TavernBoardSlotResolver.CandidateSlotAt(i));
+            }
+
+            var board = mArch?.GetModel<BoardModel>() ?? NineGridArchitecture.Current?.GetModel<BoardModel>();
+            var avatarSlot = ResolveAvatarSlot();
+            var planned = InRoomOfferSlotPlanner.Plan(
+                board,
+                options.Count,
+                avatarSlot,
+                preferred,
+                TavernBoardSlotResolver.CandidateFallbackPool,
+                TavernBoardSlotResolver.LeaveSlot,
+                TavernBoardSlotResolver.RefreshSlot,
+                reserveRefresh: false);
+
+            for (var i = 0; i < planned.Length; i++)
+            {
+                mCandidateSlots.Add(planned[i]);
+            }
+        }
+
         private void RefreshRefreshTip(PendingChoiceModel pending)
         {
             if (mRefreshGo == null)
@@ -294,6 +404,13 @@ namespace NineGrid.Flow.TavernBoard
             PendingChoiceModel pending,
             CancellationToken ct)
         {
+            var replan = mReplanServiceSlots;
+            if (replan)
+            {
+                PlanServiceSlots(pending);
+                mReplanServiceSlots = false;
+            }
+
             var geometry = arch.GetSystem<IGroundFieldGeometrySystem>();
             var content = arch.GetSystem<IContentSystem>();
             var newOptions = pending.RewardOptions;
@@ -316,16 +433,20 @@ namespace NineGrid.Flow.TavernBoard
                     continue;
                 }
 
-                var slot = TavernBoardSlotResolver.ServiceSlotAt(i);
-                var oldIndex = InRoomShelfAnimation.TryMatchOldIndex(oldDefIds, keptOld, entry.DefId, i);
-                if (oldIndex >= 0 && oldIndex < oldGos.Count && oldGos[oldIndex] != null)
+                var slot = ResolveServiceSlot(entry.DefId);
+                if (!replan)
                 {
-                    var go = oldGos[oldIndex];
-                    newGos.Add(go);
-                    newDefIds.Add(entry.DefId);
-                    var tip = BuildServiceTip(entry.DefId, content);
-                    AttachClickProxy(go, TavernBoardHitKind.SelectService, i, tip, slot);
-                    continue;
+                    var oldIndex = InRoomShelfAnimation.TryMatchOldIndex(oldDefIds, keptOld, entry.DefId, i);
+                    if (oldIndex >= 0 && oldIndex < oldGos.Count && oldGos[oldIndex] != null)
+                    {
+                        var go = oldGos[oldIndex];
+                        newGos.Add(go);
+                        newDefIds.Add(entry.DefId);
+                        var tip = BuildServiceTip(entry.DefId, content);
+                        AttachClickProxy(go, TavernBoardHitKind.SelectService, i, tip, slot);
+                        mServiceSlotByDefId[entry.DefId] = slot;
+                        continue;
+                    }
                 }
 
                 newDefIds.Add(entry.DefId);
@@ -339,6 +460,7 @@ namespace NineGrid.Flow.TavernBoard
                 {
                     var tip = BuildServiceTip(entry.DefId, content);
                     AttachClickProxy(fresh, TavernBoardHitKind.SelectService, i, tip, slot);
+                    mServiceSlotByDefId[entry.DefId] = slot;
                     animTasks.Add(InRoomShelfAnimation.DropOptionGoInAsync(fresh, geometry, slot, ct));
                 }
             }
@@ -370,6 +492,8 @@ namespace NineGrid.Flow.TavernBoard
             PendingChoiceModel pending,
             CancellationToken ct)
         {
+            PlanCandidateSlots(pending);
+
             var geometry = arch.GetSystem<IGroundFieldGeometrySystem>();
             var content = arch.GetSystem<IContentSystem>();
             var cards = CardEntityLifecycleHook.CardsOrNull()
@@ -394,14 +518,14 @@ namespace NineGrid.Flow.TavernBoard
                     continue;
                 }
 
-                var slot = TavernBoardSlotResolver.CandidateSlotAt(i);
+                var slot = ResolveCandidateSlot(i);
                 var oldIndex = InRoomShelfAnimation.TryMatchOldIndex(oldDefIds, keptOld, entry.DefId, i);
                 if (oldIndex >= 0 && oldIndex < oldCards.Count && oldCards[oldIndex] != null)
                 {
                     var card = oldCards[oldIndex];
                     newCards.Add(card);
                     newDefIds.Add(entry.DefId);
-                    var oldSlot = TavernBoardSlotResolver.CandidateSlotAt(oldIndex);
+                    var oldSlot = ResolveCandidateSlot(oldIndex);
                     var tip = BuildCandidateTip(entry.DefId, content);
                     AttachClickProxy(
                         card.View.gameObject,
@@ -469,8 +593,11 @@ namespace NineGrid.Flow.TavernBoard
             IGroundFieldGeometrySystem geometry,
             IContentSystem content)
         {
+            PlanServiceSlots(pending);
+            mReplanServiceSlots = false;
+
             var options = pending.RewardOptions;
-            for (var i = 0; i < options.Count && i < TavernBoardSlotResolver.ServiceSlots.Length; i++)
+            for (var i = 0; i < options.Count; i++)
             {
                 var entry = options[i];
                 mServiceDefIds.Add(entry == null ? null : entry.DefId);
@@ -480,7 +607,13 @@ namespace NineGrid.Flow.TavernBoard
                     continue;
                 }
 
-                var slot = TavernBoardSlotResolver.ServiceSlotAt(i);
+                var slot = ResolveServiceSlot(entry.DefId);
+                if (slot <= 0)
+                {
+                    mServiceGos.Add(null);
+                    continue;
+                }
+
                 RoomIconOccupancy.Current.Register(
                     slot, i, entry.DefId, RoomIconWalkRole.SoftBlockOnly);
 
@@ -505,10 +638,12 @@ namespace NineGrid.Flow.TavernBoard
             IGroundFieldGeometrySystem geometry,
             IContentSystem content)
         {
+            PlanCandidateSlots(pending);
+
             var cards = CardEntityLifecycleHook.CardsOrNull()
                         ?? UnityEngine.Object.FindFirstObjectByType<CardManagerSingleton>();
             var options = pending.RewardOptions;
-            for (var i = 0; i < options.Count && i < TavernBoardSlotResolver.CandidateSlots.Length; i++)
+            for (var i = 0; i < options.Count; i++)
             {
                 var entry = options[i];
                 mCandidateDefIds.Add(entry == null ? null : entry.DefId);
@@ -518,7 +653,13 @@ namespace NineGrid.Flow.TavernBoard
                     continue;
                 }
 
-                var slot = TavernBoardSlotResolver.CandidateSlotAt(i);
+                var slot = ResolveCandidateSlot(i);
+                if (slot <= 0)
+                {
+                    mCandidateCards.Add(null);
+                    continue;
+                }
+
                 RoomIconOccupancy.Current.Register(
                     slot, i, entry.DefId, RoomIconWalkRole.SoftBlockOnly);
 
@@ -1008,6 +1149,7 @@ namespace NineGrid.Flow.TavernBoard
                 FlowRoomEconomyAudioCues.TavernRefresh,
                 "TavernBoardPresenter.TryRefresh");
             InRoomGoldPresentation.PresentGoldChangesSince(arch, logStart);
+            mReplanServiceSlots = true;
             ResyncFromPending(arch);
         }
 
@@ -1034,10 +1176,10 @@ namespace NineGrid.Flow.TavernBoard
 
             if (wasNested)
             {
-                // 取消二级选择：消耗本次驻留，须先跳走再踩离开才能出店。
+                // 取消二级选择：回主面；若仍站在离开格则重武装驻留。
                 ResyncFromPending(arch);
                 mLeaveDwell.Cancel();
-                mLastAvatarSlot = TavernBoardSlotResolver.LeaveSlot;
+                mLastAvatarSlot = -1;
                 return true;
             }
 

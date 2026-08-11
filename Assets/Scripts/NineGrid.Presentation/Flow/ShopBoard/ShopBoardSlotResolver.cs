@@ -6,6 +6,7 @@ namespace NineGrid.Flow.ShopBoard
     public static class ShopBoardSlotResolver
     {
         public static readonly int[] ShelfSlots = { 1, 3, 7, 9, 4 };
+        public static readonly int[] ShelfFallbackPool = { 1, 3, 4, 6, 7, 9 };
         public const int RefreshSlot = 2;
         public const int LeaveSlot = 8;
         public const int AvatarSlot = 5;
