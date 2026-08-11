@@ -46,7 +46,7 @@
 | [ADR-0037](../adr/0037-inspect-detail-is-glossary-rows.md) | 右键详述效果区改词条行：`[[名字]]` 默认展开、`[code]` 图标仅 Inspect hover；告别 `design_text` 堆砌 |
 | [ADR-0038](../adr/0038-card-rhythm-dual-channel.md) | 卡级节奏：行动/移动双通道 + 节奏源/周期 + 共享倒计时；攻击模式仅几何；技能同步触发同拍；图标矩阵（**#184 Core/内容/卡面接线已落地**：`CardRhythmRules` / `OnCardRhythmFire` / 怪物 JSON `rhythmSource`+`rhythmPeriod`；机关全量改配另票） |
 | [ADR-0039](../adr/0039-avatar-hp-defeat-invariant.md) | Avatar HP≤0 必须 Defeat；终端相位粘性；`RefreshLegalCommands` 尊重存活；投影 `AvatarDefeated` 仍以 phase 为准，表现 `EnsureBattleEnded` 可兼读 HP 兜底 |
-| [ADR-0040](../adr/0040-vfx-cue-binding-persistent-state-workbench.md) | VFX Cue/State 与 Binding 单一播放决策真源；Attached/Independent 空间所有权；Persistent Slot；程序化播放器自治；三模式工作台；金币迁移（**#193 已落地**稳定声明、`vfx_bindings.json` Catalog、五维选择器解析、声明扫描与卫生校验、Editor Session 原子读写；**#203 已落地** `gold-flight` 程序化 Independent Pulse 播放器、金币 HUD 域宿主与批次首达/末达表现计划；**#199 已落地** 调用迁移、`GoldGainPresentationBinder`→VFX Cue、HUD 独占数字时间窗） |
+| [ADR-0040](../adr/0040-vfx-cue-binding-persistent-state-workbench.md) | VFX Cue/State 与 Binding 单一播放决策真源；Attached/Independent 空间所有权；Persistent Slot；程序化播放器自治；三模式工作台；金币迁移（**#193–#204 已落地**；**#200 已落地**结构护栏、跨系统契约与终验记录 `Assets/Notes/Logs/VfxAudit/vfx-e2e-verification-200.md`） |
 
 > ADR-0011–0013 几何、倒计时数学与敌方行动阶段已落地（#81）；**节奏频率与共用计数**以 ADR-0038 为准（部分 supersede）。旧落地方案见 `Assets/Notes/怪物攻击模式与敌方行动阶段-落地方案-2026-07-29.md`（过程笔记，非权威）。
 >

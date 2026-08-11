@@ -10,7 +10,7 @@ using UnityEngine;
 
 namespace NineGrid.Presentation.Tests
 {
-  /// <summary>#193 正式 vfx_bindings.json 与声明卫生门禁。</summary>
+  /// <summary>#193/#200 正式 vfx_bindings.json、声明、播放器注册与素材路径卫生门禁。</summary>
   public sealed class VfxDeliveryHygieneTests
   {
     [Test]
@@ -64,6 +64,75 @@ namespace NineGrid.Presentation.Tests
           .ToList();
 
       Assert.IsEmpty(critical, "VFX 声明卫生失败：\n" + string.Join("\n", critical.Take(40)));
+    }
+
+    [Test]
+    public void FormalCatalog_PlayersAreRegistered_AndMaterialPathsSane()
+    {
+      var projectRoot = new DirectoryInfo(Application.dataPath).Parent.FullName;
+      var catalogPath = Path.Combine(
+          projectRoot,
+          VfxBindingCatalogPaths.ManifestAssetPath.Replace('/', Path.DirectorySeparatorChar));
+      var json = File.ReadAllText(catalogPath, Encoding.UTF8);
+      var catalog = JsonUtility.FromJson<VfxBindingCatalogDto>(json);
+      Assert.IsNotNull(catalog);
+
+      var violations = new System.Collections.Generic.List<string>();
+      foreach (var row in catalog.cueBindings ?? System.Array.Empty<VfxCueBindingDto>())
+      {
+        if (row == null)
+        {
+          continue;
+        }
+
+        if (!VfxPlayerRegistry.IsKnownPlayerId(row.playerId))
+        {
+          violations.Add("cue " + row.cueId + ": 未知 playerId=" + row.playerId);
+        }
+
+        if (VfxPlayerRegistry.IsMaterialPlayer(row.playerId)
+            && string.IsNullOrWhiteSpace(row.materialKey)
+            && (row.variants == null || row.variants.Length == 0))
+        {
+          violations.Add("cue " + row.cueId + ": 素材型播放器缺少 materialKey/variants");
+        }
+
+        if (!string.IsNullOrWhiteSpace(row.materialKey)
+            && (row.materialKey.IndexOf("..", System.StringComparison.Ordinal) >= 0
+                || row.materialKey.IndexOf('\\') >= 0
+                || row.materialKey.StartsWith("/", System.StringComparison.Ordinal)))
+        {
+          violations.Add("cue " + row.cueId + ": 非法素材路径 " + row.materialKey);
+        }
+      }
+
+      foreach (var row in catalog.stateBindings ?? System.Array.Empty<VfxStateBindingDto>())
+      {
+        if (row == null)
+        {
+          continue;
+        }
+
+        if (!VfxPlayerRegistry.IsKnownPlayerId(row.playerId))
+        {
+          violations.Add("state " + row.stateId + ": 未知 playerId=" + row.playerId);
+        }
+
+        if (!VfxPlayerRegistry.SupportsState(row.playerId))
+        {
+          violations.Add("state " + row.stateId + ": playerId=" + row.playerId + " 不支持 State");
+        }
+
+        if (!string.IsNullOrWhiteSpace(row.materialKey)
+            && (row.materialKey.IndexOf("..", System.StringComparison.Ordinal) >= 0
+                || row.materialKey.IndexOf('\\') >= 0
+                || row.materialKey.StartsWith("/", System.StringComparison.Ordinal)))
+        {
+          violations.Add("state " + row.stateId + ": 非法素材路径 " + row.materialKey);
+        }
+      }
+
+      Assert.IsEmpty(violations, "播放器注册/素材路径卫生失败：\n" + string.Join("\n", violations.Take(40)));
     }
 
     private static bool IsCritical(string category)
