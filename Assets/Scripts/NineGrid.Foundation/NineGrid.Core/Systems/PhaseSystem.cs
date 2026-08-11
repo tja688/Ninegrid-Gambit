@@ -2184,6 +2184,14 @@ namespace NineGrid.Core.Systems
                     mLegalCommands.Add(GameCommandKind.MoveAvatar);
                     mLegalCommands.Add(GameCommandKind.DiscardRelic);
                     mLegalCommands.Add(GameCommandKind.RecycleItemSlot);
+                    // 非战斗选房相位使用宝箱卡等：PendingChoice 已被 OfferRewardChoice 换成遗物三选一，
+                    // 覆盖层待选须放行（与 InteractionLoop / RewardItemChoice 的局内宝箱同款）。
+                    if (this.GetModel<PendingChoiceModel>().Kind.Value == PendingChoiceKind.Reward)
+                    {
+                        mLegalCommands.Add(GameCommandKind.SelectReward);
+                        mLegalCommands.Add(GameCommandKind.SkipHelpChoice);
+                    }
+
                     break;
                 case GamePhase.RoomEvent:
                     mLegalCommands.Add(GameCommandKind.EnterRoom);
