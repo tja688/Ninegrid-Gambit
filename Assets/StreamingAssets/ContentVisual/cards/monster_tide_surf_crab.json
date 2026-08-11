@@ -1,0 +1,68 @@
+{
+    "schemaVersion": 2,
+    "contentId": "monster.tide_surf_crab",
+    "kind": "Monster",
+    "deckId": "deck.ai_expansion",
+    "role": "",
+    "displayName": "逐浪蟹",
+    "designSlotName": "怒潮涡流·序列2",
+    "description": "[[全向近战]]，进场时盘面旋转{skill.tide_surge.enter.count}格",
+    "faceIntro": "它来的时候，浪也跟着来",
+    "attackPattern": "全向近战",
+    "rhythmSource": "移动计数",
+    "rhythmPeriod": 5,
+    "gold": 5,
+    "stats": {
+        "hp": 4,
+        "armor": 0,
+        "attack": 1,
+        "action": 5,
+        "recovery": 0
+    },
+    "sprites": {
+        "mainIcon": "Assets/Resources/ContentArt/Multiple/icons_full_32.png#icons_full_32_173",
+        "faceBackground": "",
+        "cardFrame": "",
+        "banner": "",
+        "backBorder": "",
+        "backShirt": "",
+        "backLogo": ""
+    },
+    "mainVisual": {
+        "offsetX": 0.0,
+        "offsetY": 0.0,
+        "uniformScale": 1.0
+    },
+    "animations": {
+        "defaultFps": 8.0,
+        "slots": []
+    },
+    "extraSlots": [],
+    "rarity": "None",
+    "tags": [],
+    "effectAssemblies": [
+        {
+            "id": "skill.tide_surge.enter",
+            "templateId": "tpl.skill.turn_world.enter",
+            "containerType": "MonsterSkill",
+            "argsJson": "{\"count\":1}"
+        }
+    ],
+    "effectIds": [],
+    "skillIds": [],
+    "level": "普通",
+    "sequence": 2,
+    "isElite": false,
+    "isBoss": false,
+    "isReserve": false,
+    "containerType": "",
+    "deckKind": "",
+    "monsterDefIds": [],
+    "usableOutsideBattle": false,
+    "weight": 0,
+    "rewardPoolId": "",
+    "shopOfferCount": 0,
+    "openingInjects": [],
+    "iconPrefab": "",
+    "boardSlot": 0
+}

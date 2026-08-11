@@ -1,0 +1,72 @@
+{
+    "schemaVersion": 2,
+    "contentId": "trap.storm_totem",
+    "kind": "Trap",
+    "deckId": "deck.ai_expansion",
+    "role": "",
+    "displayName": "雷暴图腾",
+    "designSlotName": "AI拓展·机关3",
+    "description": "每{trap.storm_totem.pulse.every}次互动，电击[adjacent]所有卡牌{trap.storm_totem.pulse.amount}点",
+    "faceIntro": "靠近它的都得挨一下",
+    "attackPattern": "无",
+    "rhythmSource": "",
+    "rhythmPeriod": 0,
+    "gold": 0,
+    "stats": {
+        "hp": 7,
+        "armor": 0,
+        "attack": 0,
+        "action": 0,
+        "recovery": 0
+    },
+    "sprites": {
+        "mainIcon": "Assets/Resources/ContentArt/Multiple/icons_full_32.png#icons_full_32_221",
+        "faceBackground": "",
+        "cardFrame": "",
+        "banner": "",
+        "backBorder": "",
+        "backShirt": "",
+        "backLogo": ""
+    },
+    "mainVisual": {
+        "offsetX": 0.0,
+        "offsetY": 0.0,
+        "uniformScale": 1.0
+    },
+    "animations": {
+        "defaultFps": 8.0,
+        "slots": []
+    },
+    "extraSlots": [],
+    "rarity": "Red",
+    "tags": [
+        "tag.direct_damage"
+    ],
+    "effectAssemblies": [
+        {
+            "id": "trap.storm_totem.pulse",
+            "templateId": "tpl.trap.storm_totem.pulse",
+            "containerType": "Trap",
+            "argsJson": "{\"every\":4,\"amount\":2,\"projectKey\":\"trap.storm_totem.pulse.every\"}"
+        }
+    ],
+    "effectIds": [
+        "trap.storm_totem.pulse"
+    ],
+    "skillIds": [],
+    "level": "1",
+    "sequence": 0,
+    "isElite": false,
+    "isBoss": false,
+    "isReserve": false,
+    "containerType": "",
+    "deckKind": "",
+    "monsterDefIds": [],
+    "usableOutsideBattle": false,
+    "weight": 0,
+    "rewardPoolId": "",
+    "shopOfferCount": 0,
+    "openingInjects": [],
+    "iconPrefab": "",
+    "boardSlot": 0
+}

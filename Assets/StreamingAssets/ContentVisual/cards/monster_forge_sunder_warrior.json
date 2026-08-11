@@ -1,0 +1,68 @@
+{
+    "schemaVersion": 2,
+    "contentId": "monster.forge_sunder_warrior",
+    "kind": "Monster",
+    "deckId": "deck.ai_expansion",
+    "role": "",
+    "displayName": "碎甲武士",
+    "designSlotName": "熔炉军团·序列4",
+    "description": "[[普通近战]]，行动时对[adjacent]玩家附加{skill.forge_sunder.fire.amount}点[[无视护甲]]伤害",
+    "faceIntro": "他的锤子专挑缝隙下手",
+    "attackPattern": "普通近战",
+    "rhythmSource": "行动计数",
+    "rhythmPeriod": 5,
+    "gold": 5,
+    "stats": {
+        "hp": 6,
+        "armor": 2,
+        "attack": 2,
+        "action": 5,
+        "recovery": 0
+    },
+    "sprites": {
+        "mainIcon": "Assets/Resources/ContentArt/Multiple/icons_full_32.png#icons_full_32_124",
+        "faceBackground": "",
+        "cardFrame": "",
+        "banner": "",
+        "backBorder": "",
+        "backShirt": "",
+        "backLogo": ""
+    },
+    "mainVisual": {
+        "offsetX": 0.0,
+        "offsetY": 0.0,
+        "uniformScale": 1.0
+    },
+    "animations": {
+        "defaultFps": 8.0,
+        "slots": []
+    },
+    "extraSlots": [],
+    "rarity": "None",
+    "tags": [],
+    "effectAssemblies": [
+        {
+            "id": "skill.forge_sunder.fire",
+            "templateId": "tpl.skill.forge_sunder.fire",
+            "containerType": "MonsterSkill",
+            "argsJson": "{\"amount\":1}"
+        }
+    ],
+    "effectIds": [],
+    "skillIds": [],
+    "level": "普通",
+    "sequence": 4,
+    "isElite": false,
+    "isBoss": false,
+    "isReserve": false,
+    "containerType": "",
+    "deckKind": "",
+    "monsterDefIds": [],
+    "usableOutsideBattle": false,
+    "weight": 0,
+    "rewardPoolId": "",
+    "shopOfferCount": 0,
+    "openingInjects": [],
+    "iconPrefab": "",
+    "boardSlot": 0
+}

@@ -256,6 +256,8 @@ namespace NineGrid.Flow.Diagnostics
 
         private static bool ComputeAvatarDefeated(IArchitecture arch, int avatarUid)
         {
+            // 与 Core 判死谓词对齐（ADR-0039：uid 缺失 / 未注册 / HP≤0，不看 Zone）；
+            // zone 异常单独经 avatarZone 字段暴露，便于定位置死来源。
             if (arch == null || avatarUid <= 0)
             {
                 return true;
@@ -263,11 +265,6 @@ namespace NineGrid.Flow.Diagnostics
 
             CardInstance avatar;
             if (!arch.GetModel<CardRegistry>().TryGet(avatarUid, out avatar) || avatar == null)
-            {
-                return true;
-            }
-
-            if (avatar.Zone.Value == ZoneId.Graveyard || avatar.Zone.Value == ZoneId.Removed)
             {
                 return true;
             }

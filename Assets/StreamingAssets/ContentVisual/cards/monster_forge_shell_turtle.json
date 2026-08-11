@@ -1,0 +1,68 @@
+{
+    "schemaVersion": 2,
+    "contentId": "monster.forge_shell_turtle",
+    "kind": "Monster",
+    "deckId": "deck.ai_expansion",
+    "role": "",
+    "displayName": "铁壳龟",
+    "designSlotName": "熔炉军团·序列3",
+    "description": "[[普通近战]]，[armor]破碎时[attack]+{skill.forge_harden.break.delta}",
+    "faceIntro": "壳碎的那天，它不再忍了",
+    "attackPattern": "普通近战",
+    "rhythmSource": "行动计数",
+    "rhythmPeriod": 6,
+    "gold": 5,
+    "stats": {
+        "hp": 8,
+        "armor": 4,
+        "attack": 1,
+        "action": 6,
+        "recovery": 0
+    },
+    "sprites": {
+        "mainIcon": "Assets/Resources/ContentArt/Multiple/icons_full_32.png#icons_full_32_116",
+        "faceBackground": "",
+        "cardFrame": "",
+        "banner": "",
+        "backBorder": "",
+        "backShirt": "",
+        "backLogo": ""
+    },
+    "mainVisual": {
+        "offsetX": 0.0,
+        "offsetY": 0.0,
+        "uniformScale": 1.0
+    },
+    "animations": {
+        "defaultFps": 8.0,
+        "slots": []
+    },
+    "extraSlots": [],
+    "rarity": "None",
+    "tags": [],
+    "effectAssemblies": [
+        {
+            "id": "skill.forge_harden.break",
+            "templateId": "tpl.skill.forge_harden.break",
+            "containerType": "MonsterSkill",
+            "argsJson": "{\"delta\":2,\"reason\":\"skill.forge_harden\"}"
+        }
+    ],
+    "effectIds": [],
+    "skillIds": [],
+    "level": "普通",
+    "sequence": 3,
+    "isElite": false,
+    "isBoss": false,
+    "isReserve": false,
+    "containerType": "",
+    "deckKind": "",
+    "monsterDefIds": [],
+    "usableOutsideBattle": false,
+    "weight": 0,
+    "rewardPoolId": "",
+    "shopOfferCount": 0,
+    "openingInjects": [],
+    "iconPrefab": "",
+    "boardSlot": 0
+}

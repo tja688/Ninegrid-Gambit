@@ -1,0 +1,70 @@
+{
+    "schemaVersion": 2,
+    "contentId": "help.charge_horn",
+    "kind": "HelpCard",
+    "deckId": "deck.ai_expansion",
+    "role": "Attack",
+    "displayName": "冲锋号角",
+    "designSlotName": "AI拓展·道具4",
+    "description": "本场战斗[attack]+{help.charge_horn.use.value}",
+    "faceIntro": "号声一响，胆气自壮",
+    "attackPattern": "",
+    "rhythmSource": "",
+    "rhythmPeriod": 0,
+    "gold": 45,
+    "stats": {
+        "hp": 0,
+        "armor": 0,
+        "attack": 0,
+        "action": 0,
+        "recovery": 0
+    },
+    "sprites": {
+        "mainIcon": "Assets/Resources/ContentArt/Multiple/icons_full_32.png#icons_full_32_253",
+        "faceBackground": "",
+        "cardFrame": "",
+        "banner": "",
+        "backBorder": "",
+        "backShirt": "",
+        "backLogo": ""
+    },
+    "mainVisual": {
+        "offsetX": 0.0,
+        "offsetY": 0.0,
+        "uniformScale": 1.0
+    },
+    "animations": {
+        "defaultFps": 8.0,
+        "slots": []
+    },
+    "extraSlots": [],
+    "rarity": "Red",
+    "tags": [
+        "tag.attack_buff"
+    ],
+    "effectAssemblies": [
+        {
+            "id": "help.charge_horn.use",
+            "templateId": "tpl.help.charge_horn.use",
+            "containerType": "HelpCard",
+            "argsJson": "{\"value\":2,\"source\":\"help.charge_horn\"}"
+        }
+    ],
+    "effectIds": [],
+    "skillIds": [],
+    "level": "0",
+    "sequence": 0,
+    "isElite": false,
+    "isBoss": false,
+    "isReserve": false,
+    "containerType": "",
+    "deckKind": "",
+    "monsterDefIds": [],
+    "usableOutsideBattle": false,
+    "weight": 0,
+    "rewardPoolId": "",
+    "shopOfferCount": 0,
+    "openingInjects": [],
+    "iconPrefab": "",
+    "boardSlot": 0
+}

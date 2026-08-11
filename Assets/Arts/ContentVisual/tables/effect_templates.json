@@ -1774,5 +1774,205 @@
   "requires_json": "[\"NoOwnerEntity\"]",
   "conditions_json": "[]",
   "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnActivate\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"SetCounter\",\"key\":\"relic.foam_armor.can_arm\",\"value\":1}}"
+ },
+ {
+  "id": "tpl.skill.forge_quench.fire",
+  "state": "Implemented",
+  "design_text": "[开火同拍] 自身获得N点护甲（AI拓展·熔炉军团）",
+  "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnCardRhythmFire\"},\"target\":{\"atom\":\"Self\"},\"action\":{\"atom\":\"GainArmor\",\"amount\":\"{{amount}}\",\"cause\":\"{{cause}}\"}}"
+ },
+ {
+  "id": "tpl.skill.forge_plating.fire",
+  "state": "Implemented",
+  "design_text": "[开火同拍] 随机一个其他怪物获得N点护甲（AI拓展·熔炉军团）",
+  "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnCardRhythmFire\"},\"target\":{\"atom\":\"FilteredCards\",\"kind\":\"Monster\",\"zone\":\"Board\",\"exclude\":[\"Self\"],\"random\":true,\"count\":\"{{count}}\"},\"action\":{\"atom\":\"GainArmor\",\"amount\":\"{{amount}}\",\"cause\":\"{{cause}}\"}}"
+ },
+ {
+  "id": "tpl.skill.forge_harden.break",
+  "state": "Implemented",
+  "design_text": "[护甲破碎时] 本卡攻击永久+N（AI拓展·熔炉军团）",
+  "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnArmorBreak\"},\"target\":{\"atom\":\"Self\"},\"action\":{\"atom\":\"ModifyBaseStat\",\"stat\":\"Attack\",\"delta\":\"{{delta}}\",\"reason\":\"{{reason}}\"}}"
+ },
+ {
+  "id": "tpl.skill.forge_sunder.fire",
+  "state": "Implemented",
+  "design_text": "[开火同拍] 正交邻接玩家时，附加N点无视护甲伤害（AI拓展·熔炉军团）",
+  "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[\"Adjacent:left=Self:right=Player\"]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnCardRhythmFire\"},\"conditions\":[{\"atom\":\"Adjacent\",\"left\":\"Self\",\"right\":\"Player\"}],\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"DealDamage\",\"amount\":\"{{amount}}\",\"actor\":\"Self\",\"ignoreArmor\":true}}"
+ },
+ {
+  "id": "tpl.skill.forge_all.fire",
+  "state": "Implemented",
+  "design_text": "[开火同拍] 全场其他怪物各获得N点护甲（AI拓展·熔炉军团）",
+  "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnCardRhythmFire\"},\"target\":{\"atom\":\"FilteredCards\",\"kind\":\"Monster\",\"zone\":\"Board\",\"exclude\":[\"Self\"]},\"action\":{\"atom\":\"GainArmor\",\"amount\":\"{{amount}}\",\"cause\":\"{{cause}}\"}}"
+ },
+ {
+  "id": "tpl.skill.tide_reel.fire",
+  "state": "Implemented",
+  "design_text": "[开火同拍] 无视距离对玩家造成N点伤害（AI拓展·怒潮涡流）",
+  "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnCardRhythmFire\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"DealDamage\",\"amount\":\"{{amount}}\",\"actor\":\"Self\"}}"
+ },
+ {
+  "id": "tpl.skill.tide_escape.center",
+  "state": "Implemented",
+  "design_text": "[移动到中心格时] 与随机一个其他怪物换位；无其他怪物则不动（AI拓展·怒潮涡流）",
+  "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnMoveToSlot\",\"slot\":5,\"target\":\"Self\"},\"target\":{\"atom\":\"FilteredCards\",\"kind\":\"Monster\",\"zone\":\"Board\",\"include\":[\"Self\"],\"exclude\":[\"Self\"],\"random\":true,\"count\":\"{{count}}\"},\"action\":{\"atom\":\"Swap\"}}"
+ },
+ {
+  "id": "tpl.skill.tide_surge_fire.fire",
+  "state": "Implemented",
+  "design_text": "[开火同拍] 盘面旋转N格（AI拓展·怒潮涡流）",
+  "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnCardRhythmFire\"},\"target\":{\"atom\":\"Self\"},\"action\":{\"atom\":\"Rotate\",\"count\":\"{{count}}\"}}"
+ },
+ {
+  "id": "tpl.skill.tide_bloom.fire",
+  "state": "Implemented",
+  "design_text": "[开火同拍] 全场其他怪物各恢复N点血量（AI拓展·怒潮涡流）",
+  "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnCardRhythmFire\"},\"target\":{\"atom\":\"FilteredCards\",\"kind\":\"Monster\",\"zone\":\"Board\",\"exclude\":[\"Self\"]},\"action\":{\"atom\":\"Heal\",\"amount\":\"{{amount}}\",\"actor\":\"Self\"}}"
+ },
+ {
+  "id": "tpl.trap.echo_bell.battle",
+  "state": "Implemented",
+  "design_text": "[场上] 玩家与本卡交战后，盘面旋转N格（AI拓展）",
+  "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[\"EventFilter:eventType=DamageDealt\"]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnBattle\",\"targetKind\":\"Trap\",\"maxActionDepth\":0},\"conditions\":[{\"atom\":\"EventFilterActorIsPlayerTargetIsSelf\",\"eventType\":\"DamageDealt\"}],\"target\":{\"atom\":\"Self\"},\"action\":{\"atom\":\"Rotate\",\"count\":\"{{count}}\"}}"
+ },
+ {
+  "id": "tpl.trap.gold_magnet.drain",
+  "state": "Implemented",
+  "design_text": "[场上] 每互动N次，玩家金币变化delta（负=吸走）（AI拓展）",
+  "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnInteract\",\"every\":\"{{every}}\",\"projectKey\":\"{{projectKey}}\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"ModifyGold\",\"delta\":\"{{delta}}\",\"reason\":\"{{reason}}\"}}"
+ },
+ {
+  "id": "tpl.trap.gold_magnet.refund",
+  "state": "Implemented",
+  "design_text": "[被移除时] 玩家获得N金币（AI拓展）",
+  "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnSelfRemoved\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"ModifyGold\",\"delta\":\"{{delta}}\",\"reason\":\"{{reason}}\"}}"
+ },
+ {
+  "id": "tpl.trap.storm_totem.pulse",
+  "state": "Implemented",
+  "design_text": "[场上] 每互动N次，对正交邻格全部卡牌（含玩家）造成M点伤害（AI拓展）",
+  "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnInteract\",\"every\":\"{{every}}\",\"projectKey\":\"{{projectKey}}\"},\"target\":{\"atom\":\"OrthoAdjacent\"},\"action\":{\"atom\":\"DealDamage\",\"amount\":\"{{amount}}\",\"actor\":\"Self\"}}"
+ },
+ {
+  "id": "tpl.trap.hourglass.tick",
+  "state": "Implemented",
+  "design_text": "[场上] 每互动N次，全场怪物攻击永久+M（AI拓展）",
+  "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnInteract\",\"every\":\"{{every}}\",\"projectKey\":\"{{projectKey}}\"},\"target\":{\"atom\":\"AllMonsters\"},\"action\":{\"atom\":\"ModifyBaseStat\",\"stat\":\"Attack\",\"delta\":\"{{delta}}\",\"reason\":\"{{reason}}\"}}"
+ },
+ {
+  "id": "tpl.trap.offering_altar.battle",
+  "state": "Implemented",
+  "design_text": "[场上] 玩家与本卡交战后，随机一个怪物受到N点伤害（AI拓展）",
+  "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[\"EventFilter:eventType=DamageDealt\"]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnBattle\",\"targetKind\":\"Trap\",\"maxActionDepth\":0},\"conditions\":[{\"atom\":\"EventFilterActorIsPlayerTargetIsSelf\",\"eventType\":\"DamageDealt\"}],\"target\":{\"atom\":\"RandomMonster\"},\"action\":{\"atom\":\"DealDamage\",\"amount\":\"{{amount}}\",\"actor\":\"Self\"}}"
+ },
+ {
+  "id": "tpl.help.magnet_anchor.use",
+  "state": "Implemented",
+  "design_text": "[使用时] 选择一张怪物卡，移动到中心格（AI拓展）",
+  "requires_json": "[\"HasOwnerEntity\", \"ActivatedByUse\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnSelfUsed\"},\"target\":{\"atom\":\"SelectedCards\",\"kind\":\"Monster\",\"zone\":\"Board\",\"count\":\"{{count}}\"},\"action\":{\"atom\":\"Move\",\"toSlot\":\"{{toSlot}}\"}}"
+ },
+ {
+  "id": "tpl.help.sunder_grenade.use",
+  "state": "Implemented",
+  "design_text": "[使用时] 选择一张怪物卡，移除其全部护甲并造成N点伤害（AI拓展）",
+  "requires_json": "[\"HasOwnerEntity\", \"ActivatedByUse\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnSelfUsed\"},\"target\":{\"atom\":\"SelectedCards\",\"kind\":\"Monster\",\"zone\":\"Board\",\"count\":\"{{count}}\"},\"action\":{\"atom\":\"Sequence\",\"actions\":[{\"atom\":\"TransferArmor\",\"all\":true,\"receiver\":\"None\",\"cause\":\"{{cause}}\"},{\"atom\":\"DealDamage\",\"amount\":\"{{amount}}\",\"actor\":\"Player\"}]}}"
+ },
+ {
+  "id": "tpl.help.flash_bomb.use",
+  "state": "Implemented",
+  "design_text": "[使用时] 全场怪物行动倒计时+N（AI拓展）",
+  "requires_json": "[\"HasOwnerEntity\", \"ActivatedByUse\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnSelfUsed\"},\"target\":{\"atom\":\"AllMonsters\"},\"action\":{\"atom\":\"ModifyActionCountdown\",\"delta\":\"{{delta}}\"}}"
+ },
+ {
+  "id": "tpl.help.charge_horn.use",
+  "state": "Implemented",
+  "design_text": "[使用时] 本场战斗玩家攻击+N（AI拓展）",
+  "requires_json": "[\"HasOwnerEntity\", \"ActivatedByUse\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnSelfUsed\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"AddModifier\",\"stat\":\"Attack\",\"op\":\"Add\",\"value\":\"{{value}}\",\"layer\":\"Temporary\",\"scope\":\"UntilBattleEnds\",\"source\":\"{{source}}\"}}"
+ },
+ {
+  "id": "tpl.help.dismantle_kit.use",
+  "state": "Implemented",
+  "design_text": "[使用时] 选择一张机关卡，获得N金币并移除之（门/魔免机关不受影响）（AI拓展）",
+  "requires_json": "[\"HasOwnerEntity\", \"ActivatedByUse\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnSelfUsed\"},\"target\":{\"atom\":\"SelectedCards\",\"kind\":\"Trap\",\"zone\":\"Board\",\"count\":\"{{count}}\"},\"action\":{\"atom\":\"Sequence\",\"actions\":[{\"atom\":\"ModifyGold\",\"delta\":\"{{gold}}\",\"reason\":\"{{reason}}\"},{\"atom\":\"RemoveCard\",\"destination\":\"Removed\",\"reason\":\"{{reason}}\"}]}}"
+ },
+ {
+  "id": "tpl.relic.tide_compass.tick",
+  "state": "Implemented",
+  "design_text": "[每互动N次] 恢复M点血量（跑图累计）（AI拓展）",
+  "requires_json": "[\"NoOwnerEntity\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnInteract\",\"every\":\"{{every}}\",\"scope\":\"run\",\"projectKey\":\"{{projectKey}}\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"Heal\",\"amount\":\"{{amount}}\",\"actor\":\"Player\"}}"
+ },
+ {
+  "id": "tpl.relic.forge_bracer.break",
+  "state": "Implemented",
+  "design_text": "[玩家护甲破碎时] 本场战斗攻击+N（可叠加）（AI拓展）",
+  "requires_json": "[\"NoOwnerEntity\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnArmorBreak\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"AddModifier\",\"stat\":\"Attack\",\"op\":\"Add\",\"value\":\"{{value}}\",\"layer\":\"Temporary\",\"scope\":\"UntilBattleEnds\",\"source\":\"{{source}}\"}}"
+ },
+ {
+  "id": "tpl.relic.still_watch.tick",
+  "state": "Implemented",
+  "design_text": "[每互动N次] 全场怪物行动倒计时+M（跑图累计）（AI拓展）",
+  "requires_json": "[\"NoOwnerEntity\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnInteract\",\"every\":\"{{every}}\",\"scope\":\"run\",\"projectKey\":\"{{projectKey}}\"},\"target\":{\"atom\":\"AllMonsters\"},\"action\":{\"atom\":\"ModifyActionCountdown\",\"delta\":\"{{delta}}\"}}"
+ },
+ {
+  "id": "tpl.relic.slag_recycler.cumulative",
+  "state": "Implemented",
+  "design_text": "[玩家每累计损失N点护甲] 对随机一个怪物造成M点伤害（AI拓展）",
+  "requires_json": "[\"NoOwnerEntity\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnCumulative\",\"metric\":\"armorLost\",\"threshold\":\"{{threshold}}\",\"targetIsPlayer\":true,\"scope\":\"run\",\"projectKey\":\"{{projectKey}}\"},\"target\":{\"atom\":\"RandomMonster\"},\"action\":{\"atom\":\"DealDamage\",\"amount\":\"{{amount}}\",\"actor\":\"Player\"}}"
+ },
+ {
+  "id": "tpl.relic.caravan_ledger.node_end",
+  "state": "Implemented",
+  "design_text": "[每个战斗节点结束时] 获得N金币（AI拓展）",
+  "requires_json": "[\"NoOwnerEntity\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnNodeEnd\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"ModifyGold\",\"delta\":\"{{delta}}\",\"reason\":\"{{reason}}\"}}"
  }
 ]

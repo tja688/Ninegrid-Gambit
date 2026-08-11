@@ -653,7 +653,7 @@ namespace NineGrid.Flow.Diagnostics
             int boardOccupantCount,
             int presOccupantCount)
         {
-            return new Dictionary<string, string>
+            var payload = new Dictionary<string, string>
             {
                 { "avatarUid", avatarUid.ToString() },
                 { "nodeIndex", ResolveNodeIndex() },
@@ -661,6 +661,31 @@ namespace NineGrid.Flow.Diagnostics
                 { "boardOccupantCount", boardOccupantCount.ToString() },
                 { "presOccupantCount", presOccupantCount.ToString() },
             };
+
+            // ADR-0039 取证：逐节点留存 Avatar zone / 一手 HP，便于事后定位判死状态的产生区间。
+            try
+            {
+                var registry = NineGridArchitecture.Current?.GetModel<CardRegistry>();
+                if (avatarUid > 0
+                    && registry != null
+                    && registry.TryGet(avatarUid, out var avatar)
+                    && avatar != null)
+                {
+                    payload["avatarZone"] = avatar.Zone.Value.ToString();
+                    payload["avatarHpBase"] =
+                        ((int)System.Math.Round(avatar.Stats.GetBase(StatId.Hp))).ToString();
+                }
+                else
+                {
+                    payload["avatarZone"] = "unregistered";
+                }
+            }
+            catch
+            {
+                // 取证字段失败不阻断主流程。
+            }
+
+            return payload;
         }
 
         public static void CountBoardOccupants(out int coreCount, out int presCount)

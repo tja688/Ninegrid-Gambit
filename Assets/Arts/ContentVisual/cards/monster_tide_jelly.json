@@ -1,0 +1,61 @@
+{
+    "schemaVersion": 2,
+    "contentId": "monster.tide_jelly",
+    "kind": "Monster",
+    "deckId": "deck.ai_expansion",
+    "role": "",
+    "displayName": "涟漪水母",
+    "designSlotName": "怒潮涡流·序列1",
+    "description": "[[普通近战]]，随[[移动计数]]行动",
+    "faceIntro": "随波逐流，也随波出手",
+    "attackPattern": "普通近战",
+    "rhythmSource": "移动计数",
+    "rhythmPeriod": 4,
+    "gold": 5,
+    "stats": {
+        "hp": 4,
+        "armor": 0,
+        "attack": 1,
+        "action": 4,
+        "recovery": 0
+    },
+    "sprites": {
+        "mainIcon": "Assets/Resources/ContentArt/Multiple/icons_full_32.png#icons_full_32_164",
+        "faceBackground": "",
+        "cardFrame": "",
+        "banner": "",
+        "backBorder": "",
+        "backShirt": "",
+        "backLogo": ""
+    },
+    "mainVisual": {
+        "offsetX": 0.0,
+        "offsetY": 0.0,
+        "uniformScale": 1.0
+    },
+    "animations": {
+        "defaultFps": 8.0,
+        "slots": []
+    },
+    "extraSlots": [],
+    "rarity": "None",
+    "tags": [],
+    "effectAssemblies": [],
+    "effectIds": [],
+    "skillIds": [],
+    "level": "普通",
+    "sequence": 1,
+    "isElite": false,
+    "isBoss": false,
+    "isReserve": false,
+    "containerType": "",
+    "deckKind": "",
+    "monsterDefIds": [],
+    "usableOutsideBattle": false,
+    "weight": 0,
+    "rewardPoolId": "",
+    "shopOfferCount": 0,
+    "openingInjects": [],
+    "iconPrefab": "",
+    "boardSlot": 0
+}

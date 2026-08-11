@@ -191,14 +191,12 @@ namespace NineGrid.Core
                 return GameActionResult.Empty;
             }
 
-            var board = context.GetModel<BoardModel>();
-            CardInstance avatar;
-            if (!context.GetModel<CardRegistry>().TryGet(board.AvatarUid.Value, out avatar))
-            {
-                return GameActionResult.Empty;
-            }
-
-            if ((int)Math.Round(avatar.Stats.GetBase(StatId.Hp)) > 0)
+            // ADR-0039：与合法指令裁决共用同一判死谓词（uid 缺失 / 未注册 / HP≤0）。
+            // 旧实现对「查不到 Avatar」静默 no-op：一旦出现该非法状态，合法指令已进僵尸集
+            // 而战败永不触发，战场永久软锁。现统一为可收束的 Defeat。
+            if (!AvatarDefeatFollowUp.IsAvatarDefeated(
+                    context.GetModel<BoardModel>(),
+                    context.GetModel<CardRegistry>()))
             {
                 return GameActionResult.Empty;
             }

@@ -1,0 +1,71 @@
+{
+    "schemaVersion": 2,
+    "contentId": "relic.slag_recycler",
+    "kind": "Relic",
+    "deckId": "deck.ai_expansion",
+    "role": "Attack",
+    "displayName": "熔渣回收器",
+    "designSlotName": "AI拓展·遗物4",
+    "description": "每累计损失{relic.slag_recycler.cumulative.threshold}点[armor]，随机怪物受{relic.slag_recycler.cumulative.amount}点伤害",
+    "faceIntro": "掉下来的甲片都能再利用",
+    "attackPattern": "",
+    "rhythmSource": "",
+    "rhythmPeriod": 0,
+    "gold": 0,
+    "stats": {
+        "hp": 0,
+        "armor": 0,
+        "attack": 0,
+        "action": 0,
+        "recovery": 0
+    },
+    "sprites": {
+        "mainIcon": "Assets/Resources/ContentArt/Multiple/icons_full_32.png#icons_full_32_263",
+        "faceBackground": "",
+        "cardFrame": "",
+        "banner": "",
+        "backBorder": "",
+        "backShirt": "",
+        "backLogo": ""
+    },
+    "mainVisual": {
+        "offsetX": 0.0,
+        "offsetY": 0.0,
+        "uniformScale": 1.0
+    },
+    "animations": {
+        "defaultFps": 8.0,
+        "slots": []
+    },
+    "extraSlots": [],
+    "rarity": "Red",
+    "tags": [
+        "tag.armor",
+        "tag.direct_damage"
+    ],
+    "effectAssemblies": [
+        {
+            "id": "relic.slag_recycler.cumulative",
+            "templateId": "tpl.relic.slag_recycler.cumulative",
+            "containerType": "Relic",
+            "argsJson": "{\"threshold\":3,\"amount\":2,\"projectKey\":\"relic.slag_recycler.cumulative.threshold\"}"
+        }
+    ],
+    "effectIds": [],
+    "skillIds": [],
+    "level": "0",
+    "sequence": 0,
+    "isElite": false,
+    "isBoss": false,
+    "isReserve": false,
+    "containerType": "",
+    "deckKind": "",
+    "monsterDefIds": [],
+    "usableOutsideBattle": false,
+    "weight": 0,
+    "rewardPoolId": "",
+    "shopOfferCount": 0,
+    "openingInjects": [],
+    "iconPrefab": "",
+    "boardSlot": 0
+}

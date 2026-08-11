@@ -1,0 +1,70 @@
+{
+    "schemaVersion": 2,
+    "contentId": "trap.echo_bell",
+    "kind": "Trap",
+    "deckId": "deck.ai_expansion",
+    "role": "",
+    "displayName": "回音钟",
+    "designSlotName": "AI拓展·机关1",
+    "description": "与本卡交战后，盘面旋转{trap.echo_bell.battle.count}格",
+    "faceIntro": "敲一下，世界就转一圈",
+    "attackPattern": "无",
+    "rhythmSource": "",
+    "rhythmPeriod": 0,
+    "gold": 0,
+    "stats": {
+        "hp": 5,
+        "armor": 0,
+        "attack": 0,
+        "action": 0,
+        "recovery": 0
+    },
+    "sprites": {
+        "mainIcon": "Assets/Resources/ContentArt/Multiple/icons_full_32.png#icons_full_32_210",
+        "faceBackground": "",
+        "cardFrame": "",
+        "banner": "",
+        "backBorder": "",
+        "backShirt": "",
+        "backLogo": ""
+    },
+    "mainVisual": {
+        "offsetX": 0.0,
+        "offsetY": 0.0,
+        "uniformScale": 1.0
+    },
+    "animations": {
+        "defaultFps": 8.0,
+        "slots": []
+    },
+    "extraSlots": [],
+    "rarity": "Red",
+    "tags": [],
+    "effectAssemblies": [
+        {
+            "id": "trap.echo_bell.battle",
+            "templateId": "tpl.trap.echo_bell.battle",
+            "containerType": "Trap",
+            "argsJson": "{\"count\":1}"
+        }
+    ],
+    "effectIds": [
+        "trap.echo_bell.battle"
+    ],
+    "skillIds": [],
+    "level": "1",
+    "sequence": 0,
+    "isElite": false,
+    "isBoss": false,
+    "isReserve": false,
+    "containerType": "",
+    "deckKind": "",
+    "monsterDefIds": [],
+    "usableOutsideBattle": false,
+    "weight": 0,
+    "rewardPoolId": "",
+    "shopOfferCount": 0,
+    "openingInjects": [],
+    "iconPrefab": "",
+    "boardSlot": 0
+}

@@ -1,0 +1,79 @@
+{
+    "schemaVersion": 2,
+    "contentId": "trap.gold_magnet",
+    "kind": "Trap",
+    "deckId": "deck.ai_expansion",
+    "role": "",
+    "displayName": "聚宝磁盘",
+    "designSlotName": "AI拓展·机关2",
+    "description": "每{trap.gold_magnet.drain.every}次互动吸走{trap.gold_magnet.drain.amount}[money]，移除时返还{trap.gold_magnet.refund.delta}[money]",
+    "faceIntro": "吸走的钱总会吐出来的",
+    "attackPattern": "无",
+    "rhythmSource": "",
+    "rhythmPeriod": 0,
+    "gold": 0,
+    "stats": {
+        "hp": 8,
+        "armor": 0,
+        "attack": 0,
+        "action": 0,
+        "recovery": 0
+    },
+    "sprites": {
+        "mainIcon": "Assets/Resources/ContentArt/Multiple/icons_full_32.png#icons_full_32_216",
+        "faceBackground": "",
+        "cardFrame": "",
+        "banner": "",
+        "backBorder": "",
+        "backShirt": "",
+        "backLogo": ""
+    },
+    "mainVisual": {
+        "offsetX": 0.0,
+        "offsetY": 0.0,
+        "uniformScale": 1.0
+    },
+    "animations": {
+        "defaultFps": 8.0,
+        "slots": []
+    },
+    "extraSlots": [],
+    "rarity": "Red",
+    "tags": [
+        "tag.economy"
+    ],
+    "effectAssemblies": [
+        {
+            "id": "trap.gold_magnet.drain",
+            "templateId": "tpl.trap.gold_magnet.drain",
+            "containerType": "Trap",
+            "argsJson": "{\"every\":3,\"delta\":-2,\"amount\":2,\"projectKey\":\"trap.gold_magnet.drain.every\",\"reason\":\"trap.gold_magnet\"}"
+        },
+        {
+            "id": "trap.gold_magnet.refund",
+            "templateId": "tpl.trap.gold_magnet.refund",
+            "containerType": "Trap",
+            "argsJson": "{\"delta\":10,\"reason\":\"trap.gold_magnet\"}"
+        }
+    ],
+    "effectIds": [
+        "trap.gold_magnet.drain",
+        "trap.gold_magnet.refund"
+    ],
+    "skillIds": [],
+    "level": "1",
+    "sequence": 0,
+    "isElite": false,
+    "isBoss": false,
+    "isReserve": false,
+    "containerType": "",
+    "deckKind": "",
+    "monsterDefIds": [],
+    "usableOutsideBattle": false,
+    "weight": 0,
+    "rewardPoolId": "",
+    "shopOfferCount": 0,
+    "openingInjects": [],
+    "iconPrefab": "",
+    "boardSlot": 0
+}

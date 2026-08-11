@@ -1244,12 +1244,12 @@ namespace NineGrid.Presentation.Systems
             var tint = binding.Tint;
             var useUnscaledTime = binding.UseUnscaledTime;
 
-            if (VfxPlayerRegistry.IsMaterialPlayer(binding.PlayerId))
+            if (VfxPlayerRegistry.UsesMaterialVariantSelection(binding.PlayerId))
             {
                 var variant = ResolveVariant(binding);
                 if (variant == null || string.IsNullOrWhiteSpace(variant.materialKey))
                 {
-                    return RecordUnbound(request, correlationId, "视觉特效绑定缺少有效素材。");
+                    return RecordUnbound(request, correlationId, "视觉特效绑定缺少有效素材或预设。");
                 }
 
                 variantId = variant.variantId ?? string.Empty;
@@ -1673,12 +1673,12 @@ namespace NineGrid.Presentation.Systems
             var tint = binding.Tint;
             var useUnscaledTime = binding.UseUnscaledTime;
 
-            if (VfxPlayerRegistry.IsMaterialPlayer(binding.PlayerId))
+            if (VfxPlayerRegistry.UsesMaterialVariantSelection(binding.PlayerId))
             {
                 var variant = ResolveStateVariant(binding);
                 if (variant == null || string.IsNullOrWhiteSpace(variant.materialKey))
                 {
-                    return RecordStateUnbound(request, correlationId, "视觉特效绑定缺少有效素材。");
+                    return RecordStateUnbound(request, correlationId, "视觉特效绑定缺少有效素材或预设。");
                 }
 
                 variantId = variant.variantId ?? string.Empty;
@@ -2533,6 +2533,7 @@ namespace NineGrid.Presentation.Systems
         {
             private readonly VfxSpriteSheetPlayerFactory mSpriteSheetFactory = new VfxSpriteSheetPlayerFactory();
             private readonly VfxGoldFlightPlayerFactory mGoldFlightFactory = new VfxGoldFlightPlayerFactory();
+            private readonly VfxParticlePlayerFactory mParticleFactory = new VfxParticlePlayerFactory();
 
             public bool TryCreatePulsePlayer(string playerId, out IVfxPulsePlayer player, out string failureReason)
             {
@@ -2554,6 +2555,11 @@ namespace NineGrid.Presentation.Systems
                     return mGoldFlightFactory.TryCreatePulsePlayer(playerId, out player, out failureReason);
                 }
 
+                if (string.Equals(playerId, VfxPlayerRegistry.Particle, StringComparison.Ordinal))
+                {
+                    return mParticleFactory.TryCreatePulsePlayer(playerId, out player, out failureReason);
+                }
+
                 failureReason = "播放器尚未实现。";
                 return false;
             }
@@ -2571,6 +2577,11 @@ namespace NineGrid.Presentation.Systems
                 if (string.Equals(playerId, VfxPlayerRegistry.SpriteSheet, StringComparison.Ordinal))
                 {
                     return mSpriteSheetFactory.TryCreateStatePlayer(playerId, out player, out failureReason);
+                }
+
+                if (string.Equals(playerId, VfxPlayerRegistry.Particle, StringComparison.Ordinal))
+                {
+                    return mParticleFactory.TryCreateStatePlayer(playerId, out player, out failureReason);
                 }
 
                 failureReason = "播放器尚未实现。";

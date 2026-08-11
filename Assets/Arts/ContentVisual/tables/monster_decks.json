@@ -48,5 +48,10 @@
     "deck_id": "deck.smallanimal",
     "deck_kind": "Boss",
     "display_name": "小动物卡组"
+  },
+  {
+    "deck_id": "deck.ai_expansion",
+    "deck_kind": "Reserve",
+    "display_name": "AI 拓展设计卡组"
   }
 ]

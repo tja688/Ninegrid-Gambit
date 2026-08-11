@@ -16,9 +16,15 @@ status: accepted
 
 5. **表现投影**：`AvatarDefeated` 投影旗标仍以 `phase == Defeat` 为准；`EnsureBattleEndedIfAvatarDefeated` 可兼读 Core phase / Avatar HP 作兜底，**不得**把战败权威上移到 HUD。
 
+6. **判死谓词唯一（2026-08-11 补遗）**：合法指令裁决（`PhaseSystem.IsAvatarDefeated`）与战败收束（`DefeatIfAvatarDeadAction`）必须共用同一谓词——`AvatarDefeatFollowUp.IsAvatarDefeated`：`AvatarUid≤0` ∨ 注册表查无 ∨ 一手 HP≤0。**不看 Zone**。任何令合法指令收缩为「仅回收/丢弃」僵尸集的状态，都必须能被 `DefeatIfAvatarDeadAction` 收束成 `Defeat`，禁止出现「裁决判死、收束不认」的永久软锁。
+
+7. **Avatar zone 自愈（同批补遗）**：Avatar 在册且 HP>0 但 `Zone != Avatar`（被 `Removed`/`Graveyard` 等异常置死）属**非法状态**：不参与判死（见第 6 条），`StartNode` 战斗路径检测到即经 `MoveAvatarAction→SetAvatar` 归位修复；表现探针 `[AvatarDefeatProbe]` 在 StartNode 后仍见非法 zone 时 `LogError` 归因。
+
 ## 为什么
 
 0 血僵尸局（`hp=0` + `InteractionLoop` + 仍可 `Attack`）来自死亡缝合不完整：`DefeatIfAvatarDead` 几乎只挂在 `DealDamage`；`ChangePhase(InteractionLoop)` 可在 `NodeStarted` Post 链致死之后覆盖 `Defeat`；合法指令只看相位不看 HP。Batch-ack 缓释只延迟战败**表演**，不是 Core 僵尸根因。
+
+**第 6/7 条的动机（2026-08-11）**：线上复现过反向僵尸——进战斗后 `InteractionLoop + pendingChoice=None` 下攻击/用牌/点空格全部 `notLegal` 拒绝、拾取（免门禁可信路径）与卖卡仍可用、战败永不触发。根因是两个判死谓词不一致：旧 `PhaseSystem.IsAvatarDefeated` 复用 `IsCardAlive`（含 Zone 判定），而 `DefeatIfAvatarDeadAction` 只读 HP 且对「注册表查无」静默 no-op；Avatar zone 被异常置死（HP>0）即落入「裁决判死、收束不认」的缝隙，成为跨节点永久软锁（进房硬切格 5 会跳过 `StartNode` 原有的 `MoveAvatarAction` 归位，使 zone 非法状态得以残留）。回归见 `AvatarVitalityInvariantTests`。
 
 ## 后果
 

@@ -1,0 +1,70 @@
+{
+    "schemaVersion": 2,
+    "contentId": "help.flash_bomb",
+    "kind": "HelpCard",
+    "deckId": "deck.ai_expansion",
+    "role": "Utility",
+    "displayName": "闪光弹",
+    "designSlotName": "AI拓展·道具3",
+    "description": "全场怪物行动倒计时+{help.flash_bomb.use.delta}",
+    "faceIntro": "亮一下，全场愣神",
+    "attackPattern": "",
+    "rhythmSource": "",
+    "rhythmPeriod": 0,
+    "gold": 50,
+    "stats": {
+        "hp": 0,
+        "armor": 0,
+        "attack": 0,
+        "action": 0,
+        "recovery": 0
+    },
+    "sprites": {
+        "mainIcon": "Assets/Resources/ContentArt/Multiple/icons_full_32.png#icons_full_32_249",
+        "faceBackground": "",
+        "cardFrame": "",
+        "banner": "",
+        "backBorder": "",
+        "backShirt": "",
+        "backLogo": ""
+    },
+    "mainVisual": {
+        "offsetX": 0.0,
+        "offsetY": 0.0,
+        "uniformScale": 1.0
+    },
+    "animations": {
+        "defaultFps": 8.0,
+        "slots": []
+    },
+    "extraSlots": [],
+    "rarity": "Red",
+    "tags": [
+        "tag.special"
+    ],
+    "effectAssemblies": [
+        {
+            "id": "help.flash_bomb.use",
+            "templateId": "tpl.help.flash_bomb.use",
+            "containerType": "HelpCard",
+            "argsJson": "{\"delta\":2}"
+        }
+    ],
+    "effectIds": [],
+    "skillIds": [],
+    "level": "0",
+    "sequence": 0,
+    "isElite": false,
+    "isBoss": false,
+    "isReserve": false,
+    "containerType": "",
+    "deckKind": "",
+    "monsterDefIds": [],
+    "usableOutsideBattle": false,
+    "weight": 0,
+    "rewardPoolId": "",
+    "shopOfferCount": 0,
+    "openingInjects": [],
+    "iconPrefab": "",
+    "boardSlot": 0
+}

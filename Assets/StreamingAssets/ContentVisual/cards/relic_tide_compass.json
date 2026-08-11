@@ -1,0 +1,70 @@
+{
+    "schemaVersion": 2,
+    "contentId": "relic.tide_compass",
+    "kind": "Relic",
+    "deckId": "deck.ai_expansion",
+    "role": "Defense",
+    "displayName": "潮汐罗盘",
+    "designSlotName": "AI拓展·遗物1",
+    "description": "每{relic.tide_compass.tick.every}次互动，恢复{relic.tide_compass.tick.amount}点[HP]",
+    "faceIntro": "指针转满一圈，伤口就合上一点",
+    "attackPattern": "",
+    "rhythmSource": "",
+    "rhythmPeriod": 0,
+    "gold": 0,
+    "stats": {
+        "hp": 0,
+        "armor": 0,
+        "attack": 0,
+        "action": 0,
+        "recovery": 0
+    },
+    "sprites": {
+        "mainIcon": "Assets/Resources/ContentArt/Multiple/icons_full_32.png#icons_full_32_257",
+        "faceBackground": "",
+        "cardFrame": "",
+        "banner": "",
+        "backBorder": "",
+        "backShirt": "",
+        "backLogo": ""
+    },
+    "mainVisual": {
+        "offsetX": 0.0,
+        "offsetY": 0.0,
+        "uniformScale": 1.0
+    },
+    "animations": {
+        "defaultFps": 8.0,
+        "slots": []
+    },
+    "extraSlots": [],
+    "rarity": "Red",
+    "tags": [
+        "tag.heal"
+    ],
+    "effectAssemblies": [
+        {
+            "id": "relic.tide_compass.tick",
+            "templateId": "tpl.relic.tide_compass.tick",
+            "containerType": "Relic",
+            "argsJson": "{\"every\":8,\"amount\":2,\"projectKey\":\"relic.tide_compass.tick.every\"}"
+        }
+    ],
+    "effectIds": [],
+    "skillIds": [],
+    "level": "0",
+    "sequence": 0,
+    "isElite": false,
+    "isBoss": false,
+    "isReserve": false,
+    "containerType": "",
+    "deckKind": "",
+    "monsterDefIds": [],
+    "usableOutsideBattle": false,
+    "weight": 0,
+    "rewardPoolId": "",
+    "shopOfferCount": 0,
+    "openingInjects": [],
+    "iconPrefab": "",
+    "boardSlot": 0
+}

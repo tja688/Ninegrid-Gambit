@@ -1,0 +1,68 @@
+{
+    "schemaVersion": 2,
+    "contentId": "monster.forge_apprentice",
+    "kind": "Monster",
+    "deckId": "deck.ai_expansion",
+    "role": "",
+    "displayName": "熔炉学徒",
+    "designSlotName": "熔炉军团·序列2",
+    "description": "[[全向近战]]，行动时为随机友军+{skill.forge_plating.fire.amount}[armor]",
+    "faceIntro": "学徒的手艺全在别人身上",
+    "attackPattern": "全向近战",
+    "rhythmSource": "行动计数",
+    "rhythmPeriod": 5,
+    "gold": 5,
+    "stats": {
+        "hp": 4,
+        "armor": 0,
+        "attack": 1,
+        "action": 5,
+        "recovery": 0
+    },
+    "sprites": {
+        "mainIcon": "Assets/Resources/ContentArt/Multiple/icons_full_32.png#icons_full_32_41",
+        "faceBackground": "",
+        "cardFrame": "",
+        "banner": "",
+        "backBorder": "",
+        "backShirt": "",
+        "backLogo": ""
+    },
+    "mainVisual": {
+        "offsetX": 0.0,
+        "offsetY": 0.0,
+        "uniformScale": 1.0
+    },
+    "animations": {
+        "defaultFps": 8.0,
+        "slots": []
+    },
+    "extraSlots": [],
+    "rarity": "None",
+    "tags": [],
+    "effectAssemblies": [
+        {
+            "id": "skill.forge_plating.fire",
+            "templateId": "tpl.skill.forge_plating.fire",
+            "containerType": "MonsterSkill",
+            "argsJson": "{\"count\":1,\"amount\":2,\"cause\":\"skill.forge_plating\"}"
+        }
+    ],
+    "effectIds": [],
+    "skillIds": [],
+    "level": "普通",
+    "sequence": 2,
+    "isElite": false,
+    "isBoss": false,
+    "isReserve": false,
+    "containerType": "",
+    "deckKind": "",
+    "monsterDefIds": [],
+    "usableOutsideBattle": false,
+    "weight": 0,
+    "rewardPoolId": "",
+    "shopOfferCount": 0,
+    "openingInjects": [],
+    "iconPrefab": "",
+    "boardSlot": 0
+}

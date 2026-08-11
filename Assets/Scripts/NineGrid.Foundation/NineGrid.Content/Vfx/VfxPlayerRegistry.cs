@@ -7,6 +7,7 @@ namespace NineGrid.Content.Vfx
   {
     public const string SpriteSheet = "sprite-sheet";
     public const string GoldFlight = "gold-flight";
+    public const string Particle = "particle";
 
     public static bool IsKnownPlayerId(string playerId)
     {
@@ -16,12 +17,28 @@ namespace NineGrid.Content.Vfx
       }
 
       return string.Equals(playerId, SpriteSheet, StringComparison.Ordinal)
-          || string.Equals(playerId, GoldFlight, StringComparison.Ordinal);
+          || string.Equals(playerId, GoldFlight, StringComparison.Ordinal)
+          || string.Equals(playerId, Particle, StringComparison.Ordinal);
     }
 
     public static bool IsMaterialPlayer(string playerId)
     {
       return string.Equals(playerId, SpriteSheet, StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// particle 程序化粒子播放器：materialKey 携带 VfxParticlePresetIds 预设 ID，
+    /// 走与素材播放器相同的变体池解析，但素材卫生按预设表校验而非 visual_effects 索引。
+    /// </summary>
+    public static bool IsParticlePlayer(string playerId)
+    {
+      return string.Equals(playerId, Particle, StringComparison.Ordinal);
+    }
+
+    /// <summary>该播放器是否消费 materialKey / variants 变体池（素材键或预设键）。</summary>
+    public static bool UsesMaterialVariantSelection(string playerId)
+    {
+      return IsMaterialPlayer(playerId) || IsParticlePlayer(playerId);
     }
 
     public static bool SupportsPulse(string playerId)
@@ -31,12 +48,13 @@ namespace NineGrid.Content.Vfx
 
     public static bool SupportsState(string playerId)
     {
-      return string.Equals(playerId, SpriteSheet, StringComparison.Ordinal);
+      return string.Equals(playerId, SpriteSheet, StringComparison.Ordinal)
+          || string.Equals(playerId, Particle, StringComparison.Ordinal);
     }
 
     public static bool AllowsParamOverride(string playerId, string paramName)
     {
-      if (!IsMaterialPlayer(playerId) || string.IsNullOrWhiteSpace(paramName))
+      if (!UsesMaterialVariantSelection(playerId) || string.IsNullOrWhiteSpace(paramName))
       {
         return false;
       }

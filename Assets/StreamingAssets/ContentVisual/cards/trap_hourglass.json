@@ -1,0 +1,72 @@
+{
+    "schemaVersion": 2,
+    "contentId": "trap.hourglass",
+    "kind": "Trap",
+    "deckId": "deck.ai_expansion",
+    "role": "",
+    "displayName": "岁月沙漏",
+    "designSlotName": "AI拓展·机关4",
+    "description": "每{trap.hourglass.tick.every}次互动，全场怪物[attack]+{trap.hourglass.tick.delta}",
+    "faceIntro": "沙漏不空，怪物不停变强",
+    "attackPattern": "无",
+    "rhythmSource": "",
+    "rhythmPeriod": 0,
+    "gold": 0,
+    "stats": {
+        "hp": 6,
+        "armor": 0,
+        "attack": 0,
+        "action": 0,
+        "recovery": 0
+    },
+    "sprites": {
+        "mainIcon": "Assets/Resources/ContentArt/Multiple/icons_full_32.png#icons_full_32_240",
+        "faceBackground": "",
+        "cardFrame": "",
+        "banner": "",
+        "backBorder": "",
+        "backShirt": "",
+        "backLogo": ""
+    },
+    "mainVisual": {
+        "offsetX": 0.0,
+        "offsetY": 0.0,
+        "uniformScale": 1.0
+    },
+    "animations": {
+        "defaultFps": 8.0,
+        "slots": []
+    },
+    "extraSlots": [],
+    "rarity": "Red",
+    "tags": [
+        "tag.attack_buff"
+    ],
+    "effectAssemblies": [
+        {
+            "id": "trap.hourglass.tick",
+            "templateId": "tpl.trap.hourglass.tick",
+            "containerType": "Trap",
+            "argsJson": "{\"every\":6,\"delta\":1,\"projectKey\":\"trap.hourglass.tick.every\",\"reason\":\"trap.hourglass\"}"
+        }
+    ],
+    "effectIds": [
+        "trap.hourglass.tick"
+    ],
+    "skillIds": [],
+    "level": "1",
+    "sequence": 0,
+    "isElite": false,
+    "isBoss": false,
+    "isReserve": false,
+    "containerType": "",
+    "deckKind": "",
+    "monsterDefIds": [],
+    "usableOutsideBattle": false,
+    "weight": 0,
+    "rewardPoolId": "",
+    "shopOfferCount": 0,
+    "openingInjects": [],
+    "iconPrefab": "",
+    "boardSlot": 0
+}

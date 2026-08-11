@@ -104,12 +104,14 @@ namespace NineGrid.Flow
             var avatarUid = board.AvatarUid.Value;
             var baseHp = -1;
             var effectiveHp = -1;
+            var zoneNote = "unregistered";
             if (avatarUid > 0 && registry.TryGet(avatarUid, out var avatar) && avatar != null)
             {
                 baseHp = (int)Math.Round(avatar.Stats.GetBase(StatId.Hp));
                 effectiveHp = statSystem != null
                     ? statSystem.GetEffectiveInt(avatar, StatId.Hp)
                     : baseHp;
+                zoneNote = avatar.Zone.Value.ToString();
             }
 
             var hud = PlayerInfoHudPresenter.TryGetInstance();
@@ -117,9 +119,16 @@ namespace NineGrid.Flow
             Debug.Log(
                 $"[AvatarDefeatProbe] AfterStartNode "
                 + $"phase={phase?.CurrentPhase} "
-                + $"avatarUid={avatarUid} baseHp={baseHp} effectiveHp={effectiveHp} "
+                + $"avatarUid={avatarUid} zone={zoneNote} baseHp={baseHp} effectiveHp={effectiveHp} "
                 + $"phaseIsDefeat={phase?.CurrentPhase == GamePhase.Defeat} "
                 + $"hud={hudNote}");
+            if (avatarUid > 0 && zoneNote != nameof(ZoneId.Avatar))
+            {
+                // ADR-0039 补遗：在册 Avatar 的 zone 不是 Avatar 属非法状态；
+                // StartNode 已尝试归位自愈，此处仍异常说明有新的置死写入点，需立即归因。
+                Debug.LogError(
+                    $"[AvatarDefeatProbe] Avatar zone 非法：zone={zoneNote} baseHp={baseHp}（ADR-0039）");
+            }
 #endif
         }
 

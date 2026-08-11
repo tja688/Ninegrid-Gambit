@@ -158,7 +158,10 @@ namespace NineGrid.Core.Systems
             pipeline.Enqueue(new ClearPendingChoicesAction());
             pipeline.Enqueue(new ChangePhaseAction(GamePhase.BuildEnemyPool));
             pipeline.Enqueue(new SetupNodeDeckAction(options));
-            if (this.GetModel<BoardModel>().AvatarSlot.Value != SlotId.Board(5))
+            // 归位到中心格；zone 被异常置死（Removed/Graveyard 等）而 HP>0 时，
+            // 借 MoveAvatarAction→SetAvatar 归位自愈（ADR-0039 补遗），避免非法状态跨节点残留。
+            if (this.GetModel<BoardModel>().AvatarSlot.Value != SlotId.Board(5)
+                || IsAvatarZoneCorrupted())
             {
                 pipeline.Enqueue(new MoveAvatarAction(SlotId.Board(5)));
             }
@@ -1851,20 +1854,32 @@ namespace NineGrid.Core.Systems
 
         private bool IsAvatarDefeated()
         {
+            // ADR-0039：判死与战败收束共用同一谓词（uid 缺失 / 未注册 / HP≤0），只读一手 HP。
+            // 不得复用 IsCardAlive 的 Zone 判定：Avatar zone 被异常置死（Removed/Graveyard）
+            // 而 HP>0 时，旧实现会把合法指令锁进「仅回收/丢弃」僵尸集，而 DefeatIfAvatarDead
+            // 只认 HP 永不收束，战场永久软锁（点不了敌人、道具释放被拒、仅能卖卡）。
+            return AvatarDefeatFollowUp.IsAvatarDefeated(
+                this.GetModel<BoardModel>(),
+                this.GetModel<CardRegistry>());
+        }
+
+        /// <summary>Avatar 在册且 HP>0，但 Zone 不是 Avatar——非法状态，进战斗节点时必须归位自愈。</summary>
+        private bool IsAvatarZoneCorrupted()
+        {
             var board = this.GetModel<BoardModel>();
             var avatarUid = board.AvatarUid.Value;
             if (avatarUid <= 0)
             {
-                return true;
+                return false;
             }
 
             CardInstance avatar;
-            if (!this.GetModel<CardRegistry>().TryGet(avatarUid, out avatar))
+            if (!this.GetModel<CardRegistry>().TryGet(avatarUid, out avatar) || avatar == null)
             {
-                return true;
+                return false;
             }
 
-            return !IsCardAlive(avatar);
+            return avatar.Zone.Value != ZoneId.Avatar;
         }
 
         private static bool IsActionBanned(IStatSystem statSystem, CardInstance card)

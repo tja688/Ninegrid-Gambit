@@ -1,0 +1,68 @@
+{
+    "schemaVersion": 2,
+    "contentId": "monster.tide_ray",
+    "kind": "Monster",
+    "deckId": "deck.ai_expansion",
+    "role": "",
+    "displayName": "磁暴鳐",
+    "designSlotName": "怒潮涡流·序列4",
+    "description": "[[斜角近战]]，被移入中心格时与随机怪物换位",
+    "faceIntro": "别想把它钉在原地",
+    "attackPattern": "斜角近战",
+    "rhythmSource": "移动计数",
+    "rhythmPeriod": 4,
+    "gold": 5,
+    "stats": {
+        "hp": 7,
+        "armor": 0,
+        "attack": 2,
+        "action": 4,
+        "recovery": 0
+    },
+    "sprites": {
+        "mainIcon": "Assets/Resources/ContentArt/Multiple/icons_full_32.png#icons_full_32_201",
+        "faceBackground": "",
+        "cardFrame": "",
+        "banner": "",
+        "backBorder": "",
+        "backShirt": "",
+        "backLogo": ""
+    },
+    "mainVisual": {
+        "offsetX": 0.0,
+        "offsetY": 0.0,
+        "uniformScale": 1.0
+    },
+    "animations": {
+        "defaultFps": 8.0,
+        "slots": []
+    },
+    "extraSlots": [],
+    "rarity": "None",
+    "tags": [],
+    "effectAssemblies": [
+        {
+            "id": "skill.tide_escape.center",
+            "templateId": "tpl.skill.tide_escape.center",
+            "containerType": "MonsterSkill",
+            "argsJson": "{\"count\":1}"
+        }
+    ],
+    "effectIds": [],
+    "skillIds": [],
+    "level": "普通",
+    "sequence": 4,
+    "isElite": false,
+    "isBoss": false,
+    "isReserve": false,
+    "containerType": "",
+    "deckKind": "",
+    "monsterDefIds": [],
+    "usableOutsideBattle": false,
+    "weight": 0,
+    "rewardPoolId": "",
+    "shopOfferCount": 0,
+    "openingInjects": [],
+    "iconPrefab": "",
+    "boardSlot": 0
+}

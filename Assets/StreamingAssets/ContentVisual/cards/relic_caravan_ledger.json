@@ -1,0 +1,70 @@
+{
+    "schemaVersion": 2,
+    "contentId": "relic.caravan_ledger",
+    "kind": "Relic",
+    "deckId": "deck.ai_expansion",
+    "role": "Utility",
+    "displayName": "商队账本",
+    "designSlotName": "AI拓展·遗物5",
+    "description": "每个战斗节点结束时，获得{relic.caravan_ledger.node_end.delta}[money]",
+    "faceIntro": "每一站都有分红",
+    "attackPattern": "",
+    "rhythmSource": "",
+    "rhythmPeriod": 0,
+    "gold": 0,
+    "stats": {
+        "hp": 0,
+        "armor": 0,
+        "attack": 0,
+        "action": 0,
+        "recovery": 0
+    },
+    "sprites": {
+        "mainIcon": "Assets/Resources/ContentArt/Multiple/icons_full_32.png#icons_full_32_272",
+        "faceBackground": "",
+        "cardFrame": "",
+        "banner": "",
+        "backBorder": "",
+        "backShirt": "",
+        "backLogo": ""
+    },
+    "mainVisual": {
+        "offsetX": 0.0,
+        "offsetY": 0.0,
+        "uniformScale": 1.0
+    },
+    "animations": {
+        "defaultFps": 8.0,
+        "slots": []
+    },
+    "extraSlots": [],
+    "rarity": "Red",
+    "tags": [
+        "tag.economy"
+    ],
+    "effectAssemblies": [
+        {
+            "id": "relic.caravan_ledger.node_end",
+            "templateId": "tpl.relic.caravan_ledger.node_end",
+            "containerType": "Relic",
+            "argsJson": "{\"delta\":5,\"reason\":\"relic.caravan_ledger\"}"
+        }
+    ],
+    "effectIds": [],
+    "skillIds": [],
+    "level": "0",
+    "sequence": 0,
+    "isElite": false,
+    "isBoss": false,
+    "isReserve": false,
+    "containerType": "",
+    "deckKind": "",
+    "monsterDefIds": [],
+    "usableOutsideBattle": false,
+    "weight": 0,
+    "rewardPoolId": "",
+    "shopOfferCount": 0,
+    "openingInjects": [],
+    "iconPrefab": "",
+    "boardSlot": 0
+}

@@ -1,0 +1,52 @@
+{
+  "schemaVersion": 2,
+  "contentId": "deck.ai_expansion",
+  "kind": "Deck",
+  "deckId": "",
+  "displayName": "AI 拓展设计卡组",
+  "description": "AI 拓展内容临时收纳（评审用）：熔炉军团×5、怒潮涡流×5、机关×5、道具×5、遗物×5。评审通过后按设计文档拆分正式落地。",
+  "gold": 0,
+  "stats": {
+    "hp": 0,
+    "armor": 0,
+    "attack": 0,
+    "action": 0,
+    "recovery": 0
+  },
+  "sprites": {
+    "mainIcon": "",
+    "faceBackground": "",
+    "cardFrame": "",
+    "banner": "",
+    "backBorder": "",
+    "backShirt": "",
+    "backLogo": ""
+  },
+  "mainVisual": {
+    "offsetX": 0.0,
+    "offsetY": 0.0,
+    "uniformScale": 1.0
+  },
+  "animations": {
+    "defaultFps": 8.0,
+    "slots": []
+  },
+  "extraSlots": [],
+  "rarity": "",
+  "tags": [],
+  "effectIds": [],
+  "skillIds": [],
+  "level": 0,
+  "isElite": false,
+  "isBoss": false,
+  "isReserve": false,
+  "containerType": "",
+  "weight": 0,
+  "goldDelta": 0,
+  "maxHpDelta": 0,
+  "healToFull": false,
+  "rewardPoolId": "",
+  "shopOfferCount": 0,
+  "effectAssemblies": [],
+  "role": ""
+}

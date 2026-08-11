@@ -1,4 +1,5 @@
 using NineGrid.Cards.Convergence;
+using NineGrid.Cards.Vfx;
 using NineGrid.Core;
 using NineGrid.Core.Systems;
 using NineGrid.Flow;
@@ -107,6 +108,7 @@ namespace NineGrid.Cards
 
         public void ReleaseClaim()
         {
+            BoardRangeGlowFx.Hide(this);
             var field = GroundFieldGeometryHook.FieldOrNull();
             if (field != null)
             {
@@ -173,6 +175,7 @@ namespace NineGrid.Cards
             }
 
             _driver?.SetTarget(CardVisualTarget.Hover);
+            BoardRangeGlowFx.ShowThreatRange(this, _driver?.BoundCard);
             InteractionAudioCues.PulseCard(
                 InteractionAudioCues.GroundCardHover,
                 "GroundCardHitProxy.HoverEnterClaim",
@@ -181,6 +184,8 @@ namespace NineGrid.Cards
 
         private void HoverExitClaim()
         {
+            // 荧光清除不受悬停响应门禁影响：无论何种早退都必须先熄灭范围提示。
+            BoardRangeGlowFx.Hide(this);
             if (!CanRespondToHover())
             {
                 return;

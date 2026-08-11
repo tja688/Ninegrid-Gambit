@@ -1,0 +1,74 @@
+{
+    "schemaVersion": 2,
+    "contentId": "monster.tide_heart",
+    "kind": "Monster",
+    "deckId": "deck.ai_expansion",
+    "role": "",
+    "displayName": "潮汐之心",
+    "designSlotName": "怒潮涡流·序列5（层主）",
+    "description": "[[全向近战]]，行动时旋转{skill.tide_surge_fire.fire.count}格并为友军回{skill.tide_bloom.fire.amount}血",
+    "faceIntro": "潮起潮落，都听它的",
+    "attackPattern": "全向近战",
+    "rhythmSource": "移动计数",
+    "rhythmPeriod": 3,
+    "gold": 5,
+    "stats": {
+        "hp": 28,
+        "armor": 0,
+        "attack": 3,
+        "action": 3,
+        "recovery": 0
+    },
+    "sprites": {
+        "mainIcon": "Assets/Resources/ContentArt/Multiple/icons_full_32.png#icons_full_32_202",
+        "faceBackground": "",
+        "cardFrame": "",
+        "banner": "",
+        "backBorder": "",
+        "backShirt": "",
+        "backLogo": ""
+    },
+    "mainVisual": {
+        "offsetX": 0.0,
+        "offsetY": 0.0,
+        "uniformScale": 1.0
+    },
+    "animations": {
+        "defaultFps": 8.0,
+        "slots": []
+    },
+    "extraSlots": [],
+    "rarity": "None",
+    "tags": [],
+    "effectAssemblies": [
+        {
+            "id": "skill.tide_surge_fire.fire",
+            "templateId": "tpl.skill.tide_surge_fire.fire",
+            "containerType": "MonsterSkill",
+            "argsJson": "{\"count\":1}"
+        },
+        {
+            "id": "skill.tide_bloom.fire",
+            "templateId": "tpl.skill.tide_bloom.fire",
+            "containerType": "MonsterSkill",
+            "argsJson": "{\"amount\":1}"
+        }
+    ],
+    "effectIds": [],
+    "skillIds": [],
+    "level": "层主",
+    "sequence": 5,
+    "isElite": false,
+    "isBoss": true,
+    "isReserve": false,
+    "containerType": "",
+    "deckKind": "",
+    "monsterDefIds": [],
+    "usableOutsideBattle": false,
+    "weight": 0,
+    "rewardPoolId": "",
+    "shopOfferCount": 0,
+    "openingInjects": [],
+    "iconPrefab": "",
+    "boardSlot": 0
+}

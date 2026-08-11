@@ -1,0 +1,70 @@
+{
+    "schemaVersion": 2,
+    "contentId": "relic.still_watch",
+    "kind": "Relic",
+    "deckId": "deck.ai_expansion",
+    "role": "Utility",
+    "displayName": "静滞怀表",
+    "designSlotName": "AI拓展·遗物3",
+    "description": "每{relic.still_watch.tick.every}次互动，全场怪物行动倒计时+{relic.still_watch.tick.delta}",
+    "faceIntro": "表针一压，万物迟缓",
+    "attackPattern": "",
+    "rhythmSource": "",
+    "rhythmPeriod": 0,
+    "gold": 0,
+    "stats": {
+        "hp": 0,
+        "armor": 0,
+        "attack": 0,
+        "action": 0,
+        "recovery": 0
+    },
+    "sprites": {
+        "mainIcon": "Assets/Resources/ContentArt/Multiple/icons_full_32.png#icons_full_32_262",
+        "faceBackground": "",
+        "cardFrame": "",
+        "banner": "",
+        "backBorder": "",
+        "backShirt": "",
+        "backLogo": ""
+    },
+    "mainVisual": {
+        "offsetX": 0.0,
+        "offsetY": 0.0,
+        "uniformScale": 1.0
+    },
+    "animations": {
+        "defaultFps": 8.0,
+        "slots": []
+    },
+    "extraSlots": [],
+    "rarity": "Red",
+    "tags": [
+        "tag.special"
+    ],
+    "effectAssemblies": [
+        {
+            "id": "relic.still_watch.tick",
+            "templateId": "tpl.relic.still_watch.tick",
+            "containerType": "Relic",
+            "argsJson": "{\"every\":12,\"delta\":1,\"projectKey\":\"relic.still_watch.tick.every\"}"
+        }
+    ],
+    "effectIds": [],
+    "skillIds": [],
+    "level": "0",
+    "sequence": 0,
+    "isElite": false,
+    "isBoss": false,
+    "isReserve": false,
+    "containerType": "",
+    "deckKind": "",
+    "monsterDefIds": [],
+    "usableOutsideBattle": false,
+    "weight": 0,
+    "rewardPoolId": "",
+    "shopOfferCount": 0,
+    "openingInjects": [],
+    "iconPrefab": "",
+    "boardSlot": 0
+}
