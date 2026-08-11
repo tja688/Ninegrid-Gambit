@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace NineGrid.Presentation.Systems.Vfx
 {
-    internal sealed class VfxSpriteSheetVisualPool
+    public sealed class VfxSpriteSheetVisualPool
     {
         private readonly Transform mPoolRoot;
         private readonly Stack<VfxSpriteSheetVisual> mIdle = new Stack<VfxSpriteSheetVisual>();

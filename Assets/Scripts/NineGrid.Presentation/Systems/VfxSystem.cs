@@ -1527,7 +1527,7 @@ namespace NineGrid.Presentation.Systems
                 request.RoomId,
                 request.ItemDefId,
                 request.ContentId,
-                request.DiagnosticCardUid);
+                request.DiagnosticOwnerUid);
 
             if (!mCatalog.TryResolveStateStrict(request, out var binding, out var resolveError))
             {
@@ -1546,7 +1546,7 @@ namespace NineGrid.Presentation.Systems
                         request.RoomId,
                         request.ItemDefId,
                         request.ContentId,
-                        request.DiagnosticCardUid,
+                        request.DiagnosticOwnerUid,
                         resolveError.Message ?? "绑定解析歧义。");
                     return RecordStateInvalidBinding(request, correlationId, resolveError);
                 }
@@ -1565,7 +1565,7 @@ namespace NineGrid.Presentation.Systems
                     request.RoomId,
                     request.ItemDefId,
                     request.ContentId,
-                    request.DiagnosticCardUid,
+                    request.DiagnosticOwnerUid,
                     reason);
                 return RecordStateUnbound(request, correlationId, reason);
             }
@@ -1583,7 +1583,7 @@ namespace NineGrid.Presentation.Systems
                 request.RoomId,
                 request.ItemDefId,
                 request.ContentId,
-                request.DiagnosticCardUid,
+                request.DiagnosticOwnerUid,
                 failureReason: string.Empty);
 
             if (!binding.Enabled)
@@ -1622,7 +1622,7 @@ namespace NineGrid.Presentation.Systems
                     request.RoomId,
                     request.ItemDefId,
                     request.ContentId,
-                    request.DiagnosticCardUid,
+                    request.DiagnosticOwnerUid,
                     factoryReason);
                 return RecordStatePlayerUnavailable(request, correlationId, binding, factoryReason);
             }
@@ -1640,7 +1640,7 @@ namespace NineGrid.Presentation.Systems
                 request.RoomId,
                 request.ItemDefId,
                 request.ContentId,
-                request.DiagnosticCardUid,
+                request.DiagnosticOwnerUid,
                 failureReason: string.Empty);
 
             string variantId = string.Empty;
@@ -1824,7 +1824,7 @@ namespace NineGrid.Presentation.Systems
                 request.RoomId,
                 request.ItemDefId,
                 request.ContentId,
-                request.DiagnosticCardUid,
+                request.DiagnosticOwnerUid,
                 reason);
             return new VfxStateSlotResult
             {
@@ -1853,7 +1853,7 @@ namespace NineGrid.Presentation.Systems
                 request.RoomId,
                 request.ItemDefId,
                 request.ContentId,
-                request.DiagnosticCardUid,
+                request.DiagnosticOwnerUid,
                 reason);
             return new VfxStateSlotResult
             {
@@ -1882,7 +1882,7 @@ namespace NineGrid.Presentation.Systems
                 request.RoomId,
                 request.ItemDefId,
                 request.ContentId,
-                request.DiagnosticCardUid,
+                request.DiagnosticOwnerUid,
                 SuppressedReason);
             return new VfxStateSlotResult
             {
@@ -1913,7 +1913,7 @@ namespace NineGrid.Presentation.Systems
                 request.RoomId,
                 request.ItemDefId,
                 request.ContentId,
-                request.DiagnosticCardUid,
+                request.DiagnosticOwnerUid,
                 reason);
             return new VfxStateSlotResult
             {
@@ -1944,7 +1944,7 @@ namespace NineGrid.Presentation.Systems
                 request.RoomId,
                 request.ItemDefId,
                 request.ContentId,
-                request.DiagnosticCardUid,
+                request.DiagnosticOwnerUid,
                 reason);
             return new VfxStateSlotResult
             {
@@ -1977,7 +1977,7 @@ namespace NineGrid.Presentation.Systems
                 request.RoomId,
                 request.ItemDefId,
                 request.ContentId,
-                request.DiagnosticCardUid,
+                request.DiagnosticOwnerUid,
                 reason);
             return new VfxStateSlotResult
             {
@@ -2298,7 +2298,7 @@ namespace NineGrid.Presentation.Systems
                 request.RoomId,
                 request.ItemDefId,
                 request.ContentId,
-                request.DiagnosticCardUid,
+                request.DiagnosticOwnerUid,
                 VfxDiagnosticFormatting.BuildOverrideSummary(fps, speed, scale));
         }
 

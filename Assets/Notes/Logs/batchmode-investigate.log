@@ -1,0 +1,617 @@
+[Licensing::Module] Trying to connect to existing licensing client channel...
+Built from '6000.3/staging' branch; Version is '6000.3.10f1 (e35f0c77bd8e) revision 14901004'; Using compiler version '194234433'; Build Type 'Release'
+OS: 'Windows 11  (10.0.26200) Professional' Language: 'zh' Physical Memory: 48185 MB
+[Licensing::IpcConnector] Successfully connected to: "LicenseClient-jinji" at "2026-08-11T00:16:49.9146601Z"
+BatchMode: 1, IsHumanControllingUs: 0, StartBugReporterOnCrash: 0, Is64bit: 1
+System  architecture: x64
+Process architecture: x64
+Date: 2026-08-11T00:16:49Z
+
+COMMAND LINE ARGUMENTS:
+C:\Program Files\Unity\Hub\Editor\6000.3.10f1\Editor\Unity.exe
+-projectpath
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit
+-batchmode
+-nographics
+-quit
+-logFile
+C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Assets\Notes\Logs\batchmode-investigate.log
+Successfully changed project path to: C:\Users\jinji\Documents\GitHub\Ninegrid Gambit
+C:/Users/jinji/Documents/GitHub/Ninegrid Gambit
+[UnityMemory] Configuration Parameters - Can be set up in boot.config
+    "memorysetup-temp-allocator-size-nav-mesh-worker=65536"
+    "memorysetup-temp-allocator-size-audio-worker=65536"
+    "memorysetup-temp-allocator-size-gfx=262144"
+    "memorysetup-allocator-temp-initial-block-size-main=262144"
+    "memorysetup-allocator-temp-initial-block-size-worker=262144"
+    "memorysetup-temp-allocator-size-background-worker=32768"
+    "memorysetup-temp-allocator-size-job-worker=262144"
+    "memorysetup-temp-allocator-size-preload-manager=33554432"
+    "memorysetup-temp-allocator-size-gi-baking-worker=262144"
+    "memorysetup-temp-allocator-size-gi-baking-worker=262144"
+    "memorysetup-temp-allocator-size-gi-baking-worker=262144"
+    "memorysetup-temp-allocator-size-gi-baking-worker=262144"
+    "memorysetup-temp-allocator-size-gi-baking-worker=262144"
+    "memorysetup-bucket-allocator-granularity=16"
+    "memorysetup-bucket-allocator-bucket-count=8"
+    "memorysetup-bucket-allocator-block-size=33554432"
+    "memorysetup-bucket-allocator-block-count=8"
+    "memorysetup-main-allocator-block-size=16777216"
+    "memorysetup-thread-allocator-block-size=16777216"
+    "memorysetup-gfx-main-allocator-block-size=16777216"
+    "memorysetup-gfx-thread-allocator-block-size=16777216"
+    "memorysetup-cache-allocator-block-size=4194304"
+    "memorysetup-typetree-allocator-block-size=2097152"
+    "memorysetup-profiler-bucket-allocator-granularity=16"
+    "memorysetup-profiler-bucket-allocator-bucket-count=8"
+    "memorysetup-profiler-bucket-allocator-block-size=33554432"
+    "memorysetup-profiler-bucket-allocator-block-count=8"
+    "memorysetup-profiler-allocator-block-size=16777216"
+    "memorysetup-profiler-editor-allocator-block-size=1048576"
+    "memorysetup-temp-allocator-size-main=16777216"
+    "memorysetup-job-temp-allocator-block-size=2097152"
+    "memorysetup-job-temp-allocator-block-size-background=1048576"
+    "memorysetup-job-temp-allocator-reduction-small-platforms=262144"
+    "memorysetup-temp-allocator-size-cloud-worker=32768"
+Player connection [49260]  Target information:
+
+Player connection [49260]  * "[IP] 172.21.16.1 [Port] 55504 [Flags] 2 [Guid] 3554998201 [EditorId] 3554998201 [Version] 1048832 [Id] WindowsEditor(7,JT) [Debug] 1 [PackageName] WindowsEditor [ProjectName] Editor" 
+
+Player connection [49260]  * "[IP] 172.21.32.1 [Port] 55504 [Flags] 2 [Guid] 3554998201 [EditorId] 3554998201 [Version] 1048832 [Id] WindowsEditor(7,JT) [Debug] 1 [PackageName] WindowsEditor [ProjectName] Editor" 
+
+Player connection [49260]  * "[IP] 10.1.129.10 [Port] 55504 [Flags] 2 [Guid] 3554998201 [EditorId] 3554998201 [Version] 1048832 [Id] WindowsEditor(7,JT) [Debug] 1 [PackageName] WindowsEditor [ProjectName] Editor" 
+
+Player connection [49260] Host joined multi-casting on [225.0.0.222:54997]...
+Player connection [49260] Host joined alternative multi-casting on [225.0.0.222:34997]...
+Input System module state changed to: Initialized.
+[Physics::Module] Initialized fallback backend.
+[Physics::Module] Id: 0xdecafbad
+[Package Manager] Connected to IPC stream "Upm-57036" after 0.2 seconds.
+[Licensing::Module] Licensing is not yet initialized.
+[Licensing::Client] Handshaking with LicensingClient:
+  Version:                 1.17.4+4293ba1
+  Session Id:              f28941c16226425aa8319f2776c9aaa4
+  Correlation Id:          4f32e29d7148a7bf3e7a2a63c9e0fafe
+  External correlation Id: 122409656023243140
+  Machine Id:              DlJysP3uAx7v0iSiEudNIsBnX1Y=
+[Licensing::Module] Successfully connected to LicensingClient on channel: "LicenseClient-jinji" (connect: 0.00s, validation: 0.00s, handshake: 1.28s)
+[Licensing::IpcConnector] Successfully connected to: "LicenseClient-jinji-notifications" at "2026-08-11T00:16:51.2002362Z"
+[Licensing::Module] Error: Access token is unavailable; failed to update
+[Licensing::Client] Successfully resolved entitlement details
+[Licensing::Module] License group:
+  Id: 5773786567460-UnityPersXXXX
+  Product: Unity Personal
+  Type: Assigned
+  Expiration: Unlimited
+[Licensing::Client] Successfully updated license, isAsync: True, time: 0.00
+[Licensing::Client] Successfully resolved entitlement details
+[Licensing::Module] Licensing Background thread has ended after 1.30s
+[Licensing::Module] Licensing is initialized (took 0.76s).
+[Licensing::Client] Successfully resolved entitlement details
+Library Redirect Path: Library/
+[Physics::Module] Selected backend.
+[Physics::Module] Name: PhysX
+[Physics::Module] Id: 0xf2b8ea05
+[Physics::Module] SDK Version: 4.1.2
+[Physics::Module] Integration Version: 1.0.0
+[Physics::Module] Threading Mode: Multi-Threaded
+Refreshing native plugins compatible for Editor in 2.02 ms, found 2 plugins.
+Preloading 0 native plugins for Editor in 0.00 ms.
+Initialize engine version: 6000.3.10f1 (e35f0c77bd8e)
+[Subsystems] Discovering subsystems at path C:/Program Files/Unity/Hub/Editor/6000.3.10f1/Editor/Data/Resources/UnitySubsystems
+[Subsystems] Discovering subsystems at path C:/Users/jinji/Documents/GitHub/Ninegrid Gambit/Assets
+Forcing GfxDevice: Null
+GfxDevice: creating device client; kGfxThreadingModeNonThreaded
+NullGfxDevice:
+    Version:  NULL 1.0 [1.0]
+    Renderer: Null Device
+    Vendor:   Unity Technologies
+Shader 'MoreMountains/MMRipple': fallback shader 'Particle/AlphaBlended' not found
+Initialize mono
+Mono path[0] = 'C:/Program Files/Unity/Hub/Editor/6000.3.10f1/Editor/Data/Managed'
+Mono path[1] = 'C:/Program Files/Unity/Hub/Editor/6000.3.10f1/Editor/Data/MonoBleedingEdge/lib/mono/unityjit-win32'
+Mono config path = 'C:/Program Files/Unity/Hub/Editor/6000.3.10f1/Editor/Data/MonoBleedingEdge/etc'
+Using monoOptions --debugger-agent=transport=dt_socket,embedding=1,server=y,suspend=n,address=127.0.0.1:56036
+Using cacheserver namespaces - metadata:defaultmetadata, artifacts:defaultartifacts
+Using cacheserver namespaces - metadata:defaultmetadata, artifacts:defaultartifacts
+ImportWorker Server TCP listen port: 0
+AcceleratorClientConnectionCallback - disconnected - :0
+Begin MonoManager ReloadAssembly
+Registering precompiled unity dll's ...
+Register platform support module: C:/Program Files/Unity/Hub/Editor/6000.3.10f1/Editor/Data/PlaybackEngines/WebGLSupport/UnityEditor.WebGL.Extensions.dll
+Register platform support module: C:/Program Files/Unity/Hub/Editor/6000.3.10f1/Editor/Data/PlaybackEngines/WindowsStandaloneSupport/UnityEditor.WindowsStandalone.Extensions.dll
+Registered in 0.002339 seconds.
+- Loaded All Assemblies, in  0.246 seconds
+Native extension for WindowsStandalone target not found
+Native extension for WebGL target not found
+ScheduleIndexationOnStartup MainProcess:False IndexOnStartup:True
+Mono: successfully reloaded assembly
+- Finished resetting the current domain, in  0.229 seconds
+Domain Reload Profiling: 473ms
+	BeginReloadAssembly (85ms)
+		ExecutionOrderSort (0ms)
+		DisableScriptedObjects (0ms)
+		BackupInstance (0ms)
+		ReleaseScriptingObjects (0ms)
+		CreateAndSetChildDomain (9ms)
+	RebuildCommonClasses (22ms)
+	RebuildNativeTypeToScriptingClass (7ms)
+	initialDomainReloadingComplete (30ms)
+	LoadAllAssembliesAndSetupDomain (100ms)
+		LoadAssemblies (74ms)
+		RebuildTransferFunctionScriptingTraits (0ms)
+		AnalyzeDomain (98ms)
+			TypeCache.Refresh (96ms)
+				TypeCache.ScanAssembly (88ms)
+			BuildScriptInfoCaches (0ms)
+			ResolveRequiredComponents (0ms)
+	FinalizeReload (229ms)
+		ReleaseScriptCaches (0ms)
+		RebuildScriptCaches (0ms)
+		SetupLoadedEditorAssemblies (207ms)
+			LogAssemblyErrors (0ms)
+			InitializePlatformSupportModulesInManaged (31ms)
+			SetLoadedEditorAssemblies (2ms)
+			BeforeProcessingInitializeOnLoad (45ms)
+			ProcessInitializeOnLoadAttributes (88ms)
+			ProcessInitializeOnLoadMethodAttributes (42ms)
+			AfterProcessingInitializeOnLoad (0ms)
+			EditorAssembliesLoaded (0ms)
+		ExecutionOrderSort2 (0ms)
+		AwakeInstancesAfterBackupRestoration (0ms)
+[Licensing::Client] Successfully resolved entitlement details
+Application.AssetDatabase Initial Refresh Start
+Package Manager log level set to [2]
+[Package Manager] Restoring resolved packages state from cache
+[Licensing::Client] Successfully resolved entitlement details
+[Package Manager] Registered 76 packages:
+  Packages from [https://packages.unity.com]:
+    com.unity.2d.spriteshape@13.0.0 (location: C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Library\PackageCache\com.unity.2d.spriteshape@0738bab11647)
+    com.unity.cinemachine@3.1.7 (location: C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Library\PackageCache\com.unity.cinemachine@f3f96bcb59af)
+    com.unity.collab-proxy@2.11.3 (location: C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Library\PackageCache\com.unity.collab-proxy@e566cd3e7623)
+    com.unity.ide.rider@3.0.39 (location: C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Library\PackageCache\com.unity.ide.rider@4504839d03f7)
+    com.unity.ide.visualstudio@2.0.26 (location: C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Library\PackageCache\com.unity.ide.visualstudio@a99d56dec63f)
+    com.unity.inputsystem@1.18.0 (location: C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Library\PackageCache\com.unity.inputsystem@57d0e36f6123)
+    com.unity.pipeline@0.4.0-exp.1 (location: C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Library\PackageCache\com.unity.pipeline@f49636739437)
+    com.unity.timeline@1.8.10 (location: C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Library\PackageCache\com.unity.timeline@7f8b2fb101b6)
+    com.unity.visualscripting@1.9.9 (location: C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Library\PackageCache\com.unity.visualscripting@191c0d7e3b69)
+    com.unity.nuget.mono-cecil@1.11.6 (location: C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Library\PackageCache\com.unity.nuget.mono-cecil@ecb9724e46ff)
+    com.unity.nuget.newtonsoft-json@3.2.2 (location: C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Library\PackageCache\com.unity.nuget.newtonsoft-json@4dfd81071c64)
+    com.unity.2d.animation@13.0.5 (location: C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Library\PackageCache\com.unity.2d.animation@5d1ab6c077e2)
+    com.unity.2d.pixel-perfect@5.1.1 (location: C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Library\PackageCache\com.unity.2d.pixel-perfect@09d99455b901)
+    com.unity.2d.psdimporter@12.0.2 (location: C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Library\PackageCache\com.unity.2d.psdimporter@f207d91d598d)
+    com.unity.2d.tilemap.extras@6.0.2 (location: C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Library\PackageCache\com.unity.2d.tilemap.extras@4c5cdf9da5f3)
+    com.unity.2d.aseprite@3.0.2 (location: C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Library\PackageCache\com.unity.2d.aseprite@20edb5643ab5)
+    com.unity.2d.tooling@1.0.3 (location: C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Library\PackageCache\com.unity.2d.tooling@127d960d4dc1)
+    com.unity.splines@2.8.3 (location: C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Library\PackageCache\com.unity.splines@56b2023b4b9f)
+    com.unity.mathematics@1.3.3 (location: C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Library\PackageCache\com.unity.mathematics@19a9377c4ffa)
+    com.unity.burst@1.8.28 (location: C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Library\PackageCache\com.unity.burst@07790c2d06d9)
+    com.unity.collections@2.6.2 (location: C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Library\PackageCache\com.unity.collections@aea9d3bd5e19)
+    com.unity.searcher@4.9.4 (location: C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Library\PackageCache\com.unity.searcher@d45a78918735)
+    com.unity.2d.common@12.0.3 (location: C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Library\PackageCache\com.unity.2d.common@2af7c9b44b5c)
+    com.unity.settings-manager@2.1.1 (location: C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Library\PackageCache\com.unity.settings-manager@0b8638c5ce86)
+    com.unity.test-framework.performance@3.2.0 (location: C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Library\PackageCache\com.unity.test-framework.performance@0840f58e4562)
+  Built-in packages:
+    com.unity.2d.sprite@1.0.0 (location: C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Library\PackageCache\com.unity.2d.sprite@d14b9d497a24)
+    com.unity.2d.tilemap@1.0.0 (location: C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Library\PackageCache\com.unity.2d.tilemap@f011712243ad)
+    com.unity.feature.2d@2.0.2 (location: C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Library\PackageCache\com.unity.feature.2d@0309d34ea7f2)
+    com.unity.multiplayer.center@1.0.1 (location: C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Library\PackageCache\com.unity.multiplayer.center@f01f4ba8d00a)
+    com.unity.render-pipelines.universal@17.3.0 (location: C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Library\PackageCache\com.unity.render-pipelines.universal@37e0d4fc2503)
+    com.unity.test-framework@1.6.0 (location: C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Library\PackageCache\com.unity.test-framework@0b7a23ab2e1d)
+    com.unity.ugui@2.0.0 (location: C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Library\PackageCache\com.unity.ugui@bb329a87fcdc)
+    com.unity.visualeffectgraph@17.3.0 (location: C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Library\PackageCache\com.unity.visualeffectgraph@ec7b0e7f250a)
+    com.unity.modules.accessibility@1.0.0 (location: C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Library\PackageCache\com.unity.modules.accessibility)
+    com.unity.modules.adaptiveperformance@1.0.0 (location: C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Library\PackageCache\com.unity.modules.adaptiveperformance)
+    com.unity.modules.ai@1.0.0 (location: C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Library\PackageCache\com.unity.modules.ai)
+    com.unity.modules.androidjni@1.0.0 (location: C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Library\PackageCache\com.unity.modules.androidjni)
+    com.unity.modules.animation@1.0.0 (location: C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Library\PackageCache\com.unity.modules.animation)
+    com.unity.modules.assetbundle@1.0.0 (location: C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Library\PackageCache\com.unity.modules.assetbundle)
+    com.unity.modules.audio@1.0.0 (location: C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Library\PackageCache\com.unity.modules.audio)
+    com.unity.modules.cloth@1.0.0 (location: C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Library\PackageCache\com.unity.modules.cloth)
+    com.unity.modules.director@1.0.0 (location: C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Library\PackageCache\com.unity.modules.director)
+    com.unity.modules.imageconversion@1.0.0 (location: C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Library\PackageCache\com.unity.modules.imageconversion)
+    com.unity.modules.imgui@1.0.0 (location: C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Library\PackageCache\com.unity.modules.imgui)
+    com.unity.modules.jsonserialize@1.0.0 (location: C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Library\PackageCache\com.unity.modules.jsonserialize)
+    com.unity.modules.particlesystem@1.0.0 (location: C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Library\PackageCache\com.unity.modules.particlesystem)
+    com.unity.modules.physics@1.0.0 (location: C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Library\PackageCache\com.unity.modules.physics)
+    com.unity.modules.physics2d@1.0.0 (location: C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Library\PackageCache\com.unity.modules.physics2d)
+    com.unity.modules.screencapture@1.0.0 (location: C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Library\PackageCache\com.unity.modules.screencapture)
+    com.unity.modules.terrain@1.0.0 (location: C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Library\PackageCache\com.unity.modules.terrain)
+    com.unity.modules.terrainphysics@1.0.0 (location: C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Library\PackageCache\com.unity.modules.terrainphysics)
+    com.unity.modules.tilemap@1.0.0 (location: C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Library\PackageCache\com.unity.modules.tilemap)
+    com.unity.modules.ui@1.0.0 (location: C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Library\PackageCache\com.unity.modules.ui)
+    com.unity.modules.uielements@1.0.0 (location: C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Library\PackageCache\com.unity.modules.uielements)
+    com.unity.modules.umbra@1.0.0 (location: C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Library\PackageCache\com.unity.modules.umbra)
+    com.unity.modules.unityanalytics@1.0.0 (location: C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Library\PackageCache\com.unity.modules.unityanalytics)
+    com.unity.modules.unitywebrequest@1.0.0 (location: C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Library\PackageCache\com.unity.modules.unitywebrequest)
+    com.unity.modules.unitywebrequestassetbundle@1.0.0 (location: C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Library\PackageCache\com.unity.modules.unitywebrequestassetbundle)
+    com.unity.modules.unitywebrequestaudio@1.0.0 (location: C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Library\PackageCache\com.unity.modules.unitywebrequestaudio)
+    com.unity.modules.unitywebrequesttexture@1.0.0 (location: C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Library\PackageCache\com.unity.modules.unitywebrequesttexture)
+    com.unity.modules.unitywebrequestwww@1.0.0 (location: C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Library\PackageCache\com.unity.modules.unitywebrequestwww)
+    com.unity.modules.vectorgraphics@1.0.0 (location: C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Library\PackageCache\com.unity.modules.vectorgraphics)
+    com.unity.modules.vehicles@1.0.0 (location: C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Library\PackageCache\com.unity.modules.vehicles)
+    com.unity.modules.video@1.0.0 (location: C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Library\PackageCache\com.unity.modules.video)
+    com.unity.modules.vr@1.0.0 (location: C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Library\PackageCache\com.unity.modules.vr)
+    com.unity.modules.wind@1.0.0 (location: C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Library\PackageCache\com.unity.modules.wind)
+    com.unity.modules.xr@1.0.0 (location: C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Library\PackageCache\com.unity.modules.xr)
+    com.unity.modules.subsystems@1.0.0 (location: C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Library\PackageCache\com.unity.modules.subsystems)
+    com.unity.modules.hierarchycore@1.0.0 (location: C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Library\PackageCache\com.unity.modules.hierarchycore)
+    com.unity.shadergraph@17.3.0 (location: C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Library\PackageCache\com.unity.shadergraph@c8830f61858d)
+    com.unity.render-pipelines.core@17.3.0 (location: C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Library\PackageCache\com.unity.render-pipelines.core@04ab0eefa0c3)
+    com.unity.ext.nunit@2.0.5 (location: C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Library\PackageCache\com.unity.ext.nunit@d8c07649098d)
+    com.unity.render-pipelines.universal-config@17.0.3 (location: C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Library\PackageCache\com.unity.render-pipelines.universal-config@8dc1aab4af1d)
+  Embedded packages:
+    com.farlocus.locus@file:C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Packages\com.farlocus.locus (location: C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Packages\com.farlocus.locus)
+    com.livingui.stage@file:C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Packages\com.livingui.stage (location: C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Packages\com.livingui.stage)
+  Git packages:
+    com.coplaydev.unity-mcp@https://github.com/CoplayDev/unity-mcp.git?path=/MCPForUnity#main (location: C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\Library\PackageCache\com.coplaydev.unity-mcp@8bd91ce7bd3a)
+[Subsystems] No new subsystems found in resolved package list.
+[Package Manager] Done registering packages in 0.02 seconds
+The GUID inside 'Assets/Notes/Logs/OtherLog/RegistryLog/registrylog-20260715-094207-seed1.json.meta' cannot be extracted by the YAML Parser. Attempting to extract it via string matching instead. Please verify the file does not contain unexpected data.
+The GUID inside 'Assets/Notes/Logs/OtherLog/RegistryLog/registrylog-QuickTest-20260714-200318-seed1.json.meta' cannot be extracted by the YAML Parser. Attempting to extract it via string matching instead. Please verify the file does not contain unexpected data.
+'Assets/Notes/Logs/batchmode-investigate.log' Amount of processed bytes '21801' does not match file size '589'
+Assembly reference Packages/com.unity.cinemachine/Editor/Samples/ExposeHDRPInternals/HDRP-Editor-ref.asmref has no target assembly definition
+Assembly reference Packages/com.unity.cinemachine/Editor/Samples/ExposeHDRPInternals/HDRP-Editor-ref.asmref has no target assembly definition
+[ScriptCompilation] Requested script compilation because: Assetdatabase observed changes in script compilation related files
+Duplicate assembly 'System.Runtime.CompilerServices.Unsafe.dll' with different versions detected, using 'Packages/com.unity.collections/Unity.Collections.Tests/System.Runtime.CompilerServices.Unsafe/System.Runtime.CompilerServices.Unsafe.dll, AssemblyName=System.Runtime.CompilerServices.Unsafe, Version=6.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a' and ignoring 'Packages/com.unity.pipeline/Runtime/Plugins/CodeAnalysis/System.Runtime.CompilerServices.Unsafe.dll, AssemblyName=System.Runtime.CompilerServices.Unsafe, Version=4.0.4.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a'.info: Microsoft.Hosting.Lifetime[14]
+      Now listening on: http://localhost:80
+info: Microsoft.Hosting.Lifetime[0]
+      Application started. Press Ctrl+C to shut down.
+info: Microsoft.Hosting.Lifetime[0]
+      Hosting environment: Production
+info: Microsoft.Hosting.Lifetime[0]
+      Content root path: C:\Users\jinji\Documents\GitHub\Ninegrid Gambit\
+info: Microsoft.AspNetCore.Hosting.Diagnostics[1]
+      Request starting HTTP/2 POST http://ilpp/UnityILPP.PostProcessing/Ping application/grpc -
+info: Microsoft.AspNetCore.Routing.EndpointMiddleware[0]
+      Executing endpoint 'gRPC - /UnityILPP.PostProcessing/Ping'
+info: Microsoft.AspNetCore.Routing.EndpointMiddleware[1]
+      Executed endpoint 'gRPC - /UnityILPP.PostProcessing/Ping'
+info: Microsoft.AspNetCore.Hosting.Diagnostics[2]
+      Request finished HTTP/2 POST http://ilpp/UnityILPP.PostProcessing/Ping application/grpc - - 200 - application/grpc 23.9609ms
+Starting: C:\Program Files\Unity\Hub\Editor\6000.3.10f1\Editor\Data\Tools\BuildPipeline\bee_backend.exe --ipc --defer-dag-verification --dagfile="Library/Bee/1900b0aE.dag" --continue-on-failure --profile="Library/Bee/backend1.traceevents" ScriptAssemblies
+WorkingDir: C:/Users/jinji/Documents/GitHub/Ninegrid Gambit
+DisplayProgressbar: Compiling Scripts
+info: Microsoft.AspNetCore.Hosting.Diagnostics[1]
+      Request starting HTTP/2 POST http://ilpp/UnityILPP.PostProcessing/ConfigurePostProcessors application/grpc -
+info: Microsoft.AspNetCore.Routing.EndpointMiddleware[0]
+      Executing endpoint 'gRPC - /UnityILPP.PostProcessing/ConfigurePostProcessors'
+warn: Unity.ILPP.Runner.PostProcessingAssemblyLoadContext[0]
+      Assembly system.componentmodel.composition has duplicate hint path. Ignoring "C:\Program Files\Unity\Hub\Editor\6000.3.10f1\Editor\Data\NetStandard\compat\2.1.0\shims\netfx\System.ComponentModel.Composition.dll" in favor of "C:\Program Files\Unity\Hub\Editor\6000.3.10f1\Editor\Data\UnityReferenceAssemblies\unity-4.8-api\System.ComponentModel.Composition.dll"
+warn: Unity.ILPP.Runner.PostProcessingAssemblyLoadContext[0]
+      Assembly system.runtime.interopservices.windowsruntime has duplicate hint path. Ignoring "C:\Program Files\Unity\Hub\Editor\6000.3.10f1\Editor\Data\NetStandard\Extensions\2.0.0\System.Runtime.InteropServices.WindowsRuntime.dll" in favor of "C:\Program Files\Unity\Hub\Editor\6000.3.10f1\Editor\Data\UnityReferenceAssemblies\unity-4.8-api\Facades\System.Runtime.InteropServices.WindowsRuntime.dll"
+info: Unity.ILPP.Runner.PostProcessingAssemblyLoadContext[0]
+      Resolved Mono.Cecil, Version=0.11.5.0, Culture=neutral, PublicKeyToken=50cebf1cceb9d05e with Library\PackageCache\com.unity.nuget.mono-cecil@ecb9724e46ff\Mono.Cecil.dll
+info: Unity.ILPP.Runner.PostProcessingAssemblyLoadContext[0]
+      Resolved Unity.Burst.Cecil, Version=0.11.4.0, Culture=neutral, PublicKeyToken=50cebf1cceb9d05e with Library\PackageCache\com.unity.burst@07790c2d06d9\Unity.Burst.CodeGen\Unity.Burst.Cecil.dll
+info: Microsoft.AspNetCore.Routing.EndpointMiddleware[1]
+      Executed endpoint 'gRPC - /UnityILPP.PostProcessing/ConfigurePostProcessors'
+info: Microsoft.AspNetCore.Hosting.Diagnostics[2]
+      Request finished HTTP/2 POST http://ilpp/UnityILPP.PostProcessing/ConfigurePostProcessors application/grpc - - 200 - application/grpc 26.1310ms
+info: Microsoft.AspNetCore.Hosting.Diagnostics[1]
+      Request starting HTTP/2 POST http://ilpp/UnityILPP.PostProcessing/PostProcessAssembly application/grpc -
+info: Microsoft.AspNetCore.Routing.EndpointMiddleware[0]
+      Executing endpoint 'gRPC - /UnityILPP.PostProcessing/PostProcessAssembly'
+info: Unity.ILPP.Runner.PostProcessingPipeline[0]
+      Processing assembly Library/Bee/artifacts/1900b0aE.dag/NineGrid.Presentation.Tests.dll, with 143 defines and 280 references
+info: Unity.ILPP.Runner.PostProcessingPipeline[0]
+      processors: Unity.Jobs.CodeGen.JobsILPostProcessor, Unity.Pipeline.CodeGen.HotReloadInPlaceILPostProcessor, zzzUnity.Burst.CodeGen.BurstILPostProcessor
+info: Unity.ILPP.Runner.PostProcessingPipeline[0]
+      running Unity.Jobs.CodeGen.JobsILPostProcessor
+info: Unity.ILPP.Runner.PostProcessingPipeline[0]
+      running Unity.Pipeline.CodeGen.HotReloadInPlaceILPostProcessor
+info: Unity.ILPP.Runner.PostProcessingPipeline[0]
+      running zzzUnity.Burst.CodeGen.BurstILPostProcessor
+info: Microsoft.AspNetCore.Routing.EndpointMiddleware[1]
+      Executed endpoint 'gRPC - /UnityILPP.PostProcessing/PostProcessAssembly'
+info: Microsoft.AspNetCore.Hosting.Diagnostics[2]
+      Request finished HTTP/2 POST http://ilpp/UnityILPP.PostProcessing/PostProcessAssembly application/grpc - - 200 - application/grpc 11.3648ms
+ExitCode: 0 Duration: 0s716ms
+[1236/1643  0s] ILPP-Configuration Library/ilpp-configuration.nevergeneratedoutput
+[1639/1643  0s] Csc Library/Bee/artifacts/1900b0aE.dag/NineGrid.Presentation.Tests.dll (+2 others)
+[1640/1643  0s] ILPostProcess Library/Bee/artifacts/1900b0aE.dag/post-processed/NineGrid.Presentation.Tests.dll (+pdb)
+Processing assembly Library/Bee/artifacts/1900b0aE.dag/NineGrid.Presentation.Tests.dll, with 143 defines and 280 references
+
+processors: Unity.Jobs.CodeGen.JobsILPostProcessor, Unity.Pipeline.CodeGen.HotReloadInPlaceILPostProcessor, zzzUnity.Burst.CodeGen.BurstILPostProcessor
+
+running Unity.Jobs.CodeGen.JobsILPostProcessor
+
+running Unity.Pipeline.CodeGen.HotReloadInPlaceILPostProcessor
+
+running zzzUnity.Burst.CodeGen.BurstILPostProcessor
+[1641/1643  0s] CopyFiles Library/ScriptAssemblies/NineGrid.Presentation.Tests.pdb
+[1642/1643  0s] CopyFiles Library/ScriptAssemblies/NineGrid.Presentation.Tests.dll
+*** Tundra build success (0.69 seconds), 5 items updated, 1643 evaluated
+AssetDatabase: script compilation time: 1.063907s
+'Assets/Notes/Logs/batchmode-investigate.log' Amount of processed bytes '28715' does not match file size '21913'
+Begin MonoManager ReloadAssembly
+Duplicate assembly 'System.Runtime.CompilerServices.Unsafe.dll' with different versions detected, using 'Packages/com.unity.collections/Unity.Collections.Tests/System.Runtime.CompilerServices.Unsafe/System.Runtime.CompilerServices.Unsafe.dll, AssemblyName=System.Runtime.CompilerServices.Unsafe, Version=6.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a' and ignoring 'Packages/com.unity.pipeline/Runtime/Plugins/CodeAnalysis/System.Runtime.CompilerServices.Unsafe.dll, AssemblyName=System.Runtime.CompilerServices.Unsafe, Version=4.0.4.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a'.Symbol file LoadedFromMemory is not a mono symbol file
+- Loaded All Assemblies, in  1.075 seconds
+'Assets/QFramework/Toolkits/_CoreKit/GraphKit/IMGUI/Scripts/IMGUISceneGraph.cs' contains partial class of Unity.Object, exactly 1 of the partial classes needs to be in a file with the same filename. This is to know the one that can be referenced from ie. GameObjects
+'Assets/QFramework/Toolkits/_CoreKit/GraphKit/IMGUI/Scripts/IMGUISceneGraph.cs' contains partial class of Unity.Object, exactly 1 of the partial classes needs to be in a file with the same filename. This is to know the one that can be referenced from ie. GameObjects
+'Packages/com.unity.cinemachine/Editor/Editors/CinemachineVirtualCameraBaseEditor.cs' contains partial class of Unity.Object, exactly 1 of the partial classes needs to be in a file with the same filename. This is to know the one that can be referenced from ie. GameObjects
+'Assets/QFramework/Toolkits/_CoreKit/GraphKit/IMGUI/Scripts/Editor/IMGUIGraphEditorGUI.cs' contains partial class of Unity.Object, exactly 1 of the partial classes needs to be in a file with the same filename. This is to know the one that can be referenced from ie. GameObjects
+'Assets/QFramework/Toolkits/_CoreKit/GraphKit/IMGUI/Scripts/Editor/IMGUIGraphWindow.cs' contains partial class of Unity.Object, exactly 1 of the partial classes needs to be in a file with the same filename. This is to know the one that can be referenced from ie. GameObjects
+'Packages/com.unity.cinemachine/Editor/Obsolete/CinemachineVirtualCameraBaseEditor.cs' contains partial class of Unity.Object, exactly 1 of the partial classes needs to be in a file with the same filename. This is to know the one that can be referenced from ie. GameObjects
+'Assets/QFramework/Toolkits/_CoreKit/GraphKit/IMGUI/Scripts/Editor/IMGUIGraphEditorAction.cs' contains partial class of Unity.Object, exactly 1 of the partial classes needs to be in a file with the same filename. This is to know the one that can be referenced from ie. GameObjects
+'Assets/Notes/Logs/batchmode-investigate.log' Amount of processed bytes '31483' does not match file size '28863'
+Refreshing native plugins compatible for Editor in 2.18 ms, found 6 plugins.
+Native extension for WindowsStandalone target not found
+Native extension for WebGL target not found
+Assembly reference Packages/com.unity.cinemachine/Editor/Samples/ExposeHDRPInternals/HDRP-Editor-ref.asmref has no target assembly definition
+Duplicate assembly 'System.Runtime.CompilerServices.Unsafe.dll' with different versions detected, using 'Packages/com.unity.collections/Unity.Collections.Tests/System.Runtime.CompilerServices.Unsafe/System.Runtime.CompilerServices.Unsafe.dll, AssemblyName=System.Runtime.CompilerServices.Unsafe, Version=6.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a' and ignoring 'Packages/com.unity.pipeline/Runtime/Plugins/CodeAnalysis/System.Runtime.CompilerServices.Unsafe.dll, AssemblyName=System.Runtime.CompilerServices.Unsafe, Version=4.0.4.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a'.Start HTTP server: port:7800
+ScheduleIndexationOnStartup MainProcess:True IndexOnStartup:True
+Mono: successfully reloaded assembly
+[locus-native] broker listening on \\.\pipe\locus_unity_native_668a5677c909bcd72f73ad852edb7595
+[Locus] Native broker bridge active (generation 1).
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+Locus.LocusBridge:NativeStartIfEnabled () (at ./Packages/com.farlocus.locus/Editor/LocusBridge.Native.cs:141)
+Locus.LocusBridge:NativeOnAfterReload () (at ./Packages/com.farlocus.locus/Editor/LocusBridge.Native.cs:168)
+Locus.LocusBridge:OnAfterAssemblyReload () (at ./Packages/com.farlocus.locus/Editor/LocusBridge.cs:743)
+UnityEditor.AssemblyReloadEvents:OnAfterAssemblyReload ()
+
+(Filename: ./Packages/com.farlocus.locus/Editor/LocusBridge.Native.cs Line: 141)
+
+[Locus] Native background hook active (2 symbols).
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+Locus.LocusBridge:NativeApplyBackgroundHook () (at ./Packages/com.farlocus.locus/Editor/LocusBridge.Native.cs:527)
+Locus.LocusBridge:NativeRefreshBackgroundHook (bool) (at ./Packages/com.farlocus.locus/Editor/LocusBridge.Native.cs:541)
+Locus.LocusBridge:NativeStartIfEnabled () (at ./Packages/com.farlocus.locus/Editor/LocusBridge.Native.cs:146)
+Locus.LocusBridge:NativeOnAfterReload () (at ./Packages/com.farlocus.locus/Editor/LocusBridge.Native.cs:168)
+Locus.LocusBridge:OnAfterAssemblyReload () (at ./Packages/com.farlocus.locus/Editor/LocusBridge.cs:743)
+UnityEditor.AssemblyReloadEvents:OnAfterAssemblyReload ()
+
+(Filename: ./Packages/com.farlocus.locus/Editor/LocusBridge.Native.cs Line: 527)
+
+- Finished resetting the current domain, in  6.100 seconds
+Domain Reload Profiling: 7170ms
+	BeginReloadAssembly (228ms)
+		ExecutionOrderSort (0ms)
+		DisableScriptedObjects (7ms)
+		BackupInstance (0ms)
+		ReleaseScriptingObjects (0ms)
+		CreateAndSetChildDomain (141ms)
+	RebuildCommonClasses (22ms)
+	RebuildNativeTypeToScriptingClass (8ms)
+	initialDomainReloadingComplete (25ms)
+	LoadAllAssembliesAndSetupDomain (786ms)
+		LoadAssemblies (469ms)
+		RebuildTransferFunctionScriptingTraits (0ms)
+		AnalyzeDomain (374ms)
+			TypeCache.Refresh (284ms)
+				TypeCache.ScanAssembly (271ms)
+			BuildScriptInfoCaches (72ms)
+			ResolveRequiredComponents (13ms)
+	FinalizeReload (6101ms)
+		ReleaseScriptCaches (0ms)
+		RebuildScriptCaches (0ms)
+		SetupLoadedEditorAssemblies (5000ms)
+			LogAssemblyErrors (0ms)
+			InitializePlatformSupportModulesInManaged (17ms)
+			SetLoadedEditorAssemblies (3ms)
+			BeforeProcessingInitializeOnLoad (118ms)
+			ProcessInitializeOnLoadAttributes (4662ms)
+			ProcessInitializeOnLoadMethodAttributes (194ms)
+			AfterProcessingInitializeOnLoad (6ms)
+			EditorAssembliesLoaded (1ms)
+		ExecutionOrderSort2 (0ms)
+		AwakeInstancesAfterBackupRestoration (8ms)
+'Assets/Notes/Logs/batchmode-investigate.log' Amount of processed bytes '36048' does not match file size '31597'
+ (4,10): Semantic - The specified URI does not exist in the current project : Asset reference to GUID 'f9029dd0173d57a45ab78e2ad79be0b8' was moved from 'Packages/com.febucci.text-animator-unity/Samples/BuiltIn/Timings/Delays By Character.asset' to 'Assets/Plugins/Febucci/Text Animator for Unity/Samples/BuiltIn/Timings/Delays By Character.asset'. Update the URL 'project://database/Packages/com.febucci.text-animator-unity/Samples/BuiltIn/Timings/Delays%20By%20Character.asset?fileID=11400000&guid=f9029dd0173d57a45ab78e2ad79be0b8&type=2#Delays By Character' to remove this warning.
+ (4,10): Semantic - The specified URI does not exist in the current project : Asset reference to GUID 'e5ebec8b825794584aa9434d686fed6f' was moved from 'Packages/com.febucci.text-animator-unity/Samples/BuiltIn/Settings/Shared Typewriter Settings.asset' to 'Assets/Plugins/Febucci/Text Animator for Unity/Samples/BuiltIn/Settings/Shared Typewriter Settings.asset'. Update the URL 'project://database/Packages/com.febucci.text-animator-unity/Samples/BuiltIn/Settings/Shared%20Typewriter%20Settings.asset?fileID=11400000&guid=e5ebec8b825794584aa9434d686fed6f&type=2#Shared Typewriter Settings' to remove this warning.
+Assets/Plugins/Febucci/Text Animator for Unity/Samples/Quick Start/UIToolkit/TextAnimUITK_Example.uxml (线 2): 警告: Asset reference to GUID 'aefdeb69b4be8fe41ab2965fd0f8aff9' was moved from 'Packages/com.febucci.text-animator-unity/Samples/Quick Start/Sprites/textanimator-sfondo-unity.png' to 'Assets/Plugins/Febucci/Text Animator for Unity/Samples/Quick Start/Sprites/textanimator-sfondo-unity.png'. Update the URL 'project://database/Packages/com.febucci.text-animator-unity/Samples/Quick%20Start/Sprites/textanimator-sfondo-unity.png?fileID=2800000&guid=aefdeb69b4be8fe41ab2965fd0f8aff9&type=3#textanimator-sfondo-unity' to remove this warning.
+: Semantic - USS in 'style' attribute is invalid: Assets/Plugins/Febucci/Text Animator for Unity/Samples/Quick Start/UIToolkit/TextAnimUITK_Example.uxml (线 2): 警告: Asset reference to GUID 'aefdeb69b4be8fe41ab2965fd0f8aff9' was moved from 'Packages/com.febucci.text-animator-unity/Samples/Quick Start/Sprites/textanimator-sfondo-unity.png' to 'Assets/Plugins/Febucci/Text Animator for Unity/Samples/Quick Start/Sprites/textanimator-sfondo-unity.png'. Update the URL 'project://database/Packages/com.febucci.text-animator-unity/Samples/Quick%20Start/Sprites/textanimator-sfondo-unity.png?fileID=2800000&guid=aefdeb69b4be8fe41ab2965fd0f8aff9&type=3#textanimator-sfondo-unity' to remove this warning.
+Start importing Assets/Notes/Logs/batchmode-investigate.log using Guid(35c7c1e042816a048aa7f4f47fddd9a2) (DefaultImporter) -> (artifact id: '00000000000000000000000000000000') in 0.0331829 seconds
+Import Error Code:(4)
+Message: Build asset version error: assets/notes/logs/batchmode-investigate.log in SourceAssetDB has modification time of '2026-08-11T00:14:23.4825883Z' while content on disk has modification time of '2026-08-11T00:17:01.2507548Z'
+'Assets/Notes/Logs/batchmode-investigate.log' Amount of processed bytes '39174' does not match file size '38843'
+Start importing Assets/Notes/Logs/batchmode-investigate.log using Guid(35c7c1e042816a048aa7f4f47fddd9a2) (DefaultImporter) -> (artifact id: '00000000000000000000000000000000') in 0.0008722 seconds
+Import Error Code:(4)
+Message: Build asset version error: assets/notes/logs/batchmode-investigate.log in SourceAssetDB has modification time of '2026-08-11T00:14:23.4825883Z' while content on disk has modification time of '2026-08-11T00:17:01.3106336Z'
+Start importing Assets/Notes/Logs/batchmode-investigate.log using Guid(35c7c1e042816a048aa7f4f47fddd9a2) (DefaultImporter) -> (artifact id: '00000000000000000000000000000000') in 0.000915 seconds
+Import Error Code:(4)
+Message: Build asset version error: assets/notes/logs/batchmode-investigate.log in SourceAssetDB has modification time of '2026-08-11T00:17:01.3106336Z' while content on disk has modification time of '2026-08-11T00:17:01.3522418Z'
+Start importing Assets/Notes/Logs/batchmode-investigate.log using Guid(35c7c1e042816a048aa7f4f47fddd9a2) (DefaultImporter) -> (artifact id: '00000000000000000000000000000000') in 0.0008832 seconds
+Import Error Code:(4)
+Message: Build asset version error: assets/notes/logs/batchmode-investigate.log in SourceAssetDB has modification time of '2026-08-11T00:17:01.3533531Z' while content on disk has modification time of '2026-08-11T00:17:01.405437Z'
+Start importing Assets/Notes/Logs/batchmode-investigate.log using Guid(35c7c1e042816a048aa7f4f47fddd9a2) (DefaultImporter) -> (artifact id: '00000000000000000000000000000000') in 0.0008906 seconds
+Import Error Code:(4)
+Message: Build asset version error: assets/notes/logs/batchmode-investigate.log in SourceAssetDB has modification time of '2026-08-11T00:17:01.405437Z' while content on disk has modification time of '2026-08-11T00:17:01.4506441Z'
+Start importing Assets/Notes/Logs/batchmode-investigate.log using Guid(35c7c1e042816a048aa7f4f47fddd9a2) (DefaultImporter) -> (artifact id: '00000000000000000000000000000000') in 0.0009608 seconds
+Import Error Code:(4)
+Message: Build asset version error: assets/notes/logs/batchmode-investigate.log in SourceAssetDB has modification time of '2026-08-11T00:17:01.452154Z' while content on disk has modification time of '2026-08-11T00:17:01.5082814Z'
+Start importing Assets/Notes/Logs/batchmode-investigate.log using Guid(35c7c1e042816a048aa7f4f47fddd9a2) (DefaultImporter) -> (artifact id: '00000000000000000000000000000000') in 0.0009627 seconds
+Import Error Code:(4)
+Message: Build asset version error: assets/notes/logs/batchmode-investigate.log in SourceAssetDB has modification time of '2026-08-11T00:17:01.5092861Z' while content on disk has modification time of '2026-08-11T00:17:01.5591202Z'
+Start importing Assets/Notes/Logs/batchmode-investigate.log using Guid(35c7c1e042816a048aa7f4f47fddd9a2) (DefaultImporter) -> (artifact id: '00000000000000000000000000000000') in 0.0009618 seconds
+Import Error Code:(4)
+Message: Build asset version error: assets/notes/logs/batchmode-investigate.log in SourceAssetDB has modification time of '2026-08-11T00:17:01.5601256Z' while content on disk has modification time of '2026-08-11T00:17:01.6139232Z'
+An infinite import loop has been detected. The following Assets were imported multiple times, but no changes to them have been detected. Please check if any custom code is trying to import them:
+Packages/com.unity.render-pipelines.core/Editor/Lighting/ProbeVolume/RenderingLayerMask/TraceRenderingLayerMask.urtshader(modified date 2026-02-17T17:09:44Z)
+Packages/com.unity.render-pipelines.core/Editor/Lighting/ProbeVolume/VirtualOffset/TraceVirtualOffset.urtshader(modified date 2026-02-17T17:09:44Z)
+Packages/com.unity.render-pipelines.core/Tests/Editor/UnifiedRayTracing/TraceRaysAndFetchAttributes.urtshader(modified date 2026-02-17T17:10:08Z)
+Packages/com.unity.render-pipelines.core/Tests/Editor/UnifiedRayTracing/TraceRays.urtshader(modified date 2026-02-17T17:10:08Z)
+Packages/com.unity.render-pipelines.universal/Runtime/RendererFeatures/SurfaceCacheGI/SurfaceCacheCore/RestirCandidateTemporal.urtshader(modified date 2026-02-17T17:09:46Z)
+Packages/com.unity.render-pipelines.core/Editor/Lighting/ProbeVolume/DynamicGI/DynamicGISkyOcclusion.urtshader(modified date 2026-02-17T17:09:42Z)
+Packages/com.unity.render-pipelines.universal/Runtime/RendererFeatures/SurfaceCacheGI/SurfaceCacheCore/RisEstimation.urtshader(modified date 2026-02-17T17:09:46Z)
+Assets/Notes/Logs/batchmode-investigate.log(modified date 2026-08-11T00:17:01.6149234Z)
+Packages/com.unity.render-pipelines.core/Tests/Editor/UnifiedRayTracing/TraceTransparentRays.urtshader(modified date 2026-02-17T17:10:08Z)
+Packages/com.unity.render-pipelines.universal/Runtime/RendererFeatures/SurfaceCacheGI/SurfaceCacheCore/UniformEstimation.urtshader(modified date 2026-02-17T17:09:48Z)
+Host type is not matching any asset type at Path Packages/com.unity.render-pipelines.core/Editor/Lighting/ProbeVolume/VirtualOffset/TraceVirtualOffset.urtshader.
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:LogError (object)
+UnityEditor.Rendering.RenderPipelineResourcesEditorUtils:TryReloadContainedNullFields (UnityEngine.Rendering.IRenderPipelineResources)
+UnityEditor.Rendering.Settings.RenderPipelineGraphicsSettingsManager:UpdateRenderPipelineGlobalSettings (UnityEditor.Rendering.Settings.RenderPipelineGraphicsSettingsManager/RenderPipelineGraphicsSettingsInfo,UnityEngine.Rendering.RenderPipelineGlobalSettings,bool&,UnityEngine.Rendering.IRenderPipelineGraphicsSettings&)
+UnityEditor.Rendering.Settings.RenderPipelineGraphicsSettingsManager:PopulateRenderPipelineGraphicsSettings (UnityEngine.Rendering.RenderPipelineGlobalSettings)
+UnityEditor.Rendering.EditorGraphicsSettings:SetRenderPipelineGlobalSettingsAsset (System.Type,UnityEngine.Rendering.RenderPipelineGlobalSettings)
+UnityEditor.Rendering.EditorGraphicsSettings:SetRenderPipelineGlobalSettingsAsset<UnityEngine.Rendering.Universal.UniversalRenderPipeline> (UnityEngine.Rendering.RenderPipelineGlobalSettings)
+UnityEngine.Rendering.RenderPipelineGlobalSettingsUtils:TryEnsure<UnityEngine.Rendering.Universal.UniversalRenderPipelineGlobalSettings, UnityEngine.Rendering.Universal.UniversalRenderPipeline> (UnityEngine.Rendering.Universal.UniversalRenderPipelineGlobalSettings&,string,bool,System.Exception&) (at ./Library/PackageCache/com.unity.render-pipelines.core@04ab0eefa0c3/Runtime/RenderPipeline/RenderPipelineGlobalSettingsUtils.cs:138)
+UnityEngine.Rendering.RenderPipelineGlobalSettingsUtils:TryEnsure<UnityEngine.Rendering.Universal.UniversalRenderPipelineGlobalSettings, UnityEngine.Rendering.Universal.UniversalRenderPipeline> (UnityEngine.Rendering.Universal.UniversalRenderPipelineGlobalSettings&,string,bool) (at ./Library/PackageCache/com.unity.render-pipelines.core@04ab0eefa0c3/Runtime/RenderPipeline/RenderPipelineGlobalSettingsUtils.cs:90)
+UnityEngine.Rendering.Universal.UniversalRenderPipelineGlobalSettings:Ensure (bool) (at ./Library/PackageCache/com.unity.render-pipelines.universal@37e0d4fc2503/Runtime/UniversalRenderPipelineGlobalSettings.cs:290)
+UnityEditor.Rendering.Universal.UniversalRenderPipelineGlobalSettingsPostprocessor:OnPostprocessAllAssets (string[],string[],string[],string[],bool) (at ./Library/PackageCache/com.unity.render-pipelines.universal@37e0d4fc2503/Editor/AssetPostProcessors/UniversalRenderPipelineGlobalSettingsPostprocessor.cs:14)
+System.Reflection.RuntimeMethodInfo:Invoke (object,System.Reflection.BindingFlags,System.Reflection.Binder,object[],System.Globalization.CultureInfo)
+System.Reflection.MethodBase:Invoke (object,object[])
+UnityEditor.AssetPostprocessingInternal:InvokeMethod (System.Reflection.MethodInfo,object[])
+UnityEditor.AssetPostprocessingInternal:PostprocessAllAssets (string[],string[],string[],string[],string[],bool)
+
+(Filename: ./Library/PackageCache/com.unity.render-pipelines.core@04ab0eefa0c3/Runtime/RenderPipeline/RenderPipelineGlobalSettingsUtils.cs Line: 138)
+
+Refreshing native plugins compatible for Editor in 2.57 ms, found 6 plugins.
+Preloading 0 native plugins for Editor in 0.00 ms.
+Asset Pipeline Refresh (id=6c1763e1d0212fe4391f232a0ec36bbc): Total: 9.747 seconds - Initiated by InitialRefreshV2(ForceSynchronousImport)
+	Summary:
+		Imports: total=9233 (actual=7, local cache=9226, cache server=0)
+		Asset DB Process Time: managed=3 ms, native=7289 ms
+		Asset DB Callback time: managed=230 ms, native=29 ms
+		Scripting: domain reloads=1, domain reload time=1075 ms, compile time=1065 ms, other=53 ms
+		Project Asset Count: scripts=4233, non-scripts=16760
+		Asset File Changes: new=0, changed=7, moved=0, deleted=0
+		Scan Filter Count: 0
+	InvokeCustomDependenciesCallbacks: 0.002ms
+	InvokePackagesCallback: 30.815ms
+	ApplyChangesToAssetFolders: 1.468ms
+	Scan: 348.325ms
+	OnSourceAssetsModified: 1.729ms
+	CategorizeAssetsWithTransientArtifact: 70.456ms
+	ProcessAssetsWithTransientArtifactChanges: 101.784ms
+	CategorizeAssets: 264.988ms
+	ImportOutOfDateAssets: 6216.284ms (5093.138ms without children)
+		ImportManagerImport: 42.327ms (1.094ms without children)
+			ImportInProcess: 41.213ms
+			UpdateCategorizedAssets: 0.019ms
+		CompileScripts: 1065.438ms
+		ReloadNativeAssets: 0.277ms
+		UnloadImportedAssets: 3.889ms
+		ReloadImportedAssets: 0.221ms
+		EnsureUptoDateAssetsAreRegisteredWithGuidPM: 10.116ms
+		InitializingProgressBar: 0.053ms
+		PostProcessAllAssetNotificationsAddChangedAssets: 0.003ms
+		OnDemandSchedulerStart: 0.821ms
+	PostProcessAllAssets: 230.267ms
+	Hotreload: 6.629ms
+	GatherAllCurrentPrimaryArtifactRevisions: 0.001ms
+	UnloadStreamsBegin: 2.316ms
+	UnloadStreamsEnd: 0.001ms
+	GenerateScriptTypeHashes: 5.034ms
+	Untracked: 2472.287ms
+
+Application.AssetDatabase Initial Refresh End
+Scanning for USB devices : 21.289ms
+Initializing Unity extensions:
+[MODES] ModeService[none].Initialize
+[MODES] ModeService[none].LoadModes
+[MODES] Loading mode Default (0) for mode-current-id-Ninegrid Gambit
+Unloading 34 Unused Serialized files (Serialized files now loaded: 0)
+Unloading 11823 unused Assets / (4.7 MB). Loaded Objects now: 12777.
+Memory consumption went from 419.5 MB to 414.8 MB.
+Total: 26.679300 ms (FindLiveObjects: 0.609900 ms CreateObjectMapping: 0.439100 ms MarkObjects: 23.011100 ms  DeleteObjects: 2.618100 ms)
+
+Batchmode quit successfully invoked - shutting down!
+[locus-native] broker loop exited
+Pipeline Server stopped
+Curl error 42: Callback aborted
+Start importing ProjectSettings/ProjectSettings.asset using Guid(00000000000000004000000000000000) (LibraryAssetImporter) -> (artifact id: '7d6fa12f26f890ac6013892c2ffb7724') in 0.0028178 seconds
+Start importing ProjectSettings/EditorBuildSettings.asset using Guid(0000000000000000b000000000000000) (LibraryAssetImporter) -> (artifact id: 'fcf76cd07b3b3d1428f660e0c1652587') in 0.0023974 seconds
+Start importing Assets/Notes/Logs/batchmode-investigate.log using Guid(35c7c1e042816a048aa7f4f47fddd9a2) (DefaultImporter) -> (artifact id: '00000000000000000000000000000000') in 0.0007887 seconds
+Import Error Code:(4)
+Message: Build asset version error: assets/notes/logs/batchmode-investigate.log in SourceAssetDB has modification time of '2026-08-11T00:17:01.5601256Z' while content on disk has modification time of '2026-08-11T00:17:02.9330776Z'
+Start importing Assets/Notes/Logs/batchmode-investigate.log using Guid(35c7c1e042816a048aa7f4f47fddd9a2) (DefaultImporter) -> (artifact id: '00000000000000000000000000000000') in 0.0011844 seconds
+Import Error Code:(4)
+Message: Build asset version error: assets/notes/logs/batchmode-investigate.log in SourceAssetDB has modification time of '2026-08-11T00:17:02.9350945Z' while content on disk has modification time of '2026-08-11T00:17:02.9758072Z'
+Start importing Assets/Notes/Logs/batchmode-investigate.log using Guid(35c7c1e042816a048aa7f4f47fddd9a2) (DefaultImporter) -> (artifact id: '00000000000000000000000000000000') in 0.0011263 seconds
+Import Error Code:(4)
+Message: Build asset version error: assets/notes/logs/batchmode-investigate.log in SourceAssetDB has modification time of '2026-08-11T00:17:02.9768098Z' while content on disk has modification time of '2026-08-11T00:17:03.0106803Z'
+Start importing Assets/Notes/Logs/batchmode-investigate.log using Guid(35c7c1e042816a048aa7f4f47fddd9a2) (DefaultImporter) -> (artifact id: '00000000000000000000000000000000') in 0.0010489 seconds
+Import Error Code:(4)
+Message: Build asset version error: assets/notes/logs/batchmode-investigate.log in SourceAssetDB has modification time of '2026-08-11T00:17:03.0111847Z' while content on disk has modification time of '2026-08-11T00:17:03.0433927Z'
+Start importing Assets/Notes/Logs/batchmode-investigate.log using Guid(35c7c1e042816a048aa7f4f47fddd9a2) (DefaultImporter) -> (artifact id: '00000000000000000000000000000000') in 0.0010377 seconds
+Import Error Code:(4)
+Message: Build asset version error: assets/notes/logs/batchmode-investigate.log in SourceAssetDB has modification time of '2026-08-11T00:17:03.0439024Z' while content on disk has modification time of '2026-08-11T00:17:03.0783322Z'
+Start importing Assets/Notes/Logs/batchmode-investigate.log using Guid(35c7c1e042816a048aa7f4f47fddd9a2) (DefaultImporter) -> (artifact id: '00000000000000000000000000000000') in 0.0010417 seconds
+Import Error Code:(4)
+Message: Build asset version error: assets/notes/logs/batchmode-investigate.log in SourceAssetDB has modification time of '2026-08-11T00:17:03.0793328Z' while content on disk has modification time of '2026-08-11T00:17:03.1100268Z'
+Start importing Assets/Notes/Logs/batchmode-investigate.log using Guid(35c7c1e042816a048aa7f4f47fddd9a2) (DefaultImporter) -> (artifact id: '00000000000000000000000000000000') in 0.0008955 seconds
+Import Error Code:(4)
+Message: Build asset version error: assets/notes/logs/batchmode-investigate.log in SourceAssetDB has modification time of '2026-08-11T00:17:03.1105385Z' while content on disk has modification time of '2026-08-11T00:17:03.1422927Z'
+An infinite import loop has been detected. The following Assets were imported multiple times, but no changes to them have been detected. Please check if any custom code is trying to import them:
+Packages/com.unity.render-pipelines.core/Editor/Lighting/ProbeVolume/RenderingLayerMask/TraceRenderingLayerMask.urtshader(modified date 2026-02-17T17:09:44Z)
+Packages/com.unity.render-pipelines.core/Editor/Lighting/ProbeVolume/VirtualOffset/TraceVirtualOffset.urtshader(modified date 2026-02-17T17:09:44Z)
+Packages/com.unity.render-pipelines.core/Tests/Editor/UnifiedRayTracing/TraceRaysAndFetchAttributes.urtshader(modified date 2026-02-17T17:10:08Z)
+Packages/com.unity.render-pipelines.core/Tests/Editor/UnifiedRayTracing/TraceRays.urtshader(modified date 2026-02-17T17:10:08Z)
+Packages/com.unity.render-pipelines.universal/Runtime/RendererFeatures/SurfaceCacheGI/SurfaceCacheCore/RestirCandidateTemporal.urtshader(modified date 2026-02-17T17:09:46Z)
+Packages/com.unity.render-pipelines.core/Editor/Lighting/ProbeVolume/DynamicGI/DynamicGISkyOcclusion.urtshader(modified date 2026-02-17T17:09:42Z)
+Packages/com.unity.render-pipelines.universal/Runtime/RendererFeatures/SurfaceCacheGI/SurfaceCacheCore/RisEstimation.urtshader(modified date 2026-02-17T17:09:46Z)
+Assets/Notes/Logs/batchmode-investigate.log(modified date 2026-08-11T00:17:03.1432958Z)
+Packages/com.unity.render-pipelines.core/Tests/Editor/UnifiedRayTracing/TraceTransparentRays.urtshader(modified date 2026-02-17T17:10:08Z)
+Packages/com.unity.render-pipelines.universal/Runtime/RendererFeatures/SurfaceCacheGI/SurfaceCacheCore/UniformEstimation.urtshader(modified date 2026-02-17T17:09:48Z)
+Refreshing native plugins compatible for Editor in 2.58 ms, found 6 plugins.
+Preloading 0 native plugins for Editor in 0.00 ms.
+Asset Pipeline Refresh (id=ba3b7c420b6004a4f8a2f26802309641): Total: 0.323 seconds - Initiated by StopAssetImportingV2(NoUpdateAssetOptions)
+	Summary:
+		Imports: total=2 (actual=9, local cache=18446744073709551609, cache server=0)
+		Asset DB Process Time: managed=0 ms, native=311 ms
+		Asset DB Callback time: managed=2 ms, native=7 ms
+		Scripting: domain reloads=0, domain reload time=0 ms, compile time=0 ms, other=0 ms
+		Project Asset Count: scripts=4233, non-scripts=16760
+		Asset File Changes: new=0, changed=6, moved=0, deleted=0
+		Scan Filter Count: 2
+	InvokeCustomDependenciesCallbacks: 0.002ms
+	InvokePackagesCallback: 0.002ms
+	ApplyChangesToAssetFolders: 0.471ms
+	Scan: 65.363ms
+	OnSourceAssetsModified: 0.273ms
+	CategorizeAssetsWithTransientArtifact: 0.047ms
+	ProcessAssetsWithTransientArtifactChanges: 0.398ms
+	CategorizeAssets: 190.280ms
+	ImportOutOfDateAssets: 29.793ms (1.715ms without children)
+		ImportManagerImport: 15.687ms (0.671ms without children)
+			ImportInProcess: 14.641ms
+			UpdateCategorizedAssets: 0.374ms
+		ReloadNativeAssets: 0.713ms
+		UnloadImportedAssets: 3.142ms
+		ReloadImportedAssets: 0.000ms
+		EnsureUptoDateAssetsAreRegisteredWithGuidPM: 7.972ms
+		InitializingProgressBar: 0.048ms
+		PostProcessAllAssetNotificationsAddChangedAssets: 0.004ms
+		OnDemandSchedulerStart: 0.513ms
+	PostProcessAllAssets: 7.757ms
+	Hotreload: 2.730ms
+	GatherAllCurrentPrimaryArtifactRevisions: 0.814ms
+	UnloadStreamsBegin: 1.090ms
+	UnloadStreamsEnd: 0.001ms
+	Untracked: 24.226ms
+
+[Physics::Module] Cleanup current backend.
+[Physics::Module] Id: 0xf2b8ea05
+Input System module state changed to: ShutdownInProgress.
+Input System polling thread exited.
+Input System module state changed to: Shutdown.
+[Licensing::IpcConnector] LicenseClient-jinji-notifications channel disconnected successfully.
+[Licensing::IpcConnector] LicenseClient-jinji channel disconnected successfully.
+AcceleratorClientConnectionCallback - disconnected - :0
+Cleanup mono
+abort_threads: Failed aborting id: 000000000000C8EC, mono_thread_manage will ignore it
+
+abort_threads: Failed aborting id: 0000000000004F80, mono_thread_manage will ignore it
+
+abort_threads: Failed aborting id: 000000000000C8EC, mono_thread_manage will ignore it
+
+abort_threads: Failed aborting id: 0000000000004F80, mono_thread_manage will ignore it
+
+debugger-agent: Unable to listen on 3352
+Exiting batchmode successfully now!
+Exiting without the bug reporter. Application will terminate with return code 0

@@ -3,6 +3,7 @@ using System.Linq;
 using NineGrid.Content.Vfx;
 using NineGrid.Flow.Diagnostics;
 using NineGrid.Presentation.Systems;
+using NineGrid.Presentation.Systems.Vfx;
 using NUnit.Framework;
 
 namespace NineGrid.Presentation.Tests

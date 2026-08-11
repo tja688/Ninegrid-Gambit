@@ -4,7 +4,7 @@ namespace NineGrid.Presentation.Systems.Vfx
 {
     /// <summary>池化精灵表实例视图：只改本节点 SpriteRenderer，不碰共享相机 / Canvas / 卡级 SortingGroup。</summary>
     [DisallowMultipleComponent]
-    internal sealed class VfxSpriteSheetVisual : MonoBehaviour
+    public sealed class VfxSpriteSheetVisual : MonoBehaviour
     {
         private SpriteRenderer mRenderer;
 
