@@ -6,7 +6,7 @@ status: accepted
 
 ## 决策
 
-玩家卡在**非战斗相位**（`RoomChoice` / `RoomEvent`）可通过点击目标格走正交最短路径：逐邻格 `MoveAvatar` + 复用场地 hop 动画。输入一律经 IntentIntake（`boardWalk`），忙时 latest-wins 缓冲；半空改目标等当前跳落地后重规划。`InteractionLoop` **禁止** `MoveAvatar` 与 BoardWalk。逻辑占格权威仍是 Core `BoardModel.AvatarSlot`。
+玩家卡在**非战斗相位**（`RoomChoice` / `RoomEvent`）可通过点击目标格走正交最短路径：逐邻格 `MoveAvatar` + 复用场地 hop 动画。输入一律经 IntentIntake（`boardWalk`），主线忙时拒收；半空改目标等当前跳落地后重规划。`InteractionLoop` **禁止** `MoveAvatar` 与 BoardWalk。逻辑占格权威仍是 Core `BoardModel.AvatarSlot`。
 
 **途经格优先完全空置**（绕开其它场地图标 / 可购选项 / 真卡）；**终点可为空格或场地图标格**（ADR-0020 的驻留提交需要踩上图标）。若空途经不存在（盘面堆满，多半设计失误），允许途经踩过软占与真卡到达终点。图标格作为终点时不改变图标归属，Avatar 与图标共占一格由几何注册表达。
 

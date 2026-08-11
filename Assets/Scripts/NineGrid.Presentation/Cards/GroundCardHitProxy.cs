@@ -1,5 +1,8 @@
 using NineGrid.Cards.Convergence;
+using NineGrid.Core;
+using NineGrid.Core.Systems;
 using NineGrid.Flow;
+using NineGrid.Flow.Diagnostics;
 using NineGrid.Flow.Presentation;
 using NineGrid.Presentation;
 using UnityEngine;
@@ -241,6 +244,24 @@ namespace NineGrid.Cards
                     "GroundCardHitProxy",
                     layer: "L0",
                     verdict: "blocked");
+
+                if (card.CoreKind == CardPresentationKind.Monster
+                    || card.CoreKind == CardPresentationKind.Trap)
+                {
+                    BoardIntentGateDiagnostics.LogConsole(
+                        "GroundInputGate",
+                        "blocked uid=" + card.Uid + " reason=" + blockReason + " slot=" + registeredSlot,
+                        NineGridArchitecture.Current,
+                        GameCommandKind.Attack);
+                }
+                else if (!string.IsNullOrEmpty(blockReason))
+                {
+                    BoardIntentGateDiagnostics.LogConsole(
+                        "GroundInputGate",
+                        "blocked uid=" + card.Uid + " reason=" + blockReason + " slot=" + registeredSlot,
+                        NineGridArchitecture.Current,
+                        GameCommandKind.PickupItem);
+                }
             }
 
             RegistryTraceSink.RecordPickupEligibility?.Invoke(

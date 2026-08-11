@@ -255,12 +255,24 @@ namespace NineGrid.Flow.Diagnostics
                 payload);
         }
 
-        public static void IntentRejected(string intentKind, int targetId, string reason = null)
+        public static void IntentRejected(
+            string intentKind,
+            int targetId,
+            string reason = null,
+            IReadOnlyDictionary<string, string> diagnostics = null)
         {
             var payload = IntentPayload(intentKind, targetId);
             if (!string.IsNullOrEmpty(reason))
             {
                 payload["reason"] = reason;
+            }
+
+            if (diagnostics != null)
+            {
+                foreach (var pair in diagnostics)
+                {
+                    payload[pair.Key] = pair.Value;
+                }
             }
 
             Record(

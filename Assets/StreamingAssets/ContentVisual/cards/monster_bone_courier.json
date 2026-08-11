@@ -9,13 +9,13 @@
     "description": "[[神圣决斗]]，[[逃避]]",
     "faceIntro": "静待时机...",    "attackPattern": "无",
     "rhythmSource": "行动计数",
-    "rhythmPeriod": 5,
+    "rhythmPeriod": 0,
     "gold": 5,
     "stats": {
         "hp": 4,
         "armor": 0,
         "attack": 1,
-        "action": 5,
+        "action": 0,
         "recovery": 0
     },
     "sprites": {

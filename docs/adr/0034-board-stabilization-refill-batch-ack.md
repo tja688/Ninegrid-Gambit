@@ -31,6 +31,15 @@ status: accepted
 - 需要测试用“稳定态检查步 + 独立补牌批”描述时序，不能用固定 Tick 数推断某轮 Fill 是否发生；测试夹具必须显式准备抽牌堆供给。
 - 开局和旧整拍调用仍可一次性收敛，但现代战斗导演保留 `Resolve → Present → ack` 的可见因果。
 
+## 补记：机关空位补牌不触发「补牌触发型」效果（2026-08-11）
+
+策划确认：**敌方机关效果（滚石等 `trap.*` 来源）移除场上卡造成的空位，其补牌不应触发「补牌触发型」效果**——捕熊陷阱不应因滚石移除邻卡而自毁（`需要修改项目.md`：「滚石移除卡时，若捕熊陷阱与被移除卡相邻，捕熊陷阱会把自己移除」）。捕熊陷阱仍对玩家侧造成的空位补牌（击杀/拾取/道具·遗物效果）开火。
+
+- `RemoveCardAction` 在 `SourceDefId` 以 `trap.` 开头且被移除卡在场上时，将该格标记为机关空位（`BoardModel.MarkTrapVacated`；标记在格位被任何卡占用——补牌/旋转/打出——时消费，节点重置时清空）。
+- `FillEmptySlotsAction` 两遍分派：先填正常空位，再填机关空位；机关空位的 `CardDealt` 事件带 `cause=refillAfterTrapRemoval`（`FillEmptySlotsAction.TrapVacatedRefillCause`）。两遍分派保证机关空位事件不与正常补牌混在同批，`EventCard` 语义（本批第一个 CardDealt）不误指机关空位。
+- 捕熊陷阱 `tpl.trap.bear_trap.fill` 条件增加 `EventFilterExcludeCause(eventType=CardDealt, cause=refillAfterTrapRemoval)`：机关空位补牌批不满足条件 → 不触发。
+- 击杀（KillAction）、拾取、道具/遗物效果的移除不标记，其补牌照常可触发。
+
 ## 相关
 
 - [ADR-0001](0001-battle-presentation-unified-timeline-batch-ack.md) — 统一时间线与 Batch-ack

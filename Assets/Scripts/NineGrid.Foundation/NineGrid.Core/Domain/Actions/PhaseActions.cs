@@ -176,6 +176,13 @@ namespace NineGrid.Core
     {
         public override string ActionName { get { return "DefeatIfAvatarDead"; } }
 
+        internal static bool IsOpeningPipelinePhase(GamePhase phase)
+        {
+            return phase == GamePhase.BuildEnemyPool
+                || phase == GamePhase.ResetNode
+                || phase == GamePhase.DealOpeningCards;
+        }
+
         public override GameActionResult Apply(GameActionContext context)
         {
             var run = context.GetModel<RunModel>();
@@ -192,6 +199,12 @@ namespace NineGrid.Core
             }
 
             if ((int)Math.Round(avatar.Stats.GetBase(StatId.Hp)) > 0)
+            {
+                return GameActionResult.Empty;
+            }
+
+            // ADR-0039：开局管线内先稳定化再战败，避免提前 Defeat 挡住 ResolveUntilStable 补位。
+            if (IsOpeningPipelinePhase(run.Phase.Value))
             {
                 return GameActionResult.Empty;
             }

@@ -6,7 +6,7 @@
     "role": "",
     "displayName": "仙人掌",
     "designSlotName": "",
-    "description": "[[潜伏近战]]，[[休养]]",
+    "description": "[[普通近战]]，[[休养]]，[[潜伏]]",
     "faceIntro": "别碰我",    "attackPattern": "普通近战",
     "rhythmSource": "行动计数",
     "rhythmPeriod": 5,

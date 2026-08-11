@@ -1,5 +1,5 @@
 (() => {
-  const UI_KEY = "NineGrid.AudioWorkbench.Ui.v1";
+  const UI_KEY = "NineGrid.AudioWorkbench.Ui.v4";
   const ABNORMAL = new Set(["Suppressed", "Cooldown", "Unbound", "BackendFailure"]);
   const DEFAULT_OUTCOMES = ["Played", "Suppressed", "Cooldown", "Unbound", "BackendFailure", "Scheduled", "Cancelled"];
   const BURST_WINDOW_MS = 1000;
@@ -10,6 +10,7 @@
   const token = new URLSearchParams(location.hash.replace(/^#/, "")).get("token") || "";
   const els = {
     badge: document.getElementById("connectionBadge"),
+    reconnect: document.getElementById("btnReconnect"),
     status: document.getElementById("statusLine"),
     dirty: document.getElementById("dirtyLine"),
     error: document.getElementById("errorLine"),
@@ -23,6 +24,11 @@
   let mode = null;
   let revision = 0;
   let useLongPoll = false;
+  let ws = null;
+  let longPollTimer = null;
+  let streamActive = false;
+  let reconnecting = false;
+  let suppressStreamClose = false;
   let selectedSequence = null;
   let selectedBindingKey = null;
   let selectedMusicState = null;
@@ -32,6 +38,14 @@
   let flashUntil = new Map();
   let lastPreviewSourceId = "";
   let requestSeq = 0;
+  let bubbleMode = "atomic";
+  let bumpUntil = new Map();
+  const eventRegistry = new Map();
+  /** @type {Map<string, object>} live/persisted bubbles driven by playingSources */
+  const liveBubbles = new Map();
+  let selectedBubbleId = null;
+  let lastPlayMode = null;
+  let bumpRefreshTimer = null;
 
   const ui = loadUi();
   const pins = new Map((ui.pins || []).map((p) => [p.sequence, p]));
@@ -47,6 +61,7 @@
   const cols = Object.assign({
     left: "1.2fr", mid: "0.9fr", right: "1.1fr", static: "1.6fr", bgm: "1.2fr",
   }, ui.cols || {});
+  bubbleMode = ui.bubbleMode === "merged" ? "merged" : "atomic";
 
   function loadUi() {
     try { return JSON.parse(localStorage.getItem(UI_KEY) || "{}"); } catch { return {}; }
@@ -61,6 +76,7 @@
       pins: Array.from(pins.values()),
       filters,
       cols,
+      bubbleMode,
     });
   }
 
@@ -98,6 +114,83 @@
   function setConnected(ok, label) {
     els.badge.className = "badge " + (ok ? "ok" : "bad");
     els.badge.textContent = label;
+    if (els.reconnect) {
+      els.reconnect.classList.toggle("emphasis", !ok);
+      els.reconnect.disabled = reconnecting;
+    }
+  }
+
+  function stopStream() {
+    useLongPoll = false;
+    streamActive = false;
+    if (longPollTimer != null) {
+      clearTimeout(longPollTimer);
+      longPollTimer = null;
+    }
+    if (ws) {
+      suppressStreamClose = true;
+      try { ws.close(); } catch { /* ignore */ }
+      ws = null;
+    }
+  }
+
+  function startStream() {
+    if (streamActive) return;
+    streamActive = true;
+    if (location.protocol === "http:" && window.WebSocket) {
+      try {
+        ws = new WebSocket((location.protocol === "https:" ? "wss://" : "ws://") + location.host + "/stream");
+        ws.addEventListener("open", () => {
+          ws.send(JSON.stringify({ type: "hello", token, afterRevision: revision }));
+        });
+        ws.addEventListener("message", (ev) => {
+          try { applyEnvelope(JSON.parse(ev.data)); } catch { /* ignore */ }
+        });
+        ws.addEventListener("close", () => {
+          ws = null;
+          streamActive = false;
+          if (suppressStreamClose) {
+            suppressStreamClose = false;
+            return;
+          }
+          useLongPoll = true;
+          longPoll();
+        });
+        ws.addEventListener("error", () => { useLongPoll = true; });
+        return;
+      } catch {
+        streamActive = false;
+        useLongPoll = true;
+      }
+    } else {
+      useLongPoll = true;
+    }
+    longPoll();
+  }
+
+  async function tryReconnect() {
+    if (reconnecting) return;
+    if (!token) {
+      setConnected(false, "缺少 token");
+      els.error.textContent = "请从 Unity 菜单「NineGrid/音频/声音绑定调音工作台」重新打开页面。";
+      return;
+    }
+    reconnecting = true;
+    setConnected(false, "重连中…");
+    els.error.textContent = "";
+    stopStream();
+    try {
+      const snap = await api("/api/snapshot");
+      applyEnvelope(snap);
+      startStream();
+    } catch (err) {
+      setConnected(false, "连接失败");
+      els.error.textContent = String(err.message || err)
+        + "\n若 Unity 已重编译，请从菜单重新打开工作台以获取新地址。";
+    } finally {
+      reconnecting = false;
+      if (els.reconnect) els.reconnect.disabled = false;
+    }
   }
 
   function declByKey(key) {
@@ -174,36 +267,368 @@
     return `<div class="hint-line">快捷键：Space 固定 · <b>E</b> 临时禁 · <b>Ctrl+S</b> 永久禁 · P 试听 · Esc 取消选中</div>`;
   }
 
+  function mergeKey(row) {
+    const src = row.diagnosticSource || "";
+    const key = row.bindingKey || row.cueId || row.actualClipKey || row.clipKey || "unknown";
+    return key + "::" + src;
+  }
+
+  function liveMergeKey(rec) {
+    const key = rec.bindingKey || rec.cueId || rec.clipKey || "unknown";
+    return key + "::" + (rec.track || "Sfx");
+  }
+
+  function scheduleBumpRefresh() {
+    if (bumpRefreshTimer != null) return;
+    bumpRefreshTimer = setTimeout(() => {
+      bumpRefreshTimer = null;
+      const river = document.getElementById("bubbleRiver");
+      if (river && mode === "实时抓音") renderBubbleRiver(river);
+    }, 720);
+  }
+
+  function ingestEvents(rows) {
+    let changed = false;
+    (rows || []).forEach((row) => {
+      if (!row || row.sequence == null) return;
+      const prev = eventRegistry.get(row.sequence);
+      if (!prev) {
+        eventRegistry.set(row.sequence, Object.assign({}, row));
+        changed = true;
+      } else if (
+        prev.outcome !== row.outcome
+        || prev.sourceId !== row.sourceId
+        || prev.actualClipKey !== row.actualClipKey
+        || prev.bindingKey !== row.bindingKey
+      ) {
+        eventRegistry.set(row.sequence, Object.assign({}, row));
+        changed = true;
+      }
+    });
+    return changed;
+  }
+
+  function clearSessionBubbles(opts) {
+    const keepPins = !opts || opts.keepPins !== false;
+    const pinnedSeq = keepPins ? new Set(pins.keys()) : new Set();
+    Array.from(eventRegistry.keys()).forEach((seq) => {
+      if (!pinnedSeq.has(seq)) eventRegistry.delete(seq);
+    });
+    if (keepPins) {
+      const pinnedSources = new Set(
+        Array.from(pins.values()).map((p) => p.sourceId).filter(Boolean)
+      );
+      Array.from(liveBubbles.keys()).forEach((id) => {
+        const rec = liveBubbles.get(id);
+        const keep = (rec && rec.sourceId && pinnedSources.has(rec.sourceId))
+          || (rec && rec.sequence != null && pinnedSeq.has(rec.sequence));
+        if (!keep) liveBubbles.delete(id);
+      });
+    } else {
+      liveBubbles.clear();
+    }
+    streamRows = streamRows.filter((r) => pinnedSeq.has(r.sequence));
+    pendingHistory = [];
+    flashUntil.clear();
+    bumpUntil.clear();
+    selectedBubbleId = null;
+    if (!keepPins) {
+      pins.clear();
+      persistUi();
+    }
+  }
+
+  function notePlayModeTransition() {
+    const pm = !!(state && state.playMode);
+    if (lastPlayMode === false && pm === true) {
+      clearSessionBubbles({ keepPins: true });
+    }
+    lastPlayMode = pm;
+  }
+
+  function collectLiveSourceRows() {
+    if (!state || !state.playMode) return [];
+    const rows = [];
+    ((state.runtime && state.runtime.playingSources) || []).forEach((s) => {
+      rows.push({
+        track: "Sfx",
+        sourceId: s.sourceId || "",
+        clipKey: s.clipKey || "",
+        cueId: s.cueId || "",
+        loop: !!s.loop,
+        pos: s.playbackPositionSeconds,
+        claimed: s.claimed !== false,
+        kind: "sfx",
+        workbenchPreview: !!s.workbenchPreview,
+      });
+    });
+    ((state.musicRuntime && state.musicRuntime.playingSources) || []).forEach((s) => {
+      rows.push({
+        track: "Music",
+        sourceId: s.sourceId || "",
+        clipKey: s.clipKey || "",
+        cueId: "",
+        loop: s.loop !== false,
+        pos: s.playbackPositionSeconds,
+        claimed: !!s.claimed,
+        kind: "music",
+      });
+    });
+    ((state.runtime && state.runtime.sceneOrphans) || []).forEach((o, idx) => {
+      rows.push({
+        track: "Scene",
+        sourceId: "",
+        clipKey: o.clipName || "(no clip)",
+        cueId: o.gameObjectPath || ("orphan-" + idx),
+        loop: !!o.loop,
+        pos: o.playbackPositionSeconds,
+        claimed: false,
+        kind: "orphan",
+      });
+    });
+    return rows;
+  }
+
+  function findHistoryEnrichment(row) {
+    let best = null;
+    eventRegistry.forEach((ev) => {
+      if (row.sourceId && ev.sourceId === row.sourceId) {
+        if (!best || ev.sequence > best.sequence) best = ev;
+      }
+    });
+    if (best) return best;
+    if (row.cueId) {
+      eventRegistry.forEach((ev) => {
+        if (ev.cueId === row.cueId && (!best || ev.sequence > best.sequence)) best = ev;
+      });
+    }
+    if (best) return best;
+    if (row.clipKey) {
+      eventRegistry.forEach((ev) => {
+        if ((ev.actualClipKey === row.clipKey || ev.clipKey === row.clipKey)
+          && (!best || ev.sequence > best.sequence)) best = ev;
+      });
+    }
+    return best;
+  }
+
+  function atomicLiveId(row) {
+    if (row.sourceId) return "src:" + row.sourceId;
+    return "orphan:" + (row.track || "") + ":" + (row.clipKey || "") + ":" + (row.cueId || "");
+  }
+
+  const REACTIVATE_GAP_MS = 600;
+
+  function syncLiveBubbles() {
+    const now = Date.now();
+    const live = collectLiveSourceRows();
+    const seen = new Set();
+    let activated = false;
+    const previewIds = new Set();
+    if (lastPreviewSourceId) previewIds.add(lastPreviewSourceId);
+
+    live.forEach((row) => {
+      // Workbench audition must not pollute the gameplay bubble stage.
+      if (row.workbenchPreview || (row.sourceId && previewIds.has(row.sourceId))) {
+        return;
+      }
+
+      const id = atomicLiveId(row);
+      seen.add(id);
+      const hist = findHistoryEnrichment(row);
+      const decl = findDeclByCueOrClip(row.cueId, row.clipKey)
+        || (hist ? findDeclForEvent(hist) : null);
+      const prev = liveBubbles.get(id);
+      const wasPlaying = !!(prev && prev.playing);
+      const rec = {
+        id,
+        track: row.track,
+        kind: row.kind,
+        sourceId: row.sourceId || "",
+        clipKey: row.clipKey || "",
+        cueId: row.cueId || (hist && hist.cueId) || "",
+        cueNote: (hist && hist.cueNote) || (decl && decl.note) || "",
+        bindingKey: (hist && hist.bindingKey) || (decl && decl.bindingKey) || "",
+        diagnosticSource: (hist && hist.diagnosticSource) || "",
+        sequence: hist ? hist.sequence : (prev && prev.sequence) || null,
+        outcome: (hist && hist.outcome) || "Played",
+        loop: !!row.loop,
+        claimed: !!row.claimed,
+        pos: Number(row.pos || 0),
+        playing: true,
+        firstSeenAt: prev ? prev.firstSeenAt : now,
+        lastActivatedAt: prev ? prev.lastActivatedAt : now,
+        lastSeenPlayingAt: now,
+        activationCount: prev ? prev.activationCount : 1,
+      };
+      if (!prev) {
+        rec.lastActivatedAt = now;
+        rec.activationCount = 1;
+        bumpUntil.set(id, now + 700);
+        bumpUntil.set(id + ":new", now + 450);
+        activated = true;
+      } else if (!wasPlaying) {
+        const gap = now - (prev.lastSeenPlayingAt || 0);
+        const clipChanged = (prev.clipKey || "") !== (rec.clipKey || "")
+          || (prev.cueId || "") !== (rec.cueId || "");
+        // Ignore brief isPlaying flicker / pool reuse noise from workbench audition.
+        if (clipChanged || gap >= REACTIVATE_GAP_MS) {
+          rec.lastActivatedAt = now;
+          rec.activationCount = (prev.activationCount || 1) + 1;
+          bumpUntil.set(id, now + 700);
+          activated = true;
+        } else {
+          rec.lastActivatedAt = prev.lastActivatedAt;
+          rec.activationCount = prev.activationCount || 1;
+        }
+      } else {
+        rec.lastActivatedAt = prev.lastActivatedAt;
+        rec.activationCount = prev.activationCount || 1;
+      }
+      liveBubbles.set(id, rec);
+    });
+
+    liveBubbles.forEach((rec, id) => {
+      if (!seen.has(id) && rec.playing) {
+        liveBubbles.set(id, Object.assign({}, rec, {
+          playing: false,
+          lastSeenPlayingAt: rec.lastSeenPlayingAt || now,
+        }));
+      }
+    });
+
+    if (activated) scheduleBumpRefresh();
+  }
+
+  function toEventShape(rec) {
+    return {
+      sequence: rec.sequence,
+      sourceId: rec.sourceId,
+      cueId: rec.cueId,
+      cueNote: rec.cueNote,
+      bindingKey: rec.bindingKey,
+      actualClipKey: rec.clipKey,
+      diagnosticSource: rec.diagnosticSource,
+      outcome: rec.outcome || "Played",
+      kind: rec.kind,
+      track: rec.track,
+      loop: rec.loop,
+      claimed: rec.claimed,
+    };
+  }
+
+  function bubbleTitleFromRec(rec) {
+    if (!rec) return "未命名音效";
+    const decl = rec.bindingKey
+      ? declByKey(rec.bindingKey)
+      : findDeclByCueOrClip(rec.cueId, rec.clipKey);
+    return (decl && decl.note) || rec.cueNote || rec.cueId || rec.clipKey || rec.sourceId || "未命名音效";
+  }
+
+  function buildBubbles() {
+    const atoms = Array.from(liveBubbles.values());
+    if (bubbleMode === "merged") {
+      const groups = new Map();
+      atoms.forEach((rec) => {
+        const k = liveMergeKey(rec);
+        if (!groups.has(k)) groups.set(k, []);
+        groups.get(k).push(rec);
+      });
+      return Array.from(groups.entries()).map(([k, recs]) => {
+        recs.sort((a, b) => b.lastActivatedAt - a.lastActivatedAt);
+        const latest = recs[0];
+        const id = "merge:" + k;
+        return {
+          id,
+          records: recs,
+          events: recs.map(toEventShape),
+          latest: toEventShape(latest),
+          lastSequence: latest.sequence || 0,
+          lastActivatedAt: Math.max(...recs.map((r) => r.lastActivatedAt || 0)),
+          count: recs.length,
+          playing: recs.some((r) => r.playing),
+          title: bubbleTitleFromRec(latest),
+        };
+      }).sort((a, b) => {
+        if (b.lastActivatedAt !== a.lastActivatedAt) return b.lastActivatedAt - a.lastActivatedAt;
+        return b.lastSequence - a.lastSequence;
+      });
+    }
+    return atoms
+      .map((rec) => ({
+        id: rec.id,
+        records: [rec],
+        events: [toEventShape(rec)],
+        latest: toEventShape(rec),
+        lastSequence: rec.sequence || 0,
+        lastActivatedAt: rec.lastActivatedAt || 0,
+        count: 1,
+        playing: !!rec.playing,
+        title: bubbleTitleFromRec(rec),
+      }))
+      .sort((a, b) => {
+        if (b.lastActivatedAt !== a.lastActivatedAt) return b.lastActivatedAt - a.lastActivatedAt;
+        return b.lastSequence - a.lastSequence;
+      });
+  }
+
+  function bubbleTitle(b) {
+    return (b && b.title) || bubbleTitleFromRec(b && b.records && b.records[0]) || "未命名音效";
+  }
+
+  function isBubblePlaying(b) {
+    return !!(b && b.playing);
+  }
+
+  function isBubbleSelected(b) {
+    if (!b) return false;
+    if (selectedBubbleId && b.id === selectedBubbleId) return true;
+    if (selectedSequence != null && b.latest && b.latest.sequence === selectedSequence) return true;
+    return false;
+  }
+
+  function selectBubble(b) {
+    if (!b) return;
+    selectedBubbleId = b.id;
+    selectedSequence = b.latest && b.latest.sequence != null ? b.latest.sequence : null;
+    selectedBindingKey = (b.latest && b.latest.bindingKey)
+      || findDeclByCueOrClip(b.latest && b.latest.cueId, b.latest && b.latest.actualClipKey)?.bindingKey
+      || null;
+    render();
+  }
+
   function syncStreamFromState() {
+    notePlayModeTransition();
     if (!state || !state.playMode || !state.runtime) {
-      streamRows = [];
+      streamRows = Array.from(eventRegistry.values()).sort((a, b) => b.sequence - a.sequence);
       pendingHistory = [];
-      flashUntil.clear();
+      syncLiveBubbles();
       return;
     }
     const hist = ((state.runtime && state.runtime.history) || []).slice();
     if (streamPaused) {
-      const known = new Set(streamRows.map((r) => r.sequence).concat(pendingHistory.map((r) => r.sequence)));
+      const known = new Set(
+        Array.from(eventRegistry.keys()).concat(pendingHistory.map((r) => r.sequence))
+      );
       hist.forEach((row) => {
         if (!known.has(row.sequence)) pendingHistory.push(row);
       });
+      streamRows = Array.from(eventRegistry.values()).sort((a, b) => b.sequence - a.sequence);
+      syncLiveBubbles();
       return;
     }
     if (pendingHistory.length) {
       hist.push(...pendingHistory);
       pendingHistory = [];
     }
-    const serverSeqs = new Set(hist.map((r) => r.sequence));
-    // Drop rows that vanished from the runtime ring (new Play session / eviction).
-    const bySeq = new Map();
-    streamRows.forEach((r) => {
-      if (serverSeqs.has(r.sequence) || pins.has(r.sequence)) bySeq.set(r.sequence, r);
+    ingestEvents(hist);
+    pins.forEach((p) => {
+      if (p && p.sequence != null && !eventRegistry.has(p.sequence)) {
+        eventRegistry.set(p.sequence, Object.assign({}, p));
+      }
     });
-    hist.forEach((r) => {
-      if (!bySeq.has(r.sequence)) flashUntil.set(r.sequence, Date.now() + 600);
-      bySeq.set(r.sequence, r);
-    });
-    streamRows = Array.from(bySeq.values()).sort((a, b) => b.sequence - a.sequence);
+    streamRows = Array.from(eventRegistry.values()).sort((a, b) => b.sequence - a.sequence);
+    syncLiveBubbles();
   }
 
   function isEditingDetail() {
@@ -277,10 +702,16 @@
   }
 
   function selectedEvent() {
+    if (selectedBubbleId) {
+      const bub = buildBubbles().find((b) => b.id === selectedBubbleId);
+      if (bub && bub.latest) return bub.latest;
+    }
     if (selectedSequence != null) {
       const pinned = pins.get(selectedSequence);
       if (pinned) return pinned;
-      return streamRows.find((r) => r.sequence === selectedSequence) || null;
+      return eventRegistry.get(selectedSequence)
+        || streamRows.find((r) => r.sequence === selectedSequence)
+        || null;
     }
     return null;
   }
@@ -332,9 +763,7 @@
   }
 
   function clearUnpinned() {
-    const pinnedSeq = new Set(pins.keys());
-    streamRows = streamRows.filter((r) => pinnedSeq.has(r.sequence));
-    pendingHistory = [];
+    clearSessionBubbles({ keepPins: true });
     render();
   }
 
@@ -381,8 +810,9 @@
         filters.text = "";
         const cue = card.dataset.cue;
         const bkey = card.dataset.bkey;
-        const newest = streamRows.find((r) =>
-          (bkey && r.bindingKey === bkey) || (cue && r.cueId === cue));
+        const newest = Array.from(eventRegistry.values())
+          .sort((a, b) => b.sequence - a.sequence)
+          .find((r) => (bkey && r.bindingKey === bkey) || (cue && r.cueId === cue));
         if (newest) {
           selectedSequence = newest.sequence;
           selectedBindingKey = newest.bindingKey || bkey || null;
@@ -442,24 +872,11 @@
       host.innerHTML = `<div class="empty">选择一条事件或绑定以检查与调音<br/>${hintShortcuts()}</div>`;
       return;
     }
-    const playing = playingSourceIds();
     const sourceId = (ev && ev.sourceId) || lastPreviewSourceId;
-    const canStop = !!(sourceId && playing.has(sourceId));
     const dto = (decl && decl.dto) || null;
     const clips = state.clipOptions || [];
-    const enabled = !!(dto && dto.enabled);
 
-    let html = `<div class="section kill-panel"><h3>灭火</h3>
-      <div class="actions kill-actions">
-        <button type="button" class="danger" data-act="stop-source" ${canStop ? "" : "disabled"} title="${canStop ? "" : "该次 SourceId 已不在播放中；请用下方「正在播放」停源"}">立刻停播（本次）</button>
-        <button type="button" class="danger" data-act="mute-temp" ${dto ? "" : "disabled"}>${enabled ? "临时禁用绑定" : "已临时/永久禁用"}</button>
-        <button type="button" class="danger primary" data-act="mute-save" ${decl ? "" : "disabled"}>保存永久禁用</button>
-      </div>
-      ${hintShortcuts()}
-      ${!canStop && sourceId ? `<div class="meta">SourceId 已结束：${esc(sourceId)}</div>` : ""}
-    </div>`;
-
-    html += `<div class="section"><h3>检查</h3><div class="kv">`;
+    let html = `<div class="section"><h3>检查</h3><div class="kv">`;
     if (ev) {
       html += `
         <b>outcome</b><span class="outcome-${esc(ev.outcome)}">${esc(ev.outcome)}</span>
@@ -490,7 +907,9 @@
       <button type="button" data-act="stop-preview">停本次试听</button>
       <button type="button" data-act="ping-clip" ${dto && dto.clipKey ? "" : "disabled"}>定位素材</button>
       <button type="button" data-act="copy-src" ${ev ? "" : "disabled"}>复制触发源</button>
-    </div></div>`;
+    </div>
+    ${hintShortcuts()}
+    </div>`;
 
     if (dto && decl) {
       html += `<div class="section"><h3>调音</h3>
@@ -594,7 +1013,16 @@
       const res = await command("previewBinding", { bindingKey: decl.bindingKey, includeBindingDelay: false });
       lastPreviewSourceId = (res.payload && (res.payload.SourceId || res.payload.sourceId)) || "";
       const snap = await api("/api/snapshot");
-      applyEnvelope(snap);
+      if (snap && typeof snap.revision === "number") revision = snap.revision;
+      state = Object.assign({}, state || {}, (snap && snap.payload) || snap || {});
+      // Soft refresh: keep bubble stage stable; audition must not remount/reorder gameplay bubbles.
+      if (mode === "实时抓音" && document.getElementById("bubbleRiver")) {
+        refreshCaptureLive();
+        const detail = document.getElementById("detailHost");
+        if (detail) renderDetail(detail);
+      } else {
+        applyEnvelope(snap);
+      }
       return;
     }
     if (act === "ping-clip") {
@@ -636,7 +1064,6 @@
     const sfx = ((state.runtime && state.runtime.playingSources) || []).slice();
     const music = ((state.musicRuntime && state.musicRuntime.playingSources) || []).slice();
     const orphans = ((state.runtime && state.runtime.sceneOrphans) || []).slice();
-    const persist = ((state.runtime && state.runtime.persistAnomalies) || []).slice().slice(-6);
 
     const rows = [];
     sfx.forEach((s) => {
@@ -678,16 +1105,13 @@
 
     const head = `<div class="now-head"><h2>正在播放</h2>
         <span class="meta">${rows.length} 源 · Sfx ${sfx.length} · Music ${music.length} · Scene ${orphans.length}</span>
-        <button type="button" class="danger" id="npStopAllSfx">紧急：停全部 SFX</button>
-        <button type="button" class="danger" id="npStopUnknownMusic">紧急：停全部未知 Music</button>
+        <button type="button" class="danger" id="npStopAllSfx">停全部 SFX</button>
+        <button type="button" class="danger" id="npStopUnknownMusic">停全部未知 Music</button>
       </div>`;
 
     if (!rows.length) {
       host.innerHTML = `${head}
-      <div class="empty">当前无在播源。若仍听到声音，旁路会出现在 Scene 行；也可切 BGM 页。</div>
-      ${persist.length ? `<div class="persist-list"><h3>近期持续异常</h3>${persist.map((a) =>
-        `<div class="persist-row"><span class="badge-unclaimed">Persist</span> ${esc(a.clipKey || a.sourceId)} · ${esc(a.reason || "")}</div>`
-      ).join("")}</div>` : ""}`;
+      <div class="empty">当前无在播源。若仍听到声音，旁路会出现在 Scene 行；也可切 BGM 页。</div>`;
       wireNowPlayingActions(host);
       return;
     }
@@ -708,13 +1132,83 @@
             <button type="button" data-np="save" data-bkey="${esc((decl && decl.bindingKey) || "")}" ${decl ? "" : "disabled"}>永久禁</button>
           </span>
         </div>`;
-      }).join("")}</div>
-      ${persist.length ? `<div class="persist-list"><h3>近期持续异常</h3>${persist.map((a) =>
-        `<div class="persist-row"><span class="badge-unclaimed">Persist</span> ${esc(a.clipKey || a.sourceId)} · ${esc(a.reason || "")}
-          <button type="button" data-np="stop" data-kind="sfx" data-sid="${esc(a.sourceId)}" ${a.sourceId ? "" : "disabled"}>停</button>
-        </div>`
-      ).join("")}</div>` : ""}`;
+      }).join("")}</div>`;
     wireNowPlayingActions(host);
+  }
+
+  function renderPersistPanel(host) {
+    if (!host) return;
+    const persist = ((state.runtime && state.runtime.persistAnomalies) || []).slice().slice(-12);
+    if (!persist.length) {
+      host.innerHTML = `<div class="empty" style="padding:10px">暂无持续异常</div>`;
+      return;
+    }
+    host.innerHTML = `<div class="persist-list" style="margin:0;padding:8px 10px">${persist.map((a) =>
+      `<div class="persist-row"><span class="badge-unclaimed">Persist</span> ${esc(a.clipKey || a.sourceId)} · ${esc(a.reason || "")}
+        <button type="button" data-np="stop" data-kind="sfx" data-sid="${esc(a.sourceId)}" ${a.sourceId ? "" : "disabled"}>停</button>
+      </div>`
+    ).join("")}</div>`;
+    wireNowPlayingActions(host);
+  }
+
+  function renderLegacyStreamPanel(host) {
+    if (!host) return;
+    const modules = Array.from(new Set((state.declarations || []).map((d) => d.module).filter(Boolean))).sort();
+    host.innerHTML = `
+      <section class="col legacy-stream-panel">
+        <div class="col-head">
+          <h2>实时流</h2>
+          <div class="filters">
+            <input type="text" id="fltText" placeholder="文本过滤" value="${esc(filters.text)}" />
+            <select id="fltModule"><option value="">模块</option>${modules.map((m) =>
+              `<option value="${esc(m)}" ${m === filters.module ? "selected" : ""}>${esc(m)}</option>`).join("")}</select>
+            <button type="button" class="chip ${filters.onlyAbnormal ? "on" : ""}" id="fltAbn">只看异常</button>
+            <button type="button" class="chip ${streamPaused ? "on" : ""}" id="fltPause">${streamPaused ? "恢复流入" : "暂停流入视图"}</button>
+            <button type="button" id="fltClear">清空未固定</button>
+            ${filters.aggregateKey ? `<button type="button" id="fltClearAgg">清除频率筛选</button>` : ""}
+          </div>
+          <div class="filters" id="outcomeChips"></div>
+        </div>
+        <div class="vlist" id="streamList"></div>
+      </section>`;
+
+    const chipHost = host.querySelector("#outcomeChips");
+    ["Requested", ...DEFAULT_OUTCOMES].forEach((o) => {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "chip " + ((filters.outcomes || []).includes(o) ? "on" : "");
+      btn.textContent = o;
+      btn.addEventListener("click", () => {
+        const set = new Set(filters.outcomes || []);
+        if (set.has(o)) set.delete(o); else set.add(o);
+        filters.outcomes = Array.from(set);
+        persistUi();
+        renderDiagStream();
+      });
+      chipHost.appendChild(btn);
+    });
+
+    host.querySelector("#fltText").addEventListener("change", (e) => {
+      filters.text = e.target.value; persistUi(); renderDiagStream();
+    });
+    host.querySelector("#fltModule").addEventListener("change", (e) => {
+      filters.module = e.target.value; persistUi(); renderDiagStream();
+    });
+    host.querySelector("#fltAbn").addEventListener("click", () => {
+      filters.onlyAbnormal = !filters.onlyAbnormal; persistUi(); renderDiagStream();
+    });
+    host.querySelector("#fltPause").addEventListener("click", () => {
+      streamPaused = !streamPaused;
+      if (!streamPaused) syncStreamFromState();
+      render();
+    });
+    host.querySelector("#fltClear").addEventListener("click", clearUnpinned);
+    const clearAgg = host.querySelector("#fltClearAgg");
+    if (clearAgg) clearAgg.addEventListener("click", () => {
+      filters.aggregateKey = ""; persistUi(); renderDiagStream();
+    });
+
+    renderDiagStream();
   }
 
   function wireNowPlayingActions(host) {
@@ -743,82 +1237,224 @@
     });
   }
 
-  function renderCapture() {
-    syncStreamFromState();
-    const modules = Array.from(new Set((state.declarations || []).map((d) => d.module).filter(Boolean))).sort();
-    els.panel.innerHTML = `
-      <div id="freqRail" class="freq-rail"></div>
-      <div id="nowPlaying" class="now-playing"></div>
-      <div class="capture-layout" style="--col-left:${cols.left};--col-mid:${cols.mid};--col-right:${cols.right}">
-        <section class="col" id="colStream">
-          <div class="col-head">
-            <h2>实时流</h2>
-            <div class="filters">
-              <input type="text" id="fltText" placeholder="文本过滤" value="${esc(filters.text)}" />
-              <select id="fltModule"><option value="">模块</option>${modules.map((m) =>
-                `<option value="${esc(m)}" ${m === filters.module ? "selected" : ""}>${esc(m)}</option>`).join("")}</select>
-              <button type="button" class="chip ${filters.onlyAbnormal ? "on" : ""}" id="fltAbn">只看异常</button>
-              <button type="button" class="chip ${streamPaused ? "on" : ""}" id="fltPause">${streamPaused ? "恢复流入" : "暂停流入视图"}</button>
-              <button type="button" id="fltClear">清空未固定</button>
-              ${filters.aggregateKey ? `<button type="button" id="fltClearAgg">清除频率筛选</button>` : ""}
-            </div>
-            <div class="filters" id="outcomeChips"></div>
-          </div>
-          <div class="vlist" id="streamList"></div>
-        </section>
-        <div class="splitter" data-split="left-mid"></div>
-        <section class="col" id="colPins">
-          <div class="col-head"><h2>已固定</h2><span class="meta">${pins.size}</span></div>
-          <div id="pinList" style="overflow:auto;flex:1"></div>
-        </section>
-        <div class="splitter" data-split="mid-right"></div>
-        <section class="col" id="colDetail">
-          <div class="col-head"><h2>检查与调音</h2></div>
-          <div class="detail" id="detailHost"></div>
-        </section>
-      </div>`;
+  function wireMonitorActions(host) {
+    host.querySelectorAll(".bubble").forEach((el) => {
+      const bid = el.dataset.bid;
+      const bubble = buildBubbles().find((b) => b.id === bid);
+      if (!bubble) return;
+      el.addEventListener("click", (e) => {
+        if (e.target.closest("[data-bact]")) return;
+        selectBubble(bubble);
+      });
+      el.querySelectorAll("[data-bact]").forEach((btn) => {
+        btn.addEventListener("click", async (e) => {
+          e.stopPropagation();
+          const act = btn.dataset.bact;
+          const ev = bubble.latest;
+          const decl = findDeclForEvent(ev)
+            || findDeclByCueOrClip(ev && ev.cueId, ev && ev.actualClipKey);
+          selectedBubbleId = bubble.id;
+          selectedSequence = ev && ev.sequence != null ? ev.sequence : null;
+          selectedBindingKey = (ev && ev.bindingKey) || decl?.bindingKey || null;
+          if (act === "stop") {
+            const stopJobs = (bubble.records || [])
+              .filter((r) => r.playing && r.sourceId)
+              .map((r) => ({ kind: r.kind, sourceId: r.sourceId }));
+            for (const job of stopJobs) {
+              if (job.kind === "music") await run("stopMusicSource", { sourceId: job.sourceId });
+              else await run("stopSfxSource", { sourceId: job.sourceId });
+            }
+          } else if (act === "mute" && decl) {
+            await muteBindingTemp(decl);
+          } else if (act === "save" && decl) {
+            await saveBindingPermanent(decl);
+          } else if (act === "pin" && ev) {
+            pinEvent(ev);
+          }
+        });
+      });
+    });
+  }
 
-    renderFreqRail(document.getElementById("freqRail"));
-    renderNowPlaying(document.getElementById("nowPlaying"));
-    const chipHost = document.getElementById("outcomeChips");
-    ["Requested", ...DEFAULT_OUTCOMES].forEach((o) => {
-      const on = (filters.outcomes || []).includes(o) || (o === "Requested" && (filters.outcomes || []).includes("Requested"));
-      const btn = document.createElement("button");
-      btn.type = "button";
-      btn.className = "chip " + ((filters.outcomes || []).includes(o) ? "on" : "");
-      btn.textContent = o;
-      btn.addEventListener("click", () => {
-        const set = new Set(filters.outcomes || []);
-        if (set.has(o)) set.delete(o); else set.add(o);
-        filters.outcomes = Array.from(set);
-        persistUi();
+  function renderMonitorRowHtml(b) {
+    const ev = b.latest || {};
+    const playing = isBubblePlaying(b);
+    const abnormal = ABNORMAL.has(ev.outcome);
+    const selected = isBubbleSelected(b);
+    const bump = (bumpUntil.get(b.id) || 0) > Date.now();
+    const isNew = (bumpUntil.get(b.id + ":new") || 0) > Date.now();
+    const decl = findDeclForEvent(ev) || findDeclByCueOrClip(ev.cueId, ev.actualClipKey);
+    const canStop = playing && (b.records || []).some((r) => r.sourceId);
+    const title = bubbleTitle(b);
+    const track = (b.records && b.records[0] && b.records[0].track) || "Sfx";
+    const pos = playing && b.records && b.records[0]
+      ? Number(b.records[0].pos || 0).toFixed(2) + "s"
+      : "";
+    const cls = [
+      "bubble",
+      playing ? "playing" : "",
+      abnormal ? "abnormal" : "",
+      selected ? "selected" : "",
+      bump ? "bump" : "",
+      isNew ? "is-new" : "",
+    ].filter(Boolean).join(" ");
+    return `<div class="${cls}" data-bid="${esc(b.id)}" data-seq="${ev.sequence == null ? "" : ev.sequence}">
+      <div class="bubble-head">
+        <div class="bubble-title" title="${esc(title)}">${esc(title)}</div>
+        <span class="bubble-seq">${ev.sequence != null ? "#" + ev.sequence : esc(track)}</span>
+      </div>
+      <div class="bubble-meta">
+        <span class="track track-${esc(String(track).toLowerCase())}">${esc(track)}</span>
+        <span data-st>${playing ? "在播" : "历史"}</span>
+        ${b.count > 1 ? `<span class="merge-count">×${b.count}</span>` : ""}
+        <span class="mono" title="${esc(ev.actualClipKey || "")}">${esc(ev.actualClipKey || "—")}</span>
+        <span data-pos class="meta">${esc(pos)}</span>
+      </div>
+      <div class="bubble-actions">
+        <button type="button" data-bact="stop" ${canStop ? "" : "disabled"}>停</button>
+        <button type="button" data-bact="mute" ${decl ? "" : "disabled"}>临时禁</button>
+        <button type="button" data-bact="save" ${decl ? "" : "disabled"}>永久禁</button>
+        <button type="button" data-bact="pin">${ev.sequence != null && pins.has(ev.sequence) ? "已固定" : "固定"}</button>
+      </div>
+    </div>`;
+  }
+
+  function updateStageMeta() {
+    const meta = document.querySelector(".stage-toolbar .meta");
+    if (!meta) return;
+    const playingN = Array.from(liveBubbles.values()).filter((r) => r.playing).length;
+    meta.textContent = `本局 ${liveBubbles.size} 条 · 在播 ${playingN} · ${buildBubbles().length} 条目`;
+  }
+
+  function renderMonitorRiver(host) {
+    if (!host) return;
+    const wasNearTop = host.scrollTop < 48;
+    const bubbles = buildBubbles();
+    host.classList.toggle("empty", bubbles.length === 0);
+    updateStageMeta();
+    if (!bubbles.length) {
+      host.innerHTML = "";
+      host.dataset.ids = "";
+      return;
+    }
+    const ids = bubbles.map((b) => b.id).join("|");
+    if (host.dataset.ids === ids) {
+      bubbles.forEach((b) => {
+        const el = host.querySelector(`[data-bid="${CSS.escape(b.id)}"]`);
+        if (!el) return;
+        const playing = isBubblePlaying(b);
+        el.classList.toggle("playing", playing);
+        el.classList.toggle("selected", isBubbleSelected(b));
+        el.classList.toggle("bump", (bumpUntil.get(b.id) || 0) > Date.now());
+        el.classList.toggle("is-new", (bumpUntil.get(b.id + ":new") || 0) > Date.now());
+        const st = el.querySelector("[data-st]");
+        if (st) st.textContent = playing ? "在播" : "历史";
+        const pos = el.querySelector("[data-pos]");
+        if (pos) {
+          pos.textContent = playing && b.records && b.records[0]
+            ? Number(b.records[0].pos || 0).toFixed(2) + "s"
+            : "";
+        }
+        const stopBtn = el.querySelector('[data-bact="stop"]');
+        if (stopBtn) stopBtn.disabled = !(playing && (b.records || []).some((r) => r.sourceId));
+      });
+      return;
+    }
+    host.dataset.ids = ids;
+    host.innerHTML = bubbles.map(renderMonitorRowHtml).join("");
+    wireMonitorActions(host);
+    if (wasNearTop) host.scrollTop = 0;
+  }
+
+  function renderBubbleRiver(host) {
+    renderMonitorRiver(host);
+  }
+
+  function refreshCaptureLive() {
+    renderGlobal();
+    syncStreamFromState();
+    const river = document.getElementById("bubbleRiver");
+    if (river) renderBubbleRiver(river);
+    const pinsRail = document.getElementById("pinsRail");
+    if (pinsRail) renderPinsRail(pinsRail);
+    const diag = document.querySelector(".diag-bar");
+    if (diag && diag.open) {
+      const freq = document.getElementById("freqRail");
+      if (freq) renderFreqRail(freq);
+      const persist = document.getElementById("persistPanel");
+      if (persist) renderPersistPanel(persist);
+      const now = document.getElementById("nowPlaying");
+      if (now) renderNowPlaying(now);
+      renderDiagStream();
+    }
+    if (!isEditingDetail()) {
+      const detail = document.getElementById("detailHost");
+      if (detail) renderDetail(detail);
+    }
+  }
+
+  function renderPinsRail(host) {
+    if (!host) return;
+    if (!pins.size) {
+      host.innerHTML = "";
+      return;
+    }
+    host.innerHTML = Array.from(pins.values())
+      .sort((a, b) => b.sequence - a.sequence)
+      .map((p) => {
+        const abnormal = ABNORMAL.has(p.outcome);
+        return `<div class="pin-dot ${p.sequence === selectedSequence ? "selected" : ""}" data-seq="${p.sequence}" title="#${p.sequence} ${esc(p.cueNote || p.cueId || "")}">
+          <span class="pin-seq">${p.sequence}</span>
+          <span class="pin-outcome ${abnormal ? "abnormal" : ""}"></span>
+        </div>`;
+      }).join("");
+    host.querySelectorAll(".pin-dot").forEach((dot) => {
+      dot.addEventListener("click", () => {
+        const seq = Number(dot.dataset.seq);
+        const p = pins.get(seq);
+        selectedSequence = seq;
+        selectedBindingKey = p.bindingKey || findDeclForEvent(p)?.bindingKey || null;
         render();
       });
-      chipHost.appendChild(btn);
     });
+  }
 
-    document.getElementById("fltText").addEventListener("change", (e) => {
-      filters.text = e.target.value; persistUi(); render();
-    });
-    document.getElementById("fltModule").addEventListener("change", (e) => {
-      filters.module = e.target.value; persistUi(); render();
-    });
-    document.getElementById("fltAbn").addEventListener("click", () => {
-      filters.onlyAbnormal = !filters.onlyAbnormal; persistUi(); render();
-    });
-    document.getElementById("fltPause").addEventListener("click", () => {
-      streamPaused = !streamPaused;
-      if (!streamPaused) syncStreamFromState();
-      render();
-    });
-    document.getElementById("fltClear").addEventListener("click", clearUnpinned);
-    const clearAgg = document.getElementById("fltClearAgg");
-    if (clearAgg) clearAgg.addEventListener("click", () => {
-      filters.aggregateKey = ""; persistUi(); render();
-    });
+  function renderDiagDrawer(host) {
+    if (!host) return;
+    host.innerHTML = `
+      <details class="diag-bar">
+        <summary>诊断与备用</summary>
+        <div class="diag-bar-body">
+          <section class="diag-section">
+            <h4>频率聚合</h4>
+            <div id="freqRail" class="freq-rail"></div>
+          </section>
+          <section class="diag-section">
+            <h4>近期持续异常</h4>
+            <div id="persistPanel"></div>
+          </section>
+          <section class="diag-section">
+            <h4>正在播放</h4>
+            <div id="nowPlaying" class="now-playing"></div>
+          </section>
+          <section class="diag-section">
+            <h4>实时流</h4>
+            <div id="legacyStreamHost"></div>
+          </section>
+        </div>
+      </details>`;
 
+    renderFreqRail(document.getElementById("freqRail"));
+    renderPersistPanel(document.getElementById("persistPanel"));
+    renderNowPlaying(document.getElementById("nowPlaying"));
+    renderLegacyStreamPanel(document.getElementById("legacyStreamHost"));
+  }
+
+  function renderDiagStream() {
+    const list = document.getElementById("streamList");
+    if (!list) return;
     const rows = filteredStream();
-    attachVirtualList(document.getElementById("streamList"), rows, (el, row) => {
+    attachVirtualList(list, rows, (el, row) => {
       el.classList.toggle("selected", row.sequence === selectedSequence);
       el.classList.toggle("flash", (flashUntil.get(row.sequence) || 0) > Date.now());
       el.style.gridTemplateColumns = "52px 96px 1fr 1fr";
@@ -828,28 +1464,54 @@
       selectedBindingKey = row.bindingKey || findDeclForEvent(row)?.bindingKey || null;
       render();
     });
+  }
 
-    const pinHost = document.getElementById("pinList");
-    if (!pins.size) pinHost.innerHTML = `<div class="empty">空格或点击固定一条记录</div>`;
-    else {
-      pinHost.innerHTML = Array.from(pins.values()).sort((a, b) => b.sequence - a.sequence).map((p) => `
-        <div class="pin-card ${p.sequence === selectedSequence ? "selected" : ""}" data-seq="${p.sequence}">
-          <div class="title">#${p.sequence} · ${esc(p.outcome)} · ${esc(p.cueNote || p.cueId || "")}</div>
-          <div class="meta mono">${esc(p.bindingKey || "")}</div>
-        </div>`).join("");
-      pinHost.querySelectorAll(".pin-card").forEach((card) => {
-        card.addEventListener("click", () => {
-          const seq = Number(card.dataset.seq);
-          const p = pins.get(seq);
-          selectedSequence = seq;
-          selectedBindingKey = p.bindingKey || findDeclForEvent(p)?.bindingKey || null;
-          render();
-        });
+  function renderCapture() {
+    syncStreamFromState();
+    els.panel.innerHTML = `
+      <div class="capture-v2" style="--col-detail:${cols.right}">
+        <aside class="pins-rail">
+          <div class="pins-rail-head">已固定 ${pins.size}</div>
+          <div class="pins-rail-list" id="pinsRail"></div>
+        </aside>
+        <section class="bubble-stage">
+          <div class="stage-toolbar">
+            <h2>实时音效监控</h2>
+            <div class="mode-toggle">
+              <button type="button" class="${bubbleMode === "atomic" ? "on" : ""}" data-bmode="atomic">原子个体</button>
+              <button type="button" class="${bubbleMode === "merged" ? "on" : ""}" data-bmode="merged">合并显示</button>
+            </div>
+            <span class="meta">本局 ${liveBubbles.size} 条 · 在播 ${Array.from(liveBubbles.values()).filter((r) => r.playing).length} · ${buildBubbles().length} 条目</span>
+            <span class="spacer"></span>
+            <button type="button" id="btnClearHistory">清空历史</button>
+          </div>
+          <div class="bubble-river" id="bubbleRiver"></div>
+        </section>
+        <div class="splitter" data-split="bubble-detail"></div>
+        <aside class="detail-rail">
+          <div class="col-head"><h2>检查与调音</h2></div>
+          <div class="detail" id="detailHost"></div>
+        </aside>
+        <div class="diag-drawer" id="diagDrawer">
+          <div id="diagInner"></div>
+        </div>
+      </div>`;
+
+    els.panel.querySelectorAll("[data-bmode]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        bubbleMode = btn.dataset.bmode;
+        persistUi();
+        render();
       });
-    }
+    });
+    const clearBtn = els.panel.querySelector("#btnClearHistory");
+    if (clearBtn) clearBtn.addEventListener("click", clearUnpinned);
 
+    renderBubbleRiver(document.getElementById("bubbleRiver"));
+    renderPinsRail(document.getElementById("pinsRail"));
     renderDetail(document.getElementById("detailHost"));
-    wireSplitters(els.panel.querySelector(".capture-layout"), "capture");
+    renderDiagDrawer(document.getElementById("diagInner"));
+    wireSplitters(els.panel.querySelector(".capture-v2"), "capture-v2");
   }
 
   function renderStatic() {
@@ -1042,6 +1704,9 @@
             layout.style.setProperty("--col-left", cols.left);
             layout.style.setProperty("--col-mid", cols.mid);
             layout.style.setProperty("--col-right", cols.right);
+          } else if (kind === "capture-v2") {
+            cols.right = Math.max(0.3, Math.min(1.4, (1 - x) * 1.6)) + "fr";
+            layout.style.setProperty("--col-detail", cols.right);
           } else if (kind === "static") {
             cols.static = Math.max(0.4, Math.min(2.2, x * 2.5)) + "fr";
             layout.style.setProperty("--col-static", cols.static);
@@ -1125,30 +1790,12 @@
       revision = envelope.revision;
       state = Object.assign({}, state || {}, envelope.payload || {});
       if (state.focusedBindingKey) selectedBindingKey = state.focusedBindingKey;
-      syncStreamFromState();
-      // Avoid wiping an in-progress tuning form on high-frequency runtime deltas.
-      if (isEditingDetail() && mode === "实时抓音") {
-        renderGlobal();
-        const freq = document.getElementById("freqRail");
-        if (freq) renderFreqRail(freq);
-        const now = document.getElementById("nowPlaying");
-        if (now) renderNowPlaying(now);
-        const list = document.getElementById("streamList");
-        if (list) {
-          const rows = filteredStream();
-          attachVirtualList(list, rows, (el, row) => {
-            el.classList.toggle("selected", row.sequence === selectedSequence);
-            el.classList.toggle("flash", (flashUntil.get(row.sequence) || 0) > Date.now());
-            el.style.gridTemplateColumns = "52px 96px 1fr 1fr";
-            el.innerHTML = `<span class="seq">#${row.sequence}</span><span class="outcome outcome-${esc(row.outcome)}">${esc(row.outcome)}</span><span class="ellipsis">${esc(row.cueNote || row.cueId || "")}</span><span class="ellipsis mono">${esc(row.bindingKey || row.actualClipKey || "")}</span>`;
-          }, (row) => {
-            selectedSequence = row.sequence;
-            selectedBindingKey = row.bindingKey || findDeclForEvent(row)?.bindingKey || null;
-            render();
-          });
-        }
+      // Live capture: soft-refresh river only — never remount the whole stage on every tick.
+      if (mode === "实时抓音" && document.getElementById("bubbleRiver")) {
+        refreshCaptureLive();
         return;
       }
+      syncStreamFromState();
       render();
     }
   }
@@ -1198,8 +1845,10 @@
   }
 
   async function bootstrap() {
+    if (els.reconnect) els.reconnect.addEventListener("click", () => { tryReconnect(); });
     if (!token) {
       setConnected(false, "缺少 token");
+      els.error.textContent = "请从 Unity 菜单「NineGrid/音频/声音绑定调音工作台」重新打开页面。";
       return;
     }
     if (ui.mode) mode = ui.mode;
@@ -1215,29 +1864,11 @@
       applyEnvelope(snap);
     } catch (err) {
       setConnected(false, "鉴权失败");
-      els.error.textContent = String(err);
+      els.error.textContent = String(err.message || err);
       return;
     }
 
-    if (location.protocol === "http:" && window.WebSocket) {
-      try {
-        const ws = new WebSocket((location.protocol === "https:" ? "wss://" : "ws://") + location.host + "/stream");
-        ws.addEventListener("open", () => {
-          ws.send(JSON.stringify({ type: "hello", token, afterRevision: revision }));
-        });
-        ws.addEventListener("message", (ev) => {
-          try { applyEnvelope(JSON.parse(ev.data)); } catch { /* ignore */ }
-        });
-        ws.addEventListener("close", () => { useLongPoll = true; longPoll(); });
-        ws.addEventListener("error", () => { useLongPoll = true; });
-        return;
-      } catch {
-        useLongPoll = true;
-      }
-    } else {
-      useLongPoll = true;
-    }
-    longPoll();
+    startStream();
   }
 
   async function longPoll() {
@@ -1247,9 +1878,9 @@
       applyEnvelope(snap);
     } catch (err) {
       setConnected(false, "长轮询中断");
-      els.error.textContent = String(err);
+      els.error.textContent = String(err.message || err);
     }
-    setTimeout(longPoll, 250);
+    longPollTimer = setTimeout(longPoll, 250);
   }
 
   bootstrap();

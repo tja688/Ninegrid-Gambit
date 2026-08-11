@@ -565,7 +565,10 @@ namespace NineGrid.Core.Effects
         private void EnqueueActivateActions(EffectInstance instance)
         {
             var runtime = new EffectRuntimeContext(((IBelongToArchitecture)this).GetArchitecture(), instance, null);
-            if (!CanTrigger(instance, runtime))
+            // OnActivate 是一次性挂载动作：区域 requires（CardZoneTriggerable 等）在造卡
+            // 挂载时刻求值会因卡还停在 EnemyCardPool/PlayerCardPool 静默丢弃（神圣决斗等
+            // 挂载即生效技能失效）；区域门闩只对响应式触发在触发时生效，这里跳过区域 token。
+            if (!CanTrigger(instance, runtime, ignoreZoneRequires: true))
             {
                 return;
             }
@@ -629,7 +632,7 @@ namespace NineGrid.Core.Effects
             }
         }
 
-        private bool CanTrigger(EffectInstance instance, EffectRuntimeContext runtime)
+        private bool CanTrigger(EffectInstance instance, EffectRuntimeContext runtime, bool ignoreZoneRequires = false)
         {
             if (instance.Trigger == null || instance.Action == null)
             {
@@ -638,7 +641,9 @@ namespace NineGrid.Core.Effects
 
             // 必须在 Trigger.Matches 之前检查：OnCumulative 等在 Matches 内会改写计数器。
             // ADR-0010 / #73：外部门禁已拆除；区域/实体适用由 requires 自陈。
-            if (!EffectRequiresRuntime.Passes(instance, runtime))
+            if (ignoreZoneRequires
+                ? !EffectRequiresRuntime.PassesIgnoringZoneRequires(instance, runtime)
+                : !EffectRequiresRuntime.Passes(instance, runtime))
             {
                 return false;
             }

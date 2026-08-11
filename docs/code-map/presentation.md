@@ -40,7 +40,7 @@
 | `BoardBriefTip/` | 简要解释文字框 + 楼层提示（#89）：文案纯逻辑、悬停命中代理、胜负 Notice 出口 |
 | `BattleInfoPreview/` | 战斗信息预览：正式 Run 在 `StartBattleNodeAsync` 前硬阻塞；数据源为 `BuildNodeDeckOptions` 的 `PlayerCards`（含房间开局注入 + 固定卡 + 来源池）；槽位不足时**优先**展示房间注入候选与固定卡（属性房加权属性卡、恢复房食品卡等）；图标按 **defId 种类去重**；槽位图标 **复用卡面 `mainVisual` + idle 槽偏移**，以槽框为 Mask 做 **BottomCenter** 锚定（`BattleInfoSlotArtFit.ApplyMainVisual` / `__Art`），再叠 Presenter 分类外部缩放（怪物/玩家道具/环境/本体）；悬停为九宫四角框 `F_U_Frame3`（`BattleInfoPreviewHighlight`，框住图标包围盒）；`BattleInfoPreviewCopySO`（Resources `Flow/BattleInfoPreviewCopy`）；半黑屏 + 详述嵌套退回预览 |
 | `Diagnostics/` | Battle/Flow/Perf/Registry Trace Recorder 与 Sink |
-| （根下） | `BattleSessionController`、`GameFlowController`、若干 `*ManagerSingleton`（Presenter 壳名）；**指针缝** `WorldPointerUtility`、**命中路由** `PointerHitRouter` / `IPointerHitTarget` / `PointerHitRegistry`（替代 OnMouse*，ADR-0006）；**开局选项** `GameFlowRunOptions`（`CreateFormal` 正式无作弊 / `CreateQuickTest` QuickTest；`QuickTestMode` 由载荷推导，`TestMode` 布尔已删，#125）；**QuickTest 通道** `QuickTestDeckCatalog` / `QuickTestRunOptions`（主菜单 `\0`=流程测试 Sequential 空技能；`\1`–`\9`：`skillIds` 一怪一技挂载 + **`trapContentIds` 经 `AddEnemyCard` 注入敌池**；正式开局不挂怪技能/不注机关；挂载经 `BattleSessionCheat.TryAttachSkillsToBoardMonsters`：**一怪一技**按格号升序，不够则 Spawn 白板宿主 + 至少一只无技能同伴）。**批1** `CardKind.Trap` / 双桶 / 五套卡面（ADR-0017）；**批2** 滚石/捕熊/烈焰迁 Trap + QT `\1`/`\6`/`\8`/`\9` 机关注入；**批3** 倒刺/三图腾/治疗泉 + QT `\1`–`\9` 九机关齐全（`help.healing_spring` 已删）；**#111** 离开机关 `trap.leave` + `tpl.trap.door`/`tpl.trap.magic_immunity`/`tpl.trap.leave`（可注入）；**#112** 默认 ⌈N/2⌉ 真怪击破后洗入；层主房改击破开局层主（`DeckSystem` OnKill → `ShuffleIntoDrawPile`，经补牌上场）；**#113** `IsNodeCleared`=`IsLeaveTrapBroken`（真怪清零不清关；击破离开机关清关；清场不兑金；QT 跳关置标志；**清关后禁止 PostKill Fill 补牌**） |
+| （根下） | `BattleSessionController`、`GameFlowController`、若干 `*ManagerSingleton`（Presenter 壳名）；**指针缝** `WorldPointerUtility`、**命中路由** `PointerHitRouter` / `IPointerHitTarget` / `PointerHitRegistry`（替代 OnMouse*，ADR-0006）；**开局选项** `GameFlowRunOptions`（`CreateFormal` 正式无作弊 / `CreateQuickTest` QuickTest；`QuickTestMode` 由载荷推导，`TestMode` 布尔已删，#125）；**QuickTest 通道** `QuickTestDeckCatalog` / `QuickTestRunOptions`（主菜单 `\0`=流程测试 Sequential 空技能；`\1`–`\9`：`skillIds` 一怪一技挂载 + **`trapContentIds` 经 `AddEnemyCard` 注入敌池**；正式开局不挂怪技能/不注机关；挂载经 `BattleSessionCheat.TryAttachSkillsToBoardMonsters`：**一怪一技**按格号升序，不够则 Spawn 白板宿主 + 至少一只无技能同伴）。**批1** `CardKind.Trap` / 双桶 / 五套卡面（ADR-0017）；**批2** 滚石/捕熊/烈焰迁 Trap + QT `\1`/`\6`/`\8`/`\9` 机关注入；**批3** 倒刺/三图腾/治疗泉 + QT `\1`–`\9` 九机关齐全（`help.healing_spring` 已删）；**#111** 离开机关 `trap.leave` + `tpl.trap.door`/`tpl.trap.magic_immunity`/`tpl.trap.leave`（可注入）；**#112** 普通房开局编入离开机关（`BuildNodeDeckOptions` → 敌池 → 发牌；`OpeningDeal` 洗牌后 `LeaveTrapDrawPileRules` 落后半段）；层主房击破开局层主后置顶洗入（`DeckSystem` OnKill → `ShuffleIntoDrawPile(top)`，下一张补牌）；**#113** `IsNodeCleared`=`IsLeaveTrapBroken`（真怪清零不清关；击破离开机关清关；清场不兑金；QT 跳关置标志；**清关后禁止 PostKill Fill 补牌**） |
 
 ### `Cards/` 子树
 
@@ -84,7 +84,7 @@
 ### 道具卡格回收（#110 / ADR-0025）
 
 - **Core**：`RecycleItemSlot` / `ApplyRecycleItemSlot` ⇒ 移除 ItemSlots 卡 + `RecycleItemSlotGold`（默认 10）
-- **意图**：`InputIntentKinds.RecycleItem` 为 board action；主线 busy → `BufferToDirector`（不拒收）
+- **意图**：`InputIntentKinds.RecycleItem` 为 board action；主线 busy → `Reject`（ADR-0004 strict-drop）
 - **装配**：`RecycleItemIntentScriptFactory`（`ApplyRecycleItemSlotCommand`）经 `PresentationCompositionRoot` 路由
 - **拖放**：`CardHandManagerSingleton` 拖起激活 `CardRecycleNotice`（半透明黑底 + 图标 + `标准世界文字 (2)` 价值 TMP）+ `HandcardRecycleZone`；落入回收区优先于 ApplyZone；提交 `SubmitRecycleItemIntentCommand`
 - **叠层**：回收 UI 激活期间 `CardDeckManagerSingleton.SetRecycleBackgroundSuppressed(true)` 把卡组卡临时切到 Sorting Layer `BG`，Notice 留在 `Main` 压住卡组；手牌拖拽 / 遗物 ghost 仍在 `Main` 更高 order，压住 Notice。`CardDeckSlotContainer.ApplySortingOrder` **每次**入槽都 `PropagateSortingLayerFromGroup`（不只在 layer 名变化时）；`CardManagerSingleton.ApplyDisplayMode` 对已入槽 `CardDeckMode` 委托 `EnsureDeckSorting`（对齐手牌 `EnsureHandSorting`），避免 `RefreshDisplayMode` 把序打回默认 -30 / 子节点逃出 BG
@@ -97,7 +97,7 @@
 - **持续持有**：`CaptureOpeningHandDeals` 把非本关授予的 ItemSlots 归入 `HandRestores`；`StartBattleNode` 在 `ResetCardPresentationSurface` + `CaptureOpeningPresentationPlan` 之后立刻 `ApplyOpeningHandRestores`（`TryPlaceInHandImmediate`），须早于 Avatar/环发牌，避免空窗闪烁
 - **本关授予**：仅 `relic.*` / `skill.*` 的 `CardSpawned` 走 `HandDeals` → `DealCardToHandAsync` 从源锚点飞入（仍在 Opening 末尾）
 - **满格**：Core `SpawnCard` / `GrantHelpCardToPlayerSideDeck` 写满即止、多余静默丢弃、不兑金；表现层不会收到被丢弃卡的 spawn
-- **非战斗打出**：`RoomChoice` / `RewardItemChoice` 相位对 `usableOutsideBattle=true` 的道具卡放行 `UseItem`（拖到棋盘空位，走既有 ApplyZone 链路；Core `PhaseSystem` 门禁版 `UseItem` + `BoardIntentLegality` + `ValidateHandDragApplyAsync` 三处均按卡级裁决）；`RoomEvent` 与未标注卡维持禁止（拖放回手，v1 无提示）。非战斗使用走**非锁步冲刷**（`BattleBeatFlush.PresentEventLogSlice`）驱动 HUD，不复用战斗锁步 Batch-ack（ADR-0032）
+- **非战斗打出**：`RoomChoice` / `RewardItemChoice` 相位对 `usableOutsideBattle=true` 的道具卡放行 `UseItem`（拖到棋盘空位，走既有 ApplyZone 链路；Core `PhaseSystem` 门禁版 `UseItem` + `BoardIntentLegality` + `ValidateHandDragApplyAsync` 三处均按卡级裁决）；`RoomEvent` 与未标注卡维持禁止（拖放回手，v1 无提示）。非战斗使用走**非锁步冲刷**（`BattleBeatFlush.PresentEventLogSlice`）驱动 HUD，不复用战斗锁步 Batch-ack（ADR-0032）。**房内开宝箱**：`OfferRewardChoice(relic.*)` 覆盖 Pending 前由 `PendingChoiceModel` 挂起商店/卡店/特殊房货架；选完或跳过遗物后恢复挂起会话并 Resync 场地板，**不**经 `ResolvePostRewardChoiceFlow`/`AdvanceNode` 离店；`NonCombatUseItemIntentScriptFactory` 补开 Bounce 并在 `RewardItemChoice` 收尾 Resync
 
 ## Systems
 
@@ -110,7 +110,7 @@
 | `ICardEntityLifecycleSystem` / `CardEntityLifecycleSystem` | 卡实体生命周期 |
 | `IGameFlowShellSystem` / `GameFlowShellSystem` | 流程壳相位权威 |
 | `IPresentationInputStateSystem` / `PresentationInputStateSystem` | 输入所有权轴只读投影（`CurrentOwner`）+ MainlineBusy |
-| `IIntentIntake` / `IntentIntakeSystem` | 唯一意图收口：两轴门禁 + 合法性 + Director 缓冲；忙时 `IAccelerationSink` |
+| `IIntentIntake` / `IntentIntakeSystem` | 唯一意图收口：两轴门禁 + 合法性；主线忙时拒收（strict-drop）；忙时 `IAccelerationSink` |
 | `IAvatarWalkSystem` / `AvatarWalkSystem` | 非战斗跳格门禁 + `AvatarWalkRunner`（BFS 连跳 / 改目标） |
 | `BoardSelectionSystem` | 棋盘选择模式 |
 | `ChoicePresentationSystem` | 房间/奖励选择表现 |
@@ -156,7 +156,7 @@
 
 - Cards：`CardManagerSingleton`（底盘 + Kind→卡面五套：`Avatar`/`Monster`/`HelpCard|Item|PlayerCard`/`Relic`/`Trap`，路径见 `CardChassisPaths`；ADR-0002 / ADR-0017；**运行时 Spawn 不含** `Room` / `ChoiceOption`）、`CardHandManagerSingleton`、`CardDeckManagerSingleton`（局内 NewCard 洗入如离开机关经 `CardDeckAddAnchors`；遗物/技能开局赠牌才走 `AddCardAtFromOrigin` 锚点直飞；洗入 Present 后 `SyncVisualOrderFromDrawPile` 对齐 `DrawPileUids`）
 - 编辑器扩展壳（非运行时五套）：`CardChassisPaths.RoomOptionFacePrefab`（`房间选项标准模板`）+ `ResolveRoomIconPrefab`（`Assets/Prefabs/地形图标/*图标.prefab`）；卡牌表现编辑器侧栏「卡面」下另分 **房间图标** / **房间选项**
-- **怪物遭遇正式配置（#134 起）**：七套正式主题卡组（`ThemeDeckStableMapping`，deckId 为历史不透明主键）在遭遇表 `monster_decks.json` 已切 `Unknown` 正式可选；过渡卡组 `deck.transition` 与池外流浪卡（`deck.wandering_legion` 等）已**归档**——表行 `Reserve` + 成员 `isReserve`，保留 JSON 但不再被 RewardSystem 序列抽卡选中（仍被效果模板 `ShuffleInto` 按 defId 直生，见 ADR-0029）。卡 JSON 保留 `sequence`（1–5）与 `designSlotName`（近战1/远程2…，仅表现、不进 Core）；编辑器可改所属卡组 / 槽位名 / 序列 / 等级。菜单 `NineGrid/Content/校验怪物遭遇配置（过渡期|交付就绪）` 一键校验；交付就绪为正向门禁（ADR-0029）
+- **怪物遭遇正式配置（#134 起）**：七套正式主题卡组（`ThemeDeckStableMapping` + `ThemeDeckFloorTierMapping`，deckId 为历史不透明主键）在遭遇表 `monster_decks.json` 按难度档进层池（`WeakElite`/`StrongElite`/`Boss` → 1/2/3 层；见 ADR-0022）；层数攻血叠加见 `MonsterFloorStatScaling`。过渡卡组 `deck.transition` 与池外流浪卡（`deck.wandering_legion` 等）已**归档**——表行 `Reserve` + 成员 `isReserve`，保留 JSON 但不再被 RewardSystem 序列抽卡选中（仍被效果模板 `ShuffleInto` 按 defId 直生，见 ADR-0029）。卡 JSON 保留 `sequence`（1–5）与 `designSlotName`（近战1/远程2…，仅表现、不进 Core）；编辑器可改所属卡组 / 槽位名 / 序列 / 等级。菜单 `NineGrid/Content/校验怪物遭遇配置（过渡期|交付就绪）` 一键校验；交付就绪为正向门禁（ADR-0029）
 - Flow：`DamageNumberManagerSingleton`、`GoldGainFxManagerSingleton`、`RelicManagerSingleton`（#69：图标优先一卡一文件 JSON `sprites.mainIcon`；空缺时回退 `RelicVisualCatalog` bootstrap；显示壳为槽下挂 `Assets/Prefabs/标准遗物图标模板.prefab`（`图标本体` + `计数` TMP）；**Collider / `ContentIconSlotHitProxy` 仍在 `RelicSlot` 锚点**，预制体只负责显示；有 `projectKey` 且 period>1 的遗物在图标显示「还差几次」（未 Settled 前用装配 `threshold`/`every` 初值；Settled 后吃 `EffectCountdownChanged`，`SourceDefId=relic.*` 经 `CardFaceStatHandler` → `RelicHudHook` 写入已提交表）；**#98 / ADR-0027**：装备栏上限 12；**左键拖**遗物图标（抬高排序 + 半透明，槽显示根隐藏不改布局）共用道具卡格回收区 → `DiscardRelic` +20 金；**右键** `CardInspectOverlayPresenter.TryOpenByDefId` 详述；满栏 Bounce 拒收「遗物格子已满」且拖弃可穿透半黑屏；宝箱跳过走 `SkipRelicChoiceGold`）、`SelectorManagerSingleton`（卡面主视图锚定为祖先变换无关的局部空间计算，见 [ADR-0015](../adr/0015-card-slot-placement-local-space.md)；BounceFan 不得在 `scale=0` 期间提交卡面，`BuildEntries` 保持 `scale=1`，入场归零只在 `PlayEntryAnimation`；选择命中为容器本地固定 AABB，ChoiceOverlay 下合法悬停可开右键详述且详述打开期间屏蔽点选）
 
 `DescriptionManagerSingleton`（**已删 #141**：动态 HUD 描述 TMP 退役后不再留场景/绑定表序列化兼容，`PresentationSceneRoot` / `PresentationSceneBindings` 同步移除；禁复活）。
@@ -176,7 +176,7 @@
 - **九宫格互动计数** → `IPhaseSystem.AdvanceInteractionCount` 与盘面稳定化/旋转分步；攻击/探索剧本在稳定化前推进计数，用道具路径不调用（ADR-0012 / #75）
 - **盘面稳定化 / 补牌** → Core `IBoardStabilizationSystem` 的 `NeedsRefill` 与 `ResolveNextSlice` 是唯一欠补位/补牌裁决；Flow `BoardStabilizationScheduler` 在每轮 Present ack 后重新检查并逐轮推进。融合/重组结果的 `deferRefill` 由 Core 临时排除并在稳定后恢复，旧 `DrainRefill` / `FusionRefill` 专用表现路径已删除。
 - **敌方行动阶段** → `RegisterEnemyActionPhase` / `ResolveNextEnemyAction` / `ResolveEnemyActionFinale` 分拍；**ADR-0038 / #184**：仅节奏源=行动的卡在报名链 −1；移动源在换格推进归零后由报名收走；开火窗同拍单向打击 + `OpenCardRhythmFireWindow`（`OnCardRhythmFire` 同步技能）。导演仍由 `EnemyActionPhaseScheduler` 挂攻击/探索剧本末尾（`ActionCountdownChanged` → Settled → `UpdateActionCount`）（ADR-0012 / #81）。**斜角近战 Present**：Core 对角合法开火后走既有 Counter 通道；`CardAttackBasicAdapter` 放开对角门禁，场景无对角 Timeline 时相对冲刺回退四向 rig（玩家主动开战仍只正交）
-- **行动倒计时上卡面** → Core `ActionCountdownChanged`（`ResultValue`=剩余）经 `PresentationEventMap` Settled → `CardFaceStatHandler` Commit `ActionCount`；禁止 View 队列外直读 Counters（ADR-0005 / #81）。`Action_Icon` 节点名候选含「攻击模式」；`Sync_Rhythm_Icon`↔「是否有技能同步触发」；矩阵见 ADR-0038。**临时接线**：`CardFaceAttackPatternIconResolver` + `CardFacePresentationBinder.ApplyRhythmIconMatrix` 已按局内怪物 `AttackPattern`（Core 投影）切换攻击模式槽图标（`1786242411378_d` 子 Sprite；普通远程复用全向近战图）；节奏源行动计数图标切换与完整 Catalog **未**落地
+- **行动倒计时上卡面** → Core `ActionCountdownChanged`（`ResultValue`=剩余）经 `PresentationEventMap` Settled → `CardFaceStatHandler` Commit `ActionCount`；禁止 View 队列外直读 Counters（ADR-0005 / #81）。`Action_Icon` 节点名候选含「攻击模式」；`Sync_Rhythm_Icon`↔「是否有技能同步触发」；矩阵见 ADR-0038。**临时接线**：`CardFaceAttackPatternIconResolver` + `CardFacePresentationBinder.ApplyRhythmIconMatrix` 已按局内怪物 `AttackPattern`（Core 投影）切换攻击模式槽图标（`1786242411378_d` 子 Sprite：正交 / 全向 / 斜角三档）；节奏源行动计数图标切换与完整 Catalog **未**落地
 - **效果倒计时 UI（ADR-0035 / #156）** → 效果触发器（`OnSelfMove`/`OnInteract`/`OnCumulative`，DSL `projectKey`）推进计数器后由 `CommitEffectCountdownRemainingAction` 广播 `EffectCountdownChanged`（`ResultValue`=剩余、`Message`=令牌键）→ `PresentationEventMap` Settled → `CardFaceStatHandler` → **机关** `CoreCardPresentationMapper.CommitCountdownRemaining` 写 `CommittedCountdownRemaining` + `ActionCount`/`ShowActionCount`（`EffectCountdownProjection`）；**遗物** `SourceDefId=relic.*` 优先路由 `RelicHudHook.CommitCountdownRemaining` 刷新图标「计数」TMP。描述保持静态。禁止 View 直读 Core 计数器（ADR-0005 / ADR-0035）
 
 ## 效果扩展点
@@ -185,7 +185,7 @@
 2. `ITimelineStep` / `IPresentChannel`（`Flow/Presentation/`）  
 3. `BattleBeatScheduler` / `IBattleBeatHandler`（多处理器唯一分发；`CardFaceStatHandler` 为卡面数值；新事件须在 `PresentationEventMap` 声明 Beat）  
 4. 卡面视觉 SO（`Cards/Effects/`）；默认 Death 为 Burning 精灵表退场（`CardSpriteSheetBurnExitEffectSO`，脱卡 FX，落点=视觉世界位）；Use 缩小退场；Lethal 交战不播受击回原段，碎亡留在击退终点
-5. 翻牌：`CardFaceFlipPresenter` 采样 Flip.anim；Core `FaceUp` 经 `CardFaceChanged`→`UpdateFaceUp`→`CardFaceFlipBeatHandler` Commit，再经 `FlipPlaybackCoordinator` 全局串行播翻（ADR-0016）；`PresentStep` 默认通道 Begin 前 `FlushUpdateFaceUp` + 等 Idle，ack 前再等 Idle；**攻击 / 反击 Present** 设 `flushFaceUpBeforeBegin: false`，当批 FaceUp 留到通道后 `FlushBeats`（命中后再翻）；配置编辑器 `CardPresentationFlipPreview` 同采样同挂点，禁止再写线性假翻牌
+5. 翻牌：`CardFaceFlipPresenter` 采样 Flip.anim；Core `FaceUp` 经 `CardFaceChanged`→`UpdateFaceUp`→`CardFaceFlipBeatHandler` Commit，再经 `FlipPlaybackCoordinator` 全局串行播翻（ADR-0016）；`PresentStep` 默认通道 Begin 前 `FlushUpdateFaceUp` + 等 Idle，ack 前再等 Idle；**攻击 / 反击 Present** 设 `flushFaceUpBeforeBegin: false`，当批 FaceUp 留到通道后 `FlushBeats`（命中后再翻）；**开局路径**（`PresentOpeningAsync` 发牌表演收束）经 `CardFaceGenerationBootstrap.ApplyFromEventLog` 重放批内 `CardFaceChanged` 走同一 `CardFaceFlipBeatHandler`（发牌落地后才翻面/结算，等 `FlipPlaybackCoordinator.WaitIdleAsync` 再放行输入门禁）；配置编辑器 `CardPresentationFlipPreview` 同采样同挂点，禁止再写线性假翻牌
 6. 主动翻开：`InputIntentKinds.RevealFace` + `RevealFaceIntentScriptFactory`；邻接背面卡点击分流（AttackInputController）
 
 不要接回静态业务 Sink，也不要在 View 上直接改 Core 规则状态，也不要旁路直读 Core 写卡面数值。
@@ -228,7 +228,7 @@
 
 - Core：进 `Shop` → `OfferShopSession` 固定 4 货架（宝箱 / 随机属性道具 / 恢复药水 / 食品）+ 容量未满时追加 `ExpandItemSlots`（道具牌格升级，50 金）+ 本次进店刷新价初值 10；`SelectReward` 扣 `Price`、直写道具卡格（满则拒）、**留店**；升级选项扣 50 金写 `ItemSlotsCapacity+1`（不发卡、不改 `ItemDeckCapacity`），满 5 后选项移除/不再出现；`RefreshShop` 扣刷新价并翻倍；`SkipHelpChoice` 出店（不加 skip 金）
 - 刷新价作用域：**本次进店**（离开清零；再进店重新从 10 起）
-- 表现：`ShopBoardPresenter` 落格 1/3/7/9 货架、4 升级选项（未满级）、2 刷新、8 离开；Avatar 硬切格 5；货架/刷新/升级任意距离点击；离开驻留 1s；金币不足写简要解释 Notice
+- 表现：`ShopBoardPresenter` 偏好落格 `{1,3,7,9,4}`（第 5 项为 `ExpandItemSlots`）、2 刷新、8 离开；Avatar 硬切格 5；**购后粘性**：仍在售项保持原 assigned 格不换格、已购格留空；**进店/刷新**经 `InRoomOfferSlotPlanner` 重排——避开 Avatar 站位并保证 PreferEmpty 空路到离开格 8
 - 货架真卡 `GroundCardMode`（预制体原生尺寸，与战斗卡同尺度）；升级/刷新就地选项 / 离开图标同按预制体根缩放（#104 / ADR-0024，已删 `RoomIconVisualFit`）；货架·刷新·升级登记 `SoftBlockOnly`，离开 `WalkDestination`
   - 落格只写世界位置、不 SetParent 到 `GroundAnchors/slotN`（`BoardSlotWorldPlacement`）；避免继承锚点 ×2 缩放
 - 扣金后经 `InRoomGoldPresentation` 推 EventLog→HUD（非战斗无 GoldGainBeat）；**房内会话不持 ChoiceOverlay**（场地=ProtectedField，否则 BoardWalk ownerMismatch 全点不动）；Presenter 内勿嵌套 Set/清门；局内宝箱 Bounce 仍短暂持 overlay
@@ -241,7 +241,7 @@
 
 - Core：进 `Tavern` → `OfferTavernSession` 三项服务（`UpgradeItemStats` / `FixItem` / `ExpandItemCapacity`，各 50 金）+ 本次进店刷新价初值 10；扩容写 `ItemDeckCapacity+1`；强化写 `ItemStatBonus+3`（跨节点应用属 #97）；**任一服务买一次即从本货架下架**，`RefreshShop` 清空已售并全量补货（扣本次价并翻倍，无次数上限）；`SkipHelpChoice` 出店
 - **唯一嵌套选择**：「道具卡固定」→ 池切 `tavern.fixItem`，候选为来源池**随机 3 张**（可含已固定 defId）；确认后 `AddFixedItemCard` + 扣费回主面，且本货架 `FixItem` **下架**；固定占 `ItemDeckCapacity` 预算；满预算拒购；`SkipHelpChoice` 在子池取消回主面（不扣费、不离店、不消耗本货架固定名额）
-- 表现：`TavernBoardPresenter` 落格 1/3/7 服务选项（`房间选项标准模板`）、2 刷新、8 离开；二级选择时**服务/刷新退场**，候选真卡铺格 1/3/4；确认后选中与**未选候选一并碎裂退场**再回主面；离开 tip 改「取消选择」
+- 表现：`TavernBoardPresenter` 服务家格 `UpgradeItemStats→1` / `FixItem→3` / `ExpandItemCapacity→7`、2 刷新、8 离开；**购后粘性**：已购家格留空、其余服务不换格；**进店/刷新**经 `InRoomOfferSlotPlanner` 若家格与 Avatar 冲突则改落备选格并保到离开格空路；二级选择时**服务/刷新退场**，候选偏好 `{1,3,4}` 同样走 planner；确认后选中与**未选候选一并碎裂退场**再回主面；离开 tip 改「取消选择」；二级取消后仍站格 8 可重武装驻留出店
 - 服务/刷新选项与候选真卡均按预制体原生尺寸（#104，不 Fit）；服务·刷新·候选 `SoftBlockOnly`，离开 `WalkDestination`；扣金同商店走 `InRoomGoldPresentation`；离开监视与 **不持 ChoiceOverlay** 约定同商店；候选真卡禁用 `GroundCardHitProxy`
 - `GameFlowOrchestrator.PresentInRoomSessionAfterEnterAsync`：`IsTavernPool` / `IsTavernFixItemPool` 走卡店场地板
 
@@ -365,7 +365,7 @@
 - **统一冲刷** `BattleBeatFlush.FlushBeats`（Impact→Settled）：`PresentStep` 就位回执前调用；非锁步（房间/选择/拾取）走 `PresentEventLogSlice`；Bounce spawn 后走 `PresentLatestEventOfType(RewardOffered)`（单条 PresentStandalone）
 - **翻牌门控** `FlipPlaybackCoordinator`：Handler 入队串行 `PlayFlipAsync`；`BattleBeatScheduler.FlushUpdateFaceUp` / `BattleBeatFlush.FlushUpdateFaceUp` 供 `PresentStep` 在 hop 通道 `channel.Begin` 前只刷 FaceUp；战斗通道可跳过前置刷、把 FaceUp 留到 `FlushBeats`；Idle 门控在 Begin 与 ack 两侧（ADR-0016）
 - **生成绝对值** `CardFaceEventValues.WithFaceAbsolutes`：`CardSpawned` / 带 uid 的 `CardDealt` / `AvatarAppeared` 写入造卡/发牌时攻甲血
-- **Permanent 有效攻旁路**（ADR-0005 细化，非对账）：Conditional/常驻光环改有效攻时，Core 发 `BaseStatModified(ResultValue=GetEffectiveInt(Attack))`——`AddStatModifier`/`CommitPermanentAttackFace` Apply、以及 Swap/Rotate/Remove/Kill/`DeactivateOwnerEffects` 对盘面「带条件的 Permanent Attack」补扫；**`ModifyBaseStat` 模板原子（加攻卡/属性房加攻/献身类技能）的 Attack 分支同样提交有效攻**（与 `AppendPermanentAttackFaceCommit` 同构，禁止发基础值——否则带遗物/光环时显示落后于伤害结算）；Temporary 交战加成仍不上卡面；表现层不对账、不直读 Core
+- **Permanent 有效攻旁路**（ADR-0005 细化，非对账）：Conditional/常驻光环改有效攻时，Core 发 `BaseStatModified(ResultValue=GetEffectiveInt(Attack))`——`AddStatModifier`/`CommitPermanentAttackFace` Apply、以及 Swap/Rotate/Remove/Kill/`DeactivateOwnerEffects` 对盘面「带条件的 Permanent Attack」补扫；**`ModifyBaseStat` 模板原子（加攻卡/属性房加攻/献身类技能）的 Attack 分支同样提交有效攻**（与 `AppendPermanentAttackFaceCommit` 同构，禁止发基础值——否则带遗物/光环时显示落后于伤害结算）；玩家下一次对怪的 `DamageMultiplier` 经 `AppendProjectedBattleAttackFaceCommit` 投影攻、Once 消耗后 `AppendPermanentAttackFaceCommit` 回退；表现层不对账、不直读 Core
 - **奖励候选项** `RewardEntry` 投影绝对值 + `RewardOffered` Settled；Bounce spawn 后 `PresentLatestEventOfType` 二次提交；禁 `clearCombatStats` 数值旁路
 - **开局引导** `Flow/Presentation/CardFaceGenerationBootstrap`：非锁步 Opening 从事件日志重放生成类指令；BoardSelect 视图重 Spawn 用 `ApplyFaceHistoryForUid` 重放该 uid 的生成+后续数值指令（与 Settled 同一 Handler）
 - **报点**：攻击/反击命中帧 → `Impact`；用道具 Present：Vacate 前 `FlushImpactExcept(TriggerEffect)`（保飘字坐标，不提前消费触发脉冲）；`TriggerEffect` 由后续 Drain 运动落地 Impact（无盘面 delta 则由 `PresentStep` `FlushBeats`）消费。奖励 Choice：有盘面 Drain 时先 `PresentEventLogSliceExcluding(TriggerEffect)`，Drain 后再 `PresentEventLogSliceOnly(TriggerEffect)`；空 delta 仍整批 `PresentEventLogSlice`。盘面 Drain：全部运动步（及同批前置 Deal）播完后、**首个 Remove 前**冲刷 `Impact`（无 Remove 则 Drain 尾冲刷）。禁止在首个 Deal 前抢跑——同批 `[Deal, Rotate]` 时否则脉冲/扣血会早于旋转（ADR-0018）；`PresentStep`：FaceUp 先刷 → 通道 → `FlushBeats` → 等翻牌 Idle → `TryAcknowledge`

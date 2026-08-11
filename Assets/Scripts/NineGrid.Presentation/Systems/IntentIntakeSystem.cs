@@ -131,23 +131,16 @@ namespace NineGrid.Presentation.Systems
                 return IntentDisposition.Reject;
             }
 
-            // Pickup：idle 时 Allow，由调用方 ExternalHold→Apply；busy 时 Director latest-wins 缓冲。
+            if (mainlineBusy)
+            {
+                Reject(intent, "mainlineBusy", mainlineBusy: true);
+                return IntentDisposition.Reject;
+            }
+
+            // Pickup：idle 时 Allow，由调用方 ExternalHold→Apply。
             if (string.Equals(intent.Kind, InputIntentKinds.Pickup, StringComparison.Ordinal))
             {
-                if (!mainlineBusy)
-                {
-                    return IntentDisposition.Allow;
-                }
-
-                var pickupRuntime = this.GetSystem<IPresentationRuntimeSystem>();
-                if (pickupRuntime == null || !pickupRuntime.IsStarted)
-                {
-                    Reject(intent, "runtimeNotStarted(pickupBuffer)", mainlineBusy: true);
-                    return IntentDisposition.Reject;
-                }
-
-                pickupRuntime.TrySubmitIntent(intent, out uiPickPreview);
-                return IntentDisposition.BufferToDirector;
+                return IntentDisposition.Allow;
             }
 
             var runtime = this.GetSystem<IPresentationRuntimeSystem>();
@@ -155,12 +148,6 @@ namespace NineGrid.Presentation.Systems
             {
                 Reject(intent, "runtimeNotStarted", mainlineBusy);
                 return IntentDisposition.Reject;
-            }
-
-            if (mainlineBusy)
-            {
-                runtime.TrySubmitIntent(intent, out uiPickPreview);
-                return IntentDisposition.BufferToDirector;
             }
 
             runtime.TrySubmitIntent(intent, out uiPickPreview);
@@ -277,11 +264,17 @@ namespace NineGrid.Presentation.Systems
 
         private static void Reject(InputIntent intent, string reason, bool mainlineBusy)
         {
-            DirectorTrace.IntentRejected(intent.Kind, intent.TargetId, reason);
+            var arch = NineGridArchitecture.Interface;
+            var probe = BoardIntentGateDiagnostics.MapIntentKindToCommand(intent.Kind);
+            var diagnostics = BoardIntentGateDiagnostics.Collect(arch, probe);
+            var suffix = BoardIntentGateDiagnostics.FormatReasonSuffix(diagnostics);
+            var enrichedReason = string.IsNullOrEmpty(suffix) ? reason : reason + " | " + suffix;
+
+            DirectorTrace.IntentRejected(intent.Kind, intent.TargetId, enrichedReason, diagnostics);
             Debug.LogWarning(
                 "[IntentIntake] Reject kind=" + intent.Kind
                 + " target=" + intent.TargetId
-                + " reason=" + reason
+                + " reason=" + enrichedReason
                 + " mainlineBusy=" + mainlineBusy
                 + " owner=" + PresentationInputGates.CurrentOwner);
         }

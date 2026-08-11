@@ -171,6 +171,53 @@ namespace NineGrid.Core.Effects
         /// <summary>
         /// 全部 requires 成立时返回 true（failedToken 为空）；否则返回 false 并写出失败 token。
         /// </summary>
+        /// <summary>
+        /// 一次性 OnActivate 激活路径的 requires 求值：跳过区域 token
+        /// （CardZoneTriggerable / CardZoneBoard / CardZoneItemSlots）。
+        /// 卡在造卡即激活（SetupNodeDeck 阶段还停在 EnemyCardPool/PlayerCardPool），
+        /// 区域门闩本为响应式触发「触发时」设计，在一次性挂载时刻求值会把
+        /// 挂载即生效的技能（神圣决斗 HolyDuel / 远程武器 CounterAttackBanned 等）静默丢弃；
+        /// 区域约束由效果自身语义（如 Persistent 规则修饰器在场上才被查询）承担。
+        /// </summary>
+        public static bool PassesIgnoringZoneRequires(
+            EffectInstance instance,
+            EffectRuntimeContext runtime)
+        {
+            if (instance?.Definition == null || runtime == null)
+            {
+                return true;
+            }
+
+            var requires = instance.Definition.Requires;
+            for (var i = 0; i < requires.Count; i++)
+            {
+                var token = requires[i];
+                if (IsZoneRequireToken(token))
+                {
+                    continue;
+                }
+
+                if (!PassesToken(token, instance, runtime))
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        private static bool IsZoneRequireToken(string token)
+        {
+            if (string.IsNullOrEmpty(token))
+            {
+                return false;
+            }
+
+            return Same(token, EffectRequireTokens.CardZoneTriggerable)
+                || Same(token, EffectRequireTokens.CardZoneBoard)
+                || Same(token, EffectRequireTokens.CardZoneItemSlots);
+        }
+
         public static bool TryExplainFailure(
             EffectInstance instance,
             EffectRuntimeContext runtime,

@@ -174,6 +174,13 @@ namespace NineGrid.Core.Systems
                 }
             }
 
+            if (definition.Kind == CardKind.Monster)
+            {
+                var run = this.GetModel<RunModel>();
+                var floor = run != null && run.Floor != null ? run.Floor.Value : 1;
+                MonsterFloorStatScaling.ApplyToDraft(draft, floor);
+            }
+
             return draft;
         }
 

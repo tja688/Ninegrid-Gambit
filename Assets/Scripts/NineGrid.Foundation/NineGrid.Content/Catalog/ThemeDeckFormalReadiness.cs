@@ -60,6 +60,19 @@ namespace NineGrid.Content
                     });
                 }
 
+                var expectedKind = ThemeDeckFloorTierMapping.GetExpectedKind(entry.DeckId);
+                if (expectedKind != MonsterDeckKind.Unknown && deck.Kind != expectedKind)
+                {
+                    report.Blockers.Add(new Issue
+                    {
+                        DeckId = entry.DeckId,
+                        Code = "deck_floor_tier_mismatch",
+                        Message = entry.DeckId + " 的 deck_kind 应为 " + expectedKind + "（第 "
+                            + ThemeDeckFloorTierMapping.GetExpectedPoolFloor(entry.DeckId)
+                            + " 层池），当前为 " + deck.Kind + "。",
+                    });
+                }
+
                 for (var seq = 1; seq <= ThemeDeckStableMapping.SequenceCount; seq++)
                 {
                     var contentId = entry.GetContentId(seq);

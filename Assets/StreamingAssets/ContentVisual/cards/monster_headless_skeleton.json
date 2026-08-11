@@ -9,13 +9,13 @@
     "description": "[[普通近战]][[叠甲]]",
     "faceIntro": "很耐揍",    "attackPattern": "普通近战",
     "rhythmSource": "行动计数",
-    "rhythmPeriod": 5,
+    "rhythmPeriod": 6,
     "gold": 5,
     "stats": {
         "hp": 12,
         "armor": 0,
         "attack": 1,
-        "action": 5,
+        "action": 6,
         "recovery": 0
     },
     "sprites": {

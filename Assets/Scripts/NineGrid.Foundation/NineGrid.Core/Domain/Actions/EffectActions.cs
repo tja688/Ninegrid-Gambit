@@ -215,9 +215,10 @@ namespace NineGrid.Core
 
     /// <summary>
     /// 离开战斗时重置 Battle 作用域倒计时（ADR-0035 / #157）：遍历激活的效果实例，
-    /// 对 <see cref="ICountdownProjectionTrigger"/> 且作用域为 Battle 的倒计时，
+    /// 对 <see cref="ICountdownProjectionTrigger"/> 且有效作用域为 Battle 的倒计时，
     /// 把持有者计数器复位到阈值（period）并广播剩余提交（投影同步回阈值）。
-    /// Run 作用域不动（跨战斗忠实剩余）。作用域标记仅作者/系统可见，绝不进入玩家文本。
+    /// 机关默认 Battle；遗物累计计数默认 Run（跨战斗保留），仅显式 <c>scope:battle</c> 时离战重置。
+    /// 作用域标记仅作者/系统可见，绝不进入玩家文本。
     /// </summary>
     public sealed class ResetBattleScopedCountdownsAction : GameAction
     {
@@ -239,7 +240,7 @@ namespace NineGrid.Core
 
                 var countdown = instance.Trigger as ICountdownProjectionTrigger;
                 if (countdown == null
-                    || countdown.Scope != CountdownScope.Battle
+                    || CountdownScopePolicy.ResolveResetScope(instance.Owner, countdown) != CountdownScope.Battle
                     || string.IsNullOrEmpty(countdown.CountdownProjectionKey)
                     || instance.Owner == null)
                 {
@@ -430,6 +431,13 @@ namespace NineGrid.Core
             TriggerPoint.OnMoveToSlot
         };
 
+        private static readonly TriggerPoint[] sDealPostTriggers =
+        {
+            TriggerPoint.AfterAction,
+            TriggerPoint.OnDeal,
+            TriggerPoint.OnEnter
+        };
+
         public MoveCardAction(int cardUid, SlotId toSlot)
             : this(cardUid, toSlot, null, null)
         {
@@ -467,17 +475,41 @@ namespace NineGrid.Core
                 board.PlaceCard(card, ToSlot);
             }
 
-            var result = new GameActionResult()
-                .AddEvent(new CoreGameEvent(CoreEventType.CardMoved, context.ActionId, ActionName)
-                    .WithCard(CardUid)
-                    .WithSlots(fromSlot, ToSlot)
-                    .WithSource(SourceDefId, Cause));
+            // 入场落地不是盘面换格：发牌应走 CardDealt，避免移动位置效果误触发。
+            var isDeal = card.Kind != CardKind.Avatar
+                && !fromSlot.IsBoardSlot
+                && ToSlot.IsBoardSlot;
+            var eventType = isDeal ? CoreEventType.CardDealt : CoreEventType.CardMoved;
+            var gameEvent = new CoreGameEvent(eventType, context.ActionId, ActionName)
+                .WithCard(CardUid)
+                .WithSlots(fromSlot, ToSlot)
+                .WithSource(SourceDefId, Cause);
+            var result = new GameActionResult();
+            if (isDeal)
+            {
+                result.AddWithFaceAbsolutes(context, card, gameEvent);
+            }
+            else
+            {
+                result.AddEvent(gameEvent);
+            }
+
             CardRhythmMoveTicks.AppendFromMovedEvents(result, context, result.Events);
             return result;
         }
-
         public override IEnumerable<TriggerPoint> GetPostTriggerPoints(GameActionContext context, IReadOnlyList<CoreGameEvent> events)
         {
+            if (events != null)
+            {
+                for (var i = 0; i < events.Count; i++)
+                {
+                    if (events[i].Type == CoreEventType.CardDealt)
+                    {
+                        return sDealPostTriggers;
+                    }
+                }
+            }
+
             return sPostTriggers;
         }
     }
@@ -1238,7 +1270,7 @@ namespace NineGrid.Core
                     .WithMessage(Source)
                     .WithSource(SourceDefId, Source));
 
-            // Permanent Attack 光环旁路提交有效攻；Temporary 交战加成不上卡面（ADR-0005 / PresentationEventMap）。
+            // Permanent Attack 光环旁路提交有效攻（ADR-0005 / PresentationEventMap）。
             if (Stat == StatId.Attack && Scope == ModifierScope.Permanent)
             {
                 CardFaceEventValues.AppendPermanentAttackFaceCommit(
@@ -1380,12 +1412,29 @@ namespace NineGrid.Core
             var modifier = new RuleModifier(Rule, Op, Value, Layer, new ModifierSource(Source), Scope, condition);
             context.GetSystem<IStatSystem>().RuleModifiers.Add(modifier);
 
-            return new GameActionResult()
+            var result = new GameActionResult()
                 .AddEvent(new CoreGameEvent(CoreEventType.EffectModifierApplied, context.ActionId, ActionName)
                     .WithCard(TargetUid)
                     .WithAmount((int)Rule)
                     .WithDelta((int)Math.Round(Value))
                     .WithMessage(Source));
+
+            CardInstance targetCard;
+            if (Rule == RuleId.DamageMultiplier
+                && context.GetModel<CardRegistry>().TryGet(TargetUid, out targetCard)
+                && targetCard != null
+                && targetCard.Kind == CardKind.Avatar)
+            {
+                CardFaceEventValues.AppendProjectedBattleAttackFaceCommit(
+                    result,
+                    context,
+                    targetCard,
+                    ActionName,
+                    Source,
+                    SourceDefId);
+            }
+
+            return result;
         }
     }
 

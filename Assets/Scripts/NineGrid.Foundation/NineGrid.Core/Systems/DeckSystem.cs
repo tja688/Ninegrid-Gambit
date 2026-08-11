@@ -115,7 +115,6 @@ namespace NineGrid.Core.Systems
                 }
 
                 // 开局编入真怪 UID 才计入进度（局中新生怪不加速出门）。
-                // 层主房：只认开局层主击破；其它战斗房：⌈N/2⌉（ADR-0026）。
                 if (bossRoom)
                 {
                     if (battle.TryRecordOpeningBossDefeat(evt.CardUid))
@@ -123,13 +122,13 @@ namespace NineGrid.Core.Systems
                         recorded = true;
                     }
                 }
-                else if (battle.TryRecordOpeningTrueMonsterDefeat(evt.CardUid))
+                else
                 {
-                    recorded = true;
+                    battle.TryRecordOpeningTrueMonsterDefeat(evt.CardUid);
                 }
             }
 
-            if (!recorded || !battle.ShouldInsertLeaveTrap(bossRoom))
+            if (!bossRoom || !recorded || !battle.ShouldInsertLeaveTrap(bossRoom))
             {
                 return null;
             }
@@ -137,7 +136,7 @@ namespace NineGrid.Core.Systems
             battle.MarkLeaveTrapInserted();
             return new GameAction[]
             {
-                new ShuffleIntoDrawPileAction(LeaveTrapDefId, CardKind.Trap, 1, false, "leaveTrap.insert")
+                new ShuffleIntoDrawPileAction(LeaveTrapDefId, CardKind.Trap, 1, true, "leaveTrap.insert")
             };
         }
 

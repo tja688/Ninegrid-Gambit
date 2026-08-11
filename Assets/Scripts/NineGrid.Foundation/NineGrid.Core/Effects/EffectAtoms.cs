@@ -57,10 +57,13 @@ namespace NineGrid.Core.Effects
         bool CountdownAdvanced { get; }
 
         /// <summary>
-        /// 作用域标记（Battle 默认 / Run，DSL <c>scope</c> 配置，仅作者/系统可见）。
+        /// 作用域标记（机关默认 Battle / 显式 Run，DSL <c>scope</c> 配置，仅作者/系统可见）。
         /// Battle 作用域由离战重置动作复位为 <see cref="CountdownPeriod"/>；Run 作用域不重置。
         /// </summary>
         CountdownScope Scope { get; }
+
+        /// <summary>DSL 是否显式写了 <c>scope</c>（未写时遗物走跨战斗默认，机关走本战斗默认）。</summary>
+        bool HasExplicitScope { get; }
 
         /// <summary>倒计时周期（every / threshold）：Battle 离战重置的目标阈值。</summary>
         int CountdownPeriod { get; }
@@ -70,6 +73,29 @@ namespace NineGrid.Core.Effects
         /// 按实例 id 推导的自动键（<c>effect.&lt;instanceId&gt;.&lt;suffix&gt;</c>）。
         /// </summary>
         string ResolveCounterKey(string instanceId);
+    }
+
+    /// <summary>
+    /// 离战重置时解析倒计时有效作用域：机关未显式声明则 Battle；遗物未显式声明则 Run（跨战斗保留累计）。
+    /// </summary>
+    internal static class CountdownScopePolicy
+    {
+        public static CountdownScope ResolveResetScope(EffectOwner owner, ICountdownProjectionTrigger countdown)
+        {
+            if (countdown == null)
+            {
+                return CountdownScope.Battle;
+            }
+
+            if (countdown.HasExplicitScope)
+            {
+                return countdown.Scope;
+            }
+
+            return owner != null && owner.ContainerType == EffectContainerType.Relic
+                ? CountdownScope.Run
+                : CountdownScope.Battle;
+        }
     }
 
     public interface ICondition : IEffectAtom

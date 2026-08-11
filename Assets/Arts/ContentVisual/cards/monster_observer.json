@@ -7,7 +7,7 @@
     "displayName": "人面莱姆",
     "description": "",
     "faceIntro": "其实是三只史莱姆史套娃",
-    "attackPattern": "普通远程",
+    "attackPattern": "全向近战",
     "gold": 5,
     "stats": {
         "hp": 8,

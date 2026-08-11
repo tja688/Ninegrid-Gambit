@@ -124,7 +124,7 @@ namespace NineGrid.Flow
 
         public static int GetDefaultNodeIndexForDeckKind(MonsterDeckKind kind)
         {
-            // ADR-0022：deck_kind 不再分档；任意主题卡组默认从节点 1 开测。
+            // QuickTest 默认从节点 1 开测；deck_kind 决定正式 Run 进哪一层随机池。
             return 1;
         }
 
@@ -283,7 +283,7 @@ namespace NineGrid.Flow
                 { "skill.death_summon", "死时召复活石" },
                 { "skill.lord_of_death", "他死召复活石" },
                 { "skill.holy_duel", "战后打他怪伤2" },
-                { "skill.ambush_melee", "互动5邻攻打翻面" },
+                { "skill.ambush_melee", "开火窗邻攻打翻面" },
                 { "skill.assassin_leader", "发牌后翻面" },
                 { "skill.world_as_neighbors", "怪技能皆相邻" },
             };

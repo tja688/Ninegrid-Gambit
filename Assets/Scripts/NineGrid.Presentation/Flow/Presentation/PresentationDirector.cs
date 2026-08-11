@@ -13,9 +13,6 @@ namespace NineGrid.Flow.Presentation
         private readonly BattleTimeline mBypass;
         private readonly IIntentScriptFactory mScriptFactory;
         private readonly IUiPickPreviewSink mUiPickPreview;
-        private readonly IBufferedIntentLegality mBufferedIntentLegality;
-        private bool mHasBufferedIntent;
-        private InputIntent mBufferedIntent;
         private bool mExternalHoldReleased = true;
         private int mExternalHoldNestDepth;
 
@@ -30,9 +27,11 @@ namespace NineGrid.Flow.Presentation
                 throw new ArgumentNullException("scriptFactory");
             }
 
+            // bufferedIntentLegality 已随 ADR-0004 strict-drop 退役；保留参数以兼容装配签名。
+            _ = bufferedIntentLegality;
+
             mScriptFactory = scriptFactory;
             mUiPickPreview = uiPickPreview;
-            mBufferedIntentLegality = bufferedIntentLegality;
             var diag = timelineDiagnostics ?? DirectorTrace.TimelineSink;
             mMainline = new BattleTimeline(diag, DirectorTimelineLane.Mainline);
             mBypass = new BattleTimeline(diag, DirectorTimelineLane.Bypass);
@@ -57,16 +56,11 @@ namespace NineGrid.Flow.Presentation
 
         public bool HasBufferedIntent
         {
-            get { return mHasBufferedIntent; }
-        }
-
-        public InputIntent BufferedIntent
-        {
-            get { return mBufferedIntent; }
+            get { return false; }
         }
 
         /// <summary>
-        /// 提交输入意图。主线忙时 latest-wins 缓冲（深度 1，后者覆盖前者）并给出 uiPick 预告。
+        /// 提交输入意图。主线忙时拒收（ADR-0004 strict-drop，不缓冲）。
         /// </summary>
         public bool TrySubmitIntent(InputIntent intent, out bool uiPickPreview)
         {
@@ -81,17 +75,9 @@ namespace NineGrid.Flow.Presentation
                 return true;
             }
 
-            mBufferedIntent = intent;
-            mHasBufferedIntent = true;
-            uiPickPreview = true;
-            if (mUiPickPreview != null)
-            {
-                mUiPickPreview.Preview(intent);
-            }
-
-            DirectorTrace.IntentBuffered(intent.Kind, intent.TargetId, uiPick: true);
+            DirectorTrace.IntentRejected(intent.Kind, intent.TargetId, "mainlineBusy");
             PublishBusy();
-            return true;
+            return false;
         }
 
         public IntentClearReason? LastClearReason { get; private set; }
@@ -99,8 +85,6 @@ namespace NineGrid.Flow.Presentation
         public void HardClearIntents(IntentClearReason reason)
         {
             LastClearReason = reason;
-            mHasBufferedIntent = false;
-            mBufferedIntent = default(InputIntent);
             // Phase / 战败 / 换层使当前剧本上下文失效，一并中止主线与旁路。
             mMainline.Clear();
             mBypass.Clear();
@@ -182,29 +166,9 @@ namespace NineGrid.Flow.Presentation
             mMainline.Tick(deltaTime);
             mBypass.Tick(deltaTime);
 
-            if (!IsMainlineBusy && mHasBufferedIntent)
+            if (!IsMainlineBusy)
             {
-                var intent = mBufferedIntent;
-                mHasBufferedIntent = false;
-                mBufferedIntent = default(InputIntent);
-
-                // flush 前复用提交时 Core 合法性；非法则安静丢弃、不建脚本。
-                var stillLegal = mBufferedIntentLegality == null
-                    || mBufferedIntentLegality.IsStillLegal(intent);
-                if (stillLegal)
-                {
-                    DirectorTrace.BeginChain();
-                    DirectorTrace.IntentFlush(intent.Kind, intent.TargetId);
-                    mScriptFactory.BuildScript(intent, mMainline);
-                }
-                else
-                {
-                    DirectorTrace.ClearChain();
-                }
-            }
-            else if (!IsMainlineBusy && !mHasBufferedIntent)
-            {
-                // defer 补牌等兄弟 batch 仍在同一脚本内；仅整条主线跑空且无缓冲时清连锁根。
+                // defer 补牌等兄弟 batch 仍在同一脚本内；仅整条主线跑空时清连锁根。
                 DirectorTrace.ClearChain();
             }
 
@@ -216,8 +180,8 @@ namespace NineGrid.Flow.Presentation
             DirectorTrace.PublishBusyState(
                 IsMainlineBusy,
                 IsBypassBusy,
-                mHasBufferedIntent,
-                mHasBufferedIntent ? mBufferedIntent.Kind : string.Empty);
+                hasBufferedIntent: false,
+                bufferedIntentKind: string.Empty);
         }
     }
 }

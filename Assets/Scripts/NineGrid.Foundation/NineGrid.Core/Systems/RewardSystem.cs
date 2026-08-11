@@ -304,6 +304,7 @@ namespace NineGrid.Core.Systems
                 var fallback = new NodeDeckOptions();
                 AddRunPlayerSideCards(catalog, fallback);
                 AppendRegularTrapCards(catalog, fallback);
+                AppendOpeningLeaveTrapCard(catalog, fallback);
                 return fallback;
             }
 
@@ -313,6 +314,7 @@ namespace NineGrid.Core.Systems
                 var fallback = new NodeDeckOptions();
                 AddRunPlayerSideCards(catalog, fallback);
                 AppendRegularTrapCards(catalog, fallback);
+                AppendOpeningLeaveTrapCard(catalog, fallback);
                 return fallback;
             }
 
@@ -320,7 +322,7 @@ namespace NineGrid.Core.Systems
             {
                 PlayerOpeningCount = 3,
                 EnemyOpeningCount = 3,
-                // 序列 5 = 层主；开局必含层主时 OpeningDeal 走 RequireElite（Boss Counter 亦计 Elite）。
+                // 序列 5 = 层主；RequireElite 时 OpeningDeal 必选全部层主（精英）且第一波直摆上盘（Boss Counter 亦计 Elite）。
                 RequireElite = rule.Seq5Count > 0
             };
 
@@ -333,6 +335,7 @@ namespace NineGrid.Core.Systems
 
             AppendRoomOpeningInjectMonsterCards(catalog, deck, options);
             AppendRegularTrapCards(catalog, options);
+            AppendOpeningLeaveTrapCard(catalog, options);
             return options;
         }
 
@@ -755,6 +758,32 @@ namespace NineGrid.Core.Systems
         }
 
         /// <summary>
+        /// #112 / ADR-0026：普通战斗房开局编入离开机关（层主房改击破开局层主后洗入）。
+        /// </summary>
+        private void AppendOpeningLeaveTrapCard(GameContentCatalog catalog, NodeDeckOptions options)
+        {
+            if (catalog == null || options == null)
+            {
+                return;
+            }
+
+            var run = this.GetModel<RunModel>();
+            if (run.Room.Value == RoomKind.Boss)
+            {
+                return;
+            }
+
+            var content = this.GetSystem<IContentSystem>();
+            var draft = content.CreateDraft(RegularTrapPool.LeaveTrapDefId);
+            if (draft == null || draft.Kind != CardKind.Trap)
+            {
+                return;
+            }
+
+            options.AddEnemyCard(draft);
+        }
+
+        /// <summary>
         /// #135：正式战斗开局随机注入三张常规机关（Core 契约 <see cref="RegularTrapPool"/>）。
         /// 离开机关/特殊机关不入池；不足三张按池量；QuickTest \1–\9 定向注入在此之上叠加。
         /// </summary>
@@ -950,6 +979,37 @@ namespace NineGrid.Core.Systems
             return null;
         }
 
+        private static List<MonsterDeckDefinition> CollectFloorMonsterDeckCandidates(
+            GameContentCatalog catalog,
+            RunModel run,
+            int floor,
+            bool excludeUsed)
+        {
+            var matches = new List<MonsterDeckDefinition>();
+            foreach (var pair in catalog.MonsterDecks)
+            {
+                var deck = pair.Value;
+                if (deck == null || !MonsterDeckFloorPool.IsPlayableDifficulty(deck.Kind))
+                {
+                    continue;
+                }
+
+                if (!MonsterDeckFloorPool.MatchesFloor(deck.Kind, floor))
+                {
+                    continue;
+                }
+
+                if (excludeUsed && run.IsMonsterDeckUsed(deck.Id))
+                {
+                    continue;
+                }
+
+                matches.Add(deck);
+            }
+
+            return matches;
+        }
+
         private MonsterDeckDefinition FindMonsterDeck(GameContentCatalog catalog, string deckId)
         {
             MonsterDeckDefinition deck;
@@ -965,32 +1025,13 @@ namespace NineGrid.Core.Systems
                 return deck;
             }
 
-            var matches = new List<MonsterDeckDefinition>();
-            foreach (var pair in catalog.MonsterDecks)
-            {
-                if (pair.Value == null || pair.Value.Kind == MonsterDeckKind.Reserve)
-                {
-                    continue;
-                }
-
-                if (run.IsMonsterDeckUsed(pair.Value.Id))
-                {
-                    continue;
-                }
-
-                matches.Add(pair.Value);
-            }
+            var floor = run.Floor != null ? run.Floor.Value : 1;
+            var matches = CollectFloorMonsterDeckCandidates(catalog, run, floor, excludeUsed: true);
 
             if (matches.Count == 0)
             {
-                // 主题卡组用尽时回退：任意非 Reserve（仍避免重复优先已失败）。
-                foreach (var pair in catalog.MonsterDecks)
-                {
-                    if (pair.Value != null && pair.Value.Kind != MonsterDeckKind.Reserve)
-                    {
-                        matches.Add(pair.Value);
-                    }
-                }
+                // 本层难度池用尽时回退：同层难度档内允许复用（仍排除 Reserve / Unknown）。
+                matches = CollectFloorMonsterDeckCandidates(catalog, run, floor, excludeUsed: false);
             }
 
             if (matches.Count == 0)

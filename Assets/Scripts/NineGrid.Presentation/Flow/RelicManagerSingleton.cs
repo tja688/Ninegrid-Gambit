@@ -192,11 +192,18 @@ namespace NineGrid.Flow
                 return false;
             }
 
-            return ContentIconSlotBinder.TryGetSlotTransformByDefId(
-                panelAnchors,
-                _displayedDefIds,
-                relicDefId,
-                out anchor);
+            for (var i = 0; i < _displayedDefIds.Count && i < _slots.Length; i++)
+            {
+                if (_displayedDefIds[i] != relicDefId)
+                {
+                    continue;
+                }
+
+                anchor = _slots[i]?.SlotRoot;
+                return anchor != null;
+            }
+
+            return false;
         }
 
         /// <summary>
@@ -571,6 +578,42 @@ namespace NineGrid.Flow
             return Mathf.Max(0, gold);
         }
 
+        /// <summary>
+        /// 按视觉阅读序占槽：先上后下、同行从左到右（不改锚点世界坐标）。
+        /// </summary>
+        private static void SortSlotsByGridReadingOrder(List<RelicIconSlotView> slots)
+        {
+            slots.Sort(static (a, b) =>
+            {
+                var aRoot = a?.SlotRoot;
+                var bRoot = b?.SlotRoot;
+                if (aRoot == null && bRoot == null)
+                {
+                    return 0;
+                }
+
+                if (aRoot == null)
+                {
+                    return 1;
+                }
+
+                if (bRoot == null)
+                {
+                    return -1;
+                }
+
+                var pa = aRoot.localPosition;
+                var pb = bRoot.localPosition;
+                var yCmp = pb.y.CompareTo(pa.y);
+                if (yCmp != 0)
+                {
+                    return yCmp;
+                }
+
+                return pa.x.CompareTo(pb.x);
+            });
+        }
+
         private void EnsureBindings()
         {
             if (panelAnchors == null)
@@ -603,6 +646,7 @@ namespace NineGrid.Flow
                     list.Add(view);
                 }
 
+                SortSlotsByGridReadingOrder(list);
                 _slots = list.ToArray();
             }
             else if (_slots != null && iconPrefab != null)

@@ -731,6 +731,12 @@ namespace NineGrid.Flow
                 Debug.Log(
                     "[InRoom] ShopBoard session end phase=" + phaseSystem.CurrentPhase
                     + " shopActive=" + shop.IsActive);
+                BoardIntentGateDiagnostics.LogConsole(
+                    "ShopBoardEnd",
+                    "walkEnabled=" + (walk != null && walk.IsEnabled ? "1" : "0")
+                    + " shopActive=" + (shop.IsActive ? "1" : "0"),
+                    arch,
+                    GameCommandKind.MoveAvatar);
                 walk?.SetEnabled(false);
                 walk?.Cancel();
                 if (shop.IsActive)
@@ -1221,12 +1227,30 @@ namespace NineGrid.Flow
             var relicsBefore = FormatRelicIds(player);
             var locked = sync != null && sync.IsInputLocked;
 
+            if (locked)
+            {
+                BoardIntentGateDiagnostics.LogConsole(
+                    "BattleBootstrap",
+                    "StartNode-blocked-before-clear phaseBefore=" + phaseBefore,
+                    arch,
+                    GameCommandKind.StartNode);
+            }
+
             // 粘连 Present 锁会使 StartNode 非法；先清锁再决定是否必须 BootstrapRun。
             sync?.Clear();
             PresentationInputGates.ForceEndExternalHold("EnsureBattleNodeBootstrap.unlock");
 
             if (phase.CanExecute(GameCommandKind.StartNode))
             {
+                if (locked)
+                {
+                    BoardIntentGateDiagnostics.LogConsole(
+                        "BattleBootstrap",
+                        "StartNode-ok-after-clear phase=" + phase.CurrentPhase,
+                        arch,
+                        GameCommandKind.StartNode);
+                }
+
                 RecordBootstrapDecision(
                     "avoided_clearedPresentationLock",
                     phaseBefore,
@@ -1249,6 +1273,11 @@ namespace NineGrid.Flow
             }
 
             // 末路：BootstrapRun 会 player.Reset；跨关必须带回遗物/金币/帮助卡。
+            BoardIntentGateDiagnostics.LogConsole(
+                "BattleBootstrap",
+                "forced-bootstrap phaseBefore=" + phaseBefore + " locked=" + (locked ? "1" : "0"),
+                arch,
+                GameCommandKind.StartNode);
             RecordBootstrapDecision(
                 "forced_preserveRunInventory",
                 phaseBefore,

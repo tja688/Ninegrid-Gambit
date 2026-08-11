@@ -22,7 +22,8 @@ namespace NineGrid.Flow.Presentation
                 return;
             }
 
-            var handler = new CardFaceStatHandler();
+            var statHandler = new CardFaceStatHandler();
+            var faceFlipHandler = new CardFaceFlipBeatHandler();
             for (var i = startIndex; i < entries.Count; i++)
             {
                 var entry = entries[i];
@@ -37,7 +38,17 @@ namespace NineGrid.Flow.Presentation
                     continue;
                 }
 
-                handler.Apply(new PresentationInstruction(entry, map));
+                var instruction = new PresentationInstruction(entry, map);
+                if (instruction.Kind == PresentationInstructionKind.UpdateFaceUp)
+                {
+                    // 开局批内翻面（刺客领袖等 OnDeal）：发牌表演收束后再重放，走 CardFaceFlipBeatHandler
+                    // 提交镜像并交 FlipPlaybackCoordinator 串行播翻（ADR-0016 时序门控）。
+                    faceFlipHandler.TryApply(instruction);
+                }
+                else
+                {
+                    statHandler.Apply(instruction);
+                }
             }
         }
 
@@ -88,7 +99,8 @@ namespace NineGrid.Flow.Presentation
                 || entry.Type == CoreEventType.AvatarAppeared
                 || entry.Type == CoreEventType.ActionCountdownChanged
                 || entry.Type == CoreEventType.EffectCountdownChanged
-                || entry.Type == CoreEventType.EffectCountdownCleared;
+                || entry.Type == CoreEventType.EffectCountdownCleared
+                || entry.Type == CoreEventType.CardFaceChanged;
         }
 
         private static bool IsCardFaceStatEvent(CoreEventType type)

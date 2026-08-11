@@ -331,6 +331,7 @@ namespace NineGrid.Core.Effects
         private string mResolvedCounterKey = string.Empty;
         private bool mCountdownAdvanced;
         private CountdownScope mScope = CountdownScope.Battle;
+        private bool mHasExplicitScope;
 
         public override TriggerPoint Point { get { return TriggerPoint.OnInteract; } }
 
@@ -341,7 +342,8 @@ namespace NineGrid.Core.Effects
             mCounterKey = config.Get("counterKey").AsString(string.Empty);
             // ADR-0035：倒计时投影令牌键（完整「装配id.键」）；空 = 不投影。
             mProjectKey = config.Get("projectKey").AsString(string.Empty);
-            // #157：作用域标记（Battle 默认 / Run），仅作者/系统可见，绝不进入玩家文本。
+            // #157：作用域标记（机关默认 Battle / 遗物默认 Run，显式 scope 覆盖）。
+            mHasExplicitScope = config.Has("scope");
             mScope = string.Equals(config.Get("scope").AsString("battle"), "run", StringComparison.OrdinalIgnoreCase)
                 ? CountdownScope.Run
                 : CountdownScope.Battle;
@@ -351,6 +353,7 @@ namespace NineGrid.Core.Effects
         public string CountdownCounterKey { get { return mResolvedCounterKey; } }
         public bool CountdownAdvanced { get { return mCountdownAdvanced; } }
         public CountdownScope Scope { get { return mScope; } }
+        public bool HasExplicitScope { get { return mHasExplicitScope; } }
         public int CountdownPeriod { get { return mEvery; } }
 
         public string ResolveCounterKey(string instanceId)
@@ -401,6 +404,7 @@ namespace NineGrid.Core.Effects
         private string mResolvedCounterKey = string.Empty;
         private bool mCountdownAdvanced;
         private CountdownScope mScope = CountdownScope.Battle;
+        private bool mHasExplicitScope;
 
         public override TriggerPoint Point { get { return TriggerPoint.OnMove; } }
 
@@ -415,7 +419,8 @@ namespace NineGrid.Core.Effects
             mSourcePrefix = config.Get("sourcePrefix").AsString(string.Empty);
             // ADR-0035：倒计时投影令牌键（完整「装配id.键」）；空 = 不投影。
             mProjectKey = config.Get("projectKey").AsString(string.Empty);
-            // #157：作用域标记（Battle 默认 / Run），仅作者/系统可见，绝不进入玩家文本。
+            // #157：作用域标记（机关默认 Battle / 遗物默认 Run，显式 scope 覆盖）。
+            mHasExplicitScope = config.Has("scope");
             mScope = string.Equals(config.Get("scope").AsString("battle"), "run", StringComparison.OrdinalIgnoreCase)
                 ? CountdownScope.Run
                 : CountdownScope.Battle;
@@ -425,6 +430,7 @@ namespace NineGrid.Core.Effects
         public string CountdownCounterKey { get { return mResolvedCounterKey; } }
         public bool CountdownAdvanced { get { return mCountdownAdvanced; } }
         public CountdownScope Scope { get { return mScope; } }
+        public bool HasExplicitScope { get { return mHasExplicitScope; } }
         public int CountdownPeriod { get { return mEvery; } }
 
         public string ResolveCounterKey(string instanceId)
@@ -912,6 +918,7 @@ namespace NineGrid.Core.Effects
         private bool mActorIsPlayer;
         private int mFireCount;
         private CountdownScope mScope = CountdownScope.Battle;
+        private bool mHasExplicitScope;
 
         public int FireCount { get { return mFireCount; } }
 
@@ -919,6 +926,7 @@ namespace NineGrid.Core.Effects
         public string CountdownCounterKey { get { return mResolvedCounterKey; } }
         public bool CountdownAdvanced { get { return mCountdownAdvanced; } }
         public CountdownScope Scope { get { return mScope; } }
+        public bool HasExplicitScope { get { return mHasExplicitScope; } }
         public int CountdownPeriod { get { return mThreshold; } }
 
         public string ResolveCounterKey(string instanceId)
@@ -943,7 +951,8 @@ namespace NineGrid.Core.Effects
             mCause = config.Get("cause").AsString(string.Empty);
             // ADR-0035：倒计时投影令牌键（完整「装配id.键」）；空 = 不投影。
             mProjectKey = config.Get("projectKey").AsString(string.Empty);
-            // #157：作用域标记（Battle 默认 / Run），仅作者/系统可见，绝不进入玩家文本。
+            // #157：作用域标记（机关默认 Battle / 遗物默认 Run，显式 scope 覆盖）。
+            mHasExplicitScope = config.Has("scope");
             mScope = string.Equals(config.Get("scope").AsString("battle"), "run", StringComparison.OrdinalIgnoreCase)
                 ? CountdownScope.Run
                 : CountdownScope.Battle;
@@ -3367,6 +3376,36 @@ namespace NineGrid.Core.Effects
                 if (targets[i] != 0)
                 {
                     result.Add(new FlipCardAction(targets[i], context.SourceDefId, context.EffectId));
+                }
+            }
+
+            return result;
+        }
+    }
+
+    /// <summary>
+    /// 单向盖面：正面→背面；已背面 no-op（与 <see cref="RevealFaceAction"/> 对称）。
+    /// </summary>
+    [EffectAtom("ConcealFace", EffectAtomKind.Action)]
+    public sealed class ConcealFaceEffectAction : IAction
+    {
+        public void Configure(EffectDslNode config)
+        {
+        }
+
+        public IReadOnlyList<GameAction> BuildActions(EffectRuntimeContext context, IReadOnlyList<int> targets)
+        {
+            var result = new List<GameAction>();
+            if (targets == null || targets.Count == 0)
+            {
+                return result;
+            }
+
+            for (var i = 0; i < targets.Count; i++)
+            {
+                if (targets[i] != 0)
+                {
+                    result.Add(new ConcealFaceAction(targets[i], context.SourceDefId, context.EffectId));
                 }
             }
 

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using NineGrid.Core.Content;
 using NineGrid.Core.Systems;
 using NineGrid.Core.Utilities;
 
@@ -49,10 +50,17 @@ namespace NineGrid.Core
                         .WithSource(card.DefId, "setupNodeDeck"));
             }
 
+            var openingLeaveTrap = false;
             for (var i = 0; i < Options.EnemyCards.Count; i++)
             {
-                var card = CreateConfiguredCard(context, Options.EnemyCards[i], registry);
+                var draft = Options.EnemyCards[i];
+                var card = CreateConfiguredCard(context, draft, registry);
                 deck.AddToEnemyCardPool(card);
+                if (string.Equals(draft.DefId, RegularTrapPool.LeaveTrapDefId, StringComparison.Ordinal))
+                {
+                    openingLeaveTrap = true;
+                }
+
                 if (CardCombatRules.IsTrueMonster(card.Kind))
                 {
                     var isBoss = card.Counters.Get(CoreCounterKeys.Boss) > 0;
@@ -66,6 +74,11 @@ namespace NineGrid.Core
                         .WithCard(card.Uid)
                         .WithMessage(card.DefId)
                         .WithSource(card.DefId, "setupNodeDeck"));
+            }
+
+            if (openingLeaveTrap)
+            {
+                battle.MarkLeaveTrapInserted();
             }
 
             var deactivation = BuildDeactivationResult(context, deactivatedEffects);
@@ -201,13 +214,17 @@ namespace NineGrid.Core
             var rng = context.Architecture.GetUtility<IRngUtility>();
 
             // Step 1: place player-side cards directly on the board (soft guarantee).
-            var playerPlaced = PlacePlayerCardsDirectly(deck, board, registry, rng, Options.PlayerOpeningCount);
+            var playerPlaced = PlaceCardsDirectly(deck, board, registry, rng, deck.PlayerCardPoolUids, Options.PlayerOpeningCount);
 
             // Step 2: select enemy cards.
+            // 设计案发牌机制：怪物侧选出的卡直接放置上盘（存在层主则必定抽出）。
+            // 层主对战时所有层主必须第一波发牌上场，不得洗入抽牌堆随缘补出（ADR-0026「开局编入的层主」以本关首次发牌在场为前提）。
             var selected = new List<int>();
             SelectCards(selected, deck.EnemyCardPoolUids, registry, Options.EnemyOpeningCount, Options.RequireElite);
+            var enemyPlaced = PlaceCardsDirectly(deck, board, registry, rng, selected, selected.Count);
 
-            for (var i = 0; i < selected.Count; i++)
+            // 盘面放不下时（理论不可达）剩余选中卡退回抽牌堆，避免吞卡。
+            for (var i = enemyPlaced; i < selected.Count; i++)
             {
                 var card = registry.Get(selected[i]);
                 deck.AddToDrawPile(card, false);
@@ -218,10 +235,11 @@ namespace NineGrid.Core
             DrainStagingPool(deck, registry, deck.EnemyCardPoolUids);
 
             ShuffleDrawPile(deck, rng);
+            LeaveTrapDrawPileRules.EnsureInSecondHalf(deck, registry, rng);
 
             return new GameActionResult()
                 .AddEvent(new CoreGameEvent(CoreEventType.CardDealt, context.ActionId, ActionName)
-                    .WithAmount(playerPlaced + selected.Count)
+                    .WithAmount(playerPlaced + enemyPlaced)
                     .WithMessage("opening"));
         }
 
@@ -230,15 +248,15 @@ namespace NineGrid.Core
             return sPostTriggers;
         }
 
-        private static int PlacePlayerCardsDirectly(
+        private static int PlaceCardsDirectly(
             DeckModel deck,
             BoardModel board,
             CardRegistry registry,
             IRngUtility rng,
+            IReadOnlyList<int> uids,
             int maxCount)
         {
-            var poolUids = new List<int>(deck.PlayerCardPoolUids);
-            if (poolUids.Count == 0 || maxCount <= 0)
+            if (uids.Count == 0 || maxCount <= 0)
             {
                 return 0;
             }
@@ -254,10 +272,17 @@ namespace NineGrid.Core
             }
 
             var placed = 0;
-            var count = poolUids.Count < maxCount ? poolUids.Count : maxCount;
+            // 拷贝入参：玩家侧传的是活池列表，RemoveUid 会边放边变（原 PlacePlayerCardsDirectly 同款保护）。
+            var orderedUids = new List<int>(uids.Count);
+            for (var i = 0; i < uids.Count; i++)
+            {
+                orderedUids.Add(uids[i]);
+            }
+
+            var count = orderedUids.Count < maxCount ? orderedUids.Count : maxCount;
             for (var i = 0; i < count && availableSlots.Count > 0; i++)
             {
-                var card = registry.Get(poolUids[i]);
+                var card = registry.Get(orderedUids[i]);
                 var slotIdx = rng.Range(0, availableSlots.Count);
                 var slot = availableSlots[slotIdx];
                 availableSlots.RemoveAt(slotIdx);
@@ -277,27 +302,24 @@ namespace NineGrid.Core
                 return;
             }
 
-            var selectedFromPool = 0;
             if (requireElite)
             {
+                // 层主（精英）全部必选：层主对战时所有层主必须第一波发牌上场。
                 for (var i = 0; i < pool.Count; i++)
                 {
                     var card = registry.Get(pool[i]);
                     if (card.Counters.Get(CoreCounterKeys.Elite) > 0)
                     {
                         selected.Add(card.Uid);
-                        selectedFromPool++;
-                        break;
                     }
                 }
             }
 
-            for (var i = 0; i < pool.Count && selectedFromPool < count; i++)
+            for (var i = 0; i < pool.Count && selected.Count < count; i++)
             {
                 if (!selected.Contains(pool[i]))
                 {
                     selected.Add(pool[i]);
-                    selectedFromPool++;
                 }
             }
         }
@@ -336,6 +358,65 @@ namespace NineGrid.Core
         }
     }
 
+    /// <summary>
+    /// 离开机关在抽牌堆中的落点契约（ADR-0026）：普通房开局编入后必在后半段；层主房击破层主后置顶。
+    /// </summary>
+    internal static class LeaveTrapDrawPileRules
+    {
+        public static void EnsureInSecondHalf(DeckModel deck, CardRegistry registry, IRngUtility rng)
+        {
+            if (deck == null || registry == null || rng == null)
+            {
+                return;
+            }
+
+            var pile = deck.DrawPileUids;
+            var count = pile.Count;
+            if (count <= 1)
+            {
+                return;
+            }
+
+            var secondHalfStart = (count + 1) / 2;
+            if (secondHalfStart >= count)
+            {
+                return;
+            }
+
+            var leaveIndex = -1;
+            var leaveUid = 0;
+            for (var i = 0; i < count; i++)
+            {
+                var card = registry.Get(pile[i]);
+                if (string.Equals(card.DefId, RegularTrapPool.LeaveTrapDefId, StringComparison.Ordinal))
+                {
+                    leaveIndex = i;
+                    leaveUid = card.Uid;
+                    break;
+                }
+            }
+
+            if (leaveUid == 0)
+            {
+                return;
+            }
+
+            var targetIndex = leaveIndex >= secondHalfStart
+                ? leaveIndex
+                : rng.Range(secondHalfStart, count);
+            if (targetIndex == leaveIndex)
+            {
+                return;
+            }
+
+            var ordered = new List<int>(pile);
+            ordered.RemoveAt(leaveIndex);
+            var insertIndex = leaveIndex < targetIndex ? targetIndex - 1 : targetIndex;
+            ordered.Insert(insertIndex, leaveUid);
+            deck.ReorderDrawPile(ordered);
+        }
+    }
+
     public sealed class FillEmptySlotsAction : GameAction
     {
         private static readonly SlotId[] sFillOrder =
@@ -357,6 +438,9 @@ namespace NineGrid.Core
             TriggerPoint.OnDeal,
             TriggerPoint.OnEnter
         };
+
+        /// <summary>机关效果（滚石等）移除卡造成的空位补牌事件 cause；捕熊陷阱等以该 cause 排除响应。</summary>
+        public const string TrapVacatedRefillCause = "refillAfterTrapRemoval";
 
         public override string ActionName { get { return "FillEmptySlots"; } }
 
@@ -383,32 +467,55 @@ namespace NineGrid.Core
                         .WithSlots(SlotId.None, board.AvatarSlot.Value));
             }
 
-            for (var i = 0; i < fillOrder.Count; i++)
+            // 两遍填充：先正常空位，后机关效果空位（trap-vacated）。
+            // 机关效果（滚石等）移除卡造成的空位补牌不算「补牌触发」事件：捕熊陷阱等通过
+            // EventFilterExcludeCause(cause=refillAfterTrapRemoval) 不响应；且两遍分派保证
+            // 机关空位的 CardDealt 事件与正常补牌同批时也保持语义正确（事件携带 cause）。
+            for (var pass = 0; pass < 2; pass++)
             {
-                var slot = fillOrder[i];
-                if (slot == board.AvatarSlot.Value || !board.IsEmpty(slot))
+                var trapVacatedPass = pass == 1;
+                var pileEmpty = false;
+                for (var i = 0; i < fillOrder.Count; i++)
                 {
-                    continue;
+                    var slot = fillOrder[i];
+                    if (slot == board.AvatarSlot.Value || !board.IsEmpty(slot))
+                    {
+                        continue;
+                    }
+
+                    if (trapVacatedPass != board.IsTrapVacated(slot))
+                    {
+                        continue;
+                    }
+
+                    int uid;
+                    if (!deck.TryPeekDrawPile(out uid))
+                    {
+                        pileEmpty = true;
+                        break;
+                    }
+
+                    var card = registry.Get(uid);
+                    deck.RemoveUid(uid);
+                    board.PlaceCard(card, slot);
+                    filled++;
+
+                    var dealt = new CoreGameEvent(CoreEventType.CardDealt, context.ActionId, ActionName)
+                        .WithCard(uid)
+                        .WithSlots(SlotId.None, slot)
+                        .WithAmount(filled);
+                    if (trapVacatedPass)
+                    {
+                        dealt = dealt.WithSource(string.Empty, TrapVacatedRefillCause);
+                    }
+
+                    result.AddWithFaceAbsolutes(context, card, dealt);
                 }
 
-                int uid;
-                if (!deck.TryPeekDrawPile(out uid))
+                if (pileEmpty)
                 {
                     break;
                 }
-
-                var card = registry.Get(uid);
-                deck.RemoveUid(uid);
-                board.PlaceCard(card, slot);
-                filled++;
-
-                result.AddWithFaceAbsolutes(
-                    context,
-                    card,
-                    new CoreGameEvent(CoreEventType.CardDealt, context.ActionId, ActionName)
-                        .WithCard(uid)
-                        .WithSlots(SlotId.None, slot)
-                        .WithAmount(filled));
             }
 
             result.AddEvent(new CoreGameEvent(CoreEventType.SlotsFilled, context.ActionId, ActionName)

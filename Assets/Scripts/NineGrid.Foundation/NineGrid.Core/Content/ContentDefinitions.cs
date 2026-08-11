@@ -37,19 +37,21 @@ namespace NineGrid.Core.Content
     }
 
     /// <summary>
-    /// 主题怪物卡组标记（ADR-0022）。仅 <see cref="Reserve"/> 有语义（不参与每层随机）；
-    /// WeakElite/StrongElite/Boss 为历史分档残留，加载后视同可参与主题池（与 <see cref="Unknown"/> 同等）。
+    /// 主题怪物卡组标记（ADR-0022）。<see cref="Reserve"/> 不参与随机；
+    /// <see cref="WeakElite"/> / <see cref="StrongElite"/> / <see cref="Boss"/> 为策划难度档
+    /// （普通 / 中等 / 困难），分别进入第 1 / 2 / 3 层随机池（见 <c>MonsterDeckFloorPool</c>）。
+    /// <see cref="Unknown"/> 不参与正式主题随机。
     /// </summary>
     public enum MonsterDeckKind
     {
         Unknown = 0,
-        /// <summary>历史残留；不再决定哪层用哪档。</summary>
+        /// <summary>普通档；第 1 层主题随机池。</summary>
         WeakElite = 1,
-        /// <summary>历史残留；不再决定哪层用哪档。</summary>
+        /// <summary>中等档；第 2 层主题随机池。</summary>
         StrongElite = 2,
-        /// <summary>历史残留；不再决定哪层用哪档。</summary>
+        /// <summary>困难档；第 3 层主题随机池（卡组难度，非怪物层主 rank）。</summary>
         Boss = 3,
-        /// <summary>不参与每层主题随机。</summary>
+        /// <summary>不参与每层主题随机（过渡 / 归档等）。</summary>
         Reserve = 4
     }
 

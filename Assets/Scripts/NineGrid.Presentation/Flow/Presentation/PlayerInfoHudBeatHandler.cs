@@ -1,6 +1,8 @@
 using NineGrid.Cards;
 using NineGrid.Cards.Presentation;
 using NineGrid.Core;
+using NineGrid.Core.Stats;
+using NineGrid.Core.Systems;
 using NineGrid.Flow;
 
 namespace NineGrid.Flow.Presentation
@@ -61,9 +63,30 @@ namespace NineGrid.Flow.Presentation
                     break;
                 case StatId.Armor:
                     // 基础护甲被遗物 / 效果永久修改：刷新基础护甲 HUD（战斗当前护甲改动不在此列）。
-                    hud.ApplyArmor(value, animate: true);
+                    // HUD 显示有效护甲（ADR-0028）：ResultValue 只是基础甲新值，遗物/图腾
+                    // Modifier 加成需另行计入，否则带遗物时刷新后数值落后于真实有效甲。
+                    hud.ApplyArmor(ResolveEffectiveArmor(gameEvent), animate: true);
                     break;
             }
+        }
+
+        private static int ResolveEffectiveArmor(CoreGameEvent gameEvent)
+        {
+            var arch = NineGridArchitecture.Current;
+            if (arch == null)
+            {
+                return UnityEngine.Mathf.Max(0, gameEvent.ResultValue);
+            }
+
+            var board = arch.GetModel<BoardModel>();
+            var avatarUid = board != null && board.AvatarUid != null ? board.AvatarUid.Value : 0;
+            CardInstance avatar;
+            if (avatarUid <= 0 || !arch.GetModel<CardRegistry>().TryGet(avatarUid, out avatar))
+            {
+                return UnityEngine.Mathf.Max(0, gameEvent.ResultValue);
+            }
+
+            return StatArmorUtility.GetEffectiveArmor(arch.GetSystem<IStatSystem>(), avatar);
         }
 
         private static bool TryResolveAvatar(CoreGameEvent gameEvent, out ManagedCard card)

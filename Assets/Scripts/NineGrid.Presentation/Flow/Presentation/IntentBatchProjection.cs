@@ -47,7 +47,59 @@ namespace NineGrid.Flow.Presentation
             summary.Deals = projection.LegacyDeals ?? Array.Empty<PostKillCardDeal>();
             summary.RemovedUids = projection.LegacyRemovedUids ?? Array.Empty<int>();
             summary.DamagePopups = Array.Empty<CombatDamagePopup>();
+            summary.HolyDuelPunishment = ScanHolyDuelPunishment(architecture, pipeline, startIndex);
             return summary;
+        }
+
+        /// <summary>
+        /// 扫描批内神圣决斗惩罚：EffectTriggered（message=skill.holy_duel.activate）标记持有者，
+        /// 之后以 source=skill.holy_duel 打向玩家卡的 DamageDealt 即惩罚伤害。
+        /// 表现层据此在玩家攻击编排后追加决斗者的攻击表演（见 FieldBattlePresentationExecutor）。
+        /// </summary>
+        private static HolyDuelPunishmentPresentation ScanHolyDuelPunishment(
+            IArchitecture architecture,
+            IActionPipelineSystem pipeline,
+            int startIndex)
+        {
+            var avatarUid = architecture != null
+                ? architecture.GetModel<BoardModel>().AvatarUid.Value
+                : 0;
+            var entries = pipeline?.EventLog?.Entries;
+            if (entries == null)
+            {
+                return default;
+            }
+
+            var holderUid = 0;
+            var amount = 0;
+            for (var i = startIndex; i < entries.Count; i++)
+            {
+                var e = entries[i];
+                if (e == null)
+                {
+                    continue;
+                }
+
+                if (e.Type == CoreEventType.EffectTriggered
+                    && string.Equals(e.Message, "skill.holy_duel.activate", StringComparison.Ordinal))
+                {
+                    holderUid = e.CardUid;
+                }
+                else if (e.Type == CoreEventType.DamageDealt
+                    && avatarUid > 0
+                    && e.TargetUid == avatarUid
+                    && string.Equals(e.SourceDefId, "skill.holy_duel", StringComparison.Ordinal))
+                {
+                    amount = e.Amount;
+                }
+            }
+
+            if (holderUid <= 0 || amount <= 0)
+            {
+                return default;
+            }
+
+            return new HolyDuelPunishmentPresentation { HolderUid = holderUid, Amount = amount };
         }
 
         public static bool ContainsCardKilled(

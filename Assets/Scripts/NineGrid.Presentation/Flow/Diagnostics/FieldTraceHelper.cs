@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using NineGrid.Cards;
 using NineGrid.Core;
+using NineGrid.Core.Systems;
 using QFramework;
 using UnityEngine;
 
@@ -609,17 +610,28 @@ namespace NineGrid.Flow.Diagnostics
             }
 
             RecordOccupancySnapshot("pickupClick", FlowTraceBatchTags.Pickup);
+            var payload = new Dictionary<string, string>
+            {
+                { "uid", uid.ToString() },
+                { "gate", gate ?? string.Empty },
+                { "accepted", accepted ? "true" : "false" },
+                { "coreReason", coreReason ?? string.Empty },
+                { "choreoSeqId", ChoreoTraceContext.CurrentSeqId.ToString() },
+            };
+
+            if (!accepted)
+            {
+                BoardIntentGateDiagnostics.MergeInto(
+                    payload,
+                    BoardIntentGateDiagnostics.Collect(
+                        NineGridArchitecture.Current,
+                        GameCommandKind.PickupItem));
+            }
+
             Record(
                 FlowTraceCategory.Hand,
                 FlowTraceNames.PickupGate,
-                new Dictionary<string, string>
-                {
-                    { "uid", uid.ToString() },
-                    { "gate", gate ?? string.Empty },
-                    { "accepted", accepted ? "true" : "false" },
-                    { "coreReason", coreReason ?? string.Empty },
-                    { "choreoSeqId", ChoreoTraceContext.CurrentSeqId.ToString() },
-                },
+                payload,
                 accepted: accepted);
         }
 

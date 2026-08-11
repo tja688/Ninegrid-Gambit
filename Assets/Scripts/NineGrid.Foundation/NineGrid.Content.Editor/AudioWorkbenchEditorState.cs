@@ -38,6 +38,7 @@ namespace NineGrid.Content.Editor
         private long lastObservedHistorySequence = -1;
         private int lastObservedMusicHistoryCount = -1;
         private int lastObservedPlayingSourceCount = -1;
+        private long lastObservedPlayingFingerprint = -1;
         private int lastObservedUnclaimedSfxCount = -1;
         private int lastObservedSceneOrphanCount = -1;
         private int lastObservedPersistAnomalyCount = -1;
@@ -215,6 +216,7 @@ namespace NineGrid.Content.Editor
                 lastObservedHistorySequence = -1;
                 lastObservedMusicHistoryCount = -1;
                 lastObservedPlayingSourceCount = -1;
+                lastObservedPlayingFingerprint = -1;
                 lastObservedUnclaimedSfxCount = -1;
                 lastObservedSceneOrphanCount = -1;
                 lastObservedPersistAnomalyCount = -1;
@@ -234,6 +236,7 @@ namespace NineGrid.Content.Editor
             var musicHistoryCount = 0;
             var musicPlaying = 0;
             var musicUnknown = 0;
+            long playingFingerprint = 0;
             var architecture = NineGridArchitecture.Interface;
             var audio = architecture?.GetSystem<IAudioSystem>();
             if (audio != null)
@@ -247,9 +250,16 @@ namespace NineGrid.Content.Editor
                 {
                     for (var i = 0; i < snap.PlayingSources.Count; i++)
                     {
-                        if (!snap.PlayingSources[i].Claimed)
+                        var src = snap.PlayingSources[i];
+                        if (!src.Claimed)
                         {
                             unclaimedSfx++;
+                        }
+
+                        var sid = src.SourceId ?? string.Empty;
+                        unchecked
+                        {
+                            playingFingerprint = (playingFingerprint * 397) ^ sid.GetHashCode();
                         }
                     }
                 }
@@ -271,11 +281,23 @@ namespace NineGrid.Content.Editor
                 var audit = music.LastAudit ?? music.AuditMusicTrack("AudioWorkbench.Tick");
                 musicPlaying = audit?.ActualSources?.Count ?? 0;
                 musicUnknown = audit?.UnknownSources?.Count ?? 0;
+                if (audit?.ActualSources != null)
+                {
+                    for (var i = 0; i < audit.ActualSources.Count; i++)
+                    {
+                        var sid = audit.ActualSources[i].SourceId ?? string.Empty;
+                        unchecked
+                        {
+                            playingFingerprint = (playingFingerprint * 397) ^ (("m:" + sid).GetHashCode());
+                        }
+                    }
+                }
             }
 
             var changed = runtimeRevision != lastObservedRuntimeRevision
                 || historySequence != lastObservedHistorySequence
                 || playingCount != lastObservedPlayingSourceCount
+                || playingFingerprint != lastObservedPlayingFingerprint
                 || unclaimedSfx != lastObservedUnclaimedSfxCount
                 || sceneOrphans != lastObservedSceneOrphanCount
                 || persistAnomalies != lastObservedPersistAnomalyCount
@@ -285,6 +307,7 @@ namespace NineGrid.Content.Editor
             lastObservedRuntimeRevision = runtimeRevision;
             lastObservedHistorySequence = historySequence;
             lastObservedPlayingSourceCount = playingCount;
+            lastObservedPlayingFingerprint = playingFingerprint;
             lastObservedUnclaimedSfxCount = unclaimedSfx;
             lastObservedSceneOrphanCount = sceneOrphans;
             lastObservedPersistAnomalyCount = persistAnomalies;
@@ -408,6 +431,7 @@ namespace NineGrid.Content.Editor
                         loop = s.Loop,
                         isPlaying = s.IsPlaying,
                         claimed = s.Claimed,
+                        workbenchPreview = s.WorkbenchPreview,
                     }).ToArray(),
                 sceneOrphans = (snap.SceneOrphans ?? Array.Empty<SceneAudioOrphanSnapshot>())
                     .Select(o => new

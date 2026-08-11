@@ -954,10 +954,10 @@
  {
   "id": "tpl.skill.rise_up.damage",
   "state": "Implemented",
-  "design_text": "[场上]本卡对玩家造成一次伤害后，随机翻面一张其他怪物卡",
+  "design_text": "[场上]本卡对玩家造成一次伤害后，随机使一张其他正面怪物卡翻面为背面",
   "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
   "conditions_json": "[]",
-  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnSelfDamageDealtToPlayerCumulative\",\"threshold\":1},\"target\":{\"atom\":\"FilteredCards\",\"kind\":\"Monster\",\"zone\":\"Board\",\"exclude\":[\"Self\"],\"random\":true,\"count\":\"{{count}}\"},\"action\":{\"atom\":\"Flip\"}}"
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnSelfDamageDealtToPlayerCumulative\",\"threshold\":1},\"target\":{\"atom\":\"FilteredCards\",\"kind\":\"Monster\",\"zone\":\"Board\",\"exclude\":[\"Self\"],\"random\":true,\"count\":\"{{count}}\"},\"action\":{\"atom\":\"ConcealFace\"}}"
  },
  {
   "id": "tpl.skill.purge_followers.move",
@@ -1242,10 +1242,10 @@
  {
   "id": "tpl.skill.ambush_melee.interact",
   "state": "Implemented",
-  "design_text": "[场上]玩家卡每互动5次，若本卡正面且与玩家卡正交相邻，对玩家造成等同本卡攻击的伤害并翻面",
+  "design_text": "[场上]卡级开火窗口时，若本卡正面且与玩家卡正交相邻，对玩家造成等同本卡攻击的伤害并翻面",
   "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
   "conditions_json": "[\"IsFaceUp:target=Self\", \"Adjacent:left=Self:right=Player\"]",
-  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnInteract\",\"every\":5},\"conditions\":[{\"atom\":\"IsFaceUp\",\"target\":\"Self\"},{\"atom\":\"Adjacent\",\"left\":\"Self\",\"right\":\"Player\"}],\"target\":{\"atom\":\"Self\"},\"action\":{\"atom\":\"Sequence\",\"actions\":[{\"atom\":\"DealDamage\",\"value\":{\"source\":\"Self\",\"stat\":\"Attack\"},\"actor\":\"Self\",\"target\":{\"atom\":\"Player\"}},{\"atom\":\"Flip\",\"target\":{\"atom\":\"Self\"}}]}}"
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnCardRhythmFire\"},\"conditions\":[{\"atom\":\"IsFaceUp\",\"target\":\"Self\"},{\"atom\":\"Adjacent\",\"left\":\"Self\",\"right\":\"Player\"}],\"target\":{\"atom\":\"Self\"},\"action\":{\"atom\":\"Sequence\",\"actions\":[{\"atom\":\"DealDamage\",\"value\":{\"source\":\"Self\",\"stat\":\"Attack\"},\"actor\":\"Self\",\"target\":{\"atom\":\"Player\"}},{\"atom\":\"Flip\",\"target\":{\"atom\":\"Self\"}}]}}"
  },
  {
   "id": "tpl.trap.revive_stone.interact",
@@ -1274,10 +1274,10 @@
  {
   "id": "tpl.trap.bear_trap.fill",
   "state": "Implemented",
-  "design_text": "[场上]正交邻格补牌时：真怪造成10点伤害；道具移除该卡；机关不影响；之后移除本卡",
+  "design_text": "[场上]正交邻格补牌时：真怪造成10点伤害；道具移除该卡；机关不影响；之后移除本卡；机关效果移除卡后该格补牌不触发",
   "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
-  "conditions_json": "[\"ActionSource\", \"EventFilter:eventType=CardDealt\", \"Adjacent:left=Self:right=EventCard\"]",
-  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnDeal\"},\"conditions\":[{\"atom\":\"ActionSource\",\"action\":\"FillEmptySlots\"},{\"atom\":\"EventFilter\",\"eventType\":\"CardDealt\"},{\"atom\":\"Adjacent\",\"left\":\"Self\",\"right\":\"EventCard\"}],\"target\":{\"atom\":\"EventCard\"},\"action\":{\"atom\":\"Sequence\",\"actions\":[{\"atom\":\"Conditional\",\"condition\":{\"atom\":\"EventFilter\",\"eventType\":\"CardDealt\",\"targetKind\":\"Monster\"},\"action\":{\"atom\":\"DealDamage\",\"amount\":\"{{amount}}\",\"actor\":\"Self\"},\"elseAction\":{\"atom\":\"Conditional\",\"condition\":{\"atom\":\"EventFilter\",\"eventType\":\"CardDealt\",\"targetKind\":\"HelpCard\"},\"action\":{\"atom\":\"RemoveCard\",\"destination\":\"Removed\",\"reason\":\"{{reason}}\"}}},{\"atom\":\"RemoveCard\",\"target\":{\"atom\":\"Self\"},\"destination\":\"Removed\",\"reason\":\"{{reason}}\"}]}}"
+  "conditions_json": "[\"ActionSource\", \"EventFilter:eventType=CardDealt\", \"EventFilterExcludeCause:eventType=CardDealt:cause=refillAfterTrapRemoval\", \"Adjacent:left=Self:right=EventCard\"]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnDeal\"},\"conditions\":[{\"atom\":\"ActionSource\",\"action\":\"FillEmptySlots\"},{\"atom\":\"EventFilter\",\"eventType\":\"CardDealt\"},{\"atom\":\"EventFilterExcludeCause\",\"eventType\":\"CardDealt\",\"cause\":\"refillAfterTrapRemoval\"},{\"atom\":\"Adjacent\",\"left\":\"Self\",\"right\":\"EventCard\"}],\"target\":{\"atom\":\"EventCard\"},\"action\":{\"atom\":\"Sequence\",\"actions\":[{\"atom\":\"Conditional\",\"condition\":{\"atom\":\"EventFilter\",\"eventType\":\"CardDealt\",\"targetKind\":\"Monster\"},\"action\":{\"atom\":\"DealDamage\",\"amount\":\"{{amount}}\",\"actor\":\"Self\"},\"elseAction\":{\"atom\":\"Conditional\",\"condition\":{\"atom\":\"EventFilter\",\"eventType\":\"CardDealt\",\"targetKind\":\"HelpCard\"},\"action\":{\"atom\":\"RemoveCard\",\"destination\":\"Removed\",\"reason\":\"{{reason}}\"}}},{\"atom\":\"RemoveCard\",\"target\":{\"atom\":\"Self\"},\"destination\":\"Removed\",\"reason\":\"{{reason}}\"}]}}"
  },
  {
   "id": "tpl.trap.flame.move",
@@ -1677,7 +1677,7 @@
   "design_text": "[击杀怪物时] 本关卡每移除6张怪物卡，随机移除一张九宫格上的普通等级怪物卡",
   "requires_json": "[\"NoOwnerEntity\"]",
   "conditions_json": "[]",
-  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnCumulative\",\"metric\":\"monsterRemoved\",\"threshold\":\"{{threshold}}\",\"counterKey\":\"relic.terror_mask.remove\",\"projectKey\":\"{{projectKey}}\"},\"target\":{\"atom\":\"FilteredCards\",\"kind\":\"Monster\",\"zone\":\"Board\",\"excludeBoss\":true,\"random\":true,\"count\":\"{{count}}\"},\"action\":{\"atom\":\"RemoveCard\",\"destination\":\"Removed\",\"reason\":\"{{reason}}\"}}"
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnCumulative\",\"metric\":\"monsterRemoved\",\"threshold\":\"{{threshold}}\",\"counterKey\":\"relic.terror_mask.remove\",\"projectKey\":\"{{projectKey}}\",\"scope\":\"battle\"},\"target\":{\"atom\":\"FilteredCards\",\"kind\":\"Monster\",\"zone\":\"Board\",\"excludeBoss\":true,\"random\":true,\"count\":\"{{count}}\"},\"action\":{\"atom\":\"RemoveCard\",\"destination\":\"Removed\",\"reason\":\"{{reason}}\"}}"
 },
  {
   "id": "tpl.relic.junk_cycler.use",

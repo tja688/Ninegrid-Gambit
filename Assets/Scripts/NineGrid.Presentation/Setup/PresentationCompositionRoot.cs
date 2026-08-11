@@ -239,6 +239,8 @@ namespace NineGrid.Presentation.Setup
             BattleBeatHook.PresentStandalone = mBeatScheduler.PresentStandalone;
             BattleBeatHook.FlushUpdateFaceUp = mBeatScheduler.FlushUpdateFaceUp;
             BattleBeatHook.FlushImpactExcept = mBeatScheduler.FlushImpactExcept;
+            BattleBeatHook.QuarantineImpactWhere = mBeatScheduler.QuarantineImpactWhere;
+            BattleBeatHook.ReleaseQuarantined = mBeatScheduler.ReleaseQuarantined;
             if (architecture != null)
             {
                 mBatchOpenedUnRegister = architecture.RegisterEvent<Evt_PresentationBatchOpened>(e =>

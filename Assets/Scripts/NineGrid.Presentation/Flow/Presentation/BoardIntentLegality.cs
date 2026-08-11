@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using NineGrid.Core;
 using NineGrid.Core.Content;
 using NineGrid.Core.Systems;
+using NineGrid.Flow.Diagnostics;
 using QFramework;
 
 namespace NineGrid.Flow.Presentation
@@ -115,6 +116,13 @@ namespace NineGrid.Flow.Presentation
             if (!arch.GetSystem<IBoardSystem>().AreAdjacent(board.AvatarSlot.Value, slot))
             {
                 rejectReason = "notAdjacent avatarSlot=" + board.AvatarSlot.Value;
+                return false;
+            }
+
+            var occupancy = RoomIcons.RoomIconOccupancy.Current;
+            if (occupancy != null && occupancy.IsSoftBlocked(slot))
+            {
+                rejectReason = "softBlockedPresentationOccupancy";
                 return false;
             }
 
@@ -443,6 +451,7 @@ namespace NineGrid.Flow.Presentation
             }
 
             rejectReason = "notLegal phase=" + phase.CurrentPhase + " pendingChoice=" + pending;
+            BoardIntentGateDiagnostics.AppendPhaseReject(ref rejectReason, arch, command);
             return false;
         }
 

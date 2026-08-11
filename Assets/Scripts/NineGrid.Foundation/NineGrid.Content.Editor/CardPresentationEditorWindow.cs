@@ -2986,7 +2986,6 @@ namespace NineGrid.Content.Editor
                     AttackPatternRules.TokenOrthogonalMelee,
                     AttackPatternRules.TokenDiagonalMelee,
                     AttackPatternRules.TokenOmnidirectionalMelee,
-                    AttackPatternRules.TokenRanged,
                 };
                 var patternIndex = Mathf.Max(0, patternLabels.IndexOf(dto.attackPattern ?? string.Empty));
                 if (string.IsNullOrWhiteSpace(dto.attackPattern))

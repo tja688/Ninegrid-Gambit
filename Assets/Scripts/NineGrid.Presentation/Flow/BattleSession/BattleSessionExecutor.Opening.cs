@@ -912,12 +912,17 @@ namespace NineGrid.Flow
                         }
                     }
                 }
+
+                // 发牌收束：先刷视觉与数值，再重放批内翻面（刺客领袖等 OnDeal）。
+                // 层主技能在发牌落地后才结算/表现——发牌飞行中不得翻面（ADR-0016 串行门控）。
+                CoreCardPresentationMapper.CommitAllSpawnedCards();
+                CardFaceGenerationBootstrap.ApplyFromEventLog(NineGridArchitecture.Current, _nodeEventLogStart);
+                await FlipPlaybackCoordinator.WaitIdleAsync(cancellationToken);
             }
             finally
             {
                 PresentationInputGates.SetOpening(false);
-                // #10：开局不再靠 Sync 自愈占格镜像；几何登记由发牌表演维护，合法性由 Flow idle 裁决。
-                // 开局表演收束：先刷视觉，再经生成类指令（与 Settled 同一 Handler）写卡面数值。
+                // 幂等兜底：异常/取消路径仍对齐镜像（重放翻面已落地时无动画直 Snap）。
                 CoreCardPresentationMapper.CommitAllSpawnedCards();
                 CardFaceGenerationBootstrap.ApplyFromEventLog(NineGridArchitecture.Current, _nodeEventLogStart);
             }

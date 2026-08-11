@@ -5,6 +5,7 @@ using NineGrid.Cards;
 using NineGrid.Core;
 using NineGrid.Core.Content;
 using NineGrid.Core.Systems;
+using NineGrid.Flow.Diagnostics;
 using NineGrid.Flow.Presentation;
 using NineGrid.Presentation;
 using UnityEngine;
@@ -22,6 +23,7 @@ namespace NineGrid.Flow
 
             if (PresentationInputGates.ChoiceOverlayActive)
             {
+                LogHandDragApplyReject(card, "choice-overlay");
                 return false;
             }
 
@@ -30,12 +32,14 @@ namespace NineGrid.Flow
             var phase = NineGridArchitecture.Current?.GetSystem<IPhaseSystem>();
             if (phase == null)
             {
+                LogHandDragApplyReject(card, "no-phase");
                 return false;
             }
 
             var inBattle = phase.CurrentPhase == GamePhase.InteractionLoop;
             if (!inBattle && !ItemUseEligibility.IsUsableInCurrentPhase(NineGridArchitecture.Current, card.DefId))
             {
+                LogHandDragApplyReject(card, "not-usable-outside-battle");
                 return false;
             }
 
@@ -50,6 +54,7 @@ namespace NineGrid.Flow
             // ADR-0032：非战斗只放行免目标类（None）；需选目标/多选的战斗卡维持战斗限定。
             if (!inBattle && playKind != HelpCardPlayKind.None)
             {
+                LogHandDragApplyReject(card, "non-battle-playKind=" + playKind);
                 return false;
             }
 
@@ -58,6 +63,7 @@ namespace NineGrid.Flow
                 if (!HelpCardBoardSelectResolver.TryGetRequiredBoardSelectCount(card.DefId, out var boardSelectCount)
                     || !BoardCardSelectModeController.Begin(card.Uid, card.DefId, boardSelectCount))
                 {
+                    LogHandDragApplyReject(card, "board-select-begin-failed");
                     return false;
                 }
 
@@ -69,6 +75,7 @@ namespace NineGrid.Flow
             {
                 if (!TryResolveSingleDragTarget(targetGroundSlot, selectedCardsSpec, out var targetUid))
                 {
+                    LogHandDragApplyReject(card, "single-drag-target-missing");
                     return false;
                 }
 
@@ -77,16 +84,29 @@ namespace NineGrid.Flow
 
             if (UseItemInputHook.TrySubmitUseItem == null)
             {
+                LogHandDragApplyReject(card, "use-item-hook-unwired");
                 Debug.LogWarning("[BattleSession] UseItemInputHook.TrySubmitUseItem 未装配。");
                 return false;
             }
 
             if (!UseItemInputHook.TrySubmitUseItem(card.Uid, selectedUids, null))
             {
+                LogHandDragApplyReject(card, "use-item-submit-false");
                 return false;
             }
 
             return true;
+        }
+
+        private static void LogHandDragApplyReject(ManagedCard card, string detail)
+        {
+            var defId = card != null ? card.DefId : "?";
+            var uid = card != null ? card.Uid : 0;
+            BoardIntentGateDiagnostics.LogConsole(
+                "HandDragApply",
+                "reject uid=" + uid + " defId=" + defId + " detail=" + detail,
+                NineGridArchitecture.Current,
+                GameCommandKind.UseItem);
         }
 
         private bool TryResolveSingleDragTarget(
@@ -177,6 +197,11 @@ namespace NineGrid.Flow
 
             if (!UseItemInputHook.TrySubmitUseItem(itemUid, selectedUids, null))
             {
+                BoardIntentGateDiagnostics.LogConsole(
+                    "BoardSelectUseItem",
+                    "use-intent-rejected itemUid=" + itemUid,
+                    NineGridArchitecture.Current,
+                    GameCommandKind.UseItem);
                 await RestoreBoardSelectItemToHandAsync(itemUid, defId, "use-intent-rejected");
                 return;
             }
@@ -302,6 +327,11 @@ namespace NineGrid.Flow
 
             Debug.LogWarning(
                 $"[BattleSession] BoardSelectAbort itemUid={itemUid} defId={defId ?? "?"} reason={reason ?? "unknown"}");
+            BoardIntentGateDiagnostics.LogConsole(
+                "BoardSelectAbort",
+                "itemUid=" + itemUid + " defId=" + (defId ?? "?") + " reason=" + (reason ?? "unknown"),
+                NineGridArchitecture.Current,
+                GameCommandKind.UseItem);
             RegistryTraceSink.NotifyUserInteraction?.Invoke($"BoardSelectAbort:{reason}");
 
             BoardCardSelectModeController.End();
