@@ -421,6 +421,18 @@ namespace NineGrid.Flow.Presentation
         }
     }
 
+    /// <summary>Avatar 跳格声音提示；发射点为 AvatarWalkRunner 每跳落地。</summary>
+    public static class AvatarWalkAudioCues
+    {
+        [AudioCue("avatar.walk.step", "Avatar 跳格脚步声（石头脚步池）", "Flow", "AvatarWalkRunner.RunLoopAsync", AudioCueContexts.None)]
+        public const string Step = "avatar.walk.step";
+
+        public static void PulseStep(string diagnosticSource)
+        {
+            InteractionAudioCues.Pulse(Step, diagnosticSource);
+        }
+    }
+
     /// <summary>
     /// 房间、经济与跑图流程声音提示；发射对齐进房/离房、商店/卡店、奖励/属性、金币演出与胜负回菜单，
     /// 不经 FlowTrace 旁路，也不由 Presenter 提交 Music。
@@ -465,6 +477,9 @@ namespace NineGrid.Flow.Presentation
 
         [AudioCue("reward.abandon", "放弃奖励离开", "Reward", "RewardBoardPresenter.TryLeave", AudioCueContexts.None)]
         public const string RewardAbandon = "reward.abandon";
+
+        [AudioCue("reward.relic_option_pop", "遗物三选一选项弹出（抽牌声）", "Reward", "BounceFanChoicePresenter.PlayEntryAnimation", AudioCueContexts.None)]
+        public const string RelicOptionPop = "reward.relic_option_pop";
 
         [AudioCue("attribute.pick", "属性提升选择", "Attribute", "AttributeBoardPresenter.TrySelect", AudioCueContexts.ContentId)]
         public const string AttributePick = "attribute.pick";

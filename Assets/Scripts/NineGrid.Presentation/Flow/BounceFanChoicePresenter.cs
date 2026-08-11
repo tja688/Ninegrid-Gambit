@@ -3,8 +3,10 @@ using System.Collections.Generic;
 using DG.Tweening;
 using NineGrid.Cards;
 using NineGrid.Cards.Anim;
+using NineGrid.Content.Audio;
 using NineGrid.Core;
 using NineGrid.Flow.Presentation;
+using NineGrid.Presentation.Systems;
 using QFramework;
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -185,6 +187,10 @@ namespace NineGrid.Flow
             {
                 ShowHoverDescription(_entries[hovered].DefId);
                 AnimateHover(hovered);
+                InteractionAudioCues.PulseCard(
+                    InteractionAudioCues.GroundCardHover,
+                    "BounceFanChoicePresenter.Update.Hover",
+                    _entries[hovered].DefId);
             }
         }
 
@@ -339,6 +345,26 @@ namespace NineGrid.Flow
                 ? safeEntryDelay + ((count - 1) * safeEntryStagger) + safeEntryDuration
                 : 0f;
 
+            if (IsRelicChoice())
+            {
+                try
+                {
+                    var audio = AudioSystem.EnsureRegistered();
+                    for (var i = 0; i < count; i++)
+                    {
+                        audio.ScheduleCue(
+                            AudioCueRequest.Simple(
+                                FlowRoomEconomyAudioCues.RelicOptionPop,
+                                "BounceFanChoicePresenter.PlayEntryAnimation"),
+                            Math.Max(0f, safeEntryDelay + (i * safeEntryStagger)));
+                    }
+                }
+                catch (Exception)
+                {
+                    // 音频失败不阻断选择表现。
+                }
+            }
+
             for (var i = 0; i < count; i++)
             {
                 var entry = _entries[i];
@@ -354,6 +380,21 @@ namespace NineGrid.Flow
                     .SetEase(Ease.OutElastic)
                     .SetLink(entry.Wrapper.gameObject, LinkBehaviour.KillOnDestroy);
             }
+        }
+
+        private bool IsRelicChoice()
+        {
+            for (var i = 0; i < _entries.Count; i++)
+            {
+                var defId = _entries[i].DefId;
+                if (!string.IsNullOrEmpty(defId)
+                    && defId.StartsWith("relic.", StringComparison.OrdinalIgnoreCase))
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         private int DetermineHoveredIndex()

@@ -1012,6 +1012,24 @@
             "sizeBytes": 693902,
             "kind": "SFX",
             "loadPolicy": "first_use_cached"
+        },
+        {
+            "guid": "01d80f8ef8ceaa14b94efce99061a574",
+            "assetPath": "Assets/Resources/audio/SFX/抽牌声.wav",
+            "resourcesKey": "audio/SFX/抽牌声",
+            "sha256": "d3378a37d4d750f79f2588350f8440579611939e75e729d5371488a5d4f753b9",
+            "sizeBytes": 45172,
+            "kind": "SFX",
+            "loadPolicy": "first_use_cached"
+        },
+        {
+            "guid": "567ebedb0770c374bb92458d7daa3eb3",
+            "assetPath": "Assets/Resources/audio/SFX/复古单声.wav",
+            "resourcesKey": "audio/SFX/复古单声",
+            "sha256": "367d4215ac84500b96e1abc17bacf17205ed5f73c41bbbd076392540dc7d4527",
+            "sizeBytes": 23192,
+            "kind": "SFX",
+            "loadPolicy": "first_use_cached"
         }
     ]
 }

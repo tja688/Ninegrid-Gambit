@@ -1022,7 +1022,7 @@
             "note": "商店余额不足",
             "module": "Shop",
             "enabled": true,
-            "clipKey": "audio/SFX/失败铃声 00增强",
+            "clipKey": "audio/SFX/复古单声",
             "volumeDb": -6,
             "startOffsetSeconds": 0,
             "bindingDelaySeconds": 0,
@@ -1033,7 +1033,7 @@
             "selectorRoomId": "",
             "selectorItemDefId": "",
             "selectorContentId": "",
-            "authoringStatus": "aiDraft"
+            "authoringStatus": "humanConfirmed"
         },
         {
             "cueId": "shop.refresh",
@@ -1094,7 +1094,7 @@
             "note": "牌店余额不足",
             "module": "Tavern",
             "enabled": true,
-            "clipKey": "audio/SFX/失败铃声 00增强",
+            "clipKey": "audio/SFX/复古单声",
             "volumeDb": -6,
             "startOffsetSeconds": 0,
             "bindingDelaySeconds": 0,
@@ -1105,7 +1105,7 @@
             "selectorRoomId": "",
             "selectorItemDefId": "",
             "selectorContentId": "",
-            "authoringStatus": "aiDraft"
+            "authoringStatus": "humanConfirmed"
         },
         {
             "cueId": "tavern.refresh",
@@ -1388,6 +1388,100 @@
             "selectorItemDefId": "",
             "selectorContentId": "",
             "authoringStatus": "aiDraft"
+        },
+        {
+            "cueId": "avatar.walk.step",
+            "note": "Avatar 跳格脚步声（石头脚步池）",
+            "module": "Flow",
+            "enabled": true,
+            "clipKey": "",
+            "volumeDb": 0,
+            "startOffsetSeconds": 0,
+            "bindingDelaySeconds": 0,
+            "minimumIntervalSeconds": 0.1,
+            "variants": [
+                {
+                    "variantId": "stone-1",
+                    "clipKey": "audio/SFX/06 石头脚步声",
+                    "weight": 1,
+                    "volumeTrimDb": 0,
+                    "startOffsetSeconds": 0
+                },
+                {
+                    "variantId": "stone-2",
+                    "clipKey": "audio/SFX/06 石头脚步声_1",
+                    "weight": 1,
+                    "volumeTrimDb": 0,
+                    "startOffsetSeconds": 0
+                },
+                {
+                    "variantId": "stone-3",
+                    "clipKey": "audio/SFX/06 石头脚步声_2",
+                    "weight": 1,
+                    "volumeTrimDb": 0,
+                    "startOffsetSeconds": 0
+                }
+            ],
+            "selectorCardDefId": "",
+            "selectorSkillId": "",
+            "selectorRoomId": "",
+            "selectorItemDefId": "",
+            "selectorContentId": "",
+            "authoringStatus": "humanConfirmed"
+        },
+        {
+            "cueId": "card.lifecycle.item_use",
+            "note": "耐用盾牌使用（锤子声）",
+            "module": "Cards",
+            "enabled": true,
+            "clipKey": "audio/SFX/锤子声",
+            "volumeDb": -3,
+            "startOffsetSeconds": 0,
+            "bindingDelaySeconds": 0,
+            "minimumIntervalSeconds": 0.08,
+            "variants": [],
+            "selectorCardDefId": "help.sturdy_shield",
+            "selectorSkillId": "",
+            "selectorRoomId": "",
+            "selectorItemDefId": "",
+            "selectorContentId": "",
+            "authoringStatus": "humanConfirmed"
+        },
+        {
+            "cueId": "reward.relic_option_pop",
+            "note": "遗物三选一选项弹出（抽牌声）",
+            "module": "Reward",
+            "enabled": true,
+            "clipKey": "audio/SFX/抽牌声",
+            "volumeDb": -6,
+            "startOffsetSeconds": 0,
+            "bindingDelaySeconds": 0,
+            "minimumIntervalSeconds": 0.05,
+            "variants": [],
+            "selectorCardDefId": "",
+            "selectorSkillId": "",
+            "selectorRoomId": "",
+            "selectorItemDefId": "",
+            "selectorContentId": "",
+            "authoringStatus": "humanConfirmed"
+        },
+        {
+            "cueId": "ui.action.confirm",
+            "note": "打开局内功能菜单确认（滴答增强，player_audio.open 专属覆盖）",
+            "module": "UI",
+            "enabled": true,
+            "clipKey": "audio/SFX/滴答增强",
+            "volumeDb": 2,
+            "startOffsetSeconds": 0,
+            "bindingDelaySeconds": 0,
+            "minimumIntervalSeconds": 0.05,
+            "variants": [],
+            "selectorCardDefId": "",
+            "selectorSkillId": "",
+            "selectorRoomId": "",
+            "selectorItemDefId": "",
+            "selectorContentId": "player_audio.open",
+            "authoringStatus": "humanConfirmed"
         }
     ]
 }
