@@ -69,6 +69,17 @@ input[type="checkbox"] { accent-color: var(--amber); }
 }
 .badge.ok { color: var(--ink); border-left-color: var(--ok); }
 .badge.bad { color: #ffd0c0; border-left-color: var(--danger); }
+.reconnect-btn {
+  border-color: var(--amber-soft);
+  color: var(--muted);
+  white-space: nowrap;
+}
+.reconnect-btn:hover:not(:disabled) { border-color: var(--amber); color: var(--ink); }
+.reconnect-btn.emphasis {
+  border-color: var(--amber);
+  color: #fff6df;
+  background: #4a3a28;
+}
 .status { color: var(--muted); flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .toolbar-actions { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
 

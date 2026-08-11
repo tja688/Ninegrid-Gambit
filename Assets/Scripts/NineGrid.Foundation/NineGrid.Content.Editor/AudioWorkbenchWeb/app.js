@@ -10,6 +10,7 @@
   const token = new URLSearchParams(location.hash.replace(/^#/, "")).get("token") || "";
   const els = {
     badge: document.getElementById("connectionBadge"),
+    reconnect: document.getElementById("btnReconnect"),
     status: document.getElementById("statusLine"),
     dirty: document.getElementById("dirtyLine"),
     error: document.getElementById("errorLine"),
@@ -23,6 +24,11 @@
   let mode = null;
   let revision = 0;
   let useLongPoll = false;
+  let ws = null;
+  let longPollTimer = null;
+  let streamActive = false;
+  let reconnecting = false;
+  let suppressStreamClose = false;
   let selectedSequence = null;
   let selectedBindingKey = null;
   let selectedMusicState = null;
@@ -98,6 +104,83 @@
   function setConnected(ok, label) {
     els.badge.className = "badge " + (ok ? "ok" : "bad");
     els.badge.textContent = label;
+    if (els.reconnect) {
+      els.reconnect.classList.toggle("emphasis", !ok);
+      els.reconnect.disabled = reconnecting;
+    }
+  }
+
+  function stopStream() {
+    useLongPoll = false;
+    streamActive = false;
+    if (longPollTimer != null) {
+      clearTimeout(longPollTimer);
+      longPollTimer = null;
+    }
+    if (ws) {
+      suppressStreamClose = true;
+      try { ws.close(); } catch { /* ignore */ }
+      ws = null;
+    }
+  }
+
+  function startStream() {
+    if (streamActive) return;
+    streamActive = true;
+    if (location.protocol === "http:" && window.WebSocket) {
+      try {
+        ws = new WebSocket((location.protocol === "https:" ? "wss://" : "ws://") + location.host + "/stream");
+        ws.addEventListener("open", () => {
+          ws.send(JSON.stringify({ type: "hello", token, afterRevision: revision }));
+        });
+        ws.addEventListener("message", (ev) => {
+          try { applyEnvelope(JSON.parse(ev.data)); } catch { /* ignore */ }
+        });
+        ws.addEventListener("close", () => {
+          ws = null;
+          streamActive = false;
+          if (suppressStreamClose) {
+            suppressStreamClose = false;
+            return;
+          }
+          useLongPoll = true;
+          longPoll();
+        });
+        ws.addEventListener("error", () => { useLongPoll = true; });
+        return;
+      } catch {
+        streamActive = false;
+        useLongPoll = true;
+      }
+    } else {
+      useLongPoll = true;
+    }
+    longPoll();
+  }
+
+  async function tryReconnect() {
+    if (reconnecting) return;
+    if (!token) {
+      setConnected(false, "缺少 token");
+      els.error.textContent = "请从 Unity 菜单「NineGrid/音频/声音绑定调音工作台」重新打开页面。";
+      return;
+    }
+    reconnecting = true;
+    setConnected(false, "重连中…");
+    els.error.textContent = "";
+    stopStream();
+    try {
+      const snap = await api("/api/snapshot");
+      applyEnvelope(snap);
+      startStream();
+    } catch (err) {
+      setConnected(false, "连接失败");
+      els.error.textContent = String(err.message || err)
+        + "\n若 Unity 已重编译，请从菜单重新打开工作台以获取新地址。";
+    } finally {
+      reconnecting = false;
+      if (els.reconnect) els.reconnect.disabled = false;
+    }
   }
 
   function declByKey(key) {
@@ -1198,8 +1281,10 @@
   }
 
   async function bootstrap() {
+    if (els.reconnect) els.reconnect.addEventListener("click", () => { tryReconnect(); });
     if (!token) {
       setConnected(false, "缺少 token");
+      els.error.textContent = "请从 Unity 菜单「NineGrid/音频/声音绑定调音工作台」重新打开页面。";
       return;
     }
     if (ui.mode) mode = ui.mode;
@@ -1215,29 +1300,11 @@
       applyEnvelope(snap);
     } catch (err) {
       setConnected(false, "鉴权失败");
-      els.error.textContent = String(err);
+      els.error.textContent = String(err.message || err);
       return;
     }
 
-    if (location.protocol === "http:" && window.WebSocket) {
-      try {
-        const ws = new WebSocket((location.protocol === "https:" ? "wss://" : "ws://") + location.host + "/stream");
-        ws.addEventListener("open", () => {
-          ws.send(JSON.stringify({ type: "hello", token, afterRevision: revision }));
-        });
-        ws.addEventListener("message", (ev) => {
-          try { applyEnvelope(JSON.parse(ev.data)); } catch { /* ignore */ }
-        });
-        ws.addEventListener("close", () => { useLongPoll = true; longPoll(); });
-        ws.addEventListener("error", () => { useLongPoll = true; });
-        return;
-      } catch {
-        useLongPoll = true;
-      }
-    } else {
-      useLongPoll = true;
-    }
-    longPoll();
+    startStream();
   }
 
   async function longPoll() {
@@ -1247,9 +1314,9 @@
       applyEnvelope(snap);
     } catch (err) {
       setConnected(false, "长轮询中断");
-      els.error.textContent = String(err);
+      els.error.textContent = String(err.message || err);
     }
-    setTimeout(longPoll, 250);
+    longPollTimer = setTimeout(longPoll, 250);
   }
 
   bootstrap();
