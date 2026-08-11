@@ -388,6 +388,18 @@ namespace NineGrid.Cards
                 BattleBeatHook.NotifyBeat(PresentationBeat.Impact);
             }
 
+            // 神圣决斗惩罚：把「决斗者脉冲 + 对玩家伤害」指令从当批暂挂隔离，
+            // 待决斗者攻击表演命中帧再放回报点，让惩罚以攻击编排打出（而非玩家攻击帧直接掉血）。
+            var duelPunishment = hitProjection.HolyDuelPunishment;
+            var duelQuarantined = duelPunishment.HolderUid > 0 && duelPunishment.Amount > 0;
+            if (duelQuarantined)
+            {
+                var duelHolderUid = duelPunishment.HolderUid;
+                var avatarUidForDuel = avatar.Uid;
+                BattleBeatHook.NotifyQuarantineImpactWhere(
+                    instruction => IsHolyDuelPunishmentInstruction(instruction, duelHolderUid, avatarUidForDuel));
+            }
+
             var holdAcquired = false;
             if (!PresentationMainlineHold.TryAcquire("FieldBattlePresent", out holdAcquired))
             {
@@ -428,6 +440,12 @@ namespace NineGrid.Cards
                 if (!hitFrameApplied)
                 {
                     ApplyHitFrameVisuals();
+                }
+
+                // 决斗者攻击表演：惩罚伤害在决斗者命中帧落地（隔离指令于此放回报点）。
+                if (duelQuarantined)
+                {
+                    await PlayDuelPunishmentRigAsync(duelPunishment, avatar, hitProjection, ct);
                 }
 
                 // OnBattle（逃避 Swap 等）与技能移除写在同一 CombatHit EventLog 窗；
@@ -487,6 +505,110 @@ namespace NineGrid.Cards
                 SyncAfterCombatRound();
                 DisposeBattleCts(linkedCts);
             }
+        }
+
+        /// <summary>
+        /// 神圣决斗惩罚攻击表演：决斗持有者以反击 rig 向玩家卡打出惩罚伤害。
+        /// 命中帧放回隔离指令并报 Impact（脉冲 + 伤害飘字 + 玩家血条同步落地）。
+        /// 决斗者不可用/不邻接等任何失败路径都会放回隔离区兜底（惩罚伤害不得丢失）。
+        /// </summary>
+        private async UniTask PlayDuelPunishmentRigAsync(
+            HolyDuelPunishmentPresentation duelPunishment,
+            ManagedCard avatar,
+            PostKillBoardPresentationResult hitProjection,
+            CancellationToken cancellationToken)
+        {
+            var geometry = ResolveGeometry();
+            var adapter = EnsureAdapter();
+            if (adapter == null || geometry == null || avatar == null || avatar.Transform == null)
+            {
+                ReleaseDuelQuarantineFallback();
+                return;
+            }
+
+            var cards = CardEntityLifecycleHook.CardsOrNull();
+            ManagedCard holder;
+            if (cards == null
+                || !cards.TryGet(duelPunishment.HolderUid, out holder)
+                || holder == null
+                || holder.Transform == null
+                || holder.IsFieldDead
+                || !geometry.TryGetSlotOf(holder.Uid, out var holderSlot)
+                || !GroundSlotTopology.AreAdjacentEight(holderSlot, GroundSlotTopology.AvatarReservedSlot))
+            {
+                ReleaseDuelQuarantineFallback();
+                return;
+            }
+
+            var duelHitApplied = false;
+            void ApplyDuelHitFrameVisuals()
+            {
+                if (duelHitApplied)
+                {
+                    return;
+                }
+
+                duelHitApplied = true;
+                BattleBeatHook.NotifyReleaseQuarantined();
+                BattleBeatHook.NotifyBeat(PresentationBeat.Impact);
+            }
+
+            try
+            {
+                var willDefeatAvatar = hitProjection.AvatarDefeated;
+                var duelIntent = BattleIntentUtility.FromFlags(counter: true, willDefeatAvatar);
+                var duelBind = ResolveBindParams(duelIntent, holder, out var duelProfile);
+                LogBattleBindResolve(holder.Uid, avatar.Uid, duelBind, duelProfile, willDefeatAvatar, isCounter: true);
+                await adapter.PlayBasicCounterAttackAsync(holder, duelBind, ApplyDuelHitFrameVisuals, cancellationToken);
+            }
+            catch (OperationCanceledException)
+            {
+                throw;
+            }
+            catch (Exception ex)
+            {
+                Debug.LogWarning("[FieldBattle] 决斗惩罚攻击表演失败: " + ex.Message);
+            }
+            finally
+            {
+                if (!duelHitApplied)
+                {
+                    // rig 未播或未到命中帧（决斗者对角无 rig 等）：放回隔离区，由后续 FlushBeats 兜底消费。
+                    ReleaseDuelQuarantineFallback();
+                }
+            }
+        }
+
+        private static void ReleaseDuelQuarantineFallback()
+        {
+            BattleBeatHook.NotifyReleaseQuarantined();
+        }
+
+        /// <summary>
+        /// 神圣决斗惩罚指令判定：EffectTriggered（message=skill.holy_duel.activate，CardUid=持有者）
+        /// 与以 source=skill.holy_duel 打向玩家卡的 Impact 指令（DamageDealt/HpChanged/ArmorChanged）。
+        /// </summary>
+        private static bool IsHolyDuelPunishmentInstruction(
+            PresentationInstruction instruction,
+            int holderUid,
+            int avatarUid)
+        {
+            var gameEvent = instruction?.Event;
+            if (gameEvent == null
+                || instruction.MapEntry == null
+                || instruction.MapEntry.Beat != PresentationBeat.Impact)
+            {
+                return false;
+            }
+
+            if (gameEvent.Type == CoreEventType.EffectTriggered)
+            {
+                return gameEvent.CardUid == holderUid
+                    && string.Equals(gameEvent.Message, "skill.holy_duel.activate", StringComparison.Ordinal);
+            }
+
+            return gameEvent.TargetUid == avatarUid
+                && string.Equals(gameEvent.SourceDefId, "skill.holy_duel", StringComparison.Ordinal);
         }
 
         private bool TryResolveDirectorCombatVictim(

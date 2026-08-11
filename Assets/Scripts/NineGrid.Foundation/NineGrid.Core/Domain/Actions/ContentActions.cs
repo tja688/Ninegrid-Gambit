@@ -34,7 +34,11 @@ namespace NineGrid.Core
                 ? StatArmorUtility.GetCurrentArmor(card)
                 : 0;
             var previous = (int)Math.Round(card.Stats.GetBase(Stat));
-            var next = Math.Max(0, previous + Delta);
+            // 损耗类「掉自己血量」技能（tpl.skill.attrition.remove 等）不得把血扣到 0：
+            // 0 血卡不会因此死亡，会以 0 血卡在场上（击破只由伤害结算走 Kill）。负增量钳到最低 1。
+            var next = Stat == StatId.Hp && Delta < 0
+                ? Math.Max(1, previous + Delta)
+                : Math.Max(0, previous + Delta);
             card.Stats.SetBase(Stat, next);
 
             // 加上限同时加等量当前血；降上限则把当前血钳到新上限（局内统一约定）。

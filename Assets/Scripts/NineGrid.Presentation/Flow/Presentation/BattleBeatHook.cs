@@ -18,6 +18,12 @@ namespace NineGrid.Flow.Presentation
         /// <summary>冲刷 Impact 但跳过指定 Kind（ADR-0018：Vacate 前飘字、TriggerEffect 延迟）。</summary>
         public static Action<PresentationInstructionKind> FlushImpactExcept;
 
+        /// <summary>隔离满足谓词的 Impact 指令（神圣决斗惩罚留给决斗者攻击帧）。</summary>
+        public static Action<Func<PresentationInstruction, bool>> QuarantineImpactWhere;
+
+        /// <summary>放回隔离区指令（决斗者攻击命中帧报点前）。</summary>
+        public static Action ReleaseQuarantined;
+
         public static void Reset()
         {
             OnBatchOpened = null;
@@ -25,6 +31,8 @@ namespace NineGrid.Flow.Presentation
             PresentStandalone = null;
             FlushUpdateFaceUp = null;
             FlushImpactExcept = null;
+            QuarantineImpactWhere = null;
+            ReleaseQuarantined = null;
         }
 
         public static void NotifyBatchOpened(PresentationBatch batch)
@@ -50,6 +58,16 @@ namespace NineGrid.Flow.Presentation
         public static void NotifyFlushImpactExcept(PresentationInstructionKind excludedKind)
         {
             FlushImpactExcept?.Invoke(excludedKind);
+        }
+
+        public static void NotifyQuarantineImpactWhere(Func<PresentationInstruction, bool> predicate)
+        {
+            QuarantineImpactWhere?.Invoke(predicate);
+        }
+
+        public static void NotifyReleaseQuarantined()
+        {
+            ReleaseQuarantined?.Invoke();
         }
     }
 }

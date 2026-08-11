@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using NineGrid.Core;
 using UnityEngine;
@@ -12,6 +13,7 @@ namespace NineGrid.Flow.Presentation
     {
         private readonly IBattleBeatHandler[] mHandlers;
         private readonly List<PresentationInstruction> mPending = new List<PresentationInstruction>(16);
+        private readonly List<PresentationInstruction> mQuarantined = new List<PresentationInstruction>(4);
         private int mActiveBatchId;
 
         public BattleBeatScheduler(params IBattleBeatHandler[] handlers)
@@ -29,6 +31,8 @@ namespace NineGrid.Flow.Presentation
         public void OnBatchOpened(PresentationBatch batch)
         {
             DiagnoseDiscardedPending();
+            // 隔离区只属于当批：开新批即失效丢弃。
+            mQuarantined.Clear();
             mPending.Clear();
             mActiveBatchId = batch != null ? batch.BatchId : 0;
             if (batch?.Instructions == null)
@@ -140,6 +144,48 @@ namespace NineGrid.Flow.Presentation
 
                 mPending.RemoveAt(i);
             }
+        }
+
+        /// <summary>
+        /// 从当批暂挂移出满足谓词的 Impact 指令进隔离区（神圣决斗：惩罚伤害与持有者脉冲
+        /// 留给决斗者攻击表演的命中帧，而不是玩家攻击命中帧就掉血）。
+        /// </summary>
+        public void QuarantineImpactWhere(Func<PresentationInstruction, bool> predicate)
+        {
+            if (predicate == null)
+            {
+                return;
+            }
+
+            for (var i = mPending.Count - 1; i >= 0; i--)
+            {
+                var instruction = mPending[i];
+                if (instruction == null
+                    || instruction.MapEntry == null
+                    || instruction.MapEntry.Beat != PresentationBeat.Impact
+                    || !predicate(instruction))
+                {
+                    continue;
+                }
+
+                mPending.RemoveAt(i);
+                mQuarantined.Add(instruction);
+            }
+        }
+
+        /// <summary>
+        /// 把隔离区指令放回当批暂挂（决斗者攻击命中帧报点前调用；随后 ReportBeat(Impact) 消费）。
+        /// 未放回就开新批会被 OnBatchOpened 丢弃（不该发生；由调用方兜底释放）。
+        /// </summary>
+        public void ReleaseQuarantined()
+        {
+            if (mQuarantined.Count == 0)
+            {
+                return;
+            }
+
+            mPending.AddRange(mQuarantined);
+            mQuarantined.Clear();
         }
 
         /// <summary>
