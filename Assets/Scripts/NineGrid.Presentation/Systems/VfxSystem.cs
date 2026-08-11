@@ -379,7 +379,7 @@ namespace NineGrid.Presentation.Systems
                 };
             }
 
-            result = RequestCue(request);
+            result = RequestCueCore(request, default, preview: true);
             if (result.Outcome != VfxCueOutcome.Played)
             {
                 return PreviewFailure(result.FailureReason ?? result.Outcome.ToString(), "cue", bindingKey);
@@ -899,6 +899,14 @@ namespace NineGrid.Presentation.Systems
 
         public VfxCueResult RequestCue(VfxCueRequest request, VfxSpatialContext spatialContext = default)
         {
+            return RequestCueCore(request, spatialContext, preview: false);
+        }
+
+        private VfxCueResult RequestCueCore(
+            VfxCueRequest request,
+            VfxSpatialContext spatialContext,
+            bool preview)
+        {
             var requestedAt = mClock.UnscaledTime;
             mDiagnostics.SetClock(requestedAt);
             var correlationId = mDiagnostics.BeginCorrelation();
@@ -980,7 +988,7 @@ namespace NineGrid.Presentation.Systems
             PatchLatestRequested(binding);
 #endif
 
-            if (!binding.Enabled)
+            if (!binding.Enabled && !preview)
             {
                 return RecordSuppressed(request, correlationId, binding);
             }
@@ -999,7 +1007,8 @@ namespace NineGrid.Presentation.Systems
             var acceptedSpatial = AcceptSpatial(binding, spatialContext);
             var now = mClock.UnscaledTime;
             mDiagnostics.SetClock(now);
-            if (binding.MinimumIntervalSeconds > 0f
+            if (!preview
+                && binding.MinimumIntervalSeconds > 0f
                 && mLastPlayedAt.TryGetValue(binding, out var lastPlayedAt)
                 && now >= lastPlayedAt
                 && now - lastPlayedAt < binding.MinimumIntervalSeconds)
@@ -1013,9 +1022,9 @@ namespace NineGrid.Presentation.Systems
                 var capturedSpatial = acceptedSpatial;
                 var scheduler = mScheduler ?? UnityVfxCueScheduler.Instance;
                 VfxScheduleKey delayKey = default;
-                delayKey = scheduler.Schedule(binding.BindingDelaySeconds, () =>
+                delayKey =                 scheduler.Schedule(binding.BindingDelaySeconds, () =>
                 {
-                    StartResolvedCue(request, capturedBinding, capturedSpatial, mClock.UnscaledTime, correlationId);
+                    StartResolvedCue(request, capturedBinding, capturedSpatial, mClock.UnscaledTime, correlationId, preview);
                 });
                 if (delayKey.IsValid)
                 {
@@ -1030,7 +1039,7 @@ namespace NineGrid.Presentation.Systems
                 }
             }
 
-            return StartResolvedCue(request, binding, acceptedSpatial, now, correlationId);
+            return StartResolvedCue(request, binding, acceptedSpatial, now, correlationId, preview);
         }
 
         public void Tick(float deltaTime)
@@ -1186,7 +1195,8 @@ namespace NineGrid.Presentation.Systems
             VfxCueBinding binding,
             VfxSpatialContext acceptedSpatial,
             double now,
-            long correlationId)
+            long correlationId,
+            bool preview = false)
         {
             mDiagnostics.SetClock(now);
             if (!mPlayerFactory.TryCreatePulsePlayer(binding.PlayerId, out var player, out var factoryReason))
@@ -1283,7 +1293,11 @@ namespace NineGrid.Presentation.Systems
                     backend.FailureReason);
             }
 
-            mLastPlayedAt[binding] = now;
+            if (!preview)
+            {
+                mLastPlayedAt[binding] = now;
+            }
+
             if (!string.IsNullOrEmpty(variantId))
             {
                 mLastVariantIds[binding] = variantId;

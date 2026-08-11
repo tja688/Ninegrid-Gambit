@@ -23,6 +23,12 @@ namespace NineGrid.Content.Editor
 
     public string SavedJson => diskJson;
 
+    internal string DiskPath
+    {
+        get => diskPath;
+        set => diskPath = value ?? string.Empty;
+    }
+
     public static VfxBindingEditorSession LoadFromDisk()
     {
       var session = new VfxBindingEditorSession();

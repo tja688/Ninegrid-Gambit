@@ -261,11 +261,13 @@ namespace NineGrid.Content.Editor
         public bool LoadFromSnapshots(string baselineJson, string workingJson)
         {
             simulatedDiskJson = baselineJson ?? string.Empty;
+            var diskPath = coreSession.DiskPath;
             if (!coreSession.LoadFromJson(workingJson ?? string.Empty))
             {
                 return false;
             }
 
+            coreSession.DiskPath = diskPath;
             RebuildEntries();
             return true;
         }
@@ -593,7 +595,9 @@ namespace NineGrid.Content.Editor
                     .Select(entry => VfxBindingEditorSession.CloneStateDto(entry.Dto))
                     .ToArray(),
             };
+            var diskPath = coreSession.DiskPath;
             coreSession.LoadFromJson(JsonUtility.ToJson(catalog, true));
+            coreSession.DiskPath = diskPath;
         }
 
         private static Assembly ResolvePresentationAssembly()
