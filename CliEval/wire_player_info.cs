@@ -85,20 +85,9 @@ if (maxHp != null)
   }
 }
 
-// 3) Gold FX rebind
-var goldFx = UnityEngine.Object.FindFirstObjectByType<NineGrid.Flow.GoldGainFxManagerSingleton>(UnityEngine.FindObjectsInactive.Include);
-if (goldFx != null)
-{
-  var gso = new UnityEditor.SerializedObject(goldFx);
-  var gt = gso.FindProperty("goldText");
-  var si = gso.FindProperty("sinkIcon");
-  if (gt != null) gt.objectReferenceValue = gold != null ? gold.GetComponent<TMPro.TMP_Text>() : null;
-  if (si != null) si.objectReferenceValue = goldIcon;
-  gso.ApplyModifiedPropertiesWithoutUndo();
-  UnityEditor.EditorUtility.SetDirty(goldFx);
-  sb.Append("goldFxRebound;");
-}
-else sb.Append("goldFxMissing;");
+// 3) Gold HUD host is installed by PlayerInfoHudPresenter; no GoldGainFxManagerSingleton rebind.
+var host = NineGrid.Flow.GoldHudDomainHost.Instance;
+sb.Append(host!=null && host.IsAvailable ? "goldHostOk;" : "goldHostMissing;");
 
 UnityEditor.SceneManagement.EditorSceneManager.MarkSceneDirty(root.scene);
 var saved = UnityEditor.SceneManagement.EditorSceneManager.SaveScene(root.scene);

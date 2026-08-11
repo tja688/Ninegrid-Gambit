@@ -6,13 +6,8 @@ sb.Append("presenterOnRoot=").Append(p!=null);
 sb.Append(" cur=").Append(so.FindProperty("currentHpText").objectReferenceValue!=null);
 sb.Append(" slot=").Append(so.FindProperty("bloodSlot").objectReferenceValue!=null);
 sb.Append(" col=").Append(so.FindProperty("bloodSlotCollider").objectReferenceValue!=null);
-var goldFx = UnityEngine.Object.FindFirstObjectByType<NineGrid.Flow.GoldGainFxManagerSingleton>(UnityEngine.FindObjectsInactive.Include);
-var gso = new UnityEditor.SerializedObject(goldFx);
-sb.Append(" goldTxt=").Append((gso.FindProperty("goldText").objectReferenceValue as TMPro.TMP_Text)?.name);
-sb.Append(" sinkPath=");
-var sink = gso.FindProperty("sinkIcon").objectReferenceValue as UnityEngine.Transform;
-if (sink != null) {
-  var t=sink; var path=t.name; while(t.parent!=null){t=t.parent;path=t.name+"/"+path;}
-  sb.Append(path);
-}
+sb.Append(" goldTxt=").Append((so.FindProperty("goldText").objectReferenceValue as TMPro.TMP_Text)?.name);
+sb.Append(" displayed=").Append(p!=null ? p.DisplayedGold.ToString() : "null");
+var host = NineGrid.Flow.GoldHudDomainHost.Instance;
+sb.Append(" goldHost=").Append(host!=null && host.IsAvailable);
 return sb.ToString();

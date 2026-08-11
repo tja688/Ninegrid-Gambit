@@ -33,14 +33,7 @@ sb.Append(" armorTxt=").Append(ReadTmp("armorText"));
 sb.Append(" goldTxt=").Append(ReadTmp("goldText"));
 sb.Append(" slot=").Append(ReadSr("bloodSlot"));
 sb.Append(" fill=").Append(ReadSr("bloodFill"));
-
-var goldFx = NineGrid.Flow.GoldGainFxManagerSingleton.Instance;
-if (goldFx != null) {
-  var gso = new UnityEditor.SerializedObject(goldFx);
-  var gt = gso.FindProperty("goldText").objectReferenceValue as TMPro.TMP_Text;
-  var si = gso.FindProperty("sinkIcon").objectReferenceValue as UnityEngine.Transform;
-  sb.Append(" goldFxText=").Append(gt!=null?gt.name:"null");
-  sb.Append(" sink=").Append(si!=null?si.name:"null");
-  sb.Append(" displayed=").Append(goldFx.DisplayedGold);
-}
+sb.Append(" displayed=").Append(hud!=null ? hud.DisplayedGold.ToString() : "null");
+var host = NineGrid.Flow.GoldHudDomainHost.Instance;
+sb.Append(" goldHost=").Append(host!=null && host.IsAvailable);
 return sb.ToString();

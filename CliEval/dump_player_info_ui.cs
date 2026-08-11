@@ -62,14 +62,10 @@ if (presenter != null) {
     sb.Append(" ").Append(p).Append("=").Append(sp!=null && sp.objectReferenceValue!=null ? sp.objectReferenceValue.name : "null");
   }
 }
-var goldFx = UnityEngine.Object.FindFirstObjectByType<NineGrid.Flow.GoldGainFxManagerSingleton>(UnityEngine.FindObjectsInactive.Include);
+var host = NineGrid.Flow.GoldHudDomainHost.Instance;
 sb.AppendLine();
-sb.Append("goldFx=").Append(goldFx!=null ? goldFx.name : "null");
-if (goldFx != null) {
-  var so = new UnityEditor.SerializedObject(goldFx);
-  foreach (var p in new[]{"goldText","sinkIcon","coinPrefab"}) {
-    var sp = so.FindProperty(p);
-    sb.Append(" ").Append(p).Append("=").Append(sp!=null && sp.objectReferenceValue!=null ? sp.objectReferenceValue.name : "null");
-  }
+sb.Append("goldHost=").Append(host!=null && host.IsAvailable);
+if (presenter != null) {
+  sb.Append(" displayed=").Append(presenter.DisplayedGold);
 }
 return sb.ToString();

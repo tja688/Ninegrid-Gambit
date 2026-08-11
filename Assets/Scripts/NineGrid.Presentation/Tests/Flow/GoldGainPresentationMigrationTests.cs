@@ -1,6 +1,7 @@
 using NineGrid.Content.Vfx;
 using NineGrid.Flow;
 using NineGrid.Flow.Presentation;
+using NineGrid.Presentation.Setup;
 using NineGrid.Presentation.Systems;
 using NineGrid.Presentation.Systems.Vfx;
 using NUnit.Framework;
@@ -24,6 +25,13 @@ namespace NineGrid.Presentation.Tests
         {
             TriggerPulseHub.ResetToNull();
             GoldHudDomainHost.ClearInstance();
+        }
+
+        [Test]
+        public void PresentationSceneBindings_NoLongerExposesGoldGainFxManager()
+        {
+            var prop = typeof(PresentationSceneBindings).GetProperty("GoldGainFxManager");
+            Assert.IsNull(prop, "GoldGainFxManager 宿主字段应随 #204 删除，避免双轨装配。");
         }
 
         [Test]

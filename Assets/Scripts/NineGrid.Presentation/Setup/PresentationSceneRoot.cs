@@ -23,7 +23,6 @@ namespace NineGrid.Presentation.Setup
         [SerializeField] private RelicManagerSingleton relicManager;
         [SerializeField] private SelectorManagerSingleton selectorManager;
         [SerializeField] private DamageNumberManagerSingleton damageNumberManager;
-        [SerializeField] private GoldGainFxManagerSingleton goldGainFxManager;
 
         [Header("Card Hosts")]
         [SerializeField] private CardManagerSingleton cardManager;
@@ -166,11 +165,6 @@ namespace NineGrid.Presentation.Setup
             {
                 Debug.LogWarning("[PresentationSceneRoot] damageNumberManager 未绑定。");
             }
-
-            if (goldGainFxManager == null)
-            {
-                Debug.LogWarning("[PresentationSceneRoot] goldGainFxManager 未绑定。");
-            }
         }
 
         private PresentationSceneBindings BuildBindings()
@@ -181,7 +175,6 @@ namespace NineGrid.Presentation.Setup
                 relicManager,
                 selectorManager,
                 damageNumberManager,
-                goldGainFxManager,
                 cardManager,
                 cardHand,
                 cardDeck,

@@ -14,7 +14,6 @@ namespace NineGrid.Presentation.Setup
         public RelicManagerSingleton RelicManager { get; }
         public SelectorManagerSingleton SelectorManager { get; }
         public DamageNumberManagerSingleton DamageNumberManager { get; }
-        public GoldGainFxManagerSingleton GoldGainFxManager { get; }
         public CardManagerSingleton CardManager { get; }
         public CardHandManagerSingleton CardHand { get; }
         public CardDeckManagerSingleton CardDeck { get; }
@@ -27,7 +26,6 @@ namespace NineGrid.Presentation.Setup
             RelicManagerSingleton relicManager,
             SelectorManagerSingleton selectorManager,
             DamageNumberManagerSingleton damageNumberManager,
-            GoldGainFxManagerSingleton goldGainFxManager,
             CardManagerSingleton cardManager,
             CardHandManagerSingleton cardHand,
             CardDeckManagerSingleton cardDeck,
@@ -39,7 +37,6 @@ namespace NineGrid.Presentation.Setup
             RelicManager = relicManager;
             SelectorManager = selectorManager;
             DamageNumberManager = damageNumberManager;
-            GoldGainFxManager = goldGainFxManager;
             CardManager = cardManager;
             CardHand = cardHand;
             CardDeck = cardDeck;
