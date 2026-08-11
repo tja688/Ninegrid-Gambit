@@ -96,6 +96,10 @@ namespace NineGrid.Presentation.Systems
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
         IReadOnlyList<VfxHistoryRecord> History { get; }
         VfxDiagnosticsSnapshot GetDiagnosticsSnapshot();
+        VfxWorkbenchSnapshot GetWorkbenchSnapshot();
+        VfxWorkbenchApplyResult ApplyWorkbenchCatalog(string catalogJson);
+        VfxWorkbenchPreviewResult PreviewWorkbenchBinding(string bindingKey, bool includeBindingDelay, bool isStateBinding);
+        VfxStateSlotResult ClearWorkbenchStateSlot(string ownerLabel, string slot);
 #endif
         VfxReleaseCounters ReleaseCounters { get; }
         VfxCueResult RequestCue(VfxCueRequest request, VfxSpatialContext spatialContext = default);
@@ -139,6 +143,14 @@ namespace NineGrid.Presentation.Systems
         private readonly Dictionary<VfxSlotKey, ActiveStateSlot> mActiveStateSlots =
             new Dictionary<VfxSlotKey, ActiveStateSlot>();
         private readonly List<ActiveStateSlot> mExitingStateSlots = new List<ActiveStateSlot>();
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        private const int AggregateTimestampCapacity = 32;
+        private long mWorkbenchRevision;
+        private readonly Dictionary<string, WorkbenchAggregateState> mAggregates =
+            new Dictionary<string, WorkbenchAggregateState>(StringComparer.Ordinal);
+        private readonly Dictionary<string, VfxWorkbenchPreviewOwner> mPreviewOwnersByLabel =
+            new Dictionary<string, VfxWorkbenchPreviewOwner>(StringComparer.Ordinal);
+#endif
 
         public VfxSystem(
             VfxBindingCatalog catalog,
@@ -194,6 +206,528 @@ namespace NineGrid.Presentation.Systems
         public VfxDiagnosticsSnapshot GetDiagnosticsSnapshot()
         {
             return mDiagnostics.GetSnapshot();
+        }
+
+        public VfxWorkbenchSnapshot GetWorkbenchSnapshot()
+        {
+            var historyCopy = new VfxHistoryRecord[mHistory.Count];
+            for (var i = 0; i < mHistory.Count; i++)
+            {
+                historyCopy[i] = CloneHistoryRecord(mHistory[i]);
+            }
+
+            var activePulses = new List<VfxWorkbenchActivePulse>(mActiveInstances.Count);
+            for (var i = 0; i < mActiveInstances.Count; i++)
+            {
+                var pulse = mActiveInstances[i];
+                var context = pulse.DiagnosticContext;
+                activePulses.Add(new VfxWorkbenchActivePulse
+                {
+                    InstanceId = pulse.InstanceId,
+                    BindingKey = context.BindingKey,
+                    CueId = context.CueOrStateId,
+                    PlayerId = context.PlayerId,
+                    MaterialKey = context.MaterialKey,
+                    SpatialOwnership = VfxDiagnosticFormatting.SpatialOwnershipLabel(context.SpatialOwnership),
+                });
+            }
+
+            var activeStates = new List<VfxWorkbenchActiveStateSlot>(mActiveStateSlots.Count + mExitingStateSlots.Count);
+            foreach (var pair in mActiveStateSlots)
+            {
+                activeStates.Add(ProjectActiveStateSlot(pair.Value));
+            }
+
+            for (var i = 0; i < mExitingStateSlots.Count; i++)
+            {
+                activeStates.Add(ProjectActiveStateSlot(mExitingStateSlots[i]));
+            }
+
+            var aggregates = new VfxCueAggregate[mAggregates.Count];
+            var aggregateIndex = 0;
+            foreach (var pair in mAggregates)
+            {
+                aggregates[aggregateIndex++] = pair.Value.ToImmutable();
+            }
+
+            return new VfxWorkbenchSnapshot
+            {
+                Revision = mWorkbenchRevision,
+                History = historyCopy,
+                ActivePulses = activePulses,
+                ActiveStateSlots = activeStates,
+                Aggregates = aggregates,
+                Diagnostics = mDiagnostics.GetSnapshot(),
+            };
+        }
+
+        public VfxWorkbenchApplyResult ApplyWorkbenchCatalog(string catalogJson)
+        {
+            if (!VfxBindingCatalog.TryFromJson(catalogJson, out var catalog, out var error))
+            {
+                return new VfxWorkbenchApplyResult
+                {
+                    Succeeded = false,
+                    Revision = mWorkbenchRevision,
+                    Error = error ?? "catalog apply failed.",
+                };
+            }
+
+            mCatalog = catalog;
+            mLastPlayedAt.Clear();
+            mLastVariantIds.Clear();
+            mWorkbenchRevision++;
+            RebuildActiveStateSlotsAfterCatalogApply();
+            return new VfxWorkbenchApplyResult
+            {
+                Succeeded = true,
+                Revision = mWorkbenchRevision,
+                Error = string.Empty,
+            };
+        }
+
+        public VfxWorkbenchPreviewResult PreviewWorkbenchBinding(
+            string bindingKey,
+            bool includeBindingDelay,
+            bool isStateBinding)
+        {
+            if (string.IsNullOrWhiteSpace(bindingKey))
+            {
+                return PreviewFailure("binding key is empty.", isStateBinding ? "state" : "cue");
+            }
+
+            if (isStateBinding)
+            {
+                return PreviewStateBinding(bindingKey);
+            }
+
+            return PreviewCueBinding(bindingKey, includeBindingDelay);
+        }
+
+        public VfxStateSlotResult ClearWorkbenchStateSlot(string ownerLabel, string slot)
+        {
+            if (string.IsNullOrWhiteSpace(ownerLabel) || string.IsNullOrWhiteSpace(slot))
+            {
+                return new VfxStateSlotResult
+                {
+                    Outcome = VfxStateSlotOutcome.Cleared,
+                    FailureReason = "owner or slot is empty.",
+                };
+            }
+
+            if (!mPreviewOwnersByLabel.TryGetValue(ownerLabel, out var owner))
+            {
+                foreach (var pair in mActiveStateSlots)
+                {
+                    if (string.Equals(pair.Key.Slot, slot, StringComparison.Ordinal)
+                        && string.Equals(BuildOwnerLabel(pair.Key.Owner), ownerLabel, StringComparison.Ordinal))
+                    {
+                        return ClearSlotInternal(pair.Key, expectedState: null, conditional: false, VfxEndReason.SlotCleared);
+                    }
+                }
+
+                return new VfxStateSlotResult
+                {
+                    Outcome = VfxStateSlotOutcome.Cleared,
+                    FailureReason = "active owner not found.",
+                };
+            }
+
+            return SetSlot(owner, slot, null);
+        }
+
+        private VfxWorkbenchPreviewResult PreviewCueBinding(string bindingKey, bool includeBindingDelay)
+        {
+            if (!TryFindCueBindingByKey(bindingKey, out var binding) || binding == null)
+            {
+                return PreviewFailure("cue binding not found.", "cue", bindingKey);
+            }
+
+            var request = new VfxCueRequest(
+                binding.CueId,
+                "VfxWorkbench.Preview",
+                binding.SelectorCardDefId,
+                binding.SelectorSkillId,
+                binding.SelectorRoomId,
+                binding.SelectorItemDefId,
+                binding.SelectorContentId);
+            var delay = includeBindingDelay ? Math.Max(0f, binding.BindingDelaySeconds) : 0f;
+            VfxCueResult result;
+            if (delay > 0f)
+            {
+                var key = ScheduleCue(request, delay);
+                if (!key.IsValid)
+                {
+                    return PreviewFailure("failed to schedule preview.", "cue", bindingKey);
+                }
+
+                return new VfxWorkbenchPreviewResult
+                {
+                    Succeeded = true,
+                    Channel = "cue",
+                    BindingKey = bindingKey,
+                    PlayerId = binding.PlayerId,
+                    MaterialKey = binding.MaterialKey,
+                    VariantId = string.Empty,
+                    InstanceId = string.Empty,
+                    FailureReason = string.Empty,
+                };
+            }
+
+            result = RequestCue(request);
+            if (result.Outcome != VfxCueOutcome.Played)
+            {
+                return PreviewFailure(result.FailureReason ?? result.Outcome.ToString(), "cue", bindingKey);
+            }
+
+            return new VfxWorkbenchPreviewResult
+            {
+                Succeeded = true,
+                Channel = "cue",
+                BindingKey = bindingKey,
+                PlayerId = result.PlayerId,
+                MaterialKey = result.MaterialKey,
+                VariantId = result.VariantId,
+                InstanceId = result.InstanceId,
+                FailureReason = string.Empty,
+            };
+        }
+
+        private VfxWorkbenchPreviewResult PreviewStateBinding(string bindingKey)
+        {
+            if (!TryFindStateBindingByKey(bindingKey, out var binding) || binding == null)
+            {
+                return PreviewFailure("state binding not found.", "state", bindingKey);
+            }
+
+            var owner = GetOrCreatePreviewOwner(bindingKey);
+            var result = SetSlot(owner, "preview", binding.StateId);
+            if (result.Outcome != VfxStateSlotOutcome.Applied
+                && result.Outcome != VfxStateSlotOutcome.NoOp)
+            {
+                return PreviewFailure(result.FailureReason ?? result.Outcome.ToString(), "state", bindingKey);
+            }
+
+            return new VfxWorkbenchPreviewResult
+            {
+                Succeeded = true,
+                Channel = "state",
+                BindingKey = bindingKey,
+                PlayerId = result.PlayerId,
+                MaterialKey = binding.MaterialKey,
+                InstanceId = result.InstanceId,
+                FailureReason = string.Empty,
+            };
+        }
+
+        private VfxWorkbenchPreviewOwner GetOrCreatePreviewOwner(string ownerLabel)
+        {
+            if (!mPreviewOwnersByLabel.TryGetValue(ownerLabel, out var owner))
+            {
+                owner = new VfxWorkbenchPreviewOwner(ownerLabel);
+                mPreviewOwnersByLabel[ownerLabel] = owner;
+            }
+
+            return owner;
+        }
+
+        private static VfxWorkbenchActiveStateSlot ProjectActiveStateSlot(ActiveStateSlot slot)
+        {
+            return new VfxWorkbenchActiveStateSlot
+            {
+                OwnerLabel = BuildOwnerLabel(slot.Key.Owner),
+                Slot = slot.Key.Slot,
+                StateId = slot.DesiredStateId,
+                BindingKey = slot.BindingKey,
+                PlayerId = slot.PlayerId,
+                InstanceId = slot.InstanceId,
+                SpatialOwnership = VfxDiagnosticFormatting.SpatialOwnershipLabel(slot.SpatialOwnership),
+            };
+        }
+
+        private static string BuildOwnerLabel(IVfxSlotOwner owner)
+        {
+            if (owner is VfxWorkbenchPreviewOwner preview)
+            {
+                return preview.Label;
+            }
+
+            return owner?.GetType().Name ?? "owner";
+        }
+
+        private static VfxWorkbenchPreviewResult PreviewFailure(
+            string reason,
+            string channel,
+            string bindingKey = null)
+        {
+            return new VfxWorkbenchPreviewResult
+            {
+                Succeeded = false,
+                Channel = channel ?? string.Empty,
+                BindingKey = bindingKey ?? string.Empty,
+                PlayerId = string.Empty,
+                MaterialKey = string.Empty,
+                VariantId = string.Empty,
+                InstanceId = string.Empty,
+                FailureReason = reason ?? string.Empty,
+            };
+        }
+
+        private bool TryFindCueBindingByKey(string bindingKey, out VfxCueBinding binding)
+        {
+            binding = null;
+            var bindings = mCatalog.CueBindings;
+            for (var i = 0; i < bindings.Count; i++)
+            {
+                var candidate = bindings[i];
+                if (candidate != null
+                    && string.Equals(candidate.BindingKey, bindingKey, StringComparison.Ordinal))
+                {
+                    binding = candidate;
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private bool TryFindStateBindingByKey(string bindingKey, out VfxStateBinding binding)
+        {
+            binding = null;
+            var bindings = mCatalog.StateBindings;
+            for (var i = 0; i < bindings.Count; i++)
+            {
+                var candidate = bindings[i];
+                if (candidate != null
+                    && string.Equals(candidate.BindingKey, bindingKey, StringComparison.Ordinal))
+                {
+                    binding = candidate;
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private void RebuildActiveStateSlotsAfterCatalogApply()
+        {
+            if (mActiveStateSlots.Count == 0)
+            {
+                return;
+            }
+
+            var snapshots = new List<(IVfxSlotOwner Owner, string Slot, string DesiredState, VfxSpatialContext Spatial)>();
+            foreach (var pair in mActiveStateSlots)
+            {
+                var slot = pair.Value;
+                snapshots.Add((pair.Key.Owner, pair.Key.Slot, slot.DesiredStateId, slot.SpatialContext));
+            }
+
+            for (var i = 0; i < snapshots.Count; i++)
+            {
+                var key = new VfxSlotKey(snapshots[i].Owner, snapshots[i].Slot);
+                ClearSlotInternal(key, expectedState: null, conditional: false, VfxEndReason.SlotReplaced);
+            }
+
+            for (var i = 0; i < snapshots.Count; i++)
+            {
+                SetSlot(
+                    snapshots[i].Owner,
+                    snapshots[i].Slot,
+                    snapshots[i].DesiredState,
+                    snapshots[i].Spatial);
+            }
+        }
+
+        private static VfxHistoryRecord CloneHistoryRecord(VfxHistoryRecord source)
+        {
+            if (source == null)
+            {
+                return null;
+            }
+
+            return new VfxHistoryRecord
+            {
+                Sequence = source.Sequence,
+                Outcome = source.Outcome,
+                CueId = source.CueId,
+                CueNote = source.CueNote,
+                BindingKey = source.BindingKey,
+                DiagnosticSource = source.DiagnosticSource,
+                CardDefId = source.CardDefId,
+                SkillId = source.SkillId,
+                RoomId = source.RoomId,
+                ItemDefId = source.ItemDefId,
+                ContentId = source.ContentId,
+                DiagnosticCardUid = source.DiagnosticCardUid,
+                PlayerId = source.PlayerId,
+                MaterialKey = source.MaterialKey,
+                VariantId = source.VariantId,
+                InstanceId = source.InstanceId,
+                FailureReason = source.FailureReason,
+                ScheduleKey = source.ScheduleKey,
+                ScheduleDelaySeconds = source.ScheduleDelaySeconds,
+                Time = source.Time,
+            };
+        }
+
+        private void UpdateAggregate(VfxHistoryRecord record)
+        {
+            switch (record.Outcome)
+            {
+                case VfxHistoryOutcome.Requested:
+                case VfxHistoryOutcome.Played:
+                case VfxHistoryOutcome.Suppressed:
+                case VfxHistoryOutcome.Unbound:
+                case VfxHistoryOutcome.InvalidBinding:
+                case VfxHistoryOutcome.PlayerUnavailable:
+                case VfxHistoryOutcome.DomainUnavailable:
+                case VfxHistoryOutcome.BackendFailure:
+                    break;
+                default:
+                    return;
+            }
+
+            var bindingKey = record.BindingKey ?? string.Empty;
+            var cueId = record.CueId ?? string.Empty;
+            var aggregateKey = !string.IsNullOrEmpty(bindingKey) ? bindingKey : cueId;
+            if (string.IsNullOrEmpty(aggregateKey))
+            {
+                return;
+            }
+
+            if (!mAggregates.TryGetValue(aggregateKey, out var state))
+            {
+                state = new WorkbenchAggregateState(aggregateKey, bindingKey, cueId, isPulse: true);
+                mAggregates[aggregateKey] = state;
+            }
+
+            state.Observe(record);
+        }
+
+        private sealed class WorkbenchAggregateState
+        {
+            private readonly Queue<double> mTimestamps = new Queue<double>(AggregateTimestampCapacity);
+            private readonly List<double> mTimestampBuffer = new List<double>(AggregateTimestampCapacity);
+
+            public WorkbenchAggregateState(string aggregateKey, string bindingKey, string cueOrStateId, bool isPulse)
+            {
+                AggregateKey = aggregateKey ?? string.Empty;
+                BindingKey = bindingKey ?? string.Empty;
+                CueOrStateId = cueOrStateId ?? string.Empty;
+                IsPulse = isPulse;
+            }
+
+            public string AggregateKey { get; }
+            public string BindingKey { get; private set; }
+            public string CueOrStateId { get; private set; }
+            public bool IsPulse { get; }
+            public int Requested { get; private set; }
+            public int Played { get; private set; }
+            public int Suppressed { get; private set; }
+            public int Unbound { get; private set; }
+            public int InvalidBinding { get; private set; }
+            public int PlayerUnavailable { get; private set; }
+            public int DomainUnavailable { get; private set; }
+            public int BackendFailure { get; private set; }
+            public double LastTime { get; private set; }
+            public string LastFailureReason { get; private set; }
+
+            public void Observe(VfxHistoryRecord record)
+            {
+                if (!string.IsNullOrEmpty(record.BindingKey))
+                {
+                    BindingKey = record.BindingKey;
+                }
+
+                if (!string.IsNullOrEmpty(record.CueId))
+                {
+                    CueOrStateId = record.CueId;
+                }
+
+                LastTime = record.Time;
+                switch (record.Outcome)
+                {
+                    case VfxHistoryOutcome.Requested:
+                        Requested++;
+                        break;
+                    case VfxHistoryOutcome.Played:
+                        Played++;
+                        break;
+                    case VfxHistoryOutcome.Suppressed:
+                        Suppressed++;
+                        break;
+                    case VfxHistoryOutcome.Unbound:
+                        Unbound++;
+                        LastFailureReason = record.FailureReason;
+                        break;
+                    case VfxHistoryOutcome.InvalidBinding:
+                        InvalidBinding++;
+                        LastFailureReason = record.FailureReason;
+                        break;
+                    case VfxHistoryOutcome.PlayerUnavailable:
+                        PlayerUnavailable++;
+                        LastFailureReason = record.FailureReason;
+                        break;
+                    case VfxHistoryOutcome.DomainUnavailable:
+                        DomainUnavailable++;
+                        LastFailureReason = record.FailureReason;
+                        break;
+                    case VfxHistoryOutcome.BackendFailure:
+                        BackendFailure++;
+                        LastFailureReason = record.FailureReason;
+                        break;
+                }
+
+                mTimestamps.Enqueue(record.Time);
+                while (mTimestamps.Count > AggregateTimestampCapacity)
+                {
+                    mTimestamps.Dequeue();
+                }
+            }
+
+            public VfxCueAggregate ToImmutable()
+            {
+                mTimestampBuffer.Clear();
+                foreach (var timestamp in mTimestamps)
+                {
+                    mTimestampBuffer.Add(timestamp);
+                }
+
+                return new VfxCueAggregate
+                {
+                    AggregateKey = AggregateKey,
+                    BindingKey = BindingKey,
+                    CueOrStateId = CueOrStateId,
+                    IsPulse = IsPulse,
+                    Requested = Requested,
+                    Played = Played,
+                    Suppressed = Suppressed,
+                    Unbound = Unbound,
+                    InvalidBinding = InvalidBinding,
+                    PlayerUnavailable = PlayerUnavailable,
+                    DomainUnavailable = DomainUnavailable,
+                    BackendFailure = BackendFailure,
+                    LastTime = LastTime,
+                    LastFailureReason = LastFailureReason ?? string.Empty,
+                    RecentTimestamps = mTimestampBuffer.ToArray(),
+                };
+            }
+        }
+
+        private sealed class VfxWorkbenchPreviewOwner : IVfxSlotOwner
+        {
+            public VfxWorkbenchPreviewOwner(string label)
+            {
+                Label = label ?? string.Empty;
+            }
+
+            public string Label { get; }
+
+            public VfxStateRequest BuildStateRequest(string stateId)
+            {
+                return new VfxStateRequest(stateId, "VfxWorkbench.Preview", string.Empty, string.Empty, string.Empty, string.Empty, string.Empty);
+            }
         }
 #endif
 
@@ -1873,6 +2407,7 @@ namespace NineGrid.Presentation.Systems
             }
 
             mHistory.Add(record);
+            UpdateAggregate(record);
         }
 #endif
 

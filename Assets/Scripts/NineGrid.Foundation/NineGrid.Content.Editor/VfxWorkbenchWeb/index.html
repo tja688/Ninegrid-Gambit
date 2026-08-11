@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>VFX 绑定调试工作台</title>
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">VFX 绑定调试工作台</div>
+    <div id="connectionBadge" class="badge">连接中…</div>
+    <div id="statusLine" class="status"></div>
+    <div class="toolbar-actions" id="globalActions"></div>
+  </header>
+  <nav class="tabs" role="tablist">
+    <button class="tab" data-mode="实时实例" type="button">实时实例</button>
+    <button class="tab" data-mode="静态绑定库" type="button">静态绑定库</button>
+    <button class="tab" data-mode="持续状态" type="button">持续状态</button>
+  </nav>
+  <div id="conflictBanner" class="conflict hidden"></div>
+  <main id="modePanel" class="panel"></main>
+  <footer class="footer">
+    <span id="dirtyLine"></span>
+    <span id="errorLine" class="error"></span>
+  </footer>
+  <script src="/app.js"></script>
+</body>
+</html>

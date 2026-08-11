@@ -191,6 +191,43 @@ namespace NineGrid.Presentation.Tests
             TriggerPulseHub.ResetToNull();
         }
 
+        [Test]
+        public void ApplyWorkbenchCatalog_IncrementsRevisionAndAffectsFutureRequests()
+        {
+            var factory = new FakeVfxPlayerFactory();
+            var system = CreateSystem(factory);
+            var applied = system.ApplyWorkbenchCatalog(DisabledTestCatalogJson);
+            Assert.IsTrue(applied.Succeeded);
+            Assert.AreEqual(1L, system.GetWorkbenchSnapshot().Revision);
+
+            var suppressed = system.RequestCue(VfxCueRequest.Simple("vfx.test", "workbench"));
+            Assert.AreEqual(VfxCueOutcome.Suppressed, suppressed.Outcome);
+            Assert.AreEqual(0, factory.CreatedCount);
+        }
+
+        [Test]
+        public void WorkbenchSnapshot_IncludesHistoryAggregatesAndActiveInstances()
+        {
+            var factory = new FakeVfxPlayerFactory();
+            var system = CreateSystem(factory);
+            system.RequestCue(VfxCueRequest.Simple("vfx.test", "snap"));
+            var snapshot = system.GetWorkbenchSnapshot();
+            Assert.GreaterOrEqual(snapshot.History.Count, 1);
+            Assert.GreaterOrEqual(snapshot.Aggregates.Count, 1);
+            Assert.AreEqual(1, snapshot.ActivePulses.Count);
+        }
+
+        [Test]
+        public void PreviewWorkbenchBinding_IgnoresEnabledAndDoesNotAdvanceCooldown()
+        {
+            var factory = new FakeVfxPlayerFactory();
+            var system = CreateSystem(factory, DisabledTestCatalogJson);
+            var bindingKey = VfxBindingKey.Compose("vfx.test", string.Empty, string.Empty, string.Empty, string.Empty, string.Empty);
+            var preview = system.PreviewWorkbenchBinding(bindingKey, includeBindingDelay: false, isStateBinding: false);
+            Assert.IsTrue(preview.Succeeded);
+            Assert.AreEqual(1, factory.CreatedCount);
+        }
+
         private const string DisabledTestCatalogJson =
             "{\"schemaVersion\":1,\"cueBindings\":["
             + "{\"cueId\":\"vfx.test\",\"enabled\":false,\"playerId\":\"" + VfxPlayerRegistry.SpriteSheet + "\",\"materialKey\":\"fx/test\","
