@@ -98,6 +98,11 @@ namespace NineGrid.Core
             // 导演硬清/跨局可能留下未 Ack 批次；不清除则 IsInputLocked 粘连，
             // phase 虽已 Reset 为 BuildEnemyPool，StartNode 仍会被拒。
             architecture.GetSystem<IPresentationSyncSystem>().Clear();
+            // 规则修正存放在全局 RuleModifierRegistry，不随卡实例消亡；其中按 uid 条件挂的
+            // Permanent 修正（远程武器/陷阱的 CounterAttackBanned、神圣决斗等）若不清，
+            // registry.Clear 重用 uid 后会误命中新局同 uid 的卡（如近战怪被静默禁反击）。
+            // 存档恢复由 RestoreAfterCreate 重装遗物 Persistent 修正，卡侧修正随节点重新激活。
+            architecture.GetSystem<IStatSystem>().RuleModifiers.Clear();
 
             rng.SetSeed(options.Seed);
             registry.Clear();
