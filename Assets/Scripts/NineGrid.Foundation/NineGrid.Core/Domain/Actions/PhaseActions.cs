@@ -441,6 +441,49 @@ namespace NineGrid.Core
         }
     }
 
+    /// <summary>
+    /// 诊断（#206）：敌方行动窗口裁决痕迹。仅发 <see cref="CoreEventType.EnemyActionResolved"/> 事件，
+    /// 不改任何状态、不进表现批次（映射 RequiresPlayback=false）；FlowTrace 旁路消费。
+    /// verdict 词表：roster / fired / voidPosition / voidActionBanned / skipFaceDown / skipInvalid / abortAvatarDown。
+    /// </summary>
+    public sealed class EmitEnemyActionVerdictAction : GameAction
+    {
+        public EmitEnemyActionVerdictAction(
+            int cardUid,
+            string defId,
+            string verdict,
+            string detail,
+            int patternFires,
+            int countdownRemaining)
+        {
+            CardUid = cardUid;
+            DefId = defId ?? string.Empty;
+            Verdict = verdict ?? string.Empty;
+            Detail = detail ?? string.Empty;
+            PatternFires = patternFires;
+            CountdownRemaining = countdownRemaining;
+        }
+
+        public int CardUid { get; private set; }
+        public string DefId { get; private set; }
+        public string Verdict { get; private set; }
+        public string Detail { get; private set; }
+        public int PatternFires { get; private set; }
+        public int CountdownRemaining { get; private set; }
+        public override string ActionName { get { return "EmitEnemyActionVerdict"; } }
+
+        public override GameActionResult Apply(GameActionContext context)
+        {
+            return new GameActionResult()
+                .AddEvent(new CoreGameEvent(CoreEventType.EnemyActionResolved, context.ActionId, ActionName)
+                    .WithCard(CardUid)
+                    .WithMessage(Verdict)
+                    .WithSource(DefId, Detail)
+                    .WithAmount(PatternFires)
+                    .WithResultValue(CountdownRemaining));
+        }
+    }
+
     public sealed class PickupCardAction : GameAction
     {
         private static readonly TriggerPoint[] sPostTriggers =

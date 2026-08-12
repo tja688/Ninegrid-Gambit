@@ -1715,6 +1715,19 @@ namespace NineGrid.Core.Systems
 
             candidates.Sort();
             mEnemyActionRoster.AddRange(candidates);
+
+            // #206 诊断：报名名单痕迹（uid 升序冻结）；空名单不发，避免逐互动刷噪。
+            if (candidates.Count > 0)
+            {
+                pipeline.Enqueue(new EmitEnemyActionVerdictAction(
+                    0,
+                    string.Empty,
+                    "roster",
+                    "uids=" + JoinUids(candidates),
+                    0,
+                    candidates.Count));
+            }
+
             var resolved = pipeline.RunToCompletion();
 
             // 独立背面 Tick：仅已 Register 的 faceDownTick.*，与 AttackPatternCountdown 解耦。
@@ -1739,45 +1752,63 @@ namespace NineGrid.Core.Systems
             mEnemyActionCursor++;
 
             var registry = this.GetModel<CardRegistry>();
+            var pipeline = this.GetSystem<IActionPipelineSystem>();
             CardInstance monster;
             if (!registry.TryGet(monsterUid, out monster)
                 || monster.Kind != CardKind.Monster
                 || monster.Zone.Value != ZoneId.Board
                 || !IsCardAlive(monster))
             {
-                return 0;
+                // #206 诊断：名单成员已死亡/离场，本条跳过。
+                return EmitEnemyActionVerdict(
+                    pipeline, monsterUid, monster != null ? monster.DefId : string.Empty,
+                    "skipInvalid", string.Empty, false, 0);
             }
 
+            var remaining = monster.Counters.Get(CoreCounterKeys.AttackPatternCountdown);
             var board = this.GetModel<BoardModel>();
             var avatarUid = board.AvatarUid.Value;
             CardInstance avatar;
             if (avatarUid <= 0 || !registry.TryGet(avatarUid, out avatar) || !IsCardAlive(avatar))
             {
                 mEnemyActionCursor = mEnemyActionRoster.Count;
-                return 0;
+                return EmitEnemyActionVerdict(
+                    pipeline, monster.Uid, monster.DefId, "abortAvatarDown", string.Empty, false, remaining);
             }
 
-            var pipeline = this.GetSystem<IActionPipelineSystem>();
             var statSystem = this.GetSystem<IStatSystem>();
             // ADR-0016：结算时已背面 → 不开火、不 Reset（倒计时保持冻结）。
             if (!monster.FaceUp)
             {
-                return 0;
+                return EmitEnemyActionVerdict(
+                    pipeline, monster.Uid, monster.DefId, "skipFaceDown",
+                    "frozenRemaining=" + remaining, false, remaining);
             }
 
             var patternFires = AttackPatternRules.ParticipatesInEnemyAction(monster.AttackPattern);
-            if (patternFires
-                && (IsActionBanned(statSystem, monster)
-                    || !AttackPatternRules.MeetsPositionRequirement(
-                        monster.AttackPattern,
-                        monster.Slot.Value,
-                        board.AvatarSlot.Value)))
+            if (patternFires)
             {
-                // 错过位置窗口：整窗作废（不同步技能半触发），重置为 X。
-                return EnqueueResetAttackPatternCountdown(pipeline, monster);
+                var banned = IsActionBanned(statSystem, monster);
+                var meetsPosition = AttackPatternRules.MeetsPositionRequirement(
+                    monster.AttackPattern,
+                    monster.Slot.Value,
+                    board.AvatarSlot.Value);
+                if (banned || !meetsPosition)
+                {
+                    // 错过位置窗口：整窗作废（不同步技能半触发），重置为 X。
+                    var verdictResolved = EmitEnemyActionVerdict(
+                        pipeline, monster.Uid, monster.DefId,
+                        banned ? "voidActionBanned" : "voidPosition",
+                        "slot=" + monster.Slot.Value + ";avatar=" + board.AvatarSlot.Value, true, remaining);
+                    return verdictResolved + EnqueueResetAttackPatternCountdown(pipeline, monster);
+                }
             }
 
-            var resolved = 0;
+            var resolved = EmitEnemyActionVerdict(
+                pipeline, monster.Uid, monster.DefId, "fired",
+                "slot=" + monster.Slot.Value + ";avatar=" + board.AvatarSlot.Value
+                    + ";sync=" + (monster.HasSyncRhythmSkills ? "1" : "0"),
+                patternFires, remaining);
             if (patternFires)
             {
                 // 单向打击：不开交战作用域；标准伤害管线；玩家不反击（ADR-0012）。
@@ -1835,6 +1866,52 @@ namespace NineGrid.Core.Systems
 
             pipeline.Enqueue(new SetAttackPatternCountdownAction(monster.Uid, period));
             return pipeline.RunToCompletion();
+        }
+
+        /// <summary>#206 诊断：入队敌方行动裁决痕迹事件并结算（仅事件，无状态副作用）。</summary>
+        private static int EmitEnemyActionVerdict(
+            IActionPipelineSystem pipeline,
+            int cardUid,
+            string defId,
+            string verdict,
+            string detail,
+            bool patternFires,
+            int countdownRemaining)
+        {
+            if (pipeline == null)
+            {
+                return 0;
+            }
+
+            pipeline.Enqueue(new EmitEnemyActionVerdictAction(
+                cardUid,
+                defId,
+                verdict,
+                detail,
+                patternFires ? 1 : 0,
+                countdownRemaining));
+            return pipeline.RunToCompletion();
+        }
+
+        private static string JoinUids(List<int> uids)
+        {
+            if (uids == null || uids.Count == 0)
+            {
+                return string.Empty;
+            }
+
+            var sb = new System.Text.StringBuilder();
+            for (var i = 0; i < uids.Count; i++)
+            {
+                if (i > 0)
+                {
+                    sb.Append(',');
+                }
+
+                sb.Append(uids[i]);
+            }
+
+            return sb.ToString();
         }
 
         private static bool IsCardAlive(CardInstance card)

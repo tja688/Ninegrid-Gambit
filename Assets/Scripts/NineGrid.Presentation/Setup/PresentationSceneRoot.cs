@@ -1,6 +1,7 @@
 using System;
 using NineGrid.Cards;
 using NineGrid.Flow;
+using NineGrid.Flow.Diagnostics;
 using NineGrid.Flow.Presentation;
 using NineGrid.Presentation.Controllers;
 using NineGrid.Presentation.Systems;
@@ -160,6 +161,7 @@ namespace NineGrid.Presentation.Setup
             triggerPulse.ConfigureProductionDefaults();
             DiagnosticOutputController.EnsureInstalled();
             GoldGainPresentationBinder.EnsureInstalled();
+            RhythmFaceFlowTraceBinder.EnsureInstalled();
 
             if (damageNumberManager == null)
             {

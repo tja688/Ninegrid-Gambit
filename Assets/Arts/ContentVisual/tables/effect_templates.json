@@ -1530,7 +1530,7 @@
  {
   "id": "tpl.relic.beyond_dimension.battle",
   "state": "Implemented",
-  "design_text": "[战斗时] 旋转一次",
+  "design_text": "[战斗时] 旋转一次（2026-08-12 遗物暂归档 deck.relic_archive：旋转经 OnBattle 插在玩家命中与怪物反击之间结算、反击无几何校验——正交怪被转到斜角后仍反击，观感出戏；待交战时序裁决后再回 deck.relic，详见 Assets/Docs/04-预发布可疑问题总清单）",
   "requires_json": "[\"NoOwnerEntity\"]",
   "conditions_json": "[]",
   "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnBattle\",\"sourceAction\":\"{{sourceAction}}\",\"targetKind\":\"Monster\",\"maxActionDepth\":0},\"conditions\":[{\"atom\":\"EventFilterActorIsPlayer\",\"eventType\":\"DamageDealt\",\"targetKind\":\"Monster\"}],\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"Rotate\",\"count\":\"{{count}}\"}}"

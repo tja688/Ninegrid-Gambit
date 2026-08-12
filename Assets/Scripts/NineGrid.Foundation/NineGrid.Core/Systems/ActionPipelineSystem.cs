@@ -182,12 +182,18 @@ namespace NineGrid.Core.Systems
                 return;
             }
 
+            // 只排干本次压入的动作：栈是共享的，若排到空为止，内层调用会把外层
+            // 尚未处理的兄弟动作偷走并按内层深度嵌套结算——一串有限但较长的合法
+            // 连锁（劈砍+击杀奖励+转盘+敌方行动）深度会被线性放大，误撞 64 深度
+            // 保护并把异常炸出命令中途（Core/表现盘面永久分叉、流程卡死）。
+            // 深度只应反映真实因果嵌套；真失控循环仍由 ResolveAction 的上限捕获。
+            var baseline = mReactionStack.Count;
             for (var i = actions.Count - 1; i >= 0; i--)
             {
                 PushReaction(actions[i]);
             }
 
-            while (mReactionStack.Count > 0)
+            while (mReactionStack.Count > baseline)
             {
                 ResolveAction(mReactionStack.Pop(), depth);
             }

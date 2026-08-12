@@ -12,10 +12,14 @@ namespace NineGrid.Cards
         /// <summary>
         /// 命中 Present 内 Drain 用：保留 OnBattle Swap/Move/Deal 与其它移除，
         /// 剥离交战主目标 Remove（尸体仍走 Vacate/FinalizeLethal）。
+        /// <paramref name="stripVictimMotion"/> = true（主目标已死）时同时剥离尸体的
+        /// Move/Swap 位移——Core 在击杀落地前的旋转/换位会真实移动尸体，
+        /// 表现侧尸体已先行 Vacate 离场，不得重放其位移（Rotate 步只带方向、天然无尸体）。
         /// </summary>
         public static PostKillBoardPresentationResult ForHitPresentDrain(
             PostKillBoardPresentationResult hit,
-            int combatVictimUid)
+            int combatVictimUid,
+            bool stripVictimMotion = false)
         {
             var result = new PostKillBoardPresentationResult
             {
@@ -28,13 +32,15 @@ namespace NineGrid.Cards
             if (hit.Steps != null && hit.Steps.Length > 0)
             {
                 var steps = new List<BoardPresentationStep>(hit.Steps.Length);
-                AppendFilteredSteps(steps, hit.Steps, combatVictimUid);
+                AppendFilteredSteps(steps, hit.Steps, combatVictimUid, stripVictimMotion);
                 result.Steps = steps.Count > 0 ? steps.ToArray() : Array.Empty<BoardPresentationStep>();
                 result.RemovedUids = FilterRemovedUids(hit.RemovedUids, combatVictimUid);
                 return result;
             }
 
-            result.Moves = hit.Moves ?? Array.Empty<PostKillCardMove>();
+            result.Moves = stripVictimMotion
+                ? FilterMoves(hit.Moves, combatVictimUid)
+                : hit.Moves ?? Array.Empty<PostKillCardMove>();
             result.Deals = hit.Deals ?? Array.Empty<PostKillCardDeal>();
             result.RemovedUids = FilterRemovedUids(hit.RemovedUids, combatVictimUid);
             return result;
@@ -60,12 +66,13 @@ namespace NineGrid.Cards
                 var steps = new List<BoardPresentationStep>(8);
                 if (hit.HasOrderedSteps)
                 {
-                    AppendFilteredSteps(steps, hit.Steps, combatVictimUid);
+                    // 致死合并：主目标必死，尸体位移一并剥离（同 ForHitPresentDrain 击杀分支）。
+                    AppendFilteredSteps(steps, hit.Steps, combatVictimUid, stripVictimMotion: true);
                 }
 
                 if (postKillHasSteps)
                 {
-                    AppendFilteredSteps(steps, postKill.Steps, combatVictimUid);
+                    AppendFilteredSteps(steps, postKill.Steps, combatVictimUid, stripVictimMotion: true);
                 }
 
                 merged.Steps = steps.Count > 0 ? steps.ToArray() : Array.Empty<BoardPresentationStep>();
@@ -96,7 +103,8 @@ namespace NineGrid.Cards
         private static void AppendFilteredSteps(
             List<BoardPresentationStep> target,
             BoardPresentationStep[] source,
-            int combatVictimUid)
+            int combatVictimUid,
+            bool stripVictimMotion = false)
         {
             if (source == null || source.Length == 0)
             {
@@ -116,9 +124,42 @@ namespace NineGrid.Cards
 
                     step.RemovedUids = filtered;
                 }
+                else if (stripVictimMotion
+                         && (step.Kind == BoardPresentationStepKind.Move
+                             || step.Kind == BoardPresentationStepKind.Swap))
+                {
+                    var moves = FilterMoves(step.Moves, combatVictimUid);
+                    if (moves.Length == 0)
+                    {
+                        continue;
+                    }
+
+                    step.Moves = moves;
+                }
 
                 target.Add(step);
             }
+        }
+
+        private static PostKillCardMove[] FilterMoves(PostKillCardMove[] source, int combatVictimUid)
+        {
+            if (source == null || source.Length == 0)
+            {
+                return Array.Empty<PostKillCardMove>();
+            }
+
+            var kept = new List<PostKillCardMove>(source.Length);
+            for (var i = 0; i < source.Length; i++)
+            {
+                if (source[i].Uid != combatVictimUid)
+                {
+                    kept.Add(source[i]);
+                }
+            }
+
+            return kept.Count == source.Length
+                ? source
+                : (kept.Count > 0 ? kept.ToArray() : Array.Empty<PostKillCardMove>());
         }
 
         private static int[] MergeRemovedUids(int[] hitRemoved, int[] postKillRemoved, int combatVictimUid)

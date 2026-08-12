@@ -32,6 +32,19 @@ Play 结束自动导出至 `Assets/Notes/Logs/`（Editor 路径；Player 下为 
 - **Node**：事件/op 级 `nodeIndex`（shell 整局节点 1..24 优先，回退 RunModel 层内 0..7）。
 - **Battle**：FlowTrace 事件 `refBattleOpIndex` → BattleTrace `ops[opIndex]`。
 
+## Rhythm 诊断轨（#206：节奏 / 翻面 / 敌方行动裁决）
+
+CoreLog（FlowTrace）`category=Rhythm`，由 `RhythmFaceFlowTraceBinder` 全互动链扫描（含拾取/点空/翻开，不只交战）：
+
+| name | 关键 payload | 含义 |
+|------|--------------|------|
+| `CardFaceChanged` | uid/defId/faceUp/action(FlipCard·ConcealFace·RevealFace)/sourceDefId/cause | 谁在何时把谁翻向哪面 |
+| `ActionCountdownChanged` | uid/defId/delta/remaining | 卡级共享倒计时轨迹 |
+| `RhythmFireOpened` | uid/defId | 卡级开火窗（ADR-0038） |
+| `EnemyActionVerdict` | uid/defId/verdict/detail/patternFires/remaining | 敌方行动裁决：`roster`（报名名单）/`fired`/`voidPosition`/`voidActionBanned`/`skipFaceDown`/`skipInvalid`/`abortAvatarDown` |
+
+`category=CombatSummary` 的 `EffectTriggered` 自 #206 起覆盖**全部**互动链（此前只有交战链）。
+
 ## 分析脚本（推荐）
 
 ```powershell

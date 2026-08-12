@@ -472,26 +472,27 @@ namespace NineGrid.Cards
                     await PlayDuelPunishmentRigAsync(duelPunishment, avatar, hitProjection, ct);
                 }
 
-                // OnBattle（逃避 Swap 等）与技能移除写在同一 CombatHit EventLog 窗；
-                // 必须在 Vacate 前 Drain，否则 Core 已换位而表现占格仍旧 → OccupancyDesync。
-                // 交战主目标尸体仍走下方 Vacate，不进 Remove 步。
+                // OnBattle（逃避 Swap 等）与技能移除写在同一 CombatHit EventLog 窗。
+                // 主目标存活：正常在 Drain 里重放其位移（Core 已换位而表现占格仍旧 → OccupancyDesync）。
+                // 主目标已死：Core 在击杀落地（KillIfDead FollowUp）前，OnBattle 旋转/换位遗物
+                // 会真实移动尸体一格——表现侧不重放尸体位移，否则死亡表演中的卡被 hop 拽走
+                // （「尸体跟着转」闪烁）。改为先 MarkFieldDead + Vacate + 离锚，再 Drain：
+                // Rotate 步只带方向，旋转「无尸体的环」；Move/Swap 步中尸体位移已在
+                // ForHitPresentDrain 剥离。终态占格与 Core 击杀后一致。
                 var killed = HasRemovedUid(hitProjection, combatVictim.Uid) || combatVictim.IsFieldDead;
                 var hitBoardDelta = BoardPresentationMerge.ForHitPresentDrain(
                     hitProjection,
-                    combatVictim.Uid);
+                    combatVictim.Uid,
+                    stripVictimMotion: killed);
                 var pendingVacateUids = killed ? new[] { combatVictim.Uid } : null;
-                await DrainCombatHitBoardDeltaFromProjectionAsync(
-                    hitBoardDelta,
-                    ct,
-                    pendingVacateUids);
-
+                var victimStagedBeforeDrain = false;
                 if (!hitProjection.AvatarDefeated && killed)
                 {
-                    // Swap 后主目标可能已不在点击格；以 Drain 后的表现占格为准。
-                    if (geometry.TryGetSlotOf(combatVictim.Uid, out var slotAfterDelta)
-                        && slotAfterDelta > 0)
+                    // 尸体位移已剥离：以 Drain 前的表现占格定尸体格（找不到时回退交战格）。
+                    if (geometry.TryGetSlotOf(combatVictim.Uid, out var corpseSlot)
+                        && corpseSlot > 0)
                     {
-                        combatSlot = slotAfterDelta;
+                        combatSlot = corpseSlot;
                     }
 
                     CardEntityLifecycleHook.CardsOrNull()?.MarkFieldDead(combatVictim);
@@ -502,6 +503,16 @@ namespace NineGrid.Cards
                         skipBusyGuard: true,
                         startExplore: false);
                     CardEntityLifecycleHook.CardsOrNull()?.StageFieldDeadCorpseOffAnchor(combatVictim);
+                    victimStagedBeforeDrain = true;
+                }
+
+                await DrainCombatHitBoardDeltaFromProjectionAsync(
+                    hitBoardDelta,
+                    ct,
+                    pendingVacateUids);
+
+                if (victimStagedBeforeDrain)
+                {
                     FinalizeLethalVictimAsync(combatVictim, ct).Forget();
                     ResolveBattleSession()?.AssertHitPresentOccupancySync();
                 }

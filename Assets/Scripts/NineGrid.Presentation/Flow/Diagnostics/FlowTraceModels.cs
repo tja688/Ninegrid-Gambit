@@ -56,6 +56,8 @@ namespace NineGrid.Flow.Diagnostics
         public const string Field = "Field";
         public const string Presentation = "Presentation";
         public const string Hand = "Hand";
+        /// <summary>#206：卡级节奏 / 翻面 / 敌方行动裁决诊断轨。</summary>
+        public const string Rhythm = "Rhythm";
     }
 
     /// <summary>
@@ -86,6 +88,16 @@ namespace NineGrid.Flow.Diagnostics
         public const string BaseStatModified = "BaseStatModified";
         /// <summary>卡面 Settled 认领 ModifyBaseStat 后的 Commit 回执。</summary>
         public const string CardFaceBaseStatCommit = "CardFaceBaseStatCommit";
+
+        // #206 Rhythm 诊断轨（RhythmFaceFlowTraceBinder 全链路扫描）
+        /// <summary>牌面朝向变化（Flip/Conceal/Reveal，含 source/cause）。</summary>
+        public const string CardFaceChanged = "CardFaceChanged";
+        /// <summary>卡级共享倒计时变化（delta/remaining）。</summary>
+        public const string ActionCountdownChanged = "ActionCountdownChanged";
+        /// <summary>卡级开火窗口开启（ADR-0038）。</summary>
+        public const string RhythmFireOpened = "RhythmFireOpened";
+        /// <summary>敌方行动窗口裁决（roster/fired/void*/skip*）。</summary>
+        public const string EnemyActionVerdict = "EnemyActionVerdict";
 
         // V2 Field / Presentation / Hand
         public const string DrainBegin = "DrainBegin";

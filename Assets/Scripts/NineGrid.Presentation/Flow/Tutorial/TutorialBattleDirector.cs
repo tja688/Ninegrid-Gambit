@@ -2,9 +2,11 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using Cysharp.Threading.Tasks;
+using NineGrid.Cards;
 using NineGrid.Core;
 using NineGrid.Core.Systems;
 using NineGrid.Flow.Presentation;
+using NineGrid.Presentation;
 using NineGrid.Presentation.Systems;
 using QFramework;
 using UnityEngine;
@@ -12,9 +14,12 @@ using UnityEngine;
 namespace NineGrid.Flow.Tutorial
 {
     /// <summary>
-    /// 教学关卡导演：主线空闲时巡检 Core 状态，推进四波受控发牌。
+    /// 教学关卡导演：逐帧巡检 Core 状态，推进四波受控发牌。
     /// 波次切换作为真时间线脚本挂主线（清场批 → 补发批 → 盘面稳定化），
-    /// 复用既有 Resolve/Present/ack 锁步与发牌表演；切换期间输入互斥自然生效。
+    /// 复用既有 Resolve/Present/ack 锁步与发牌表演。
+    /// 换波条件一满足（哪怕击杀表演还在播）即挂 Opening 输入门，
+    /// 直到新波发牌表演完成、ScanWave 登记完毕才解锁——堵住
+    /// 「表演收尾 → 换波脚本入队」之间的玩家输入窗口。
     /// </summary>
     /// <remarks>
     /// 波次剧本：
@@ -33,13 +38,14 @@ namespace NineGrid.Flow.Tutorial
         private readonly IArchitecture mArchitecture;
         private readonly IBattleSessionSystem mSession;
         private readonly CoreCommandDispatcher mDispatcher;
-        private readonly IPresentChannel mBoardChannel;
+        private readonly QueuedBoardPresentChannel mBoardChannel;
         private readonly BoardStabilizationScheduler mStabilization = new BoardStabilizationScheduler();
         private readonly HashSet<int> mWaveUids = new HashSet<int>();
 
         private int mWave = WaveOne;
         private bool mWaveScanned;
         private bool mTransitionQueued;
+        private bool mInputHeld;
         private int mMonsterUid;
         private int mKnifeUid;
         private int mPotionUid;
@@ -67,6 +73,7 @@ namespace NineGrid.Flow.Tutorial
 
         public void Stop()
         {
+            ReleasePlayerInput();
             if (mCts == null)
             {
                 return;
@@ -101,16 +108,36 @@ namespace NineGrid.Flow.Tutorial
             var phase = mArchitecture.GetSystem<IPhaseSystem>();
             if (phase == null || phase.CurrentPhase != GamePhase.InteractionLoop)
             {
+                // 清关 / 战败等相位切换后由后续流程接管输入，不粘住教学输入门。
+                ReleasePlayerInput();
                 return;
             }
 
             var runtime = mArchitecture.GetSystem<IPresentationRuntimeSystem>();
             var sync = mArchitecture.GetSystem<IPresentationSyncSystem>();
-            if (runtime == null
-                || sync == null
-                || runtime.MainlineBusy.Value
-                || sync.ActiveBatchId > 0
-                || mTransitionQueued)
+            if (runtime == null || sync == null || mTransitionQueued)
+            {
+                return;
+            }
+
+            // 换波条件按 Core 真相先行判定（击杀批一解算即为真，无需等表演收尾）：
+            // 满足即挂输入门，再等主线与批次真正空闲后把换波脚本挂上主线。
+            if (mWaveScanned)
+            {
+                var nextWave = NextWaveIfCompleted();
+                if (nextWave > 0)
+                {
+                    HoldPlayerInput();
+                    if (!runtime.MainlineBusy.Value && sync.ActiveBatchId == 0)
+                    {
+                        EnqueueWaveTransition(nextWave);
+                    }
+
+                    return;
+                }
+            }
+
+            if (runtime.MainlineBusy.Value || sync.ActiveBatchId > 0)
             {
                 return;
             }
@@ -118,40 +145,71 @@ namespace NineGrid.Flow.Tutorial
             if (!mWaveScanned)
             {
                 ScanWave();
+                // 新波登记完毕才把换波期间锁住的输入还给玩家。
+                ReleasePlayerInput();
+                return;
             }
 
             switch (mWave)
             {
-                case WaveOne:
-                    if (CountDeadWaveCards() >= 2)
-                    {
-                        EnqueueWaveTransition(WaveTwo);
-                    }
-
-                    break;
                 case WaveTwo:
-                    if (IsDeadOrGone(mMonsterUid))
-                    {
-                        EnqueueWaveTransition(WaveThree);
-                        break;
-                    }
-
                     EnsureFillerStock();
                     break;
                 case WaveThree:
-                    if (IsDeadOrGone(mKnifeUid) && IsDeadOrGone(mPotionUid))
-                    {
-                        EnqueueWaveTransition(WaveFour);
-                        break;
-                    }
-
                     EnsureFillerStock();
                     EnsureKnifeTargetAvailable();
                     break;
-                case WaveFour:
-                    // 击破离开机关 → Core 正常清关收口；导演无事可做。
-                    break;
             }
+        }
+
+        /// <summary>本波完成条件（Core 真相）：满足返回下一波号，否则 0。第四波走 Core 正常清关收口。</summary>
+        private int NextWaveIfCompleted()
+        {
+            switch (mWave)
+            {
+                case WaveOne:
+                    return CountDeadWaveCards() >= 2 ? WaveTwo : 0;
+                case WaveTwo:
+                    return IsDeadOrGone(mMonsterUid) ? WaveThree : 0;
+                case WaveThree:
+                    return IsDeadOrGone(mKnifeUid) && IsDeadOrGone(mPotionUid) ? WaveFour : 0;
+                default:
+                    return 0;
+            }
+        }
+
+        /// <summary>
+        /// 换波期输入管控：复用 Opening 输入门（发牌表演期输入归 Opening，棋盘意图一律被拒）。
+        /// 幂等重挂，防止外部 ResetGates 把门清掉。
+        /// </summary>
+        private void HoldPlayerInput()
+        {
+            if (!mInputHeld)
+            {
+                mInputHeld = true;
+                Debug.Log("[Tutorial] 换波就绪：锁定玩家输入，等待表演完成。");
+            }
+
+            if (!PresentationInputGates.OpeningPresentationActive)
+            {
+                PresentationInputGates.SetOpening(true);
+            }
+        }
+
+        private void ReleasePlayerInput()
+        {
+            if (!mInputHeld)
+            {
+                return;
+            }
+
+            mInputHeld = false;
+            if (PresentationInputGates.OpeningPresentationActive)
+            {
+                PresentationInputGates.SetOpening(false);
+            }
+
+            Debug.Log("[Tutorial] 新波就位：解锁玩家输入。");
         }
 
         /// <summary>波次发牌落定后：登记本波教学卡 uid 与特殊卡（怪物 / 飞刀 / 药水）。</summary>
@@ -377,7 +435,7 @@ namespace NineGrid.Flow.Tutorial
                     mDispatcher,
                     mBoardChannel,
                     ResolveAvatarSlotIndex(),
-                    mSession.OnExploreBatchProjected,
+                    OnTutorialBatchProjected,
                     onStable: _ => mTransitionQueued = false);
             });
         }
@@ -392,11 +450,26 @@ namespace NineGrid.Flow.Tutorial
                 return dispatch;
             }
 
-            mSession.OnExploreBatchProjected(
+            OnTutorialBatchProjected(
                 startIndex,
                 ResolveAvatarSlotIndex(),
                 IntentBatchProjection.Build(mArchitecture, pipeline, startIndex));
             return dispatch;
+        }
+
+        /// <summary>
+        /// 投影必须投递导演私有通道——PresentStep 消费的就是它。
+        /// 若走 mSession.OnExploreBatchProjected 会投进生产 Explore 通道，
+        /// 无人消费 → 换波在 Core 落地但零表演（旧卡影子留场、新卡虚空发出）。
+        /// </summary>
+        private void OnTutorialBatchProjected(
+            int startIndex,
+            int boardSlot,
+            PostKillBoardPresentationResult result)
+        {
+            mBoardChannel.Enqueue(result);
+            // 补发批的「洗入卡组」飞行表演与生产链同构。
+            mSession.PresentShuffleIntoDeckFromEventLog(startIndex);
         }
 
         private int ResolveAvatarSlotIndex()

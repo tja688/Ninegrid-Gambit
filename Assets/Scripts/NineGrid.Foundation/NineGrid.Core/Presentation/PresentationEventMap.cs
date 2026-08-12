@@ -101,7 +101,16 @@ namespace NineGrid.Core
                 false,
                 PresentationBeat.None,
                 "Card rhythm fire window opened",
-                "Drives OnCardRhythmFire; card-face countdown via ActionCountdownChanged")
+                "Drives OnCardRhythmFire; card-face countdown via ActionCountdownChanged"),
+            Entry(
+                CoreEventType.EnemyActionResolved,
+                PresentationInstructionKind.None,
+                PresentationEventCategory.Effect,
+                false,
+                false,
+                PresentationBeat.None,
+                "Enemy action window verdict",
+                "Diagnostics-only trace (#206) — FlowTrace records verdict; no playback")
         };
 
         private static readonly Dictionary<CoreEventType, PresentationEventMapEntry> sByType = BuildLookup();

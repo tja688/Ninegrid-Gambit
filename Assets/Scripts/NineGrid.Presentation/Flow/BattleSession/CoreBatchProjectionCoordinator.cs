@@ -610,25 +610,13 @@ namespace NineGrid.Flow
             int startIndex,
             int endIndex)
         {
+            // EffectTriggered 已改由 RhythmFaceFlowTraceBinder 全链路扫描记录（#206），
+            // 此处只补交战链的 BaseStatModified，避免双写。
             var entries = pipeline.EventLog.Entries;
             for (var i = startIndex; i < endIndex; i++)
             {
                 var e = entries[i];
-                if (e.Type == CoreEventType.EffectTriggered)
-                {
-                    FlowTraceRecorder.Record(
-                        FlowTraceCategory.CombatSummary,
-                        FlowTraceNames.EffectTriggered,
-                        new Dictionary<string, string>
-                        {
-                            { "sourceDefId", e.SourceDefId ?? string.Empty },
-                            { "cardUid", e.CardUid.ToString() },
-                            { "message", e.Message ?? string.Empty },
-                        },
-                        accepted: true,
-                        refBattleOpIndex: BattleTraceRecorder.LastOpIndex);
-                }
-                else if (e.Type == CoreEventType.BaseStatModified)
+                if (e.Type == CoreEventType.BaseStatModified)
                 {
                     FlowTraceRecorder.Record(
                         FlowTraceCategory.CombatSummary,

@@ -203,7 +203,9 @@ namespace NineGrid.Core
         CardFaceChanged,
         AvatarMoved,
         /// <summary>卡级开火窗口开启（ADR-0038）；驱动 OnCardRhythmFire。</summary>
-        CardRhythmFireOpened
+        CardRhythmFireOpened,
+        /// <summary>诊断：敌方行动窗口裁决痕迹（roster/fired/void*/skip*，#206）；不进表现批次。</summary>
+        EnemyActionResolved
     }
 
     public enum PresentationEventCategory
