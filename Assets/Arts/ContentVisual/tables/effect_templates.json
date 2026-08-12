@@ -805,7 +805,7 @@
   "design_text": "每有一张烈焰加入战斗卡组，额外加入一张；额外加入的烈焰不再触发本效果",
   "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
   "conditions_json": "[\"EventFilter:eventType=CardDealt\"]",
-  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnDeal\"},\"conditions\":[{\"atom\":\"EventFilterExcludeCause\",\"eventType\":\"CardDealt\",\"sourceDefId\":\"trap.flame\",\"cause\":\"skill.intense_burning\"}],\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"ShuffleInto\",\"defId\":\"trap.flame\",\"kind\":\"Trap\",\"count\":\"{{count}}\",\"top\":false}}"
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnDeal\"},\"conditions\":[{\"atom\":\"EventFilterExcludeCause\",\"eventType\":\"CardDealt\",\"sourceDefId\":\"trap.flame\",\"cause\":\"skill.intense_burning\"}],\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"ShuffleInto\",\"defId\":\"trap.flame\",\"kind\":\"Trap\",\"count\":\"{{count}}\",\"top\":false,\"cause\":\"skill.intense_burning\"}}"
  },
  {
   "id": "tpl.skill.call_melee6.interact",

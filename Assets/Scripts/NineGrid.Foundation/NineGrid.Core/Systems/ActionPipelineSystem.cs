@@ -20,6 +20,24 @@ namespace NineGrid.Core.Systems
         public int CardUid { get; private set; }
     }
 
+    /// <summary>
+    /// ADR-0047：失控反应链被熔断遏制（深度/总量超限，后续分支丢弃、命令原子收尾）。
+    /// 表现层订阅后转显式错误日志——熔断属内容 bug 的兜底，不是正常路径。
+    /// </summary>
+    public sealed class Evt_PipelineFaultContained
+    {
+        public Evt_PipelineFaultContained(string actionName, int depth, int resolvedThisRun)
+        {
+            ActionName = actionName ?? string.Empty;
+            Depth = depth;
+            ResolvedThisRun = resolvedThisRun;
+        }
+
+        public string ActionName { get; private set; }
+        public int Depth { get; private set; }
+        public int ResolvedThisRun { get; private set; }
+    }
+
     public interface IActionPipelineSystem : ISystem
     {
         EventLog EventLog { get; }
@@ -35,11 +53,19 @@ namespace NineGrid.Core.Systems
 
     public sealed class ActionPipelineSystem : AbstractSystem, IActionPipelineSystem
     {
+        /// <summary>真实因果嵌套深度上限；超过视为失控触发环（ADR-0047）。</summary>
+        private const int MaxReactionDepth = 64;
+        /// <summary>单次 RunToCompletion 解算动作总量保险丝——防有限深度的宽度爆炸把主线程冻死。</summary>
+        private const int MaxResolvedPerRun = 4096;
+        /// <summary>每次 run 最多落多少条熔断诊断事件，防止排空残留动作时刷屏。</summary>
+        private const int MaxFaultEventsPerRun = 8;
+
         private static readonly CoreGameEvent[] sNoEvents = new CoreGameEvent[0];
         private readonly Queue<GameAction> mQueue = new Queue<GameAction>();
         private readonly Stack<GameAction> mReactionStack = new Stack<GameAction>();
         private int mNextActionId = 1;
         private int mResolvedThisRun;
+        private int mFaultEventsThisRun;
 
         public EventLog EventLog { get; private set; }
         public bool IsRunning { get; private set; }
@@ -92,6 +118,7 @@ namespace NineGrid.Core.Systems
             }
 
             mResolvedThisRun = 0;
+            mFaultEventsThisRun = 0;
             IsRunning = true;
             try
             {
@@ -136,9 +163,14 @@ namespace NineGrid.Core.Systems
 
         private void ResolveAction(GameAction action, int depth)
         {
-            if (depth > 64)
+            // ADR-0047 熔断遏制：失控触发环（深度超限）或宽度爆炸（总量超限）不再抛异常——
+            // 抛异常会把命令炸穿在半途：已 Apply 的动作留在 Core、批次不开、表现层永远收不到
+            // 该命令事实（盘面/遗物/点击全面分叉）。改为丢弃该分支并落诊断事件，命令原子收尾；
+            // 失控环的「根治」在内容层（效果 DSL 的 cause 防环标记），这里只保证不把局玩死。
+            if (depth > MaxReactionDepth || mResolvedThisRun >= MaxResolvedPerRun)
             {
-                throw new InvalidOperationException("Action reaction chain exceeded max depth.");
+                ContainPipelineFault(action, depth);
+                return;
             }
 
             mResolvedThisRun++;
@@ -157,6 +189,24 @@ namespace NineGrid.Core.Systems
             ResolveTriggeredActions(result.FollowUpActions, depth + 1);
 
             EventLog.Append(new CoreGameEvent(CoreEventType.ActionFinished, actionId, action.ActionName));
+        }
+
+        private void ContainPipelineFault(GameAction action, int depth)
+        {
+            if (mFaultEventsThisRun >= MaxFaultEventsPerRun)
+            {
+                return;
+            }
+
+            mFaultEventsThisRun++;
+            var reason = depth > MaxReactionDepth
+                ? "Reaction chain exceeded max depth " + MaxReactionDepth
+                : "Run exceeded max resolved actions " + MaxResolvedPerRun;
+            var actionName = action != null ? action.ActionName : "<null>";
+            EventLog.Append(new CoreGameEvent(CoreEventType.PipelineFaultContained, 0, actionName)
+                .WithAmount(depth)
+                .WithMessage(reason + "; dropped " + actionName + " (resolved=" + mResolvedThisRun + ")"));
+            this.SendEvent(new Evt_PipelineFaultContained(actionName, depth, mResolvedThisRun));
         }
 
         private void DispatchTriggers(

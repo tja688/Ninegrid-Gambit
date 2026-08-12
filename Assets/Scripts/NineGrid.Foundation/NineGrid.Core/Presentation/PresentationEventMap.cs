@@ -110,7 +110,16 @@ namespace NineGrid.Core
                 false,
                 PresentationBeat.None,
                 "Enemy action window verdict",
-                "Diagnostics-only trace (#206) — FlowTrace records verdict; no playback")
+                "Diagnostics-only trace (#206) — FlowTrace records verdict; no playback"),
+            Entry(
+                CoreEventType.PipelineFaultContained,
+                PresentationInstructionKind.None,
+                PresentationEventCategory.ActionLifecycle,
+                false,
+                false,
+                PresentationBeat.None,
+                "Pipeline fault contained",
+                "Diagnostics-only trace (ADR-0047) — runaway reaction chain truncated; no playback")
         };
 
         private static readonly Dictionary<CoreEventType, PresentationEventMapEntry> sByType = BuildLookup();

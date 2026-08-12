@@ -60,7 +60,7 @@ EffectTriggerReaction.React(triggerCtx):
 - **触发**：OnBattle（带 targetKind/sourceAction/maxActionDepth）、OnKill、OnDeal、OnEvent（任意 CoreEventType）、OnRemove/OnSelfRemoved、OnAnyCardRemoved、OnUseHelpCard/OnSelfUsed、OnOtherHelpCardUsed、OnAnyHelpCardUsed、OnActivate、OnNodeStart/End、OnRotate、OnInteract（every/projectKey/scope）、OnSelfMove（every/requireAdjacentTo/来源过滤）、OnCardRhythmFire（禁 every）、OnMoveToSlot、OnMoveToBoardMark、OnEnter、OnFlip、OnArmorBreak、OnDamageTaken、OnFatalDamage、OnCumulative（metric×7/threshold/形态子类 OnSelfArmorLostCumulative、OnSelfDamageDealtToPlayerCumulative）、OnSelfDamageDealtToPlayer。
 - **条件**：AdjacentHasCard、AtSlot、Adjacent、SelfNotDealtThisBatch / NotInOpeningDeal（ADR-0034 补记豁免）、CardZone、IsFaceUp、HpBelow、StatAtLeast、HasCard、CardCounter、TargetCount、BoardMarkCount、SelectedOption、EventFilter 族（8 个形态化变体：ActorIsPlayer/TargetIsSelf/TargetNotSelf/组合/SourcePrefix/ExcludeCause）、ActionSource、OwnsRelicSet、LevelParity。
 - **目标**：Self、Player、EventCard(s)、EventTarget、Actor（事件行动者——反伤类「对攻击者」；行动者缺失时目标集为空）、MovedEventCards、BoardMarkEventCard、RandomMonster、FilteredCards（多轴过滤 + include/exclude 引用 + 随机取样）、AllMonsters（可交战桶 ∧ 正面）、SelectedCards（玩家选牌；kind=Monster 走可交战桶，trueMonsterOnly 走真怪）、OrthoAdjacent、SlotCard、Column、AdjacentCard。
-- **动作**：Sequence / WeightedRandom / Repeat / Conditional（组合子，可各带子 target）、DealDamage（ignoreArmor）、Heal、GainArmor、SyncAdjacentBorrowedArmor、TransferArmor、ModifyGold、ModifyBaseStat、OfferRewardChoice、GrantRewardFromPool、GrantRelic、Move、Swap、Rotate、Flip、ConcealFace、ModifyActionCountdown、ShuffleInto（deferRefill）、MoveToDrawPile、Spawn（slot=EventFromSlot 亡语占原槽）、ShuffleRandomContent、ExchangeWithDrawPile、ForceBattle、AddModifier（activeWhileAdjacentTo）、AddRuleModifier、ReplayHelpCardEffects、SetBoardMark、RemoveCard、SetCounter、RemoveRuleModifiersBySource、ModifyRelicRunContribution、MarkLeaveTrapBroken、DeactivateSelfEffect。
+- **动作**：Sequence / WeightedRandom / Repeat / Conditional（组合子，可各带子 target）、DealDamage（ignoreArmor）、Heal、GainArmor、SyncAdjacentBorrowedArmor、TransferArmor、ModifyGold、ModifyBaseStat、OfferRewardChoice、GrantRewardFromPool、GrantRelic、Move、Swap、Rotate、Flip、ConcealFace、ModifyActionCountdown、ShuffleInto（deferRefill / cause，见坑）、MoveToDrawPile、Spawn（slot=EventFromSlot 亡语占原槽）、ShuffleRandomContent、ExchangeWithDrawPile、ForceBattle、AddModifier（activeWhileAdjacentTo）、AddRuleModifier、ReplayHelpCardEffects、SetBoardMark、RemoveCard、SetCounter、RemoveRuleModifiersBySource、ModifyRelicRunContribution、MarkLeaveTrapBroken、DeactivateSelfEffect。
 - **数值表达式（EffectValueExpression）**：常数 / `{op: Add|Subtract|Multiply|Divide|Min|Max|Floor|Negate, values:[…]}` / `{source: Player|Target|Owner|Self|EventTarget|EventCard|Actor|Event(field)|CardCount|BoardMarkCount, stat, effective}`。`source:Event` 支持可选 `eventType` 过滤（如 `{"source":"Event","field":"Delta","eventType":"ArmorChanged"}`）——同一动作可能先发别类 delta 事件（金甲吸收下 GoldModified 先入队），不过滤会取错值；schema 校验非法 eventType。简单 amount 数值自动叠加卡店强化（`HelpCardStatBonusUtility`），表达式派生值不叠。
 
 ### requires 词表（ADR-0010）
@@ -78,7 +78,7 @@ EffectTriggerReaction.React(triggerCtx):
 
 ## 关联 ADR
 
-- ADR-0009（参数化模板；实参替换在 NineGrid.Content 侧完成）、ADR-0010（责任自陈、单形态原子、未触发探查）、ADR-0016（背面被动压制 SyncOwnerFaceSuppression）、ADR-0026（魔免过滤在目标解析后）、ADR-0034（SelfNotDealtThisBatch / NotInOpeningDeal / EventFilterExcludeCause）、ADR-0035（projectKey 投影与作用域）、ADR-0038（OnCardRhythmFire 禁 every）、ADR-0044（ExecuteEffectAction 内位移挂起漏斗）、ADR-0045（修正器动作卡面刷新走统一对账缝）。
+- ADR-0009（参数化模板；实参替换在 NineGrid.Content 侧完成）、ADR-0010（责任自陈、单形态原子、未触发探查）、ADR-0016（背面被动压制 SyncOwnerFaceSuppression）、ADR-0026（魔免过滤在目标解析后）、ADR-0034（SelfNotDealtThisBatch / NotInOpeningDeal / EventFilterExcludeCause）、ADR-0035（projectKey 投影与作用域）、ADR-0038（OnCardRhythmFire 禁 every）、ADR-0044（ExecuteEffectAction 内位移挂起漏斗）、ADR-0045（修正器动作卡面刷新走统一对账缝）、ADR-0047（失控触发环管线熔断；防环 cause 必须显式配置）。
 
 ## 不变量与坑
 
@@ -89,3 +89,4 @@ EffectTriggerReaction.React(triggerCtx):
 - 触发原子的 `Matches` 有副作用（推进计数器）；探查器靠计数器快照/恢复规避，其他调用方不要对同一上下文重复 Matches。
 - `every<=1` 且配了 projectKey 的触发不会产出投影提交（Matches 提前 return，`CountdownAdvanced` 未置位）——投影键应只配给 every≥2 的节奏。
 - `DeactivateEffectAction` 对遗物容器会顺带 `PlayerModel.RemoveRelic`（自毁式遗物）；一般卸载路径是 `DeactivateOwnerEffectsAction`（卡离场）与 `DiscardRelicAction`（玩家丢弃）。
+- **事件 Cause ≠ 技能 id（ADR-0047 事故根因）**：卡面 `effectAssemblies` 装配的效果 owner `SourceDefId` 是**挂载卡 DefId**（`ContentSystem.ActivateCardEffects` 传 `definition.DefId`），`ShuffleInto` 等原子产出事件的 `Cause` 缺省即该值。模板用 `EventFilterExcludeCause` 排除某个技能 id 字符串防自触发环时，**必须**在产事件的动作原子上显式配置 `cause`（如剧烈燃烧 `"cause":"skill.intense_burning"`），否则排除永不命中 → 无限自触发 → 管线熔断。写防环模板时永远成对检查「事件写入的 cause」与「过滤器匹配的 cause」是同一字符串。

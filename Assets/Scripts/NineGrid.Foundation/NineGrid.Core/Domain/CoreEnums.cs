@@ -205,7 +205,12 @@ namespace NineGrid.Core
         /// <summary>卡级开火窗口开启（ADR-0038）；驱动 OnCardRhythmFire。</summary>
         CardRhythmFireOpened,
         /// <summary>诊断：敌方行动窗口裁决痕迹（roster/fired/void*/skip*，#206）；不进表现批次。</summary>
-        EnemyActionResolved
+        EnemyActionResolved,
+        /// <summary>
+        /// 诊断（ADR-0047）：反应链深度/总量熔断——失控触发环被遏制、后续分支丢弃，
+        /// 命令仍原子收尾（不再抛异常炸穿命令导致 Core/表现分叉）。不进表现批次。
+        /// </summary>
+        PipelineFaultContained
     }
 
     public enum PresentationEventCategory

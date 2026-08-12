@@ -45,6 +45,7 @@ namespace NineGrid.Flow
 
         private IUnRegister _exploreRejectedUnRegister;
         private IUnRegister _attackRejectedUnRegister;
+        private IUnRegister _pipelineFaultUnRegister;
         private bool _recoveringRewardUi;
 
         public BattleSessionExecutor()
@@ -267,6 +268,8 @@ namespace NineGrid.Flow
                 OnExploreIntentRejected);
             _attackRejectedUnRegister = architecture.RegisterEvent<AttackIntentRejectedEvent>(
                 OnAttackIntentRejected);
+            _pipelineFaultUnRegister = architecture.RegisterEvent<Evt_PipelineFaultContained>(
+                OnPipelineFaultContained);
         }
 
         public void UnregisterPresentationIntentHandlers()
@@ -281,6 +284,12 @@ namespace NineGrid.Flow
             {
                 _attackRejectedUnRegister.UnRegister();
                 _attackRejectedUnRegister = null;
+            }
+
+            if (_pipelineFaultUnRegister != null)
+            {
+                _pipelineFaultUnRegister.UnRegister();
+                _pipelineFaultUnRegister = null;
             }
         }
 
@@ -1044,6 +1053,14 @@ namespace NineGrid.Flow
         private void OnAttackIntentRejected(AttackIntentRejectedEvent e)
         {
             TryRecoverOrphanMidBattleRewardUi("AttackRejected");
+        }
+
+        private void OnPipelineFaultContained(Evt_PipelineFaultContained e)
+        {
+            // ADR-0047：熔断是内容 bug 的兜底遏制（失控触发环被截断、命令原子收尾）。
+            // 游戏可继续，但必须响亮报错让 QA / 日志审查第一时间看见。
+            Debug.LogError(
+                $"[BattleSession] Core 管线熔断（ADR-0047）：失控反应链被截断 action={e.ActionName} depth={e.Depth} resolved={e.ResolvedThisRun}。盘面保持一致可继续游玩，但该效果链存在死循环内容 bug，请回报。");
         }
 
         private void RequestSyncBoardFromCore()

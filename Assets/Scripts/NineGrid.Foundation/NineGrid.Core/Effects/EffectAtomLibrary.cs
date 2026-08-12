@@ -3534,6 +3534,7 @@ namespace NineGrid.Core.Effects
         private bool mTop;
         private bool mPerTarget;
         private bool mDeferRefill;
+        private string mCause = string.Empty;
 
         public void Configure(EffectDslNode config)
         {
@@ -3543,11 +3544,16 @@ namespace NineGrid.Core.Effects
             mTop = config.Get("top").AsBool(false);
             mPerTarget = config.Get("perTarget").AsBool(false);
             mDeferRefill = config.Get("deferRefill").AsBool(false);
+            mCause = config.Get("cause").AsString(string.Empty);
         }
 
         public IReadOnlyList<GameAction> BuildActions(EffectRuntimeContext context, IReadOnlyList<int> targets)
         {
             var count = mPerTarget ? mCount * targets.Count : mCount;
+            // cause 缺省沿用 owner SourceDefId（= 挂载卡 DefId，而非技能 id）。
+            // 依赖 EventFilterExcludeCause 精确排除的模板（如剧烈燃烧防自触发环）
+            // 必须显式配置 cause，否则排除条件永远不命中 → 无限自触发。
+            var cause = string.IsNullOrEmpty(mCause) ? context.SourceDefId : mCause;
             return new[]
             {
                 new ShuffleIntoDrawPileAction(
@@ -3555,7 +3561,7 @@ namespace NineGrid.Core.Effects
                     mKind,
                     count,
                     mTop,
-                    context.SourceDefId,
+                    cause,
                     mDeferRefill)
             };
         }
