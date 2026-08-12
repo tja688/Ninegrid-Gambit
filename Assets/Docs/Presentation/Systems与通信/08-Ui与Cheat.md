@@ -1,6 +1,6 @@
 # Ui 面板与 Cheat 作弊工具
 
-> 覆盖范围：`Ui/` 7 个文件 + `Cheat/` 6 个文件，共 13 个。
+> 覆盖范围：`Ui/` 8 个文件 + `Cheat/` 6 个文件，共 14 个。
 > `Ui/` 是世界空间（SpriteRenderer + Collider）面板的场景接线层；`Cheat/` 是 F12 作弊面板（仅 `UNITY_EDITOR || DEVELOPMENT_BUILD`，正式包不含）。
 
 ## Ui/ 职责综述
@@ -10,7 +10,8 @@
 - 场景预置 GameObject（默认失活）+ 静态 `sInstance` + `RequestOpen/CloseIfOpen`；
 - 命中走 `PointerHitRegistry` / `PointerHitRouter`（世界 UI，非 uGUI 射线）；
 - 打开时 `BattleUiDimmerOverlay.TryAcquire(reason)` 挡射线（引用计数，不改 CurrentOwner、不暂停主线）；
-- 声音一律经 `InteractionAudioCues.Pulse`（稳定 cue + contentId）。
+- 声音一律经 `InteractionAudioCues.Pulse`（稳定 cue + contentId）；
+- 玩家可见字面量一律 `L10n.Tr(key, 中文默认值)`（ADR-0046：zh 走默认值、en 查 ui 表缺键回中文）；场景静态 TMP 标签由 `SceneTextLocalizer` 统一覆盖。
 
 ## Ui/ 关键类型表
 
@@ -23,6 +24,7 @@
 | `WorldUiHitButton` | `Ui/WorldUiHitButton.cs` | 世界空间按钮通用件：BoxCollider2D + `IPointerHitTarget`（Overlay 优先级）+ 悬停缩放 + 点击回调；人物选择/结算面板运行时接线复用 |
 | `ResourcesSpriteLoop` | `Ui/ResourcesSpriteLoop.cs` | Resources 序列帧循环装饰（`LoadAll<Sprite>` + 帧名尾号排序，unscaled 时钟）；仅面板装饰用，**不进卡面表现管线** |
 | `UiAudioFeedback` | `Ui/UiAudioFeedback.cs` | uGUI Selectable 统一声音出口：PointerEnter→`ui.hover`、PointerDown→按可交互性 `ui.press`/`ui.reject`、`PulseAccepted` 由动作回调触发 |
+| `SceneTextLocalizer` | `Ui/SceneTextLocalizer.cs` | MainScene 静态标签本地化（ADR-0046）：显式序列化 TMP 引用 + ui 键数组（禁止 Find）；Awake 捕获场景中文原文作默认值，订阅 `ILanguageSettingsSystem.Changed` 即时刷新（失活面板下的 TMP 同样可写）；MainScene 挂一处，条目跨主菜单/局内功能菜单/战斗信息预览等面板 |
 
 ## Cheat/ 职责综述
 

@@ -11,6 +11,7 @@
 | 文档 | 何时读 |
 |------|--------|
 | [`docs/code-map/`](docs/code-map/) | 代码现状入口（程序集、Presentation 目录、验证约定） |
+| [`Assets/Docs/`](Assets/Docs/) | 权威代码事实文档库（分层区域文档 + ADR 对照 + 领域词汇表 + 按 bug 症状导航），**随代码改动同步维护** |
 | [`docs/adr/`](docs/adr/) | 长期架构决策与行为不变量 |
 | [`CONTEXT.md`](CONTEXT.md) | 仓库当下事实 |
 | `Assets/Notes/` | 进行时过程笔记 |
@@ -18,7 +19,7 @@
 
 ## Code Map 维护（开发后必做）
 
-先文档、后或同 PR 改代码。代码现状只写进 `docs/code-map/` + `docs/adr/`（`Assets/Notes/` 或新镜像库不存代码现状；未落地 Spec 的目标树不写入）。
+先文档、后或同 PR 改代码。代码现状写进 `docs/code-map/` + `docs/adr/`，并**同步维护 [`Assets/Docs/`](Assets/Docs/) 权威代码事实文档库**（`Assets/Notes/` 不存代码现状；未落地 Spec 的目标树不写入）。
 
 | 改动类型 | 更新目标 |
 |----------|----------|
@@ -26,6 +27,7 @@
 | Controller / System / Command·Query 边界、Hook 矩阵、读写与扩展点 | [`docs/code-map/presentation.md`](docs/code-map/presentation.md) |
 | 验证门槛与手动检查约定 | [`docs/code-map/tests.md`](docs/code-map/tests.md) |
 | 长期行为不变量（Batch-ack、占格权威、IntentIntake、卡面 Commit 等） | 新增或修订 [`docs/adr/`](docs/adr/)，并在 code-map 中引用 |
+| **上述任一代码事实变化（新增/删改类、行为变更、目录调整等）** | 同步更新 [`Assets/Docs/`](Assets/Docs/) 对应区域文档（架构总览 / Core / Content / Presentation / ADR 对照 / 领域词汇表） |
 
 **验证门槛**（见 [`docs/code-map/tests.md`](docs/code-map/tests.md)）：硬要求——`recompile` 后 Console 无**由你的改动导致**的新增 Error / Exception / Assert；其余按任务需要手动 Play / QuickTest 验证。
 

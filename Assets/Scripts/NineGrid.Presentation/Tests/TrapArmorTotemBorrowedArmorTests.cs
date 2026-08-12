@@ -1,9 +1,11 @@
 using System.Collections.Generic;
 using System.Text;
 using NineGrid.Core;
+using NineGrid.Core.Content;
 using NineGrid.Core.Effects;
 using NineGrid.Core.Stats;
 using NineGrid.Core.Systems;
+using NineGrid.Core.Utilities;
 using NUnit.Framework;
 using QFramework;
 
@@ -40,8 +42,8 @@ namespace NineGrid.Presentation.Tests
             var far = CreateMonsterOnBoard("monster.test.far", SlotId.Board(1));
             ActivateTotemEffects(totem);
 
-            // 触发一次刷新（远处两格互换，不改变邻接拓扑）。
-            Run(new SwapBoardSlotsAction(SlotId.Board(2), SlotId.Board(3)));
+            // 触发一次刷新（远处怪 1↔2 来回换位，不改变对图腾的邻接拓扑）。
+            Run(new SwapBoardSlotsAction(SlotId.Board(1), SlotId.Board(2)));
             DumpArmor("刷新1", totem, near, far);
             Assert.AreEqual(1, StatArmorUtility.GetCurrentArmor(near), "邻接怪 +1 借甲");
             Assert.AreEqual(0, StatArmorUtility.GetCurrentArmor(far), "远处怪不加甲");
@@ -49,7 +51,7 @@ namespace NineGrid.Presentation.Tests
             // 连续多次刷新：不得叠加。
             for (var i = 0; i < 5; i++)
             {
-                Run(new SwapBoardSlotsAction(SlotId.Board(2), SlotId.Board(3)));
+                Run(new SwapBoardSlotsAction(SlotId.Board(1), SlotId.Board(2)));
             }
 
             DumpArmor("刷新6", totem, near, far);
@@ -84,7 +86,80 @@ namespace NineGrid.Presentation.Tests
             }
         }
 
+        [Test]
+        public void RealContent_DealsMovesRotations_NeverAccumulates()
+        {
+            var content = mArch.GetSystem<IContentSystem>();
+            content.Load(NineGrid.Content.ContentCatalogBootstrap.Load());
+            mArch.GetUtility<IConfigUtility>().Set(ContentConfigKeys.DefaultCatalog, content.Catalog);
+            Assert.IsTrue(content.HasCatalog, "需要真实内容目录");
+
+            var avatar = CreateAvatarOnBoard(SlotId.Board(5));
+            var totem = CreateRealCardOnBoard("trap.armor_totem", SlotId.Board(8));
+            var m1 = CreateRealCardOnBoard("monster.melee_3", SlotId.Board(7));
+            var m2 = CreateRealCardOnBoard("monster.melee_3", SlotId.Board(1));
+            var m3 = CreateRealCardOnBoard("monster.melee_3", SlotId.Board(3));
+            var monsters = new[] { m1, m2, m3 };
+
+            var board = mArch.GetSystem<IBoardSystem>();
+            for (var step = 0; step < 12; step++)
+            {
+                if (step % 3 == 2)
+                {
+                    // 模拟怪物单格移动（MoveCard 发 CardMoved）。
+                    var target = monsters[step % monsters.Length];
+                    var empty = FindEmptySlot(target.Slot.Value);
+                    if (empty != SlotId.None)
+                    {
+                        Run(new MoveCardAction(target.Uid, empty));
+                    }
+                }
+                else
+                {
+                    Run(new RotateBoardClockwiseAction(step % 2 == 0));
+                }
+
+                DumpArmor("真实步" + step, totem, m1, m2, m3);
+                for (var i = 0; i < monsters.Length; i++)
+                {
+                    var expected = board.AreAdjacent(totem, monsters[i]) ? 1 : 0;
+                    Assert.AreEqual(
+                        expected,
+                        StatArmorUtility.GetCurrentArmor(monsters[i]),
+                        "真实步" + step + "：" + monsters[i].DefId + "#" + monsters[i].Uid
+                        + " 借甲必须等于邻接状态");
+                }
+            }
+        }
+
         // ==================== 基建 ====================
+
+        private SlotId FindEmptySlot(SlotId not)
+        {
+            var board = mArch.GetModel<BoardModel>();
+            for (var i = SlotId.MinBoardIndex; i <= SlotId.MaxBoardIndex; i++)
+            {
+                var slot = SlotId.Board(i);
+                if (slot != not && slot != board.AvatarSlot.Value && board.IsEmpty(slot))
+                {
+                    return slot;
+                }
+            }
+
+            return SlotId.None;
+        }
+
+        private CardInstance CreateRealCardOnBoard(string defId, SlotId slot)
+        {
+            var content = mArch.GetSystem<IContentSystem>();
+            var registry = mArch.GetModel<CardRegistry>();
+            var draft = content.CreateDraft(defId);
+            Assert.AreNotEqual(CardKind.Unknown, draft.Kind, defId + " 应在内容目录中");
+            var card = draft.Create(registry);
+            content.ApplyContentToCard(card);
+            mArch.GetModel<BoardModel>().PlaceCard(card, slot);
+            return card;
+        }
 
         private const string RequiresJson = "\"requires\":[\"HasOwnerEntity\",\"CardZoneTriggerable\"],\"containerType\":\"Trap\"";
 

@@ -1,7 +1,8 @@
 # Tests 现状（NineGrid.Presentation.Tests）
 
-> 覆盖范围：`Tests/` 目录，共 **29 个 .cs**（根目录 1 + `Tests/Flow/` 28），全部 EditMode / NUnit。
-> 背景澄清：`docs/code-map/tests.md` 记载的「冲刺期测试套件整体清空」**不适用于本程序集**——音频/VFX 主题的行为测试、结构护栏、交付卫生门禁、工作台传输测试都**仍在且生效**。`AudioStructureGuardTests`、`VfxStructureGuardTests` 等护栏测试没有被清掉；本目录其他篇章若提"护栏只靠文字纪律"，以本篇为准（已同步修正）。
+> 覆盖范围：`Tests/` 目录，共 **32 个 .cs**（根目录 7 + `Tests/Flow/` 25），全部 EditMode / NUnit。
+> 背景澄清：`docs/code-map/tests.md` 记载的「冲刺期测试套件整体清空」**不适用于本程序集**——音频/VFX 主题的行为测试、结构护栏、交付卫生门禁都**仍在且生效**。`AudioStructureGuardTests`、`VfxStructureGuardTests` 等护栏测试没有被清掉；本目录其他篇章若提"护栏只靠文字纪律"，以本篇为准（已同步修正）。
+> 2026-08-12 变更：三个工作台 web 层测试（`AudioWorkbenchServerTests` / `VfxWorkbenchServerTests` / `EditorWorkbenchTransportTests`）已删除——跑测试不再拉起回环服务器与网页；根目录新增六个规则回归测试（对账缝 / 位移挂起 / 神圣决斗 / 清关残留重置 / 遗物开局自愈 / 借甲图腾）。
 
 程序集：`Tests/NineGrid.Presentation.Tests.asmdef`（Editor-only，NUnit；部分文件 `#if UNITY_EDITOR || DEVELOPMENT_BUILD`）。
 
@@ -13,13 +14,19 @@ unity command run_tests --mode EditMode --filter NineGrid.Presentation.Tests --f
 
 ---
 
-## 根目录（1）
+## 根目录（7）
 
 | 文件 | 验证行为 | 守护的不变量 |
 |------|---------|-------------|
 | `AvatarVitalityInvariantTests` | 6 用例：zone 异常但 HP>0 时战场指令仍合法；HP=0 时合法指令收缩为槽位管理；Avatar 失注册/HP=0 时 `DefeatIfAvatarDeadAction` 必须收束 Defeat；StartNode 自愈异常 zone、补跑 Defeat | ADR-0039 判死谓词统一：合法指令裁决 ≡ 战败收束，杜绝"僵尸 Avatar 永久软锁"。断言主体是 Core 侧行为，放本程序集属历史归置；夹具 `NineGridArchitecture.ResetForTests()` |
+| `CardFaceReconciliationRegressionTests` | 随机动作风暴等场景下按表现层消费语义重放事件日志得到的卡面值 == oracle 重算值；对账事件紧邻因果动作、diff 后才发 | ADR-0045 统一对账缝：新增数值源零手工接线，卡面显示与结算源头同源 |
+| `DeferredBoardMotionRegressionTests` | 交战窗 / 敌方行动阶段内效果 DSL 位移挂起到收尾锚点复验后落地（先打再转）；击杀落地前尸体不跟转；齐射盘面冻结成立 | ADR-0044 位移锁定窗口与锚点排水 |
+| `HolyDuelMarkRegressionTests` | 双持有者连打时旧标记惩罚先结算、标记后转移，不因新目标同为持有者而静默 | 神圣决斗（skill.holy_duel）标记结算语义 |
+| `NodeEndTransientResetTests` | 清关（节点完成）即清四档临时修正 + 当前甲回落有效甲，不拖到下局 StartNode | 「对战残留不出局」（`ClearNodeTransientModifiersAction`） |
+| `RelicCompositeArmorNodeStartTests` | 装备栏遗物效果实例缺失时 StartNode 自愈重挂——复合盔甲开局按攻击加当前甲不再哑火 | `ReactivateMissingRelicEffectsAction` 幂等自愈 |
+| `TrapArmorTotemBorrowedArmorTests` | 护甲图腾邻接怪 +1 借甲且只加一次、离邻回收、远处怪不涨甲 | 借甲光环基线记账（`SyncAdjacentBorrowedArmorAction`） |
 
-## Tests/Flow/（28）
+## Tests/Flow/（25）
 
 ### 音频系统行为（4）
 
@@ -46,14 +53,13 @@ unity command run_tests --mode EditMode --filter NineGrid.Presentation.Tests --f
 | `CardLifecycleAndCombatAudioTests` | `DamageFloaterBeatHandler` 出伤序列 Hit→ArmorAbsorb→HpDamage 无重复；帮助卡伤害跳过近战 Hit 保留分账；全甲格挡发 Hit+Block 不发 Hp/Armor；Healed 走旁路装饰（不认领指令）只发一次 Heal；`PulseMotion` Rotate/Move/Swap 三 cue 区分；生命周期/战斗 cue 声明唯一 | #176 从高层表演 seam 断言声音请求顺序与结果，不断言私有动画——战斗声音的"每事件恰好一次" |
 | `FlowRoomEconomyAudioTests` | 金币演出按方向发 GoldGain/GoldSpend 恰一次；过场区分跨层 FloorCross 与同层 RunTransition；`IsInsufficientGoldReason` 精确匹配 Core 拒绝文案；进房脉冲带 RoomId 上下文；流程/经济 cue 声明唯一 | #177 房间/经济/跑图声音的公开 seam 契约 |
 
-### 工作台会话与传输（4）
+### 工作台会话（1）
 
 | 文件 | 验证行为 | 守护的不变量 |
 |------|---------|-------------|
 | `AudioBindingEditorSessionTests` | Session 保存标 HumanConfirmed 清脏、Revert 回磁盘快照不动兄弟脏行、SaveAll/RevertAllDirty 往返；`TryReplaceWorkingDto` 负值夹紧为 0、保留 cueId/note/module/authoringStatus 权威字段、拒空补丁与 BindingKey 冲突；工作 JSON 快照往返恢复脏状态；Music Session 同样夹紧/拒空 | #187 工作台编辑会话：磁盘快照 = 回撤真相；权威字段不可经补丁改写 |
-| `AudioWorkbenchServerTests` | loopback 服务器：无 Bearer Token 401、错 Origin 403、路径穿越 400/404、超大 payload 413；快照 revision 单调、ping 推进；Launcher 菜单路径与 `#token=` URL；`/stream` 无 WS 升级回退 501 指向 `/api/events`；long-poll 在 revision 变化后返回更高版、未变化超时返回原快照；WS 握手→snapshot→ping 后收到 revision+1 的 delta 推送；瞬态与磁盘冲突时 `BlocksMutations` 挡 saveAll 直到 discardTransient | #187 调音工作台传输安全面（鉴权/拒绝面）与 revision 协议 |
-| `VfxWorkbenchServerTests` | VFX loopback：401 无 token；revision 单调 + ping 推进；Launcher 菜单路径/URL；**与 Audio 工作台端口和 token 互异**（可并存）；静态页含"VFX 绑定调试工作台"；瞬态冲突挡 saveAll 直到 discard | #202 VFX 工作台复用同一传输契约且与音频工作台隔离 |
-| `EditorWorkbenchTransportTests` | 通用 `EditorWorkbenchTransport` 用假 host（独立 webroot/端口段/protocolVersion=2）启动：静态页、快照、命令分发都走 host 回调，与 Audio 服务器（protocolVersion=1）并行互不串 | #195 传输层与业务 host 解耦——新工作台只实现 `IEditorWorkbenchHost` 即可复用鉴权/长轮询/静态页 |
+
+> 工作台 **web 传输层**测试（`AudioWorkbenchServerTests` / `VfxWorkbenchServerTests` / `EditorWorkbenchTransportTests`）已于 2026-08-12 删除——跑测试不再拉起回环服务器与网页；工作台本体（`EditorWorkbench/` transport 与各 `*WorkbenchServer`）仍在，其传输安全面（鉴权/拒绝面/revision 协议）现无自动化护栏。
 
 ### VFX 系统行为与诊断（3）
 

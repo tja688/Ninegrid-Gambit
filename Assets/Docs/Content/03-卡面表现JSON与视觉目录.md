@@ -14,7 +14,7 @@
 | 类型 | 文件 | 一句话职责 |
 |------|------|------|
 | `CardPresentationConfigDto`（及嵌套 DTO） | `CardPresentation/CardPresentationConfigDto.cs` | 一卡一文件 JSON 的完整形状：身份/分类三轴/描述两级/攻击模式与节奏/数值/精灵槽/主视觉/动画槽/额外槽/装配引用/怪物编排/房间字段 |
-| `CardPresentationConfigCatalog` | `CardPresentation/CardPresentationConfigCatalog.cs` | cards 目录内存缓存（contentId → DTO）：Editor 先 Arts 后 Streaming 补缺；Player 只读 Streaming；带测试注入缝 |
+| `CardPresentationConfigCatalog` | `CardPresentation/CardPresentationConfigCatalog.cs` | cards 目录内存缓存（contentId → DTO）：Editor 先 Arts 后 Streaming 补缺；Player 只读 Streaming；带测试注入缝；`TryGet` 是卡面文本唯一读口 + 本地化覆盖缝（ADR-0046）——非源语言时按 contentId 查 `LocalizationCatalog` cards 表覆盖 displayName/description/faceIntro（浅拷贝覆盖副本、不污染中文 DTO、按 TablesVersion 失效），覆盖发生在 `{装配id.键}` 令牌投影之前 |
 | `CardPresentationJsonIO` | `CardPresentation/CardPresentationJsonIO.cs` | 单卡 JSON 读写：`contentId` 点号 → 下划线文件名；`SaveAuthoring` 同步双写 Arts + StreamingAssets 并 ImportAsset；嵌套字段缺省补全 |
 | `CardPresentationIndexIO` | `CardPresentation/CardPresentationIndexIO.cs` | `_index.json` 扫盘生成 / 读写 / 一致性校验（索引↔磁盘双向、重复检测、双侧索引字节一致、镜像校验） |
 | `CardPresentationAuthority` | `CardPresentation/CardPresentationAuthority.cs` | 权威契约门面：`HasConfig` / `TryGetOwnedDescription` / `TryGetOwnedDisplayName`（JSON 有值即权威） |
@@ -34,7 +34,7 @@
 | `ContentVisualDefinition` | `Catalog/ContentVisualDefinition.cs` | 视觉条目值对象：contentId + Kind + Description |
 | `ContentVisualCatalog` | `Catalog/ContentVisualCatalog.cs` | 视觉条目字典容器（contentId → Definition） |
 | `ContentVisualResolvedView` | `Catalog/ContentVisualResolvedView.cs` | 解析结果聚合：显示名/描述/五张直暴露槽 Sprite/卡框样式与颜色 |
-| `ContentVisualResolver` | `Catalog/ContentVisualResolver.cs` | contentId + Core Catalog + 视觉目录 + Sprite 提供者 → `ContentVisualResolvedView`；稀有度→卡框样式、Boss/Elite→框色、按 Kind 取显示名 |
+| `ContentVisualResolver` | `Catalog/ContentVisualResolver.cs` | contentId + Core Catalog + 视觉目录 + Sprite 提供者 → `ContentVisualResolvedView`；稀有度→卡框样式、Boss/Elite→框色、按 Kind 取显示名（Avatar 回退名与属性选项文案经 `L10n.Tr`，ADR-0046） |
 | `ContentVisualSpriteCatalogSO`（+ `ContentVisualSpriteEntry` / `IContentVisualSpriteProvider` / `ContentVisualDirectSlotSprites` / `ContentVisualSpriteCatalogSet`） | `Catalog/ContentVisualSpriteCatalogSO.cs` | SO 视觉目录基类：contentId → 五槽 Sprite（主图标/卡面背景/卡背三件套）；类型级 FallbackIcon；`CatalogSet` 按 Kind 路由六个 SO |
 | `HelpCardVisualCatalogSO` / `MonsterVisualCatalogSO` / `RelicVisualCatalogSO` / `SkillVisualCatalogSO` / `MiscVisualCatalogSO` / `ChoiceOptionVisualCatalogSO` | `Catalog/*VisualCatalogSO.cs` | 六个按 Kind 特化的 SO 壳（Misc 承载 Avatar/Room/MonsterDeck） |
 | `ContentVisualSpriteCatalogBootstrapSO` | `Catalog/ContentVisualSpriteCatalogBootstrapSO.cs` | Resources 引导 SO（`ContentVisual/SpriteCatalogBootstrap`）：让 Player 构建能拿到 CatalogSet |
@@ -53,7 +53,7 @@
 
 ### 加载优先级（`CardPresentationConfigCatalog`）
 
-Editor（含 Play Mode in Editor）：先整载 Arts（overwrite），再补 Streaming 中 Arts 缺失的条目；Player：只有 Streaming。DTO 缺 `contentId` 时以文件名（下划线还原点号）为键。**运行时不读 `_index.json`**——索引只服务校验与外部工具。
+Editor（含 Play Mode in Editor）：先整载 Arts（overwrite），再补 Streaming 中 Arts 缺失的条目；Player：只有 Streaming。DTO 缺 `contentId` 时以文件名（下划线还原点号）为键。**运行时不读 `_index.json`**——索引只服务校验与外部工具。中文 JSON 是唯一真源（ADR-0046）：其他语言以外挂翻译表（`Assets/Resources/Localization/<lang>/` 下 cards/glossary/ui 三表）在 `TryGet` 时覆盖文本字段，缺键回中文、永不空串。
 
 ### 资产路径与 Sprite 解析
 

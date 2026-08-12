@@ -1,8 +1,8 @@
 # Ninegrid Gambit · 权威代码事实文档库
 
-> **定位**：预发布权威代码事实快照，生成日期 **2026-08-12**。对象是 `Assets/Scripts/` 全部代码（共 816 个 .cs）。目的：游戏上线后遇到恶性 bug 时，凭这套文档最快速地理解架构、掌控代码、分析推测和定位问题。
+> **定位**：权威代码事实文档库，初版生成日期 **2026-08-12**，对象是 `Assets/Scripts/` 全部代码（初版共 816 个 .cs）。目的：遇到恶性 bug 时，凭这套文档最快速地理解架构、掌控代码、分析推测和定位问题。
 >
-> **权威性声明**：本库以**当下代码实际实现**为准写成（文档/注释与代码冲突处均按代码事实记录并标注）。它是一次性快照——上线后代码继续演进时，以代码为准、本库为入口地图。日常长期权威仍是 `docs/code-map/` + `docs/adr/` + `CONTEXT.md`；本库是为「事故现场快速导航」而做的一次性豁免产物。
+> **权威性声明**：本库以**当下代码实际实现**为准写成（文档/注释与代码冲突处均按代码事实记录并标注）。本库为**持续维护文档**：后续代码改动须同步更新对应区域文档（见根 `AGENTS.md`「Code Map 维护」）。日常长期权威口径由 `docs/code-map/` + `docs/adr/` + `CONTEXT.md` 与本库共同承担：前者管边界与不变量，本库管全量代码事实与事故导航。
 
 ## 目录结构
 
@@ -10,14 +10,14 @@
 |------|------|
 | [00-架构总览](00-架构总览.md) | 分层架构、核心运行循环（Run→Floor→Node→Battle）、十大架构范式鸟瞰 |
 | [01-程序集与场景装配](01-程序集与场景装配.md) | 13 个 asmdef + 2 处 Assembly-CSharp 的清单/引用/文件数；MainScene 装配链与无场景自举点 |
-| [02-ADR索引与代码对照](02-ADR索引与代码对照.md) | 43 篇 ADR 逐条：决策一句话、已核实落地代码位置、关键行为不变量——「从行为规则找代码」的关键索引 |
+| [02-ADR索引与代码对照](02-ADR索引与代码对照.md) | 46 篇 ADR 逐条：决策一句话、已核实落地代码位置、关键行为不变量——「从行为规则找代码」的关键索引 |
 | [03-领域词汇表](03-领域词汇表.md) | 领域词汇 → 含义 + 代码体现位置 |
-| [04-预发布可疑问题总清单](04-预发布可疑问题总清单.md) | 六区读码发现的可疑问题汇总（30 条）：疑似真 bug / 出包风险 / 废止残留与死代码 / 文档与口径矛盾 / 代码卫生，每条附出处链接 |
-| [Core/](Core/) | `NineGrid.Core` 规则核（89 文件）区域文档 |
+| [04-预发布可疑问题总清单](04-预发布可疑问题总清单.md) | 六区读码发现的可疑问题汇总（31 条，其中 #31 已修）：疑似真 bug / 出包风险 / 废止残留与死代码 / 文档与口径矛盾 / 代码卫生，每条附出处链接 |
+| [Core/](Core/) | `NineGrid.Core` 规则核（93 文件）区域文档 |
 | [Content/](Content/) | `NineGrid.Content` + `Content.Editor` + `DevTest`（149 文件）区域文档 |
 | [Presentation/Flow/](Presentation/Flow/) | 表现层 Flow 子树（211 文件）：导演/时间线/流程壳/房间/存档/教学/诊断 |
 | [Presentation/Cards/](Presentation/Cards/) | 表现层 Cards 子树（166 文件）：卡视图/场地/手牌/牌库/卡面/特效 SO/静态 Hook |
-| [Presentation/Systems与通信/](Presentation/Systems与通信/) | Systems/Commands/Queries/Controllers/Setup/Ui/Cheat/Platform/Editor/Tests（约 178 文件） |
+| [Presentation/Systems与通信/](Presentation/Systems与通信/) | Systems/Commands/Queries/Controllers/Setup/Ui/Cheat/Platform/Editor/Tests（约 183 文件） |
 | [Platform桥接/](Platform桥接/README.md) | `NineGrid.SteamBridge`（7）+ `NineGrid.SaveBridge`（1）：Steam 成就/云存档/回调泵 + ES3 落盘桥 |
 | [工具与实验/](工具与实验/README.md) | `VisualFxLab`（8）+ `UI`/`VisualLook`（5）+ `Temporary Test`（2）：画面实验室/像素 Look 管线/临时脚本 |
 
@@ -26,7 +26,9 @@
 | 症状类型 | 从哪入手 | 关键 ADR |
 |----------|----------|----------|
 | 战斗表演卡死 / 时间线不推进 / 输入没反应 | [00](00-架构总览.md) §4.1/4.3 → [Presentation/Flow/](Presentation/Flow/)（PresentationDirector/BattleTimeline/IntentIntake） | 0001, 0004 |
-| 卡面数字错 / 血甲攻显示与结算不符 / 抢跳变 | [02](02-ADR索引与代码对照.md) 表演编排组 → CardFaceStatHandler/BattleBeatScheduler | 0005, 0007, 0028 |
+| 卡面数字错 / 血甲攻显示与结算不符 / 抢跳变 | [02](02-ADR索引与代码对照.md) 表演编排组 → CardFaceStatHandler/BattleBeatScheduler；Core 发射侧对账缝 CardFaceReconciliation（Cause=faceReconcile 可过滤诊断） | 0005, 0045, 0007, 0028 |
+| 交战/齐射中盘面转动时机怪 / 转走还挨打 | BattleScopeSystem 位移锁定窗口 + PhaseSystem 收尾锚点排水 | 0044, 0012 |
+| 文本语言不对 / 英文缺失回中文 / 词条断链 | LanguageSettingsSystem + LocalizationCatalog 三表；卡面覆盖缝 CardPresentationConfigCatalog.TryGet | 0046 |
 | 点击点不中 / 悬停粘连 / 命中区怪异 | [02](02-ADR索引与代码对照.md) 输入命中组 → SlotClaimRegistry/GroundFieldHitSurface/PointerHitRouter | 0006, 0023, 0024 |
 | 补牌/旋转时机错 / 空格不补 / 补牌触发效果误伤 | BoardStabilizationSystem + Scheduler | 0034, 0012 |
 | 怪物不开火 / 开火节奏错 / 倒计时显示错 | CardRhythm + PhaseSystem 敌方行动 + ActionCount 提交链 | 0011, 0012, 0013, 0038 |

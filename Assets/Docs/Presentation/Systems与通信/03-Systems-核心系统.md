@@ -1,6 +1,6 @@
 # Systems 核心系统一览（不含音频 / VFX / 输入门禁）
 
-> 覆盖范围：`Systems/` 下 15 个文件（输入门禁五件套见《02》，音频十件套见《04》，VFX 见《05》）。
+> 覆盖范围：`Systems/` 下 16 个文件（输入门禁五件套见《02》，音频十件套见《04》，VFX 见《05》）。
 > 这些是表现层的 QF System 骨架：**接口窄、状态权威、场景 View 只当宿主**。
 
 ## 职责综述
@@ -30,6 +30,7 @@
 | `CardEntityLifecycleSystem` | `Systems/CardEntityLifecycleSystem.cs` | 实现：持 Cards/Hand/Deck 三 Manager 显式引用；Battle 端交接为位置快照（速度恒 0） |
 | `IGameFlowShellSystem` | `Systems/IGameFlowShellSystem.cs` | 流程壳只读投影接口：State/NodeIndex/IsBusy/IsQuickTestMode/Generation |
 | `GameFlowShellSystem` | `Systems/GameFlowShellSystem.cs` | 流程唯一权威：相位 BindableProperty、run mode（QuickTest/Tutorial）、节点序号、内部持 `GameFlowOrchestrator`；**BGM 期望状态唯一提交方** |
+| `ILanguageSettingsSystem` / `LanguageSettingsSystem` | `Systems/LanguageSettingsSystem.cs` | 玩家语言偏好唯一读写口（ADR-0046）：PlayerPrefs 键 `NineGrid.LanguagePreference.v1`（zh/en，默认 zh）；构造即 `LocalizationCatalog.ConfigureRuntime`（Resources 加载翻译表）+ SetLanguage；`SetLanguage/Toggle` = 写偏好 → 重载表 → 发 `Changed`，订阅者（`SceneTextLocalizer`/主菜单语言按钮）自刷；切换只发生在主菜单 |
 
 ## 核心流程与数据流
 

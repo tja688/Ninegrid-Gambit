@@ -22,12 +22,12 @@
 | `EffectNonTriggerProbe(Result)` | `Effects/EffectNonTriggerProbe.cs` | 未触发探查：分诊 Requires / TriggerMismatch / Conditions / Other（快照恢复计数器避免副作用） |
 | `FragmentRecombineDedup` | `Effects/FragmentRecombineDedup.cs` | 无头骷髅/骷髅头重组：同批相邻对只合并一次 |
 | `HelpCardStatBonusUtility` | `Effects/HelpCardStatBonusUtility.cs` | 卡店"道具数值强化"运行时加成：仅道具卡自有固定数值叠加（派生数值不叠） |
-| `ExecuteEffectAction` / `EmitEffectTriggeredAction` | `Domain/Actions/EffectActions.cs` | 效果触发的动作化包装（EffectTriggered 事件 + follow-up 展开）/ 无实例时的等价事件（ADR-0018 基础触发表现） |
+| `ExecuteEffectAction` / `EmitEffectTriggeredAction` | `Domain/Actions/EffectActions.cs` | 效果触发的动作化包装（EffectTriggered 事件 + follow-up 展开）/ 无实例时的等价事件（ADR-0018 基础触发表现）；ExecuteEffectAction 是全部 Triggered 效果反应的唯一漏斗——结算窗口（交战窗/敌方行动阶段）内产出的盘面位移动作经 `IBattleScopeSystem.TryDeferBoardMotion` 挂起，其余动作照常插在结算链原位（ADR-0044） |
 | `CommitEffectCountdownRemainingAction` / `ClearEffectCountdownRemainingAction` / `ResetBattleScopedCountdownsAction` | 同上 | 倒计时剩余提交 / 清除投影 / 离战把 Battle 作用域倒计时复位为阈值（ADR-0035 #157） |
 | `KillIfDeadAction` / `ConditionalDealDamageIfAliveAction` / `ForceBattleAction` | 同上 | 血≤0 补击杀 / 攻击方活着才出手 / 强制交战（自开交战作用域，先手裁决同交战） |
 | `MoveCardAction` / `SetBoardMarkAction` / `ShuffleIntoDrawPileAction` / `ShuffleCardIntoDrawPileAction` / `SpawnCardAction` / `ShuffleRandomContentIntoDrawPileAction` / `ExchangeWithDrawPileAction` | 同上 | 位移（入场落地按 CardDealt）/ 祝福标记 / 生成洗入（可延后补牌）/ 现有卡洗回 / 生成落位（同槽竞态先到先得；亡语占原槽）/ 随机内容洗入 / 与牌堆换牌 |
-| `AddStatModifierAction` / `AddRuleModifierAction` / `RemoveRuleModifiersBySourceAction` | 同上 | 挂属性修正（Permanent Attack 卡面旁路）/ 挂规则修正（组合条件；DamageMultiplier 对 Avatar 投影攻击槽）/ 按来源清规则 |
-| `ReplayHelpCardEffectsAction` / `DeactivateEffectAction` / `CommitPermanentAttackFaceAction` / `DeactivateOwnerEffectsAction` / `SyncAdjacentBorrowedArmorAction` / `MarkLeaveTrapBrokenAction` | 同上 | 倍增塔重放他卡用牌效果 / 卸载效果（含倒计时投影清除、遗物撤持有）/ 有效攻卡面提交 / 按 owner 反激活 / 邻接图腾借甲（基线记账，离邻回收未耗部分）/ 置清关标志（「离开」技能终点） |
+| `AddStatModifierAction` / `AddRuleModifierAction` / `RemoveRuleModifiersBySourceAction` | 同上 | 挂属性修正 / 挂规则修正（组合条件）/ 按来源清规则——三者引发的卡面数值刷新均由统一对账缝自动提交（ADR-0045，旧手工补扫与 `CommitPermanentAttackFaceAction` 已删除） |
+| `ReplayHelpCardEffectsAction` / `DeactivateEffectAction` / `DeactivateOwnerEffectsAction` / `SyncAdjacentBorrowedArmorAction` / `MarkLeaveTrapBrokenAction` | 同上 | 倍增塔重放他卡用牌效果 / 卸载效果（含倒计时投影清除、遗物撤持有）/ 按 owner 反激活 / 邻接图腾借甲（基线记账，离邻回收未耗部分）/ 置清关标志（「离开」技能终点） |
 
 ## 核心流程与数据流
 
@@ -36,7 +36,7 @@
 | Kind | 激活行为 |
 |---|---|
 | `Triggered` | 创建 Trigger/Target/Action 原子；`OnActivate` 触发点则立即求值入队动作（跳过区域 requires——造卡时还在暂存池）；否则向 TriggerSystem 注册 `(Point, Timing)` 反应 |
-| `Modifier` | 立即解析 Target、对每个目标挂 `StatModifier`（记录以便 Deactivate 回收）；Permanent Attack 入队卡面旁路提交 |
+| `Modifier` | 立即解析 Target、对每个目标挂 `StatModifier`（记录以便 Deactivate 回收）；卡面攻刷新由统一对账缝自动提交（ADR-0045） |
 | `RuleModifier` | 构建 `RuleModifier` 挂入全局注册表（AttackTargetRestriction 自动以 Owner uid 为值；target=Self/Player 生成 TargetUidCondition） |
 
 ### 触发链（CanTrigger）
@@ -59,9 +59,9 @@ EffectTriggerReaction.React(triggerCtx):
 
 - **触发**：OnBattle（带 targetKind/sourceAction/maxActionDepth）、OnKill、OnDeal、OnEvent（任意 CoreEventType）、OnRemove/OnSelfRemoved、OnAnyCardRemoved、OnUseHelpCard/OnSelfUsed、OnOtherHelpCardUsed、OnAnyHelpCardUsed、OnActivate、OnNodeStart/End、OnRotate、OnInteract（every/projectKey/scope）、OnSelfMove（every/requireAdjacentTo/来源过滤）、OnCardRhythmFire（禁 every）、OnMoveToSlot、OnMoveToBoardMark、OnEnter、OnFlip、OnArmorBreak、OnDamageTaken、OnFatalDamage、OnCumulative（metric×7/threshold/形态子类 OnSelfArmorLostCumulative、OnSelfDamageDealtToPlayerCumulative）、OnSelfDamageDealtToPlayer。
 - **条件**：AdjacentHasCard、AtSlot、Adjacent、SelfNotDealtThisBatch / NotInOpeningDeal（ADR-0034 补记豁免）、CardZone、IsFaceUp、HpBelow、StatAtLeast、HasCard、CardCounter、TargetCount、BoardMarkCount、SelectedOption、EventFilter 族（8 个形态化变体：ActorIsPlayer/TargetIsSelf/TargetNotSelf/组合/SourcePrefix/ExcludeCause）、ActionSource、OwnsRelicSet、LevelParity。
-- **目标**：Self、Player、EventCard(s)、EventTarget、MovedEventCards、BoardMarkEventCard、RandomMonster、FilteredCards（多轴过滤 + include/exclude 引用 + 随机取样）、AllMonsters（可交战桶 ∧ 正面）、SelectedCards（玩家选牌；kind=Monster 走可交战桶，trueMonsterOnly 走真怪）、OrthoAdjacent、SlotCard、Column、AdjacentCard。
+- **目标**：Self、Player、EventCard(s)、EventTarget、Actor（事件行动者——反伤类「对攻击者」；行动者缺失时目标集为空）、MovedEventCards、BoardMarkEventCard、RandomMonster、FilteredCards（多轴过滤 + include/exclude 引用 + 随机取样）、AllMonsters（可交战桶 ∧ 正面）、SelectedCards（玩家选牌；kind=Monster 走可交战桶，trueMonsterOnly 走真怪）、OrthoAdjacent、SlotCard、Column、AdjacentCard。
 - **动作**：Sequence / WeightedRandom / Repeat / Conditional（组合子，可各带子 target）、DealDamage（ignoreArmor）、Heal、GainArmor、SyncAdjacentBorrowedArmor、TransferArmor、ModifyGold、ModifyBaseStat、OfferRewardChoice、GrantRewardFromPool、GrantRelic、Move、Swap、Rotate、Flip、ConcealFace、ModifyActionCountdown、ShuffleInto（deferRefill）、MoveToDrawPile、Spawn（slot=EventFromSlot 亡语占原槽）、ShuffleRandomContent、ExchangeWithDrawPile、ForceBattle、AddModifier（activeWhileAdjacentTo）、AddRuleModifier、ReplayHelpCardEffects、SetBoardMark、RemoveCard、SetCounter、RemoveRuleModifiersBySource、ModifyRelicRunContribution、MarkLeaveTrapBroken、DeactivateSelfEffect。
-- **数值表达式（EffectValueExpression）**：常数 / `{op: Add|Subtract|Multiply|Divide|Min|Max|Floor|Negate, values:[…]}` / `{source: Player|Target|Owner|Self|EventTarget|EventCard|Actor|Event(field)|CardCount|BoardMarkCount, stat, effective}`。简单 amount 数值自动叠加卡店强化（`HelpCardStatBonusUtility`），表达式派生值不叠。
+- **数值表达式（EffectValueExpression）**：常数 / `{op: Add|Subtract|Multiply|Divide|Min|Max|Floor|Negate, values:[…]}` / `{source: Player|Target|Owner|Self|EventTarget|EventCard|Actor|Event(field)|CardCount|BoardMarkCount, stat, effective}`。`source:Event` 支持可选 `eventType` 过滤（如 `{"source":"Event","field":"Delta","eventType":"ArmorChanged"}`）——同一动作可能先发别类 delta 事件（金甲吸收下 GoldModified 先入队），不过滤会取错值；schema 校验非法 eventType。简单 amount 数值自动叠加卡店强化（`HelpCardStatBonusUtility`），表达式派生值不叠。
 
 ### requires 词表（ADR-0010）
 
@@ -78,7 +78,7 @@ EffectTriggerReaction.React(triggerCtx):
 
 ## 关联 ADR
 
-- ADR-0009（参数化模板；实参替换在 NineGrid.Content 侧完成）、ADR-0010（责任自陈、单形态原子、未触发探查）、ADR-0016（背面被动压制 SyncOwnerFaceSuppression）、ADR-0026（魔免过滤在目标解析后）、ADR-0034（SelfNotDealtThisBatch / NotInOpeningDeal / EventFilterExcludeCause）、ADR-0035（projectKey 投影与作用域）、ADR-0038（OnCardRhythmFire 禁 every）。
+- ADR-0009（参数化模板；实参替换在 NineGrid.Content 侧完成）、ADR-0010（责任自陈、单形态原子、未触发探查）、ADR-0016（背面被动压制 SyncOwnerFaceSuppression）、ADR-0026（魔免过滤在目标解析后）、ADR-0034（SelfNotDealtThisBatch / NotInOpeningDeal / EventFilterExcludeCause）、ADR-0035（projectKey 投影与作用域）、ADR-0038（OnCardRhythmFire 禁 every）、ADR-0044（ExecuteEffectAction 内位移挂起漏斗）、ADR-0045（修正器动作卡面刷新走统一对账缝）。
 
 ## 不变量与坑
 

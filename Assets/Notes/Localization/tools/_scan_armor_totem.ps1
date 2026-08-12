@@ -1,17 +1,16 @@
-# 临时分析脚本 2：registrylog 结构 + corelog slime 局定位
-$reg = "Assets/Notes/Logs/OtherLog/RegistryLog/registrylog-20260812-181031-seed4773169723558279157.json"
-$core = "Assets/Notes/Logs/CoreLog/corelog-20260812-181031-seed4773169723558279157.json"
-
-$rj = Get-Content $reg -Raw | ConvertFrom-Json
-Write-Output ("registry top-level: " + ($rj.PSObject.Properties.Name -join ", "))
-$rev = $rj.events
-if (-not $rev) { $rev = $rj.entries }
-if (-not $rev) { $rev = $rj.ops }
-if ($rev) {
-    Write-Output ("registry count: " + $rev.Count)
-    $rev[0] | ConvertTo-Json -Depth 5 -Compress
-    # uid -> defId 映射（找 slime 和 armor totem）
-    $hits = @($rev | Where-Object { ($_ | ConvertTo-Json -Depth 5 -Compress) -match "slime|armor_totem" })
-    Write-Output ("slime/totem hits: " + $hits.Count)
-    $hits | Select-Object -First 40 | ForEach-Object { $_ | ConvertTo-Json -Depth 5 -Compress }
+# 临时分析脚本 7：各 session 战斗中怪物身上出现过的最大护甲
+Get-ChildItem "Assets/Notes/Logs/OtherLog/BattleLog" -Filter "battlelog-*.json" | Sort-Object Name | ForEach-Object {
+    $bj = Get-Content $_.FullName -Raw | ConvertFrom-Json
+    $max = 0; $hits = 0
+    foreach ($op in $bj.ops) {
+        if (-not $op.events) { continue }
+        foreach ($e in $op.events) {
+            if ($e.type -eq "ArmorChanged" -and $e.delta -lt 0 -and $e.cardUid -ne 1) {
+                $before = $e.remainingArmor - $e.delta
+                if ($before -gt $max) { $max = $before }
+                $hits++
+            }
+        }
+    }
+    Write-Output ($_.Name + "  maxMonsterArmorSeen=" + $max + " (negArmorEvents=" + $hits + ")")
 }

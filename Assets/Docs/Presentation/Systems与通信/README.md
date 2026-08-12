@@ -1,6 +1,6 @@
 # Presentation · Systems 与通信（权威代码事实文档）
 
-> 本区块覆盖 `Assets/Scripts/NineGrid.Presentation/` 下**除顶层 `Flow/` 与 `Cards/` 之外**的全部 178 个 .cs 文件（2026-08-12 实测扫盘计数；注意 `Tests/Flow/` 是 Tests 的子目录，属本区块）。`Flow/`、`Cards/` 由兄弟区块负责：[../Flow/](../Flow/)、[../Cards/](../Cards/)。
+> 本区块覆盖 `Assets/Scripts/NineGrid.Presentation/` 下**除顶层 `Flow/` 与 `Cards/` 之外**的全部 183 个 .cs 文件（2026-08-12 实测扫盘计数，含当日 ADR-0044/0045/0046 落地后的维护更新；注意 `Tests/Flow/` 是 Tests 的子目录，属本区块）。`Flow/`、`Cards/` 由兄弟区块负责：[../Flow/](../Flow/)、[../Cards/](../Cards/)。
 > 定位：上线后遇到恶性 bug 时，**顺着调用链找责任方**的核心地图。以当下代码实际实现为准；长期不变量以 `docs/adr/` 为准，目录级摘要以 `docs/code-map/presentation.md` 为准。
 
 ## 分篇目录
@@ -9,14 +9,14 @@
 |----|------|--------|
 | [01-装配与场景绑定](./01-装配与场景绑定.md) | `Setup/`（3 文件） | 想知道"这个 System/Hook/Handler 是谁、什么时候接上的" |
 | [02-输入门禁与平台守护](./02-输入门禁与平台守护.md) | 根 2 文件 + 门禁 Systems 5 + `Platform/` 2 | 点击没反应/点了两次/忙时怪态/Win 掉帧卡死 |
-| [03-Systems-核心系统](./03-Systems-核心系统.md) | `Systems/` 核心 15 文件 | 会话/几何/交战/流程壳/卡实体的权威归属 |
+| [03-Systems-核心系统](./03-Systems-核心系统.md) | `Systems/` 核心 16 文件 | 会话/几何/交战/流程壳/卡实体/语言偏好的权威归属 |
 | [04-音频系统](./04-音频系统.md) | `Systems/` 音频 10 文件 | 没声音/声音重复/BGM 串轨/音量不对 |
 | [05-VFX系统](./05-VFX系统.md) | `Systems/VfxSystem+两契约` + `Systems/Vfx/` 共 27 文件 | 特效不播/播错位置/播不停/金币与弹道 |
 | [06-Commands与Queries](./06-Commands与Queries.md) | `Commands/` 27 + `Queries/` 10 文件 | 逐条查"这个写入/读取从哪来到哪去" |
 | [07-Controllers](./07-Controllers.md) | `Controllers/` 21 文件 | Hook 委托挂在谁身上、输入桥断在哪 |
-| [08-Ui与Cheat](./08-Ui与Cheat.md) | `Ui/` 7 + `Cheat/` 6 文件 | 面板打不开/按钮点不中/F12 后门 |
+| [08-Ui与Cheat](./08-Ui与Cheat.md) | `Ui/` 8 + `Cheat/` 6 文件 | 面板打不开/按钮点不中/F12 后门/场景标签本地化 |
 | [09-Editor工具](./09-Editor工具.md) | `Editor/` 14 文件 | 预览/日志导出/打包/资产批处理 |
-| [10-Tests现状](./10-Tests现状.md) | `Tests/` 29 文件（根 1 + `Tests/Flow/` 28） | 现存自动化测试（行为/护栏/卫生/工作台）与验证门槛 |
+| [10-Tests现状](./10-Tests现状.md) | `Tests/` 32 文件（根 7 + `Tests/Flow/` 25） | 现存自动化测试（行为/护栏/卫生/规则回归）与验证门槛 |
 
 ---
 
@@ -81,7 +81,7 @@ PlayerInfoHudBeatHandler → DamageFloaterBeatHandler → CardFaceStatHandler
 ```
 MainScene 加载
 └─ PresentationSceneRoot.Awake（-100）
-   ├─ PlayerAudioSettings / Music / Vfx System 注册（应用会话，跨主菜单存活）
+   ├─ PlayerAudioSettings / Language / Music / Vfx System 注册（应用会话，跨主菜单存活）
    ├─ WireHosts：BattleSessionController.BindSceneHosts + 全部 *Hook.RequestWire
    │   └─ 各 Controller 被 Wire：把 Handle* 挂上 Hook、把场景 View Bind 进 System
    ├─ TriggerPulseOutputController.ConfigureProductionDefaults（FX/audio/VFX 三线）
@@ -161,7 +161,7 @@ MainScene 加载
 | `Systems/IIntentIntake.cs` | 唯一意图收口接口 | 02 |
 | `Systems/IntentIntakeSystem.cs` | 两轴裁决+合法性+冲动轻点+拒绝诊断 | 02 |
 
-### Systems/ 核心（15）
+### Systems/ 核心（16）
 
 | 文件 | 说明 | 篇 |
 |------|------|----|
@@ -180,6 +180,7 @@ MainScene 加载
 | `Systems/CardEntityLifecycleSystem.cs` | 三 Manager 引用+Evict/Admit 实现 | 03 |
 | `Systems/IGameFlowShellSystem.cs` | 流程壳只读投影接口 | 03 |
 | `Systems/GameFlowShellSystem.cs` | 流程权威：相位/QuickTest/教学/存档对齐/BGM 提交 | 03 |
+| `Systems/LanguageSettingsSystem.cs` | 语言偏好唯一读写口（PlayerPrefs + 翻译表重载 + Changed，ADR-0046） | 03 |
 
 ### Systems/ 音频（10）
 
@@ -306,7 +307,7 @@ MainScene 加载
 | `Controllers/ZoneOwnershipQueryController.cs` | Zone 归属 Hook→Query 只读桥 | 07 |
 | `Controllers/AvatarBoardFacingController.cs` | Avatar 朝向（指针相对卡面 X 镜像） | 07 |
 
-### Ui/（7）
+### Ui/（8）
 
 | 文件 | 说明 | 篇 |
 |------|------|----|
@@ -317,6 +318,7 @@ MainScene 加载
 | `Ui/WorldUiHitButton.cs` | 世界空间按钮通用件 | 08 |
 | `Ui/ResourcesSpriteLoop.cs` | Resources 序列帧循环装饰 | 08 |
 | `Ui/UiAudioFeedback.cs` | uGUI Selectable 统一声音出口 | 08 |
+| `Ui/SceneTextLocalizer.cs` | MainScene 静态 TMP 标签本地化（显式引用 + ui 键，ADR-0046） | 08 |
 
 ### Cheat/（6）
 
@@ -348,11 +350,17 @@ MainScene 加载
 | `Editor/SmileySansSdfCharsetBaker.cs` | SDF 字体原地补字 | 09 |
 | `Editor/UiStrokeThickenBatch.cs` | UI 描边加粗批处理 | 09 |
 
-### Tests/（29 = 根 1 + Tests/Flow 28）
+### Tests/（32 = 根 7 + Tests/Flow 25）
 
 | 文件 | 说明 | 篇 |
 |------|------|----|
 | `Tests/AvatarVitalityInvariantTests.cs` | ADR-0039 Avatar 判死谓词回归（6 用例） | 10 |
+| `Tests/CardFaceReconciliationRegressionTests.cs` | ADR-0045 卡面投影对账缝回归（重放==oracle） | 10 |
+| `Tests/DeferredBoardMotionRegressionTests.cs` | ADR-0044 结算窗口位移挂起回归（先打再转） | 10 |
+| `Tests/HolyDuelMarkRegressionTests.cs` | 神圣决斗标记先罚后转回归 | 10 |
+| `Tests/NodeEndTransientResetTests.cs` | 清关即清临时修正与当前甲回落回归 | 10 |
+| `Tests/RelicCompositeArmorNodeStartTests.cs` | StartNode 遗物效果自愈重挂回归（复合盔甲） | 10 |
+| `Tests/TrapArmorTotemBorrowedArmorTests.cs` | 护甲图腾借甲光环回归（邻接+1/离邻回收） | 10 |
 | `Tests/Flow/AudioSystemBehaviorTests.cs` | AudioSystem 冷却/变体/排期/工作台热调音行为 | 10 |
 | `Tests/Flow/MusicDiagnosticsBehaviorTests.cs` | MusicSystem 切歌代数/审计/试听恢复行为 | 10 |
 | `Tests/Flow/PlayerAudioSettingsBehaviorTests.cs` | 三总线音量/静音/落库重置行为 | 10 |
@@ -364,9 +372,6 @@ MainScene 加载
 | `Tests/Flow/CardLifecycleAndCombatAudioTests.cs` | 卡牌生命周期/战斗声音顺序（出伤分账无重复） | 10 |
 | `Tests/Flow/FlowRoomEconomyAudioTests.cs` | 房间/经济/过场声音 seam 契约 | 10 |
 | `Tests/Flow/AudioBindingEditorSessionTests.cs` | 工作台编辑会话（保存/回撤/夹紧/键冲突） | 10 |
-| `Tests/Flow/AudioWorkbenchServerTests.cs` | 音频工作台 loopback 鉴权/revision/WS 推送 | 10 |
-| `Tests/Flow/VfxWorkbenchServerTests.cs` | VFX 工作台 loopback + 与音频工作台并存 | 10 |
-| `Tests/Flow/EditorWorkbenchTransportTests.cs` | 通用工作台传输层与业务 host 解耦 | 10 |
 | `Tests/Flow/VfxSystemBehaviorTests.cs` | VfxSystem Cue 六类结局/空间所有权/热调音 | 10 |
 | `Tests/Flow/VfxPersistentStateBehaviorTests.cs` | 持续状态槽期望态收敛与退出模式 | 10 |
 | `Tests/Flow/VfxDiagnosticsBehaviorTests.cs` | VFX 生命周期诊断/Issue 分类/峰值下钻 | 10 |
@@ -382,4 +387,4 @@ MainScene 加载
 | `Tests/Flow/GoldHudNumberWindowTests.cs` | HUD 金币数字时间窗采样 | 10 |
 | `Tests/Flow/CardDeckEntryDurationTests.cs` | 发牌入场时长估算公式与入场声音 seam | 10 |
 
-**合计：2 + 3 + 2 + 5 + 15 + 10 + 3 + 24 + 27 + 10 + 21 + 7 + 6 + 14 + 29 = 178 ✅**
+**合计：2 + 3 + 2 + 5 + 16 + 10 + 3 + 24 + 27 + 10 + 21 + 8 + 6 + 14 + 32 = 183 ✅**

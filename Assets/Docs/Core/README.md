@@ -1,7 +1,7 @@
 # NineGrid.Core 权威代码文档（总览）
 
-> 程序集：`NineGrid.Core`，路径 `Assets/Scripts/NineGrid.Foundation/NineGrid.Core/`，共 **89** 个 .cs 文件。
-> 本文档库以 2026-08-12 代码实际实现为准，供预发布后快速理解架构与定位问题。分篇文档见本目录 01–10。
+> 程序集：`NineGrid.Core`，路径 `Assets/Scripts/NineGrid.Foundation/NineGrid.Core/`，共 **93** 个 .cs 文件。
+> 本文档库以 2026-08-12 代码实际实现为准（含当日 ADR-0044/0045/0046 落地后的维护更新），供预发布后快速理解架构与定位问题。分篇文档见本目录 01–10。
 
 ## 职责边界
 
@@ -22,15 +22,16 @@ NineGrid.Core/
 ├─ Models/           9 个权威状态模型                             → 篇 02
 ├─ Domain/           基础类型 + 规则 + 动作 + 事件
 │   ├─ (根)          SlotId/枚举/常量/攻击模式/节奏/寻路/战斗规则… → 篇 02/03/04/05/06
-│   ├─ Actions/      全部 GameAction（8 文件）                    → 篇 01/04/05/07/08/09
+│   ├─ Actions/      全部 GameAction（9 文件，含位移挂起）         → 篇 01/04/05/07/08/09
 │   ├─ Commands/     CoreCommandResult（1）                       → 篇 01
-│   ├─ Events/       CoreGameEvent/EventLog/卡面旁路/Offer 编码（4）→ 篇 10
+│   ├─ Events/       CoreGameEvent/EventLog/卡面口径/Offer 编码（4）→ 篇 10
 │   └─ Stats/        属性与规则修正管线（6）                      → 篇 03
 ├─ Effects/          效果 DSL 引擎（12）                          → 篇 09
+├─ Localization/     本地化门面 L10n + 翻译表目录（2，ADR-0046）   → 篇 07（拒因）
 ├─ Systems/          11 个 QF System（管线/触发/相位/盘面/装填…）  → 篇 01/04/05/06/07/08
 ├─ Content/          内容目录与装填契约（5）                      → 篇 08
 ├─ Setup/            开局工厂/职业/存档快照（3）                  → 篇 08
-└─ Presentation/     表现桥接：批次/映射/快照/分发器（8）          → 篇 10
+└─ Presentation/     表现桥接：批次/映射/快照/分发器/对账缝（9）   → 篇 10
 ```
 
 ## 对外暴露面（Presentation 如何驱动 Core）
@@ -45,11 +46,12 @@ NineGrid.Core/
 ## 领域状态模型总图
 
 ```
-                    NineGridArchitecture（装配 8 Model + 13 System + 3 Utility）
+                    NineGridArchitecture（装配 9 Model + 13 System + 3 Utility）
                                           │
    RunModel ──层/节点/相位/种子/本层主题卡组──┐
    PlayerModel ──金币/互动/遗物/双容量/来源池──┤        BattleContextModel
-   RelicRunContributionModel ──遗物run攻甲贡献─┤        （交战窗口/清关标志/开局真怪进度）
+   RelicRunContributionModel ──遗物run攻甲贡献─┤        （交战窗口/敌方行动窗口/挂起位移
+   CardFaceLedgerModel ──卡面投影账本(0045)───┤          队列/清关标志/开局真怪进度）
                                           │
    CardRegistry（uid→CardInstance：FaceUp/攻击模式/节奏/StatBlock/CounterBag/Zone/Slot）
         │                                  │
@@ -76,7 +78,7 @@ NineGrid.Core/
 | [07](07-相位跑图与节点流程.md) | 相位与跑图 | PhaseSystem 门禁矩阵、8 节点编排、清关收场、消费房会话 |
 | [08](08-内容装填奖励经济与存档.md) | 内容装填经济存档 | Catalog、节点装填总装、奖池、房间货架、金币事实、存档快照 |
 | [09](09-效果DSL与技能装配.md) | 效果 DSL | 三型效果、75 原子、requires 自陈、倒计时投影、魔免/背面惰性 |
-| [10](10-表现桥接与事件流.md) | 表现桥接 | 事件→批次→ack、映射表、卡面旁路、快照、命令分发器 |
+| [10](10-表现桥接与事件流.md) | 表现桥接 | 事件→批次→ack、映射表、卡面口径与统一对账缝、快照、命令分发器 |
 
 ## 高频排障入口
 
@@ -90,7 +92,7 @@ NineGrid.Core/
 
 ---
 
-## 文件覆盖清单（89 / 89）
+## 文件覆盖清单（93 / 93）
 
 路径基准：`Assets/Scripts/NineGrid.Foundation/NineGrid.Core/`。
 
@@ -136,8 +138,9 @@ NineGrid.Core/
 | 38 | `Domain/CardCombatRules.cs` | 双桶集中入口（可交战/真怪物/选牌过滤） | 05 |
 | 39 | `Domain/CombatEngagementOrder.cs` | 先手还击裁决 | 05 |
 | 40 | `Domain/AvatarDefeatFollowUp.cs` | Avatar 判死唯一谓词与 Defeat follow-up | 05 |
-| 41 | `Systems/BattleScopeSystem.cs` | 交战窗口开关与作用域修正器清理 | 05 |
+| 41 | `Systems/BattleScopeSystem.cs` | 交战窗口开关与作用域修正器清理；位移锁定窗口与挂起队列（ADR-0044） | 05 |
 | 42 | `Domain/Actions/BattleScopeActions.cs` | 交战作用域开/关动作 | 05 |
+| 42a | `Domain/Actions/DeferredBoardMotionActions.cs` | 挂起位移条目（占位快照）与落地复验动作 ResolveDeferredBoardMotion（ADR-0044） | 05 |
 | 43 | `Domain/Actions/CoreActions.cs` | DealDamage（标准公式）/Heal/GainArmor/TransferArmor/ModifyGold/RemoveCard/Kill | 05 |
 | 44 | `Domain/Actions/FaceOrientationActions.cs` | 翻面 toggle/盖面/翻开三动作（CardFaceChanged + OnFlip） | 05 |
 | 45 | `Domain/FaceDownTickCounters.cs` | 背面专用回合计数（faceDownTick.*） | 05 |
@@ -160,6 +163,8 @@ NineGrid.Core/
 | 62 | `Setup/InitialGameFactory.cs` | 开局工厂：清理重建 + 种子 + Avatar + 职业（含 Clear 后重绑纪律） | 08 |
 | 63 | `Setup/ProfessionCatalog.cs` | 固定职业（战士）属性/初始遗物/来源池播种 | 08 |
 | 64 | `Setup/RunSaveGame.cs` | 跑图存档快照 DTO 与捕获/恢复（ADR-0041） | 08 |
+| 64a | `Localization/L10n.cs` | 语言码与代码串翻译门面 `L10n.Tr(key, 中文默认值)`（ADR-0046） | 07 |
+| 64b | `Localization/LocalizationCatalog.cs` | 外挂翻译表装载（cards/glossary/ui 三表，严格 TryParse、缺键回中文、TablesVersion 失效信号） | 07 |
 | 65 | `Effects/EffectEnums.cs` | 效果三型/容器/原子类枚举与注册特性 | 09 |
 | 66 | `Effects/EffectDefinition.cs` | 效果定义 DTO、JSON 解析器、结构校验器 | 09 |
 | 67 | `Effects/EffectDslNode.cs` | 手写 JSON 解析与动态节点访问 | 09 |
@@ -175,7 +180,7 @@ NineGrid.Core/
 | 77 | `Domain/Actions/EffectActions.cs` | 效果触发包装、倒计时投影三动作、KillIfDead/ForceBattle/Spawn/ShuffleInto/修正器动作等效果专用动作全集 | 09 |
 | 78 | `Domain/Events/CoreGameEvent.cs` | 事实条目（链式构建，含伤害拆分/绝对值字段） | 10 |
 | 79 | `Domain/Events/EventLog.cs` | 顺序事实日志（全局 Sequence） | 10 |
-| 80 | `Domain/Events/CardFaceEventValues.cs` | 卡面绝对值旁路（有效攻/当前甲/投影战斗攻提交） | 10 |
+| 80 | `Domain/Events/CardFaceEventValues.cs` | 卡面数值单一口径 oracle（GetFaceAttack/投影战斗攻/生成类 WithFaceAbsolutes，ADR-0045） | 10 |
 | 81 | `Domain/Events/RewardOfferFaceEncoding.cs` | 奖励 Offer Message 编解码 | 10 |
 | 82 | `Presentation/PresentationBeat.cs` | 表演锚点枚举（None/Impact/Settled） | 10 |
 | 83 | `Presentation/PresentationEventMap.cs` | 事件→指令穷尽映射表（锚点/锁输入/穷尽性自检） | 10 |
@@ -185,3 +190,4 @@ NineGrid.Core/
 | 87 | `Presentation/CoreCommandDispatcher.cs` | 表现层唯一命令入口（切片建批 + 条件开批） | 10 |
 | 88 | `Presentation/CoreViewSnapshot.cs` | 全量只读快照与捕获工厂 | 10 |
 | 89 | `Presentation/ActionLogProjector.cs` | EventLog→可读日志行投影 | 10 |
+| 90 | `Presentation/CardFaceReconciliation.cs` | 卡面投影账本 CardFaceLedgerModel + 统一对账缝 ReconcileAfterAction（ADR-0045） | 10 |

@@ -24,7 +24,7 @@
 | `BattleTraceModels`（多类型） | `Diagnostics/BattleTraceModels.cs` | Battle 轨数据模型（Session/Op/CardSnap/EventRow/Presentation/VerdictHints） |
 | `BattleTraceJson`（静态类） | `Diagnostics/BattleTraceJson.cs` | Battle 轨手写 JSON 序列化（零第三方依赖，规避 JsonUtility 限制） |
 | `FlowTraceRecorder`（静态类） | `Diagnostics/FlowTraceRecorder.cs` | Flow 轨记录器：自动填 beatId/floor/nodeIndex/refBattleOpIndex |
-| `FlowTraceModels`（多类型） | `Diagnostics/FlowTraceModels.cs` | Flow 轨模型：Category / 50+ 稳定事件名常量 / sceneTag 可选标记 |
+| `FlowTraceModels`（多类型） | `Diagnostics/FlowTraceModels.cs` | Flow 轨模型：Category / 50+ 稳定事件名常量（含交战反打裁决 `CounterVerdict`：firstStrike/counterScheduled/skipBanned〔附禁反击来源〕/skipAvatarDefeated/skipInvalid/skipNoChannel/rejected）/ sceneTag 可选标记 |
 | `FlowTraceJson`（静态类） | `Diagnostics/FlowTraceJson.cs` | Flow 轨手写 JSON 序列化 |
 | `PerfTraceRecorder`（静态类） | `Diagnostics/PerfTraceRecorder.cs` | Perf 轨记录器：Beat 管理 + BoardSnap + 实时异常检测 + 镜像 Registry |
 | `PerfTraceModels`（多类型） | `Diagnostics/PerfTraceModels.cs` | Perf 轨模型：60+ Kind 常量、打点站点、异常码 |

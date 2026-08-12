@@ -80,7 +80,7 @@
             "id": "fx.b74cd83f",
             "templateId": "tpl.skill.stack_armor.interact",
             "containerType": "MonsterSkill",
-            "argsJson": "{\"amount\":6}"
+            "argsJson": "{\"amount\":2}"
         }
     ],
     "effectIds": [],

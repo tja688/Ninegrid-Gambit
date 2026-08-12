@@ -7,27 +7,27 @@
 这两个目录承载「游戏 ↔ 外部平台/插件」的全部胶水代码，共同遵循仓库的**装配缝范式**：业务程序集只依赖 `NineGrid.Presentation` 内的抽象接口（`IRunSaveStore`、`IPlatformAchievements`、`IPlatformInfo`）与静态 Hook（`RunSaveStoreHook`、`PlatformAchievementsHook`、`PlatformInfoHook`），第三方 SDK 类型（Steamworks.NET、Easy Save 3）被隔离在桥接侧，经 `RuntimeInitializeOnLoad` 自举注册，**无任何场景序列化对象**。
 
 - **NineGrid.SaveBridge**：跑图存档（ADR-0041 战斗开始检查点）的 Easy Save 3 落盘后端。ES3 插件无 asmdef、只能从 Assembly-CSharp 调用，因此本目录**刻意不放 asmdef**（编入 Assembly-CSharp），这是硬约束不是疏漏。
-- **NineGrid.SteamBridge**：Steam 平台桥（ADR-0043）。成就/统计、平台信息（玩家名/语言/Rich Presence）、云存档镜像三件事的 Steam 后端，外加每帧回调泵与 Editor 验证菜单。核心行为不变量：**平台缺位零影响**——Steam 客户端未运行 / Init 失败 / 原生库缺失时静默降级，所有 Hook 不注册，游戏与无 Steam 完全一致。
+- **NineGrid.SteamBridge**：Steam 平台桥（ADR-0043）。成就/统计、平台信息（玩家名/语言/Rich Presence）、云存档镜像三件事的 Steam 后端，外加每帧回调泵与 Editor 验证菜单。核心行为不变量：**平台缺位零影响**——Steam 客户端未运行 / Init 失败 / 原生库缺失 / Editor 开关未开时静默降级，所有 Hook 不注册，游戏与无 Steam 完全一致。
 
 ## 关键类型表
 
 | 类型 | 文件（相对 `Assets/Scripts/`） | 一句话职责 |
 |------|------|------|
 | `Es3RunSaveStore` | `NineGrid.SaveBridge/Es3RunSaveStore.cs` | `IRunSaveStore` 的 ES3 实现；`SubsystemRegistration` 时经 `RunSaveStoreHook.Set` 注册；落盘 `persistentDataPath/NineGridSaves/slot_{id}.es3`，单键 `snapshot` 存快照 JSON |
-| `SteamPlatformBootstrap` | `NineGrid.SteamBridge/SteamPlatformBootstrap.cs` | `BeforeSceneLoad` 自举：`Packsize/DllCheck` 校验 → `RestartAppIfNecessary`（仅 Player）→ `SteamAPI.Init` → 挂回调泵 → 注册成就/平台信息后端 → 用云装饰器包住既有存档后端并 `SyncOnBoot`；失败即静默降级；`ShutdownFromPump` 还原全部 Hook + `SteamAPI.Shutdown` |
+| `SteamPlatformBootstrap` | `NineGrid.SteamBridge/SteamPlatformBootstrap.cs` | `BeforeSceneLoad` 自举（2026-08-12 修订，ADR-0043）：Editor 下先查本机 EditorPrefs 开关（`NineGrid.Steam.EditorEnabled`，默认 false，未开完全不碰 SteamAPI）→ Development Build 的 Player 整体跳过（临时措施，未上架前打包分发不触发 Steam 登录验证）→ `Packsize/DllCheck` 校验 → Editor 下 `SteamAPI.IsSteamRunning()` 确认客户端在运行（只读状态不拉起）→ `RestartAppIfNecessary`（仅正式 Build）→ `SteamAPI.Init` → 挂回调泵 → 注册成就/平台信息后端 → 用云装饰器包住既有存档后端并 `SyncOnBoot`；失败即静默降级；`ShutdownFromPump` 还原全部 Hook + `SteamAPI.Shutdown` |
 | `SteamAchievementsService` | `NineGrid.SteamBridge/SteamAchievementsService.cs` | `IPlatformAchievements` 的 Steam 后端（`ISteamUserStats`）：Unlock 幂等（已解锁即返回）、SetStat/AddStat/GetStat/Flush、`ResetAllForDev`；API Name 后台未定义只打 Warning |
 | `SteamPlatformInfo` | `NineGrid.SteamBridge/SteamPlatformInfo.cs` | `IPlatformInfo` 的 Steam 后端：玩家名、语言码、SteamID、Overlay 可用性、Rich Presence 读写 |
 | `SteamCloudRunSaveStore` | `NineGrid.SteamBridge/SteamCloudRunSaveStore.cs` | `IRunSaveStore` 云镜像**装饰器**（`ISteamRemoteStorage`）：写=本地+云双写；读=本地优先、云端兜底并回填；`SyncOnBoot` 双向同步按文件时间戳新者胜（容差 2 秒）；云不可用时纯透传本地 |
 | `SteamCallbackPump` | `NineGrid.SteamBridge/SteamCallbackPump.cs` | 常驻 `DontDestroyOnLoad` MonoBehaviour：每帧 `SteamAPI.RunCallbacks()`；`OnApplicationQuit`（含 Editor 退 Play）调 `SteamPlatformBootstrap.ShutdownFromPump` 收口 |
 | `SteamAppIds` | `NineGrid.SteamBridge/SteamAppIds.cs` | AppId 单点常量：`Current = 480`（Spacewar 占位）；正式 AppId 须同步改仓库根 `steam_appid.txt` |
-| `SteamDebugMenu` | `NineGrid.SteamBridge/SteamDebugMenu.cs` | Editor 菜单 `NineGrid/Steam/`（须 Play Mode + Steam 客户端）：打印平台状态、解锁 Spacewar 测试成就、重置全部成就统计、列云存档文件 |
+| `SteamDebugMenu` | `NineGrid.SteamBridge/SteamDebugMenu.cs` | Editor 菜单 `NineGrid/Steam/`：勾选开关「在本机 Editor 启用 Steam」（写 EditorPrefs，下次进 Play 生效）；其余功能须 Play Mode + Steam 客户端——打印平台状态、解锁 Spacewar 测试成就、重置全部成就统计、列云存档文件 |
 
 ## 核心流程与数据流
 
 ### 启动装配链（顺序敏感）
 
 1. `Es3RunSaveStore.Install`（`RuntimeInitializeLoadType.SubsystemRegistration`，最早）→ `RunSaveStoreHook.Set(es3)`。
-2. `SteamPlatformBootstrap.Install`（`BeforeSceneLoad`，晚于上一步）→ Init 成功后：
+2. `SteamPlatformBootstrap.Install`（`BeforeSceneLoad`，晚于上一步）→ 三道前置闸（Editor 本机开关未开 / Development Build Player / Editor 下 Steam 客户端未运行 → 直接跳过初始化）→ Init 成功后：
    - `SteamCallbackPump.Ensure()` 建常驻泵；
    - `PlatformAchievementsHook.Set(SteamAchievementsService)`、`PlatformInfoHook.Set(SteamPlatformInfo)`；
    - 取出 `RunSaveStoreHook.StoreOrNull()`（即 ES3 后端），构造 `SteamCloudRunSaveStore(inner)` 装饰，`SyncOnBoot()` 后 `RunSaveStoreHook.Set(cloudStore)`。
@@ -70,7 +70,7 @@
 | 文件 | 说明 |
 |------|------|
 | `Assets/Scripts/NineGrid.SaveBridge/Es3RunSaveStore.cs` | 跑图存档 ES3 落盘后端；SubsystemRegistration 自举注册进 `RunSaveStoreHook` |
-| `Assets/Scripts/NineGrid.SteamBridge/SteamPlatformBootstrap.cs` | Steam 自举与收口总入口；Init 失败静默降级；注册/还原全部平台 Hook |
+| `Assets/Scripts/NineGrid.SteamBridge/SteamPlatformBootstrap.cs` | Steam 自举与收口总入口；Editor 默认关闭须本机显式开启、Dev Build 跳过；Init 失败静默降级；注册/还原全部平台 Hook |
 | `Assets/Scripts/NineGrid.SteamBridge/SteamAchievementsService.cs` | 成就/统计 Steam 后端（ISteamUserStats），Unlock 幂等、失败只警告 |
 | `Assets/Scripts/NineGrid.SteamBridge/SteamPlatformInfo.cs` | 玩家名/语言/SteamID/Overlay/Rich Presence 的 Steam 后端 |
 | `Assets/Scripts/NineGrid.SteamBridge/SteamCloudRunSaveStore.cs` | 云存档镜像装饰器：双写/本地优先/启动双向同步/时间戳新者胜（容差 2s） |

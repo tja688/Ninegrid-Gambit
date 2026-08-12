@@ -23,7 +23,7 @@
 | `IGameFlowView` | `GameFlow/IGameFlowView.cs` | 流程场景视图接口：Notice / Panel 显隐 / 时序参数 / QuitGame |
 | `RunSaveService`（静态类） | `GameFlow/RunSave/RunSaveService.cs` | 存档服务：检查点捕获→自动槽、手动槽写入、读档收口重开 |
 | `IRunSaveStore` + `RunSaveStoreHook` | `GameFlow/RunSave/RunSaveStore.cs` | 落盘后端接口 + 装配缝（ES3 桥在 `NineGrid.SaveBridge` 注册） |
-| `GameFlowController` | `GameFlowController.cs` | 主流程场景 View：主菜单四按钮轮询命中 + 悬停缩放 + 菜单音效；实现 `IGameFlowView` |
+| `GameFlowController` | `GameFlowController.cs` | 主流程场景 View：主菜单按钮（开始/教学/设置/退出 + 语言切换）轮询命中 + 悬停缩放 + 菜单音效；语言切换按钮（`MainPanel/LanguageToggle`）经 `LanguageSettingsSystem.Toggle` 切 zh↔en 并自刷 label（ADR-0046）；胜负 Notice 文案经 `L10n.Tr` 包装；实现 `IGameFlowView` |
 | `GameFlowShellHook`（静态类） | `GameFlowShellHook.cs` | 流程壳 Controller 接线入口；`PublishState` 镜像路径**已停用**（no-op，防旧路径偷写第二份相位） |
 | `GameFlowShellState`（enum） | `Presentation/GameFlowShellState.cs` | 壳相位七态：MainMenu / BattleStub / RewardChoice / RoomChoice / RoomEvent / VictoryNotice / DefeatNotice |
 | `GameFlowShellStateChangedEvent`（struct） | `Presentation/GameFlowShellStateChangedEvent.cs` | 相位变更一次性广播（From/To） |
