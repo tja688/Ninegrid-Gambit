@@ -42,8 +42,22 @@ CoreLog（FlowTrace）`category=Rhythm`，由 `RhythmFaceFlowTraceBinder` 全互
 | `ActionCountdownChanged` | uid/defId/delta/remaining | 卡级共享倒计时轨迹 |
 | `RhythmFireOpened` | uid/defId | 卡级开火窗（ADR-0038） |
 | `EnemyActionVerdict` | uid/defId/verdict/detail/patternFires/remaining | 敌方行动裁决：`roster`（报名名单）/`fired`/`voidPosition`/`voidActionBanned`/`skipFaceDown`/`skipInvalid`/`abortAvatarDown` |
+| `CounterVerdict` | uid/defId/verdict/detail | 交战反打裁决：`firstStrike`/`counterScheduled`/`skipBanned`/`skipAvatarDefeated`/`skipInvalid`/`skipNoChannel`/`rejected`；`skipBanned` 的 detail 带 `banSources=…`（禁反击修正来源，近战怪出现即异常，如按 uid 挂的修正跨局泄漏） |
 
 `category=CombatSummary` 的 `EffectTriggered` 自 #206 起覆盖**全部**互动链（此前只有交战链）。
+
+## BattleTrace 交战 op reason（2026-08-12 起）
+
+battlelog `CombatHit` op 带 attacker/target 双快照（此前 Intent 路径 attacker 恒为 null，且怪→玩家批完全不落 op）：
+
+| reason | 含义 |
+|--------|------|
+| `IntentCombatHit` | 玩家命中怪（attacker=avatar） |
+| `IntentCounterHit` | 交战反击（怪未被击杀后的反打，attacker=怪） |
+| `IntentFirstStrike` | 怪物先手（玩家点击交战但怪先出手） |
+| `EnemyVolleyStrike` | 敌方行动阶段开火且造成伤害的批 |
+
+审「怪不反击」：先在 corelog 查 `CounterVerdict`，`skipBanned` 直接给出禁反击来源；再对照 battlelog 是否有对应 `IntentCounterHit` op。
 
 ## 分析脚本（推荐）
 

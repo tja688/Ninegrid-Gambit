@@ -98,6 +98,11 @@ namespace NineGrid.Flow.Diagnostics
         public const string RhythmFireOpened = "RhythmFireOpened";
         /// <summary>敌方行动窗口裁决（roster/fired/void*/skip*）。</summary>
         public const string EnemyActionVerdict = "EnemyActionVerdict";
+        /// <summary>
+        /// 交战反打裁决（firstStrike / counterScheduled / skipBanned / skipAvatarDefeated /
+        /// skipInvalid / skipNoChannel / rejected）；skipBanned 附带命中的禁反击修正来源。
+        /// </summary>
+        public const string CounterVerdict = "CounterVerdict";
 
         // V2 Field / Presentation / Hand
         public const string DrainBegin = "DrainBegin";

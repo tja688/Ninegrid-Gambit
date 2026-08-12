@@ -523,21 +523,31 @@ namespace NineGrid.Flow
             var pipeline = arch.GetSystem<IActionPipelineSystem>();
             result.DamagePopups = PresentationOutputProjector.CollectDamagePopups(pipeline.EventLog.Entries, startIndex);
 
-            RecordIntentCombatHitDiagnostics(arch, pipeline, startIndex, resolvedCombatUid, result);
+            RecordIntentCombatOpDiagnostics(
+                arch,
+                pipeline,
+                startIndex,
+                "IntentCombatHit",
+                arch.GetModel<BoardModel>().AvatarUid.Value,
+                resolvedCombatUid,
+                result);
 
             _session.AttackHitPresentChannel?.Enqueue(boardSlot, resolvedCombatUid, result);
             _session.BoardPlayer.PresentShuffleIntoDeckFromEventLog(startIndex);
         }
 
         /// <summary>
-        /// Intent 击杀走 CombatHitCommand，不经 ApplyCombatHitFromCore；此处补 BattleTrace / FlowTrace，
-        /// 否则 battlelog 只有 StartNode，献身等 OnRemove 效果无法从日志核对。
+        /// Intent 交战批（玩家命中 / 反击 / 先手 / 齐射伤害）不经 ApplyCombatHitFromCore；此处补
+        /// BattleTrace / FlowTrace，否则 battlelog 只有 StartNode，反击缺席、献身等 OnRemove
+        /// 效果均无法从日志核对（2026-08-12 禁反击跨局泄漏即因反击批无 op 而难以定位）。
         /// </summary>
-        private static void RecordIntentCombatHitDiagnostics(
+        private static void RecordIntentCombatOpDiagnostics(
             IArchitecture arch,
             IActionPipelineSystem pipeline,
             int startIndex,
-            int resolvedCombatUid,
+            string reason,
+            int attackerUid,
+            int targetUid,
             PostKillBoardPresentationResult result)
         {
             try
@@ -549,13 +559,13 @@ namespace NineGrid.Flow
 
                 var endIndex = pipeline.EventLog.Entries.Count;
                 var targetKilled = IntentBatchProjection.ContainsCardKilled(
-                    pipeline, startIndex, resolvedCombatUid);
+                    pipeline, startIndex, targetUid);
                 var damageAmount = 0;
                 for (var i = startIndex; i < endIndex; i++)
                 {
                     var e = pipeline.EventLog.Entries[i];
                     if (e.Type == CoreEventType.DamageDealt
-                        && e.TargetUid == resolvedCombatUid
+                        && e.TargetUid == targetUid
                         && e.Amount > damageAmount)
                     {
                         damageAmount = e.Amount;
@@ -566,14 +576,16 @@ namespace NineGrid.Flow
                 {
                     BattleTraceRecorder.BeginSessionIfNeeded();
                     var events = BattleTraceRecorder.SliceEvents(startIndex, endIndex);
-                    var targetSnap = BattleTraceRecorder.TryCaptureCard(resolvedCombatUid);
+                    var attackerSnap = BattleTraceRecorder.TryCaptureCard(attackerUid);
+                    var targetSnap = BattleTraceRecorder.TryCaptureCard(targetUid);
                     BattleTraceRecorder.RecordOp(new BattleTraceOp
                     {
                         opKind = "CombatHit",
-                        reason = "IntentCombatHit",
+                        reason = reason,
                         apiPath = "CombatHitCommand",
                         phaseBefore = string.Empty,
                         phaseAfter = arch.GetSystem<IPhaseSystem>().CurrentPhase.ToString(),
+                        attacker = attackerSnap,
                         target = targetSnap,
                         eventStartIndex = startIndex,
                         eventEndIndex = endIndex,
@@ -660,8 +672,20 @@ namespace NineGrid.Flow
             int attackerUid,
             PostKillBoardPresentationResult result)
         {
-            var pipeline = NineGridArchitecture.Current.GetSystem<IActionPipelineSystem>();
+            var arch = NineGridArchitecture.Current;
+            var pipeline = arch.GetSystem<IActionPipelineSystem>();
             result.DamagePopups = PresentationOutputProjector.CollectDamagePopups(pipeline.EventLog.Entries, startIndex);
+
+            // 怪→玩家批（反击 / 先手 / 齐射伤害）同样落 battlelog op；
+            // reason 由派发方经 CombatHitTraceContext 标注，缺省按反击记。
+            RecordIntentCombatOpDiagnostics(
+                arch,
+                pipeline,
+                startIndex,
+                BattleTraceRecorder.ConsumePendingReason("IntentCounterHit"),
+                attackerUid,
+                arch.GetModel<BoardModel>().AvatarUid.Value,
+                result);
 
             _session.AttackCounterPresentChannel?.Enqueue(attackerBoardSlot, attackerUid, result);
             _session.BoardPlayer.PresentShuffleIntoDeckFromEventLog(startIndex);

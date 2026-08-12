@@ -1,8 +1,11 @@
 using System;
+using System.Collections.Generic;
 using NineGrid.Cards;
 using NineGrid.Core;
 using NineGrid.Core.Commands;
+using NineGrid.Core.Stats;
 using NineGrid.Core.Systems;
+using NineGrid.Flow.Diagnostics;
 using QFramework;
 
 namespace NineGrid.Flow.Presentation
@@ -111,6 +114,7 @@ namespace NineGrid.Flow.Presentation
 
             if (phase.MonsterStrikesFirst(attackerUid, targetUid))
             {
+                RecordCounterVerdict("firstStrike", targetUid, "avatar=" + attackerUid);
                 BuildMonsterFirstScript(timeline, sync, slotIndex, attackerUid, targetUid);
                 return;
             }
@@ -143,6 +147,7 @@ namespace NineGrid.Flow.Presentation
                     }
                     else
                     {
+                        RecordCounterVerdict("skipAvatarDefeated", targetUid, string.Empty);
                         EnqueueNonKillInteractionAdvance(t, slotIndex);
                     }
                 }));
@@ -165,7 +170,7 @@ namespace NineGrid.Flow.Presentation
             mLastResolvedCombatUid = monsterUid;
             var firstStrikeGate = PresentationSyncBatchGate.FromSync(
                 sync,
-                () => ResolveCounterAndProject(slotIndex, monsterUid, avatarUid),
+                () => ResolveCounterAndProject(slotIndex, monsterUid, avatarUid, "IntentFirstStrike"),
                 slice: "AttackCounter");
             timeline.Enqueue(new ResolveBatchStep(firstStrikeGate));
             timeline.Enqueue(new PresentStep(
@@ -311,6 +316,7 @@ namespace NineGrid.Flow.Presentation
         {
             if (mCounterPresentChannel == null)
             {
+                RecordCounterVerdict("skipNoChannel", monsterUid, string.Empty);
                 EnqueueNonKillInteractionAdvance(timeline, boardSlot);
                 return;
             }
@@ -332,21 +338,25 @@ namespace NineGrid.Flow.Presentation
 
             if (monsterUid <= 0 || avatarUid <= 0)
             {
+                RecordCounterVerdict("skipInvalid", monsterUid, "avatar=" + avatarUid);
                 EnqueueNonKillInteractionAdvance(timeline, boardSlot);
                 return;
             }
 
             // 远程武器：本卡不先手也不反击（齐射不受影响）→ 跳过反击批，直接互动推进。
+            // 打点带命中的修正来源：近战怪出现 skipBanned 即为异常（如按 uid 挂的修正跨局泄漏）。
             if (HasCounterAttackBan(monsterUid))
             {
+                RecordCounterVerdict("skipBanned", monsterUid, DescribeCounterBanSources(monsterUid));
                 EnqueueNonKillInteractionAdvance(timeline, boardSlot);
                 return;
             }
 
+            RecordCounterVerdict("counterScheduled", monsterUid, "avatar=" + avatarUid);
             var sync = mArchitecture.GetSystem<IPresentationSyncSystem>();
             var counterGate = PresentationSyncBatchGate.FromSync(
                 sync,
-                () => ResolveCounterAndProject(boardSlot, monsterUid, avatarUid),
+                () => ResolveCounterAndProject(boardSlot, monsterUid, avatarUid, "IntentCounterHit"),
                 slice: "AttackCounter");
             timeline.Enqueue(new ResolveBatchStep(counterGate));
             timeline.Enqueue(new PresentStep(
@@ -430,13 +440,20 @@ namespace NineGrid.Flow.Presentation
         private CoreCommandDispatchResult ResolveCounterAndProject(
             int attackerBoardSlot,
             int monsterUid,
-            int avatarUid)
+            int avatarUid,
+            string traceReason)
         {
             var pipeline = mArchitecture.GetSystem<IActionPipelineSystem>();
             var startIndex = pipeline.EventLog.Entries.Count;
             var dispatch = mDispatcher.Send(new CombatHitCommand(monsterUid, avatarUid));
             if (dispatch == null || !dispatch.Accepted)
             {
+                RecordCounterVerdict(
+                    "rejected",
+                    monsterUid,
+                    dispatch != null && dispatch.CommandResult != null
+                        ? dispatch.CommandResult.Reason
+                        : "nullDispatch");
                 return dispatch;
             }
 
@@ -445,10 +462,88 @@ namespace NineGrid.Flow.Presentation
             mLastAvatarDefeated = projection.AvatarDefeated;
             if (mOnCounterBatchProjected != null)
             {
+                CombatHitTraceContext.PendingReason = traceReason;
                 mOnCounterBatchProjected(startIndex, attackerBoardSlot, monsterUid, projection);
             }
 
             return dispatch;
+        }
+
+        /// <summary>
+        /// 交战反打裁决打点（Rhythm/CounterVerdict）：反击被跳过时必须留痕，
+        /// 否则「怪没反击」与「怪被禁反击」在日志里无法区分。诊断失败不影响结算。
+        /// </summary>
+        private void RecordCounterVerdict(string verdict, int monsterUid, string detail)
+        {
+            try
+            {
+                if (!FlowTraceRecorder.Enabled)
+                {
+                    return;
+                }
+
+                CardInstance monster;
+                mArchitecture.GetModel<CardRegistry>().TryGet(monsterUid, out monster);
+                FlowTraceRecorder.Record(
+                    FlowTraceCategory.Rhythm,
+                    FlowTraceNames.CounterVerdict,
+                    new Dictionary<string, string>
+                    {
+                        { "uid", monsterUid.ToString() },
+                        { "defId", monster != null ? monster.DefId ?? string.Empty : string.Empty },
+                        { "verdict", verdict },
+                        { "detail", detail ?? string.Empty },
+                    },
+                    refBattleOpIndex: BattleTraceRecorder.LastOpIndex);
+            }
+            catch
+            {
+                // 打点失败一律吞掉，不影响结算路径。
+            }
+        }
+
+        /// <summary>
+        /// 列出当前对该怪生效的 CounterAttackBanned 修正来源（如 skill.ranged_weapon /
+        /// intrinsic.trap:*），供 skipBanned 裁决直接定位是谁禁的反击。
+        /// </summary>
+        private string DescribeCounterBanSources(int monsterUid)
+        {
+            try
+            {
+                CardInstance monster;
+                if (!mArchitecture.GetModel<CardRegistry>().TryGet(monsterUid, out monster)
+                    || monster == null)
+                {
+                    return string.Empty;
+                }
+
+                var stats = mArchitecture.GetSystem<IStatSystem>();
+                var context = stats.CreateContext(monster);
+                var modifiers = stats.RuleModifiers.Modifiers;
+                var sources = new List<string>();
+                for (var i = 0; i < modifiers.Count; i++)
+                {
+                    var modifier = modifiers[i];
+                    if (modifier.Rule != RuleId.CounterAttackBanned || !modifier.IsActive(context))
+                    {
+                        continue;
+                    }
+
+                    var id = string.IsNullOrEmpty(modifier.Source.Id) ? "unknown" : modifier.Source.Id;
+                    if (!sources.Contains(id))
+                    {
+                        sources.Add(id);
+                    }
+                }
+
+                return sources.Count == 0
+                    ? string.Empty
+                    : "banSources=" + string.Join("|", sources.ToArray());
+            }
+            catch
+            {
+                return string.Empty;
+            }
         }
 
         private CoreCommandDispatchResult ResolveAndProject(

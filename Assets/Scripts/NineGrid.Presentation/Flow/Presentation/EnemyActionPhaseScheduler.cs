@@ -281,6 +281,8 @@ namespace NineGrid.Flow.Presentation
 
             if (mLastStrikeHadDamage && onCounterBatchProjected != null)
             {
+                // 标注 battlelog op reason：齐射伤害批与交战反击批区分开。
+                NineGrid.Flow.Diagnostics.CombatHitTraceContext.PendingReason = "EnemyVolleyStrike";
                 onCounterBatchProjected(startIndex, mLastStrikerSlot, mLastStrikerUid, projection);
             }
             else if (onBoardBatchProjected != null)
