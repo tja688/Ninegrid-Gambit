@@ -1482,10 +1482,10 @@
  {
   "id": "tpl.relic.thorn_mail.reflect",
   "state": "Implemented",
-  "design_text": "[战斗时] 玩家损失当前护甲时对攻击者造成等量伤害",
+  "design_text": "玩家损失当前护甲时对攻击者造成等量伤害（交战反击与齐射均触发）",
   "requires_json": "[\"NoOwnerEntity\"]",
   "conditions_json": "[]",
-  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnBattle\"},\"conditions\":[{\"atom\":\"EventFilter\",\"eventType\":\"ArmorChanged\",\"targetKind\":\"Avatar\",\"maxDelta\":-1}],\"target\":{\"atom\":\"Actor\"},\"action\":{\"atom\":\"DealDamage\",\"value\":{\"op\":\"Negate\",\"values\":[{\"source\":\"Event\",\"field\":\"Delta\"}]},\"actor\":\"Player\"}}"
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnEvent\",\"eventType\":\"ArmorChanged\"},\"conditions\":[{\"atom\":\"EventFilter\",\"eventType\":\"ArmorChanged\",\"targetKind\":\"Avatar\",\"maxDelta\":-1}],\"target\":{\"atom\":\"Actor\"},\"action\":{\"atom\":\"DealDamage\",\"value\":{\"op\":\"Negate\",\"values\":[{\"source\":\"Event\",\"field\":\"Delta\",\"eventType\":\"ArmorChanged\"}]},\"actor\":\"Player\"}}"
  },
  {
   "id": "tpl.relic.muscle_counter.battle",

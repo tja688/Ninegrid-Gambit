@@ -4812,7 +4812,10 @@ namespace NineGrid.Core.Effects
 
             if (Same(source, "Event"))
             {
-                return EvaluateEventField(context, node.Get("field").AsString("Amount"));
+                return EvaluateEventField(
+                    context,
+                    node.Get("field").AsString("Amount"),
+                    node.Get("eventType").AsString(string.Empty));
             }
 
             var card = ResolveCard(context, targetUid, source);
@@ -4840,9 +4843,18 @@ namespace NineGrid.Core.Effects
             return context.Architecture.GetSystem<IStatSystem>().GetEffectiveValue(card, stat);
         }
 
-        private static float EvaluateEventField(EffectRuntimeContext context, string field)
+        private static float EvaluateEventField(EffectRuntimeContext context, string field, string eventType)
         {
             if (context == null)
+            {
+                return 0f;
+            }
+
+            // eventType 可选过滤：同一动作可能先发别的带 delta 事件（如金甲吸收的
+            // GoldModified 排在 ArmorChanged 前），不过滤会取错值。
+            var hasEventType = !string.IsNullOrEmpty(eventType);
+            var parsedEventType = default(CoreEventType);
+            if (hasEventType && !Enum.TryParse(eventType, true, out parsedEventType))
             {
                 return 0f;
             }
@@ -4850,6 +4862,11 @@ namespace NineGrid.Core.Effects
             var events = context.Events;
             for (var i = 0; i < events.Count; i++)
             {
+                if (hasEventType && events[i].Type != parsedEventType)
+                {
+                    continue;
+                }
+
                 if (Same(field, "Amount") && events[i].Amount != 0)
                 {
                     return events[i].Amount;
@@ -5191,6 +5208,11 @@ namespace NineGrid.Core.Effects
                     result.Add("schema.value.field", path + ".field is not supported.");
                 }
 
+                if (node.Has("eventType") && !IsSupportedEventType(node.Get("eventType").AsString(string.Empty)))
+                {
+                    result.Add("schema.value.eventType", path + ".eventType is not supported.");
+                }
+
                 return;
             }
 
@@ -5264,6 +5286,17 @@ namespace NineGrid.Core.Effects
                 || Same(field, "RemainingArmor")
                 || Same(field, "RemovedAttack")
                 || Same(field, "RemovedArmor");
+        }
+
+        private static bool IsSupportedEventType(string eventType)
+        {
+            if (string.IsNullOrEmpty(eventType))
+            {
+                return false;
+            }
+
+            CoreEventType ignored;
+            return Enum.TryParse(eventType, true, out ignored);
         }
 
         private static void ValidateZones(EffectDslNode node, string path, EffectValidationResult result)
