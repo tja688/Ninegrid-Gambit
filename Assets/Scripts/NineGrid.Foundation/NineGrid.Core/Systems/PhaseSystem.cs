@@ -344,8 +344,10 @@ namespace NineGrid.Core.Systems
 
         /// <summary>
         /// 神圣决斗（skill.holy_duel）标记结算（玩家主动交战入口）：
-        /// 目标为持有者 → 记录标记；否则若标记仍有效（持有者在场正面）→ 对玩家 2 伤；
-        /// 持有者已离场/翻面 → 清标记不惩罚。
+        /// 先结算旧标记——目标为「其他怪」且旧持有者仍在场正面 → 对玩家 2 伤
+        /// （持有者已离场/翻面 → 清标记不惩罚）；之后目标若为持有者 → 记录/转移标记。
+        /// 两只持有者互为「其他怪」：A→B 连打必须先打出 A 的惩罚再把标记转给 B，
+        /// 不得因目标也是持有者而提前转标吞掉惩罚（决斗套全员持有时曾整场静默）。
         /// </summary>
         private void ApplyHolyDuelMark(
             CardInstance avatar,
@@ -358,18 +360,28 @@ namespace NineGrid.Core.Systems
             }
 
             var player = this.GetModel<PlayerModel>();
+            var markedUid = player.DuelMarkMonsterUid;
+            if (markedUid != 0 && markedUid != target.Uid)
+            {
+                EnqueueHolyDuelPunishment(player, markedUid, avatar, pipeline);
+            }
+
             if (HasRule(target, RuleId.HolyDuel))
             {
                 player.SetDuelMark(target.Uid);
-                return;
             }
+        }
 
-            var markedUid = player.DuelMarkMonsterUid;
-            if (markedUid == 0 || markedUid == target.Uid)
-            {
-                return;
-            }
-
+        /// <summary>
+        /// 神圣决斗惩罚入队：旧持有者失效（离场/翻面/已死）→ 清标记不惩罚；
+        /// 否则以持有者为源对玩家 2 伤（惩罚后标记保留，除非被新持有者转移）。
+        /// </summary>
+        private void EnqueueHolyDuelPunishment(
+            PlayerModel player,
+            int markedUid,
+            CardInstance avatar,
+            IActionPipelineSystem pipeline)
+        {
             var registry = this.GetModel<CardRegistry>();
             CardInstance holder;
             if (!registry.TryGet(markedUid, out holder)
