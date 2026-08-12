@@ -94,6 +94,7 @@ namespace NineGrid.Core.Systems
     {
         private readonly List<GameCommandKind> mLegalCommands = new List<GameCommandKind>();
         private readonly List<int> mEnemyActionRoster = new List<int>();
+        private readonly List<DeferredBoardMotion> mDeferredMotionFlushBuffer = new List<DeferredBoardMotion>();
         private int mEnemyActionCursor;
         private bool mInRoomRewardContext;
 
@@ -881,6 +882,9 @@ namespace NineGrid.Core.Systems
             var resolved = pipeline.RunToCompletion();
             resolved += ConsumeUsedItemIfStillInItemSlots(itemUid, card.DefId);
 
+            // ADR-0044：道具链收尾锚点——ForceBattle 类道具交战窗内挂起的位移在此落地。
+            resolved += FlushDeferredBoardMotionsInternal();
+
             // 击杀后稳定化/旋转/清场留给导演 ResolveBoardStabilization / ResolvePostKillRotate。
             // 非击杀路径仍可立即 CompleteNodeIfCleared（宝箱等只写 PendingChoice，本调用通常 no-op）。
             if (!ContainsAnyEventSince(startIndex, CoreEventType.CardKilled))
@@ -1667,6 +1671,9 @@ namespace NineGrid.Core.Systems
                 return 0;
             }
 
+            // ADR-0044：报名即打开位移锁定窗口（盘面冻结的机制化）；收尾统一关窗落地。
+            this.GetSystem<IBattleScopeSystem>().SetEnemyActionPhaseActive(true);
+
             var board = this.GetModel<BoardModel>();
             var registry = this.GetModel<CardRegistry>();
             var pipeline = this.GetSystem<IActionPipelineSystem>();
@@ -1852,13 +1859,20 @@ namespace NineGrid.Core.Systems
         {
             mEnemyActionRoster.Clear();
             mEnemyActionCursor = 0;
+
+            // ADR-0044：齐射收尾锚点——先关窗，终局丢弃挂起位移，否则统一落地。
+            var battleScope = this.GetSystem<IBattleScopeSystem>();
+            battleScope.SetEnemyActionPhaseActive(false);
             if (IsTerminalPhase(CurrentPhase))
             {
+                battleScope.ClearDeferredBoardMotions();
                 return 0;
             }
 
+            var resolved = FlushDeferredBoardMotionsInternal();
+
             // 收尾只关闭齐射并做通关检查；补位由统一稳定化边界逐批推进。
-            return CompleteNodeIfCleared();
+            return resolved + CompleteNodeIfCleared();
         }
 
         private static int EnqueueResetAttackPatternCountdown(
@@ -1981,10 +1995,55 @@ namespace NineGrid.Core.Systems
 
         private int AdvanceInteractionCountInternal()
         {
+            // ADR-0044：交战收尾锚点——先落地挂起位移（终局则丢弃），再推进互动计数。
+            var resolved = FlushDeferredBoardMotionsInternal();
+
             // 即使本拍交战已把相位推到 Defeat，仍计一次九宫格互动（ADR-0012）。
             var pipeline = this.GetSystem<IActionPipelineSystem>();
             pipeline.Enqueue(new ModifyInteractionCountAction(1));
-            return pipeline.RunToCompletion();
+            return resolved + pipeline.RunToCompletion();
+        }
+
+        /// <summary>
+        /// ADR-0044 收尾锚点排水：把结算窗口内挂起的效果位移逐条（经就地复验）落地。
+        /// 循环排水——落地引发的连锁（如 OnMoveToSlot→ForceBattle）可能再开窗口再挂起；
+        /// 终局相位直接丢弃；窗口仍打开（嵌套未闭合）时留给下一锚点。
+        /// </summary>
+        private int FlushDeferredBoardMotionsInternal()
+        {
+            var battleScope = this.GetSystem<IBattleScopeSystem>();
+            if (battleScope == null || !battleScope.HasDeferredBoardMotions)
+            {
+                return 0;
+            }
+
+            var resolved = 0;
+            var pipeline = this.GetSystem<IActionPipelineSystem>();
+            for (var guard = 0; guard < 8 && battleScope.HasDeferredBoardMotions; guard++)
+            {
+                if (IsTerminalPhase(CurrentPhase))
+                {
+                    battleScope.ClearDeferredBoardMotions();
+                    break;
+                }
+
+                if (battleScope.IsBoardMotionDeferralActive)
+                {
+                    break;
+                }
+
+                mDeferredMotionFlushBuffer.Clear();
+                battleScope.DrainDeferredBoardMotions(mDeferredMotionFlushBuffer);
+                for (var i = 0; i < mDeferredMotionFlushBuffer.Count; i++)
+                {
+                    pipeline.Enqueue(new ResolveDeferredBoardMotionAction(mDeferredMotionFlushBuffer[i]));
+                }
+
+                mDeferredMotionFlushBuffer.Clear();
+                resolved += pipeline.RunToCompletion();
+            }
+
+            return resolved;
         }
 
         private int ResolvePostKillRotateInternal()

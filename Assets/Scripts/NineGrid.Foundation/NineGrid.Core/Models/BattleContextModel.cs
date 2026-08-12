@@ -13,6 +13,7 @@ namespace NineGrid.Core
     {
         private readonly HashSet<int> mOpeningTrueMonsterUids = new HashSet<int>();
         private readonly HashSet<int> mOpeningBossMonsterUids = new HashSet<int>();
+        private readonly List<DeferredBoardMotion> mDeferredBoardMotions = new List<DeferredBoardMotion>();
 
         public BindableProperty<int> EngagedEnemyUid { get; private set; }
 
@@ -21,6 +22,15 @@ namespace NineGrid.Core
         /// 与 EngagedEnemyUid 解耦：End 后敌人 uid 可保留，但交战窗口关闭。
         /// </summary>
         public bool IsEngagementActive { get; private set; }
+
+        /// <summary>敌方行动阶段报名与收尾之间为 true（ADR-0044 位移锁定窗口的第二轴）。</summary>
+        public bool IsEnemyActionPhaseActive { get; private set; }
+
+        /// <summary>结算窗口内挂起的效果位移（ADR-0044）；窗口关闭且非终局时由收尾锚点排空。</summary>
+        public bool HasDeferredBoardMotions
+        {
+            get { return mDeferredBoardMotions.Count > 0; }
+        }
 
         /// <summary>离开机关被击破后由「离开」技能置位；驱动 <c>IsNodeCleared</c>。</summary>
         public bool IsLeaveTrapBroken { get; private set; }
@@ -49,12 +59,17 @@ namespace NineGrid.Core
         {
             EngagedEnemyUid.Value = 0;
             IsEngagementActive = false;
+            IsEnemyActionPhaseActive = false;
+            mDeferredBoardMotions.Clear();
             ResetLeaveTrapProgress();
         }
 
         /// <summary>每战斗节点 Setup 时重置离开机关进度（含清关向标志），避免跨节点粘连。</summary>
         public void ResetLeaveTrapProgress()
         {
+            // ADR-0044：节点重置一并清掉残留的位移锁定窗口与挂起队列，避免跨节点粘连。
+            IsEnemyActionPhaseActive = false;
+            mDeferredBoardMotions.Clear();
             IsLeaveTrapBroken = false;
             OpeningTrueMonsterCount = 0;
             DefeatedTrueMonsterCount = 0;
@@ -72,6 +87,37 @@ namespace NineGrid.Core
         public void SetEngagementActive(bool active)
         {
             IsEngagementActive = active;
+        }
+
+        public void SetEnemyActionPhaseActive(bool active)
+        {
+            IsEnemyActionPhaseActive = active;
+        }
+
+        public void EnqueueDeferredBoardMotion(DeferredBoardMotion motion)
+        {
+            if (motion != null)
+            {
+                mDeferredBoardMotions.Add(motion);
+            }
+        }
+
+        /// <summary>按挂起顺序倒入 <paramref name="buffer"/> 并清空队列；返回条数。</summary>
+        public int DrainDeferredBoardMotions(List<DeferredBoardMotion> buffer)
+        {
+            var count = mDeferredBoardMotions.Count;
+            if (buffer != null)
+            {
+                buffer.AddRange(mDeferredBoardMotions);
+            }
+
+            mDeferredBoardMotions.Clear();
+            return count;
+        }
+
+        public void ClearDeferredBoardMotions()
+        {
+            mDeferredBoardMotions.Clear();
         }
 
         public void MarkLeaveTrapBroken()

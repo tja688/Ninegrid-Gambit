@@ -44,8 +44,16 @@ namespace NineGrid.Core
                     .WithSource(instance.Owner == null ? string.Empty : instance.Owner.SourceDefId, instance.Definition.Id));
 
             var actions = mPreparedActions ?? effectSystem.BuildTriggeredActions(InstanceId, mTriggerContext);
+            var battleScope = context.GetSystem<IBattleScopeSystem>();
             for (var i = 0; i < actions.Count; i++)
             {
+                // ADR-0044：结算窗口（交战窗 / 敌方行动阶段）内的效果位移挂起到收尾锚点落地，
+                // 其余效果动作照常插在结算链原位。
+                if (battleScope != null && battleScope.TryDeferBoardMotion(actions[i]))
+                {
+                    continue;
+                }
+
                 result.AddFollowUp(actions[i]);
             }
 
