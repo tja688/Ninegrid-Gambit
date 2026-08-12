@@ -833,8 +833,10 @@ namespace NineGrid.Flow
                             }
                         }
 
+                        // RandomInsertIndex → 按 Core 抽牌堆真实位置落点（赠牌可能被 Core 置顶/洗中段，
+                        // 固定 append 到末尾会造成顶牌失同步）。
                         var deckOk = await Deck.AddCardAtFromOriginAsync(
-                            Deck.DeckCount,
+                            CardDeckManagerSingleton.RandomInsertIndex,
                             ensureCard,
                             origin,
                             cancellationToken);
@@ -927,6 +929,9 @@ namespace NineGrid.Flow
                 CoreCardPresentationMapper.CommitAllSpawnedCards();
                 CardFaceGenerationBootstrap.ApplyFromEventLog(NineGridArchitecture.Current, _nodeEventLogStart);
                 await FlipPlaybackCoordinator.WaitIdleAsync(cancellationToken);
+
+                // 开局收束终对账：赠牌/洗牌后视觉卡组序对齐 Core 抽牌堆（slot 0 = 下一张要发）。
+                await BoardPresentationPlayer.SyncDeckVisualOrderFromCoreAsync(Deck, cancellationToken);
             }
             finally
             {

@@ -268,6 +268,17 @@ namespace NineGrid.Flow
                     Debug.LogWarning("[InBattleManager] Drain 尾部 DrainEnd 失败: " + ex.Message);
                     BattleSessionExecutor.AssertOccupancySyncForbidden("drainTailFailure", ex.Message);
                 }
+
+                // 批收束终对账：本批 Core 洗牌/重排（洗入、融合结果、交换等）后，
+                // 视觉卡组序回归 DrawPileUids，slot 0 = 下一张要发。
+                try
+                {
+                    await SyncDeckVisualOrderFromCoreAsync(Deck, CancellationToken.None);
+                }
+                catch (Exception ex)
+                {
+                    Debug.LogWarning("[InBattleManager] Drain 尾部卡组序对账失败: " + ex.Message);
+                }
             }
 
             if (pendingCancel != null)
@@ -963,18 +974,23 @@ namespace NineGrid.Flow
         }
 
         /// <summary>
-        /// 洗入 Present 结算后：视觉槽序对齐 Core DrawPileUids（slot 0 = 下一张）。
+        /// 视觉卡组槽序对齐 Core DrawPileUids（slot 0 = 下一张要发）。
+        /// 调用点：洗入 Present 结算后、盘面批收束、开局 Present 收束。
+        /// busy / 回库在途时限时等待（默认 2s），超时放弃本次（由后续调用点重试），不挂死。
         /// </summary>
-        private static async UniTask SyncDeckVisualOrderFromCoreAsync(
+        internal static async UniTask SyncDeckVisualOrderFromCoreAsync(
             CardDeckManagerSingleton deckManager,
-            CancellationToken ct)
+            CancellationToken ct,
+            float timeoutSeconds = 2f)
         {
             if (deckManager == null || deckManager.CurrentMode != CardDeckMode.InGame)
             {
                 return;
             }
 
-            while (deckManager.IsBusy || deckManager.HasReturnInFlight)
+            var deadline = Time.realtimeSinceStartup + Mathf.Max(0.1f, timeoutSeconds);
+            while ((deckManager.IsBusy || deckManager.HasReturnInFlight)
+                   && Time.realtimeSinceStartup < deadline)
             {
                 ct.ThrowIfCancellationRequested();
                 await UniTask.Yield(PlayerLoopTiming.Update, ct);

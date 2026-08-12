@@ -132,7 +132,8 @@ namespace NineGrid.Cards
 
         /// <summary>
         /// 按 Core 抽牌堆 uid 序重排已入组卡。slot 0 = 下一张。
-        /// 缺席 uid 跳过并 Warning；组内多余卡追加到末尾并 Warning。序未变返回 false。
+        /// 缺席 uid 跳过并 Warning；组内多余卡（Core 已移出、通常为本批待飞出的发牌）
+        /// 保持相对序前置到队首——它们才是接下来真正要飞出的「下一张」。序未变返回 false。
         /// </summary>
         public bool TryReorderToUids(IReadOnlyList<int> orderedUids)
         {
@@ -176,6 +177,7 @@ namespace NineGrid.Cards
                 placed.Add(uid);
             }
 
+            var extras = new List<ManagedCard>();
             for (var i = 0; i < _slots.Count; i++)
             {
                 var card = _slots[i];
@@ -185,9 +187,14 @@ namespace NineGrid.Cards
                 }
 
                 Debug.LogWarning(
-                    $"[CardDeckSlotContainer] TryReorderToUids 多余视觉卡 uid={card.Uid}，追加末尾。");
-                reordered.Add(card);
+                    $"[CardDeckSlotContainer] TryReorderToUids 多余视觉卡 uid={card.Uid}（Core 已移出），前置队首待飞出。");
+                extras.Add(card);
                 placed.Add(card.Uid);
+            }
+
+            if (extras.Count > 0)
+            {
+                reordered.InsertRange(0, extras);
             }
 
             if (reordered.Count != _slots.Count)

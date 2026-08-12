@@ -49,7 +49,10 @@ namespace NineGrid.Cards
         private readonly HashSet<int> _returnInFlightUids = new();
         private readonly Dictionary<int, UniTaskCompletionSource> _returnSettledWaiters = new();
 
-        /// <summary>入组索引：随机落点（非空时排除最左 slot 0；显式 0 允许置顶）。</summary>
+        /// <summary>
+        /// 入组索引：交由管理器解析落点——优先对齐 Core 抽牌堆真实位置（只读对账），
+        /// Core 不认识该 uid 时退回随机（非空时排除最左 slot 0）；显式 0 允许置顶。
+        /// </summary>
         public const int RandomInsertIndex = -1;
 
         public CardDeckMode CurrentMode { get; private set; } = CardDeckMode.Standby;
@@ -450,9 +453,12 @@ namespace NineGrid.Cards
                 return false;
             }
 
-            _slotContainer.TryReorderToUids(orderedUids);
-            SnapDeckCardsToLayoutPositions();
-            _slotContainer.ApplySortingOrders();
+            if (_slotContainer.TryReorderToUids(orderedUids))
+            {
+                SnapDeckCardsToLayoutPositions();
+                _slotContainer.ApplySortingOrders();
+            }
+
             AssertTopMatchesDrawPile(orderedUids, "SyncVisualOrderFromDrawPile");
             return true;
         }
@@ -932,7 +938,8 @@ namespace NineGrid.Cards
 
         /// <summary>
         /// 场地卡垂直上飞离画后插入卡组（发射后不管，可与旋转/换位并行）。
-        /// <paramref name="insertIndex"/> 为 <see cref="RandomInsertIndex"/> 时随机落点（非空排除 slot 0）；显式 0 允许置顶。
+        /// <paramref name="insertIndex"/> 为 <see cref="RandomInsertIndex"/> 时按 Core 抽牌堆真实位置落点
+        /// （Core 不认识该 uid 才随机、非空排除 slot 0）；显式 0 允许置顶。
         /// </summary>
         public bool LaunchReturnFieldCardToDeck(ManagedCard card, int insertIndex = RandomInsertIndex)
         {
@@ -1028,9 +1035,11 @@ namespace NineGrid.Cards
         }
 
         /// <summary>
-        /// 解析入组槽位：随机时非空排除 index 0；显式 0 允许置顶（Core Top=true）；牌组空时唯一合法为 0。
+        /// 解析入组槽位：显式索引 Clamp 生效（0 允许置顶，对应 Core Top=true）；
+        /// 随机请求（<see cref="RandomInsertIndex"/>）优先对齐 Core 抽牌堆真实落点（只读对账），
+        /// Core 抽牌堆不含该 uid 时退回随机（非空排除最左 slot 0）。牌组空时唯一合法为 0。
         /// </summary>
-        private int ResolveDeckInsertIndex(int requestedIndex)
+        private int ResolveDeckInsertIndex(int requestedIndex, int uid)
         {
             var count = _slotContainer?.Count ?? 0;
             if (count == 0)
@@ -1038,12 +1047,96 @@ namespace NineGrid.Cards
                 return 0;
             }
 
-            if (requestedIndex < 0)
+            if (requestedIndex >= 0)
             {
-                return UnityEngine.Random.Range(1, count + 1);
+                return Mathf.Clamp(requestedIndex, 0, count);
             }
 
-            return Mathf.Clamp(requestedIndex, 0, count);
+            if (TryResolveCoreAlignedInsertIndex(uid, out var aligned))
+            {
+                return aligned;
+            }
+
+            return UnityEngine.Random.Range(1, count + 1);
+        }
+
+        /// <summary>
+        /// 按 Core <c>DrawPileUids</c> 求视觉插入点：插在「视觉序中第一张 Core 序后继」之前；
+        /// 无后继则插在「最后一张 Core 序前驱」之后。保证 slot 0 始终对应 Core 顶牌，
+        /// 且不越过组内待飞出的多余视觉卡（Core 已移出、即将发出的牌）。
+        /// </summary>
+        private bool TryResolveCoreAlignedInsertIndex(int uid, out int insertIndex)
+        {
+            insertIndex = 0;
+            if (uid <= 0 || _slotContainer == null)
+            {
+                return false;
+            }
+
+            var pile = NineGridArchitecture.Current?.GetModel<DeckModel>()?.DrawPileUids;
+            if (pile == null || pile.Count == 0)
+            {
+                return false;
+            }
+
+            var coreIndexByUid = new Dictionary<int, int>(pile.Count);
+            for (var i = 0; i < pile.Count; i++)
+            {
+                if (pile[i] > 0 && !coreIndexByUid.ContainsKey(pile[i]))
+                {
+                    coreIndexByUid.Add(pile[i], i);
+                }
+            }
+
+            if (!coreIndexByUid.TryGetValue(uid, out var corePos))
+            {
+                return false;
+            }
+
+            var firstSuccessorSlot = -1;
+            var lastPredecessorSlot = -1;
+            var count = _slotContainer.Count;
+            for (var i = 0; i < count; i++)
+            {
+                if (!_slotContainer.TryGetCardAt(i, out var card) || card == null)
+                {
+                    continue;
+                }
+
+                // Core 已移出的待飞出卡不参与定位（保持在它当前的槽位）。
+                if (!coreIndexByUid.TryGetValue(card.Uid, out var otherPos))
+                {
+                    continue;
+                }
+
+                if (otherPos > corePos)
+                {
+                    if (firstSuccessorSlot < 0)
+                    {
+                        firstSuccessorSlot = i;
+                    }
+                }
+                else if (otherPos < corePos)
+                {
+                    lastPredecessorSlot = i;
+                }
+            }
+
+            if (firstSuccessorSlot >= 0)
+            {
+                insertIndex = firstSuccessorSlot;
+                return true;
+            }
+
+            if (lastPredecessorSlot >= 0)
+            {
+                insertIndex = lastPredecessorSlot + 1;
+                return true;
+            }
+
+            // 组内其余全是待飞出卡（或 Core 只剩这一张）：排在它们之后。
+            insertIndex = count;
+            return true;
         }
 
         /// <summary>
@@ -1067,7 +1160,7 @@ namespace NineGrid.Cards
             var returning = _returnInFlightUids.Contains(card.Uid);
             try
             {
-                var slotIndex = ResolveDeckInsertIndex(requestedIndex);
+                var slotIndex = ResolveDeckInsertIndex(requestedIndex, card.Uid);
                 var clampedSlot = Mathf.Clamp(slotIndex, 0, Mathf.Max(0, layoutSettings.maxSlots - 1));
                 var addAnchor = GetAddAnchor(clampedSlot);
                 if (addAnchor != null && card.Transform != null)
@@ -1540,7 +1633,7 @@ namespace NineGrid.Cards
                     return await InsertViaAddAnchorAsync(slotIndex, card, cancellationToken);
                 }
 
-                var resolvedIndex = ResolveDeckInsertIndex(slotIndex);
+                var resolvedIndex = ResolveDeckInsertIndex(slotIndex, card.Uid);
                 var clampedSlot = Mathf.Clamp(resolvedIndex, 0, Mathf.Max(0, layoutSettings.maxSlots - 1));
                 var deckAnchor = GetDeckAnchor(clampedSlot);
                 if (originAnchor != null && card.Transform != null)
