@@ -122,6 +122,33 @@ namespace NineGrid.Core
         }
     }
 
+    /// <summary>
+    /// 关卡结束统一重置（对战残留不出局）：清 UntilBattleEnds / UntilEnemyChanges /
+    /// UntilNodeEnds / Once 四档临时修正，玩家卡面攻回落由统一对账缝提交（ADR-0045）。
+    /// 房间相位内使用「非战斗可用」卡新挂的增益发生在本动作之后，不受影响；
+    /// StartNode 前的 UntilNodeEnds 兜底清理（#116）保留。
+    /// </summary>
+    public sealed class ClearNodeTransientModifiersAction : GameAction
+    {
+        public override string ActionName { get { return "ClearNodeTransientModifiers"; } }
+
+        public override GameActionResult Apply(GameActionContext context)
+        {
+            var battleScope = context.GetSystem<IBattleScopeSystem>();
+            if (battleScope == null)
+            {
+                return GameActionResult.Empty;
+            }
+
+            // EndCurrentBattle = 关交战窗 + 清 UntilBattleEnds。
+            battleScope.EndCurrentBattle();
+            battleScope.ClearScopedModifiers(ModifierScope.UntilEnemyChanges);
+            battleScope.ClearScopedModifiers(ModifierScope.UntilNodeEnds);
+            battleScope.ClearScopedModifiers(ModifierScope.Once);
+            return GameActionResult.Empty;
+        }
+    }
+
     public sealed class NodeCompletedAction : GameAction
     {
         private static readonly TriggerPoint[] sPostTriggers =

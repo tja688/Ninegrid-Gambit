@@ -2105,6 +2105,11 @@ namespace NineGrid.Core.Systems
             pipeline.Enqueue(new NodeCompletedAction());
             // ADR-0035 / #157：离开战斗（清关）重置 Battle 作用域倒计时为阈值（authority + projection）。
             pipeline.Enqueue(new ResetBattleScopedCountdownsAction());
+            // 对战残留不出局：清临时修正 + 当前甲回落到有效甲，非对战相位卡面即恢复干净数值
+            // （此前残留要拖到下一局 StartNode 大重置才处理）。放在 NodeCompleted 之后，
+            // 保证 OnNodeEnd 类效果（如结算回血）先在原数值语境下结算。
+            pipeline.Enqueue(new ClearNodeTransientModifiersAction());
+            pipeline.Enqueue(new ResetCurrentArmorAction());
             var resolved = pipeline.RunToCompletion();
             // ADR-0026 / #113：清关清场残留；全怪击破时场上道具按回收价兑金，否则仅移除；道具卡格保留。
             resolved += this.GetSystem<IEconomySystem>().SettleUnusedHelpCards();
