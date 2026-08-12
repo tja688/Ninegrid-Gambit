@@ -213,7 +213,7 @@
   "design_text": "所有恢复血量效果翻倍",
   "requires_json": "[\"NoOwnerEntity\"]",
   "conditions_json": "[]",
-  "body": "{\"kind\":\"RuleModifier\",\"ruleModifier\":{\"rule\":\"RecoveryMultiplier\",\"op\":\"Multiply\",\"value\":\"{{value}}\",\"layer\":\"Persistent\",\"scope\":\"Permanent\"}}"
+  "body": "{\"kind\":\"RuleModifier\",\"ruleModifier\":{\"rule\":\"RecoveryMultiplier\",\"target\":\"Player\",\"op\":\"Multiply\",\"value\":\"{{value}}\",\"layer\":\"Persistent\",\"scope\":\"Permanent\"}}"
  },
  {
   "id": "tpl.relic.dragon_scale_armor.rule",
