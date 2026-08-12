@@ -1485,7 +1485,7 @@
   "design_text": "[战斗时] 玩家损失当前护甲时对攻击者造成等量伤害",
   "requires_json": "[\"NoOwnerEntity\"]",
   "conditions_json": "[]",
-  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnBattle\"},\"conditions\":[{\"atom\":\"EventFilter\",\"eventType\":\"ArmorChanged\",\"targetKind\":\"Avatar\",\"maxDelta\":-1}],\"target\":{\"atom\":\"FilteredCards\",\"include\":[\"Actor\"]},\"action\":{\"atom\":\"DealDamage\",\"value\":{\"op\":\"Negate\",\"values\":[{\"source\":\"Event\",\"field\":\"Delta\"}]},\"actor\":\"Player\"}}"
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnBattle\"},\"conditions\":[{\"atom\":\"EventFilter\",\"eventType\":\"ArmorChanged\",\"targetKind\":\"Avatar\",\"maxDelta\":-1}],\"target\":{\"atom\":\"Actor\"},\"action\":{\"atom\":\"DealDamage\",\"value\":{\"op\":\"Negate\",\"values\":[{\"source\":\"Event\",\"field\":\"Delta\"}]},\"actor\":\"Player\"}}"
  },
  {
   "id": "tpl.relic.muscle_counter.battle",
@@ -1517,7 +1517,7 @@
   "design_text": "伤害减免+1",
   "requires_json": "[\"NoOwnerEntity\"]",
   "conditions_json": "[]",
-  "body": "{\"kind\":\"RuleModifier\",\"ruleModifier\":{\"rule\":\"DamageReduction\",\"op\":\"Add\",\"value\":\"{{value}}\",\"layer\":\"Persistent\",\"scope\":\"Permanent\",\"source\":\"{{source}}\"}}"
+  "body": "{\"kind\":\"RuleModifier\",\"ruleModifier\":{\"rule\":\"DamageReduction\",\"target\":\"Player\",\"op\":\"Add\",\"value\":\"{{value}}\",\"layer\":\"Persistent\",\"scope\":\"Permanent\",\"source\":\"{{source}}\"}}"
  },
  {
   "id": "tpl.relic.body_potential.hp_lost",
