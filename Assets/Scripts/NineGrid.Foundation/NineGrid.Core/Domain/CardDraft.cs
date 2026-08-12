@@ -129,6 +129,12 @@ namespace NineGrid.Core
         public int EnemyOpeningCount { get; set; }
         public bool RequireElite { get; set; }
 
+        /// <summary>
+        /// 受控发牌（教学关卡专用）：OpeningDeal 跳过洗牌与离开机关落点重排，
+        /// 抽牌堆保持装填顺序，配合 FillOrder 实现确定性铺场。正式流程保持 false。
+        /// </summary>
+        public bool PreserveDealOrder { get; set; }
+
         public IReadOnlyList<CardDraft> PlayerCards
         {
             get { return mPlayerCards; }

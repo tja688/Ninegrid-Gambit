@@ -33,6 +33,9 @@ namespace NineGrid.Flow
         [Tooltip("主菜单「设置」按钮；留空则运行时查找 MainPanel/SettingsScreen。")]
         [SerializeField] private Collider2D settingsHit;
 
+        [Tooltip("主菜单「教学」按钮；留空则运行时查找 MainPanel/TutorialRun。")]
+        [SerializeField] private Collider2D tutorialHit;
+
         [Tooltip("点选相机；留空则运行时取 Camera.main。")]
         [SerializeField] private Camera worldCamera;
 
@@ -110,6 +113,18 @@ namespace NineGrid.Flow
             InteractionAudioCues.MainMenuPress,
             "GameFlowController.MainMenu.SettingsPress",
             "main_menu.settings");
+        private static readonly AudioCueRequest TutorialHoverRequest = CreateMenuRequest(
+            InteractionAudioCues.MainMenuHover,
+            "GameFlowController.MainMenu.TutorialHover",
+            "main_menu.tutorial");
+        private static readonly AudioCueRequest TutorialPressRequest = CreateMenuRequest(
+            InteractionAudioCues.MainMenuPress,
+            "GameFlowController.MainMenu.TutorialPress",
+            "main_menu.tutorial");
+        private static readonly AudioCueRequest TutorialRejectRequest = CreateMenuRequest(
+            InteractionAudioCues.MainMenuReject,
+            "GameFlowController.MainMenu.TutorialReject",
+            "main_menu.tutorial");
 
         private void Awake()
         {
@@ -191,6 +206,19 @@ namespace NineGrid.Flow
                 return;
             }
 
+            if (WorldPointerUtility.TryOverlapColliderOnPlane(worldCamera, tutorialHit))
+            {
+                if (shell.IsBusy)
+                {
+                    PulseMenuRequest(TutorialRejectRequest);
+                    return;
+                }
+
+                PulseMenuRequest(TutorialPressRequest);
+                BeginTutorialRun();
+                return;
+            }
+
             if (WorldPointerUtility.TryOverlapColliderOnPlane(worldCamera, quitGameHit))
             {
                 if (shell.IsBusy)
@@ -219,7 +247,22 @@ namespace NineGrid.Flow
             TriggerPulseHub.PulseAudio(AudioCueRequest.Simple(
                 MainMenuStartCueId,
                 "GameFlowController.BeginFormalRun"));
+
+            // 首次游玩（存档无教学完成标记）：先进教学关卡，通关后自动转正式开局。
+            if (!NineGrid.Flow.Tutorial.TutorialProgressStore.IsCompleted())
+            {
+                Debug.Log("[GameFlow] 首次游玩：先进入教学关卡，通关后自动开始正式冒险。");
+                SendBeginRun(GameFlowRunOptions.CreateTutorial(continueToFormalRun: true));
+                return;
+            }
+
             SendBeginRun(GameFlowRunOptions.CreateFormal());
+        }
+
+        /// <summary>主菜单「教学」独立入口：单场教学战斗，完成后返回主菜单。</summary>
+        public void BeginTutorialRun()
+        {
+            SendBeginRun(GameFlowRunOptions.CreateTutorial(continueToFormalRun: false));
         }
 
         public void BeginQuickTestRun(QuickTestRunOptions options)
@@ -294,6 +337,15 @@ namespace NineGrid.Flow
                     settingsHit = settings.GetComponent<Collider2D>();
                 }
             }
+
+            if (tutorialHit == null)
+            {
+                var tutorial = FindDeep("TutorialRun");
+                if (tutorial != null)
+                {
+                    tutorialHit = tutorial.GetComponent<Collider2D>();
+                }
+            }
         }
 
         public void ShowNotice(string message)
@@ -359,6 +411,10 @@ namespace NineGrid.Flow
             {
                 next = settingsHit;
             }
+            else if (WorldPointerUtility.TryOverlapColliderOnPlane(worldCamera, tutorialHit))
+            {
+                next = tutorialHit;
+            }
             else if (WorldPointerUtility.TryOverlapColliderOnPlane(worldCamera, quitGameHit))
             {
                 next = quitGameHit;
@@ -377,7 +433,9 @@ namespace NineGrid.Flow
                 next.transform.localScale = hoveredMenuBaseScale * MenuHoverScale;
                 PulseMenuRequest(next == startRunHit
                     ? StartHoverRequest
-                    : (next == settingsHit ? SettingsHoverRequest : QuitHoverRequest));
+                    : (next == settingsHit
+                        ? SettingsHoverRequest
+                        : (next == tutorialHit ? TutorialHoverRequest : QuitHoverRequest)));
             }
         }
 

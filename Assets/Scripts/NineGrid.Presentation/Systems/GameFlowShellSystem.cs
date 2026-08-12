@@ -28,6 +28,7 @@ namespace NineGrid.Presentation.Systems
         private IGameFlowView mView;
         private bool mIsBusy;
         private bool mQuickTestMode;
+        private bool mTutorialMode;
         private int mNodeIndex;
         private int mGeneration;
         private List<int> mQuickTestContentNodeQueue;
@@ -52,6 +53,9 @@ namespace NineGrid.Presentation.Systems
         public bool IsBusy => mIsBusy;
 
         public bool IsQuickTestMode => mQuickTestMode;
+
+        /// <summary>教学关卡模式（单场受控教学战斗，不进节点循环）。</summary>
+        public bool IsTutorialMode => mTutorialMode;
 
         public int Generation => mGeneration;
 
@@ -215,6 +219,11 @@ namespace NineGrid.Presentation.Systems
             mQuickTestMode = quickTestMode;
         }
 
+        internal void ApplyTutorialMode(bool tutorialMode)
+        {
+            mTutorialMode = tutorialMode;
+        }
+
         internal void ResetNodeProgress()
         {
             mNodeIndex = 0;
@@ -288,6 +297,7 @@ namespace NineGrid.Presentation.Systems
         internal void ClearRunSession()
         {
             mQuickTestMode = false;
+            mTutorialMode = false;
             ClearQuickTest();
             DiagTraceShared.ClearRunTag();
             mNodeIndex = 0;

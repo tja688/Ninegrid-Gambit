@@ -92,6 +92,11 @@ namespace NineGrid.Content.Editor
                 return !VfxBindingParticlePresetRules.HasAnyKnownPresetKey(Dto.materialKey, Dto.variants);
             }
 
+            if (VfxPlayerRegistry.IsProjectilePlayer(Dto.playerId))
+            {
+                return !VfxBindingProjectilePresetRules.HasAnyKnownPresetKey(Dto.materialKey, Dto.variants);
+            }
+
             if (!VfxPlayerRegistry.IsMaterialPlayer(Dto.playerId))
             {
                 return false;
@@ -203,6 +208,12 @@ namespace NineGrid.Content.Editor
             if (VfxPlayerRegistry.IsParticlePlayer(Dto.playerId))
             {
                 return !VfxBindingParticlePresetRules.HasAnyKnownPresetKey(Dto.materialKey, Dto.variants);
+            }
+
+            if (VfxPlayerRegistry.IsProjectilePlayer(Dto.playerId))
+            {
+                // 弹道预设仅 Pulse；State 绑定挂 projectile 直接视为断链。
+                return true;
             }
 
             if (!VfxPlayerRegistry.IsMaterialPlayer(Dto.playerId))

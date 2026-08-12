@@ -1,4 +1,0 @@
-[46029405ms] [LOG] Chat-Memo: 注入式侧边栏功能已加载 @ chrome-extension://cfmmkmfimmmfikomegalpmgookideojo/js/content_common.js:967
-[46029425ms] [ERROR] Permissions policy violation: unload is not allowed in this document. @ chrome-extension://jaleebmaoohbjjohjlfmihkkopgfibne/0r0akgg.js:1
-[46029511ms] [LOG] Chat-Memo: 初始化通用功能 @ chrome-extension://cfmmkmfimmmfikomegalpmgookideojo/js/content_common.js:52
-[46029672ms] [INFO] This page uses the built-in LanguageDetector feature. To learn more and leave feedback, see https://learn.microsoft.com/microsoft-edge/web-platform/languagedetector-api @ chrome-extension://amkbmndfnliijdhojkpoglbnaaahippg/content_main.js:4916

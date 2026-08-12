@@ -14,6 +14,9 @@ namespace NineGrid.Presentation.Platform
     {
         public const string AdrId = "0006";
         public const string UnityIssueId = "UUM-142550";
+
+        /// <summary>命令行带该参数可整体关闭 NOLEGACY + 轮询注入（打包版排除法验证用）。</summary>
+        public const string DisableArg = "-ng-no-rawinput";
     }
 
 #if UNITY_STANDALONE_WIN && !UNITY_EDITOR
@@ -34,10 +37,25 @@ namespace NineGrid.Presentation.Platform
         private Vector2 _lastPos;
         private bool _hasLastPos;
         private bool _registered;
+        private IntPtr _cachedHwnd;
+        private bool _mainWindowResolveAttempted;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         private static void Bootstrap()
         {
+            var args = Environment.GetCommandLineArgs();
+            for (var i = 0; i < args.Length; i++)
+            {
+                if (string.Equals(
+                        args[i],
+                        WindowsHighPollingMouseMitigationInfo.DisableArg,
+                        StringComparison.OrdinalIgnoreCase))
+                {
+                    Debug.Log("[WindowsHighPollingMouseMitigation] 已按命令行参数禁用（走引擎默认鼠标路径）。");
+                    return;
+                }
+            }
+
             var go = new GameObject(nameof(WindowsHighPollingMouseMitigation));
             DontDestroyOnLoad(go);
             go.AddComponent<WindowsHighPollingMouseMitigation>();
@@ -120,7 +138,7 @@ namespace NineGrid.Presentation.Platform
             InputSystem.QueueStateEvent(mouse, state);
         }
 
-        private static bool TryReadClientPosition(out Vector2 unityPos)
+        private bool TryReadClientPosition(out Vector2 unityPos)
         {
             unityPos = default;
             if (!GetCursorPos(out var point))
@@ -131,7 +149,7 @@ namespace NineGrid.Presentation.Platform
             var hwnd = GetActiveWindow();
             if (hwnd == IntPtr.Zero)
             {
-                hwnd = System.Diagnostics.Process.GetCurrentProcess().MainWindowHandle;
+                hwnd = ResolveFallbackWindowHandle();
             }
 
             if (hwnd == IntPtr.Zero)
@@ -139,14 +157,38 @@ namespace NineGrid.Presentation.Platform
                 return false;
             }
 
+            _cachedHwnd = hwnd;
             if (!ScreenToClient(hwnd, ref point))
             {
+                // 句柄可能已失效（窗口重建等），丢弃缓存下帧重解析。
+                _cachedHwnd = IntPtr.Zero;
+                _mainWindowResolveAttempted = false;
                 return false;
             }
 
             // Win32 client: origin top-left, Y down. Unity: origin bottom-left, Y up.
             unityPos = new Vector2(point.X, Screen.height - point.Y);
             return true;
+        }
+
+        private IntPtr ResolveFallbackWindowHandle()
+        {
+            if (_cachedHwnd != IntPtr.Zero)
+            {
+                return _cachedHwnd;
+            }
+
+            // Process.MainWindowHandle 会枚举全系统顶层窗口，禁止每帧调用：只解析一次并缓存。
+            if (_mainWindowResolveAttempted)
+            {
+                return IntPtr.Zero;
+            }
+
+            _mainWindowResolveAttempted = true;
+            using (var process = System.Diagnostics.Process.GetCurrentProcess())
+            {
+                return process.MainWindowHandle;
+            }
         }
 
         [StructLayout(LayoutKind.Sequential)]

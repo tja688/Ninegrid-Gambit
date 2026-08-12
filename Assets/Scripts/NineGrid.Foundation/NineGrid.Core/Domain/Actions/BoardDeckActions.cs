@@ -234,8 +234,12 @@ namespace NineGrid.Core
             DrainStagingPool(deck, registry, deck.PlayerCardPoolUids);
             DrainStagingPool(deck, registry, deck.EnemyCardPoolUids);
 
-            ShuffleDrawPile(deck, rng);
-            LeaveTrapDrawPileRules.EnsureInSecondHalf(deck, registry, rng);
+            // 教学关卡受控发牌：保持装填顺序，跳过洗牌与离开机关落点重排。
+            if (!Options.PreserveDealOrder)
+            {
+                ShuffleDrawPile(deck, rng);
+                LeaveTrapDrawPileRules.EnsureInSecondHalf(deck, registry, rng);
+            }
 
             return new GameActionResult()
                 .AddEvent(new CoreGameEvent(CoreEventType.CardDealt, context.ActionId, ActionName)

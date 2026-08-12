@@ -1,0 +1,1778 @@
+[
+ {
+  "id": "tpl.gain_armor_on_use_help_card",
+  "state": "Implemented",
+  "design_text": "[使用时] 玩家获得5点护甲",
+  "requires_json": "[\"ActivatedByUse\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnSelfUsed\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"GainArmor\",\"amount\":\"{{amount}}\"}}"
+ },
+ {
+  "id": "tpl.heal_player_on_use_help_card",
+  "state": "Implemented",
+  "design_text": "[使用时] 恢复10点血量",
+  "requires_json": "[\"ActivatedByUse\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnSelfUsed\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"Heal\",\"amount\":\"{{amount}}\",\"actor\":\"Player\"}}"
+ },
+ {
+  "id": "tpl.help.armor_breaking_hammer.use",
+  "state": "Implemented",
+  "design_text": "[使用时] 将目标怪物卡护甲降低10点",
+  "requires_json": "[\"HasOwnerEntity\", \"ActivatedByUse\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnSelfUsed\"},\"target\":{\"atom\":\"SelectedCards\",\"kind\":\"Monster\",\"zone\":\"Board\",\"count\":\"{{count}}\"},\"action\":{\"atom\":\"TransferArmor\",\"amount\":\"{{amount}}\",\"receiver\":\"None\",\"cause\":\"{{cause}}\"}}"
+ },
+ {
+  "id": "tpl.help.blood_conversion.use",
+  "state": "Implemented",
+  "design_text": "[使用时] 扣除5点血量上限并随机获得攻击+1、护甲+1、50金币或随机遗物",
+  "requires_json": "[\"HasOwnerEntity\", \"ActivatedByUse\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnSelfUsed\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"Sequence\",\"actions\":[{\"atom\":\"ModifyBaseStat\",\"stat\":\"MaxHp\",\"delta\":\"{{delta}}\",\"reason\":\"{{reason}}\"},{\"atom\":\"WeightedRandom\",\"choices\":[{\"weight\":\"{{weight}}\",\"action\":{\"atom\":\"ModifyBaseStat\",\"stat\":\"Attack\",\"delta\":\"{{action_actions_1_choices_0_action_delta}}\",\"reason\":\"{{action_actions_1_choices_0_action_reason}}\"}},{\"weight\":\"{{weight}}\",\"action\":{\"atom\":\"ModifyBaseStat\",\"stat\":\"Armor\",\"delta\":\"{{action_actions_1_choices_1_action_delta}}\",\"reason\":\"{{action_actions_1_choices_1_action_reason}}\"}},{\"weight\":\"{{weight}}\",\"action\":{\"atom\":\"ModifyGold\",\"delta\":\"{{action_actions_1_choices_2_action_delta}}\",\"reason\":\"{{action_actions_1_choices_2_action_reason}}\"}},{\"weight\":\"{{weight}}\",\"action\":{\"atom\":\"GrantRewardFromPool\",\"poolId\":\"{{poolId}}\"}}]}]}}"
+ },
+ {
+  "id": "tpl.help.bomb.use",
+  "state": "Implemented",
+  "design_text": "[使用时] 对所有怪物卡造成4点伤害",
+  "requires_json": "[\"HasOwnerEntity\", \"ActivatedByUse\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnSelfUsed\"},\"target\":{\"atom\":\"AllMonsters\"},\"action\":{\"atom\":\"DealDamage\",\"amount\":\"{{amount}}\",\"actor\":\"Player\"}}"
+ },
+ {
+  "id": "tpl.help.brutality_card.use",
+  "state": "Implemented",
+  "design_text": "[使用时] 玩家下一次对怪物造成的战斗伤害翻倍",
+  "requires_json": "[\"HasOwnerEntity\", \"ActivatedByUse\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnSelfUsed\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"AddRuleModifier\",\"rule\":\"DamageMultiplier\",\"op\":\"Multiply\",\"value\":\"{{value}}\",\"layer\":\"Temporary\",\"scope\":\"Once\",\"source\":\"{{source}}\",\"conditionTarget\":\"None\",\"conditionActor\":\"Player\",\"conditionTargetKind\":\"Monster\",\"sourceAction\":\"{{sourceAction}}\",\"excludeSourcePrefix\":\"{{excludeSourcePrefix}}\"}}"
+ },
+ {
+  "id": "tpl.help.doubling_tower.board_monster",
+  "state": "Implemented",
+  "design_text": "[场上] 处于格1时，对怪物卡使用的帮助卡触发两次",
+  "requires_json": "[\"HasOwnerEntity\", \"ActivatedByUse\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[\"AtSlot\"]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnOtherHelpCardUsed\"},\"conditions\":[{\"atom\":\"AtSlot\",\"target\":\"Self\",\"slot\":1}],\"target\":{\"atom\":\"Self\"},\"action\":{\"atom\":\"ReplayHelpCardEffects\",\"targetKind\":\"Monster\"}}"
+ },
+ {
+  "id": "tpl.help.doubling_tower.item_player",
+  "state": "Implemented",
+  "design_text": "[道具牌格] 对玩家卡使用的帮助卡生效两次，触发后永久移除本卡",
+  "requires_json": "[\"HasOwnerEntity\", \"ActivatedByUse\", \"CardZoneTriggerable\", \"CardZone:ItemSlots\"]",
+  "conditions_json": "[\"CardZone:zone=ItemSlots\"]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnOtherHelpCardUsed\"},\"conditions\":[{\"atom\":\"CardZone\",\"target\":\"Self\",\"zone\":\"ItemSlots\"}],\"target\":{\"atom\":\"Self\"},\"action\":{\"atom\":\"ReplayHelpCardEffects\",\"targetKind\":\"Avatar\",\"deactivateSelf\":true}}"
+ },
+ {
+  "id": "tpl.help.fireball.use",
+  "state": "Implemented",
+  "design_text": "[使用时] 对目标怪物卡造成等同于玩家攻击的伤害",
+  "requires_json": "[\"HasOwnerEntity\", \"ActivatedByUse\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnSelfUsed\"},\"target\":{\"atom\":\"SelectedCards\",\"kind\":\"Monster\",\"zone\":\"Board\",\"count\":\"{{count}}\"},\"action\":{\"atom\":\"DealDamage\",\"value\":{\"source\":\"{{source}}\",\"stat\":\"Attack\"},\"actor\":\"Player\"}}"
+ },
+ {
+  "id": "tpl.help.food_card.use",
+  "state": "Implemented",
+  "design_text": "[使用时] 将玩家卡血量回满",
+  "requires_json": "[\"HasOwnerEntity\", \"ActivatedByUse\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnSelfUsed\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"Heal\",\"value\":{\"op\":\"Subtract\",\"values\":[{\"source\":\"{{source}}\",\"stat\":\"MaxHp\"},{\"source\":\"{{source}}\",\"stat\":\"Hp\"}]},\"actor\":\"Player\"}}"
+ },
+ {
+  "id": "tpl.help.gold_card.use",
+  "state": "Implemented",
+  "design_text": "[使用时] 为玩家提供50金币",
+  "requires_json": "[\"HasOwnerEntity\", \"ActivatedByUse\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnSelfUsed\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"ModifyGold\",\"delta\":\"{{delta}}\",\"reason\":\"{{reason}}\"}}"
+ },
+ {
+  "id": "tpl.help.impact_tutorial.use",
+  "state": "Implemented",
+  "design_text": "[使用时] 对目标怪物卡造成等同于玩家当前血量的伤害",
+  "requires_json": "[\"HasOwnerEntity\", \"ActivatedByUse\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnSelfUsed\"},\"target\":{\"atom\":\"SelectedCards\",\"kind\":\"Monster\",\"zone\":\"Board\",\"count\":\"{{count}}\"},\"action\":{\"atom\":\"DealDamage\",\"value\":{\"source\":\"{{source}}\",\"stat\":\"Hp\"},\"actor\":\"Player\"}}"
+ },
+ {
+  "id": "tpl.help.kidnapping.use",
+  "state": "Implemented",
+  "design_text": "[使用时] 移除一张非精英非层主怪物卡，并获得等同于其当前护甲的护甲",
+  "requires_json": "[\"HasOwnerEntity\", \"ActivatedByUse\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnSelfUsed\"},\"target\":{\"atom\":\"SelectedCards\",\"kind\":\"Monster\",\"zone\":\"Board\",\"count\":\"{{count}}\",\"excludeElite\":true,\"excludeBoss\":true,\"trueMonsterOnly\":true},\"action\":{\"atom\":\"Sequence\",\"actions\":[{\"atom\":\"TransferArmor\",\"all\":true,\"receiver\":\"Player\",\"cause\":\"{{cause}}\"},{\"atom\":\"RemoveCard\",\"destination\":\"Removed\",\"reason\":\"{{reason}}\"}]}}"
+ },
+ {
+  "id": "tpl.help.rotation_wheel.use",
+  "state": "Implemented",
+  "design_text": "[使用时] 逆时针旋转一次",
+  "requires_json": "[\"HasOwnerEntity\", \"ActivatedByUse\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnSelfUsed\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"Rotate\",\"direction\":\"CounterClockwise\"}}"
+ },
+ {
+  "id": "tpl.help.shield_bash_tutorial.use",
+  "state": "Implemented",
+  "design_text": "[使用时] 对目标怪物卡造成等同于玩家当前护甲的伤害",
+  "requires_json": "[\"HasOwnerEntity\", \"ActivatedByUse\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnSelfUsed\"},\"target\":{\"atom\":\"SelectedCards\",\"kind\":\"Monster\",\"zone\":\"Board\",\"count\":\"{{count}}\"},\"action\":{\"atom\":\"DealDamage\",\"value\":{\"source\":\"{{source}}\",\"stat\":\"Armor\"},\"actor\":\"Player\"}}"
+ },
+ {
+  "id": "tpl.help.stat_boost_card.use",
+  "state": "Implemented",
+  "design_text": "[使用时] 选择攻击+1、护甲+1或血量上限与当前血量+2",
+  "requires_json": "[\"HasOwnerEntity\", \"ActivatedByUse\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnSelfUsed\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"Conditional\",\"condition\":{\"atom\":\"SelectedOption\",\"option\":\"{{option}}\"},\"action\":{\"atom\":\"ModifyBaseStat\",\"stat\":\"Attack\",\"delta\":\"{{delta}}\",\"reason\":\"{{reason}}\"},\"elseAction\":{\"atom\":\"Conditional\",\"condition\":{\"atom\":\"SelectedOption\",\"option\":\"{{action_elseAction_condition_option}}\"},\"action\":{\"atom\":\"ModifyBaseStat\",\"stat\":\"Armor\",\"delta\":\"{{delta}}\",\"reason\":\"{{action_elseAction_action_reason}}\"},\"elseAction\":{\"atom\":\"Conditional\",\"condition\":{\"atom\":\"SelectedOption\",\"option\":\"{{action_elseAction_elseAction_condition_option}}\"},\"action\":{\"atom\":\"ModifyBaseStat\",\"stat\":\"MaxHp\",\"delta\":\"{{action_elseAction_elseAction_action_delta}}\",\"reason\":\"{{action_elseAction_elseAction_action_reason}}\"}}}}}"
+ },
+ {
+  "id": "tpl.help.swap_card.use",
+  "state": "Implemented",
+  "design_text": "[使用时] 选择除玩家卡外的两张卡牌互换所在格子位置",
+  "requires_json": "[\"HasOwnerEntity\", \"ActivatedByUse\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnSelfUsed\"},\"target\":{\"atom\":\"SelectedCards\",\"zone\":\"Board\",\"count\":\"{{count}}\"},\"action\":{\"atom\":\"Swap\"}}"
+ },
+ {
+  "id": "tpl.help.teleport_card.use",
+  "state": "Implemented",
+  "design_text": "[使用时] 选择除玩家卡外的一张卡牌洗回战斗卡组",
+  "requires_json": "[\"HasOwnerEntity\", \"ActivatedByUse\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnSelfUsed\"},\"target\":{\"atom\":\"SelectedCards\",\"zone\":\"Board\",\"count\":\"{{count}}\"},\"action\":{\"atom\":\"MoveToDrawPile\"}}"
+ },
+ {
+  "id": "tpl.help.throwing_knife.use",
+  "state": "Implemented",
+  "design_text": "[使用时] 对目标怪物卡造成6点伤害",
+  "requires_json": "[\"HasOwnerEntity\", \"ActivatedByUse\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnSelfUsed\"},\"target\":{\"atom\":\"SelectedCards\",\"kind\":\"Monster\",\"zone\":\"Board\",\"count\":\"{{count}}\"},\"action\":{\"atom\":\"DealDamage\",\"amount\":\"{{amount}}\",\"actor\":\"Player\"}}"
+ },
+ {
+  "id": "tpl.help.ward_magic_card.use",
+  "state": "Implemented",
+  "design_text": "[使用时] 下一次玩家受到伤害时，该次伤害变为0",
+  "requires_json": "[\"HasOwnerEntity\", \"ActivatedByUse\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnSelfUsed\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"AddRuleModifier\",\"rule\":\"DamageMultiplier\",\"op\":\"Override\",\"value\":\"{{value}}\",\"layer\":\"Temporary\",\"scope\":\"Once\",\"source\":\"{{source}}\"}}"
+ },
+ {
+  "id": "tpl.help.watchtower.board_corner",
+  "state": "Implemented",
+  "design_text": "[场上] 移动到角格时，对随机怪物造成3点伤害；触发4次后移除本卡",
+  "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnMoveToSlot\",\"slots\":[1,3,7,9],\"target\":\"Self\",\"counterKey\":\"help.watchtower.corner\"},\"target\":{\"atom\":\"FilteredCards\",\"kind\":\"Monster\",\"zone\":\"Board\",\"random\":true,\"count\":\"{{count}}\"},\"action\":{\"atom\":\"Sequence\",\"actions\":[{\"atom\":\"DealDamage\",\"amount\":\"{{amount}}\",\"actor\":\"Self\"},{\"atom\":\"Conditional\",\"condition\":{\"atom\":\"CardCounter\",\"target\":\"Self\",\"key\":\"help.watchtower.corner\",\"min\":4},\"action\":{\"atom\":\"Sequence\",\"actions\":[{\"atom\":\"RemoveCard\",\"destination\":\"Removed\",\"reason\":\"{{reason}}\",\"target\":{\"atom\":\"Self\"}},{\"atom\":\"DeactivateSelfEffect\"}]}}]}}"
+ },
+ {
+  "id": "tpl.help.watchtower.item_battle",
+  "state": "Implemented",
+  "design_text": "[道具牌格] 玩家与怪物战斗时，对随机一张怪物卡造成2点伤害",
+  "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\", \"CardZone:ItemSlots\"]",
+  "conditions_json": "[\"CardZone:zone=ItemSlots\", \"EventFilter:eventType=DamageDealt\"]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnBattle\",\"sourceAction\":\"{{sourceAction}}\",\"targetKind\":\"Monster\",\"maxActionDepth\":0},\"conditions\":[{\"atom\":\"CardZone\",\"target\":\"Self\",\"zone\":\"ItemSlots\"},{\"atom\":\"EventFilterActorIsPlayer\",\"eventType\":\"DamageDealt\",\"targetKind\":\"Monster\"}],\"target\":{\"atom\":\"RandomMonster\"},\"action\":{\"atom\":\"DealDamage\",\"amount\":\"{{amount}}\",\"actor\":\"Self\"}}"
+ },
+ {
+  "id": "tpl.relic.arsenal.node_end",
+  "state": "Implemented",
+  "design_text": "[每关卡结束时] 加入飞刀/爆弹/破击锤之一",
+  "requires_json": "[\"NoOwnerEntity\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnNodeEnd\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"WeightedRandom\",\"choices\":[{\"weight\":\"{{weight}}\",\"action\":{\"atom\":\"Spawn\",\"defId\":\"help.throwing_knife\",\"kind\":\"HelpCard\",\"zone\":\"PlayerCardPool\"}},{\"weight\":\"{{weight}}\",\"action\":{\"atom\":\"Spawn\",\"defId\":\"help.bomb\",\"kind\":\"HelpCard\",\"zone\":\"PlayerCardPool\"}},{\"weight\":\"{{weight}}\",\"action\":{\"atom\":\"Spawn\",\"defId\":\"help.armor_breaking_hammer\",\"kind\":\"HelpCard\",\"zone\":\"PlayerCardPool\"}}]}}"
+ },
+ {
+  "id": "tpl.relic.battle_hardened.battle",
+  "state": "Implemented",
+  "design_text": "[战斗时] 攻击+2（仅对当前敌人有效）",
+  "requires_json": "[\"NoOwnerEntity\"]",
+  "conditions_json": "[\"EventFilter:eventType=DamageDealt\"]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnBattle\",\"sourceAction\":\"{{sourceAction}}\",\"targetKind\":\"Monster\",\"maxActionDepth\":0},\"conditions\":[{\"atom\":\"EventFilterActorIsPlayer\",\"eventType\":\"DamageDealt\",\"targetKind\":\"Monster\"}],\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"AddModifier\",\"stat\":\"Attack\",\"op\":\"Add\",\"value\":\"{{value}}\",\"layer\":\"Temporary\",\"scope\":\"UntilEnemyChanges\",\"source\":\"{{source}}\"}}"
+ },
+ {
+  "id": "tpl.relic.blood_shockwave.node_start",
+  "state": "Implemented",
+  "design_text": "[每关卡开始时] 将一张撞击教程放入道具牌格",
+  "requires_json": "[\"NoOwnerEntity\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnNodeStart\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"Spawn\",\"defId\":\"help.impact_tutorial\",\"kind\":\"HelpCard\",\"zone\":\"ItemSlots\"}}"
+ },
+ {
+  "id": "tpl.relic.blood_shockwave.node_start_low_hp",
+  "state": "Implemented",
+  "design_text": "[每关卡开始时] 当前血量低于50%时再放入一张撞击教程",
+  "requires_json": "[\"NoOwnerEntity\"]",
+  "conditions_json": "[\"HpBelow\"]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnNodeStart\"},\"conditions\":[{\"atom\":\"HpBelow\",\"target\":\"Player\",\"pct\":0.5}],\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"Spawn\",\"defId\":\"help.impact_tutorial\",\"kind\":\"HelpCard\",\"zone\":\"ItemSlots\"}}"
+ },
+ {
+  "id": "tpl.relic.craving.rule",
+  "state": "Implemented",
+  "design_text": "所有恢复血量效果翻倍",
+  "requires_json": "[\"NoOwnerEntity\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"RuleModifier\",\"ruleModifier\":{\"rule\":\"RecoveryMultiplier\",\"op\":\"Multiply\",\"value\":\"{{value}}\",\"layer\":\"Persistent\",\"scope\":\"Permanent\"}}"
+ },
+ {
+  "id": "tpl.relic.dragon_scale_armor.rule",
+  "state": "Implemented",
+  "design_text": "所有怪物卡的攻击-1",
+  "requires_json": "[\"NoOwnerEntity\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"RuleModifier\",\"ruleModifier\":{\"rule\":\"EnemyAttackDelta\",\"op\":\"Add\",\"value\":\"{{value}}\",\"layer\":\"Persistent\",\"scope\":\"Permanent\"}}"
+ },
+ {
+  "id": "tpl.relic.easy_road.node_end",
+  "state": "Implemented",
+  "design_text": "[每关卡结束时] 进行一次白色帮助卡三选一",
+  "requires_json": "[\"NoOwnerEntity\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnNodeEnd\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"OfferRewardChoice\",\"poolId\":\"{{poolId}}\"}}"
+ },
+ {
+  "id": "tpl.relic.even_hatred.rule",
+  "state": "Implemented",
+  "design_text": "[战斗时] 若目标怪物卡等级为偶数，玩家造成双倍伤害",
+  "requires_json": "[\"NoOwnerEntity\"]",
+  "conditions_json": "[\"EventFilter\", \"LevelParity\"]",
+  "body": "{\"kind\":\"RuleModifier\",\"conditions\":[{\"atom\":\"EventFilterActorIsPlayer\",\"targetKind\":\"Monster\"},{\"atom\":\"LevelParity\",\"target\":\"Self\",\"parity\":\"Even\"}],\"ruleModifier\":{\"rule\":\"DamageMultiplier\",\"op\":\"Multiply\",\"value\":\"{{value}}\",\"layer\":\"Persistent\",\"scope\":\"Permanent\",\"source\":\"{{source}}\"}}"
+ },
+ {
+  "id": "tpl.relic.gold_armor.rule",
+  "state": "Implemented",
+  "design_text": "[受到伤害时] 每5金币抵消1点当前护甲伤害",
+  "requires_json": "[\"NoOwnerEntity\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"RuleModifier\",\"ruleModifier\":{\"rule\":\"GoldArmorAbsorb\",\"op\":\"Override\",\"value\":\"{{value}}\",\"layer\":\"Persistent\",\"scope\":\"Permanent\"}}"
+ },
+ {
+  "id": "tpl.relic.gold_knife.kill",
+  "state": "Implemented",
+  "design_text": "[击杀怪物时] 获得2金币",
+  "requires_json": "[\"NoOwnerEntity\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnKill\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"ModifyGold\",\"delta\":\"{{delta}}\",\"reason\":\"{{reason}}\"}}"
+ },
+ {
+  "id": "tpl.relic.heavy_armor.node_start",
+  "state": "Implemented",
+  "design_text": "[每关卡开始时] 每有两点基础护甲，额外获得1点当前护甲",
+  "requires_json": "[\"NoOwnerEntity\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnNodeStart\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"GainArmor\",\"value\":{\"op\":\"Floor\",\"values\":[{\"op\":\"Multiply\",\"values\":[{\"source\":\"{{source}}\",\"stat\":\"Armor\"},{\"constant\":0.5}]}]}}}"
+ },
+ {
+  "id": "tpl.relic.junk_launcher.use",
+  "state": "Implemented",
+  "design_text": "[使用道具卡时] 对随机一张怪物卡造成2点伤害",
+  "requires_json": "[\"NoOwnerEntity\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnAnyHelpCardUsed\"},\"target\":{\"atom\":\"RandomMonster\"},\"action\":{\"atom\":\"DealDamage\",\"amount\":\"{{amount}}\",\"actor\":\"Player\"}}"
+ },
+ {
+  "id": "tpl.relic.junk_coating.use",
+  "state": "Implemented",
+  "design_text": "[使用道具卡时] 获得1点当前护甲",
+  "requires_json": "[\"NoOwnerEntity\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnAnyHelpCardUsed\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"GainArmor\",\"amount\":\"{{amount}}\"}}"
+ },
+ {
+  "id": "tpl.relic.junk_recycler.use",
+  "state": "Implemented",
+  "design_text": "[使用道具卡时] 恢复2点血量",
+  "requires_json": "[\"NoOwnerEntity\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnAnyHelpCardUsed\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"Heal\",\"amount\":\"{{amount}}\",\"actor\":\"Player\"}}"
+ },
+ {
+  "id": "tpl.relic.junk_launcher.volley",
+  "state": "Implemented",
+  "design_text": "[使用帮助卡时] 对随机怪物连续造成2次2点伤害",
+  "requires_json": "[\"NoOwnerEntity\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnSelfUsed\"},\"target\":{\"atom\":\"RandomMonster\"},\"action\":{\"atom\":\"Repeat\",\"count\":\"{{count}}\",\"action\":{\"atom\":\"DealDamage\",\"amount\":\"{{amount}}\",\"actor\":\"Player\"}}}"
+ },
+ {
+  "id": "tpl.relic.junk_slot_machine.use",
+  "state": "Implemented",
+  "design_text": "[使用帮助卡时] 随机触发九选一",
+  "requires_json": "[\"NoOwnerEntity\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnSelfUsed\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"WeightedRandom\",\"choices\":[{\"weight\":\"{{weight}}\",\"action\":{\"atom\":\"ModifyGold\",\"delta\":\"{{delta}}\",\"reason\":\"{{reason}}\"}},{\"weight\":\"{{action_choices_1_weight}}\",\"action\":{\"atom\":\"GainArmor\",\"amount\":\"{{amount}}\"}},{\"weight\":\"{{action_choices_2_weight}}\",\"action\":{\"atom\":\"Heal\",\"amount\":\"{{amount}}\",\"actor\":\"Player\"}},{\"weight\":\"{{action_choices_3_weight}}\",\"action\":{\"atom\":\"DealDamage\",\"amount\":\"{{amount}}\",\"actor\":\"Player\"}},{\"weight\":\"{{action_choices_4_weight}}\",\"action\":{\"atom\":\"Spawn\",\"defId\":\"help.throwing_knife\",\"kind\":\"HelpCard\",\"zone\":\"ItemSlots\"}},{\"weight\":\"{{action_choices_5_weight}}\",\"action\":{\"atom\":\"Spawn\",\"defId\":\"help.bomb\",\"kind\":\"HelpCard\",\"zone\":\"ItemSlots\"}},{\"weight\":\"{{action_choices_6_weight}}\",\"action\":{\"atom\":\"Spawn\",\"defId\":\"help.sturdy_shield\",\"kind\":\"HelpCard\",\"zone\":\"ItemSlots\"}},{\"weight\":\"{{action_choices_7_weight}}\",\"action\":{\"atom\":\"ModifyGold\",\"delta\":\"{{action_choices_7_action_delta}}\",\"reason\":\"{{reason}}\"}},{\"weight\":\"{{action_choices_8_weight}}\",\"action\":{\"atom\":\"Rotate\",\"count\":\"{{count}}\"}}]}}"
+ },
+ {
+  "id": "tpl.relic.lucky_coin.boss_kill",
+  "state": "Implemented",
+  "design_text": "[击杀层主时] 将一张金币卡加入战斗卡组",
+  "requires_json": "[\"NoOwnerEntity\"]",
+  "conditions_json": "[\"CardCounter\"]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnKill\"},\"conditions\":[{\"atom\":\"CardCounter\",\"target\":\"EventCard\",\"key\":\"boss\"}],\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"ShuffleInto\",\"defId\":\"help.gold_card\",\"kind\":\"HelpCard\",\"count\":\"{{count}}\",\"top\":false}}"
+ },
+ {
+  "id": "tpl.relic.lucky_coin.elite_kill",
+  "state": "Implemented",
+  "design_text": "[击杀精英时] 将一张金币卡加入战斗卡组",
+  "requires_json": "[\"NoOwnerEntity\"]",
+  "conditions_json": "[\"CardCounter\"]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnKill\"},\"conditions\":[{\"atom\":\"CardCounter\",\"target\":\"EventCard\",\"key\":\"elite\"}],\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"ShuffleInto\",\"defId\":\"help.gold_card\",\"kind\":\"HelpCard\",\"count\":\"{{count}}\",\"top\":false}}"
+ },
+ {
+  "id": "tpl.relic.phoenix_feather.fatal",
+  "state": "Implemented",
+  "design_text": "[受到致命伤害时] 恢复50%血量并永久移除本遗物",
+  "requires_json": "[\"NoOwnerEntity\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnFatalDamage\",\"target\":\"Player\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"Sequence\",\"actions\":[{\"atom\":\"Heal\",\"amount\":{\"op\":\"Floor\",\"values\":[{\"op\":\"Multiply\",\"values\":[{\"source\":\"{{source}}\",\"stat\":\"MaxHp\",\"effective\":true},{\"constant\":0.5}]}]},\"actor\":\"Player\"},{\"atom\":\"DeactivateSelfEffect\"}]}}"
+ },
+ {
+  "id": "tpl.relic.potion_bag.node_start",
+  "state": "Implemented",
+  "design_text": "[每关卡开始时] 将两张恢复药水加入到玩家侧卡组",
+  "requires_json": "[\"NoOwnerEntity\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnNodeStart\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"Spawn\",\"defId\":\"help.healing_potion\",\"kind\":\"HelpCard\",\"zone\":\"PlayerCardPool\",\"count\":\"{{count}}\"}}"
+ },
+ {
+  "id": "tpl.relic.rotation_button.node_start",
+  "state": "Implemented",
+  "design_text": "[每关卡开始时] 将一张旋转轮放入道具牌格",
+  "requires_json": "[\"NoOwnerEntity\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnNodeStart\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"Spawn\",\"defId\":\"help.rotation_wheel\",\"kind\":\"HelpCard\",\"zone\":\"ItemSlots\"}}"
+ },
+ {
+  "id": "tpl.relic.shield_knife.kill",
+  "state": "Implemented",
+  "design_text": "[击杀怪物时] 获得1点当前护甲",
+  "requires_json": "[\"NoOwnerEntity\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnKill\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"GainArmor\",\"amount\":\"{{amount}}\"}}"
+ },
+ {
+  "id": "tpl.relic.sling.kill",
+  "state": "Implemented",
+  "design_text": "[击杀怪物时] 对随机一张怪物卡造成4点伤害",
+  "requires_json": "[\"NoOwnerEntity\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnKill\"},\"target\":{\"atom\":\"RandomMonster\"},\"action\":{\"atom\":\"DealDamage\",\"amount\":\"{{amount}}\",\"actor\":\"Player\"}}"
+ },
+ {
+  "id": "tpl.relic.swap_button.node_start",
+  "state": "Implemented",
+  "design_text": "[每关卡开始时] 将一张交换卡放入道具牌格",
+  "requires_json": "[\"NoOwnerEntity\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnNodeStart\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"Spawn\",\"defId\":\"help.swap_card\",\"kind\":\"HelpCard\",\"zone\":\"ItemSlots\"}}"
+ },
+ {
+  "id": "tpl.relic.thorn_skin.battle",
+  "state": "Implemented",
+  "design_text": "[战斗时] 对怪物卡造成等同于该怪物卡攻击的伤害",
+  "requires_json": "[\"NoOwnerEntity\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnBattle\",\"sourceAction\":\"{{sourceAction}}\",\"targetKind\":\"Monster\",\"maxActionDepth\":0},\"target\":{\"atom\":\"EventTarget\"},\"action\":{\"atom\":\"DealDamage\",\"value\":{\"source\":\"{{source}}\",\"stat\":\"Attack\"},\"actor\":\"Player\"}}"
+ },
+ {
+  "id": "tpl.relic.throwing_knife_bag.node_start",
+  "state": "Implemented",
+  "design_text": "[每关卡开始时] 将两张飞刀加入到玩家侧卡组",
+  "requires_json": "[\"NoOwnerEntity\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnNodeStart\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"Spawn\",\"defId\":\"help.throwing_knife\",\"kind\":\"HelpCard\",\"zone\":\"PlayerCardPool\",\"count\":\"{{count}}\"}}"
+ },
+ {
+  "id": "tpl.relic.tower_child.node_start",
+  "state": "Implemented",
+  "design_text": "[每关卡开始时] 将一张倍增塔放入道具牌格",
+  "requires_json": "[\"NoOwnerEntity\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnNodeStart\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"Spawn\",\"defId\":\"help.doubling_tower\",\"kind\":\"HelpCard\",\"zone\":\"ItemSlots\"}}"
+ },
+ {
+  "id": "tpl.relic.wood_armor.base",
+  "state": "Implemented",
+  "design_text": "血量上限+2",
+  "requires_json": "[\"NoOwnerEntity\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Modifier\",\"target\":{\"atom\":\"Player\"},\"modifier\":{\"stat\":\"MaxHp\",\"op\":\"Add\",\"value\":\"{{value}}\",\"layer\":\"Persistent\",\"scope\":\"Permanent\"}}"
+ },
+ {
+  "id": "tpl.relic.wood_armor.set",
+  "state": "Implemented",
+  "design_text": "木甲套装血量额外+8",
+  "requires_json": "[\"NoOwnerEntity\"]",
+  "conditions_json": "[\"OwnsRelicSet\"]",
+  "body": "{\"kind\":\"Modifier\",\"target\":{\"atom\":\"Player\"},\"conditions\":[{\"atom\":\"OwnsRelicSet\",\"defIds\":[\"relic.wood_shield\",\"relic.wood_sword\",\"relic.wood_armor\"]}],\"modifier\":{\"stat\":\"MaxHp\",\"op\":\"Add\",\"value\":\"{{value}}\",\"layer\":\"Conditional\",\"scope\":\"Permanent\"}}"
+ },
+ {
+  "id": "tpl.relic.wood_shield.set",
+  "state": "Implemented",
+  "design_text": "木盾套装基础护甲额外+2",
+  "requires_json": "[\"NoOwnerEntity\"]",
+  "conditions_json": "[\"OwnsRelicSet\"]",
+  "body": "{\"kind\":\"Modifier\",\"target\":{\"atom\":\"Player\"},\"conditions\":[{\"atom\":\"OwnsRelicSet\",\"defIds\":[\"relic.wood_shield\",\"relic.wood_sword\",\"relic.wood_armor\"]}],\"modifier\":{\"stat\":\"Armor\",\"op\":\"Add\",\"value\":\"{{value}}\",\"layer\":\"Conditional\",\"scope\":\"Permanent\"}}"
+ },
+ {
+  "id": "tpl.relic.wood_sword.base",
+  "state": "Implemented",
+  "design_text": "攻击+1",
+  "requires_json": "[\"NoOwnerEntity\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Modifier\",\"target\":{\"atom\":\"Player\"},\"modifier\":{\"stat\":\"Attack\",\"op\":\"Add\",\"value\":\"{{value}}\",\"layer\":\"Persistent\",\"scope\":\"Permanent\"}}"
+ },
+ {
+  "id": "tpl.relic.wood_sword.set",
+  "state": "Implemented",
+  "design_text": "木剑套装攻击额外+2",
+  "requires_json": "[\"NoOwnerEntity\"]",
+  "conditions_json": "[\"OwnsRelicSet\"]",
+  "body": "{\"kind\":\"Modifier\",\"target\":{\"atom\":\"Player\"},\"conditions\":[{\"atom\":\"OwnsRelicSet\",\"defIds\":[\"relic.wood_shield\",\"relic.wood_sword\",\"relic.wood_armor\"]}],\"modifier\":{\"stat\":\"Attack\",\"op\":\"Add\",\"value\":\"{{value}}\",\"layer\":\"Conditional\",\"scope\":\"Permanent\"}}"
+ },
+ {
+  "id": "tpl.shared.2.relic_hard_skin_node_end",
+  "state": "Implemented",
+  "design_text": "[每关卡结束时] 恢复10点血量",
+  "requires_json": "[\"NoOwnerEntity\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnNodeEnd\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"Heal\",\"amount\":\"{{amount}}\",\"actor\":\"Player\"}}"
+ },
+ {
+  "id": "tpl.shared.2.skill_air_strike_slot1",
+  "state": "Implemented",
+  "design_text": "[场上] 移动到格1时对玩家造成2点伤害",
+  "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnMoveToSlot\",\"slot\":1,\"target\":\"Self\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"DealDamage\",\"amount\":\"{{amount}}\",\"actor\":\"Self\"}}"
+ },
+ {
+  "id": "tpl.shared.3.help_blue_chest_card_use",
+  "state": "Implemented",
+  "design_text": "[使用时] 从三个遗物中选择一个获得",
+  "requires_json": "[\"HasOwnerEntity\", \"ActivatedByUse\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnSelfUsed\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"OfferRewardChoice\",\"poolId\":\"{{poolId}}\"}}"
+ },
+ {
+  "id": "tpl.shared.3.help_healing_spring_use",
+  "state": "Implemented",
+  "design_text": "[使用时] 直接移除本卡，不触发其他效果",
+  "requires_json": "[\"HasOwnerEntity\", \"ActivatedByUse\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnSelfUsed\"},\"target\":{\"atom\":\"Self\"},\"action\":{\"atom\":\"Sequence\",\"actions\":[{\"atom\":\"RemoveCard\",\"destination\":\"Removed\",\"reason\":\"{{reason}}\"},{\"atom\":\"DeactivateSelfEffect\"}]}}"
+ },
+ {
+  "id": "tpl.shared.4.relic_dragon_scale_armor_base",
+  "state": "Implemented",
+  "design_text": "基础护甲+1",
+  "requires_json": "[\"NoOwnerEntity\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Modifier\",\"target\":{\"atom\":\"Player\"},\"modifier\":{\"stat\":\"Armor\",\"op\":\"Add\",\"value\":\"{{value}}\",\"layer\":\"Persistent\",\"scope\":\"Permanent\"}}"
+ },
+ {
+  "id": "tpl.shared.5.relic_blood_shockwave_max_hp",
+  "state": "Implemented",
+  "design_text": "血量上限+4",
+  "requires_json": "[\"NoOwnerEntity\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnActivate\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"ModifyBaseStat\",\"stat\":\"MaxHp\",\"delta\":\"{{delta}}\",\"reason\":\"{{reason}}\"}}"
+ },
+ {
+  "id": "tpl.skill.absorb_bone.remove",
+  "state": "Implemented",
+  "design_text": "正交相邻格怪物被移除时，获得该怪物移除前的攻击和护甲",
+  "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[\"EventFilter:eventType=CardRemoved\", \"Adjacent:left=Self:right=EventCard\"]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnAnyCardRemoved\"},\"conditions\":[{\"atom\":\"EventFilter\",\"eventType\":\"CardRemoved\",\"targetKind\":\"Monster\"},{\"atom\":\"Adjacent\",\"left\":\"Self\",\"right\":\"EventCard\"}],\"target\":{\"atom\":\"Self\"},\"action\":{\"atom\":\"Sequence\",\"actions\":[{\"atom\":\"ModifyBaseStat\",\"stat\":\"Attack\",\"value\":{\"source\":\"{{source}}\",\"field\":\"RemovedAttack\"},\"reason\":\"{{reason}}\"},{\"atom\":\"ModifyBaseStat\",\"stat\":\"Armor\",\"value\":{\"source\":\"{{source}}\",\"field\":\"RemovedArmor\"},\"reason\":\"{{action_actions_1_reason}}\"}]}}"
+ },
+ {
+  "id": "tpl.skill.absorb.remove",
+  "state": "Implemented",
+  "design_text": "[场上] 正交相邻格每有一张怪物卡被移除，本卡从攻击+1/护甲+2/血量+4中随机获得一种",
+  "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[\"EventFilter:eventType=CardRemoved\", \"Adjacent:left=Self:right=EventCard\"]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnAnyCardRemoved\"},\"conditions\":[{\"atom\":\"EventFilter\",\"eventType\":\"CardRemoved\",\"targetKind\":\"Monster\"},{\"atom\":\"Adjacent\",\"left\":\"Self\",\"right\":\"EventCard\"}],\"target\":{\"atom\":\"Self\"},\"action\":{\"atom\":\"WeightedRandom\",\"choices\":[{\"weight\":\"{{weight}}\",\"action\":{\"atom\":\"ModifyBaseStat\",\"stat\":\"Attack\",\"delta\":\"{{delta}}\",\"reason\":\"{{reason}}\"}},{\"weight\":\"{{weight}}\",\"action\":{\"atom\":\"ModifyBaseStat\",\"stat\":\"Armor\",\"delta\":\"{{action_choices_1_action_delta}}\",\"reason\":\"{{reason}}\"}},{\"weight\":\"{{weight}}\",\"action\":{\"atom\":\"ModifyBaseStat\",\"stat\":\"MaxHp\",\"delta\":\"{{action_choices_2_action_delta}}\",\"reason\":\"{{reason}}\"}}]}}"
+ },
+ {
+  "id": "tpl.skill.absorb_stone.move",
+  "state": "Implemented",
+  "design_text": "[场上] 每次移动时，扣除相邻怪物卡全部护甲并使本卡获得等量护甲",
+  "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnSelfMove\",\"every\":1},\"target\":{\"atom\":\"FilteredCards\",\"kind\":\"Monster\",\"zone\":\"Board\",\"adjacentTo\":\"Self\",\"exclude\":[\"Self\"]},\"action\":{\"atom\":\"TransferArmor\",\"all\":true,\"receiver\":\"Self\",\"cause\":\"{{cause}}\"}}"
+ },
+ {
+  "id": "tpl.skill.air_strike.slot3",
+  "state": "Implemented",
+  "design_text": "[场上] 移动到格3时对玩家造成2点伤害",
+  "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnMoveToSlot\",\"slot\":3,\"target\":\"Self\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"DealDamage\",\"amount\":\"{{amount}}\",\"actor\":\"Self\"}}"
+ },
+ {
+  "id": "tpl.skill.air_strike.slot7",
+  "state": "Implemented",
+  "design_text": "[场上] 移动到格7时对玩家造成2点伤害",
+  "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnMoveToSlot\",\"slot\":7,\"target\":\"Self\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"DealDamage\",\"amount\":\"{{amount}}\",\"actor\":\"Self\"}}"
+ },
+ {
+  "id": "tpl.skill.air_strike.slot9",
+  "state": "Implemented",
+  "design_text": "[场上] 移动到格9时对玩家造成2点伤害",
+  "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnMoveToSlot\",\"slot\":9,\"target\":\"Self\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"DealDamage\",\"amount\":\"{{amount}}\",\"actor\":\"Self\"}}"
+ },
+ {
+  "id": "tpl.skill.attrition.remove",
+  "state": "Implemented",
+  "design_text": "[场上]每有一张怪物卡[被移除时]，本卡攻击-1，血量-10",
+  "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[\"EventFilter:eventType=CardRemoved\"]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnAnyCardRemoved\"},\"conditions\":[{\"atom\":\"EventFilter\",\"eventType\":\"CardRemoved\",\"targetKind\":\"Monster\"}],\"target\":{\"atom\":\"Self\"},\"action\":{\"atom\":\"Sequence\",\"actions\":[{\"atom\":\"ModifyBaseStat\",\"stat\":\"Attack\",\"delta\":\"{{delta}}\",\"reason\":\"{{reason}}\"},{\"atom\":\"ModifyBaseStat\",\"stat\":\"Hp\",\"delta\":\"{{action_actions_1_delta}}\",\"reason\":\"{{reason}}\"}]}}"
+ },
+ {
+  "id": "tpl.skill.beggar_bond.move",
+  "state": "Implemented",
+  "design_text": "每移动5次，将一张乞丐怪物卡洗入战斗卡组",
+  "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnSelfMove\",\"every\":5},\"target\":{\"atom\":\"Self\"},\"action\":{\"atom\":\"ShuffleInto\",\"defId\":\"monster.beggar\",\"kind\":\"Monster\",\"count\":\"{{count}}\",\"top\":false}}"
+ },
+ {
+  "id": "tpl.skill.battle_hardened.damage",
+  "state": "Implemented",
+  "design_text": "[战斗时] 每累计对玩家造成2点伤害，本卡攻击+1",
+  "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnSelfDamageDealtToPlayerCumulative\",\"threshold\":2},\"target\":{\"atom\":\"Self\"},\"action\":{\"atom\":\"ModifyBaseStat\",\"stat\":\"Attack\",\"delta\":\"{{delta}}\",\"reason\":\"{{reason}}\"}}"
+ },
+ {
+  "id": "tpl.skill.blessing.rule",
+  "state": "Implemented",
+  "design_text": "下一次受到伤害时，该次伤害变为0",
+  "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"RuleModifier\",\"ruleModifier\":{\"rule\":\"DamageMultiplier\",\"target\":\"Self\",\"op\":\"Override\",\"value\":\"{{value}}\",\"layer\":\"Temporary\",\"scope\":\"Once\"}}"
+ },
+ {
+  "id": "tpl.skill.bloodthirst.damage",
+  "state": "Implemented",
+  "design_text": "[战斗时] 每累计对玩家造成2点伤害，本卡攻击+1",
+  "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnSelfDamageDealtToPlayerCumulative\",\"threshold\":2},\"target\":{\"atom\":\"Self\"},\"action\":{\"atom\":\"ModifyBaseStat\",\"stat\":\"Attack\",\"delta\":\"{{delta}}\",\"reason\":\"{{reason}}\"}}"
+ },
+ {
+  "id": "tpl.skill.breathe_fire.move",
+  "state": "Implemented",
+  "design_text": "每移动3次，将一张烈焰加入战斗卡组",
+  "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnSelfMove\",\"every\":3},\"target\":{\"atom\":\"Self\"},\"action\":{\"atom\":\"ShuffleInto\",\"defId\":\"trap.flame\",\"kind\":\"Trap\",\"count\":\"{{count}}\",\"top\":false}}"
+ },
+ {
+  "id": "tpl.skill.call_followers.move",
+  "state": "Implemented",
+  "design_text": "每移动3次，将一张龙信徒加入战斗卡组",
+  "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnSelfMove\",\"every\":3},\"target\":{\"atom\":\"Self\"},\"action\":{\"atom\":\"ShuffleInto\",\"defId\":\"monster.dragon_follower\",\"kind\":\"Monster\",\"count\":\"{{count}}\",\"top\":false}}"
+ },
+ {
+  "id": "tpl.skill.chant.interact",
+  "state": "Implemented",
+  "design_text": "[场上]玩家卡每互动6次，将一张近战3加入战斗卡组",
+  "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnInteract\",\"every\":6},\"target\":{\"atom\":\"Self\"},\"action\":{\"atom\":\"ShuffleInto\",\"defId\":\"monster.melee_3\",\"kind\":\"Monster\",\"count\":\"{{count}}\",\"top\":false}}"
+ },
+ {
+  "id": "tpl.skill.cloud_breath.interact",
+  "state": "Implemented",
+  "design_text": "[场上]玩家卡每互动5次，移除场上所有烈焰，每移除一张对除本卡外所有卡牌造成2点伤害",
+  "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnInteract\",\"every\":5},\"target\":{\"atom\":\"Self\"},\"action\":{\"atom\":\"Sequence\",\"actions\":[{\"atom\":\"DealDamage\",\"value\":{\"op\":\"Multiply\",\"values\":[{\"constant\":2},{\"source\":\"CardCount\",\"defId\":\"trap.flame\",\"kind\":\"Trap\",\"zone\":\"Board\"}]},\"actor\":\"Self\",\"target\":{\"atom\":\"FilteredCards\",\"zone\":\"Board\",\"exclude\":[\"Self\"]}},{\"atom\":\"RemoveCard\",\"destination\":\"Removed\",\"reason\":\"{{reason}}\",\"target\":{\"atom\":\"FilteredCards\",\"defId\":\"trap.flame\",\"kind\":\"Trap\",\"zone\":\"Board\"}}]}}"
+ },
+ {
+  "id": "tpl.skill.delivery.move",
+  "state": "Implemented",
+  "design_text": "开火窗口时，将相邻格上一张帮助卡（道具）与战斗卡组里一张怪物卡交换位置",
+  "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnCardRhythmFire\"},\"target\":{\"atom\":\"FilteredCards\",\"kind\":\"HelpCard\",\"zone\":\"Board\",\"adjacentTo\":\"Self\",\"random\":true,\"count\":\"{{count}}\"},\"action\":{\"atom\":\"ExchangeWithDrawPile\",\"kind\":\"Monster\"}}"
+ },
+ {
+  "id": "tpl.skill.offer_fire.remove",
+  "state": "Implemented",
+  "design_text": "[场上] [被移除时]，将一张烈焰加入战斗卡组",
+  "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnSelfRemoved\"},\"target\":{\"atom\":\"Self\"},\"action\":{\"atom\":\"ShuffleInto\",\"defId\":\"trap.flame\",\"kind\":\"Trap\",\"count\":\"{{count}}\",\"top\":false}}"
+ },
+ {
+  "id": "tpl.skill.endless_flame.remove",
+  "state": "Implemented",
+  "design_text": "[场上]每有一张烈焰[被移除时]，将一张烈焰加入战斗卡组",
+  "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[\"EventFilter:eventType=CardRemoved:targetDefId=trap.flame\"]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnAnyCardRemoved\"},\"conditions\":[{\"atom\":\"EventFilter\",\"eventType\":\"CardRemoved\",\"targetDefId\":\"trap.flame\"}],\"target\":{\"atom\":\"Self\"},\"action\":{\"atom\":\"ShuffleInto\",\"defId\":\"trap.flame\",\"kind\":\"Trap\",\"count\":\"{{count}}\",\"top\":false}}"
+ },
+ {
+  "id": "tpl.skill.evade.battle",
+  "state": "Implemented",
+  "design_text": "[战斗后]在格1/3/7/9中有非本卡的卡牌时，随机与其中一张交换位置；全无则不触发；致死伤后不触发",
+  "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[\"EventFilter:eventType=DamageDealt\", \"StatAtLeast:stat=Hp\"]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnBattle\",\"sourceAction\":\"DealDamage\",\"targetKind\":\"Monster\",\"maxActionDepth\":0},\"conditions\":[{\"atom\":\"EventFilterActorIsPlayerTargetIsSelf\",\"eventType\":\"DamageDealt\"},{\"atom\":\"StatAtLeast\",\"target\":\"Self\",\"stat\":\"Hp\",\"value\":1}],\"target\":{\"atom\":\"FilteredCards\",\"include\":[\"Self\"],\"zone\":\"Board\",\"slots\":[1,3,7,9],\"exclude\":[\"Self\"],\"random\":true,\"count\":1},\"action\":{\"atom\":\"Swap\"}}"
+ },
+ {
+  "id": "tpl.skill.fall_apart.remove",
+  "state": "Implemented",
+  "design_text": "[场上] [被移除时]，将一张骷髅头和一张无头骷髅洗入战斗卡组",
+  "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnSelfRemoved\"},\"target\":{\"atom\":\"Self\"},\"action\":{\"atom\":\"Sequence\",\"actions\":[{\"atom\":\"ShuffleInto\",\"defId\":\"monster.skull_head\",\"kind\":\"Monster\",\"count\":\"{{count}}\",\"top\":false},{\"atom\":\"ShuffleInto\",\"defId\":\"monster.headless_skeleton\",\"kind\":\"Monster\",\"count\":\"{{count}}\",\"top\":false}]}}"
+ },
+ {
+  "id": "tpl.skill.falling_rocks.cumulative",
+  "state": "Implemented",
+  "design_text": "[场上] 本卡每累计损失满10点护甲，将一张石人军团怪物洗入战斗卡组",
+  "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\", \"CardZone:Board\"]",
+  "conditions_json": "[\"CardZone:zone=Board\"]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnSelfArmorLostCumulative\",\"threshold\":10},\"conditions\":[{\"atom\":\"CardZone\",\"target\":\"Self\",\"zone\":\"Board\"}],\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"WeightedRandom\",\"choices\":[{\"weight\":\"{{weight}}\",\"action\":{\"atom\":\"ShuffleInto\",\"defId\":\"monster.sharp_stone\",\"kind\":\"Monster\",\"count\":\"{{count}}\",\"top\":false}},{\"weight\":\"{{weight}}\",\"action\":{\"atom\":\"ShuffleInto\",\"defId\":\"monster.big_stone\",\"kind\":\"Monster\",\"count\":\"{{count}}\",\"top\":false}},{\"weight\":\"{{weight}}\",\"action\":{\"atom\":\"ShuffleInto\",\"defId\":\"monster.stone_swallower\",\"kind\":\"Monster\",\"count\":\"{{count}}\",\"top\":false}},{\"weight\":\"{{weight}}\",\"action\":{\"atom\":\"ShuffleInto\",\"defId\":\"monster.stone_man\",\"kind\":\"Monster\",\"count\":\"{{count}}\",\"top\":false}},{\"weight\":\"{{weight}}\",\"action\":{\"atom\":\"ShuffleInto\",\"defId\":\"monster.rolling_stone_man\",\"kind\":\"Monster\",\"count\":\"{{count}}\",\"top\":false}},{\"weight\":\"{{weight}}\",\"action\":{\"atom\":\"ShuffleInto\",\"defId\":\"monster.stone_shrimp\",\"kind\":\"Monster\",\"count\":\"{{count}}\",\"top\":false}},{\"weight\":\"{{weight}}\",\"action\":{\"atom\":\"ShuffleInto\",\"defId\":\"monster.stone_thrower\",\"kind\":\"Monster\",\"count\":\"{{count}}\",\"top\":false}},{\"weight\":\"{{weight}}\",\"action\":{\"atom\":\"ShuffleInto\",\"defId\":\"monster.growing_stone\",\"kind\":\"Monster\",\"count\":\"{{count}}\",\"top\":false}},{\"weight\":\"{{weight}}\",\"action\":{\"atom\":\"ShuffleInto\",\"defId\":\"monster.shelter_stone\",\"kind\":\"Monster\",\"count\":\"{{count}}\",\"top\":false}}]}}"
+ },
+ {
+  "id": "tpl.skill.fight_me.battle",
+  "state": "Implemented",
+  "design_text": "[场上] 处于玩家正交相邻格时，如果玩家与其他怪物卡战斗，则与本卡战斗一次",
+  "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[\"Adjacent:left=Self:right=Player\", \"EventFilter:eventType=DamageDealt\"]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnBattle\",\"sourceAction\":\"{{sourceAction}}\",\"targetKind\":\"Monster\",\"maxActionDepth\":0},\"conditions\":[{\"atom\":\"Adjacent\",\"left\":\"Self\",\"right\":\"Player\"},{\"atom\":\"EventFilterActorIsPlayerTargetNotSelf\",\"eventType\":\"DamageDealt\",\"targetKind\":\"Monster\"}],\"target\":{\"atom\":\"Self\"},\"action\":{\"atom\":\"ForceBattle\"}}"
+ },
+ {
+  "id": "tpl.skill.find_weakness.move",
+  "state": "Implemented",
+  "design_text": "[场上] 福地数量达到3后，本卡下一次移动对玩家造成99点伤害",
+  "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[\"BoardMarkCount\"]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnSelfMove\",\"every\":1},\"conditions\":[{\"atom\":\"BoardMarkCount\",\"mark\":\"Blessed\",\"min\":3}],\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"Sequence\",\"actions\":[{\"atom\":\"DealDamage\",\"amount\":\"{{amount}}\",\"actor\":\"Self\"},{\"atom\":\"DeactivateSelfEffect\"}]}}"
+ },
+ {
+  "id": "tpl.skill.fire_power.aura",
+  "state": "Implemented",
+  "design_text": "[场上/抽牌堆] 每有一张烈焰，本卡攻击+2",
+  "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Modifier\",\"target\":{\"atom\":\"Self\"},\"modifier\":{\"stat\":\"Attack\",\"op\":\"Add\",\"value\":{\"op\":\"Multiply\",\"values\":[{\"constant\":2},{\"source\":\"{{source}}\",\"defId\":\"trap.flame\",\"zones\":[\"Board\",\"DrawPile\"]}]},\"layer\":\"Conditional\",\"scope\":\"Permanent\"}}"
+ },
+ {
+  "id": "tpl.skill.first_strike.rule",
+  "state": "Implemented",
+  "design_text": "持有先手还击技能",
+  "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"RuleModifier\",\"ruleModifier\":{\"rule\":\"FirstStrike\",\"target\":\"Self\",\"op\":\"Override\",\"value\":\"{{value}}\",\"layer\":\"Persistent\",\"scope\":\"Permanent\"}}"
+ },
+ {
+  "id": "tpl.skill.flame_boiling.rule",
+  "state": "Implemented",
+  "design_text": "[场上]玩家卡每互动5次，烈焰机关造成的伤害再+1（可叠加）",
+  "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnInteract\",\"every\":5},\"target\":{\"atom\":\"Self\"},\"action\":{\"atom\":\"AddRuleModifier\",\"rule\":\"DamageFlatDelta\",\"op\":\"Add\",\"value\":\"{{value}}\",\"sourceAction\":\"DealDamage\",\"sourceDefId\":\"trap.flame\",\"conditionTarget\":\"None\",\"layer\":\"Persistent\",\"scope\":\"Permanent\",\"source\":\"{{source}}\"}}"
+ },
+ {
+  "id": "tpl.skill.flame_breath.move",
+  "state": "Implemented",
+  "design_text": "每移动4次，移除其他所有非精英非层主怪物卡；每移除一张，洗入两张烈焰到战斗卡组",
+  "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnSelfMove\",\"every\":4},\"target\":{\"atom\":\"FilteredCards\",\"kind\":\"Monster\",\"zone\":\"Board\",\"exclude\":[\"Self\"],\"excludeElite\":true,\"excludeBoss\":true},\"action\":{\"atom\":\"Sequence\",\"actions\":[{\"atom\":\"RemoveCard\",\"destination\":\"Removed\",\"reason\":\"{{reason}}\"},{\"atom\":\"ShuffleInto\",\"defId\":\"trap.flame\",\"kind\":\"Trap\",\"count\":\"{{count}}\",\"top\":false,\"perTarget\":true},{\"atom\":\"ShuffleInto\",\"defId\":\"trap.flame\",\"kind\":\"Trap\",\"count\":\"{{count}}\",\"top\":false,\"perTarget\":true}]}}"
+ },
+ {
+  "id": "tpl.skill.fracture_fall_apart.remove",
+  "state": "Implemented",
+  "design_text": "[场上] [被移除时]，将一张多骨虫和一张等级2随机怪物卡洗入战斗卡组",
+  "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnSelfRemoved\"},\"target\":{\"atom\":\"Self\"},\"action\":{\"atom\":\"Sequence\",\"actions\":[{\"atom\":\"ShuffleInto\",\"defId\":\"monster.multi_bone_worm\",\"kind\":\"Monster\",\"count\":\"{{count}}\",\"top\":false},{\"atom\":\"ShuffleRandomContent\",\"kind\":\"Monster\",\"minLevel\":2,\"maxLevel\":2,\"excludeElite\":true,\"excludeBoss\":true,\"count\":\"{{count}}\",\"top\":false}]}}"
+ },
+ {
+  "id": "tpl.skill.gear_delivery.move",
+  "state": "Implemented",
+  "design_text": "开火窗口时，使随机一张其他怪物卡攻击+1或者护甲+2",
+  "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnCardRhythmFire\"},\"target\":{\"atom\":\"FilteredCards\",\"kind\":\"Monster\",\"zone\":\"Board\",\"exclude\":[\"Self\"],\"random\":true,\"count\":\"{{count}}\"},\"action\":{\"atom\":\"WeightedRandom\",\"choices\":[{\"weight\":\"{{weight}}\",\"action\":{\"atom\":\"ModifyBaseStat\",\"stat\":\"Attack\",\"delta\":\"{{delta}}\",\"reason\":\"{{reason}}\"}},{\"weight\":\"{{weight}}\",\"action\":{\"atom\":\"ModifyBaseStat\",\"stat\":\"Armor\",\"delta\":\"{{action_choices_1_action_delta}}\",\"reason\":\"{{reason}}\"}}]}}"
+ },
+ {
+  "id": "tpl.skill.gift.move",
+  "state": "Implemented",
+  "design_text": "每移动3次，将一张旋转轮放入道具牌格",
+  "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnSelfMove\",\"every\":3},\"target\":{\"atom\":\"Self\"},\"action\":{\"atom\":\"Spawn\",\"defId\":\"help.rotation_wheel\",\"kind\":\"HelpCard\",\"zone\":\"ItemSlots\"}}"
+ },
+ {
+  "id": "tpl.skill.give_punch.enter2",
+  "state": "Implemented",
+  "design_text": "[登场] 若处于格2，对玩家造成2点伤害",
+  "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[\"AtSlot\"]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnEnter\"},\"conditions\":[{\"atom\":\"AtSlot\",\"target\":\"Self\",\"slot\":2}],\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"DealDamage\",\"amount\":\"{{amount}}\",\"actor\":\"Self\"}}"
+ },
+ {
+  "id": "tpl.skill.give_punch.enter4",
+  "state": "Implemented",
+  "design_text": "[登场] 若处于格4，对玩家造成2点伤害",
+  "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[\"AtSlot\"]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnEnter\"},\"conditions\":[{\"atom\":\"AtSlot\",\"target\":\"Self\",\"slot\":4}],\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"DealDamage\",\"amount\":\"{{amount}}\",\"actor\":\"Self\"}}"
+ },
+ {
+  "id": "tpl.skill.give_punch.enter6",
+  "state": "Implemented",
+  "design_text": "[登场] 若处于格6，对玩家造成2点伤害",
+  "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[\"AtSlot\"]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnEnter\"},\"conditions\":[{\"atom\":\"AtSlot\",\"target\":\"Self\",\"slot\":6}],\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"DealDamage\",\"amount\":\"{{amount}}\",\"actor\":\"Self\"}}"
+ },
+ {
+  "id": "tpl.skill.give_punch.enter8",
+  "state": "Implemented",
+  "design_text": "[登场] 若处于格8，对玩家造成2点伤害",
+  "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[\"AtSlot\"]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnEnter\"},\"conditions\":[{\"atom\":\"AtSlot\",\"target\":\"Self\",\"slot\":8}],\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"DealDamage\",\"amount\":\"{{amount}}\",\"actor\":\"Self\"}}"
+ },
+ {
+  "id": "tpl.skill.guide.blessed_enter",
+  "state": "Implemented",
+  "design_text": "任意怪物移动到福地时获得2点护甲且攻击+1",
+  "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnMoveToBoardMark\",\"mark\":\"Blessed\",\"targetKind\":\"Monster\"},\"target\":{\"atom\":\"BoardMarkEventCard\",\"mark\":\"Blessed\",\"targetKind\":\"Monster\"},\"action\":{\"atom\":\"Sequence\",\"actions\":[{\"atom\":\"GainArmor\",\"amount\":\"{{amount}}\"},{\"atom\":\"ModifyBaseStat\",\"stat\":\"Attack\",\"delta\":\"{{delta}}\",\"reason\":\"{{reason}}\"}]}}"
+ },
+ {
+  "id": "tpl.skill.guide.create_blessed",
+  "state": "Implemented",
+  "design_text": "每移动3次，在非格5且未标记为福地的格子中随机标记1个福地",
+  "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnSelfMove\",\"every\":3},\"target\":{\"atom\":\"Self\"},\"action\":{\"atom\":\"SetBoardMark\",\"mark\":\"Blessed\",\"random\":true,\"count\":\"{{count}}\",\"onlyUnmarked\":true,\"excludeSlots\":[5]}}"
+ },
+ {
+  "id": "tpl.skill.hard.slot1",
+  "state": "Implemented",
+  "design_text": "[场上] 处于格1时，战斗损失护甲后对玩家造成等同损失护甲的伤害",
+  "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[\"AtSlot\", \"EventFilter:eventType=ArmorChanged\"]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnBattle\",\"targetKind\":\"Monster\"},\"conditions\":[{\"atom\":\"AtSlot\",\"target\":\"Self\",\"slot\":1},{\"atom\":\"EventFilterTargetIsSelf\",\"eventType\":\"ArmorChanged\",\"maxDelta\":-1}],\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"DealDamage\",\"value\":{\"op\":\"Negate\",\"values\":[{\"source\":\"{{source}}\",\"field\":\"Delta\"}]},\"actor\":\"Self\"}}"
+ },
+ {
+  "id": "tpl.skill.hard.slot4",
+  "state": "Implemented",
+  "design_text": "[场上] 处于格4时，战斗损失护甲后对玩家造成等同损失护甲的伤害",
+  "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[\"AtSlot\", \"EventFilter:eventType=ArmorChanged\"]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnBattle\",\"targetKind\":\"Monster\"},\"conditions\":[{\"atom\":\"AtSlot\",\"target\":\"Self\",\"slot\":4},{\"atom\":\"EventFilterTargetIsSelf\",\"eventType\":\"ArmorChanged\",\"maxDelta\":-1}],\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"DealDamage\",\"value\":{\"op\":\"Negate\",\"values\":[{\"source\":\"{{source}}\",\"field\":\"Delta\"}]},\"actor\":\"Self\"}}"
+ },
+ {
+  "id": "tpl.skill.hard.slot7",
+  "state": "Implemented",
+  "design_text": "[场上] 处于格7时，战斗损失护甲后对玩家造成等同损失护甲的伤害",
+  "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[\"AtSlot\", \"EventFilter:eventType=ArmorChanged\"]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnBattle\",\"targetKind\":\"Monster\"},\"conditions\":[{\"atom\":\"AtSlot\",\"target\":\"Self\",\"slot\":7},{\"atom\":\"EventFilterTargetIsSelf\",\"eventType\":\"ArmorChanged\",\"maxDelta\":-1}],\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"DealDamage\",\"value\":{\"op\":\"Negate\",\"values\":[{\"source\":\"{{source}}\",\"field\":\"Delta\"}]},\"actor\":\"Self\"}}"
+ },
+ {
+  "id": "tpl.skill.hot_observation.observe",
+  "state": "Implemented",
+  "design_text": "怪物卡因怪物技能改变位置时，对玩家造成1点伤害",
+  "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[\"EventFilter:eventType=CardMoved\"]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnEvent\",\"eventType\":\"CardMoved\"},\"conditions\":[{\"atom\":\"EventFilterSourcePrefix\",\"eventType\":\"CardMoved\",\"targetKind\":\"Monster\",\"excludeSourceDefId\":\"skill.hot_observation\",\"prefix\":\"skill.\"}],\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"DealDamage\",\"amount\":\"{{amount}}\",\"actor\":\"Self\"}}"
+ },
+ {
+  "id": "tpl.skill.intense_burning.flame_deal",
+  "state": "Implemented",
+  "design_text": "每有一张烈焰加入战斗卡组，额外加入一张；额外加入的烈焰不再触发本效果",
+  "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[\"EventFilter:eventType=CardDealt\"]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnDeal\"},\"conditions\":[{\"atom\":\"EventFilterExcludeCause\",\"eventType\":\"CardDealt\",\"sourceDefId\":\"trap.flame\",\"cause\":\"skill.intense_burning\"}],\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"ShuffleInto\",\"defId\":\"trap.flame\",\"kind\":\"Trap\",\"count\":\"{{count}}\",\"top\":false}}"
+ },
+ {
+  "id": "tpl.skill.call_melee6.interact",
+  "state": "Implemented",
+  "design_text": "[场上]玩家卡每互动5次，将一张近战6加入战斗卡组",
+  "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnInteract\",\"every\":5},\"target\":{\"atom\":\"Self\"},\"action\":{\"atom\":\"ShuffleInto\",\"defId\":\"monster.melee_6\",\"kind\":\"Monster\",\"count\":\"{{count}}\",\"top\":false}}"
+ },
+ {
+  "id": "tpl.skill.learning_growth.gain",
+  "state": "Implemented",
+  "design_text": "每当其他怪物卡获得攻击时，本卡攻击+1，且不响应学习成长自身产生的攻击增加",
+  "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[\"EventFilter:stat=Attack\"]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnEvent\"},\"conditions\":[{\"atom\":\"EventFilterTargetNotSelf\",\"eventTypes\":[\"BaseStatModified\",\"EffectModifierApplied\"],\"stat\":\"Attack\",\"minDelta\":1,\"targetKind\":\"Monster\",\"excludeSourceDefId\":\"skill.learning_growth\"}],\"target\":{\"atom\":\"Self\"},\"action\":{\"atom\":\"ModifyBaseStat\",\"stat\":\"Attack\",\"delta\":\"{{delta}}\",\"reason\":\"{{reason}}\"}}"
+ },
+ {
+  "id": "tpl.skill.link_armor.interact",
+  "state": "Implemented",
+  "design_text": "[场上]玩家卡每互动3次，正交相邻格上怪物卡护甲+1",
+  "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnInteract\",\"every\":3},\"target\":{\"atom\":\"FilteredCards\",\"kind\":\"Monster\",\"zone\":\"Board\",\"adjacentTo\":\"Self\",\"exclude\":[\"Self\"]},\"action\":{\"atom\":\"GainArmor\",\"amount\":\"{{amount}}\"}}"
+ },
+ {
+  "id": "tpl.skill.link_attack_bonus.rule",
+  "state": "Implemented",
+  "design_text": "[场上]若本卡正交相邻格子有其他怪物卡，则本卡攻击伤害+1",
+  "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[\"AdjacentHasCard\"]",
+  "body": "{\"kind\":\"RuleModifier\",\"conditions\":[{\"atom\":\"AdjacentHasCard\",\"kind\":\"Monster\"}],\"ruleModifier\":{\"rule\":\"EnemyAttackDelta\",\"op\":\"Add\",\"value\":\"{{value}}\",\"target\":\"Self\",\"layer\":\"Conditional\",\"scope\":\"Permanent\",\"source\":\"{{source}}\"}}"
+ },
+ {
+  "id": "tpl.skill.love_fire.aura",
+  "state": "Implemented",
+  "design_text": "[场上] 有烈焰时，本卡攻击+4",
+  "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[\"HasCard\"]",
+  "body": "{\"kind\":\"Modifier\",\"target\":{\"atom\":\"Self\"},\"conditions\":[{\"atom\":\"HasCard\",\"defId\":\"trap.flame\"}],\"modifier\":{\"stat\":\"Attack\",\"op\":\"Add\",\"value\":\"{{value}}\",\"layer\":\"Conditional\",\"scope\":\"Permanent\"}}"
+ },
+ {
+  "id": "tpl.skill.sacrifice.remove",
+  "state": "Implemented",
+  "design_text": "[场上] [被移除时]，使[场上]其他怪物卡攻击+1",
+  "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnSelfRemoved\"},\"target\":{\"atom\":\"FilteredCards\",\"kind\":\"Monster\",\"zone\":\"Board\",\"exclude\":[\"Self\"]},\"action\":{\"atom\":\"ModifyBaseStat\",\"stat\":\"Attack\",\"delta\":\"{{delta}}\",\"reason\":\"{{reason}}\"}}"
+ },
+ {
+  "id": "tpl.skill.mixed_bones.move",
+  "state": "Implemented",
+  "design_text": "每移动5次，移除九宫格上除本卡外随机两张怪物卡，将一张等级2或等级3随机怪物卡洗入战斗卡组",
+  "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnSelfMove\",\"every\":5},\"target\":{\"atom\":\"FilteredCards\",\"kind\":\"Monster\",\"zone\":\"Board\",\"exclude\":[\"Self\"],\"random\":true,\"count\":\"{{count}}\"},\"action\":{\"atom\":\"Sequence\",\"actions\":[{\"atom\":\"RemoveCard\",\"destination\":\"Removed\",\"reason\":\"{{reason}}\"},{\"atom\":\"ShuffleRandomContent\",\"kind\":\"Monster\",\"minLevel\":2,\"maxLevel\":3,\"excludeElite\":true,\"excludeBoss\":true,\"count\":\"{{action_actions_1_count}}\",\"top\":false}]}}"
+ },
+ {
+  "id": "tpl.skill.monster_battle_hardened.battle",
+  "state": "Implemented",
+  "design_text": "[战斗时] 本卡攻击+2",
+  "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[\"EventFilter:eventType=DamageDealt\"]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnBattle\",\"sourceAction\":\"{{sourceAction}}\",\"targetKind\":\"Monster\",\"maxActionDepth\":0},\"conditions\":[{\"atom\":\"EventFilterActorIsPlayerTargetIsSelf\",\"eventType\":\"DamageDealt\"}],\"target\":{\"atom\":\"Self\"},\"action\":{\"atom\":\"AddModifier\",\"stat\":\"Attack\",\"op\":\"Add\",\"value\":\"{{value}}\",\"layer\":\"Temporary\",\"scope\":\"UntilBattleEnds\",\"source\":\"{{source}}\"}}"
+ },
+ {
+  "id": "tpl.skill.orc_tactics.move",
+  "state": "Implemented",
+  "design_text": "[场上] 每移动1次，相邻怪物攻击+1；离开相邻格后加成失效",
+  "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnSelfMove\",\"every\":1},\"target\":{\"atom\":\"FilteredCards\",\"kind\":\"Monster\",\"zone\":\"Board\",\"adjacentTo\":\"Self\",\"exclude\":[\"Self\"]},\"action\":{\"atom\":\"AddModifier\",\"stat\":\"Attack\",\"op\":\"Add\",\"value\":\"{{value}}\",\"layer\":\"Conditional\",\"scope\":\"Permanent\",\"source\":\"{{source}}\",\"activeWhileAdjacentTo\":\"Self\"}}"
+ },
+ {
+  "id": "tpl.skill.otherworld_help.move",
+  "state": "Implemented",
+  "design_text": "每移动9次，从当前层其余未选中的怪物牌组中随机加入1张普通等级怪物卡到战斗卡组",
+  "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnSelfMove\",\"every\":9},\"target\":{\"atom\":\"Self\"},\"action\":{\"atom\":\"ShuffleRandomContent\",\"kind\":\"Monster\",\"minLevel\":1,\"maxLevel\":3,\"excludeElite\":true,\"excludeBoss\":true,\"excludeDeckId\":\"deck.void\",\"count\":\"{{count}}\",\"top\":false}}"
+ },
+ {
+  "id": "tpl.skill.random_walk.move",
+  "state": "Implemented",
+  "design_text": "每移动3次，与九宫格上随机帮助卡交换位置",
+  "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnSelfMove\",\"every\":3},\"target\":{\"atom\":\"FilteredCards\",\"include\":[\"Self\"],\"kind\":\"HelpCard\",\"zone\":\"Board\",\"random\":true,\"count\":\"{{count}}\"},\"action\":{\"atom\":\"Swap\"}}"
+ },
+ {
+  "id": "tpl.skill.range_expand.rule",
+  "state": "Implemented",
+  "design_text": "[场上] 所有怪物卡视为与本卡正交相邻",
+  "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"RuleModifier\",\"ruleModifier\":{\"rule\":\"VirtualAdjacency\",\"target\":\"Self\",\"op\":\"Override\",\"value\":\"{{value}}\",\"layer\":\"Persistent\",\"scope\":\"Permanent\"}}"
+ },
+ {
+  "id": "tpl.skill.rascality.armor_lost",
+  "state": "Implemented",
+  "design_text": "[场上] 每损失3点护甲，相邻怪物攻击+1；离开相邻格后加成失效",
+  "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnSelfArmorLostCumulative\",\"threshold\":3},\"target\":{\"atom\":\"FilteredCards\",\"kind\":\"Monster\",\"zone\":\"Board\",\"adjacentTo\":\"Self\",\"exclude\":[\"Self\"]},\"action\":{\"atom\":\"AddModifier\",\"stat\":\"Attack\",\"op\":\"Add\",\"value\":\"{{value}}\",\"layer\":\"Conditional\",\"scope\":\"Permanent\",\"source\":\"{{source}}\",\"activeWhileAdjacentTo\":\"Self\"}}"
+ },
+ {
+  "id": "tpl.skill.recombine_body.move",
+  "state": "Implemented",
+  "design_text": "相邻无头骷髅时移除双方并洗入重组大骷髅（不持有散架）",
+  "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[\"AdjacentHasCard\"]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnSelfMove\",\"every\":1},\"conditions\":[{\"atom\":\"AdjacentHasCard\",\"origin\":\"Self\",\"defId\":\"monster.headless_skeleton\"}],\"target\":{\"atom\":\"Self\"},\"action\":{\"atom\":\"Sequence\",\"actions\":[{\"atom\":\"RemoveCard\"},{\"atom\":\"RemoveCard\",\"target\":{\"atom\":\"AdjacentCard\",\"origin\":\"Self\",\"defId\":\"monster.headless_skeleton\"}},{\"atom\":\"ShuffleInto\",\"defId\":\"monster.big_skeleton_reborn\",\"kind\":\"Monster\",\"count\":\"{{count}}\",\"top\":true,\"deferRefill\":true}]}}"
+ },
+ {
+  "id": "tpl.skill.recombine_head.move",
+  "state": "Implemented",
+  "design_text": "相邻骷髅头时移除双方并洗入重组大骷髅（不持有散架）",
+  "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[\"AdjacentHasCard\"]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnSelfMove\",\"every\":1},\"conditions\":[{\"atom\":\"AdjacentHasCard\",\"origin\":\"Self\",\"defId\":\"monster.skull_head\"}],\"target\":{\"atom\":\"Self\"},\"action\":{\"atom\":\"Sequence\",\"actions\":[{\"atom\":\"RemoveCard\"},{\"atom\":\"RemoveCard\",\"target\":{\"atom\":\"AdjacentCard\",\"origin\":\"Self\",\"defId\":\"monster.skull_head\"}},{\"atom\":\"ShuffleInto\",\"defId\":\"monster.big_skeleton_reborn\",\"kind\":\"Monster\",\"count\":\"{{count}}\",\"top\":true,\"deferRefill\":true}]}}"
+ },
+ {
+  "id": "tpl.skill.relentless_chase.move",
+  "state": "Implemented",
+  "design_text": "[场上] 每次移动到玩家正交相邻格时，与玩家战斗一次",
+  "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnSelfMove\",\"every\":1,\"requireAdjacentTo\":\"Player\"},\"target\":{\"atom\":\"Self\"},\"action\":{\"atom\":\"ForceBattle\"}}"
+ },
+ {
+  "id": "tpl.skill.rolling_crush.slot3",
+  "state": "Implemented",
+  "design_text": "[场上] 移动到格3时，若格6为帮助卡，则移除该帮助卡",
+  "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnMoveToSlot\",\"slot\":3,\"target\":\"Self\"},\"target\":{\"atom\":\"SlotCard\",\"slot\":6,\"kind\":\"HelpCard\"},\"action\":{\"atom\":\"RemoveCard\",\"destination\":\"Removed\",\"reason\":\"{{reason}}\"}}"
+ },
+ {
+  "id": "tpl.skill.rotate_lover.move",
+  "state": "Implemented",
+  "design_text": "每移动3次，旋转一次",
+  "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnSelfMove\",\"every\":3},\"target\":{\"atom\":\"Self\"},\"action\":{\"atom\":\"Rotate\",\"count\":\"{{count}}\"}}"
+ },
+ {
+  "id": "tpl.skill.rise_up.damage",
+  "state": "Implemented",
+  "design_text": "[场上]本卡对玩家造成一次伤害后，随机使一张其他正面怪物卡翻面为背面",
+  "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnSelfDamageDealtToPlayerCumulative\",\"threshold\":1},\"target\":{\"atom\":\"FilteredCards\",\"kind\":\"Monster\",\"zone\":\"Board\",\"exclude\":[\"Self\"],\"random\":true,\"count\":\"{{count}}\"},\"action\":{\"atom\":\"ConcealFace\"}}"
+ },
+ {
+  "id": "tpl.skill.purge_followers.move",
+  "state": "Implemented",
+  "design_text": "每移动2次，移除九宫格上所有的龙信徒",
+  "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnSelfMove\",\"every\":2},\"target\":{\"atom\":\"FilteredCards\",\"defId\":\"monster.dragon_follower\",\"kind\":\"Monster\",\"zone\":\"Board\"},\"action\":{\"atom\":\"RemoveCard\",\"destination\":\"Removed\",\"reason\":\"{{reason}}\"}}"
+ },
+ {
+  "id": "tpl.skill.recuperate.flip",
+  "state": "Implemented",
+  "design_text": "[场上][翻面后]若正面朝上，本卡攻击+1、护甲+2",
+  "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[\"IsFaceUp:target=Self\"]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnFlip\"},\"conditions\":[{\"atom\":\"IsFaceUp\",\"target\":\"Self\"}],\"target\":{\"atom\":\"Self\"},\"action\":{\"atom\":\"Sequence\",\"actions\":[{\"atom\":\"ModifyBaseStat\",\"stat\":\"Attack\",\"delta\":\"{{delta}}\",\"reason\":\"{{reason}}\"},{\"atom\":\"ModifyBaseStat\",\"stat\":\"Armor\",\"delta\":\"{{armor}}\",\"reason\":\"{{reason}}\"}]}}"
+ },
+ {
+  "id": "tpl.skill.sharp_stone.armor_break",
+  "state": "Implemented",
+  "design_text": "当护甲归零时，对玩家造成1点伤害",
+  "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnArmorBreak\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"DealDamage\",\"amount\":\"{{amount}}\",\"actor\":\"Self\"}}"
+ },
+ {
+  "id": "tpl.skill.smart.gain",
+  "state": "Implemented",
+  "design_text": "每次本卡获得攻击时，本卡额外攻击+1；不响应本效果自身加成",
+  "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[\"EventFilter:stat=Attack\"]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnEvent\"},\"conditions\":[{\"atom\":\"EventFilterTargetIsSelf\",\"eventTypes\":[\"BaseStatModified\",\"EffectModifierApplied\"],\"stat\":\"Attack\",\"minDelta\":1,\"excludeSourceDefId\":\"skill.smart\"}],\"target\":{\"atom\":\"Self\"},\"action\":{\"atom\":\"ModifyBaseStat\",\"stat\":\"Attack\",\"delta\":\"{{delta}}\",\"reason\":\"{{reason}}\"}}"
+ },
+ {
+  "id": "tpl.skill.space_mastery.battle",
+  "state": "Implemented",
+  "design_text": "玩家与本卡战斗后，旋转一次",
+  "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[\"EventFilter:eventType=DamageDealt\"]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnBattle\",\"sourceAction\":\"{{sourceAction}}\",\"targetKind\":\"Monster\",\"maxActionDepth\":0},\"conditions\":[{\"atom\":\"EventFilterActorIsPlayerTargetIsSelf\",\"eventType\":\"DamageDealt\"}],\"target\":{\"atom\":\"Self\"},\"action\":{\"atom\":\"Rotate\",\"count\":\"{{count}}\"}}"
+ },
+ {
+  "id": "tpl.skill.stack_armor.interact",
+  "state": "Implemented",
+  "design_text": "[场上]玩家卡每互动6次，使其他[场上]怪物卡护甲+2",
+  "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnInteract\",\"every\":6},\"target\":{\"atom\":\"FilteredCards\",\"kind\":\"Monster\",\"zone\":\"Board\",\"exclude\":[\"Self\"]},\"action\":{\"atom\":\"GainArmor\",\"amount\":\"{{amount}}\"}}"
+ },
+ {
+  "id": "tpl.skill.stocking.move",
+  "state": "Implemented",
+  "design_text": "[场上] 累计移动到玩家正交相邻3次时，从战斗卡组移除一张帮助卡并获得5点护甲",
+  "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[\"TargetCount\"]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnSelfMove\",\"every\":3,\"requireAdjacentTo\":\"Player\"},\"conditions\":[{\"atom\":\"TargetCount\",\"min\":1,\"target\":{\"atom\":\"FilteredCards\",\"kind\":\"HelpCard\",\"zone\":\"DrawPile\"}}],\"target\":{\"atom\":\"Self\"},\"action\":{\"atom\":\"Sequence\",\"actions\":[{\"atom\":\"RemoveCard\",\"destination\":\"Removed\",\"reason\":\"{{reason}}\",\"target\":{\"atom\":\"FilteredCards\",\"kind\":\"HelpCard\",\"zone\":\"DrawPile\",\"random\":true,\"count\":\"{{count}}\"}},{\"atom\":\"GainArmor\",\"amount\":\"{{amount}}\"}]}}"
+ },
+ {
+  "id": "tpl.skill.stone_growth.slot1",
+  "state": "Implemented",
+  "design_text": "[场上] 移动到格1时，其他怪物获得2点护甲",
+  "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnMoveToSlot\",\"slot\":1,\"target\":\"Self\"},\"target\":{\"atom\":\"FilteredCards\",\"kind\":\"Monster\",\"zone\":\"Board\",\"exclude\":[\"Self\"]},\"action\":{\"atom\":\"GainArmor\",\"amount\":\"{{amount}}\"}}"
+ },
+ {
+  "id": "tpl.skill.stone_growth.slot4",
+  "state": "Implemented",
+  "design_text": "[场上] 移动到格4时，其他怪物获得2点护甲",
+  "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnMoveToSlot\",\"slot\":4,\"target\":\"Self\"},\"target\":{\"atom\":\"FilteredCards\",\"kind\":\"Monster\",\"zone\":\"Board\",\"exclude\":[\"Self\"]},\"action\":{\"atom\":\"GainArmor\",\"amount\":\"{{amount}}\"}}"
+ },
+ {
+  "id": "tpl.skill.stone_growth.slot7",
+  "state": "Implemented",
+  "design_text": "[场上] 移动到格7时，其他怪物获得2点护甲",
+  "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnMoveToSlot\",\"slot\":7,\"target\":\"Self\"},\"target\":{\"atom\":\"FilteredCards\",\"kind\":\"Monster\",\"zone\":\"Board\",\"exclude\":[\"Self\"]},\"action\":{\"atom\":\"GainArmor\",\"amount\":\"{{amount}}\"}}"
+ },
+ {
+  "id": "tpl.skill.stone_lover.armor_lost",
+  "state": "Implemented",
+  "design_text": "每当玩家卡或怪物卡损失护甲时，本卡攻击+1",
+  "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[\"EventFilter:eventType=ArmorChanged\"]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnEvent\",\"eventType\":\"ArmorChanged\"},\"conditions\":[{\"atom\":\"EventFilter\",\"eventType\":\"ArmorChanged\",\"maxDelta\":-1}],\"target\":{\"atom\":\"Self\"},\"action\":{\"atom\":\"ModifyBaseStat\",\"stat\":\"Attack\",\"delta\":\"{{delta}}\",\"reason\":\"{{reason}}\"}}"
+ },
+ {
+  "id": "tpl.skill.stone_shelter.rule",
+  "state": "Implemented",
+  "design_text": "[场上] 其他怪物卡受到的伤害减少1点",
+  "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[\"EventFilter\"]",
+  "body": "{\"kind\":\"RuleModifier\",\"conditions\":[{\"atom\":\"EventFilterTargetNotSelf\",\"targetKind\":\"Monster\"}],\"ruleModifier\":{\"rule\":\"DamageFlatDelta\",\"op\":\"Add\",\"value\":\"{{value}}\",\"layer\":\"Persistent\",\"scope\":\"Permanent\",\"source\":\"{{source}}\"}}"
+ },
+ {
+  "id": "tpl.skill.stray_cub.first_strike",
+  "state": "Implemented",
+  "design_text": "[场上] 处于格6时，本卡获得先手还击",
+  "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[\"AtSlot\"]",
+  "body": "{\"kind\":\"RuleModifier\",\"conditions\":[{\"atom\":\"AtSlot\",\"target\":\"Self\",\"slot\":6}],\"ruleModifier\":{\"rule\":\"FirstStrike\",\"target\":\"Self\",\"op\":\"Override\",\"value\":\"{{value}}\",\"layer\":\"Conditional\",\"scope\":\"Permanent\"}}"
+ },
+ {
+  "id": "tpl.skill.stray_cub.slot6",
+  "state": "Implemented",
+  "design_text": "[场上] 处于格6时，本卡攻击力+2",
+  "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[\"AtSlot\"]",
+  "body": "{\"kind\":\"Modifier\",\"target\":{\"atom\":\"Self\"},\"conditions\":[{\"atom\":\"AtSlot\",\"target\":\"Self\",\"slot\":6}],\"modifier\":{\"stat\":\"Attack\",\"op\":\"Add\",\"value\":\"{{value}}\",\"layer\":\"Conditional\",\"scope\":\"Permanent\"}}"
+ },
+ {
+  "id": "tpl.skill.stroll.move",
+  "state": "Implemented",
+  "design_text": "每移动1次，本卡攻击+2",
+  "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnSelfMove\",\"every\":1},\"target\":{\"atom\":\"Self\"},\"action\":{\"atom\":\"AddModifier\",\"stat\":\"Attack\",\"op\":\"Add\",\"value\":\"{{value}}\",\"layer\":\"Persistent\",\"scope\":\"Permanent\",\"source\":\"{{source}}\"}}"
+ },
+ {
+  "id": "tpl.skill.strong_combo.move",
+  "state": "Implemented",
+  "design_text": "[场上] 每移动1次，若正交相邻有两张怪物，则移除本卡与两张怪物并洗入巨大骷髅",
+  "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[\"TargetCount\"]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnSelfMove\",\"every\":1},\"conditions\":[{\"atom\":\"TargetCount\",\"min\":2,\"target\":{\"atom\":\"FilteredCards\",\"kind\":\"Monster\",\"zone\":\"Board\",\"adjacentTo\":\"Self\",\"exclude\":[\"Self\"]}}],\"target\":{\"atom\":\"Self\"},\"action\":{\"atom\":\"Sequence\",\"actions\":[{\"atom\":\"RemoveCard\",\"destination\":\"Removed\",\"reason\":\"{{reason}}\"},{\"atom\":\"RemoveCard\",\"destination\":\"Removed\",\"reason\":\"{{action_actions_1_reason}}\",\"target\":{\"atom\":\"FilteredCards\",\"kind\":\"Monster\",\"zone\":\"Board\",\"adjacentTo\":\"Self\",\"exclude\":[\"Self\"],\"count\":\"{{count}}\"}},{\"atom\":\"ShuffleInto\",\"defId\":\"monster.giant_skeleton\",\"kind\":\"Monster\",\"count\":\"{{action_actions_2_count}}\",\"top\":true,\"deferRefill\":true}]}}"
+ },
+ {
+  "id": "tpl.skill.survival_wisdom.battle",
+  "state": "Implemented",
+  "design_text": "[战斗时] 恢复1点血量，本卡攻击+1",
+  "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[\"EventFilter:eventType=DamageDealt\", \"StatAtLeast:stat=Hp\"]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnBattle\",\"sourceAction\":\"{{sourceAction}}\",\"targetKind\":\"Monster\",\"maxActionDepth\":0},\"conditions\":[{\"atom\":\"EventFilterActorIsPlayerTargetIsSelf\",\"eventType\":\"DamageDealt\"},{\"atom\":\"StatAtLeast\",\"target\":\"Self\",\"stat\":\"Hp\",\"value\":\"{{value}}\"}],\"target\":{\"atom\":\"Self\"},\"action\":{\"atom\":\"Sequence\",\"actions\":[{\"atom\":\"Heal\",\"amount\":\"{{amount}}\",\"actor\":\"Self\"},{\"atom\":\"AddModifier\",\"stat\":\"Attack\",\"op\":\"Add\",\"value\":\"{{value}}\",\"layer\":\"Temporary\",\"scope\":\"UntilBattleEnds\",\"source\":\"{{source}}\"}]}}"
+ },
+ {
+  "id": "tpl.skill.swallow_stone.move",
+  "state": "Implemented",
+  "design_text": "每移动2次，扣除相邻怪物卡1点护甲并使本卡获得等量护甲",
+  "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnSelfMove\",\"every\":2},\"target\":{\"atom\":\"FilteredCards\",\"kind\":\"Monster\",\"zone\":\"Board\",\"adjacentTo\":\"Self\",\"exclude\":[\"Self\"]},\"action\":{\"atom\":\"TransferArmor\",\"amount\":\"{{amount}}\",\"receiver\":\"Self\",\"cause\":\"{{cause}}\"}}"
+ },
+ {
+  "id": "tpl.skill.taunt.rule",
+  "state": "Implemented",
+  "design_text": "[场上] 处于玩家卡正交相邻格时，玩家只能与本卡战斗",
+  "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[\"Adjacent:left=Self:right=Player\"]",
+  "body": "{\"kind\":\"RuleModifier\",\"conditions\":[{\"atom\":\"Adjacent\",\"left\":\"Self\",\"right\":\"Player\"}],\"ruleModifier\":{\"rule\":\"AttackTargetRestriction\",\"target\":\"Self\",\"op\":\"Override\",\"value\":\"{{value}}\",\"layer\":\"Conditional\",\"scope\":\"Permanent\"}}"
+ },
+ {
+  "id": "tpl.skill.link_prep.move",
+  "state": "Implemented",
+  "design_text": "[场上]玩家卡每互动5次，移除相邻格子上道具卡",
+  "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnInteract\",\"every\":5},\"target\":{\"atom\":\"FilteredCards\",\"kind\":\"HelpCard\",\"zone\":\"Board\",\"adjacentTo\":\"Self\"},\"action\":{\"atom\":\"RemoveCard\",\"destination\":\"Removed\",\"reason\":\"{{reason}}\"}}"
+ },
+ {
+  "id": "tpl.skill.link_tactics.activate",
+  "state": "Implemented",
+  "design_text": "[场上]邻接怪物攻击+1；离开邻接后失效（常驻光环，不随移动叠层）",
+  "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnActivate\"},\"target\":{\"atom\":\"FilteredCards\",\"kind\":\"Monster\",\"zone\":\"Board\",\"exclude\":[\"Self\"]},\"action\":{\"atom\":\"AddModifier\",\"stat\":\"Attack\",\"op\":\"Add\",\"value\":\"{{value}}\",\"layer\":\"Conditional\",\"scope\":\"Permanent\",\"source\":\"{{source}}\",\"activeWhileAdjacentTo\":\"Self\",\"replaceSameSource\":true}}"
+ },
+ {
+  "id": "tpl.skill.link_tactics.refresh",
+  "state": "Implemented",
+  "design_text": "[场上]邻接怪物攻击+1；离开邻接后失效（常驻光环，不随移动叠层）；任意卡移动时刷新邻接光环",
+  "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnEvent\",\"eventType\":\"CardMoved\"},\"target\":{\"atom\":\"FilteredCards\",\"kind\":\"Monster\",\"zone\":\"Board\",\"exclude\":[\"Self\"]},\"action\":{\"atom\":\"AddModifier\",\"stat\":\"Attack\",\"op\":\"Add\",\"value\":\"{{value}}\",\"layer\":\"Conditional\",\"scope\":\"Permanent\",\"source\":\"{{source}}\",\"activeWhileAdjacentTo\":\"Self\",\"replaceSameSource\":true}}"
+ },
+ {
+  "id": "tpl.skill.throw_stone.move",
+  "state": "Implemented",
+  "design_text": "每移动2次，若本卡护甲至少2，扣除2点护甲并对玩家造成2点伤害",
+  "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnSelfMove\",\"every\":2},\"target\":{\"atom\":\"Self\"},\"action\":{\"atom\":\"Conditional\",\"condition\":{\"atom\":\"StatAtLeast\",\"target\":\"Self\",\"stat\":\"Armor\",\"value\":\"{{value}}\"},\"action\":{\"atom\":\"Sequence\",\"actions\":[{\"atom\":\"TransferArmor\",\"amount\":\"{{amount}}\",\"receiver\":\"None\",\"cause\":\"{{cause}}\"},{\"atom\":\"DealDamage\",\"amount\":\"{{amount}}\",\"actor\":\"Self\",\"target\":{\"atom\":\"Player\"}}]}}}"
+ },
+ {
+  "id": "tpl.skill.turn_world.enter",
+  "state": "Implemented",
+  "design_text": "[登场] 旋转一次",
+  "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnEnter\"},\"target\":{\"atom\":\"Self\"},\"action\":{\"atom\":\"Rotate\",\"count\":\"{{count}}\"}}"
+ },
+ {
+  "id": "tpl.skill.unstable.move",
+  "state": "Implemented",
+  "design_text": "每移动3次，与九宫格上随机另一张怪物卡交换位置",
+  "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnSelfMove\",\"every\":3},\"target\":{\"atom\":\"FilteredCards\",\"include\":[\"Self\"],\"kind\":\"Monster\",\"zone\":\"Board\",\"exclude\":[\"Self\"],\"random\":true,\"count\":\"{{count}}\"},\"action\":{\"atom\":\"Swap\"}}"
+ },
+ {
+  "id": "tpl.skill.violence_maniac.move",
+  "state": "Implemented",
+  "design_text": "每移动2次，移除相邻格子上的怪物卡和帮助卡",
+  "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnSelfMove\",\"every\":2},\"target\":{\"atom\":\"Self\"},\"action\":{\"atom\":\"Sequence\",\"actions\":[{\"atom\":\"RemoveCard\",\"destination\":\"Removed\",\"reason\":\"{{reason}}\",\"target\":{\"atom\":\"FilteredCards\",\"kind\":\"Monster\",\"zone\":\"Board\",\"adjacentTo\":\"Self\",\"exclude\":[\"Self\"]}},{\"atom\":\"RemoveCard\",\"destination\":\"Removed\",\"reason\":\"{{reason}}\",\"target\":{\"atom\":\"FilteredCards\",\"kind\":\"HelpCard\",\"zone\":\"Board\",\"adjacentTo\":\"Self\"}}]}}"
+ },
+ {
+  "id": "tpl.skill.violence_nutrition.help_remove",
+  "state": "Implemented",
+  "design_text": "每依靠暴力狂移除一张帮助卡，本卡护甲+5",
+  "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[\"EventFilter:eventType=CardRemoved\"]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnAnyCardRemoved\"},\"conditions\":[{\"atom\":\"EventFilter\",\"eventType\":\"CardRemoved\",\"sourceDefId\":\"skill.violence_maniac\",\"targetKind\":\"HelpCard\"}],\"target\":{\"atom\":\"Self\"},\"action\":{\"atom\":\"ModifyBaseStat\",\"stat\":\"Armor\",\"delta\":\"{{delta}}\",\"reason\":\"{{reason}}\"}}"
+ },
+ {
+  "id": "tpl.skill.violence_nutrition.monster_remove",
+  "state": "Implemented",
+  "design_text": "每依靠暴力狂移除一张怪物卡，本卡攻击+3",
+  "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[\"EventFilter:eventType=CardRemoved\"]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnAnyCardRemoved\"},\"conditions\":[{\"atom\":\"EventFilter\",\"eventType\":\"CardRemoved\",\"sourceDefId\":\"skill.violence_maniac\",\"targetKind\":\"Monster\"}],\"target\":{\"atom\":\"Self\"},\"action\":{\"atom\":\"ModifyBaseStat\",\"stat\":\"Attack\",\"delta\":\"{{delta}}\",\"reason\":\"{{reason}}\"}}"
+ },
+ {
+  "id": "tpl.skill.leap_kill.flip",
+  "state": "Implemented",
+  "design_text": "[场上] [翻面后] 若正面朝上且正交邻接玩家，对玩家造成等同本卡攻击的伤害",
+  "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[\"IsFaceUp:target=Self\", \"Adjacent:left=Self:right=Player\"]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnFlip\"},\"conditions\":[{\"atom\":\"IsFaceUp\",\"target\":\"Self\"},{\"atom\":\"Adjacent\",\"left\":\"Self\",\"right\":\"Player\"}],\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"DealDamage\",\"value\":{\"source\":\"Self\",\"stat\":\"Attack\"},\"actor\":\"Self\"}}"
+ },
+ {
+  "id": "tpl.skill.steal.flip",
+  "state": "Implemented",
+  "design_text": "[场上] [翻面后] 若正面朝上，随机移除邻接格子上一张帮助卡",
+  "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[\"IsFaceUp:target=Self\"]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnFlip\"},\"conditions\":[{\"atom\":\"IsFaceUp\",\"target\":\"Self\"}],\"target\":{\"atom\":\"FilteredCards\",\"kind\":\"HelpCard\",\"zone\":\"Board\",\"adjacentTo\":\"Self\",\"random\":true,\"count\":\"{{count}}\"},\"action\":{\"atom\":\"RemoveCard\",\"destination\":\"Removed\",\"reason\":\"{{reason}}\"}}"
+ },
+ {
+  "id": "tpl.skill.speed_up.damage",
+  "state": "Implemented",
+  "design_text": "[场上]每次本卡对玩家卡造成一次伤害，其他怪物卡的互动次数+1（倒计时-1；背面怪不加速）",
+  "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnSelfDamageDealtToPlayer\"},\"target\":{\"atom\":\"FilteredCards\",\"kind\":\"Monster\",\"zone\":\"Board\",\"exclude\":[\"Self\"]},\"action\":{\"atom\":\"ModifyActionCountdown\",\"delta\":\"{{delta}}\"}}"
+ },
+ {
+  "id": "tpl.skill.ranged_weapon.activate",
+  "state": "Implemented",
+  "design_text": "[战斗时]玩家交战本卡时，本卡不先手也不反击（齐射不受影响）",
+  "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnActivate\"},\"target\":{\"atom\":\"Self\"},\"action\":{\"atom\":\"AddRuleModifier\",\"rule\":\"CounterAttackBanned\",\"op\":\"Add\",\"value\":\"{{value}}\",\"layer\":\"Persistent\",\"scope\":\"Permanent\",\"source\":\"{{source}}\"}}"
+ },
+ {
+  "id": "tpl.skill.death_summon.remove",
+  "state": "Implemented",
+  "design_text": "[场上] [被移除时]，将一张复活石打出到同格（抢在常规补牌前）",
+  "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnSelfRemoved\"},\"target\":{\"atom\":\"Self\"},\"action\":{\"atom\":\"Spawn\",\"defId\":\"trap.revive_stone\",\"kind\":\"Trap\",\"zone\":\"Board\",\"slot\":\"EventFromSlot\",\"count\":\"{{count}}\"}}"
+ },
+ {
+  "id": "tpl.skill.lord_of_death.remove",
+  "state": "Implemented",
+  "design_text": "[场上] 每有一张怪物卡[被移除时]，将一张复活石打出到同格；自己死不补；机关卡（CardKind.Trap）不计怪物",
+  "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[\"EventFilter:eventType=CardRemoved:targetKind=Monster\", \"EventFilterTargetNotSelf:eventType=CardRemoved\"]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnAnyCardRemoved\"},\"conditions\":[{\"atom\":\"EventFilter\",\"eventType\":\"CardRemoved\",\"targetKind\":\"Monster\"},{\"atom\":\"EventFilterTargetNotSelf\",\"eventType\":\"CardRemoved\"}],\"target\":{\"atom\":\"Self\"},\"action\":{\"atom\":\"Spawn\",\"defId\":\"trap.revive_stone\",\"kind\":\"Trap\",\"zone\":\"Board\",\"slot\":\"EventFromSlot\",\"count\":\"{{count}}\"}}"
+ },
+ {
+  "id": "tpl.skill.holy_duel.activate",
+  "state": "Implemented",
+  "design_text": "[场上]玩家与本卡交战后，再主动与其他怪物卡战斗，则对玩家造成2点伤害；持有者翻面或离场清标记",
+  "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnActivate\"},\"target\":{\"atom\":\"Self\"},\"action\":{\"atom\":\"AddRuleModifier\",\"rule\":\"HolyDuel\",\"op\":\"Add\",\"value\":\"{{value}}\",\"layer\":\"Persistent\",\"scope\":\"Permanent\",\"source\":\"{{source}}\"}}"
+ },
+ {
+  "id": "tpl.skill.ambush_melee.interact",
+  "state": "Implemented",
+  "design_text": "[场上]卡级开火窗口时，若本卡正面且与玩家卡正交相邻，对玩家造成等同本卡攻击的伤害并翻面",
+  "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[\"IsFaceUp:target=Self\", \"Adjacent:left=Self:right=Player\"]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnCardRhythmFire\"},\"conditions\":[{\"atom\":\"IsFaceUp\",\"target\":\"Self\"},{\"atom\":\"Adjacent\",\"left\":\"Self\",\"right\":\"Player\"}],\"target\":{\"atom\":\"Self\"},\"action\":{\"atom\":\"Sequence\",\"actions\":[{\"atom\":\"DealDamage\",\"value\":{\"source\":\"Self\",\"stat\":\"Attack\"},\"actor\":\"Self\",\"target\":{\"atom\":\"Player\"}},{\"atom\":\"Flip\",\"target\":{\"atom\":\"Self\"}}]}}"
+ },
+ {
+  "id": "tpl.trap.revive_stone.interact",
+  "state": "Implemented",
+  "design_text": "[场上]玩家卡互动6次后，移除本卡",
+  "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnInteract\",\"every\":\"{{every}}\",\"projectKey\":\"{{projectKey}}\"},\"target\":{\"atom\":\"Self\"},\"action\":{\"atom\":\"RemoveCard\",\"destination\":\"Removed\",\"reason\":\"{{reason}}\"}}"
+ },
+ {
+  "id": "tpl.trap.revive_stone.remove",
+  "state": "Implemented",
+  "design_text": "[场上] 互动倒计时移除本卡时，将一张特5打出到同格（被打死不触发）",
+  "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[\"EventFilter:eventType=CardRemoved:cause=trap.revive_stone\"]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnSelfRemoved\"},\"conditions\":[{\"atom\":\"EventFilter\",\"eventType\":\"CardRemoved\",\"cause\":\"trap.revive_stone\"}],\"target\":{\"atom\":\"Self\"},\"action\":{\"atom\":\"Spawn\",\"defId\":\"monster.summon.special_omni\",\"kind\":\"Monster\",\"zone\":\"Board\",\"slot\":\"EventFromSlot\",\"count\":\"{{count}}\"}}"
+ },
+ {
+  "id": "tpl.trap.rolling_stone.slot3",
+  "state": "Implemented",
+  "design_text": "[场上]移动到格3时，移除格6上的怪物（非精英非层主）/道具/机关；本卡不自移除",
+  "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[\"TargetCount\"]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnMoveToSlot\",\"slot\":3,\"target\":\"Self\"},\"conditions\":[{\"atom\":\"TargetCount\",\"min\":1,\"target\":{\"atom\":\"SlotCard\",\"slot\":6,\"excludeElite\":true,\"excludeBoss\":true}}],\"target\":{\"atom\":\"SlotCard\",\"slot\":6,\"excludeElite\":true,\"excludeBoss\":true},\"action\":{\"atom\":\"RemoveCard\",\"destination\":\"Removed\",\"reason\":\"{{reason}}\"}}"
+ },
+ {
+  "id": "tpl.trap.bear_trap.fill",
+  "state": "Implemented",
+  "design_text": "[场上]正交邻格补牌时：真怪造成10点伤害；道具移除该卡；机关不影响；之后移除本卡；机关效果移除卡后该格补牌不触发",
+  "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[\"ActionSource\", \"EventFilter:eventType=CardDealt\", \"EventFilterExcludeCause:eventType=CardDealt:cause=refillAfterTrapRemoval\", \"Adjacent:left=Self:right=EventCard\"]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnDeal\"},\"conditions\":[{\"atom\":\"ActionSource\",\"action\":\"FillEmptySlots\"},{\"atom\":\"EventFilter\",\"eventType\":\"CardDealt\"},{\"atom\":\"EventFilterExcludeCause\",\"eventType\":\"CardDealt\",\"cause\":\"refillAfterTrapRemoval\"},{\"atom\":\"Adjacent\",\"left\":\"Self\",\"right\":\"EventCard\"}],\"target\":{\"atom\":\"EventCard\"},\"action\":{\"atom\":\"Sequence\",\"actions\":[{\"atom\":\"Conditional\",\"condition\":{\"atom\":\"EventFilter\",\"eventType\":\"CardDealt\",\"targetKind\":\"Monster\"},\"action\":{\"atom\":\"DealDamage\",\"amount\":\"{{amount}}\",\"actor\":\"Self\"},\"elseAction\":{\"atom\":\"Conditional\",\"condition\":{\"atom\":\"EventFilter\",\"eventType\":\"CardDealt\",\"targetKind\":\"HelpCard\"},\"action\":{\"atom\":\"RemoveCard\",\"destination\":\"Removed\",\"reason\":\"{{reason}}\"}}},{\"atom\":\"RemoveCard\",\"target\":{\"atom\":\"Self\"},\"destination\":\"Removed\",\"reason\":\"{{reason}}\"}]}}"
+ },
+ {
+  "id": "tpl.trap.flame.move",
+  "state": "Implemented",
+  "design_text": "[场上]本卡每移动1次，若正交邻玩家则对玩家造成1点伤害",
+  "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnSelfMove\",\"every\":1,\"requireAdjacentTo\":\"Player\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"DealDamage\",\"amount\":\"{{amount}}\",\"actor\":\"Self\"}}"
+ },
+ {
+  "id": "tpl.trap.flame.remove",
+  "state": "Implemented",
+  "design_text": "[场上]本卡移动满3次后移除本卡",
+  "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnSelfMove\",\"every\":\"{{every}}\",\"projectKey\":\"{{projectKey}}\"},\"target\":{\"atom\":\"Self\"},\"action\":{\"atom\":\"RemoveCard\",\"destination\":\"Removed\",\"reason\":\"{{reason}}\"}}"
+ },
+ {
+  "id": "tpl.trap.attack_totem.aura_player",
+  "state": "Implemented",
+  "design_text": "[场上]邻接玩家攻击+1；离开邻接后失效（上场/发牌时施加）",
+  "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnEnter\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"AddModifier\",\"stat\":\"Attack\",\"op\":\"Add\",\"value\":\"{{value}}\",\"layer\":\"Conditional\",\"scope\":\"Permanent\",\"source\":\"{{source}}\",\"activeWhileAdjacentTo\":\"Self\",\"replaceSameSource\":true}}"
+ },
+ {
+  "id": "tpl.trap.attack_totem.refresh_player",
+  "state": "Implemented",
+  "design_text": "[场上]邻接玩家攻击+1；任意卡移动或发牌时刷新",
+  "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnEvent\",\"eventTypes\":[\"CardMoved\",\"CardDealt\"]},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"AddModifier\",\"stat\":\"Attack\",\"op\":\"Add\",\"value\":\"{{value}}\",\"layer\":\"Conditional\",\"scope\":\"Permanent\",\"source\":\"{{source}}\",\"activeWhileAdjacentTo\":\"Self\",\"replaceSameSource\":true}}"
+ },
+ {
+  "id": "tpl.trap.armor_totem.aura_player",
+  "state": "Implemented",
+  "design_text": "[场上]邻接玩家护甲+1；离开邻接后失效（上场/发牌时施加）",
+  "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnEnter\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"SyncAdjacentBorrowedArmor\",\"value\":\"{{value}}\",\"source\":\"{{source}}\",\"adjacentTo\":\"Self\"}}"
+ },
+ {
+  "id": "tpl.trap.armor_totem.refresh_player",
+  "state": "Implemented",
+  "design_text": "[场上]邻接玩家护甲+1；任意卡移动或发牌时刷新",
+  "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnEvent\",\"eventTypes\":[\"CardMoved\",\"CardDealt\"]},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"SyncAdjacentBorrowedArmor\",\"value\":\"{{value}}\",\"source\":\"{{source}}\",\"adjacentTo\":\"Self\"}}"
+ },
+ {
+  "id": "tpl.trap.recovery_totem.heal_player_on_move",
+  "state": "Implemented",
+  "design_text": "[场上]本卡移动/旋转落地后，若正交邻玩家则为玩家恢复1点血量",
+  "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnSelfMove\",\"every\":1,\"requireAdjacentTo\":\"Player\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"Heal\",\"amount\":\"{{amount}}\",\"actor\":\"Self\"}}"
+ },
+ {
+  "id": "tpl.trap.spike.move_player",
+  "state": "Implemented",
+  "design_text": "[场上]本卡每移动1次，若正交邻玩家则对玩家造成1点伤害",
+  "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnSelfMove\",\"every\":1,\"requireAdjacentTo\":\"Player\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"DealDamage\",\"amount\":\"{{amount}}\",\"actor\":\"Self\"}}"
+ },
+ {
+  "id": "tpl.trap.attack_totem.aura",
+  "state": "Implemented",
+  "design_text": "[场上]邻接真怪攻击+1；离开邻接后失效（上场/发牌时施加）",
+  "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnEnter\"},\"target\":{\"atom\":\"FilteredCards\",\"kind\":\"Monster\",\"zone\":\"Board\",\"exclude\":[\"Self\"]},\"action\":{\"atom\":\"AddModifier\",\"stat\":\"Attack\",\"op\":\"Add\",\"value\":\"{{value}}\",\"layer\":\"Conditional\",\"scope\":\"Permanent\",\"source\":\"{{source}}\",\"activeWhileAdjacentTo\":\"Self\",\"replaceSameSource\":true}}"
+ },
+ {
+  "id": "tpl.trap.attack_totem.refresh",
+  "state": "Implemented",
+  "design_text": "[场上]邻接真怪攻击+1；任意卡移动或发牌时刷新",
+  "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnEvent\",\"eventTypes\":[\"CardMoved\",\"CardDealt\"]},\"target\":{\"atom\":\"FilteredCards\",\"kind\":\"Monster\",\"zone\":\"Board\",\"exclude\":[\"Self\"]},\"action\":{\"atom\":\"AddModifier\",\"stat\":\"Attack\",\"op\":\"Add\",\"value\":\"{{value}}\",\"layer\":\"Conditional\",\"scope\":\"Permanent\",\"source\":\"{{source}}\",\"activeWhileAdjacentTo\":\"Self\",\"replaceSameSource\":true}}"
+ },
+ {
+  "id": "tpl.trap.armor_totem.aura",
+  "state": "Implemented",
+  "design_text": "[场上]邻接真怪护甲+1；离开邻接后失效（上场/发牌时施加）",
+  "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnEnter\"},\"target\":{\"atom\":\"FilteredCards\",\"kind\":\"Monster\",\"zone\":\"Board\",\"exclude\":[\"Self\"]},\"action\":{\"atom\":\"SyncAdjacentBorrowedArmor\",\"value\":\"{{value}}\",\"source\":\"{{source}}\",\"adjacentTo\":\"Self\"}}"
+ },
+ {
+  "id": "tpl.trap.armor_totem.refresh",
+  "state": "Implemented",
+  "design_text": "[场上]邻接真怪护甲+1；任意卡移动或发牌时刷新",
+  "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnEvent\",\"eventTypes\":[\"CardMoved\",\"CardDealt\"]},\"target\":{\"atom\":\"FilteredCards\",\"kind\":\"Monster\",\"zone\":\"Board\",\"exclude\":[\"Self\"]},\"action\":{\"atom\":\"SyncAdjacentBorrowedArmor\",\"value\":\"{{value}}\",\"source\":\"{{source}}\",\"adjacentTo\":\"Self\"}}"
+ },
+ {
+  "id": "tpl.trap.recovery_totem.heal_on_move",
+  "state": "Implemented",
+  "design_text": "[场上]本卡移动/旋转落地后，邻格真怪各恢复1点血量",
+  "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnSelfMove\",\"every\":1},\"target\":{\"atom\":\"FilteredCards\",\"kind\":\"Monster\",\"zone\":\"Board\",\"adjacentTo\":\"Self\",\"exclude\":[\"Self\"]},\"action\":{\"atom\":\"Heal\",\"amount\":\"{{amount}}\",\"actor\":\"Self\"}}"
+ },
+ {
+  "id": "tpl.trap.spike.move",
+  "state": "Implemented",
+  "design_text": "[场上]本卡每移动1次，邻格真怪各受到1点伤害",
+  "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnSelfMove\",\"every\":1},\"target\":{\"atom\":\"FilteredCards\",\"kind\":\"Monster\",\"zone\":\"Board\",\"adjacentTo\":\"Self\",\"exclude\":[\"Self\"]},\"action\":{\"atom\":\"DealDamage\",\"amount\":\"{{amount}}\",\"actor\":\"Self\"}}"
+ },
+ {
+  "id": "tpl.trap.healing_spring.heal_on_move",
+  "state": "Implemented",
+  "design_text": "[场上]本卡移动/旋转落地后，若正交邻玩家则为玩家恢复1点血量",
+  "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnSelfMove\",\"every\":1,\"requireAdjacentTo\":\"Player\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"Heal\",\"amount\":\"{{amount}}\",\"actor\":\"Self\"}}"
+ },
+ {
+  "id": "tpl.skill.assassin_leader.rule",
+  "state": "Implemented",
+  "design_text": "[场上]本卡正面时，怪物打出到格后立刻触发本效果并将该怪翻面（仅 targetKind=Monster；领袖翻面/离场后不再触发；已在场背面不自动翻回）",
+  "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[\"IsFaceUp:target=Self\", \"EventFilter:eventType=CardDealt:targetKind=Monster\"]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnDeal\"},\"conditions\":[{\"atom\":\"IsFaceUp\",\"target\":\"Self\"},{\"atom\":\"EventFilter\",\"eventType\":\"CardDealt\",\"targetKind\":\"Monster\"}],\"target\":{\"atom\":\"EventCards\",\"eventType\":\"CardDealt\",\"targetKind\":\"Monster\"},\"action\":{\"atom\":\"Flip\"}}"
+ },
+ {
+  "id": "tpl.skill.world_as_neighbors.rule",
+  "state": "Implemented",
+  "design_text": "[场上]所有怪物卡视为正交相邻（仅怪物技能邻接判定；不影响攻击距离/齐射几何）",
+  "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"RuleModifier\",\"ruleModifier\":{\"rule\":\"GlobalMonsterAdjacency\",\"target\":\"Self\",\"op\":\"Override\",\"value\":\"{{value}}\",\"layer\":\"Persistent\",\"scope\":\"Permanent\"}}"
+ },
+ {
+  "id": "tpl.help.hp_card.use",
+  "state": "Implemented",
+  "design_text": "[使用时] 永久获得2点血量上限",
+  "requires_json": "[\"HasOwnerEntity\", \"ActivatedByUse\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnSelfUsed\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"ModifyBaseStat\",\"stat\":\"MaxHp\",\"delta\":\"{{delta}}\",\"reason\":\"{{reason}}\"}}"
+ },
+ {
+  "id": "tpl.help.armor_card.use",
+  "state": "Implemented",
+  "design_text": "[使用时] 永久获得1点护甲",
+  "requires_json": "[\"HasOwnerEntity\", \"ActivatedByUse\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnSelfUsed\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"ModifyBaseStat\",\"stat\":\"Armor\",\"delta\":\"{{delta}}\",\"reason\":\"{{reason}}\"}}"
+ },
+ {
+  "id": "tpl.help.attack_card.use",
+  "state": "Implemented",
+  "design_text": "[使用时] 永久获得1点攻击",
+  "requires_json": "[\"HasOwnerEntity\", \"ActivatedByUse\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnSelfUsed\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"ModifyBaseStat\",\"stat\":\"Attack\",\"delta\":\"{{delta}}\",\"reason\":\"{{reason}}\"}}"
+ },
+ {
+  "id": "tpl.trap.door",
+  "state": "Implemented",
+  "design_text": "[场上]门：只承受交战中玩家出手伤害；其它伤害与直接移除无效",
+  "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"RuleModifier\",\"ruleModifier\":{\"rule\":\"DoorProtection\",\"target\":\"Self\",\"op\":\"Override\",\"value\":1,\"layer\":\"Persistent\",\"scope\":\"Permanent\"}}"
+ },
+ {
+  "id": "tpl.trap.magic_immunity",
+  "state": "Implemented",
+  "design_text": "[场上]魔免：不受任何外来「效果」影响（可被选中，效果直接失效）；仍可被玩家交战打死",
+  "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"RuleModifier\",\"ruleModifier\":{\"rule\":\"MagicImmunity\",\"target\":\"Self\",\"op\":\"Override\",\"value\":1,\"layer\":\"Persistent\",\"scope\":\"Permanent\"}}"
+ },
+ {
+  "id": "tpl.trap.leave",
+  "state": "Implemented",
+  "design_text": "[场上]离开：击破本卡时置清关向标志",
+  "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnFatalDamage\",\"target\":\"Self\"},\"target\":{\"atom\":\"Self\"},\"action\":{\"atom\":\"MarkLeaveTrapBroken\"}}"
+ },
+ {
+  "id": "tpl.relic.rotten_cleave_axe.base",
+  "state": "Implemented",
+  "design_text": "攻击+1",
+  "requires_json": "[\"NoOwnerEntity\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Modifier\",\"target\":{\"atom\":\"Player\"},\"modifier\":{\"stat\":\"Attack\",\"op\":\"Add\",\"value\":\"{{value}}\",\"layer\":\"Persistent\",\"scope\":\"Permanent\"}}"
+ },
+ {
+  "id": "tpl.relic.rotten_cleave_axe.cleave",
+  "state": "Implemented",
+  "design_text": "[战斗时] 对目标正交相邻怪物造成1点伤害",
+  "requires_json": "[\"NoOwnerEntity\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnBattle\",\"sourceAction\":\"{{sourceAction}}\",\"targetKind\":\"Monster\",\"maxActionDepth\":0},\"conditions\":[{\"atom\":\"EventFilterActorIsPlayer\",\"eventType\":\"DamageDealt\",\"targetKind\":\"Monster\"}],\"target\":{\"atom\":\"FilteredCards\",\"kind\":\"Monster\",\"zone\":\"Board\",\"adjacentTo\":\"EventTarget\",\"exclude\":[\"EventTarget\"]},\"action\":{\"atom\":\"DealDamage\",\"amount\":\"{{amount}}\",\"actor\":\"Player\"}}"
+ },
+ {
+  "id": "tpl.relic.thorn_mail.reflect",
+  "state": "Implemented",
+  "design_text": "[战斗时] 玩家损失当前护甲时对攻击者造成等量伤害",
+  "requires_json": "[\"NoOwnerEntity\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnBattle\"},\"conditions\":[{\"atom\":\"EventFilter\",\"eventType\":\"ArmorChanged\",\"targetKind\":\"Avatar\",\"maxDelta\":-1}],\"target\":{\"atom\":\"FilteredCards\",\"include\":[\"Actor\"]},\"action\":{\"atom\":\"DealDamage\",\"value\":{\"op\":\"Negate\",\"values\":[{\"source\":\"Event\",\"field\":\"Delta\"}]},\"actor\":\"Player\"}}"
+ },
+ {
+  "id": "tpl.relic.muscle_counter.battle",
+  "state": "Implemented",
+  "design_text": "[战斗时] 按血量上限/10 对目标造成额外伤害",
+  "requires_json": "[\"NoOwnerEntity\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnBattle\",\"sourceAction\":\"{{sourceAction}}\",\"targetKind\":\"Monster\",\"maxActionDepth\":0},\"conditions\":[{\"atom\":\"EventFilterActorIsPlayer\",\"eventType\":\"DamageDealt\",\"targetKind\":\"Monster\"}],\"target\":{\"atom\":\"EventTarget\"},\"action\":{\"atom\":\"DealDamage\",\"value\":{\"op\":\"Floor\",\"values\":[{\"op\":\"Multiply\",\"values\":[{\"source\":\"Player\",\"stat\":\"MaxHp\",\"effective\":true},{\"constant\":0.1}]}]},\"actor\":\"Player\"}}"
+ },
+ {
+  "id": "tpl.relic.golden_coffer.grant",
+  "state": "Implemented",
+  "design_text": "[获得时] 加入两张金色宝箱卡并停用本效果",
+  "requires_json": "[\"NoOwnerEntity\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnActivate\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"Sequence\",\"actions\":[{\"atom\":\"Spawn\",\"defId\":\"help.golden_chest_card\",\"kind\":\"HelpCard\",\"zone\":\"PlayerCardPool\",\"count\":\"{{count}}\"},{\"atom\":\"DeactivateSelfEffect\"}]}}"
+ },
+ {
+  "id": "tpl.relic.junk_amplifier.use",
+  "state": "Implemented",
+  "design_text": "[使用道具卡时] 本关卡攻击+1",
+  "requires_json": "[\"NoOwnerEntity\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnAnyHelpCardUsed\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"AddModifier\",\"stat\":\"Attack\",\"op\":\"Add\",\"value\":\"{{value}}\",\"layer\":\"Temporary\",\"scope\":\"UntilNodeEnds\",\"source\":\"{{source}}\"}}"
+ },
+ {
+  "id": "tpl.relic.iron_shield.reduction",
+  "state": "Implemented",
+  "design_text": "伤害减免+1",
+  "requires_json": "[\"NoOwnerEntity\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"RuleModifier\",\"ruleModifier\":{\"rule\":\"DamageReduction\",\"op\":\"Add\",\"value\":\"{{value}}\",\"layer\":\"Persistent\",\"scope\":\"Permanent\",\"source\":\"{{source}}\"}}"
+ },
+ {
+  "id": "tpl.relic.body_potential.hp_lost",
+  "state": "Implemented",
+  "design_text": "[受到伤害时] 每10点血量伤害洗入随机道具卡",
+  "requires_json": "[\"NoOwnerEntity\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnCumulative\",\"metric\":\"hpLost\",\"threshold\":\"{{threshold}}\",\"targetIsPlayer\":true,\"counterKey\":\"relic.body_potential.hp\",\"projectKey\":\"{{projectKey}}\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"ShuffleRandomContent\",\"kind\":\"HelpCard\",\"count\":\"{{count}}\",\"top\":false}}"
+ },
+ {
+  "id": "tpl.relic.beyond_dimension.battle",
+  "state": "Implemented",
+  "design_text": "[战斗时] 旋转一次",
+  "requires_json": "[\"NoOwnerEntity\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnBattle\",\"sourceAction\":\"{{sourceAction}}\",\"targetKind\":\"Monster\",\"maxActionDepth\":0},\"conditions\":[{\"atom\":\"EventFilterActorIsPlayer\",\"eventType\":\"DamageDealt\",\"targetKind\":\"Monster\"}],\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"Rotate\",\"count\":\"{{count}}\"}}"
+ },
+ {
+  "id": "tpl.relic.armor_strip_knife.battle",
+  "state": "Implemented",
+  "design_text": "[战斗时] 若目标当前护甲>0，本次战斗攻击+3",
+  "requires_json": "[\"NoOwnerEntity\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnBattle\",\"sourceAction\":\"{{sourceAction}}\",\"targetKind\":\"Monster\",\"maxActionDepth\":0},\"conditions\":[{\"atom\":\"EventFilterActorIsPlayer\",\"eventType\":\"DamageDealt\",\"targetKind\":\"Monster\"},{\"atom\":\"StatAtLeast\",\"target\":\"EventTarget\",\"stat\":\"CurrentArmor\",\"value\":1}],\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"AddModifier\",\"stat\":\"Attack\",\"op\":\"Add\",\"value\":\"{{value}}\",\"layer\":\"Temporary\",\"scope\":\"UntilBattleEnds\",\"source\":\"{{source}}\",\"replaceSameSource\":true}}"
+ },
+ {
+  "id": "tpl.relic.armor_strip_knife.armor_hit",
+  "state": "Implemented",
+  "design_text": "[战斗时] 本次打击造成目标掉甲时，本次战斗攻击+3",
+  "requires_json": "[\"NoOwnerEntity\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnBattle\",\"targetKind\":\"Monster\",\"maxActionDepth\":0},\"conditions\":[{\"atom\":\"EventFilterActorIsPlayer\",\"eventType\":\"ArmorChanged\",\"targetKind\":\"Monster\"},{\"atom\":\"EventFilter\",\"eventType\":\"ArmorChanged\",\"targetKind\":\"Monster\",\"maxDelta\":-1}],\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"AddModifier\",\"stat\":\"Attack\",\"op\":\"Add\",\"value\":\"{{value}}\",\"layer\":\"Temporary\",\"scope\":\"UntilBattleEnds\",\"source\":\"{{source}}\",\"replaceSameSource\":true}}"
+ },
+ {
+  "id": "tpl.relic.composite_armor.node_start",
+  "state": "Implemented",
+  "design_text": "[每关卡开始时] 每有三点攻击，获得1点当前护甲",
+  "requires_json": "[\"NoOwnerEntity\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnNodeStart\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"GainArmor\",\"value\":{\"op\":\"Floor\",\"values\":[{\"op\":\"Divide\",\"values\":[{\"source\":\"Player\",\"stat\":\"Attack\",\"effective\":true},{\"constant\":3}]}]}}}"
+ },
+ {
+  "id": "tpl.relic.gold_blood.taken",
+  "state": "Implemented",
+  "design_text": "[受到伤害时] 每损失1点血量获得等量金币",
+  "requires_json": "[\"NoOwnerEntity\"]",
+  "conditions_json": "[\"EventFilter:eventType=HpChanged\"]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnDamageTaken\"},\"conditions\":[{\"atom\":\"EventFilter\",\"eventType\":\"HpChanged\",\"targetKind\":\"Avatar\",\"maxDelta\":-1}],\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"ModifyGold\",\"value\":{\"op\":\"Negate\",\"values\":[{\"source\":\"Event\",\"field\":\"Delta\"}]},\"reason\":\"{{reason}}\"}}"
+ },
+ {
+  "id": "tpl.relic.rpm_engine.rotate",
+  "state": "Implemented",
+  "design_text": "[旋转时] 多旋转一次（排除本遗物引发的旋转）",
+  "requires_json": "[\"NoOwnerEntity\"]",
+  "conditions_json": "[\"EventFilter:eventType=BoardRotated\"]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnEvent\",\"eventType\":\"BoardRotated\"},\"conditions\":[{\"atom\":\"EventFilter\",\"eventType\":\"BoardRotated\",\"excludeSourceDefId\":\"relic.rpm_engine\"}],\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"Rotate\",\"count\":\"{{count}}\"}}"
+ },
+ {
+  "id": "tpl.relic.trap_cell.move",
+  "state": "Implemented",
+  "design_text": "怪物卡移动到格1时对该怪物造成4点伤害",
+  "requires_json": "[\"NoOwnerEntity\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnMoveToSlot\",\"slot\":1},\"target\":{\"atom\":\"MovedEventCards\",\"targetKind\":\"Monster\",\"toSlot\":1},\"action\":{\"atom\":\"DealDamage\",\"amount\":\"{{amount}}\",\"actor\":\"Player\"}}"
+ },
+ {
+  "id": "tpl.relic.junk_sword.kill",
+  "state": "Implemented",
+  "design_text": "[击杀怪物时] 恢复2点血量",
+  "requires_json": "[\"NoOwnerEntity\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnKill\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"Heal\",\"amount\":\"{{amount}}\",\"actor\":\"Player\"}}"
+ },
+ {
+  "id": "tpl.relic.blood_cycle.taken",
+  "state": "Implemented",
+  "design_text": "[受到伤害时] 恢复2点血量",
+  "requires_json": "[\"NoOwnerEntity\"]",
+  "conditions_json": "[\"EventFilter:eventType=HpChanged\"]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnDamageTaken\"},\"conditions\":[{\"atom\":\"EventFilter\",\"eventType\":\"HpChanged\",\"targetKind\":\"Avatar\",\"maxDelta\":-1}],\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"Heal\",\"amount\":\"{{amount}}\",\"actor\":\"Player\"}}"
+ },
+ {
+  "id": "tpl.relic.blood_violence.atk",
+  "state": "Implemented",
+  "design_text": "当前血量低于上限50%时攻击+2",
+  "requires_json": "[\"NoOwnerEntity\"]",
+  "conditions_json": "[\"HpBelow\"]",
+  "body": "{\"kind\":\"Modifier\",\"target\":{\"atom\":\"Player\"},\"conditions\":[{\"atom\":\"HpBelow\",\"target\":\"Self\",\"pct\":0.5}],\"modifier\":{\"stat\":\"Attack\",\"op\":\"Add\",\"value\":\"{{value}}\",\"layer\":\"Conditional\",\"scope\":\"Permanent\",\"source\":\"{{source}}\"}}"
+ },
+ {
+  "id": "tpl.relic.blood_burst.taken",
+  "state": "Implemented",
+  "design_text": "[受到伤害时] 对随机怪物造成等量伤害",
+  "requires_json": "[\"NoOwnerEntity\"]",
+  "conditions_json": "[\"EventFilter:eventType=HpChanged\"]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnDamageTaken\"},\"conditions\":[{\"atom\":\"EventFilter\",\"eventType\":\"HpChanged\",\"targetKind\":\"Avatar\",\"maxDelta\":-1}],\"target\":{\"atom\":\"RandomMonster\"},\"action\":{\"atom\":\"DealDamage\",\"value\":{\"op\":\"Negate\",\"values\":[{\"source\":\"Event\",\"field\":\"Delta\"}]},\"actor\":\"Player\"}}"
+ },
+ {
+  "id": "tpl.relic.spinning_barb.move",
+  "state": "Implemented",
+  "design_text": "怪物卡每移动一次受到1点伤害",
+  "requires_json": "[\"NoOwnerEntity\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnEvent\",\"eventType\":\"CardMoved\"},\"target\":{\"atom\":\"MovedEventCards\",\"targetKind\":\"Monster\"},\"action\":{\"atom\":\"DealDamage\",\"amount\":\"{{amount}}\",\"actor\":\"Player\"}}"
+ },
+ {
+  "id": "tpl.relic.blood_regen.battle",
+  "state": "Implemented",
+  "design_text": "[战斗时] 血量低于上限50%时恢复2点血量",
+  "requires_json": "[\"NoOwnerEntity\"]",
+  "conditions_json": "[\"EventFilterActorIsPlayer\",\"HpBelow\"]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnBattle\",\"sourceAction\":\"{{sourceAction}}\",\"targetKind\":\"Monster\",\"maxActionDepth\":0},\"conditions\":[{\"atom\":\"EventFilterActorIsPlayer\",\"eventType\":\"DamageDealt\",\"targetKind\":\"Monster\"},{\"atom\":\"HpBelow\",\"target\":\"Player\",\"pct\":0.5}],\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"Heal\",\"amount\":\"{{amount}}\",\"actor\":\"Player\"}}"
+ },
+ {
+  "id": "tpl.relic.sharp_longsword.kill",
+  "state": "Implemented",
+  "design_text": "[击杀怪物时] 本关卡攻击+1",
+  "requires_json": "[\"NoOwnerEntity\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnKill\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"AddModifier\",\"stat\":\"Attack\",\"op\":\"Add\",\"value\":\"{{value}}\",\"layer\":\"Temporary\",\"scope\":\"UntilNodeEnds\",\"source\":\"{{source}}\"}}"
+ },
+ {
+  "id": "tpl.relic.berserker_axe.double",
+  "state": "Implemented",
+  "design_text": "当前血量低于上限50%时攻击翻倍",
+  "requires_json": "[\"NoOwnerEntity\"]",
+  "conditions_json": "[\"HpBelow\"]",
+  "body": "{\"kind\":\"Modifier\",\"target\":{\"atom\":\"Player\"},\"conditions\":[{\"atom\":\"HpBelow\",\"target\":\"Self\",\"pct\":0.5}],\"modifier\":{\"stat\":\"Attack\",\"op\":\"Multiply\",\"value\":\"{{value}}\",\"layer\":\"Conditional\",\"scope\":\"Permanent\",\"source\":\"{{source}}\"}}"
+ },
+ {
+  "id": "tpl.relic.metal_blood.taken",
+  "state": "Implemented",
+  "design_text": "[受到伤害时] 损失血量后获得等量当前护甲",
+  "requires_json": "[\"NoOwnerEntity\"]",
+  "conditions_json": "[\"EventFilter:eventType=HpChanged\"]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnDamageTaken\"},\"conditions\":[{\"atom\":\"EventFilter\",\"eventType\":\"HpChanged\",\"targetKind\":\"Avatar\",\"maxDelta\":-1}],\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"GainArmor\",\"value\":{\"op\":\"Negate\",\"values\":[{\"source\":\"Event\",\"field\":\"Delta\"}]}}}"
+ },
+ {
+  "id": "tpl.relic.punch_card_knife.remove",
+  "state": "Implemented",
+  "design_text": "[击杀怪物时] 每移除5张怪物卡，随机洗入一张常规道具卡到战斗卡组",
+  "requires_json": "[\"NoOwnerEntity\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnCumulative\",\"metric\":\"monsterRemoved\",\"threshold\":\"{{threshold}}\",\"counterKey\":\"relic.punch_card_knife.remove\",\"projectKey\":\"{{projectKey}}\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"ShuffleRandomContent\",\"kind\":\"HelpCard\",\"count\":\"{{count}}\",\"top\":false}}"
+ },
+ {
+  "id": "tpl.relic.rotation_trick.remove",
+  "state": "Implemented",
+  "design_text": "[击杀怪物时] 每移除6张怪物卡，洗入一张旋转轮到战斗卡组",
+  "requires_json": "[\"NoOwnerEntity\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnCumulative\",\"metric\":\"monsterRemoved\",\"threshold\":\"{{threshold}}\",\"counterKey\":\"relic.rotation_trick.remove\",\"projectKey\":\"{{projectKey}}\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"ShuffleInto\",\"defId\":\"help.rotation_wheel\",\"kind\":\"HelpCard\",\"count\":\"{{count}}\",\"top\":false}}"
+ },
+ {
+  "id": "tpl.relic.terror_mask.remove",
+  "state": "Implemented",
+  "design_text": "[击杀怪物时] 本关卡每移除6张怪物卡，随机移除一张九宫格上的普通等级怪物卡",
+  "requires_json": "[\"NoOwnerEntity\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnCumulative\",\"metric\":\"monsterRemoved\",\"threshold\":\"{{threshold}}\",\"counterKey\":\"relic.terror_mask.remove\",\"projectKey\":\"{{projectKey}}\"},\"target\":{\"atom\":\"FilteredCards\",\"kind\":\"Monster\",\"zone\":\"Board\",\"excludeBoss\":true,\"random\":true,\"count\":\"{{count}}\"},\"action\":{\"atom\":\"RemoveCard\",\"destination\":\"Removed\",\"reason\":\"{{reason}}\"}}"
+},
+ {
+  "id": "tpl.relic.junk_cycler.use",
+  "state": "Implemented",
+  "design_text": "[使用道具卡时] 每使用9张道具卡，随机洗入一张道具卡到战斗卡组",
+  "requires_json": "[\"NoOwnerEntity\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnCumulative\",\"metric\":\"helpCardUsed\",\"threshold\":\"{{threshold}}\",\"counterKey\":\"relic.junk_cycler.use\",\"projectKey\":\"{{projectKey}}\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"ShuffleRandomContent\",\"kind\":\"HelpCard\",\"count\":\"{{count}}\",\"top\":false}}"
+ },
+ {
+  "id": "tpl.relic.junk_body.use",
+  "state": "Implemented",
+  "design_text": "[使用道具卡时] 每使用3张道具卡，获得1点血量上限",
+  "requires_json": "[\"NoOwnerEntity\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnCumulative\",\"metric\":\"helpCardUsed\",\"threshold\":\"{{threshold}}\",\"counterKey\":\"relic.junk_body.use\",\"projectKey\":\"{{projectKey}}\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"ModifyBaseStat\",\"stat\":\"MaxHp\",\"delta\":\"{{delta}}\",\"reason\":\"{{reason}}\"}}"
+ },
+ {
+  "id": "tpl.relic.blood_demon.damage",
+  "state": "Implemented",
+  "design_text": "[受到伤害时] 每受到5点伤害，获得1点血量上限",
+  "requires_json": "[\"NoOwnerEntity\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnCumulative\",\"metric\":\"damageTaken\",\"threshold\":\"{{threshold}}\",\"targetIsPlayer\":true,\"counterKey\":\"relic.blood_demon.damage\",\"projectKey\":\"{{projectKey}}\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"ModifyBaseStat\",\"stat\":\"MaxHp\",\"delta\":\"{{delta}}\",\"reason\":\"{{reason}}\"}}"
+ },
+ {
+  "id": "tpl.relic.terror_mask.node_start",
+  "state": "Implemented",
+  "design_text": "[每关卡开始时] 清零本关怪物移除累计",
+  "requires_json": "[\"NoOwnerEntity\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnNodeStart\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"SetCounter\",\"key\":\"relic.terror_mask.remove\",\"value\":0}}"
+ },
+ {
+  "id": "tpl.relic.forge_tool.init",
+  "state": "Implemented",
+  "design_text": "本遗物基础护甲贡献（run 内可变）",
+  "requires_json": "[\"NoOwnerEntity\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnActivate\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"ModifyRelicRunContribution\",\"stat\":\"Armor\",\"value\":\"{{value}}\"}}"
+ },
+ {
+  "id": "tpl.relic.forge_tool.node_start",
+  "state": "Implemented",
+  "design_text": "[每关卡开始时] 若当前护甲≥5，扣除5点当前护甲并使本遗物基础护甲永久+1",
+  "requires_json": "[\"NoOwnerEntity\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnNodeStart\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"Conditional\",\"condition\":{\"atom\":\"StatAtLeast\",\"target\":\"Player\",\"stat\":\"CurrentArmor\",\"value\":\"{{threshold}}\"},\"action\":{\"atom\":\"Sequence\",\"actions\":[{\"atom\":\"TransferArmor\",\"amount\":\"{{amount}}\",\"receiver\":\"None\",\"cause\":\"{{cause}}\"},{\"atom\":\"ModifyRelicRunContribution\",\"stat\":\"Armor\",\"delta\":\"{{delta}}\"}]}}}"
+ },
+ {
+  "id": "tpl.relic.golden_sword.init",
+  "state": "Implemented",
+  "design_text": "本遗物攻击贡献（run 内可变）",
+  "requires_json": "[\"NoOwnerEntity\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnActivate\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"ModifyRelicRunContribution\",\"stat\":\"Attack\",\"value\":\"{{value}}\"}}"
+ },
+ {
+  "id": "tpl.relic.golden_sword.battle",
+  "state": "Implemented",
+  "design_text": "[战斗时] 本遗物提供的攻击-1（最低为0）",
+  "requires_json": "[\"NoOwnerEntity\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnBattle\",\"sourceAction\":\"{{sourceAction}}\",\"targetKind\":\"Monster\",\"maxActionDepth\":0},\"conditions\":[{\"atom\":\"EventFilterActorIsPlayer\",\"eventType\":\"DamageDealt\",\"targetKind\":\"Monster\"}],\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"ModifyRelicRunContribution\",\"stat\":\"Attack\",\"delta\":\"{{delta}}\",\"floor\":0}}"
+ },
+ {
+  "id": "tpl.relic.golden_sword.kill",
+  "state": "Implemented",
+  "design_text": "[击杀怪物时] 本遗物提供的攻击+1",
+  "requires_json": "[\"NoOwnerEntity\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnKill\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"ModifyRelicRunContribution\",\"stat\":\"Attack\",\"delta\":\"{{delta}}\"}}"
+ },
+ {
+  "id": "tpl.relic.foam_armor.arm",
+  "state": "Implemented",
+  "design_text": "[受到伤害时] 本关首次当前护甲归零时，武装下一次伤害全额免疫（归零击本身不免疫）",
+  "requires_json": "[\"NoOwnerEntity\"]",
+  "conditions_json": "[\"CardCounter\"]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnArmorBreak\"},\"conditions\":[{\"atom\":\"CardCounter\",\"target\":\"Player\",\"key\":\"relic.foam_armor.can_arm\",\"min\":1}],\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"Sequence\",\"actions\":[{\"atom\":\"AddRuleModifier\",\"rule\":\"DamageMultiplier\",\"op\":\"Override\",\"value\":\"{{value}}\",\"layer\":\"Temporary\",\"scope\":\"Once\",\"source\":\"{{source}}\"},{\"atom\":\"SetCounter\",\"key\":\"relic.foam_armor.can_arm\",\"value\":0}]}}"
+ },
+ {
+  "id": "tpl.relic.foam_armor.node_start",
+  "state": "Implemented",
+  "design_text": "[每关卡开始时] 丢弃未消耗泡沫盾并重置本关武装配额",
+  "requires_json": "[\"NoOwnerEntity\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnNodeStart\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"Sequence\",\"actions\":[{\"atom\":\"RemoveRuleModifiersBySource\",\"source\":\"relic.foam_armor\"},{\"atom\":\"SetCounter\",\"key\":\"relic.foam_armor.can_arm\",\"value\":1}]}}"
+ },
+ {
+  "id": "tpl.relic.foam_armor.activate",
+  "state": "Implemented",
+  "design_text": "[获得时] 允许本关武装泡沫盾",
+  "requires_json": "[\"NoOwnerEntity\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnActivate\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"SetCounter\",\"key\":\"relic.foam_armor.can_arm\",\"value\":1}}"
+ }
+]

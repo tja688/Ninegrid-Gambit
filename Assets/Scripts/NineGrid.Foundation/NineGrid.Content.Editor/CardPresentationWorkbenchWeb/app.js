@@ -22,6 +22,8 @@
   let ws = null;
   let streamActive = false;
   let suppressClose = false;
+  let wsBroken = false;
+  let longPollActive = false;
   let reconnectTimer = null;
   let reconnectDelay = 1500;
   let requestSeq = 0;
@@ -91,7 +93,8 @@
       body: JSON.stringify({ requestId, command: name, payload }),
     });
     if (!result.ok) throw new Error(result.error || (name + " 失败"));
-    if (typeof result.revision === "number") revision = result.revision;
+    // revision 只由 applyEnvelope 推进：命令回执不改本地基准，
+    // 否则长轮询带回的同版本快照会被丢弃、界面不刷新。
     return result;
   }
 
@@ -119,8 +122,13 @@
   }
 
   function startStream() {
-    if (streamActive || !window.WebSocket) return;
+    if (streamActive) return;
+    if (wsBroken || !window.WebSocket) {
+      longPoll();
+      return;
+    }
     streamActive = true;
+    let gotMessage = false;
     try {
       ws = new WebSocket("ws://" + location.host + "/stream");
       ws.addEventListener("open", () => {
@@ -130,19 +138,50 @@
       ws.addEventListener("message", (ev) => {
         try {
           const parsed = JSON.parse(ev.data);
-          if (parsed.type === "snapshot" || parsed.type === "delta") applyEnvelope(parsed);
+          if (parsed.type === "snapshot" || parsed.type === "delta") {
+            gotMessage = true;
+            applyEnvelope(parsed);
+          }
         } catch { /* ignore */ }
       });
       ws.addEventListener("close", () => {
         ws = null;
         streamActive = false;
         if (suppressClose) { suppressClose = false; return; }
+        if (!gotMessage) {
+          // 编辑器侧 HttpListener 不支持 WS 升级时回退长轮询。
+          wsBroken = true;
+          longPoll();
+          return;
+        }
         setConnected(false, "已断开");
         scheduleReconnect();
       });
     } catch {
       streamActive = false;
-      scheduleReconnect();
+      wsBroken = true;
+      longPoll();
+    }
+  }
+
+  async function longPoll() {
+    if (longPollActive) return;
+    longPollActive = true;
+    setConnected(true, "已连接 · r" + revision);
+    while (longPollActive) {
+      try {
+        const envelope = await api("/api/events?afterRevision=" + revision + "&timeoutMs=25000");
+        if (!longPollActive) return;
+        if (envelope && (envelope.type === "snapshot" || envelope.type === "delta")
+          && envelope.revision > revision) {
+          applyEnvelope(envelope);
+        }
+      } catch {
+        longPollActive = false;
+        setConnected(false, "已断开");
+        scheduleReconnect();
+        return;
+      }
     }
   }
 
@@ -171,6 +210,7 @@
       const envelope = await api("/api/snapshot");
       applyEnvelope(envelope);
       if (ws) { suppressClose = true; try { ws.close(); } catch { /* ignore */ } ws = null; streamActive = false; }
+      longPollActive = false;
       startStream();
     } catch {
       scheduleReconnect();

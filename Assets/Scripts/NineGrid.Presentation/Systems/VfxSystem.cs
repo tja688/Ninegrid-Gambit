@@ -1362,7 +1362,8 @@ namespace NineGrid.Presentation.Systems
                     null,
                     spatialContext.PositionSnapshot,
                     spatialContext.DiagnosticOwnerUid,
-                    spatialContext.Amount);
+                    spatialContext.Amount,
+                    spatialContext.TargetPositionSnapshot);
             }
 
             return spatialContext;
@@ -1774,7 +1775,8 @@ namespace NineGrid.Presentation.Systems
                     null,
                     spatialContext.PositionSnapshot,
                     spatialContext.DiagnosticOwnerUid,
-                    spatialContext.Amount);
+                    spatialContext.Amount,
+                    spatialContext.TargetPositionSnapshot);
             }
 
             return spatialContext;
@@ -2534,6 +2536,7 @@ namespace NineGrid.Presentation.Systems
             private readonly VfxSpriteSheetPlayerFactory mSpriteSheetFactory = new VfxSpriteSheetPlayerFactory();
             private readonly VfxGoldFlightPlayerFactory mGoldFlightFactory = new VfxGoldFlightPlayerFactory();
             private readonly VfxParticlePlayerFactory mParticleFactory = new VfxParticlePlayerFactory();
+            private readonly VfxProjectilePlayerFactory mProjectileFactory = new VfxProjectilePlayerFactory();
 
             public bool TryCreatePulsePlayer(string playerId, out IVfxPulsePlayer player, out string failureReason)
             {
@@ -2558,6 +2561,11 @@ namespace NineGrid.Presentation.Systems
                 if (string.Equals(playerId, VfxPlayerRegistry.Particle, StringComparison.Ordinal))
                 {
                     return mParticleFactory.TryCreatePulsePlayer(playerId, out player, out failureReason);
+                }
+
+                if (string.Equals(playerId, VfxPlayerRegistry.Projectile, StringComparison.Ordinal))
+                {
+                    return mProjectileFactory.TryCreatePulsePlayer(playerId, out player, out failureReason);
                 }
 
                 failureReason = "播放器尚未实现。";

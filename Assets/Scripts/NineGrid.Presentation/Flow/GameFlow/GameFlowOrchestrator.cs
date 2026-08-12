@@ -16,6 +16,7 @@ using NineGrid.Flow.ShopBoard;
 using NineGrid.Flow.TavernBoard;
 using NineGrid.Flow.BattleInfoPreview;
 using NineGrid.Flow.Transitions;
+using NineGrid.Flow.Tutorial;
 using NineGrid.Presentation;
 using NineGrid.Presentation.Commands;
 using NineGrid.Presentation.Systems;
@@ -65,8 +66,10 @@ namespace NineGrid.Flow
 
             var quickTestMode = options != null && options.QuickTestMode;
             var quickTestOptions = options?.QuickTest;
+            var tutorialMode = options != null && options.TutorialMode;
 
             mShell.ApplyRunMode(quickTestMode);
+            mShell.ApplyTutorialMode(tutorialMode);
             mShell.ResetNodeProgress();
             // ResetNodeProgress 清 QuickTest 字段；PrepareQuickTest 须在其后。
             mShell.BumpGeneration();
@@ -144,7 +147,107 @@ namespace NineGrid.Flow
                 }
             }
 
+            // 教学模式：单场受控教学战斗，不进节点循环（不影响正式流程）。
+            if (tutorialMode)
+            {
+                RunTutorialAsync(options.Tutorial, mLoopCts.Token).Forget();
+                return;
+            }
+
             RunNodeCycleAsync(mLoopCts.Token).Forget();
+        }
+
+        /// <summary>
+        /// 教学关卡（独立于节点循环）：BootstrapRun → 受控开局发牌 → 教学导演推进四波 →
+        /// 击破离开机关走 Core 正常清关 → 结算就绪即教学完成。
+        /// 完成后按载荷转正式开局或回主菜单；战败走常规 BattleEnded 收口（不标记完成）。
+        /// </summary>
+        private async UniTaskVoid RunTutorialAsync(TutorialRunOptions tutorial, CancellationToken ct)
+        {
+            mShell.SetBusy(true);
+            TutorialBattleDirector director = null;
+            var completed = false;
+            try
+            {
+                mShell.IncrementNodeIndex();
+                RequestSetState(GameFlowShellState.BattleStub);
+                var view = mShell.View;
+                view?.EnsureViewBindings();
+                view?.HideNotice();
+                view?.ShowInRunShell(inBattle: true);
+                BoardBriefTipPresenter.InstanceOrNull()?.HardClear();
+
+                var session = ResolveSession();
+                if (session == null || !session.IsBound)
+                {
+                    Debug.LogError("[Tutorial] 未绑定 IBattleSessionSystem，教学开局失败。");
+                    return;
+                }
+
+                mSettlementTcs = new UniTaskCompletionSource();
+                session.BootstrapRun();
+                CoreCardPresentationMapper.EnsureContentCatalogLoaded();
+
+                var content = NineGridArchitecture.Current.GetSystem<IContentSystem>();
+                if (content == null || !content.HasCatalog)
+                {
+                    Debug.LogError("[Tutorial] ContentSystem 未就绪，教学开局失败。");
+                    return;
+                }
+
+                Debug.Log("[Tutorial] 教学关卡入场");
+                await session.StartBattleNodeAsync(TutorialDeckPlan.BuildOpeningOptions(content), ct);
+                if (ct.IsCancellationRequested)
+                {
+                    return;
+                }
+
+                director = TutorialBattleDirector.StartNew(ct);
+                session.TryEnterNodeSettlement();
+                await mSettlementTcs.Task.AttachExternalCancellation(ct);
+                completed = true;
+            }
+            catch (OperationCanceledException)
+            {
+            }
+            finally
+            {
+                director?.Stop();
+                mShell.SetBusy(false);
+            }
+
+            if (!completed)
+            {
+                return;
+            }
+
+            TutorialProgressStore.MarkCompleted();
+            var continueToFormal = tutorial != null && tutorial.ContinueToFormalRun;
+            Debug.Log("[Tutorial] 教学完成" + (continueToFormal ? "，转入正式开局。" : "，返回主菜单。"));
+            FinishTutorialAndContinueAsync(continueToFormal).Forget();
+        }
+
+        /// <summary>教学收口：短暂完成提示 → 回主菜单收干净 →（可选）下一帧转正式开局。</summary>
+        private async UniTaskVoid FinishTutorialAndContinueAsync(bool continueToFormal)
+        {
+            var view = mShell.View;
+            view?.ShowNotice(continueToFormal ? "教学完成！准备开始冒险…" : "教学完成！");
+            try
+            {
+                await UniTask.Delay(TimeSpan.FromSeconds(1.2f), cancellationToken: CancellationToken.None);
+            }
+            catch (OperationCanceledException)
+            {
+            }
+
+            EnterMainMenuImmediate();
+            if (!continueToFormal)
+            {
+                return;
+            }
+
+            await UniTask.Yield();
+            mShell.BeginRun(GameFlowRunOptions.CreateFormal());
         }
 
         /// <summary>
@@ -1030,7 +1133,11 @@ namespace NineGrid.Flow
         private async UniTask ShowBattleEndAndReturnAsync(bool victory, CancellationToken ct)
         {
             // run 终局：清内存检查点并删除自动存档（手动槽保留）。
-            RunSaveService.HandleRunEnded();
+            // 教学局不产生检查点，也不得误删玩家早前正式局的自动存档。
+            if (!mShell.IsTutorialMode)
+            {
+                RunSaveService.HandleRunEnded();
+            }
             CancelLoopWork();
             ResolveSession()?.ClearCardPresentationSurface();
             ResolveSession()?.RefreshPersistentInBattleUi(animate: false);

@@ -118,6 +118,17 @@ namespace NineGrid.Presentation.Editor
 
             width = Mathf.Clamp(width, 8, 2048);
             height = Mathf.Clamp(height, 8, 2048);
+
+            // 一次性离屏渲染没有编辑器循环驱动 TMP 惰性重建，先强制生成文本网格。
+            var texts = _build.Root.GetComponentsInChildren<TMPro.TMP_Text>(true);
+            for (var i = 0; i < texts.Length; i++)
+            {
+                if (texts[i] != null)
+                {
+                    texts[i].ForceMeshUpdate(true, true);
+                }
+            }
+
             _previewUtility.BeginStaticPreview(new Rect(0f, 0f, width, height));
             _previewUtility.camera.Render();
             var texture = _previewUtility.EndStaticPreview();

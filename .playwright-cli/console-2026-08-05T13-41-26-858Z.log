@@ -1,9 +1,0 @@
-[46215543ms] [INFO] ripple[DAHQvvTYB2U:85-VSjDbgSI_Ldo7A(1785974161628-0,0)]: unsubscribing from channel @ https://static.canva.cn/web/f153749557653733.sentry_browser.js:0
-[46215543ms] [INFO] websocket_client: status ERROR, reconnecting in 2462ms Error: RSocketWebSocketClient: Socket closed unexpectedly.
-    at WebSocket.<anonymous> (https://static.canva.cn/web/00a62f40c9400593.vendor.js:2:224934)
-    at WebSocket.n (https://static.canva.cn/web/f153749557653733.sentry_browser.js:1:76075) @ https://static.canva.cn/web/f153749557653733.sentry_browser.js:0
-[46218016ms] [INFO] websocket_client: 1785983504873 connecting... @ https://static.canva.cn/web/f153749557653733.sentry_browser.js:0
-[46218349ms] [INFO] websocket_client: connected @ https://static.canva.cn/web/f153749557653733.sentry_browser.js:0
-[46218349ms] [LOG] ripple[DAHQvvTYB2U:85-VSjDbgSI_Ldo7A(1785974161628-0,0)]: subscribing to channel @ https://static.canva.cn/web/f153749557653733.sentry_browser.js:0
-[46218350ms] [INFO] websocket_client: status CONNECTED @ https://static.canva.cn/web/f153749557653733.sentry_browser.js:0
-[46218431ms] [INFO] websocket_client: request id a26aa0ac1f5d23e9 @ https://static.canva.cn/web/f153749557653733.sentry_browser.js:0

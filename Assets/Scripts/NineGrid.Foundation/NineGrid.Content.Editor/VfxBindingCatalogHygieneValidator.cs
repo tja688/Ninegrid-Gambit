@@ -293,6 +293,10 @@ namespace NineGrid.Content.Editor
       {
         ValidateParticlePresetBinding(key, identityId, materialKey, variants, supportsPulse, findings);
       }
+      else if (VfxPlayerRegistry.IsProjectilePlayer(playerId))
+      {
+        ValidateProjectilePresetBinding(key, identityId, materialKey, variants, findings);
+      }
 
       if (fps < 0f || scale < 0f || startOffsetSeconds < 0f
           || bindingDelaySeconds < 0f || minimumIntervalSeconds < 0f)
@@ -433,6 +437,75 @@ namespace NineGrid.Content.Editor
           BindingKey = key,
           IdentityId = identityId,
           Detail = "粒子预设变体池没有任何有效条目。",
+        });
+      }
+    }
+
+    private static void ValidateProjectilePresetBinding(
+        string key,
+        string identityId,
+        string materialKey,
+        VfxMaterialVariantDto[] variants,
+        List<Finding> findings)
+    {
+      var pool = variants;
+      if (pool == null || pool.Length == 0)
+      {
+        if (string.IsNullOrWhiteSpace(materialKey))
+        {
+          findings.Add(new Finding
+          {
+            Category = "missing-material",
+            BindingKey = key,
+            IdentityId = identityId,
+            Detail = "弹道型绑定缺少预设 materialKey。",
+          });
+          return;
+        }
+
+        ValidateSingleProjectilePresetKey(key, identityId, materialKey, findings);
+        return;
+      }
+
+      var hasValid = false;
+      for (var i = 0; i < pool.Length; i++)
+      {
+        var variant = pool[i];
+        if (variant == null || variant.weight <= 0f || string.IsNullOrWhiteSpace(variant.materialKey))
+        {
+          continue;
+        }
+
+        hasValid = true;
+        ValidateSingleProjectilePresetKey(key, identityId, variant.materialKey, findings);
+      }
+
+      if (!hasValid)
+      {
+        findings.Add(new Finding
+        {
+          Category = "missing-material",
+          BindingKey = key,
+          IdentityId = identityId,
+          Detail = "弹道预设变体池没有任何有效条目。",
+        });
+      }
+    }
+
+    private static void ValidateSingleProjectilePresetKey(
+        string key,
+        string identityId,
+        string presetKey,
+        List<Finding> findings)
+    {
+      if (!VfxProjectilePresetIds.IsKnown(presetKey))
+      {
+        findings.Add(new Finding
+        {
+          Category = "missing-material",
+          BindingKey = key,
+          IdentityId = identityId,
+          Detail = "materialKey 不是已知弹道预设：" + presetKey,
         });
       }
     }

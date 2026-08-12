@@ -203,6 +203,61 @@
             "scale": 0.35,
             "timeBase": "unscaled",
             "authoringStatus": "aiDraft"
+        },
+        {
+            "cueId": "vfx.projectile.attack",
+            "note": "攻击弹道：飞刀直射（物理语言）",
+            "module": "Battle",
+            "enabled": true,
+            "playerId": "projectile",
+            "spatialOwnership": "independent",
+            "materialKey": "projectile.arrow_shot",
+            "timeBase": "scaled",
+            "authoringStatus": "aiDraft"
+        },
+        {
+            "cueId": "vfx.projectile.effect",
+            "note": "效果伤害弹道：蓝紫魔法飞弹（通用默认）",
+            "module": "Battle",
+            "enabled": true,
+            "playerId": "projectile",
+            "spatialOwnership": "independent",
+            "materialKey": "projectile.magic_bolt",
+            "timeBase": "scaled",
+            "authoringStatus": "aiDraft"
+        },
+        {
+            "cueId": "vfx.projectile.skill",
+            "note": "怪物技能弹道：火球（凶一点的主击）",
+            "module": "Battle",
+            "enabled": true,
+            "playerId": "projectile",
+            "spatialOwnership": "independent",
+            "materialKey": "projectile.fireball",
+            "timeBase": "scaled",
+            "authoringStatus": "aiDraft"
+        },
+        {
+            "cueId": "vfx.projectile.trap",
+            "note": "机关弹道：电光急蹿（机械速攻感）",
+            "module": "Battle",
+            "enabled": true,
+            "playerId": "projectile",
+            "spatialOwnership": "independent",
+            "materialKey": "projectile.spark_zip",
+            "timeBase": "scaled",
+            "authoringStatus": "aiDraft"
+        },
+        {
+            "cueId": "vfx.projectile.relic",
+            "note": "遗物弹道：金色流光（遗物栏到目标）",
+            "module": "Battle",
+            "enabled": true,
+            "playerId": "projectile",
+            "spatialOwnership": "independent",
+            "materialKey": "projectile.gleam_streak",
+            "timeBase": "scaled",
+            "authoringStatus": "aiDraft"
         }
     ],
     "stateBindings": []
