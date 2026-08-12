@@ -2108,6 +2108,68 @@ namespace NineGrid.Core.Effects
         }
     }
 
+    /// <summary>
+    /// 登场批次豁免（ADR-0034 修订）：本卡自己也在本批 CardDealt 事件中（与其他卡同批被发出）
+    /// 时不满足——「下张补牌」类效果只对本卡已在场后的后续发牌批生效，登场批不自触发
+    /// （捕熊陷阱开局/同批补入不得当场开火自移除）。
+    /// </summary>
+    [EffectAtom("SelfNotDealtThisBatch", EffectAtomKind.Condition)]
+    public sealed class SelfNotDealtThisBatchEffectCondition : ICondition
+    {
+        public void Configure(EffectDslNode config)
+        {
+        }
+
+        public bool IsMet(EffectRuntimeContext context)
+        {
+            var ownerUid = context.OwnerUid;
+            if (ownerUid == 0)
+            {
+                return true;
+            }
+
+            var events = context.Events;
+            for (var i = 0; i < events.Count; i++)
+            {
+                if (events[i].Type == CoreEventType.CardDealt && events[i].CardUid == ownerUid)
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        public IStatCondition CreateStatCondition(EffectBuildContext context)
+        {
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// 开局铺场豁免（ADR-0034 修订）：开局发牌相位（DealOpeningCards）的 Fill 批属于初始铺场，
+    /// 不算「补牌」——直摆上盘的「补牌触发型」效果持有者也不得在开局批开火（开局批的
+    /// EventCard 会解析到 AvatarAppeared 的玩家，误伤玩家 + 自移除）。
+    /// </summary>
+    [EffectAtom("NotInOpeningDeal", EffectAtomKind.Condition)]
+    public sealed class NotInOpeningDealEffectCondition : ICondition
+    {
+        public void Configure(EffectDslNode config)
+        {
+        }
+
+        public bool IsMet(EffectRuntimeContext context)
+        {
+            var run = context.Architecture.GetModel<RunModel>();
+            return run == null || run.Phase.Value != GamePhase.DealOpeningCards;
+        }
+
+        public IStatCondition CreateStatCondition(EffectBuildContext context)
+        {
+            return null;
+        }
+    }
+
     [EffectAtom("CardZone", EffectAtomKind.Condition)]
     public sealed class CardZoneEffectCondition : ICondition
     {

@@ -40,6 +40,18 @@ status: accepted
 - 捕熊陷阱 `tpl.trap.bear_trap.fill` 条件增加 `EventFilterExcludeCause(eventType=CardDealt, cause=refillAfterTrapRemoval)`：机关空位补牌批不满足条件 → 不触发。
 - 击杀（KillAction）、拾取、道具/遗物效果的移除不标记，其补牌照常可触发。
 
+## 补记：登场批与开局铺场豁免——「补牌触发型」效果不响应（2026-08-12）
+
+策划反馈捕熊陷阱「登场自我移除」。两条通路：
+
+1. **同批登场**：捕熊与其他卡同批被 `FillEmptySlotsAction` 发出时，Post 触发点带全批 `CardDealt` 事件分派，捕熊落位后立即对同批其他卡的发牌事件开火并自移除——「对下张邻格补牌」语义应以**本卡已在场之后的发牌批**为起点。
+2. **开局铺场**：开局发牌相位（`DealOpeningCards`）的 Fill 批首个带卡事件是 `AvatarAppeared`，`EventCard` 解析到玩家 Avatar；直摆上盘（如层主房怪物不足时机关补选直摆）的捕熊若与 Avatar 相邻，开局即开火——目标还是玩家（误伤 10 点）并自移除。开局铺场属初始布局，不算「补牌」。
+
+- 新增条件原子 `SelfNotDealtThisBatch`（`EffectAtomLibrary`）：本批 `CardDealt` 事件中含 owner 自身（`CardUid == OwnerUid`）时不满足。
+- 新增条件原子 `NotInOpeningDeal`（`EffectAtomLibrary`）：`RunModel.Phase == DealOpeningCards` 时不满足。
+- `tpl.trap.bear_trap.fill` 条件增加上述两原子：开局铺场批与捕熊登场批一律不触发；后续独立补牌批照常开火自毁。
+- 两原子形态固定、无参数，对其它「补牌触发型」效果可复用。
+
 ## 相关
 
 - [ADR-0001](0001-battle-presentation-unified-timeline-batch-ack.md) — 统一时间线与 Batch-ack
