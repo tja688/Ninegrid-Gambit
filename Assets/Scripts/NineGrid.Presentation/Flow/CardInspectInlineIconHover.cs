@@ -59,20 +59,34 @@ namespace NineGrid.Flow
                 && _catalog.TryGetByCode(code, out var entry)
                 && entry != null)
             {
-                var name = string.IsNullOrWhiteSpace(entry.displayNameZh)
-                    ? code
-                    : entry.displayNameZh.Trim();
+                // hover 词条名与解释按当前语言取 glossary 表（键 = zh 名），缺翻译回中文（ADR-0046）。
+                var name = code;
                 var explanation = entry.explanation ?? string.Empty;
+                if (!string.IsNullOrWhiteSpace(entry.displayNameZh))
+                {
+                    var zhName = entry.displayNameZh.Trim();
+                    name = NineGrid.Core.Localization.LocalizationCatalog
+                        .ResolveGlossaryDisplayName(zhName);
+                    explanation = NineGrid.Core.Localization.LocalizationCatalog
+                        .ResolveGlossaryIntro(zhName, explanation);
+                }
+
                 if (string.IsNullOrWhiteSpace(explanation))
                 {
-                    explanation = "（暂无介绍）";
+                    explanation = NineGrid.Core.Localization.L10n.Tr(
+                        "inspect.term_no_intro",
+                        "（暂无介绍）");
                 }
 
                 _list.ShowHoverTerm(name, explanation, entry.HasColorOverride, entry.color);
             }
             else
             {
-                _list.ShowHoverTerm(code, "（未配置词条介绍）", hasColor: false, color: default);
+                _list.ShowHoverTerm(
+                    code,
+                    NineGrid.Core.Localization.L10n.Tr("inspect.term_unconfigured", "（未配置词条介绍）"),
+                    hasColor: false,
+                    color: default);
             }
         }
 

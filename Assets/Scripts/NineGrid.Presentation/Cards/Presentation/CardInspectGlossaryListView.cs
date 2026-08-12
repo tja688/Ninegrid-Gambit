@@ -10,7 +10,9 @@ namespace NineGrid.Cards.Presentation
     [DisallowMultipleComponent]
     public sealed class CardInspectGlossaryListView : MonoBehaviour
     {
-        public const string HoverHintText = "将鼠标移到卡面预览中的图标上，可查看其含义。";
+        public static string HoverHintText => NineGrid.Core.Localization.L10n.Tr(
+            "inspect.hover_hint",
+            "将鼠标移到卡面预览中的图标上，可查看其含义。");
 
         [SerializeField] private RectTransform content;
         [SerializeField] private CardInspectGlossaryRowView rowPrefab;

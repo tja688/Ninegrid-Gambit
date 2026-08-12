@@ -18,6 +18,25 @@ namespace NineGrid.SteamBridge
     {
         private const string MenuRoot = "NineGrid/Steam/";
 
+        [MenuItem(SteamPlatformBootstrap.EditorEnabledMenuPath, priority = -100)]
+        private static void ToggleEditorSteam()
+        {
+            var enabled = !SteamPlatformBootstrap.EditorSteamEnabled;
+            SteamPlatformBootstrap.EditorSteamEnabled = enabled;
+            Debug.Log(enabled
+                ? "[Steam] 已在本机 Editor 启用 Steam：下次进 Play 生效（需 Steam 客户端已登录并运行）。"
+                  + "开关存 EditorPrefs，只影响本机，不进版本库。"
+                : "[Steam] 已在本机 Editor 关闭 Steam：下次进 Play 起不再初始化 SteamAPI。");
+        }
+
+        [MenuItem(SteamPlatformBootstrap.EditorEnabledMenuPath, true)]
+        private static bool ToggleEditorSteamValidate()
+        {
+            Menu.SetChecked(SteamPlatformBootstrap.EditorEnabledMenuPath,
+                SteamPlatformBootstrap.EditorSteamEnabled);
+            return true;
+        }
+
         [MenuItem(MenuRoot + "打印平台状态")]
         private static void PrintStatus()
         {
@@ -93,7 +112,10 @@ namespace NineGrid.SteamBridge
 
             if (!SteamPlatformBootstrap.IsInitialized)
             {
-                Debug.LogWarning("[Steam] Steam 未初始化（客户端未运行或 Init 失败），无法执行。");
+                Debug.LogWarning(SteamPlatformBootstrap.EditorSteamEnabled
+                    ? "[Steam] Steam 未初始化（客户端未运行或 Init 失败），无法执行。"
+                    : "[Steam] 本机 Editor 未启用 Steam。先勾选菜单 "
+                      + SteamPlatformBootstrap.EditorEnabledMenuPath + "，再进 Play。");
                 return false;
             }
 

@@ -243,7 +243,7 @@ namespace NineGrid.Presentation.Ui
                 InteractionAudioCues.MainMenuReject,
                 "CharacterSelectPanel.OnSlotClicked",
                 "character_select.locked");
-            ShowHint("该角色尚未解锁");
+            ShowHint(NineGrid.Core.Localization.L10n.Tr("charselect.locked", "该角色尚未解锁"));
         }
 
         private void RefreshSelection()
@@ -268,7 +268,10 @@ namespace NineGrid.Presentation.Ui
 
             var profession = ProfessionCatalog.Default;
             statsText.text = profession != null
-                ? $"生命 {profession.MaxHp} · 攻击 {profession.Attack}"
+                ? string.Format(
+                    NineGrid.Core.Localization.L10n.Tr("charselect.stats", "生命 {0} · 攻击 {1}"),
+                    profession.MaxHp,
+                    profession.Attack)
                 : string.Empty;
 
             var nameText = FindTmp(mWarriorSlot, "名字文字");

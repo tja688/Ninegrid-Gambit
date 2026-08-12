@@ -108,6 +108,8 @@ namespace NineGrid.Presentation.Setup
             // Player preferences are persisted separately from the bundled author defaults.
             // Registering here re-applies them after the runtime MMSoundManager host is available.
             PlayerAudioSettingsSystem.EnsureRegistered();
+            // 语言偏好（ADR-0046）：注册即读 PlayerPrefs 并装载对应翻译表。
+            LanguageSettingsSystem.EnsureRegistered();
             // 音频与 VFX 跨主菜单到跑图保持应用会话；先注册唯一期望音乐 System，再绑定流程壳。
             MusicSystem.EnsureRegistered();
             VfxSystem.EnsureRegistered();

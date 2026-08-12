@@ -123,9 +123,11 @@ namespace NineGrid.Cards.Presentation
                     && catalog.TryGetByDisplayName(name, out var entry)
                     && entry != null)
                 {
+                    // 显示名按当前语言取 glossary 表（键 = zh 名），缺翻译回中文（ADR-0046）。
                     var display = string.IsNullOrWhiteSpace(entry.displayNameZh)
                         ? name
-                        : entry.displayNameZh.Trim();
+                        : NineGrid.Core.Localization.LocalizationCatalog
+                            .ResolveGlossaryDisplayName(entry.displayNameZh.Trim());
                     if (entry.HasColorOverride)
                     {
                         builder.Append("<color=#")

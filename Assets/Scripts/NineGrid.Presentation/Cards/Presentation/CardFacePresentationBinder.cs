@@ -27,6 +27,7 @@ namespace NineGrid.Cards.Presentation
         private Dictionary<string, Sprite> _templateDefaults;
         private string _templateBasicDescription;
         private bool _hasTemplateBasicDescription;
+        private float _descriptionTemplateFontSize = -1f;
         private string _lastBasicDescriptionSource;
         private string _lastIconFingerprint;
         private TMP_SpriteAsset _descriptionSpriteAsset;
@@ -249,7 +250,29 @@ namespace NineGrid.Cards.Presentation
                 text.spriteAsset = null;
             }
 
+            EnsureDescriptionAutoFit(text);
             text.text = composed.TmpRichText;
+        }
+
+        /// <summary>
+        /// 溢出防护（ADR-0046 §5）：英文等译文可比中文长，描述槽开 TMP autosize，
+        /// 上限锁模板原字号（中文短文案视觉不变），下限 60% 防长译文垂直溢出。
+        /// </summary>
+        private void EnsureDescriptionAutoFit(TMP_Text text)
+        {
+            if (_descriptionTemplateFontSize <= 0f)
+            {
+                _descriptionTemplateFontSize = text.fontSize;
+            }
+
+            if (_descriptionTemplateFontSize <= 0f)
+            {
+                return;
+            }
+
+            text.enableAutoSizing = true;
+            text.fontSizeMax = _descriptionTemplateFontSize;
+            text.fontSizeMin = _descriptionTemplateFontSize * 0.6f;
         }
 
         private Dictionary<string, Sprite> BuildAssembledIcons(CardPresentationSnapshot snapshot)

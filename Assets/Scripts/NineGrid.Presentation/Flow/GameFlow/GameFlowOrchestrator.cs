@@ -231,7 +231,9 @@ namespace NineGrid.Flow
         private async UniTaskVoid FinishTutorialAndContinueAsync(bool continueToFormal)
         {
             var view = mShell.View;
-            view?.ShowNotice(continueToFormal ? "教学完成！准备开始冒险…" : "教学完成！");
+            view?.ShowNotice(continueToFormal
+                ? NineGrid.Core.Localization.L10n.Tr("notice.tutorial_complete_continue", "教学完成！准备开始冒险…")
+                : NineGrid.Core.Localization.L10n.Tr("notice.tutorial_complete", "教学完成！"));
             try
             {
                 await UniTask.Delay(TimeSpan.FromSeconds(1.2f), cancellationToken: CancellationToken.None);
@@ -1154,8 +1156,12 @@ namespace NineGrid.Flow
             view?.EnsureViewBindings();
             view?.ShowInRunShell();
             var message = victory
-                ? (view == null || string.IsNullOrWhiteSpace(view.VictoryMessage) ? "胜利" : view.VictoryMessage)
-                : (view == null || string.IsNullOrWhiteSpace(view.DefeatMessage) ? "失败" : view.DefeatMessage);
+                ? (view == null || string.IsNullOrWhiteSpace(view.VictoryMessage)
+                    ? NineGrid.Core.Localization.L10n.Tr("notice.victory", "胜利")
+                    : view.VictoryMessage)
+                : (view == null || string.IsNullOrWhiteSpace(view.DefeatMessage)
+                    ? NineGrid.Core.Localization.L10n.Tr("notice.defeat", "失败")
+                    : view.DefeatMessage);
             try
             {
                 FlowTraceRecorder.Record(

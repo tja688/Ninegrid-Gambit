@@ -327,7 +327,7 @@ namespace NineGrid.Flow.AttributeBoard
             RewardChoiceCoreHook.RequestWire();
             if (RewardChoiceCoreHook.SelectReward == null)
             {
-                ShowNotice("属性房输入未接线");
+                ShowNotice(NineGrid.Core.Localization.L10n.Tr("notice.attribute_not_wired", "属性房输入未接线"));
                 return;
             }
 

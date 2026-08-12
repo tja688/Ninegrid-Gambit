@@ -320,7 +320,7 @@ namespace NineGrid.Flow.ShopBoard
             }
 
             var tip = BoardBriefTipCopy.ForOptionOrShelf(
-                "刷新货架",
+                NineGrid.Core.Localization.L10n.Tr("briefTip.refresh_shelf", "刷新货架"),
                 pending.ShopRefreshPriceGold.Value);
             AttachClickProxy(mRefreshGo, ShopBoardHitKind.Refresh, -1, tip, ShopBoardSlotResolver.RefreshSlot);
         }
@@ -601,7 +601,9 @@ namespace NineGrid.Flow.ShopBoard
                 return;
             }
 
-            var tip = BoardBriefTipCopy.ForOptionOrShelf("刷新货架", refreshPrice);
+            var tip = BoardBriefTipCopy.ForOptionOrShelf(
+                NineGrid.Core.Localization.L10n.Tr("briefTip.refresh_shelf", "刷新货架"),
+                refreshPrice);
             AttachClickProxy(go, ShopBoardHitKind.Refresh, -1, tip, ShopBoardSlotResolver.RefreshSlot);
             mExtras.Add(go);
             mRefreshGo = go;
@@ -761,7 +763,7 @@ namespace NineGrid.Flow.ShopBoard
             RewardChoiceCoreHook.RequestWire();
             if (RewardChoiceCoreHook.SelectReward == null)
             {
-                ShowNotice("商店输入未接线");
+                ShowNotice(NineGrid.Core.Localization.L10n.Tr("notice.shop_not_wired", "商店输入未接线"));
                 Debug.LogWarning("[ShopBoard] TryBuy abort: SelectReward hook not wired");
                 return;
             }
@@ -788,7 +790,7 @@ namespace NineGrid.Flow.ShopBoard
                     FlowRoomEconomyAudioCues.Pulse(
                         FlowRoomEconomyAudioCues.ShopInsufficientGold,
                         "ShopBoardPresenter.TryBuy");
-                    ShowNotice("金币不足");
+                    ShowNotice(NineGrid.Core.Localization.L10n.Tr("notice.gold_insufficient", "金币不足"));
                 }
                 else if (!string.IsNullOrEmpty(reason))
                 {
@@ -877,7 +879,7 @@ namespace NineGrid.Flow.ShopBoard
                     FlowRoomEconomyAudioCues.Pulse(
                         FlowRoomEconomyAudioCues.ShopInsufficientGold,
                         "ShopBoardPresenter.TryRefresh");
-                    ShowNotice("金币不足");
+                    ShowNotice(NineGrid.Core.Localization.L10n.Tr("notice.gold_insufficient", "金币不足"));
                 }
 
                 return;

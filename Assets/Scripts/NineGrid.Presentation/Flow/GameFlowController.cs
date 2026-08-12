@@ -1,11 +1,13 @@
 using NineGrid.Content.Audio;
 using NineGrid.Core;
+using NineGrid.Core.Localization;
 using NineGrid.Flow.BoardBriefTip;
 using NineGrid.Flow.Presentation;
 using NineGrid.Presentation.Commands;
 using NineGrid.Presentation.Systems;
 using QFramework;
 using UnityEngine;
+using L10n = NineGrid.Core.Localization.L10n;
 
 #if UNITY_EDITOR
 using UnityEditor;
@@ -36,6 +38,9 @@ namespace NineGrid.Flow
         [Tooltip("主菜单「教学」按钮；留空则运行时查找 MainPanel/TutorialRun。")]
         [SerializeField] private Collider2D tutorialHit;
 
+        [Tooltip("主菜单「语言切换」按钮；留空则运行时查找 MainPanel/LanguageToggle。")]
+        [SerializeField] private Collider2D languageHit;
+
         [Tooltip("点选相机；留空则运行时取 Camera.main。")]
         [SerializeField] private Camera worldCamera;
 
@@ -62,8 +67,10 @@ namespace NineGrid.Flow
         public float RoomEventStubSeconds => roomEventStubSeconds;
         public float VictoryNoticeSeconds => victoryNoticeSeconds;
         public float DefeatNoticeSeconds => defeatNoticeSeconds;
-        public string VictoryMessage => victoryMessage;
-        public string DefeatMessage => defeatMessage;
+
+        // 序列化中文文案作为 Tr 默认值（ADR-0046）：zh 用序列化值，en 查 ui 表缺键回中文。
+        public string VictoryMessage => L10n.Tr("notice.victory", victoryMessage);
+        public string DefeatMessage => L10n.Tr("notice.defeat", defeatMessage);
 
         public GameFlowShellState State =>
             ResolveShell()?.State.Value ?? GameFlowShellState.MainMenu;
@@ -125,6 +132,14 @@ namespace NineGrid.Flow
             InteractionAudioCues.MainMenuReject,
             "GameFlowController.MainMenu.TutorialReject",
             "main_menu.tutorial");
+        private static readonly AudioCueRequest LanguageHoverRequest = CreateMenuRequest(
+            InteractionAudioCues.MainMenuHover,
+            "GameFlowController.MainMenu.LanguageHover",
+            "main_menu.language");
+        private static readonly AudioCueRequest LanguagePressRequest = CreateMenuRequest(
+            InteractionAudioCues.MainMenuPress,
+            "GameFlowController.MainMenu.LanguagePress",
+            "main_menu.language");
 
         private void Awake()
         {
@@ -141,6 +156,13 @@ namespace NineGrid.Flow
                 ShowMainMenuPanels();
                 HideNotice();
             }
+        }
+
+        private void Start()
+        {
+            // 语言系统在 PresentationSceneRoot.OnBind(WireHosts) 注册，晚于本 Awake；
+            // Start 再刷一次 label，保证持久化 en 偏好下按钮初始显示 English。
+            RefreshLanguageToggleLabel();
         }
 
         private void OnDestroy()
@@ -216,6 +238,13 @@ namespace NineGrid.Flow
 
                 PulseMenuRequest(TutorialPressRequest);
                 BeginTutorialRun();
+                return;
+            }
+
+            if (WorldPointerUtility.TryOverlapColliderOnPlane(worldCamera, languageHit))
+            {
+                PulseMenuRequest(LanguagePressRequest);
+                ToggleLanguage();
                 return;
             }
 
@@ -346,6 +375,40 @@ namespace NineGrid.Flow
                     tutorialHit = tutorial.GetComponent<Collider2D>();
                 }
             }
+
+            if (languageHit == null)
+            {
+                var language = FindDeep("LanguageToggle");
+                if (language != null)
+                {
+                    languageHit = language.GetComponent<Collider2D>();
+                }
+            }
+
+            RefreshLanguageToggleLabel();
+        }
+
+        /// <summary>主菜单语言切换（ADR-0046）：zh ↔ en，写偏好 → 重载表 → 主菜单文本即刷。</summary>
+        private void ToggleLanguage()
+        {
+            var language = LanguageSettingsSystem.EnsureRegistered();
+            language.Toggle();
+            RefreshLanguageToggleLabel();
+        }
+
+        /// <summary>按钮 label 显示当前语言（zh「中文」/ en「English」）。</summary>
+        private void RefreshLanguageToggleLabel()
+        {
+            if (languageHit == null)
+            {
+                return;
+            }
+
+            var label = languageHit.GetComponentInChildren<TMPro.TMP_Text>(true);
+            if (label != null)
+            {
+                label.text = L10n.Tr("menu.language", "中文");
+            }
         }
 
         public void ShowNotice(string message)
@@ -415,6 +478,10 @@ namespace NineGrid.Flow
             {
                 next = tutorialHit;
             }
+            else if (WorldPointerUtility.TryOverlapColliderOnPlane(worldCamera, languageHit))
+            {
+                next = languageHit;
+            }
             else if (WorldPointerUtility.TryOverlapColliderOnPlane(worldCamera, quitGameHit))
             {
                 next = quitGameHit;
@@ -435,7 +502,9 @@ namespace NineGrid.Flow
                     ? StartHoverRequest
                     : (next == settingsHit
                         ? SettingsHoverRequest
-                        : (next == tutorialHit ? TutorialHoverRequest : QuitHoverRequest)));
+                        : (next == tutorialHit
+                            ? TutorialHoverRequest
+                            : (next == languageHit ? LanguageHoverRequest : QuitHoverRequest))));
             }
         }
 

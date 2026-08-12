@@ -103,6 +103,12 @@ namespace NineGrid.Content.CardPresentation
         /// 场地图标落格（1–9）；0 = 未配置，运行时按单图标→2 / 双图标按选项序 1·3 回退。
         /// </summary>
         public int boardSlot;
+
+        /// <summary>浅拷贝（本地化文本覆盖副本用，ADR-0046）；子对象与原 DTO 共享引用。</summary>
+        internal CardPresentationConfigDto ShallowClone()
+        {
+            return (CardPresentationConfigDto)MemberwiseClone();
+        }
     }
 
     [Serializable]

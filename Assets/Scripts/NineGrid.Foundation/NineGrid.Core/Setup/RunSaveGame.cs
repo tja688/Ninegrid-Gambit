@@ -489,7 +489,7 @@ namespace NineGrid.Core
 
             // Core Catalog.Cards 不含 Avatar 条目（表现层 JSON 才有 displayName）；
             // 本轮固定职业为战士（ProfessionCatalog），兜底用其名。
-            return "战士";
+            return Localization.L10n.Tr("charselect.warrior_name", "战士");
         }
 
         private static string[] CopyList(IReadOnlyList<string> source)

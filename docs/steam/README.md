@@ -15,8 +15,18 @@
 
 ### 各系统行为
 
-- **初始化**：进 Play / 启动游戏时自动 `SteamAPI.Init`。Steam 客户端没开、Init 失败 → 打一条
-  Warning 后以无 Steam 模式继续，游戏行为完全不变。
+- **初始化**：正式（非 Development）Player Build 启动时自动 `SteamAPI.Init`；两处开发期入口
+  **默认跳过 Steam**：
+  - **Editor**：默认不初始化，须本机显式开启（菜单 `NineGrid/Steam/在本机 Editor 启用 Steam`，
+    存 EditorPrefs、按机器生效、不进版本库）——避免未跑 / 未登录 Steam 的同事机器进 Play 时
+    被拉起登录窗甚至崩溃 Editor。开启后 Init 前还会先 `IsSteamRunning` 探测客户端。
+  - **Development Build**（如 Build Profile「Development Windows64 Player」）：运行时
+    `Debug.isDebugBuild` 判定，整体跳过 Steam 自举（**临时措施**，未上架前打包分发用）。
+    原因：Steamworks.NET 打包只拷 `steam_api64.dll`、不拷 `steam_appid.txt` 到输出目录，
+    Player 启动时 `RestartAppIfNecessary` 会拉起 Steam 登录验证并直接退出游戏。
+    上架 / 需要在 Player 里实测 Steam 时再解除（届时把 `steam_appid.txt` 手动放到 exe 旁，
+    或已有正式 AppId 走 Steam 启动）。
+  - 客户端没开、Init 失败 → 打一条 Warning 后以无 Steam 模式继续，游戏行为完全不变。
 - **成就 / 统计**：业务代码调 `PlatformAchievements.Unlock(AchievementIds.Xxx)` /
   `AddStat(StatIds.Xxx)` 即可（后端缺位时安全跳过）。成就 ID 目录在
   `Flow/Platform/AchievementIds.cs`，目前是占位草案。
@@ -28,8 +38,9 @@
 
 ### 开发期怎么验证
 
-Steam 客户端登录任意账号并保持运行，Editor 进 Play（Console 应出现
-`[Steam] 初始化完成：<玩家名> (AppId 480)`），然后用菜单 **NineGrid → Steam**：
+1. 先在菜单勾选 **NineGrid → Steam → 在本机 Editor 启用 Steam**（一次即可，长期生效，只影响本机）；
+2. Steam 客户端登录任意账号并保持运行，Editor 进 Play（Console 应出现
+   `[Steam] 初始化完成：<玩家名> (AppId 480)`），然后用菜单 **NineGrid → Steam**：
 
 - **打印平台状态**：玩家、语言、云开关、云配额
 - **解锁测试成就**：用 Spacewar 自带的 `ACH_WIN_ONE_GAME`，会真的弹 Steam 通知
@@ -63,9 +74,12 @@ Steam 客户端登录任意账号并保持运行，Editor 进 Play（Console 应
 
 ### 4. 构建与上传
 
-- [ ] Windows 64 位 Build：Steamworks.NET 会自动把 `steam_api64.dll` 放进 Plugins，无需手动
+- [ ] Windows 64 位 Build：Steamworks.NET 会自动把 `steam_api64.dll` 放进 Plugins，无需手动；
+  注意它**不会**自动拷 `steam_appid.txt` 到输出目录
 - [ ] **不要**把 `steam_appid.txt` 拷进发行包（它会让正式版跳过「须经 Steam 启动」检查；
   代码里 `RestartAppIfNecessary` 已处理盗启重定向）
+- [ ] 上架前若要在 Player 里实测 Steam 链路：打**非 Development** Build（Development Build
+  会整体跳过 Steam，见上文临时措施），并把 `steam_appid.txt` 手动放到 exe 旁（测完删除）
 - [ ] 用 SteamPipe（`steamcmd` + app_build/depot_build 脚本）上传 Build 到 depot，设为 default 分支
 - [ ] 后台勾选 DRM 与否随意（本项目未接 Steamworks DRM wrapper，单机小体量一般不接）
 

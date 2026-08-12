@@ -1,0 +1,5957 @@
+{
+  "counts": {
+    "A": 559,
+    "B": 90,
+    "C": 6523,
+    "other": 14
+  },
+  "a_unique_count": 559,
+  "a_top_files": [
+    [
+      "Assets/Scripts/NineGrid.Presentation/Systems/Vfx/VfxParticlePresetLibrary.cs",
+      27
+    ],
+    [
+      "Assets/Scripts/NineGrid.Presentation/Flow/GameFlow/GameFlowOrchestrator.cs",
+      26
+    ],
+    [
+      "Assets/Scripts/NineGrid.Presentation/Cards/CardChassisPaths.cs",
+      24
+    ],
+    [
+      "Assets/Scripts/NineGrid.Presentation/Systems/VfxSystem.cs",
+      21
+    ],
+    [
+      "Assets/Scripts/NineGrid.Presentation/Cards/Slots/CardFaceSlotNodeMap.cs",
+      17
+    ],
+    [
+      "Assets/Scripts/NineGrid.Presentation/Flow/BattleSession/BattleSessionCheat.cs",
+      16
+    ],
+    [
+      "Assets/Scripts/NineGrid.Presentation/Flow/BattleSession/BattleSessionExecutor.Opening.cs",
+      15
+    ],
+    [
+      "Assets/Scripts/NineGrid.Presentation/Flow/BoardBriefTip/BoardBriefTipCopy.cs",
+      15
+    ],
+    [
+      "Assets/Scripts/NineGrid.Foundation/NineGrid.Content/Catalog/ThemeDeckMappingVerifier.cs",
+      14
+    ],
+    [
+      "Assets/Scripts/NineGrid.Presentation/Systems/MusicSystem.cs",
+      14
+    ],
+    [
+      "Assets/Scripts/NineGrid.Presentation/Systems/MMSoundManagerAudioPlaybackAdapter.cs",
+      13
+    ],
+    [
+      "Assets/Scripts/NineGrid.Presentation/Cards/Slots/CardFaceSlotRegistrySO.cs",
+      12
+    ],
+    [
+      "Assets/Scripts/NineGrid.Presentation/Flow/BattleInfoPreview/BattleInfoPreviewPresenter.cs",
+      12
+    ],
+    [
+      "Assets/Scripts/NineGrid.Presentation/Ui/RunSummaryPanel.cs",
+      12
+    ],
+    [
+      "Assets/Scripts/NineGrid.Presentation/Cards/CardDeckManagerSingleton.cs",
+      11
+    ],
+    [
+      "Assets/Scripts/NineGrid.Presentation/Cards/Effects/CardEffectManager.cs",
+      11
+    ],
+    [
+      "Assets/Scripts/NineGrid.Foundation/NineGrid.Content/CardPresentation/CardDescriptionTokenRules.cs",
+      9
+    ],
+    [
+      "Assets/Scripts/NineGrid.Presentation/Cards/Effects/CardEffectCallbackAction.cs",
+      9
+    ],
+    [
+      "Assets/Scripts/NineGrid.Presentation/Flow/UITestBootstrap.cs",
+      9
+    ],
+    [
+      "Assets/Scripts/NineGrid.Presentation/Ui/RunSaveLoadPanel.cs",
+      9
+    ],
+    [
+      "Assets/Scripts/NineGrid.Presentation/Cards/Ground/GroundOccupancyIndex.cs",
+      8
+    ],
+    [
+      "Assets/Scripts/NineGrid.Presentation/Flow/BattleSession/BoardPresentationPlayer.cs",
+      8
+    ],
+    [
+      "Assets/Scripts/NineGrid.Presentation/Flow/TavernBoard/TavernBoardPresenter.cs",
+      8
+    ],
+    [
+      "Assets/Scripts/NineGrid.Presentation/Systems/Vfx/VfxProjectilePresetLibrary.cs",
+      8
+    ],
+    [
+      "Assets/Scripts/NineGrid.Foundation/NineGrid.Content/Catalog/ThemeDeckFormalReadiness.cs",
+      7
+    ],
+    [
+      "Assets/Scripts/NineGrid.Presentation/Platform/WindowsHangWatchdog.cs",
+      7
+    ],
+    [
+      "Assets/Scripts/NineGrid.SteamBridge/SteamDebugMenu.cs",
+      7
+    ],
+    [
+      "Assets/Scripts/NineGrid.Foundation/NineGrid.Content/Vfx/VfxBindingCatalog.cs",
+      6
+    ],
+    [
+      "Assets/Scripts/NineGrid.Presentation/Cards/Vfx/CardEdgeDustFxSettingsSO.cs",
+      6
+    ],
+    [
+      "Assets/Scripts/NineGrid.Presentation/Flow/CardInspectOverlayPresenter.cs",
+      6
+    ],
+    [
+      "Assets/Scripts/NineGrid.Presentation/Flow/HelpCardBoardSelectResolver.cs",
+      6
+    ],
+    [
+      "Assets/Scripts/NineGrid.Presentation/Systems/AudioSystem.cs",
+      6
+    ],
+    [
+      "Assets/Scripts/NineGrid.Presentation/Cards/CardManagerSingleton.cs",
+      5
+    ],
+    [
+      "Assets/Scripts/NineGrid.Presentation/Cards/Ground/GroundMotionExecutor.cs",
+      5
+    ],
+    [
+      "Assets/Scripts/NineGrid.Presentation/Flow/BattleSession/BattleSessionExecutor.cs",
+      5
+    ],
+    [
+      "Assets/Scripts/NineGrid.Presentation/Flow/GameFlow/RunSave/RunSaveService.cs",
+      5
+    ],
+    [
+      "Assets/Scripts/NineGrid.Presentation/Flow/Presentation/AudioCue.cs",
+      5
+    ],
+    [
+      "Assets/Scripts/NineGrid.Presentation/Flow/Presentation/ProjectileVfxCues.cs",
+      5
+    ],
+    [
+      "Assets/Scripts/NineGrid.Presentation/Flow/ShopBoard/ShopBoardPresenter.cs",
+      5
+    ],
+    [
+      "Assets/Scripts/NineGrid.Foundation/NineGrid.Content/Catalog/ContentVisualResolver.cs",
+      4
+    ]
+  ],
+  "b_top_files": [
+    [
+      "Assets/Scripts/NineGrid.Presentation/Ui/RunSummaryPanel.cs",
+      16
+    ],
+    [
+      "Assets/Scripts/NineGrid.Presentation/Ui/PlayerAudioSettingsPanel.cs",
+      15
+    ],
+    [
+      "Assets/Scripts/NineGrid.Presentation/Flow/PlayerInfoHudPresenter.cs",
+      12
+    ],
+    [
+      "Assets/Scripts/NineGrid.Presentation/Ui/CharacterSelectPanel.cs",
+      11
+    ],
+    [
+      "Assets/Scripts/NineGrid.Presentation/Flow/BattleInfoPreview/BattleInfoPreviewPresenter.cs",
+      9
+    ],
+    [
+      "Assets/Scripts/NineGrid.Presentation/Flow/CardInspectOverlayPresenter.cs",
+      9
+    ],
+    [
+      "Assets/Scripts/NineGrid.Presentation/Ui/RunSaveLoadPanel.cs",
+      6
+    ],
+    [
+      "Assets/Scripts/NineGrid.Presentation/Flow/BoardBriefTip/FloorHintPresenter.cs",
+      3
+    ],
+    [
+      "Assets/Scripts/NineGrid.Presentation/Flow/RelicIconSlotView.cs",
+      3
+    ],
+    [
+      "Assets/Scripts/NineGrid.Presentation/Cards/Anim/CardMainVisualMaskAnchor.cs",
+      2
+    ],
+    [
+      "Assets/Scripts/NineGrid.Presentation/Flow/BattleUiDimmerOverlay.cs",
+      2
+    ],
+    [
+      "Assets/Scripts/NineGrid.Presentation/Cards/CardHandManagerSingleton.cs",
+      1
+    ],
+    [
+      "Assets/Scripts/NineGrid.Presentation/Flow/BoardBriefTip/BoardBriefTipPresenter.cs",
+      1
+    ]
+  ],
+  "c_top_files": [
+    [
+      "Assets/Scripts/NineGrid.Foundation/NineGrid.Content.Editor/CardPresentationEditorWindow.cs",
+      266
+    ],
+    [
+      "Assets/Scripts/NineGrid.Foundation/NineGrid.Content.Editor/ContentVisualEditorWindow.cs",
+      116
+    ],
+    [
+      "Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Systems/PhaseSystem.cs",
+      116
+    ],
+    [
+      "Assets/Scripts/NineGrid.Presentation/Cards/CardDeckManagerSingleton.cs",
+      97
+    ],
+    [
+      "Assets/Scripts/NineGrid.Presentation/Flow/Diagnostics/PerfTraceModels.cs",
+      87
+    ],
+    [
+      "Assets/Scripts/NineGrid.Presentation/Cheat/CheatToolPanelController.cs",
+      83
+    ],
+    [
+      "Assets/Scripts/NineGrid.Foundation/NineGrid.Content.Editor/AudioAiInitialBinder.cs",
+      80
+    ],
+    [
+      "Assets/Scripts/NineGrid.Presentation/Cards/Ground/GroundMotionExecutor.cs",
+      80
+    ],
+    [
+      "Assets/Scripts/NineGrid.Presentation/Flow/Presentation/AudioCue.cs",
+      77
+    ],
+    [
+      "Assets/Scripts/NineGrid.Presentation/Flow/QuickTestDeckCatalog.cs",
+      75
+    ],
+    [
+      "Assets/Scripts/NineGrid.Foundation/NineGrid.Content.Editor/CardPresentationEditorSession.cs",
+      73
+    ],
+    [
+      "Assets/Scripts/NineGrid.Presentation/Flow/GameFlow/GameFlowOrchestrator.cs",
+      68
+    ],
+    [
+      "Assets/Scripts/NineGrid.Presentation/Cards/CardHandManagerSingleton.cs",
+      65
+    ],
+    [
+      "Assets/Scripts/NineGrid.Presentation/Flow/BattleSession/BoardPresentationPlayer.cs",
+      57
+    ],
+    [
+      "Assets/Scripts/NineGrid.Foundation/NineGrid.Content.Editor/AudioWorkbenchEditorState.cs",
+      55
+    ],
+    [
+      "Assets/Scripts/NineGrid.Presentation/Cards/CardManagerSingleton.cs",
+      54
+    ],
+    [
+      "Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Content/ContentDefinitions.cs",
+      49
+    ],
+    [
+      "Assets/Scripts/NineGrid.Presentation/Flow/BounceFanChoicePresenter.cs",
+      48
+    ],
+    [
+      "Assets/Scripts/NineGrid.Presentation/Flow/PlayerInfoHudPresenter.cs",
+      48
+    ],
+    [
+      "Assets/Scripts/NineGrid.Presentation/Cards/Battle/FieldBattlePresentationExecutor.cs",
+      47
+    ],
+    [
+      "Assets/Scripts/NineGrid.Presentation/Editor/DiagTraceEditorWindow.cs",
+      45
+    ],
+    [
+      "Assets/Scripts/NineGrid.Foundation/NineGrid.Content/CardPresentation/CardPresentationConfigDto.cs",
+      44
+    ],
+    [
+      "Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Systems/RewardSystem.cs",
+      43
+    ],
+    [
+      "Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Setup/RunSaveGame.cs",
+      38
+    ],
+    [
+      "Assets/Scripts/NineGrid.Presentation/Flow/CoreCardPresentationMapper.cs",
+      38
+    ],
+    [
+      "Assets/Scripts/NineGrid.Foundation/NineGrid.DevTest/Cards/GroundFieldManagerDevKeys.cs",
+      37
+    ],
+    [
+      "Assets/Scripts/NineGrid.Presentation/Flow/BattleSession/BattleSessionExecutor.Opening.cs",
+      37
+    ],
+    [
+      "Assets/Scripts/NineGrid.Presentation/Systems/Vfx/VfxProjectilePresetLibrary.cs",
+      37
+    ],
+    [
+      "Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Effects/EffectAtomLibrary.cs",
+      36
+    ],
+    [
+      "Assets/Scripts/NineGrid.Presentation/Flow/DamageNumberManagerSingleton.cs",
+      36
+    ],
+    [
+      "Assets/Scripts/NineGrid.Presentation/Tests/DeferredBoardMotionRegressionTests.cs",
+      36
+    ],
+    [
+      "Assets/Scripts/NineGrid.Foundation/NineGrid.Content.Editor/CardPresentationWorkbench/CardPresentationWorkbenchEditorState.cs",
+      35
+    ],
+    [
+      "Assets/Scripts/NineGrid.Presentation/Cards/CombatPresentationContracts.cs",
+      35
+    ],
+    [
+      "Assets/Scripts/NineGrid.Foundation/NineGrid.Content.Editor/MonsterLoadoutPresentationValidator.cs",
+      34
+    ],
+    [
+      "Assets/Scripts/NineGrid.Presentation/Tests/Flow/VfxProjectilePlayerContractTests.cs",
+      34
+    ],
+    [
+      "Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Domain/Actions/EffectActions.cs",
+      33
+    ],
+    [
+      "Assets/Scripts/NineGrid.Presentation/Flow/Tutorial/TutorialBattleDirector.cs",
+      33
+    ],
+    [
+      "Assets/Scripts/NineGrid.Foundation/NineGrid.Content.Editor/VfxBindingCatalogHygieneValidator.cs",
+      32
+    ],
+    [
+      "Assets/Scripts/NineGrid.Presentation/Flow/CardInspectOverlayPresenter.cs",
+      32
+    ],
+    [
+      "Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Domain/Actions/ContentActions.cs",
+      31
+    ]
+  ],
+  "A": [
+    {
+      "file": "Assets/Scripts/NineGrid.Foundation/NineGrid.Content/Audio/AudioAssetPaths.cs",
+      "line": 12,
+      "content": "public const string LegacyDuplicateRoot = \"Assets/Arts/音频\";",
+      "strings": [
+        "Assets/Arts/音频"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Foundation/NineGrid.Content/Audio/AudioAssetPaths.cs",
+      "line": 13,
+      "content": "public const string LegacyQuarantineRoot = LegacyFormalRoot + \"/暂时不允许使用\";",
+      "strings": [
+        "/暂时不允许使用"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Foundation/NineGrid.Content/Audio/AudioAssetPaths.cs",
+      "line": 68,
+      "content": "|| path.IndexOf(\"拒绝用\", StringComparison.OrdinalIgnoreCase) >= 0;",
+      "strings": [
+        "拒绝用"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Foundation/NineGrid.Content/CardPresentation/CardDescriptionTokenRules.cs",
+      "line": 124,
+      "content": "errors.Add(\"assembly[\" + i + \"] missing id（描述契约要求装配有稳定 id）\");",
+      "strings": [
+        "] missing id（描述契约要求装配有稳定 id）"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Foundation/NineGrid.Content/CardPresentation/CardDescriptionTokenRules.cs",
+      "line": 161,
+      "content": "errors.Add(prefix + \" projectKey 必须为「装配id.键」限定式，实际 {\" + projectKey + \"}\");",
+      "strings": [
+        " projectKey 必须为「装配id.键」限定式，实际 {"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Foundation/NineGrid.Content/CardPresentation/CardDescriptionTokenRules.cs",
+      "line": 168,
+      "content": "errors.Add(prefix + \" projectKey 限定符必须等于本装配 id（{\" + projectKey + \"} ≠ \" + assembly.id + \"）\");",
+      "strings": [
+        " projectKey 限定符必须等于本装配 id（{"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Foundation/NineGrid.Content/CardPresentation/CardDescriptionTokenRules.cs",
+      "line": 189,
+      "content": "errors.Add(field + \" 简单式令牌 {\" + token + \"}：须 {装配id.键} 限定式\");",
+      "strings": [
+        " 简单式令牌 {",
+        "}：须 {装配id.键} 限定式"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Foundation/NineGrid.Content/CardPresentation/CardDescriptionTokenRules.cs",
+      "line": 197,
+      "content": "errors.Add(field + \" 令牌 {\" + token + \"} 限定符为空\");",
+      "strings": [
+        " 令牌 {",
+        "} 限定符为空"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Foundation/NineGrid.Content/CardPresentation/CardDescriptionTokenRules.cs",
+      "line": 203,
+      "content": "errors.Add(field + \" 令牌 {\" + token + \"} 键为空\");",
+      "strings": [
+        " 令牌 {",
+        "} 键为空"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Foundation/NineGrid.Content/CardPresentation/CardDescriptionTokenRules.cs",
+      "line": 210,
+      "content": "errors.Add(field + \" 令牌 {\" + token + \"} 限定符不是本卡装配 id（简单式/defId 前缀/templateId 限定退役）\");",
+      "strings": [
+        " 令牌 {",
+        "} 限定符不是本卡装配 id（简单式/defId 前缀/templateId 限定退役）"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Foundation/NineGrid.Content/CardPresentation/CardDescriptionTokenRules.cs",
+      "line": 216,
+      "content": "errors.Add(field + \" 令牌 {\" + token + \"} 键 \" + key + \" 不在装配 \" + qualifier + \" 实参中\");",
+      "strings": [
+        " 令牌 {",
+        "} 键 ",
+        " 不在装配 ",
+        " 实参中"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Foundation/NineGrid.Content/CardPresentation/CardDescriptionTokenRules.cs",
+      "line": 223,
+      "content": "errors.Add(field + \" 超描述格 \" + MaxUnits + \"（实际 \" + units + \"）\");",
+      "strings": [
+        " 超描述格 ",
+        "（实际 "
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Foundation/NineGrid.Content/CardPresentation/CardPresentationPrimaryCardRules.cs",
+      "line": 39,
+      "content": "return deckDisplayName.Trim().Contains(\"归档\", StringComparison.Ordinal);",
+      "strings": [
+        "归档"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Foundation/NineGrid.Content/Catalog/ContentHygieneValidator.cs",
+      "line": 449,
+      "content": "Detail = \"usableOutsideBattle=true 但模板 \" + assembly.templateId",
+      "strings": [
+        "usableOutsideBattle=true 但模板 "
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Foundation/NineGrid.Content/Catalog/ContentHygieneValidator.cs",
+      "line": 450,
+      "content": "+ \" 目标原子 \" + body.target.atom + \" 依赖盘面\",",
+      "strings": [
+        " 目标原子 ",
+        " 依赖盘面"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Foundation/NineGrid.Content/Catalog/ContentJsonCatalogProjector.cs",
+      "line": 183,
+      "content": "case \"层主\":",
+      "strings": [
+        "层主"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Foundation/NineGrid.Content/Catalog/ContentVisualResolver.cs",
+      "line": 232,
+      "content": "return \"玩家\";",
+      "strings": [
+        "玩家"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Foundation/NineGrid.Content/Catalog/ContentVisualResolver.cs",
+      "line": 245,
+      "content": "return \"攻击+1\";",
+      "strings": [
+        "攻击+1"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Foundation/NineGrid.Content/Catalog/ContentVisualResolver.cs",
+      "line": 247,
+      "content": "return \"护甲+1\";",
+      "strings": [
+        "护甲+1"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Foundation/NineGrid.Content/Catalog/ContentVisualResolver.cs",
+      "line": 249,
+      "content": "return \"血量+2\";",
+      "strings": [
+        "血量+2"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Foundation/NineGrid.Content/Catalog/ContentVisualSpriteCatalogSO.cs",
+      "line": 64,
+      "content": "[Header(\"类型默认设置\")]",
+      "strings": [
+        "类型默认设置"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Foundation/NineGrid.Content/Catalog/EffectDesignTextParameterizer.cs",
+      "line": 17,
+      "content": "null, \"一\", \"二\", \"三\", \"四\", \"五\", \"六\", \"七\", \"八\", \"九\", \"十\",",
+      "strings": [
+        "一",
+        "二",
+        "三",
+        "四",
+        "五",
+        "六",
+        "七",
+        "八",
+        "九",
+        "十"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Foundation/NineGrid.Content/Catalog/EffectDesignTextParameterizer.cs",
+      "line": 256,
+      "content": "replacements.Add(new KeyValuePair<string, string>(\"两\", token));",
+      "strings": [
+        "两"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Foundation/NineGrid.Content/Catalog/EffectDesignTextParameterizer.cs",
+      "line": 372,
+      "content": "matched = \"两\";",
+      "strings": [
+        "两"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Foundation/NineGrid.Content/Catalog/TableNineContentCatalog.cs",
+      "line": 32,
+      "content": "\"[夹具] 恢复5点血量\"));",
+      "strings": [
+        "[夹具] 恢复5点血量"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Foundation/NineGrid.Content/Catalog/TableNineContentCatalog.cs",
+      "line": 35,
+      "content": "new CardContentDefinition(\"fixture.heal\", \"夹具治疗\", CardKind.HelpCard)",
+      "strings": [
+        "夹具治疗"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Foundation/NineGrid.Content/Catalog/TableNineContentCatalog.cs",
+      "line": 43,
+      "content": "catalog.Rewards.AddRoom(new RoomDefinition(RoomKind.Fountain, \"夹具喷泉\")",
+      "strings": [
+        "夹具喷泉"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Foundation/NineGrid.Content/Catalog/ThemeDeckFormalReadiness.cs",
+      "line": 35,
+      "content": "report.Blockers.Add(new Issue { Code = \"catalog_null\", Message = \"目录为空。\" });",
+      "strings": [
+        "目录为空。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Foundation/NineGrid.Content/Catalog/ThemeDeckFormalReadiness.cs",
+      "line": 48,
+      "content": "Message = entry.DeckId + \" 未登记在 monster_decks.json。\",",
+      "strings": [
+        " 未登记在 monster_decks.json。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Foundation/NineGrid.Content/Catalog/ThemeDeckFormalReadiness.cs",
+      "line": 59,
+      "content": "Message = entry.DeckId + \" 在 monster_decks.json 中仍为 Reserve，无法被每层主题绑定。\",",
+      "strings": [
+        " 在 monster_decks.json 中仍为 Reserve，无法被每层主题绑定。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Foundation/NineGrid.Content/Catalog/ThemeDeckFormalReadiness.cs",
+      "line": 70,
+      "content": "Message = entry.DeckId + \" 的 deck_kind 应为 \" + expectedKind + \"（第 \"",
+      "strings": [
+        " 的 deck_kind 应为 ",
+        "（第 "
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Foundation/NineGrid.Content/Catalog/ThemeDeckFormalReadiness.cs",
+      "line": 72,
+      "content": "+ \" 层池），当前为 \" + deck.Kind + \"。\",",
+      "strings": [
+        " 层池），当前为 "
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Foundation/NineGrid.Content/Catalog/ThemeDeckFormalReadiness.cs",
+      "line": 91,
+      "content": "+ \"）仍为 Reserve，按序列抽卡会缺档。\",",
+      "strings": [
+        "）仍为 Reserve，按序列抽卡会缺档。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Foundation/NineGrid.Content/Catalog/ThemeDeckFormalReadiness.cs",
+      "line": 118,
+      "content": "Message = \"过渡卡组仍有 \" + stillInTransition + \" 张可用怪物。\",",
+      "strings": [
+        "过渡卡组仍有 ",
+        " 张可用怪物。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Foundation/NineGrid.Content/Catalog/ThemeDeckMappingVerifier.cs",
+      "line": 28,
+      "content": "issues.Add(new Issue { Code = \"catalog_null\", Message = \"目录为空。\" });",
+      "strings": [
+        "目录为空。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Foundation/NineGrid.Content/Catalog/ThemeDeckMappingVerifier.cs",
+      "line": 47,
+      "content": "issues.Add(new Issue { Code = \"catalog_null\", Message = \"目录为空。\" });",
+      "strings": [
+        "目录为空。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Foundation/NineGrid.Content/Catalog/ThemeDeckMappingVerifier.cs",
+      "line": 65,
+      "content": "issues.Add(new Issue { DeckId = deckId, Code = \"catalog_null\", Message = \"目录为空。\" });",
+      "strings": [
+        "目录为空。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Foundation/NineGrid.Content/Catalog/ThemeDeckMappingVerifier.cs",
+      "line": 75,
+      "content": "Message = deckId + \" 不在七套稳定契约中。\",",
+      "strings": [
+        " 不在七套稳定契约中。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Foundation/NineGrid.Content/Catalog/ThemeDeckMappingVerifier.cs",
+      "line": 110,
+      "content": "Message = entry.DeckId + \" 的 \" + card.DefId + \" sequence=\" + card.Sequence",
+      "strings": [
+        " 的 "
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Foundation/NineGrid.Content/Catalog/ThemeDeckMappingVerifier.cs",
+      "line": 111,
+      "content": "+ \" 超出 1–5。\",",
+      "strings": [
+        " 超出 1–5。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Foundation/NineGrid.Content/Catalog/ThemeDeckMappingVerifier.cs",
+      "line": 123,
+      "content": "+ \" 同时挂 \" + existing + \" 与 \" + card.DefId + \"。\",",
+      "strings": [
+        " 同时挂 ",
+        " 与 "
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Foundation/NineGrid.Content/Catalog/ThemeDeckMappingVerifier.cs",
+      "line": 140,
+      "content": "Message = entry.DeckId + \" 缺少 sequence=\" + seq + \" 的怪物（契约期望 \" + expected + \"）。\",",
+      "strings": [
+        " 缺少 sequence=",
+        " 的怪物（契约期望 "
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Foundation/NineGrid.Content/Catalog/ThemeDeckMappingVerifier.cs",
+      "line": 151,
+      "content": "Message = entry.DeckId + \" sequence=\" + seq + \" 实际为 \" + actual",
+      "strings": [
+        " 实际为 "
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Foundation/NineGrid.Content/Catalog/ThemeDeckMappingVerifier.cs",
+      "line": 152,
+      "content": "+ \"，契约期望 \" + expected + \"。\",",
+      "strings": [
+        "，契约期望 "
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Foundation/NineGrid.Content/Catalog/ThemeDeckMappingVerifier.cs",
+      "line": 174,
+      "content": "+ \" IsBoss=\" + card.IsBoss + \"（期望 \" + shouldBeBoss",
+      "strings": [
+        "（期望 "
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Foundation/NineGrid.Content/Catalog/ThemeDeckMappingVerifier.cs",
+      "line": 175,
+      "content": "+ \"：序列 5 恒为层主，1–4 非层主）。\",",
+      "strings": [
+        "：序列 5 恒为层主，1–4 非层主）。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Foundation/NineGrid.Content/Catalog/ThemeDeckMappingVerifier.cs",
+      "line": 221,
+      "content": "Message = contentId + \" 同时是 \" + prior + \" 与 \" + entry.DeckId",
+      "strings": [
+        " 同时是 ",
+        " 与 "
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Foundation/NineGrid.Content/Catalog/ThemeDeckMappingVerifier.cs",
+      "line": 222,
+      "content": "+ \" 的稳定槽位。\",",
+      "strings": [
+        " 的稳定槽位。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Foundation/NineGrid.Content/Catalog/ThemeDeckNarrowContract.cs",
+      "line": 35,
+      "content": "issues.Add(new Issue { DeckId = deckId, Code = \"catalog_null\", Message = \"目录为空。\" });",
+      "strings": [
+        "目录为空。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Foundation/NineGrid.Content/Catalog/ThemeDeckNarrowContract.cs",
+      "line": 45,
+      "content": "Message = deckId + \" 不在七套稳定契约中。\",",
+      "strings": [
+        " 不在七套稳定契约中。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Foundation/NineGrid.Content/Catalog/ThemeDeckNarrowContract.cs",
+      "line": 67,
+      "content": "Message = deckId + \" 未登记在 monster_decks.json。\",",
+      "strings": [
+        " 未登记在 monster_decks.json。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Foundation/NineGrid.Content/Catalog/ThemeDeckNarrowContract.cs",
+      "line": 86,
+      "content": "+ \"）仍为 Reserve，按序列抽卡会缺档。\",",
+      "strings": [
+        "）仍为 Reserve，按序列抽卡会缺档。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Foundation/NineGrid.Content/Vfx/VfxBindingCatalog.cs",
+      "line": 468,
+      "content": "Message = \"cue ID 为空。\",",
+      "strings": [
+        "cue ID 为空。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Foundation/NineGrid.Content/Vfx/VfxBindingCatalog.cs",
+      "line": 501,
+      "content": "Message = \"视觉特效 cue 绑定不存在。\",",
+      "strings": [
+        "视觉特效 cue 绑定不存在。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Foundation/NineGrid.Content/Vfx/VfxBindingCatalog.cs",
+      "line": 512,
+      "content": "Message = \"同 cue/同 specificity 存在多条可命中绑定。\",",
+      "strings": [
+        "同 cue/同 specificity 存在多条可命中绑定。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Foundation/NineGrid.Content/Vfx/VfxBindingCatalog.cs",
+      "line": 566,
+      "content": "Message = \"state ID 为空。\",",
+      "strings": [
+        "state ID 为空。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Foundation/NineGrid.Content/Vfx/VfxBindingCatalog.cs",
+      "line": 599,
+      "content": "Message = \"持续视觉状态绑定不存在。\",",
+      "strings": [
+        "持续视觉状态绑定不存在。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Foundation/NineGrid.Content/Vfx/VfxBindingCatalog.cs",
+      "line": 610,
+      "content": "Message = \"同 state/同 specificity 存在多条可命中绑定。\",",
+      "strings": [
+        "同 state/同 specificity 存在多条可命中绑定。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Foundation/NineGrid.Content/Vfx/VfxMaterialFrameSource.cs",
+      "line": 19,
+      "content": "failureReason = \"materialKey 为空。\";",
+      "strings": [
+        "materialKey 为空。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Foundation/NineGrid.Content/Vfx/VfxMaterialFrameSource.cs",
+      "line": 47,
+      "content": "? \"无法解析素材路径：\" + key",
+      "strings": [
+        "无法解析素材路径："
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Foundation/NineGrid.Content/Vfx/VfxMaterialFrameSource.cs",
+      "line": 48,
+      "content": ": \"无法加载精灵表帧：\" + sheetPath;",
+      "strings": [
+        "无法加载精灵表帧："
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Domain/AttackPattern.cs",
+      "line": 23,
+      "content": "public const string TokenNone = \"无\";",
+      "strings": [
+        "无"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Domain/AttackPattern.cs",
+      "line": 24,
+      "content": "public const string TokenOrthogonalMelee = \"普通近战\";",
+      "strings": [
+        "普通近战"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Domain/AttackPattern.cs",
+      "line": 25,
+      "content": "public const string TokenDiagonalMelee = \"斜角近战\";",
+      "strings": [
+        "斜角近战"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Domain/AttackPattern.cs",
+      "line": 26,
+      "content": "public const string TokenOmnidirectionalMelee = \"全向近战\";",
+      "strings": [
+        "全向近战"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Domain/CardRhythm.cs",
+      "line": 17,
+      "content": "public const string TokenAction = \"行动计数\";",
+      "strings": [
+        "行动计数"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Domain/CardRhythm.cs",
+      "line": 18,
+      "content": "public const string TokenMove = \"移动计数\";",
+      "strings": [
+        "移动计数"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Domain/CardRhythm.cs",
+      "line": 31,
+      "content": "case \"行动\":",
+      "strings": [
+        "行动"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Domain/CardRhythm.cs",
+      "line": 36,
+      "content": "case \"移动\":",
+      "strings": [
+        "移动"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Setup/RunSaveGame.cs",
+      "line": 215,
+      "content": "throw new InvalidOperationException(\"RunSaveGame.Capture：Avatar 不存在，无法捕获存档。\");",
+      "strings": [
+        "RunSaveGame.Capture：Avatar 不存在，无法捕获存档。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Setup/RunSaveGame.cs",
+      "line": 394,
+      "content": "throw new InvalidOperationException(\"RunSaveGame.RestoreAfterCreate：Avatar 不存在。\");",
+      "strings": [
+        "RunSaveGame.RestoreAfterCreate：Avatar 不存在。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Setup/RunSaveGame.cs",
+      "line": 492,
+      "content": "return \"战士\";",
+      "strings": [
+        "战士"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Systems/PhaseSystem.cs",
+      "line": 644,
+      "content": "return Reject(GameCommandKind.PickupItem, \"道具卡格已满\", targetSlot, cardUid);",
+      "strings": [
+        "道具卡格已满"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Systems/PhaseSystem.cs",
+      "line": 876,
+      "content": "return Reject(GameCommandKind.UseItem, \"遗物格子已满\", SlotId.None, itemUid);",
+      "strings": [
+        "遗物格子已满"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Systems/PhaseSystem.cs",
+      "line": 936,
+      "content": "return Reject(GameCommandKind.SelectReward, \"遗物格子已满\", SlotId.None, 0);",
+      "strings": [
+        "遗物格子已满"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Systems/PhaseSystem.cs",
+      "line": 955,
+      "content": "return Reject(GameCommandKind.SelectReward, \"道具卡格已满\", SlotId.None, 0);",
+      "strings": [
+        "道具卡格已满"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Cards/Battle/BattleEncounterCatalogSO.cs",
+      "line": 34,
+      "content": "\"默认战斗编排路由表。新增玩家×怪物变体时追加 Entry，勿改场景 Rig 魔法数，勿把战斗 timing 塞进 CardEffect。\";",
+      "strings": [
+        "默认战斗编排路由表。新增玩家×怪物变体时追加 Entry，勿改场景 Rig 魔法数，勿把战斗 timing 塞进 CardEffect。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Cards/Battle/BattleFinalStateGuard.cs",
+      "line": 176,
+      "content": "$\"[BattleFinalStateGuard] 卡 {card.Uid} 终态未对齐锚点，已硬 Snap。distance={finalDistance:F3}\",",
+      "strings": [
+        "[BattleFinalStateGuard] 卡 {card.Uid} 终态未对齐锚点，已硬 Snap。distance={finalDistance:F3}"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Cards/Battle/BattlePresentationRouter.cs",
+      "line": 73,
+      "content": "$\"[BattlePresentationRouter] 未命中 Catalog：intent={intent}, player={playerId}, monster={monsterId}。使用 SafeFallback 绑参。\");",
+      "strings": [
+        "[BattlePresentationRouter] 未命中 Catalog：intent={intent}, player={playerId}, monster={monsterId}。使用 SafeFallback 绑参。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Cards/Battle/BattlePresentationRouter.cs",
+      "line": 97,
+      "content": "$\"[BattlePresentationRouter] Profile '{profile.ProfileId}' intent={bind.Intent} 与请求 {intent} 不一致，仍按 Profile 绑参播放。\");",
+      "strings": [
+        "[BattlePresentationRouter] Profile '{profile.ProfileId}' intent={bind.Intent} 与请求 {intent} 不一致，仍按 Profile 绑参播放。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Cards/Battle/FieldBattlePresentationExecutor.cs",
+      "line": 814,
+      "content": "$\"[FieldBattle] 路由 intent={bind.Intent} profile={profileId}\"",
+      "strings": [
+        "[FieldBattle] 路由 intent={bind.Intent} profile={profileId}"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Cards/CardAttackBasicAdapter.cs",
+      "line": 210,
+      "content": "$\"[CardAttackBasicAdapter] 暂不支持 RigFamily='{bind.RigFamily}'，回退 {BattleEncounterProfileSO.DefaultRigFamily}。\",",
+      "strings": [
+        "[CardAttackBasicAdapter] 暂不支持 RigFamily='{bind.RigFamily}'，回退 {BattleEncounterProfileSO.DefaultRigFamily}。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Cards/CardAttackBasicAdapter.cs",
+      "line": 285,
+      "content": "$\"[CardAttackBasicAdapter] 暂不支持 RigFamily='{bind.RigFamily}'，回退 {BattleEncounterProfileSO.DefaultRigFamily}。\",",
+      "strings": [
+        "[CardAttackBasicAdapter] 暂不支持 RigFamily='{bind.RigFamily}'，回退 {BattleEncounterProfileSO.DefaultRigFamily}。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Cards/CardAttackBasicAdapter.cs",
+      "line": 388,
+      "content": "$\"[CardAttackBasicAdapter] 暂不支持 RigFamily='{bind.RigFamily}'，回退 {BattleEncounterProfileSO.DefaultRigFamily}。\",",
+      "strings": [
+        "[CardAttackBasicAdapter] 暂不支持 RigFamily='{bind.RigFamily}'，回退 {BattleEncounterProfileSO.DefaultRigFamily}。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Cards/CardAttackBasicDirectionRig.cs",
+      "line": 25,
+      "content": "[Header(\"Templates (Editor 调手感占位，用于划分 tween 归属)\")]",
+      "strings": [
+        "Templates (Editor 调手感占位，用于划分 tween 归属)"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Cards/CardAttackBasicDirectionRig.cs",
+      "line": 1204,
+      "content": "$\"[{nameof(CardAttackBasicDirectionRig)}] {name} 死亡回调已跳过：命中帧未确认击杀\"",
+      "strings": [
+        "[{nameof(CardAttackBasicDirectionRig)}] {name} 死亡回调已跳过：命中帧未确认击杀"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Cards/CardAttackBasicDirectionRig.cs",
+      "line": 1206,
+      "content": "+ \"。疑似 Lethal Profile 预估偏差导致误走死亡链路。\",",
+      "strings": [
+        "。疑似 Lethal Profile 预估偏差导致误走死亡链路。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Cards/CardBurstScatterIntoDeckPresenter.cs",
+      "line": 106,
+      "content": "$\"[BurstScatterIntoDeck] LaunchReturnFieldCardToDeck 失败 uid={card.Uid} mode={card.DisplayMode}\");",
+      "strings": [
+        "[BurstScatterIntoDeck] LaunchReturnFieldCardToDeck 失败 uid={card.Uid} mode={card.DisplayMode}"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Cards/CardChassisPaths.cs",
+      "line": 18,
+      "content": "public const string ChassisPrefab = \"Assets/Resources/Prefabs/老Standard Card.prefab\";",
+      "strings": [
+        "Assets/Resources/Prefabs/老Standard Card.prefab"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Cards/CardChassisPaths.cs",
+      "line": 19,
+      "content": "public const string AvatarFacePrefab = \"Assets/Resources/Prefabs/玩家卡标准模板.prefab\";",
+      "strings": [
+        "Assets/Resources/Prefabs/玩家卡标准模板.prefab"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Cards/CardChassisPaths.cs",
+      "line": 20,
+      "content": "public const string MonsterFacePrefab = \"Assets/Resources/Prefabs/怪物卡标准模板.prefab\";",
+      "strings": [
+        "Assets/Resources/Prefabs/怪物卡标准模板.prefab"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Cards/CardChassisPaths.cs",
+      "line": 21,
+      "content": "public const string ItemFacePrefab = \"Assets/Resources/Prefabs/道具卡标准模版.prefab\";",
+      "strings": [
+        "Assets/Resources/Prefabs/道具卡标准模版.prefab"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Cards/CardChassisPaths.cs",
+      "line": 22,
+      "content": "public const string RelicFacePrefab = \"Assets/Resources/Prefabs/遗物卡标准模版.prefab\";",
+      "strings": [
+        "Assets/Resources/Prefabs/遗物卡标准模版.prefab"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Cards/CardChassisPaths.cs",
+      "line": 23,
+      "content": "public const string TrapFacePrefab = \"Assets/Resources/Prefabs/机关卡标准模版.prefab\";",
+      "strings": [
+        "Assets/Resources/Prefabs/机关卡标准模版.prefab"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Cards/CardChassisPaths.cs",
+      "line": 24,
+      "content": "public const string RoomOptionFacePrefab = \"Assets/Resources/Prefabs/房间选项标准模板.prefab\";",
+      "strings": [
+        "Assets/Resources/Prefabs/房间选项标准模板.prefab"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Cards/CardChassisPaths.cs",
+      "line": 27,
+      "content": "public const string RelicHudIconPrefab = \"Assets/Prefabs/标准遗物图标模板.prefab\";",
+      "strings": [
+        "Assets/Prefabs/标准遗物图标模板.prefab"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Cards/CardChassisPaths.cs",
+      "line": 29,
+      "content": "public const string RoomIconBattle = \"Assets/Resources/Prefabs/地形图标/常规战斗图标.prefab\";",
+      "strings": [
+        "Assets/Resources/Prefabs/地形图标/常规战斗图标.prefab"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Cards/CardChassisPaths.cs",
+      "line": 30,
+      "content": "public const string RoomIconElite = \"Assets/Resources/Prefabs/地形图标/困难战斗图标.prefab\";",
+      "strings": [
+        "Assets/Resources/Prefabs/地形图标/困难战斗图标.prefab"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Cards/CardChassisPaths.cs",
+      "line": 31,
+      "content": "public const string RoomIconBoss = \"Assets/Resources/Prefabs/地形图标/Boss房图标.prefab\";",
+      "strings": [
+        "Assets/Resources/Prefabs/地形图标/Boss房图标.prefab"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Cards/CardChassisPaths.cs",
+      "line": 32,
+      "content": "public const string RoomIconGold = \"Assets/Resources/Prefabs/地形图标/钱袋图标.prefab\";",
+      "strings": [
+        "Assets/Resources/Prefabs/地形图标/钱袋图标.prefab"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Cards/CardChassisPaths.cs",
+      "line": 33,
+      "content": "public const string RoomIconGoldAlt = \"Assets/Resources/Prefabs/金钱图标.prefab\";",
+      "strings": [
+        "Assets/Resources/Prefabs/金钱图标.prefab"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Cards/CardChassisPaths.cs",
+      "line": 34,
+      "content": "public const string RoomIconTreasure = \"Assets/Resources/Prefabs/地形图标/宝箱图标.prefab\";",
+      "strings": [
+        "Assets/Resources/Prefabs/地形图标/宝箱图标.prefab"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Cards/CardChassisPaths.cs",
+      "line": 35,
+      "content": "public const string RoomIconFountain = \"Assets/Resources/Prefabs/地形图标/温泉图标.prefab\";",
+      "strings": [
+        "Assets/Resources/Prefabs/地形图标/温泉图标.prefab"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Cards/CardChassisPaths.cs",
+      "line": 36,
+      "content": "public const string RoomIconShop = \"Assets/Resources/Prefabs/地形图标/商店图标.prefab\";",
+      "strings": [
+        "Assets/Resources/Prefabs/地形图标/商店图标.prefab"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Cards/CardChassisPaths.cs",
+      "line": 37,
+      "content": "public const string RoomIconTavern = \"Assets/Resources/Prefabs/地形图标/牌店图标.prefab\";",
+      "strings": [
+        "Assets/Resources/Prefabs/地形图标/牌店图标.prefab"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Cards/CardChassisPaths.cs",
+      "line": 38,
+      "content": "public const string RoomIconTavernLegacy = \"Assets/Resources/Prefabs/地形图标/酒馆图标.prefab\";",
+      "strings": [
+        "Assets/Resources/Prefabs/地形图标/酒馆图标.prefab"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Cards/CardChassisPaths.cs",
+      "line": 39,
+      "content": "public const string RoomIconAttribute = \"Assets/Resources/Prefabs/地形图标/属性提升图标.prefab\";",
+      "strings": [
+        "Assets/Resources/Prefabs/地形图标/属性提升图标.prefab"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Cards/CardChassisPaths.cs",
+      "line": 40,
+      "content": "public const string RoomIconItemReward = \"Assets/Resources/Prefabs/地形图标/道具奖励图标.prefab\";",
+      "strings": [
+        "Assets/Resources/Prefabs/地形图标/道具奖励图标.prefab"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Cards/CardChassisPaths.cs",
+      "line": 41,
+      "content": "public const string RoomIconLeave = \"Assets/Resources/Prefabs/地形图标/离开图标.prefab\";",
+      "strings": [
+        "Assets/Resources/Prefabs/地形图标/离开图标.prefab"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Cards/CardChassisPaths.cs",
+      "line": 42,
+      "content": "public const string RoomIconGoUp = \"Assets/Resources/Prefabs/地形图标/上楼图标.prefab\";",
+      "strings": [
+        "Assets/Resources/Prefabs/地形图标/上楼图标.prefab"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Cards/CardChassisPaths.cs",
+      "line": 43,
+      "content": "public const string RoomIconGoDown = \"Assets/Resources/Prefabs/地形图标/下楼图标.prefab\";",
+      "strings": [
+        "Assets/Resources/Prefabs/地形图标/下楼图标.prefab"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Cards/CardChassisPaths.cs",
+      "line": 57,
+      "content": "\"Assets/Resources/Prefabs/UI/词条详细效果信息.prefab\";",
+      "strings": [
+        "Assets/Resources/Prefabs/UI/词条详细效果信息.prefab"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Cards/CardDeckManagerSingleton.cs",
+      "line": 373,
+      "content": "$\"[CardDeckManager] 卡组中未找到 Uid={uid}，且无 ensureCard，无法就位到格 {groundSlot}。\");",
+      "strings": [
+        "[CardDeckManager] 卡组中未找到 Uid={uid}，且无 ensureCard，无法就位到格 {groundSlot}。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Cards/CardDeckManagerSingleton.cs",
+      "line": 394,
+      "content": "$\"[CardDeckManager] Uid={uid} 已在场地 slot={occupiedSlot}，迁至格 {groundSlot}。\");",
+      "strings": [
+        "[CardDeckManager] Uid={uid} 已在场地 slot={occupiedSlot}，迁至格 {groundSlot}。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Cards/CardDeckManagerSingleton.cs",
+      "line": 399,
+      "content": "$\"[CardDeckManager] Uid={uid} 已在场地 slot={occupiedSlot}，无法就位到格 {groundSlot}。\");",
+      "strings": [
+        "[CardDeckManager] Uid={uid} 已在场地 slot={occupiedSlot}，无法就位到格 {groundSlot}。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Cards/CardDeckManagerSingleton.cs",
+      "line": 407,
+      "content": "$\"[CardDeckManager] 入组后仍未找到 Uid={uid}，无法就位到格 {groundSlot}。\");",
+      "strings": [
+        "[CardDeckManager] 入组后仍未找到 Uid={uid}，无法就位到格 {groundSlot}。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Cards/CardDeckManagerSingleton.cs",
+      "line": 447,
+      "content": "\"[CardDeckManager] SyncVisualOrderFromDrawPile 跳过：busy 或 return-in-flight。\");",
+      "strings": [
+        "[CardDeckManager] SyncVisualOrderFromDrawPile 跳过：busy 或 return-in-flight。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Cards/CardDeckManagerSingleton.cs",
+      "line": 501,
+      "content": "$\"[CardDeckManager] 顶牌失同步 site={site} visualSlot0={top.Uid} coreTop={coreTop}\\n\"",
+      "strings": [
+        "[CardDeckManager] 顶牌失同步 site={site} visualSlot0={top.Uid} coreTop={coreTop}\\n"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Cards/CardDeckManagerSingleton.cs",
+      "line": 1375,
+      "content": "$\"[CardDeckManager] 发牌中止：Uid={dealUid} View/Transform 为空（nullView）。\");",
+      "strings": [
+        "[CardDeckManager] 发牌中止：Uid={dealUid} View/Transform 为空（nullView）。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Cards/CardDeckManagerSingleton.cs",
+      "line": 1410,
+      "content": "$\"[CardDeckManager] 场地拒收发牌 uid={removed.Uid} slot={groundSlot}，回滚入组。\");",
+      "strings": [
+        "[CardDeckManager] 场地拒收发牌 uid={removed.Uid} slot={groundSlot}，回滚入组。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Cards/CardDeckManagerSingleton.cs",
+      "line": 1429,
+      "content": "$\"[CardDeckManager] 发牌回滚：Uid={dealUid} 占格后 View 仍为空，清占格并回滚入组。\");",
+      "strings": [
+        "[CardDeckManager] 发牌回滚：Uid={dealUid} 占格后 View 仍为空，清占格并回滚入组。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Cards/CardDeckManagerSingleton.cs",
+      "line": 1971,
+      "content": "$\"[CardDeckManager] {caller} 拒绝：uid={card.Uid} 仍在手牌/拖拽（mode={card.DisplayMode}）。\");",
+      "strings": [
+        "[CardDeckManager] {caller} 拒绝：uid={card.Uid} 仍在手牌/拖拽（mode={card.DisplayMode}）。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Cards/CardDeckManagerSingleton.cs",
+      "line": 1978,
+      "content": "$\"[CardDeckManager] {caller} 拒绝：uid={card.Uid} Core=ItemSlots。\");",
+      "strings": [
+        "[CardDeckManager] {caller} 拒绝：uid={card.Uid} Core=ItemSlots。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Cards/CardDeckSlotContainer.cs",
+      "line": 170,
+      "content": "$\"[CardDeckSlotContainer] TryReorderToUids 缺席 uid={uid}（Core 有、视觉无）。\");",
+      "strings": [
+        "[CardDeckSlotContainer] TryReorderToUids 缺席 uid={uid}（Core 有、视觉无）。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Cards/CardDeckSlotContainer.cs",
+      "line": 190,
+      "content": "$\"[CardDeckSlotContainer] TryReorderToUids 多余视觉卡 uid={card.Uid}（Core 已移出），前置队首待飞出。\");",
+      "strings": [
+        "[CardDeckSlotContainer] TryReorderToUids 多余视觉卡 uid={card.Uid}（Core 已移出），前置队首待飞出。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Cards/CardHandManagerSingleton.cs",
+      "line": 652,
+      "content": "\"[CardHandManager] PickupFlush ExternalHold 失败，跳过表现 slot=\"",
+      "strings": [
+        "[CardHandManager] PickupFlush ExternalHold 失败，跳过表现 slot="
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Cards/CardHandManagerSingleton.cs",
+      "line": 814,
+      "content": "\"[CardHandManager] Pickup 后占格冲突残留（已禁止 force-sync）uid=\"",
+      "strings": [
+        "[CardHandManager] Pickup 后占格冲突残留（已禁止 force-sync）uid="
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Cards/CardManagerSingleton.cs",
+      "line": 255,
+      "content": "$\"[CardManagerSingleton] 未配置卡牌底盘，无法 Spawn DefId={defId}。路径回退：{CardChassisPrefabAssetPath}\");",
+      "strings": [
+        "[CardManagerSingleton] 未配置卡牌底盘，无法 Spawn DefId={defId}。路径回退：{CardChassisPrefabAssetPath}"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Cards/CardManagerSingleton.cs",
+      "line": 483,
+      "content": "$\"[CardManager] 手牌与卡组双持有 uid={dualHold}（site={triggerSite}）。\");",
+      "strings": [
+        "[CardManager] 手牌与卡组双持有 uid={dualHold}（site={triggerSite}）。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Cards/CardManagerSingleton.cs",
+      "line": 810,
+      "content": "$\"[CardManagerSingleton] 未配置卡牌底盘，请赋值或通过路径 {CardChassisPrefabAssetPath} 提供。\");",
+      "strings": [
+        "[CardManagerSingleton] 未配置卡牌底盘，请赋值或通过路径 {CardChassisPrefabAssetPath} 提供。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Cards/CardManagerSingleton.cs",
+      "line": 854,
+      "content": "$\"[CardManagerSingleton] Kind={kind} 无卡面模板，跳过挂面 uid={card.Uid} defId={card.DefId}\");",
+      "strings": [
+        "[CardManagerSingleton] Kind={kind} 无卡面模板，跳过挂面 uid={card.Uid} defId={card.DefId}"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Cards/CardManagerSingleton.cs",
+      "line": 894,
+      "content": "$\"[CardManagerSingleton] 卡面模板自带 SortingGroup，已移除以免第二套卡级 SG：{facePrefab.name}\",",
+      "strings": [
+        "[CardManagerSingleton] 卡面模板自带 SortingGroup，已移除以免第二套卡级 SG：{facePrefab.name}"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Cards/CardPerformanceTimelinePlayer.cs",
+      "line": 28,
+      "content": "[Button(\"播放 Timeline\", ButtonSizes.Medium)]",
+      "strings": [
+        "播放 Timeline"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Cards/CardPerformanceTimelinePlayer.cs",
+      "line": 35,
+      "content": "[Button(\"回到起点\", ButtonSizes.Small)]",
+      "strings": [
+        "回到起点"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Cards/CardPerformanceTimelinePlayer.cs",
+      "line": 58,
+      "content": "$\"{nameof(CardPerformanceTimelinePlayer)} on {name} 未配置 DOTweenTimeline。\",",
+      "strings": [
+        "{nameof(CardPerformanceTimelinePlayer)} on {name} 未配置 DOTweenTimeline。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Cards/CardPerformanceTimelinePlayer.cs",
+      "line": 69,
+      "content": "$\"{nameof(CardPerformanceTimelinePlayer)} 无法在 {target.GetType().Name} 上调用 {methodName}。\",",
+      "strings": [
+        "{nameof(CardPerformanceTimelinePlayer)} 无法在 {target.GetType().Name} 上调用 {methodName}。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Cards/Effects/CardEffectCallbackAction.cs",
+      "line": 55,
+      "content": "case \"攻击\":",
+      "strings": [
+        "攻击"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Cards/Effects/CardEffectCallbackAction.cs",
+      "line": 59,
+      "content": "case \"受击\":",
+      "strings": [
+        "受击"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Cards/Effects/CardEffectCallbackAction.cs",
+      "line": 63,
+      "content": "case \"死亡\":",
+      "strings": [
+        "死亡"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Cards/Effects/CardEffectCallbackAction.cs",
+      "line": 67,
+      "content": "case \"使用\":",
+      "strings": [
+        "使用"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Cards/Effects/CardEffectCallbackAction.cs",
+      "line": 72,
+      "content": "case \"闪白\":",
+      "strings": [
+        "闪白"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Cards/Effects/CardEffectCallbackAction.cs",
+      "line": 77,
+      "content": "case \"效果触发\":",
+      "strings": [
+        "效果触发"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Cards/Effects/CardEffectCallbackAction.cs",
+      "line": 78,
+      "content": "case \"基础卡牌效果触发\":",
+      "strings": [
+        "基础卡牌效果触发"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Cards/Effects/CardEffectCallbackAction.cs",
+      "line": 83,
+      "content": "case \"停止\":",
+      "strings": [
+        "停止"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Cards/Effects/CardEffectCallbackAction.cs",
+      "line": 88,
+      "content": "case \"停止闪白\":",
+      "strings": [
+        "停止闪白"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Cards/Effects/CardEffectManager.cs",
+      "line": 236,
+      "content": "$\"[CardEffectManager] 未知回调动作 id={action}，已忽略。\",",
+      "strings": [
+        "[CardEffectManager] 未知回调动作 id={action}，已忽略。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Cards/Effects/CardEffectManager.cs",
+      "line": 253,
+      "content": "$\"[CardEffectManager] 未知回调动作 id={action}，已忽略。\",",
+      "strings": [
+        "[CardEffectManager] 未知回调动作 id={action}，已忽略。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Cards/Effects/CardEffectManager.cs",
+      "line": 270,
+      "content": "$\"[CardEffectManager] 未知回调动作 name='{actionName}'，已忽略。\",",
+      "strings": [
+        "[CardEffectManager] 未知回调动作 name='{actionName}'，已忽略。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Cards/Effects/CardEffectManager.cs",
+      "line": 315,
+      "content": "$\"[CardEffectManager] 未处理的回调动作 {action}，已忽略。\",",
+      "strings": [
+        "[CardEffectManager] 未处理的回调动作 {action}，已忽略。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Cards/Effects/CardEffectManager.cs",
+      "line": 404,
+      "content": "$\"[CardEffectManager] 未配置 {invoke.Kind} 效果 SO（方向={invoke.SelfDirection}），跳过。\",",
+      "strings": [
+        "[CardEffectManager] 未配置 {invoke.Kind} 效果 SO（方向={invoke.SelfDirection}），跳过。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Cards/Effects/CardEffectManager.cs",
+      "line": 616,
+      "content": "[Button(\"播放攻击\", ButtonSizes.Medium)]",
+      "strings": [
+        "播放攻击"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Cards/Effects/CardEffectManager.cs",
+      "line": 623,
+      "content": "[Button(\"播放受击\", ButtonSizes.Medium)]",
+      "strings": [
+        "播放受击"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Cards/Effects/CardEffectManager.cs",
+      "line": 630,
+      "content": "[Button(\"播放死亡\", ButtonSizes.Medium)]",
+      "strings": [
+        "播放死亡"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Cards/Effects/CardEffectManager.cs",
+      "line": 637,
+      "content": "[Button(\"播放使用\", ButtonSizes.Medium)]",
+      "strings": [
+        "播放使用"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Cards/Effects/CardEffectManager.cs",
+      "line": 644,
+      "content": "[Button(\"播放闪白\", ButtonSizes.Medium)]",
+      "strings": [
+        "播放闪白"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Cards/Effects/CardEffectManager.cs",
+      "line": 651,
+      "content": "[Button(\"停止当前\", ButtonSizes.Small)]",
+      "strings": [
+        "停止当前"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Cards/Effects/Implementations/CardSpriteHitFlashEffectSO.cs",
+      "line": 46,
+      "content": "$\"[CardSpriteHitFlashEffectSO] {DisplayName} 缺少 HitFlash 材质模板，闪白不会生效。\");",
+      "strings": [
+        "[CardSpriteHitFlashEffectSO] {DisplayName} 缺少 HitFlash 材质模板，闪白不会生效。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Cards/Ground/GroundMotionExecutor.cs",
+      "line": 529,
+      "content": "\"[GroundMotionExecutor] 场地自身忙碌，无法揭示 Avatar。\"",
+      "strings": [
+        "[GroundMotionExecutor] 场地自身忙碌，无法揭示 Avatar。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Cards/Ground/GroundMotionExecutor.cs",
+      "line": 771,
+      "content": "$\"[GroundMotionExecutor] 拒绝卸格：slot={slot} 期望 uid={card.Uid}，实际 occupant={occupantUid}。\");",
+      "strings": [
+        "[GroundMotionExecutor] 拒绝卸格：slot={slot} 期望 uid={card.Uid}，实际 occupant={occupantUid}。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Cards/Ground/GroundMotionExecutor.cs",
+      "line": 982,
+      "content": "\"[GroundMotionExecutor] 空槽点击被门禁拦截 slot=\" + slot",
+      "strings": [
+        "[GroundMotionExecutor] 空槽点击被门禁拦截 slot="
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Cards/Ground/GroundMotionExecutor.cs",
+      "line": 1325,
+      "content": "$\"[GroundMotionExecutor] 盘面 hop 前置校验失败：uid={expected.uid} 缺少视图，占格不变。\");",
+      "strings": [
+        "[GroundMotionExecutor] 盘面 hop 前置校验失败：uid={expected.uid} 缺少视图，占格不变。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Cards/Ground/GroundMotionExecutor.cs",
+      "line": 1332,
+      "content": "$\"[GroundMotionExecutor] 盘面 hop 前置校验失败：uid={expected.uid} 不在占格索引，占格不变。\");",
+      "strings": [
+        "[GroundMotionExecutor] 盘面 hop 前置校验失败：uid={expected.uid} 不在占格索引，占格不变。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Cards/Ground/GroundOccupancyIndex.cs",
+      "line": 124,
+      "content": "$\"[GroundOccupancyIndex] 禁止静默挤占：slot={slot} 已有 uid={previousUid}，拒绝登记 uid={uid}。\"",
+      "strings": [
+        "[GroundOccupancyIndex] 禁止静默挤占：slot={slot} 已有 uid={previousUid}，拒绝登记 uid={uid}。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Cards/Ground/GroundOccupancyIndex.cs",
+      "line": 125,
+      "content": "+ \" 调用方须先 Vacate/Clear 旧占格。\");",
+      "strings": [
+        " 调用方须先 Vacate/Clear 旧占格。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Cards/Ground/GroundOccupancyIndex.cs",
+      "line": 231,
+      "content": "$\"uid={uid} 无效\",",
+      "strings": [
+        "uid={uid} 无效"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Cards/Ground/GroundOccupancyIndex.cs",
+      "line": 241,
+      "content": "$\"toSlot={toSlot} 无效\",",
+      "strings": [
+        "toSlot={toSlot} 无效"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Cards/Ground/GroundOccupancyIndex.cs",
+      "line": 251,
+      "content": "$\"批次内 uid={uid} 重复\",",
+      "strings": [
+        "批次内 uid={uid} 重复"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Cards/Ground/GroundOccupancyIndex.cs",
+      "line": 261,
+      "content": "$\"批次内 toSlot={toSlot} 重复\",",
+      "strings": [
+        "批次内 toSlot={toSlot} 重复"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Cards/Ground/GroundOccupancyIndex.cs",
+      "line": 271,
+      "content": "$\"uid={uid} 不在场地\",",
+      "strings": [
+        "uid={uid} 不在场地"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Cards/Ground/GroundOccupancyIndex.cs",
+      "line": 288,
+      "content": "$\"slot={toSlot} 被外部 uid={occupant} 占用，拒绝 uid={uid} 迁入\",",
+      "strings": [
+        "slot={toSlot} 被外部 uid={occupant} 占用，拒绝 uid={uid} 迁入"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Cards/Ground/SlotClaimRegistry.cs",
+      "line": 55,
+      "content": "$\"[SlotClaimRegistry] 认领冲突：slot={slot} 已有 owner={Describe(existing.Owner)}，\"",
+      "strings": [
+        "[SlotClaimRegistry] 认领冲突：slot={slot} 已有 owner={Describe(existing.Owner)}，"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Cards/Ground/SlotClaimRegistry.cs",
+      "line": 56,
+      "content": "+ $\"拒绝 owner={Describe(claimant.Owner)}。保留先到者，禁止静默覆盖。\");",
+      "strings": [
+        "拒绝 owner={Describe(claimant.Owner)}。保留先到者，禁止静默覆盖。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Cards/Presentation/CardFaceDescriptionComposer.cs",
+      "line": 147,
+      "content": "\"[CardFaceDescriptionComposer] 未命中词条名字 [[\" + name + \"]]，已去括号显示原文。\");",
+      "strings": [
+        "[CardFaceDescriptionComposer] 未命中词条名字 [[",
+        "]]，已去括号显示原文。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Cards/Presentation/CardFaceDescriptionIconCatalogSO.cs",
+      "line": 125,
+      "content": "error = \"代号不能为空\";",
+      "strings": [
+        "代号不能为空"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Cards/Presentation/CardFaceDescriptionIconCatalogSO.cs",
+      "line": 132,
+      "content": "error = \"代号占用装配槽保留名：\" + code;",
+      "strings": [
+        "代号占用装配槽保留名："
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Cards/Presentation/CardFaceFlipPresenter.cs",
+      "line": 222,
+      "content": "var front = FindNamedChild(searchRoot, \"front\", \"Front\", \"正面\", \"CardFront\");",
+      "strings": [
+        "正面"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Cards/Presentation/CardFaceFlipPresenter.cs",
+      "line": 223,
+      "content": "var back = FindNamedChild(searchRoot, \"back\", \"Back\", \"背面\", \"CardBack\");",
+      "strings": [
+        "背面"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Cards/Presentation/CardInspectGlossaryListView.cs",
+      "line": 13,
+      "content": "public const string HoverHintText = \"将鼠标移到卡面预览中的图标上，可查看其含义。\";",
+      "strings": [
+        "将鼠标移到卡面预览中的图标上，可查看其含义。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Cards/Presentation/CardInspectGlossaryListView.cs",
+      "line": 42,
+      "content": "row.name = \"词条行_\" + term.DisplayName;",
+      "strings": [
+        "词条行_"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Cards/Presentation/CardInspectGlossaryListView.cs",
+      "line": 116,
+      "content": "hoverRow.name = \"词条Hover槽\";",
+      "strings": [
+        "词条Hover槽"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Cards/SkeletonDeckPresentationManager.cs",
+      "line": 87,
+      "content": "$\"[SkeletonDeckPresentation] PresentFusion 参与卡不足 action={request.ActionId} skill={request.SkillId} resolved={participants.Count}/{request.ParticipantUids.Length}\");",
+      "strings": [
+        "[SkeletonDeckPresentation] PresentFusion 参与卡不足 action={request.ActionId} skill={request.SkillId} resolved={participants.Count}/{request.ParticipantUids.Length}"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Cards/SkeletonDeckPresentationManager.cs",
+      "line": 472,
+      "content": "$\"[SkeletonDeckPresentation] LaunchReturnFieldCardToDeck 失败 uid={resultCard.Uid} mode={resultCard.DisplayMode}\");",
+      "strings": [
+        "[SkeletonDeckPresentation] LaunchReturnFieldCardToDeck 失败 uid={resultCard.Uid} mode={resultCard.DisplayMode}"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Cards/Slots/CardFaceSlotNodeMap.cs",
+      "line": 18,
+      "content": "new[] { \"主图标\", \"核心图标\", \"遗物主图标\", \"MainIcon\", \"Main Icon\" }",
+      "strings": [
+        "主图标",
+        "核心图标",
+        "遗物主图标"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Cards/Slots/CardFaceSlotNodeMap.cs",
+      "line": 20,
+      "content": "{ CardFaceSlotCodes.FaceBackground, new[] { \"背景\", \"背景图\", \"Card Background\", \"CardBackground\" } },",
+      "strings": [
+        "背景",
+        "背景图"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Cards/Slots/CardFaceSlotNodeMap.cs",
+      "line": 23,
+      "content": "new[] { \"卡框\", \"Frame\", \"CardFrame\", \"Card_Frame\", \"卡牌框\" }",
+      "strings": [
+        "卡框",
+        "卡牌框"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Cards/Slots/CardFaceSlotNodeMap.cs",
+      "line": 27,
+      "content": "new[] { \"横幅\", \"Banner\", \"NameBanner\", \"标题横幅\" }",
+      "strings": [
+        "横幅",
+        "标题横幅"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Cards/Slots/CardFaceSlotNodeMap.cs",
+      "line": 29,
+      "content": "{ CardFaceSlotCodes.BackBorder, new[] { \"边框\", \"Card_Border_rectangle_bronze\", \"Card_Border_rectangle_dark\" } },",
+      "strings": [
+        "边框"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Cards/Slots/CardFaceSlotNodeMap.cs",
+      "line": 30,
+      "content": "{ CardFaceSlotCodes.BackShirt, new[] { \"CardShirts_8\", \"CardShirts\", \"背纹\" } },",
+      "strings": [
+        "背纹"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Cards/Slots/CardFaceSlotNodeMap.cs",
+      "line": 34,
+      "content": "new[] { \"攻击模式\", \"行动图标\", \"行动\", \"Action_Icon\", \"ActionIcon\" }",
+      "strings": [
+        "攻击模式",
+        "行动图标",
+        "行动"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Cards/Slots/CardFaceSlotNodeMap.cs",
+      "line": 38,
+      "content": "new[] { \"是否有技能同步触发\", \"技能同步触发\", \"Sync_Rhythm_Icon\", \"SyncRhythmIcon\" }",
+      "strings": [
+        "是否有技能同步触发",
+        "技能同步触发"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Cards/Slots/CardFaceSlotNodeMap.cs",
+      "line": 47,
+      "content": "new[] { \"名字\", \"名字横幅\", \"遗物名字\", \"标准世界文字\", \"Name\" }",
+      "strings": [
+        "名字",
+        "名字横幅",
+        "遗物名字",
+        "标准世界文字"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Cards/Slots/CardFaceSlotNodeMap.cs",
+      "line": 49,
+      "content": "{ CardFaceSlotCodes.Attack, new[] { \"攻击数值\", \"Attack\" } },",
+      "strings": [
+        "攻击数值"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Cards/Slots/CardFaceSlotNodeMap.cs",
+      "line": 50,
+      "content": "{ CardFaceSlotCodes.Armor, new[] { \"护甲数值\", \"Armor\" } },",
+      "strings": [
+        "护甲数值"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Cards/Slots/CardFaceSlotNodeMap.cs",
+      "line": 51,
+      "content": "{ CardFaceSlotCodes.Hp, new[] { \"血量数值\", \"Hp\", \"Life\" } },",
+      "strings": [
+        "血量数值"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Cards/Slots/CardFaceSlotNodeMap.cs",
+      "line": 52,
+      "content": "{ CardFaceSlotCodes.ActionCount, new[] { \"行动计数数值\", \"行动计数\", \"ActionCount\", \"Action_Count\" } },",
+      "strings": [
+        "行动计数数值",
+        "行动计数"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Cards/Slots/CardFaceSlotNodeMap.cs",
+      "line": 53,
+      "content": "{ CardFaceSlotCodes.BasicDescription, new[] { \"描述\", \"介绍区域\", \"描述面板\", \"BasicDescription\" } },",
+      "strings": [
+        "描述",
+        "介绍区域",
+        "描述面板"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Cards/Slots/CardFaceSlotNodeMap.cs",
+      "line": 63,
+      "content": "{ CardFaceSlotCodes.Attack, new[] { \"攻击\", \"Attack_Icon\", \"AttackIcon\" } },",
+      "strings": [
+        "攻击"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Cards/Slots/CardFaceSlotNodeMap.cs",
+      "line": 64,
+      "content": "{ CardFaceSlotCodes.Armor, new[] { \"护甲\", \"Armor_Icon\", \"ArmorIcon\" } },",
+      "strings": [
+        "护甲"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Cards/Slots/CardFaceSlotNodeMap.cs",
+      "line": 65,
+      "content": "{ CardFaceSlotCodes.Hp, new[] { \"血量\", \"Hp_Icon\", \"HpIcon\", \"Life_Icon\" } },",
+      "strings": [
+        "血量"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Cards/Slots/CardFaceSlotRegistrySO.cs",
+      "line": 70,
+      "content": "\"主图标\",",
+      "strings": [
+        "主图标"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Cards/Slots/CardFaceSlotRegistrySO.cs",
+      "line": 74,
+      "content": "\"卡面背景\",",
+      "strings": [
+        "卡面背景"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Cards/Slots/CardFaceSlotRegistrySO.cs",
+      "line": 78,
+      "content": "\"卡背·背框\",",
+      "strings": [
+        "卡背·背框"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Cards/Slots/CardFaceSlotRegistrySO.cs",
+      "line": 82,
+      "content": "\"卡背·背纹\",",
+      "strings": [
+        "卡背·背纹"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Cards/Slots/CardFaceSlotRegistrySO.cs",
+      "line": 86,
+      "content": "\"卡背·Logo\",",
+      "strings": [
+        "卡背·Logo"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Cards/Slots/CardFaceSlotRegistrySO.cs",
+      "line": 90,
+      "content": "\"行动图标\",",
+      "strings": [
+        "行动图标"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Cards/Slots/CardFaceSlotRegistrySO.cs",
+      "line": 94,
+      "content": "\"名字\",",
+      "strings": [
+        "名字"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Cards/Slots/CardFaceSlotRegistrySO.cs",
+      "line": 98,
+      "content": "\"攻击\",",
+      "strings": [
+        "攻击"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Cards/Slots/CardFaceSlotRegistrySO.cs",
+      "line": 102,
+      "content": "\"护甲\",",
+      "strings": [
+        "护甲"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Cards/Slots/CardFaceSlotRegistrySO.cs",
+      "line": 106,
+      "content": "\"血量\",",
+      "strings": [
+        "血量"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Cards/Slots/CardFaceSlotRegistrySO.cs",
+      "line": 110,
+      "content": "\"行动计数\",",
+      "strings": [
+        "行动计数"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Cards/Slots/CardFaceSlotRegistrySO.cs",
+      "line": 114,
+      "content": "\"基础描述\",",
+      "strings": [
+        "基础描述"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Cards/Vfx/BoardRangeGlowFx.cs",
+      "line": 376,
+      "content": "\"[BoardRangeGlowFx] 未找到 \" + GlowShaderName + \"，回退 Sprite-Unlit-Default。\");",
+      "strings": [
+        "[BoardRangeGlowFx] 未找到 ",
+        "，回退 Sprite-Unlit-Default。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Cards/Vfx/CardEdgeDustFxSettingsSO.cs",
+      "line": 15,
+      "content": "[Header(\"总控\")]",
+      "strings": [
+        "总控"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Cards/Vfx/CardEdgeDustFxSettingsSO.cs",
+      "line": 23,
+      "content": "[Header(\"贴图 / 排序\")]",
+      "strings": [
+        "贴图 / 排序"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Cards/Vfx/CardEdgeDustFxSettingsSO.cs",
+      "line": 31,
+      "content": "[Header(\"Place 喷发（沿四边）\")]",
+      "strings": [
+        "Place 喷发（沿四边）"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Cards/Vfx/CardEdgeDustFxSettingsSO.cs",
+      "line": 46,
+      "content": "[Header(\"Trail 双尾迹（飞牌出场）\")]",
+      "strings": [
+        "Trail 双尾迹（飞牌出场）"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Cards/Vfx/CardEdgeDustFxSettingsSO.cs",
+      "line": 71,
+      "content": "[Header(\"绘制（双层叠色）\")]",
+      "strings": [
+        "绘制（双层叠色）"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Cards/Vfx/CardEdgeDustFxSettingsSO.cs",
+      "line": 80,
+      "content": "[Header(\"池\")]",
+      "strings": [
+        "池"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Controllers/PickupInputController.cs",
+      "line": 58,
+      "content": "\"[PickupInputController] Pickup ExternalHold 失败，中止 Apply slot=\" + groundSlot);",
+      "strings": [
+        "[PickupInputController] Pickup ExternalHold 失败，中止 Apply slot="
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/AttributeBoard/AttributeBoardPresenter.cs",
+      "line": 330,
+      "content": "ShowNotice(\"属性房输入未接线\");",
+      "strings": [
+        "属性房输入未接线"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/BattleInfoPreview/BattleInfoPreviewCopySO.cs",
+      "line": 30,
+      "content": "\"房间类型：{room}\\n楼层：{floor}\\n进度：{progress}\";",
+      "strings": [
+        "房间类型：{room}\\n楼层：{floor}\\n进度：{progress}"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/BattleInfoPreview/BattleInfoPreviewPresenter.cs",
+      "line": 31,
+      "content": "[Header(\"场景绑定\")]",
+      "strings": [
+        "场景绑定"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/BattleInfoPreview/BattleInfoPreviewPresenter.cs",
+      "line": 43,
+      "content": "[Header(\"配置\")]",
+      "strings": [
+        "配置"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/BattleInfoPreview/BattleInfoPreviewPresenter.cs",
+      "line": 53,
+      "content": "[Header(\"玩家立绘\")]",
+      "strings": [
+        "玩家立绘"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/BattleInfoPreview/BattleInfoPreviewPresenter.cs",
+      "line": 59,
+      "content": "[Header(\"槽位图标外部缩放\")]",
+      "strings": [
+        "槽位图标外部缩放"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/BattleInfoPreview/BattleInfoPreviewPresenter.cs",
+      "line": 385,
+      "content": "return \"房间类型：{room}\\n楼层：{floor}\\n进度：{progress}\";",
+      "strings": [
+        "房间类型：{room}\\n楼层：{floor}\\n进度：{progress}"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/BattleInfoPreview/BattleInfoPreviewPresenter.cs",
+      "line": 570,
+      "content": "\"[BattleInfoPreview] 槽位不足：需要 \"",
+      "strings": [
+        "[BattleInfoPreview] 槽位不足：需要 "
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/BattleInfoPreview/BattleInfoPreviewPresenter.cs",
+      "line": 572,
+      "content": "+ \" 仅有 \"",
+      "strings": [
+        " 仅有 "
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/BattleInfoPreview/BattleInfoPreviewPresenter.cs",
+      "line": 574,
+      "content": "+ \"，多余截断。\");",
+      "strings": [
+        "，多余截断。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/BattleInfoPreview/BattleInfoPreviewPresenter.cs",
+      "line": 823,
+      "content": "if (excludeBody && name == \"玩家本体占位\")",
+      "strings": [
+        "玩家本体占位"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/BattleInfoPreview/BattleInfoPreviewPresenter.cs",
+      "line": 828,
+      "content": "if (!name.StartsWith(\"占位模板\", StringComparison.Ordinal)",
+      "strings": [
+        "占位模板"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/BattleInfoPreview/BattleInfoPreviewPresenter.cs",
+      "line": 829,
+      "content": "&& name != \"玩家本体占位\")",
+      "strings": [
+        "玩家本体占位"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/BattleInfoPreview/BattleInfoPreviewPresenter.cs",
+      "line": 925,
+      "content": "|| (t.text != null && t.text.Contains(\"房间类型\")))",
+      "strings": [
+        "房间类型"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/BattleSession/BattleSessionCheat.cs",
+      "line": 158,
+      "content": "$\"[BattleSessionCheat] QuickTest 挂技能失败：uid={card.Uid} defId={card.DefId}\"",
+      "strings": [
+        "[BattleSessionCheat] QuickTest 挂技能失败：uid={card.Uid} defId={card.DefId}"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/BattleSession/BattleSessionCheat.cs",
+      "line": 159,
+      "content": "+ $\" skillId={skillId}（卡面描述仍可能写入，但无 Effect 实例）\");",
+      "strings": [
+        " skillId={skillId}（卡面描述仍可能写入，但无 Effect 实例）"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/BattleSession/BattleSessionCheat.cs",
+      "line": 169,
+      "content": "$\"[BattleSessionCheat] QuickTest 一怪一技 slot={card.Slot.Value.Index}\"",
+      "strings": [
+        "[BattleSessionCheat] QuickTest 一怪一技 slot={card.Slot.Value.Index}"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/BattleSession/BattleSessionCheat.cs",
+      "line": 186,
+      "content": "$\"[BattleSessionCheat] QuickTest 挂技能 mounted={mountedHosts}/{skillIds.Count}\"",
+      "strings": [
+        "[BattleSessionCheat] QuickTest 挂技能 mounted={mountedHosts}/{skillIds.Count}"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/BattleSession/BattleSessionCheat.cs",
+      "line": 192,
+      "content": "\"[BattleSessionCheat] QuickTest 已选宿主但激活实例为 0——技能只会显示描述、不会在规则链生效\");",
+      "strings": [
+        "[BattleSessionCheat] QuickTest 已选宿主但激活实例为 0——技能只会显示描述、不会在规则链生效"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/BattleSession/BattleSessionCheat.cs",
+      "line": 198,
+      "content": "$\"[BattleSessionCheat] QuickTest 宿主不足：只挂了 {assignCount}/{skillIds.Count}，\"",
+      "strings": [
+        "[BattleSessionCheat] QuickTest 宿主不足：只挂了 {assignCount}/{skillIds.Count}，"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/BattleSession/BattleSessionCheat.cs",
+      "line": 199,
+      "content": "+ \"空槽或 Spawn 失败，未挂技能无法单验\");",
+      "strings": [
+        "空槽或 Spawn 失败，未挂技能无法单验"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/BattleSession/BattleSessionCheat.cs",
+      "line": 292,
+      "content": "$\"[BattleSessionCheat] QuickTest 塞烈焰机关 board+={spawned}\"",
+      "strings": [
+        "[BattleSessionCheat] QuickTest 塞烈焰机关 board+={spawned}"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/BattleSession/BattleSessionCheat.cs",
+      "line": 293,
+      "content": "+ $\" defId={QuickTestFlameTrapDefId}（验沸腾：互动5后邻移烈焰，玩家受伤 1+N）\");",
+      "strings": [
+        " defId={QuickTestFlameTrapDefId}（验沸腾：互动5后邻移烈焰，玩家受伤 1+N）"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/BattleSession/BattleSessionCheat.cs",
+      "line": 318,
+      "content": "$\"[BattleSessionCheat] QuickTest 无法补宿主：have={have} needed={needed}\");",
+      "strings": [
+        "[BattleSessionCheat] QuickTest 无法补宿主：have={have} needed={needed}"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/BattleSession/BattleSessionCheat.cs",
+      "line": 389,
+      "content": "$\"[BattleSessionCheat] QuickTest 补宿主后格 {slot.Index} 仍空\");",
+      "strings": [
+        "[BattleSessionCheat] QuickTest 补宿主后格 {slot.Index} 仍空"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/BattleSession/BattleSessionCheat.cs",
+      "line": 394,
+      "content": "$\"[BattleSessionCheat] QuickTest 补白板宿主 slot={slot.Index} uid={uid}\"",
+      "strings": [
+        "[BattleSessionCheat] QuickTest 补白板宿主 slot={slot.Index} uid={uid}"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/BattleSession/BattleSessionCheat.cs",
+      "line": 480,
+      "content": "\"[BattleSessionCheat] 一键跨层 → 楼层 \"",
+      "strings": [
+        "[BattleSessionCheat] 一键跨层 → 楼层 "
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/BattleSession/BattleSessionCheat.cs",
+      "line": 482,
+      "content": "+ \" 节点 \"",
+      "strings": [
+        " 节点 "
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/BattleSession/BattleSessionCheat.cs",
+      "line": 484,
+      "content": "+ \"（战前预览由主循环承接）。\");",
+      "strings": [
+        "（战前预览由主循环承接）。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/BattleSession/BattleSessionCheat.cs",
+      "line": 587,
+      "content": "$\"[BattleSessionCheat] 强制节点胜利 → {phaseSystem.CurrentPhase} pending={arch.GetModel<PendingChoiceModel>().Kind.Value}\");",
+      "strings": [
+        "[BattleSessionCheat] 强制节点胜利 → {phaseSystem.CurrentPhase} pending={arch.GetModel<PendingChoiceModel>().Kind.Value}"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/BattleSession/BattleSessionExecutor.BoardSelect.cs",
+      "line": 180,
+      "content": "$\"[BattleSession] BoardSelect 目标校验失败 itemUid={itemUid} reason={validateReason} uids={string.Join(\",\", selectedUids)}\");",
+      "strings": [
+        "[BattleSession] BoardSelect 目标校验失败 itemUid={itemUid} reason={validateReason} uids={string.Join("
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/BattleSession/BattleSessionExecutor.cs",
+      "line": 337,
+      "content": "$\"[BattleSession] BootstrapRun 完成 seed={snapshot.Seed} avatar=#{snapshot.AvatarUid} @{snapshot.AvatarSlot}\"",
+      "strings": [
+        "[BattleSession] BootstrapRun 完成 seed={snapshot.Seed} avatar=#{snapshot.AvatarUid} @{snapshot.AvatarSlot}"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/BattleSession/BattleSessionExecutor.cs",
+      "line": 571,
+      "content": "$\"[BattleSession] 节点结算就绪 phase={phase} pending={pending.Kind.Value}\");",
+      "strings": [
+        "[BattleSession] 节点结算就绪 phase={phase} pending={pending.Kind.Value}"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/BattleSession/BattleSessionExecutor.cs",
+      "line": 800,
+      "content": "\"[BattleSession] #10 占格强制对账断言触发（正常路径永不应发生）。reason=\"",
+      "strings": [
+        "[BattleSession] #10 占格强制对账断言触发（正常路径永不应发生）。reason="
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/BattleSession/BattleSessionExecutor.cs",
+      "line": 964,
+      "content": "\"[BattleSession] EnsurePresentationRuntimeInstalled 后导演仍未启动。\");",
+      "strings": [
+        "[BattleSession] EnsurePresentationRuntimeInstalled 后导演仍未启动。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/BattleSession/BattleSessionExecutor.cs",
+      "line": 969,
+      "content": "\"[BattleSession] PresentationSceneRoot 未绑定 Runtime 生命周期，无法安装导演。\");",
+      "strings": [
+        "[BattleSession] PresentationSceneRoot 未绑定 Runtime 生命周期，无法安装导演。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/BattleSession/BattleSessionExecutor.Opening.cs",
+      "line": 130,
+      "content": "$\"[AvatarDefeatProbe] Avatar zone 非法：zone={zoneNote} baseHp={baseHp}（ADR-0039）\");",
+      "strings": [
+        "[AvatarDefeatProbe] Avatar zone 非法：zone={zoneNote} baseHp={baseHp}（ADR-0039）"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/BattleSession/BattleSessionExecutor.Opening.cs",
+      "line": 187,
+      "content": "$\"[BattleSession] StartNode 非法 phase={phase.CurrentPhase}，先 BootstrapRun(preserve)。\");",
+      "strings": [
+        "[BattleSession] StartNode 非法 phase={phase.CurrentPhase}，先 BootstrapRun(preserve)。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/BattleSession/BattleSessionExecutor.Opening.cs",
+      "line": 192,
+      "content": "\"[BattleSession] BootstrapRun 后表现意图运行时未启动，中止入场。\");",
+      "strings": [
+        "[BattleSession] BootstrapRun 后表现意图运行时未启动，中止入场。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/BattleSession/BattleSessionExecutor.Opening.cs",
+      "line": 717,
+      "content": "$\"[BattleSession] Opening Avatar 未占格5，skipBusyGuard 兜底落位 uid={avatar.Uid}。\");",
+      "strings": [
+        "[BattleSession] Opening Avatar 未占格5，skipBusyGuard 兜底落位 uid={avatar.Uid}。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/BattleSession/BattleSessionExecutor.Opening.cs",
+      "line": 773,
+      "content": "$\"[BattleSession] 就位失败 uid={placement.Uid} slot={placement.GroundSlot}，继续其余格并由 Sync 兜底。\");",
+      "strings": [
+        "[BattleSession] 就位失败 uid={placement.Uid} slot={placement.GroundSlot}，继续其余格并由 Sync 兜底。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/BattleSession/BattleSessionExecutor.Opening.cs",
+      "line": 813,
+      "content": "$\"[BattleSession] Opening DeckAdd uid={deckDeal.Uid} source={deckDeal.SourceDefId} 无锚点，跳过。\");",
+      "strings": [
+        "[BattleSession] Opening DeckAdd uid={deckDeal.Uid} source={deckDeal.SourceDefId} 无锚点，跳过。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/BattleSession/BattleSessionExecutor.Opening.cs",
+      "line": 818,
+      "content": "$\"[BattleSession] Opening DeckAdd uid={deckDeal.Uid} source={deckDeal.SourceDefId} 锚点未找到，fallback 卡组左侧。\");",
+      "strings": [
+        "[BattleSession] Opening DeckAdd uid={deckDeal.Uid} source={deckDeal.SourceDefId} 锚点未找到，fallback 卡组左侧。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/BattleSession/BattleSessionExecutor.Opening.cs",
+      "line": 852,
+      "content": "$\"[BattleSession] Opening DeckAdd 失败 uid={deckDeal.Uid} source={deckDeal.SourceDefId}。\");",
+      "strings": [
+        "[BattleSession] Opening DeckAdd 失败 uid={deckDeal.Uid} source={deckDeal.SourceDefId}。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/BattleSession/BattleSessionExecutor.Opening.cs",
+      "line": 876,
+      "content": "$\"[BattleSession] Opening HandDeal uid={handDeal.Uid} source={handDeal.SourceDefId} 无锚点，跳过。\");",
+      "strings": [
+        "[BattleSession] Opening HandDeal uid={handDeal.Uid} source={handDeal.SourceDefId} 无锚点，跳过。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/BattleSession/BattleSessionExecutor.Opening.cs",
+      "line": 881,
+      "content": "$\"[BattleSession] Opening HandDeal uid={handDeal.Uid} source={handDeal.SourceDefId} 锚点未找到，fallback 卡组左侧。\");",
+      "strings": [
+        "[BattleSession] Opening HandDeal uid={handDeal.Uid} source={handDeal.SourceDefId} 锚点未找到，fallback 卡组左侧。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/BattleSession/BattleSessionExecutor.Opening.cs",
+      "line": 915,
+      "content": "$\"[BattleSession] Opening HandDeal 失败 uid={handDeal.Uid} source={handDeal.SourceDefId}。\");",
+      "strings": [
+        "[BattleSession] Opening HandDeal 失败 uid={handDeal.Uid} source={handDeal.SourceDefId}。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/BattleSession/BattleSessionExecutor.Opening.cs",
+      "line": 973,
+      "content": "$\"[BattleSession] Opening HandRestore 无视图 uid={restore.Uid}。\");",
+      "strings": [
+        "[BattleSession] Opening HandRestore 无视图 uid={restore.Uid}。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/BattleSession/BattleSessionExecutor.Opening.cs",
+      "line": 987,
+      "content": "$\"[BattleSession] Opening HandRestore 失败 uid={restore.Uid}。\");",
+      "strings": [
+        "[BattleSession] Opening HandRestore 失败 uid={restore.Uid}。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/BattleSession/BattleSessionExecutor.Opening.cs",
+      "line": 1022,
+      "content": "$\"[BattleSession] WaitPresentationIdle 超时({timeoutSeconds:0.##}s)：drain={_drainInFlight} \" +",
+      "strings": [
+        "[BattleSession] WaitPresentationIdle 超时({timeoutSeconds:0.##}s)：drain={_drainInFlight} "
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/BattleSession/BattleSessionExecutor.Opening.cs",
+      "line": 1024,
+      "content": "$\"directorBusy={IsPresentationMainlineBusy()}，继续清场。\");",
+      "strings": [
+        "directorBusy={IsPresentationMainlineBusy()}，继续清场。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/BattleSession/BattleSessionExecutor.OrphanReward.cs",
+      "line": 59,
+      "content": "\"[BattleSession] 孤儿 PendingReward（无覆盖层），重开 Bounce。context=\"",
+      "strings": [
+        "[BattleSession] 孤儿 PendingReward（无覆盖层），重开 Bounce。context="
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/BattleSession/BoardPresentationPlayer.cs",
+      "line": 412,
+      "content": "$\"[InBattleManager] BoardStep 失败 request={requestId} i={i} kind={step.Kind}: {ex.Message}\");",
+      "strings": [
+        "[InBattleManager] BoardStep 失败 request={requestId} i={i} kind={step.Kind}: {ex.Message}"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/BattleSession/BoardPresentationPlayer.cs",
+      "line": 517,
+      "content": "$\"[InBattleManager] Drain 跳过补牌：uid={deal.Uid} 已在手牌，目标格 {deal.Slot}\");",
+      "strings": [
+        "[InBattleManager] Drain 跳过补牌：uid={deal.Uid} 已在手牌，目标格 {deal.Slot}"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/BattleSession/BoardPresentationPlayer.cs",
+      "line": 567,
+      "content": "$\"[InBattleManager] 补牌发牌失败 uid={deal.Uid} slot={deal.Slot}（placeDenied 未自愈）。\");",
+      "strings": [
+        "[InBattleManager] 补牌发牌失败 uid={deal.Uid} slot={deal.Slot}（placeDenied 未自愈）。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/BattleSession/BoardPresentationPlayer.cs",
+      "line": 621,
+      "content": "$\"[InBattleManager] Deal 前清幽灵占格 slot={slot} ghostUid={blocker.Uid} expectDeal={expectedDealUid} coreUid={coreUid}\");",
+      "strings": [
+        "[InBattleManager] Deal 前清幽灵占格 slot={slot} ghostUid={blocker.Uid} expectDeal={expectedDealUid} coreUid={coreUid}"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/BattleSession/BoardPresentationPlayer.cs",
+      "line": 838,
+      "content": "$\"[InBattleManager] ResolveOrSpawnDeckCardForDeal uid={deal.Uid} View 为空，Release 后重 Spawn。\");",
+      "strings": [
+        "[InBattleManager] ResolveOrSpawnDeckCardForDeal uid={deal.Uid} View 为空，Release 后重 Spawn。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/BattleSession/BoardPresentationPlayer.cs",
+      "line": 1036,
+      "content": "$\"[InBattleManager] BurstScatter action={group.ActionId} 无炸开原点，回退单条洗回。\");",
+      "strings": [
+        "[InBattleManager] BurstScatter action={group.ActionId} 无炸开原点，回退单条洗回。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/BattleSession/BoardPresentationPlayer.cs",
+      "line": 1128,
+      "content": "$\"[InBattleManager] ShuffleInto uid={entry.Uid} 视图 def 不符 expect={defId} actual={ensureCard.DefId}，重建。\");",
+      "strings": [
+        "[InBattleManager] ShuffleInto uid={entry.Uid} 视图 def 不符 expect={defId} actual={ensureCard.DefId}，重建。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/BattleSession/BoardPresentationPlayer.cs",
+      "line": 1179,
+      "content": "$\"[InBattleManager] ExistingCard 回库发射失败 uid={entry.Uid} mode={existing.DisplayMode}\");",
+      "strings": [
+        "[InBattleManager] ExistingCard 回库发射失败 uid={entry.Uid} mode={existing.DisplayMode}"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/BattleSessionController.cs",
+      "line": 106,
+      "content": "\"[BattleSession] PresentationSceneRoot 未绑定 Runtime 生命周期，无法安装导演。\");",
+      "strings": [
+        "[BattleSession] PresentationSceneRoot 未绑定 Runtime 生命周期，无法安装导演。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/BattleUiDimmerOverlay.cs",
+      "line": 222,
+      "content": "if (roots[i].name == \"UI面板\")",
+      "strings": [
+        "UI面板"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/BoardBriefTip/BoardBriefTipCopy.cs",
+      "line": 12,
+      "content": "public const string LeaveTip = \"离开本房\";",
+      "strings": [
+        "离开本房"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/BoardBriefTip/BoardBriefTipCopy.cs",
+      "line": 13,
+      "content": "public const string GoDownTip = \"前往下一层\";",
+      "strings": [
+        "前往下一层"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/BoardBriefTip/BoardBriefTipCopy.cs",
+      "line": 14,
+      "content": "public const string GoUpTip = \"返回上一层\";",
+      "strings": [
+        "返回上一层"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/BoardBriefTip/BoardBriefTipCopy.cs",
+      "line": 17,
+      "content": "public const string AttributePickCompleteNotice = \"已选择 2 张属性卡\";",
+      "strings": [
+        "已选择 2 张属性卡"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/BoardBriefTip/BoardBriefTipCopy.cs",
+      "line": 28,
+      "content": "return room.DisplayName + \"：开局注入 \" + room.OpeningInjects.Count + \" 项\";",
+      "strings": [
+        "：开局注入 ",
+        " 项"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/BoardBriefTip/BoardBriefTipCopy.cs",
+      "line": 100,
+      "content": "return priceGold.Value + \" 金币\";",
+      "strings": [
+        " 金币"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/BoardBriefTip/BoardBriefTipCopy.cs",
+      "line": 103,
+      "content": "return brief + \" · \" + priceGold.Value + \" 金币\";",
+      "strings": [
+        " 金币"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/BoardBriefTip/BoardBriefTipCopy.cs",
+      "line": 117,
+      "content": "return \"楼层·\" + ToLatinNumeral(floor);",
+      "strings": [
+        "楼层·"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/BoardBriefTip/BoardBriefTipCopy.cs",
+      "line": 126,
+      "content": "return \"精英战斗房间\";",
+      "strings": [
+        "精英战斗房间"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/BoardBriefTip/BoardBriefTipCopy.cs",
+      "line": 128,
+      "content": "return \"Boss房间\";",
+      "strings": [
+        "Boss房间"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/BoardBriefTip/BoardBriefTipCopy.cs",
+      "line": 130,
+      "content": "return \"商店房间\";",
+      "strings": [
+        "商店房间"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/BoardBriefTip/BoardBriefTipCopy.cs",
+      "line": 132,
+      "content": "return \"卡店房间\";",
+      "strings": [
+        "卡店房间"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/BoardBriefTip/BoardBriefTipCopy.cs",
+      "line": 137,
+      "content": "return \"战斗房间\";",
+      "strings": [
+        "战斗房间"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/BoardBriefTip/BoardBriefTipCopy.cs",
+      "line": 139,
+      "content": "return \"宝箱奖励房间\";",
+      "strings": [
+        "宝箱奖励房间"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/BoardBriefTip/BoardBriefTipCopy.cs",
+      "line": 141,
+      "content": "return \"道具奖励房间\";",
+      "strings": [
+        "道具奖励房间"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/CardInspectInlineIconHover.cs",
+      "line": 68,
+      "content": "explanation = \"（暂无介绍）\";",
+      "strings": [
+        "（暂无介绍）"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/CardInspectInlineIconHover.cs",
+      "line": 75,
+      "content": "_list.ShowHoverTerm(code, \"（未配置词条介绍）\", hasColor: false, color: default);",
+      "strings": [
+        "（未配置词条介绍）"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/CardInspectOverlayPresenter.cs",
+      "line": 90,
+      "content": "var uiRoot = FindSceneObject(\"UI面板\");",
+      "strings": [
+        "UI面板"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/CardInspectOverlayPresenter.cs",
+      "line": 327,
+      "content": ": FindSceneObject(\"UI面板\");",
+      "strings": [
+        "UI面板"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/CardInspectOverlayPresenter.cs",
+      "line": 835,
+      "content": "faceIntro = FindTmp(t, \"背景介绍\");",
+      "strings": [
+        "背景介绍"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/CardInspectOverlayPresenter.cs",
+      "line": 836,
+      "content": "deckIntro = FindTmp(t, \"牌组介绍\");",
+      "strings": [
+        "牌组介绍"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/CardInspectOverlayPresenter.cs",
+      "line": 846,
+      "content": "&& (child.name.StartsWith(\"详细效果信息\", System.StringComparison.Ordinal)",
+      "strings": [
+        "详细效果信息"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/CardInspectOverlayPresenter.cs",
+      "line": 847,
+      "content": "|| child.name.Contains(\"详细效果信息\")))",
+      "strings": [
+        "详细效果信息"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/DamageNumberManagerSingleton.cs",
+      "line": 41,
+      "content": "[Header(\"数值动态缩放（1x~2x）\")]",
+      "strings": [
+        "数值动态缩放（1x~2x）"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/DamageNumberManagerSingleton.cs",
+      "line": 60,
+      "content": "[Header(\"拆分飘字（血量/护甲伤害）\")]",
+      "strings": [
+        "拆分飘字（血量/护甲伤害）"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/Diagnostics/BattleTraceRecorder.cs",
+      "line": 112,
+      "content": "\"[BattleTrace] 新开局已轮转诊断会话 sessionId=\"",
+      "strings": [
+        "[BattleTrace] 新开局已轮转诊断会话 sessionId="
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/Diagnostics/ChoreoTraceContext.cs",
+      "line": 71,
+      "content": "\"[Choreo] OccupancyDesyncLatched（永不应触发的诊断；不再作输入硬拒）。detail=\"",
+      "strings": [
+        "[Choreo] OccupancyDesyncLatched（永不应触发的诊断；不再作输入硬拒）。detail="
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/GameFlow/GameFlowOrchestrator.cs",
+      "line": 129,
+      "content": "$\"[GameFlow] 快速测试模式：全局速度 x1，玩家 HP {GameFlowShellSystem.QuickTestAvatarHp} / ATK {GameFlowShellSystem.QuickTestAvatarAttack} 每关重置，\"",
+      "strings": [
+        "[GameFlow] 快速测试模式：全局速度 x1，玩家 HP {GameFlowShellSystem.QuickTestAvatarHp} / ATK {GameFlowShellSystem.QuickTestAvatarAttack} 每关重置，"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/GameFlow/GameFlowOrchestrator.cs",
+      "line": 130,
+      "content": "+ $\"节点顺序 {mShell.QuickTestNodeOrderMode}，队列 {QuickTestRunPlanner.FormatNodeOrder(mShell.QuickTestContentNodeQueue)}\"",
+      "strings": [
+        "节点顺序 {mShell.QuickTestNodeOrderMode}，队列 {QuickTestRunPlanner.FormatNodeOrder(mShell.QuickTestContentNodeQueue)}"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/GameFlow/GameFlowOrchestrator.cs",
+      "line": 133,
+      "content": ": $\"，首关牌组 {mShell.PinnedFirstBattleDeckId}\")",
+      "strings": [
+        "，首关牌组 {mShell.PinnedFirstBattleDeckId}"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/GameFlow/GameFlowOrchestrator.cs",
+      "line": 234,
+      "content": "view?.ShowNotice(continueToFormal ? \"教学完成！准备开始冒险…\" : \"教学完成！\");",
+      "strings": [
+        "教学完成！准备开始冒险…",
+        "教学完成！"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/GameFlow/GameFlowOrchestrator.cs",
+      "line": 280,
+      "content": "$\"[GameFlow] 读档恢复完成 层{snapshot.floor} 节点{snapshot.DisplayNode}\"",
+      "strings": [
+        "[GameFlow] 读档恢复完成 层{snapshot.floor} 节点{snapshot.DisplayNode}"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/GameFlow/GameFlowOrchestrator.cs",
+      "line": 281,
+      "content": "+ $\"（全局{snapshot.shellGlobalNodeIndex}） seed={snapshot.seed}\"",
+      "strings": [
+        "（全局{snapshot.shellGlobalNodeIndex}） seed={snapshot.seed}"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/GameFlow/GameFlowOrchestrator.cs",
+      "line": 282,
+      "content": "+ $\" 金币={snapshot.coins} HP={snapshot.metaHp}/{snapshot.metaMaxHp}\");",
+      "strings": [
+        " 金币={snapshot.coins} HP={snapshot.metaHp}/{snapshot.metaMaxHp}"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/GameFlow/GameFlowOrchestrator.cs",
+      "line": 456,
+      "content": "? $\"[GameFlow] 循环节点 {mShell.NodeIndex} 快速测试内容节点 {contentNodeIndex}\"",
+      "strings": [
+        "[GameFlow] 循环节点 {mShell.NodeIndex} 快速测试内容节点 {contentNodeIndex}"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/GameFlow/GameFlowOrchestrator.cs",
+      "line": 457,
+      "content": "+ (string.IsNullOrEmpty(monsterDeckId) ? string.Empty : $\" 固定牌组 {monsterDeckId}\")",
+      "strings": [
+        " 固定牌组 {monsterDeckId}"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/GameFlow/GameFlowOrchestrator.cs",
+      "line": 458,
+      "content": "+ \" 真实局内入场\"",
+      "strings": [
+        " 真实局内入场"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/GameFlow/GameFlowOrchestrator.cs",
+      "line": 459,
+      "content": ": $\"[GameFlow] 节点 {mShell.NodeIndex} 真实局内入场\");",
+      "strings": [
+        "[GameFlow] 节点 {mShell.NodeIndex} 真实局内入场"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/GameFlow/GameFlowOrchestrator.cs",
+      "line": 504,
+      "content": "$\"[GameFlow] 跳过通关奖励 phase={phase} pending={pending.Kind.Value}\");",
+      "strings": [
+        "[GameFlow] 跳过通关奖励 phase={phase} pending={pending.Kind.Value}"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/GameFlow/GameFlowOrchestrator.cs",
+      "line": 631,
+      "content": "$\"[GameFlow] 跳过房间图标 phase={phaseSystem.CurrentPhase} pending={kind}\");",
+      "strings": [
+        "[GameFlow] 跳过房间图标 phase={phaseSystem.CurrentPhase} pending={kind}"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/GameFlow/GameFlowOrchestrator.cs",
+      "line": 1157,
+      "content": "? (view == null || string.IsNullOrWhiteSpace(view.VictoryMessage) ? \"胜利\" : view.VictoryMessage)",
+      "strings": [
+        "胜利"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/GameFlow/GameFlowOrchestrator.cs",
+      "line": 1158,
+      "content": ": (view == null || string.IsNullOrWhiteSpace(view.DefeatMessage) ? \"失败\" : view.DefeatMessage);",
+      "strings": [
+        "失败"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/GameFlow/GameFlowOrchestrator.cs",
+      "line": 1178,
+      "content": "? \"[GameFlow] 整局胜利，展示结算面板后回主菜单。\"",
+      "strings": [
+        "[GameFlow] 整局胜利，展示结算面板后回主菜单。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/GameFlow/GameFlowOrchestrator.cs",
+      "line": 1179,
+      "content": ": \"[GameFlow] 战斗失败，展示结算面板后回主菜单。\");",
+      "strings": [
+        "[GameFlow] 战斗失败，展示结算面板后回主菜单。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/GameFlow/GameFlowOrchestrator.cs",
+      "line": 1301,
+      "content": "$\"[GameFlow] 快速测试改血失败：目标 {GameFlowShellSystem.QuickTestAvatarHp}，请确认 Avatar 已入场。\");",
+      "strings": [
+        "[GameFlow] 快速测试改血失败：目标 {GameFlowShellSystem.QuickTestAvatarHp}，请确认 Avatar 已入场。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/GameFlow/GameFlowOrchestrator.cs",
+      "line": 1307,
+      "content": "$\"[GameFlow] 快速测试改攻失败：目标 {GameFlowShellSystem.QuickTestAvatarAttack}，请确认 Avatar 已入场。\");",
+      "strings": [
+        "[GameFlow] 快速测试改攻失败：目标 {GameFlowShellSystem.QuickTestAvatarAttack}，请确认 Avatar 已入场。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/GameFlow/GameFlowOrchestrator.cs",
+      "line": 1328,
+      "content": "\"[GameFlow] 快速测试挂技能：场上无怪物宿主，skillIds=\" + skillIds.Count);",
+      "strings": [
+        "[GameFlow] 快速测试挂技能：场上无怪物宿主，skillIds="
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/GameFlow/GameFlowOrchestrator.cs",
+      "line": 1339,
+      "content": "var note = \"快速测试：全局速度x1，玩家HP99/ATK5每关重置，节点顺序\"",
+      "strings": [
+        "快速测试：全局速度x1，玩家HP99/ATK5每关重置，节点顺序"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/GameFlow/GameFlowOrchestrator.cs",
+      "line": 1340,
+      "content": "+ (orderMode == QuickTestNodeOrderMode.Sequential ? \"正式\" : \"乱序\");",
+      "strings": [
+        "正式",
+        "乱序"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/GameFlow/GameFlowOrchestrator.cs",
+      "line": 1343,
+      "content": "note += \"，首关固定牌组=\" + pinnedFirstBattleDeckId;",
+      "strings": [
+        "，首关固定牌组="
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/GameFlow/GameFlowOrchestrator.cs",
+      "line": 1348,
+      "content": "note += \"，技能=\" + string.Join(\",\", skillIds);",
+      "strings": [
+        "，技能="
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/GameFlow/GameFlowOrchestrator.cs",
+      "line": 1361,
+      "content": "return \"，技能 \" + string.Join(\",\", skillIds);",
+      "strings": [
+        "，技能 "
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/GameFlow/GameFlowOrchestrator.cs",
+      "line": 1407,
+      "content": "\"[GameFlow] 读档恢复后 StartNode 仍非法 phase=\" + phase.CurrentPhase + \"，走常规兜底。\");",
+      "strings": [
+        "[GameFlow] 读档恢复后 StartNode 仍非法 phase=",
+        "，走常规兜底。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/GameFlow/RunSave/RunSaveService.cs",
+      "line": 51,
+      "content": "$\"[RunSave] 检查点已捕获 层{sCheckpoint.floor} 节点{sCheckpoint.DisplayNode}\"",
+      "strings": [
+        "[RunSave] 检查点已捕获 层{sCheckpoint.floor} 节点{sCheckpoint.DisplayNode}"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/GameFlow/RunSave/RunSaveService.cs",
+      "line": 52,
+      "content": "+ $\"（全局{shellGlobalNodeIndex}）并写入自动存档。\");",
+      "strings": [
+        "（全局{shellGlobalNodeIndex}）并写入自动存档。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/GameFlow/RunSave/RunSaveService.cs",
+      "line": 112,
+      "content": "$\"[RunSave] 槽位 {slotId} 版本不兼容（{parsed?.version.ToString() ?? \"null\"}），忽略。\");",
+      "strings": [
+        "[RunSave] 槽位 {slotId} 版本不兼容（{parsed?.version.ToString() ?? ",
+        "}），忽略。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/GameFlow/RunSave/RunSaveService.cs",
+      "line": 172,
+      "content": "$\"[RunSave] 读档开始 层{snapshot.floor} 节点{snapshot.DisplayNode}\"",
+      "strings": [
+        "[RunSave] 读档开始 层{snapshot.floor} 节点{snapshot.DisplayNode}"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/GameFlow/RunSave/RunSaveService.cs",
+      "line": 191,
+      "content": "throw new InvalidOperationException(\"存档后端未注册（Easy Save 3 桥缺失）。\");",
+      "strings": [
+        "存档后端未注册（Easy Save 3 桥缺失）。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/GameFlow/RunSave/RunSaveStore.cs",
+      "line": 45,
+      "content": "\"[RunSave] 存档后端未注册：Easy Save 3 桥（NineGrid.SaveBridge）缺失，存读档不可用。\");",
+      "strings": [
+        "[RunSave] 存档后端未注册：Easy Save 3 桥（NineGrid.SaveBridge）缺失，存读档不可用。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/GameFlowController.cs",
+      "line": 53,
+      "content": "[SerializeField] private string victoryMessage = \"胜利\";",
+      "strings": [
+        "胜利"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/GameFlowController.cs",
+      "line": 56,
+      "content": "[SerializeField] private string defeatMessage = \"失败\";",
+      "strings": [
+        "失败"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/GameFlowController.cs",
+      "line": 239,
+      "content": "\"主菜单开始游戏确认\",",
+      "strings": [
+        "主菜单开始游戏确认"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/GameFlowShellHook.cs",
+      "line": 25,
+      "content": "[Obsolete(\"GameFlow 权威已迁入 System；请使用 SetGameFlowShellStateCommand。\")]",
+      "strings": [
+        "GameFlow 权威已迁入 System；请使用 SetGameFlowShellStateCommand。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/HelpCardBoardSelectResolver.cs",
+      "line": 121,
+      "content": "prompt = \"选择两张卡牌互换位置\";",
+      "strings": [
+        "选择两张卡牌互换位置"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/HelpCardBoardSelectResolver.cs",
+      "line": 127,
+      "content": "prompt = $\"选择{spec.Count}张卡牌\";",
+      "strings": [
+        "选择{spec.Count}张卡牌"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/HelpCardBoardSelectResolver.cs",
+      "line": 381,
+      "content": "const string usePrefix = \"[使用时]\";",
+      "strings": [
+        "[使用时]"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/HelpCardBoardSelectResolver.cs",
+      "line": 388,
+      "content": "if (text.StartsWith(\"选择\", StringComparison.Ordinal))",
+      "strings": [
+        "选择"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/HelpCardBoardSelectResolver.cs",
+      "line": 393,
+      "content": "if (text.StartsWith(\"对\", StringComparison.Ordinal))",
+      "strings": [
+        "对"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/HelpCardBoardSelectResolver.cs",
+      "line": 395,
+      "content": "return \"请\" + text;",
+      "strings": [
+        "请"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/PlayerInfoHudPresenter.cs",
+      "line": 53,
+      "content": "[Header(\"根与文本\")]",
+      "strings": [
+        "根与文本"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/PlayerInfoHudPresenter.cs",
+      "line": 78,
+      "content": "[Header(\"血槽血管\")]",
+      "strings": [
+        "血槽血管"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/PlayerInfoHudPresenter.cs",
+      "line": 430,
+      "content": "armorText = FindTmp(armorRoot, \"数值\");",
+      "strings": [
+        "数值"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/PointerHitRouter.cs",
+      "line": 284,
+      "content": "\"[PointerHitRouter] 表面优先级同分（装配错误）：sort=\"",
+      "strings": [
+        "[PointerHitRouter] 表面优先级同分（装配错误）：sort="
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/Presentation/AudioCue.cs",
+      "line": 404,
+      "content": "\"可见效果触发\",",
+      "strings": [
+        "可见效果触发"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/Presentation/AudioCue.cs",
+      "line": 412,
+      "content": "\"怪物技能触发\",",
+      "strings": [
+        "怪物技能触发"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/Presentation/AudioCue.cs",
+      "line": 420,
+      "content": "\"机关触发\",",
+      "strings": [
+        "机关触发"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/Presentation/AudioCue.cs",
+      "line": 428,
+      "content": "\"遗物触发\",",
+      "strings": [
+        "遗物触发"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/Presentation/AudioCue.cs",
+      "line": 436,
+      "content": "\"攻击蓄力可取消预备\",",
+      "strings": [
+        "攻击蓄力可取消预备"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/Presentation/AvatarWalkRunner.cs",
+      "line": 127,
+      "content": "$\"[AvatarWalk] 无路径 from={from.Index} to={mDesiredSlot}，取消欲望。\");",
+      "strings": [
+        "[AvatarWalk] 无路径 from={from.Index} to={mDesiredSlot}，取消欲望。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/Presentation/AvatarWalkRunner.cs",
+      "line": 136,
+      "content": "$\"[AvatarWalk] MoveAvatar 被拒 from={from.Index} next={next.Index}\"",
+      "strings": [
+        "[AvatarWalk] MoveAvatar 被拒 from={from.Index} next={next.Index}"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/Presentation/BattleVfxCues.cs",
+      "line": 125,
+      "content": "\"可见效果触发蓝色星爆\",",
+      "strings": [
+        "可见效果触发蓝色星爆"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/Presentation/BattleVfxCues.cs",
+      "line": 133,
+      "content": "\"怪物技能触发紫电爆发\",",
+      "strings": [
+        "怪物技能触发紫电爆发"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/Presentation/BattleVfxCues.cs",
+      "line": 141,
+      "content": "\"机关触发金色火花\",",
+      "strings": [
+        "机关触发金色火花"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/Presentation/BattleVfxCues.cs",
+      "line": 149,
+      "content": "\"遗物触发星光闪烁\",",
+      "strings": [
+        "遗物触发星光闪烁"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/Presentation/CardFaceStatHandler.cs",
+      "line": 219,
+      "content": "\"[CardFaceStatHandler] ModifyBaseStat 找不到卡面 uid=\"",
+      "strings": [
+        "[CardFaceStatHandler] ModifyBaseStat 找不到卡面 uid="
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/Presentation/CardFaceStatHandler.cs",
+      "line": 261,
+      "content": "\"[CardFaceStatHandler] \" + op + \" 找不到卡面 uid=\"",
+      "strings": [
+        " 找不到卡面 uid="
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/Presentation/CardFaceStatHandler.cs",
+      "line": 272,
+      "content": "\"[CardFaceStatHandler] \" + op + \" 卡面无 View uid=\"",
+      "strings": [
+        " 卡面无 View uid="
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/Presentation/ProjectileVfxCues.cs",
+      "line": 20,
+      "content": "\"攻击弹道：攻击者飞向受击者的伤害轨迹\",",
+      "strings": [
+        "攻击弹道：攻击者飞向受击者的伤害轨迹"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/Presentation/ProjectileVfxCues.cs",
+      "line": 28,
+      "content": "\"效果伤害弹道：效果源卡飞向目标\",",
+      "strings": [
+        "效果伤害弹道：效果源卡飞向目标"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/Presentation/ProjectileVfxCues.cs",
+      "line": 36,
+      "content": "\"怪物技能弹道：技能宿主飞向目标\",",
+      "strings": [
+        "怪物技能弹道：技能宿主飞向目标"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/Presentation/ProjectileVfxCues.cs",
+      "line": 44,
+      "content": "\"机关弹道：机关飞向目标\",",
+      "strings": [
+        "机关弹道：机关飞向目标"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/Presentation/ProjectileVfxCues.cs",
+      "line": 52,
+      "content": "\"遗物弹道：遗物触发飞向目标\",",
+      "strings": [
+        "遗物弹道：遗物触发飞向目标"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/RewardBoard/RewardBoardPresenter.cs",
+      "line": 478,
+      "content": "ShowNotice(\"奖励房输入未接线\");",
+      "strings": [
+        "奖励房输入未接线"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/ShopBoard/ShopBoardPresenter.cs",
+      "line": 323,
+      "content": "\"刷新货架\",",
+      "strings": [
+        "刷新货架"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/ShopBoard/ShopBoardPresenter.cs",
+      "line": 604,
+      "content": "var tip = BoardBriefTipCopy.ForOptionOrShelf(\"刷新货架\", refreshPrice);",
+      "strings": [
+        "刷新货架"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/ShopBoard/ShopBoardPresenter.cs",
+      "line": 764,
+      "content": "ShowNotice(\"商店输入未接线\");",
+      "strings": [
+        "商店输入未接线"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/ShopBoard/ShopBoardPresenter.cs",
+      "line": 791,
+      "content": "ShowNotice(\"金币不足\");",
+      "strings": [
+        "金币不足"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/ShopBoard/ShopBoardPresenter.cs",
+      "line": 880,
+      "content": "ShowNotice(\"金币不足\");",
+      "strings": [
+        "金币不足"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/TavernBoard/TavernBoardPresenter.cs",
+      "line": 29,
+      "content": "public const string CancelNestedTip = \"取消选择\";",
+      "strings": [
+        "取消选择"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/TavernBoard/TavernBoardPresenter.cs",
+      "line": 405,
+      "content": "\"刷新货架\",",
+      "strings": [
+        "刷新货架"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/TavernBoard/TavernBoardPresenter.cs",
+      "line": 729,
+      "content": "var tip = BoardBriefTipCopy.ForOptionOrShelf(\"刷新货架\", refreshPrice);",
+      "strings": [
+        "刷新货架"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/TavernBoard/TavernBoardPresenter.cs",
+      "line": 906,
+      "content": "ShowNotice(\"卡店输入未接线\");",
+      "strings": [
+        "卡店输入未接线"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/TavernBoard/TavernBoardPresenter.cs",
+      "line": 931,
+      "content": "ShowNotice(\"金币不足\");",
+      "strings": [
+        "金币不足"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/TavernBoard/TavernBoardPresenter.cs",
+      "line": 935,
+      "content": "ShowNotice(\"暂无可固定的道具卡\");",
+      "strings": [
+        "暂无可固定的道具卡"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/TavernBoard/TavernBoardPresenter.cs",
+      "line": 939,
+      "content": "ShowNotice(\"塞卡预算已满\");",
+      "strings": [
+        "塞卡预算已满"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/TavernBoard/TavernBoardPresenter.cs",
+      "line": 1153,
+      "content": "ShowNotice(\"金币不足\");",
+      "strings": [
+        "金币不足"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/Transitions/RunSceneTransitionSettingsSO.cs",
+      "line": 18,
+      "content": "[Header(\"总控\")]",
+      "strings": [
+        "总控"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/Transitions/RunSceneTransitionSettingsSO.cs",
+      "line": 26,
+      "content": "[Header(\"Directional（同层节点）\")]",
+      "strings": [
+        "Directional（同层节点）"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/Transitions/RunSceneTransitionSettingsSO.cs",
+      "line": 34,
+      "content": "[Header(\"Round（跨层）\")]",
+      "strings": [
+        "Round（跨层）"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/Tutorial/TutorialBattleDirector.cs",
+      "line": 243,
+      "content": "$\"[Tutorial] 第{mWave}波就位：教学卡 {mWaveUids.Count} 张\"",
+      "strings": [
+        "[Tutorial] 第{mWave}波就位：教学卡 {mWaveUids.Count} 张"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/Tutorial/TutorialBattleDirector.cs",
+      "line": 244,
+      "content": "+ (mMonsterUid > 0 ? $\" 怪物#{mMonsterUid}\" : string.Empty)",
+      "strings": [
+        " 怪物#{mMonsterUid}"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/Tutorial/TutorialBattleDirector.cs",
+      "line": 245,
+      "content": "+ (mKnifeUid > 0 ? $\" 飞刀#{mKnifeUid}\" : string.Empty)",
+      "strings": [
+        " 飞刀#{mKnifeUid}"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/Tutorial/TutorialBattleDirector.cs",
+      "line": 246,
+      "content": "+ (mPotionUid > 0 ? $\" 药水#{mPotionUid}\" : string.Empty));",
+      "strings": [
+        " 药水#{mPotionUid}"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/UITestBootstrap.cs",
+      "line": 14,
+      "content": "[Header(\"快捷面板引用（留空则从同 GameObject 自动查找）\")]",
+      "strings": [
+        "快捷面板引用（留空则从同 GameObject 自动查找）"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/UITestBootstrap.cs",
+      "line": 17,
+      "content": "[Header(\"灵动形态选择测试（留空则从同 GameObject 自动查找 IUITestKeyConsumer）\")]",
+      "strings": [
+        "灵动形态选择测试（留空则从同 GameObject 自动查找 IUITestKeyConsumer）"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/UITestBootstrap.cs",
+      "line": 62,
+      "content": "[ContextMenu(\"1. 切换 主菜单/局内\")]",
+      "strings": [
+        "1. 切换 主菜单/局内"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/UITestBootstrap.cs",
+      "line": 79,
+      "content": "[ContextMenu(\"2. 切换 奖励面板叠层\")]",
+      "strings": [
+        "2. 切换 奖励面板叠层"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/UITestBootstrap.cs",
+      "line": 96,
+      "content": "[ContextMenu(\"4. 切换 房间事件叠层\")]",
+      "strings": [
+        "4. 切换 房间事件叠层"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/UITestBootstrap.cs",
+      "line": 113,
+      "content": "[ContextMenu(\"5. 切换 Info 弹层\")]",
+      "strings": [
+        "5. 切换 Info 弹层"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/UITestBootstrap.cs",
+      "line": 124,
+      "content": "[ContextMenu(\"6. 切换 MainBG\")]",
+      "strings": [
+        "6. 切换 MainBG"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/UITestBootstrap.cs",
+      "line": 136,
+      "content": "[ContextMenu(\"0. 输出面板状态\")]",
+      "strings": [
+        "0. 输出面板状态"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/UITestBootstrap.cs",
+      "line": 151,
+      "content": "var state = go == null ? \"null\" : go.activeSelf ? \"显示\" : \"隐藏\";",
+      "strings": [
+        "显示",
+        "隐藏"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Platform/WindowsHangWatchdog.cs",
+      "line": 119,
+      "content": "\"[WindowsHangWatchdog] 已启动：主线程停滞 >\" + (mDumpThresholdMs / 1000)",
+      "strings": [
+        "[WindowsHangWatchdog] 已启动：主线程停滞 >"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Platform/WindowsHangWatchdog.cs",
+      "line": 120,
+      "content": "+ \"s 将写报告与 minidump 到 \" + mReportDir);",
+      "strings": [
+        "s 将写报告与 minidump 到 "
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Platform/WindowsHangWatchdog.cs",
+      "line": 269,
+      "content": "report.AppendLine(\"[NineGrid HangWatchdog] 检测到主线程卡死\");",
+      "strings": [
+        "[NineGrid HangWatchdog] 检测到主线程卡死"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Platform/WindowsHangWatchdog.cs",
+      "line": 277,
+      "content": "report.AppendLine(\"Player.log 同目录上级：%USERPROFILE%\\\\AppData\\\\LocalLow\\\\\"",
+      "strings": [
+        "Player.log 同目录上级：%USERPROFILE%\\\\AppData\\\\LocalLow\\\\"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Platform/WindowsHangWatchdog.cs",
+      "line": 279,
+      "content": "report.AppendLine(\"dump 可用 Visual Studio / WinDbg 打开，看 Main Thread 卡在哪个调用栈。\");",
+      "strings": [
+        "dump 可用 Visual Studio / WinDbg 打开，看 Main Thread 卡在哪个调用栈。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Platform/WindowsHangWatchdog.cs",
+      "line": 355,
+      "content": "+ \"] 主线程停滞约 \" + stallMaxMs + \" ms 后恢复\"",
+      "strings": [
+        "] 主线程停滞约 ",
+        " ms 后恢复"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Platform/WindowsHangWatchdog.cs",
+      "line": 356,
+      "content": "+ \"（frame \" + frame + \", scene \" + scene + (dumped ? \", 已写 dump\" : string.Empty)",
+      "strings": [
+        ", 已写 dump"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Systems/AudioDiagnosticsService.cs",
+      "line": 199,
+      "content": "? \"Sfx 来源在导演空闲时连续多秒仍在播放。\"",
+      "strings": [
+        "Sfx 来源在导演空闲时连续多秒仍在播放。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Systems/AudioDiagnosticsService.cs",
+      "line": 200,
+      "content": ": \"Sfx 来源开启 loop 并持续多秒播放。\";",
+      "strings": [
+        "Sfx 来源开启 loop 并持续多秒播放。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Systems/AudioDiagnosticsTicker.cs",
+      "line": 51,
+      "content": "mService.AuditSfxTrack(\"LowFrequency巡检\");",
+      "strings": [
+        "LowFrequency巡检"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Systems/AudioSystem.cs",
+      "line": 422,
+      "content": "return PreviewFailure(\"声音绑定缺少有效素材。\");",
+      "strings": [
+        "声音绑定缺少有效素材。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Systems/AudioSystem.cs",
+      "line": 691,
+      "content": "? \"cue ID 为空。\"",
+      "strings": [
+        "cue ID 为空。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Systems/AudioSystem.cs",
+      "line": 692,
+      "content": ": \"声音绑定不存在。\");",
+      "strings": [
+        "声音绑定不存在。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Systems/AudioSystem.cs",
+      "line": 703,
+      "content": "return RecordUnbound(request, \"声音绑定缺少有效素材。\");",
+      "strings": [
+        "声音绑定缺少有效素材。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Systems/AudioSystem.cs",
+      "line": 1101,
+      "content": "[\"reason\"] = \"同一 cue 在短窗口内高频播放。\",",
+      "strings": [
+        "同一 cue 在短窗口内高频播放。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Systems/AudioSystem.cs",
+      "line": 1421,
+      "content": "return AudioBackendResult.Failure(\"音频播放 Adapter 未安装。\");",
+      "strings": [
+        "音频播放 Adapter 未安装。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Systems/BattleSessionSystem.cs",
+      "line": 287,
+      "content": "throw new InvalidOperationException(\"NineGridArchitecture 未就绪，无法注册 BattleSessionSystem。\");",
+      "strings": [
+        "NineGridArchitecture 未就绪，无法注册 BattleSessionSystem。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Systems/GameFlowShellSystem.cs",
+      "line": 333,
+      "content": "$\"[GameFlow] 快速测试节点队列已耗尽，回退顺序节点 {mNodeIndex}。\");",
+      "strings": [
+        "[GameFlow] 快速测试节点队列已耗尽，回退顺序节点 {mNodeIndex}。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Systems/MMSoundManagerAudioPlaybackAdapter.cs",
+      "line": 40,
+      "content": "return AudioBackendResult.Failure(\"正式音频 manifest 未登记素材键：\" + resourcesKey);",
+      "strings": [
+        "正式音频 manifest 未登记素材键："
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Systems/MMSoundManagerAudioPlaybackAdapter.cs",
+      "line": 46,
+      "content": "return AudioBackendResult.Failure(\"Resources 音频素材不存在：\" + resourcesKey);",
+      "strings": [
+        "Resources 音频素材不存在："
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Systems/MMSoundManagerAudioPlaybackAdapter.cs",
+      "line": 52,
+      "content": "return AudioBackendResult.Failure(\"MMSoundManager 未就绪：\" + resourcesKey);",
+      "strings": [
+        "MMSoundManager 未就绪："
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Systems/MMSoundManagerAudioPlaybackAdapter.cs",
+      "line": 65,
+      "content": "return AudioBackendResult.Failure(\"MMSoundManager Sfx 播放失败：\" + resourcesKey);",
+      "strings": [
+        "MMSoundManager Sfx 播放失败："
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Systems/MMSoundManagerAudioPlaybackAdapter.cs",
+      "line": 77,
+      "content": "return MusicBackendResult.Failure(\"音乐绑定为空。\");",
+      "strings": [
+        "音乐绑定为空。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Systems/MMSoundManagerAudioPlaybackAdapter.cs",
+      "line": 89,
+      "content": "return MusicBackendResult.Failure(\"MMSoundManager 未就绪：\" + resourcesKey);",
+      "strings": [
+        "MMSoundManager 未就绪："
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Systems/MMSoundManagerAudioPlaybackAdapter.cs",
+      "line": 109,
+      "content": "return MusicBackendResult.Failure(\"MMSoundManager Music 播放失败：\" + resourcesKey);",
+      "strings": [
+        "MMSoundManager Music 播放失败："
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Systems/MMSoundManagerAudioPlaybackAdapter.cs",
+      "line": 198,
+      "content": "return MusicBackendResult.Failure(\"MMSoundManager 未就绪：\" + resourcesKey);",
+      "strings": [
+        "MMSoundManager 未就绪："
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Systems/MMSoundManagerAudioPlaybackAdapter.cs",
+      "line": 218,
+      "content": "return MusicBackendResult.Failure(\"MMSoundManager Music Preview 播放失败：\" + resourcesKey);",
+      "strings": [
+        "MMSoundManager Music Preview 播放失败："
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Systems/MMSoundManagerAudioPlaybackAdapter.cs",
+      "line": 566,
+      "content": "failureReason = \"正式音频 manifest 未登记 BGM 素材键：\" + resourcesKey;",
+      "strings": [
+        "正式音频 manifest 未登记 BGM 素材键："
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Systems/MMSoundManagerAudioPlaybackAdapter.cs",
+      "line": 573,
+      "content": "failureReason = \"Resources BGM 素材不存在：\" + resourcesKey;",
+      "strings": [
+        "Resources BGM 素材不存在："
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Systems/MMSoundManagerAudioPlaybackAdapter.cs",
+      "line": 588,
+      "content": "failureReason = \"正式音频 manifest 未登记 BGM 素材键：\" + resourcesKey;",
+      "strings": [
+        "正式音频 manifest 未登记 BGM 素材键："
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Systems/MMSoundManagerAudioPlaybackAdapter.cs",
+      "line": 595,
+      "content": "failureReason = \"Resources BGM 素材不存在：\" + resourcesKey;",
+      "strings": [
+        "Resources BGM 素材不存在："
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Systems/MusicDiagnosticsTicker.cs",
+      "line": 51,
+      "content": "musicSystem.AuditMusicTrack(\"LowFrequency巡检\");",
+      "strings": [
+        "LowFrequency巡检"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Systems/MusicSystem.cs",
+      "line": 325,
+      "content": "EndPreview(\"音乐状态切换\");",
+      "strings": [
+        "音乐状态切换"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Systems/MusicSystem.cs",
+      "line": 352,
+      "content": "reason: \"音乐状态请求必须带稳定 source。\",",
+      "strings": [
+        "音乐状态请求必须带稳定 source。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Systems/MusicSystem.cs",
+      "line": 368,
+      "content": "reason: \"音乐状态未绑定、已禁用或缺少素材。\",",
+      "strings": [
+        "音乐状态未绑定、已禁用或缺少素材。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Systems/MusicSystem.cs",
+      "line": 387,
+      "content": "reason: \"状态或解析结果仍为当前音乐。\",",
+      "strings": [
+        "状态或解析结果仍为当前音乐。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Systems/MusicSystem.cs",
+      "line": 396,
+      "content": "ReleaseRetiringSource(request, \"新音乐状态到来\");",
+      "strings": [
+        "新音乐状态到来"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Systems/MusicSystem.cs",
+      "line": 503,
+      "content": "return PreviewFailure(request.ClipKey, \"当前播放 Adapter 不支持 Editor Preview。\");",
+      "strings": [
+        "当前播放 Adapter 不支持 Editor Preview。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Systems/MusicSystem.cs",
+      "line": 508,
+      "content": "return PreviewFailure(request.ClipKey, \"试听素材为空。\");",
+      "strings": [
+        "试听素材为空。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Systems/MusicSystem.cs",
+      "line": 513,
+      "content": "StopPreviewSource(MusicHistoryOutcome.PreviewReplaced, \"切换 Editor Preview\");",
+      "strings": [
+        "切换 Editor Preview"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Systems/MusicSystem.cs",
+      "line": 575,
+      "content": "string.IsNullOrWhiteSpace(stableSource) ? \"Editor Preview 结束\" : stableSource);",
+      "strings": [
+        "Editor Preview 结束"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Systems/MusicSystem.cs",
+      "line": 619,
+      "content": "\"Music 轨巡检失败：\" + exception.Message,",
+      "strings": [
+        "Music 轨巡检失败："
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Systems/MusicSystem.cs",
+      "line": 675,
+      "content": "\"未知 Music 来源：\" + unknown.Count.ToString(CultureInfo.InvariantCulture),",
+      "strings": [
+        "未知 Music 来源："
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Systems/MusicSystem.cs",
+      "line": 945,
+      "content": "\"旧代数回调被忽略；currentGeneration=\"",
+      "strings": [
+        "旧代数回调被忽略；currentGeneration="
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Systems/MusicSystem.cs",
+      "line": 1107,
+      "content": "Reason = reason ?? \"音乐试听失败。\",",
+      "strings": [
+        "音乐试听失败。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Systems/MusicSystem.cs",
+      "line": 1319,
+      "content": "return MusicBackendResult.Failure(\"音乐播放 Adapter 未安装。\");",
+      "strings": [
+        "音乐播放 Adapter 未安装。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Systems/Vfx/VfxGoldFlightPlayer.cs",
+      "line": 66,
+      "content": "return VfxPlayerStartResult.Failure(\"金币 HUD 视觉域宿主不可用。\");",
+      "strings": [
+        "金币 HUD 视觉域宿主不可用。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Systems/Vfx/VfxGoldFlightPlayerFactory.cs",
+      "line": 15,
+      "content": "failureReason = \"非 gold-flight 播放器。\";",
+      "strings": [
+        "非 gold-flight 播放器。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Systems/Vfx/VfxGoldFlightPlayerFactory.cs",
+      "line": 26,
+      "content": "failureReason = \"gold-flight 不支持 State。\";",
+      "strings": [
+        "gold-flight 不支持 State。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Systems/Vfx/VfxParticleEmitterRig.cs",
+      "line": 469,
+      "content": "failureReason = \"视觉域宿主缺少附着父级。\";",
+      "strings": [
+        "视觉域宿主缺少附着父级。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Systems/Vfx/VfxParticlePlayerFactory.cs",
+      "line": 15,
+      "content": "failureReason = \"非 particle 播放器。\";",
+      "strings": [
+        "非 particle 播放器。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Systems/Vfx/VfxParticlePlayerFactory.cs",
+      "line": 29,
+      "content": "failureReason = \"非 particle 播放器。\";",
+      "strings": [
+        "非 particle 播放器。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Systems/Vfx/VfxParticlePresetLibrary.cs",
+      "line": 139,
+      "content": "Note = \"通用命中火花：白金星芒径向迸射，快出快收，任何打击命中都能叠。\",",
+      "strings": [
+        "通用命中火花：白金星芒径向迸射，快出快收，任何打击命中都能叠。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Systems/Vfx/VfxParticlePresetLibrary.cs",
+      "line": 158,
+      "content": "Note = \"血量受伤红色像素碎屑：向上喷溅后重力下坠，与血伤飘字同色系。\",",
+      "strings": [
+        "血量受伤红色像素碎屑：向上喷溅后重力下坠，与血伤飘字同色系。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Systems/Vfx/VfxParticlePresetLibrary.cs",
+      "line": 178,
+      "content": "Note = \"护甲吸收青灰碎片：斜向溅出翻滚下坠，表达「甲挡住了」的碎裂感。\",",
+      "strings": [
+        "护甲吸收青灰碎片：斜向溅出翻滚下坠，表达「甲挡住了」的碎裂感。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Systems/Vfx/VfxParticlePresetLibrary.cs",
+      "line": 199,
+      "content": "Note = \"完全格挡白色短促火星：从格挡点环缘弹开，硬质金属感。\",",
+      "strings": [
+        "完全格挡白色短促火星：从格挡点环缘弹开，硬质金属感。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Systems/Vfx/VfxParticlePresetLibrary.cs",
+      "line": 218,
+      "content": "Note = \"治疗绿色光尘：从卡底浮起缓慢上升渐隐，柔和不抢戏。\",",
+      "strings": [
+        "治疗绿色光尘：从卡底浮起缓慢上升渐隐，柔和不抢戏。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Systems/Vfx/VfxParticlePresetLibrary.cs",
+      "line": 239,
+      "content": "Note = \"获得护甲蓝色光点：自下而上收拢升起，像镀上一层新甲。\",",
+      "strings": [
+        "获得护甲蓝色光点：自下而上收拢升起，像镀上一层新甲。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Systems/Vfx/VfxParticlePresetLibrary.cs",
+      "line": 260,
+      "content": "Note = \"死亡烟尘：灰黑软团缓涨缓散微上飘，衬托单位消失。\",",
+      "strings": [
+        "死亡烟尘：灰黑软团缓涨缓散微上飘，衬托单位消失。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Systems/Vfx/VfxParticlePresetLibrary.cs",
+      "line": 281,
+      "content": "Note = \"骨白碎屑：迸出翻滚下坠；骷髅系死亡/碎裂时叠在烟尘上。\",",
+      "strings": [
+        "骨白碎屑：迸出翻滚下坠；骷髅系死亡/碎裂时叠在烟尘上。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Systems/Vfx/VfxParticlePresetLibrary.cs",
+      "line": 304,
+      "content": "Note = \"卡牌退场轻尘：几缕灰白软点上飘，比精灵表轻烟更便宜的替代/叠加。\",",
+      "strings": [
+        "卡牌退场轻尘：几缕灰白软点上飘，比精灵表轻烟更便宜的替代/叠加。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Systems/Vfx/VfxParticlePresetLibrary.cs",
+      "line": 324,
+      "content": "Note = \"道具使用金色光爆：星芒短促炸开，强调「用掉了一张卡」。\",",
+      "strings": [
+        "道具使用金色光爆：星芒短促炸开，强调「用掉了一张卡」。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Systems/Vfx/VfxParticlePresetLibrary.cs",
+      "line": 343,
+      "content": "Note = \"翻面星尘：沿卡面竖带浮出白青闪点，提示信息翻转。\",",
+      "strings": [
+        "翻面星尘：沿卡面竖带浮出白青闪点，提示信息翻转。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Systems/Vfx/VfxParticlePresetLibrary.cs",
+      "line": 363,
+      "content": "Note = \"金色闪光爆点：拾金/赏金瞬间的星光，可与 gold-flight 飞币叠加。\",",
+      "strings": [
+        "金色闪光爆点：拾金/赏金瞬间的星光，可与 gold-flight 飞币叠加。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Systems/Vfx/VfxParticlePresetLibrary.cs",
+      "line": 384,
+      "content": "Note = \"效果触发符能环：单圈蓝紫冲击波展开消散，通用「有东西生效了」。\",",
+      "strings": [
+        "效果触发符能环：单圈蓝紫冲击波展开消散，通用「有东西生效了」。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Systems/Vfx/VfxParticlePresetLibrary.cs",
+      "line": 401,
+      "content": "Note = \"怪物技能紫电碎闪：噪声抖动的紫白星芒，凶一点的能量感。\",",
+      "strings": [
+        "怪物技能紫电碎闪：噪声抖动的紫白星芒，凶一点的能量感。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Systems/Vfx/VfxParticlePresetLibrary.cs",
+      "line": 422,
+      "content": "Note = \"机关触发金属火花：橙黄锥形上迸带重力，机械「咔哒」感。\",",
+      "strings": [
+        "机关触发金属火花：橙黄锥形上迸带重力，机械「咔哒」感。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Systems/Vfx/VfxParticlePresetLibrary.cs",
+      "line": 441,
+      "content": "Note = \"遗物触发星光缓闪：少量大星芒原地脉冲，安静的「被动生效」。\",",
+      "strings": [
+        "遗物触发星光缓闪：少量大星芒原地脉冲，安静的「被动生效」。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Systems/Vfx/VfxParticlePresetLibrary.cs",
+      "line": 462,
+      "content": "Note = \"火焰爆发：橙红光团上蹿快速烧尽；烈焰套/灼烧类效果的主击。\",",
+      "strings": [
+        "火焰爆发：橙红光团上蹿快速烧尽；烈焰套/灼烧类效果的主击。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Systems/Vfx/VfxParticlePresetLibrary.cs",
+      "line": 481,
+      "content": "Note = \"虚空爆散：暗紫烟点缓慢逸散微升；决斗套/暗系效果的低语感。\",",
+      "strings": [
+        "虚空爆散：暗紫烟点缓慢逸散微升；决斗套/暗系效果的低语感。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Systems/Vfx/VfxParticlePresetLibrary.cs",
+      "line": 502,
+      "content": "Note = \"召唤登场绿雾：黄绿斑点扑散；虫群套生成/入场的生物气息。\",",
+      "strings": [
+        "召唤登场绿雾：黄绿斑点扑散；虫群套生成/入场的生物气息。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Systems/Vfx/VfxParticlePresetLibrary.cs",
+      "line": 524,
+      "content": "Note = \"胜利彩纸：多彩像素纸屑自上方撒落翻滚飘摆，配 YOU WON。\",",
+      "strings": [
+        "胜利彩纸：多彩像素纸屑自上方撒落翻滚飘摆，配 YOU WON。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Systems/Vfx/VfxParticlePresetLibrary.cs",
+      "line": 556,
+      "content": "Note = \"战败余烬：暗红光点满场缓浮缓沉，压抑的收场氛围，配 GAME OVER。\",",
+      "strings": [
+        "战败余烬：暗红光点满场缓浮缓沉，压抑的收场氛围，配 GAME OVER。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Systems/Vfx/VfxParticlePresetLibrary.cs",
+      "line": 581,
+      "content": "Note = \"持续燃烧余烬：橙红火星不断升腾；灼烧/烈焰驻场状态。\",",
+      "strings": [
+        "持续燃烧余烬：橙红火星不断升腾；灼烧/烈焰驻场状态。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Systems/Vfx/VfxParticlePresetLibrary.cs",
+      "line": 602,
+      "content": "Note = \"治疗泉气泡光点：绿青光尘持续从底部涌起；治疗泉机关驻场。\",",
+      "strings": [
+        "治疗泉气泡光点：绿青光尘持续从底部涌起；治疗泉机关驻场。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Systems/Vfx/VfxParticlePresetLibrary.cs",
+      "line": 624,
+      "content": "Note = \"毒瘴气泡：黄绿浊雾缓浮带噪声漂移；中毒/瘴气类持续状态。\",",
+      "strings": [
+        "毒瘴气泡：黄绿浊雾缓浮带噪声漂移；中毒/瘴气类持续状态。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Systems/Vfx/VfxParticlePresetLibrary.cs",
+      "line": 647,
+      "content": "Note = \"稀有星光环：卡面范围金白星点偶发闪烁；精英/稀有/强化标记。\",",
+      "strings": [
+        "稀有星光环：卡面范围金白星点偶发闪烁；精英/稀有/强化标记。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Systems/Vfx/VfxParticlePresetLibrary.cs",
+      "line": 667,
+      "content": "Note = \"虚空紫幕：暗紫软点自环缘向心收拢；虚空/诅咒类持续状态。\",",
+      "strings": [
+        "虚空紫幕：暗紫软点自环缘向心收拢；虚空/诅咒类持续状态。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Systems/Vfx/VfxParticlePresetLibrary.cs",
+      "line": 687,
+      "content": "Note = \"环境浮尘：全场极淡光尘缓慢漂浮；氛围层，几乎不可察觉才是对的。\",",
+      "strings": [
+        "环境浮尘：全场极淡光尘缓慢漂浮；氛围层，几乎不可察觉才是对的。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Systems/Vfx/VfxParticlePulsePlayer.cs",
+      "line": 31,
+      "content": "return VfxPlayerStartResult.Failure(\"未知粒子预设：\" + request.MaterialKey);",
+      "strings": [
+        "未知粒子预设："
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Systems/Vfx/VfxParticlePulsePlayer.cs",
+      "line": 36,
+      "content": "return VfxPlayerStartResult.Failure(\"loop 预设仅供 State 绑定使用：\" + preset.Id);",
+      "strings": [
+        "loop 预设仅供 State 绑定使用："
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Systems/Vfx/VfxParticleStatePlayer.cs",
+      "line": 26,
+      "content": "return VfxPlayerStartResult.Failure(\"未知粒子预设：\" + request.MaterialKey);",
+      "strings": [
+        "未知粒子预设："
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Systems/Vfx/VfxParticleStatePlayer.cs",
+      "line": 31,
+      "content": "return VfxPlayerStartResult.Failure(\"一次性预设仅供 Pulse 绑定使用：\" + preset.Id);",
+      "strings": [
+        "一次性预设仅供 Pulse 绑定使用："
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Systems/Vfx/VfxProjectilePlayerFactory.cs",
+      "line": 15,
+      "content": "failureReason = \"非 projectile 播放器。\";",
+      "strings": [
+        "非 projectile 播放器。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Systems/Vfx/VfxProjectilePlayerFactory.cs",
+      "line": 26,
+      "content": "failureReason = \"projectile 播放器仅支持 Pulse。\";",
+      "strings": [
+        "projectile 播放器仅支持 Pulse。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Systems/Vfx/VfxProjectilePresetLibrary.cs",
+      "line": 173,
+      "content": "Note = \"蓝紫魔法飞弹：发光弹头微弧线加速飞向目标，光尘拖尾，星爆命中；通用效果伤害默认语言。\",",
+      "strings": [
+        "蓝紫魔法飞弹：发光弹头微弧线加速飞向目标，光尘拖尾，星爆命中；通用效果伤害默认语言。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Systems/Vfx/VfxProjectilePresetLibrary.cs",
+      "line": 206,
+      "content": "Note = \"飞刀直射：白亮拉伸弹头极速直线出手，稀疏碎屑尾，命中火花；物理攻击语言。\",",
+      "strings": [
+        "飞刀直射：白亮拉伸弹头极速直线出手，稀疏碎屑尾，命中火花；物理攻击语言。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Systems/Vfx/VfxProjectilePresetLibrary.cs",
+      "line": 234,
+      "content": "Note = \"火球：橙红光团低弧线压向目标，火星拖尾，火焰爆燃命中；烈焰主题主击。\",",
+      "strings": [
+        "火球：橙红光团低弧线压向目标，火星拖尾，火焰爆燃命中；烈焰主题主击。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Systems/Vfx/VfxProjectilePresetLibrary.cs",
+      "line": 270,
+      "content": "Note = \"虚空法球：暗紫球体高抛缓落俯冲，暗烟拖尾，虚空爆散命中；决斗/暗系主题。\",",
+      "strings": [
+        "虚空法球：暗紫球体高抛缓落俯冲，暗烟拖尾，虚空爆散命中；决斗/暗系主题。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Systems/Vfx/VfxProjectilePresetLibrary.cs",
+      "line": 305,
+      "content": "Note = \"电光急蹿：白青光点锯齿疾驰，电花拖尾，脆响火星命中；速攻/雷电语言。\",",
+      "strings": [
+        "电光急蹿：白青光点锯齿疾驰，电花拖尾，脆响火星命中；速攻/雷电语言。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Systems/Vfx/VfxProjectilePresetLibrary.cs",
+      "line": 338,
+      "content": "Note = \"骨刺三连：骨白碎片旋转齐射错峰命中，骨屑迸溅；骷髅主题（deck.skeleton_legion 等）。\",",
+      "strings": [
+        "骨刺三连：骨白碎片旋转齐射错峰命中，骨屑迸溅；骷髅主题（deck.skeleton_legion 等）。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Systems/Vfx/VfxProjectilePresetLibrary.cs",
+      "line": 372,
+      "content": "Note = \"毒液抛射：黄绿液团高抛坠向目标，沿途滴落，毒雾泼溅命中；虫群/中毒主题。\",",
+      "strings": [
+        "毒液抛射：黄绿液团高抛坠向目标，沿途滴落，毒雾泼溅命中；虫群/中毒主题。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Systems/Vfx/VfxProjectilePresetLibrary.cs",
+      "line": 404,
+      "content": "Note = \"金色流光：暖金光点柔和 S 线掠向目标，星尘拖尾，金光爆点；遗物/道具触发语言。\",",
+      "strings": [
+        "金色流光：暖金光点柔和 S 线掠向目标，星尘拖尾，金光爆点；遗物/道具触发语言。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Systems/Vfx/VfxProjectilePulsePlayer.cs",
+      "line": 37,
+      "content": "return VfxPlayerStartResult.Failure(\"未知弹道预设：\" + request.MaterialKey);",
+      "strings": [
+        "未知弹道预设："
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Systems/Vfx/VfxSpriteSheetPlayerFactory.cs",
+      "line": 25,
+      "content": "failureReason = \"非 sprite-sheet 播放器。\";",
+      "strings": [
+        "非 sprite-sheet 播放器。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Systems/Vfx/VfxSpriteSheetPlayerFactory.cs",
+      "line": 39,
+      "content": "failureReason = \"非 sprite-sheet 播放器。\";",
+      "strings": [
+        "非 sprite-sheet 播放器。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Systems/Vfx/VfxSpriteSheetPulsePlayer.cs",
+      "line": 41,
+      "content": "return VfxPlayerStartResult.Failure(\"精灵表帧为空。\");",
+      "strings": [
+        "精灵表帧为空。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Systems/Vfx/VfxSpriteSheetPulsePlayer.cs",
+      "line": 140,
+      "content": "failureReason = \"视觉域宿主缺少附着父级。\";",
+      "strings": [
+        "视觉域宿主缺少附着父级。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Systems/Vfx/VfxSpriteSheetStatePlayer.cs",
+      "line": 42,
+      "content": "return VfxPlayerStartResult.Failure(\"精灵表帧为空。\");",
+      "strings": [
+        "精灵表帧为空。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Systems/Vfx/VfxSpriteSheetStatePlayer.cs",
+      "line": 173,
+      "content": "failureReason = \"视觉域宿主缺少附着父级。\";",
+      "strings": [
+        "视觉域宿主缺少附着父级。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Systems/VfxSystem.cs",
+      "line": 812,
+      "content": "FailureReason = \"owner 为空。\",",
+      "strings": [
+        "owner 为空。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Systems/VfxSystem.cs",
+      "line": 821,
+      "content": "FailureReason = \"slot 为空。\",",
+      "strings": [
+        "slot 为空。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Systems/VfxSystem.cs",
+      "line": 861,
+      "content": "FailureReason = \"owner 或 slot 无效。\",",
+      "strings": [
+        "owner 或 slot 无效。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Systems/VfxSystem.cs",
+      "line": 870,
+      "content": "FailureReason = \"expectedState 为空。\",",
+      "strings": [
+        "expectedState 为空。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Systems/VfxSystem.cs",
+      "line": 949,
+      "content": "resolveError.Message ?? \"绑定解析歧义。\");",
+      "strings": [
+        "绑定解析歧义。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Systems/VfxSystem.cs",
+      "line": 953,
+      "content": "var reason = resolveError?.Message ?? \"视觉特效 cue 绑定不存在。\";",
+      "strings": [
+        "视觉特效 cue 绑定不存在。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Systems/VfxSystem.cs",
+      "line": 998,
+      "content": "return RecordPlayerUnavailable(request, correlationId, binding, \"播放器未注册或不支持 Pulse。\");",
+      "strings": [
+        "播放器未注册或不支持 Pulse。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Systems/VfxSystem.cs",
+      "line": 1252,
+      "content": "return RecordUnbound(request, correlationId, \"视觉特效绑定缺少有效素材或预设。\");",
+      "strings": [
+        "视觉特效绑定缺少有效素材或预设。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Systems/VfxSystem.cs",
+      "line": 1377,
+      "content": "failureReason = \"附着型特效缺少视觉域宿主。\";",
+      "strings": [
+        "附着型特效缺少视觉域宿主。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Systems/VfxSystem.cs",
+      "line": 1385,
+      "content": "failureReason = \"视觉域宿主无法解析。\";",
+      "strings": [
+        "视觉域宿主无法解析。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Systems/VfxSystem.cs",
+      "line": 1391,
+      "content": "failureReason = \"视觉域宿主不可用。\";",
+      "strings": [
+        "视觉域宿主不可用。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Systems/VfxSystem.cs",
+      "line": 1572,
+      "content": "resolveError.Message ?? \"绑定解析歧义。\");",
+      "strings": [
+        "绑定解析歧义。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Systems/VfxSystem.cs",
+      "line": 1576,
+      "content": "var reason = resolveError?.Message ?? \"持续视觉状态绑定不存在。\";",
+      "strings": [
+        "持续视觉状态绑定不存在。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Systems/VfxSystem.cs",
+      "line": 1622,
+      "content": "\"播放器未注册或不支持 State。\");",
+      "strings": [
+        "播放器未注册或不支持 State。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Systems/VfxSystem.cs",
+      "line": 1682,
+      "content": "return RecordStateUnbound(request, correlationId, \"视觉特效绑定缺少有效素材或预设。\");",
+      "strings": [
+        "视觉特效绑定缺少有效素材或预设。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Systems/VfxSystem.cs",
+      "line": 1866,
+      "content": "var reason = resolveError?.Message ?? \"绑定解析歧义。\";",
+      "strings": [
+        "绑定解析歧义。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Systems/VfxSystem.cs",
+      "line": 2051,
+      "content": "var reason = resolveError?.Message ?? \"绑定解析歧义。\";",
+      "strings": [
+        "绑定解析歧义。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Systems/VfxSystem.cs",
+      "line": 2547,
+      "content": "failureReason = \"播放器未注册。\";",
+      "strings": [
+        "播放器未注册。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Systems/VfxSystem.cs",
+      "line": 2571,
+      "content": "failureReason = \"播放器尚未实现。\";",
+      "strings": [
+        "播放器尚未实现。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Systems/VfxSystem.cs",
+      "line": 2581,
+      "content": "failureReason = \"播放器未注册或不支持 State。\";",
+      "strings": [
+        "播放器未注册或不支持 State。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Systems/VfxSystem.cs",
+      "line": 2595,
+      "content": "failureReason = \"播放器尚未实现。\";",
+      "strings": [
+        "播放器尚未实现。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Ui/CharacterSelectPanel.cs",
+      "line": 246,
+      "content": "ShowHint(\"该角色尚未解锁\");",
+      "strings": [
+        "该角色尚未解锁"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Ui/CharacterSelectPanel.cs",
+      "line": 271,
+      "content": "? $\"生命 {profession.MaxHp} · 攻击 {profession.Attack}\"",
+      "strings": [
+        "生命 {profession.MaxHp} · 攻击 {profession.Attack}"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Ui/CharacterSelectPanel.cs",
+      "line": 274,
+      "content": "var nameText = FindTmp(mWarriorSlot, \"名字文字\");",
+      "strings": [
+        "名字文字"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Ui/RunSaveLoadPanel.cs",
+      "line": 110,
+      "content": "\"[RunSave] 存档/读档模块结构不完整（UI槽位/条目模板缺失），面板不可用。\");",
+      "strings": [
+        "[RunSave] 存档/读档模块结构不完整（UI槽位/条目模板缺失），面板不可用。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Ui/RunSaveLoadPanel.cs",
+      "line": 161,
+      "content": "var label = has ? FormatEntry(existing) : \"空存档位 \" + slotIndex;",
+      "strings": [
+        "空存档位 "
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Ui/RunSaveLoadPanel.cs",
+      "line": 180,
+      "content": "hasAuto ? \"自动 \" + FormatEntry(auto) : \"自动存档（暂无）\",",
+      "strings": [
+        "自动 ",
+        "自动存档（暂无）"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Ui/RunSaveLoadPanel.cs",
+      "line": 192,
+      "content": "has ? FormatEntry(existing) : \"空存档位 \" + i,",
+      "strings": [
+        "空存档位 "
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Ui/RunSaveLoadPanel.cs",
+      "line": 236,
+      "content": "row.name = template.name + \"_行\" + rowIndex;",
+      "strings": [
+        "_行"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Ui/RunSaveLoadPanel.cs",
+      "line": 328,
+      "content": "if (child != null && child.name.Contains(\"_行\"))",
+      "strings": [
+        "_行"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Ui/RunSaveLoadPanel.cs",
+      "line": 405,
+      "content": "when = time.ToString(\"M月d日 HH:mm\", CultureInfo.InvariantCulture);",
+      "strings": [
+        "M月d日 HH:mm"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Ui/RunSaveLoadPanel.cs",
+      "line": 409,
+      "content": "? \"冒险者\"",
+      "strings": [
+        "冒险者"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Ui/RunSaveLoadPanel.cs",
+      "line": 411,
+      "content": "return $\"{when} {name} 层{snapshot.floor}·{snapshot.DisplayNode}\";",
+      "strings": [
+        "{when} {name} 层{snapshot.floor}·{snapshot.DisplayNode}"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Ui/RunSummaryPanel.cs",
+      "line": 224,
+      "content": "SetText(mTitleText, victory ? \"凯旋而归\" : \"壮志未酬\");",
+      "strings": [
+        "凯旋而归",
+        "壮志未酬"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Ui/RunSummaryPanel.cs",
+      "line": 235,
+      "content": "? \"你征服了全部三层地城，九宫的传说将铭记你的名字！\"",
+      "strings": [
+        "你征服了全部三层地城，九宫的传说将铭记你的名字！"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Ui/RunSummaryPanel.cs",
+      "line": 236,
+      "content": ": \"地城的阴影暂时吞没了冒险者，重整旗鼓再来一局。\");",
+      "strings": [
+        "地城的阴影暂时吞没了冒险者，重整旗鼓再来一局。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Ui/RunSummaryPanel.cs",
+      "line": 241,
+      "content": "var heroName = \"战士\";",
+      "strings": [
+        "战士"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Ui/RunSummaryPanel.cs",
+      "line": 259,
+      "content": "? $\"通关进度　全 {RunModel.FinalFloor} 层制霸\"",
+      "strings": [
+        "通关进度　全 {RunModel.FinalFloor} 层制霸"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Ui/RunSummaryPanel.cs",
+      "line": 260,
+      "content": ": $\"通关进度　第 {floor} 层 · 第 {displayNode} 关\");",
+      "strings": [
+        "通关进度　第 {floor} 层 · 第 {displayNode} 关"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Ui/RunSummaryPanel.cs",
+      "line": 261,
+      "content": "SetText(mSeedText, $\"本局种子 {run.Seed?.Value ?? 0}\");",
+      "strings": [
+        "本局种子 {run.Seed?.Value ?? 0}"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Ui/RunSummaryPanel.cs",
+      "line": 272,
+      "content": "? $\"持有金币　{Mathf.Max(0, player.Coins.Value)}\"",
+      "strings": [
+        "持有金币　{Mathf.Max(0, player.Coins.Value)}"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Ui/RunSummaryPanel.cs",
+      "line": 277,
+      "content": "? $\"九宫互动　{Mathf.Max(0, player.InteractionCount.Value)} 次\"",
+      "strings": [
+        "九宫互动　{Mathf.Max(0, player.InteractionCount.Value)} 次"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Ui/RunSummaryPanel.cs",
+      "line": 308,
+      "content": "return $\"最终属性　生命 {hp}/{maxHp} · 攻击 {attack} · 护甲 {armor}\";",
+      "strings": [
+        "最终属性　生命 {hp}/{maxHp} · 攻击 {attack} · 护甲 {armor}"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Ui/RunSummaryPanel.cs",
+      "line": 316,
+      "content": "SetText(mRelicTitleText, $\"持有遗物　{count} 件\");",
+      "strings": [
+        "持有遗物　{count} 件"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Ui/RunSummaryPanel.cs",
+      "line": 333,
+      "content": "var icon = new GameObject(\"遗物图标_\" + relicIds[i]);",
+      "strings": [
+        "遗物图标_"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.SteamBridge/SteamDebugMenu.cs",
+      "line": 21,
+      "content": "[MenuItem(MenuRoot + \"打印平台状态\")]",
+      "strings": [
+        "打印平台状态"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.SteamBridge/SteamDebugMenu.cs",
+      "line": 33,
+      "content": "+ \" | 语言=\" + PlatformInfo.LanguageCode",
+      "strings": [
+        " | 语言="
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.SteamBridge/SteamDebugMenu.cs",
+      "line": 35,
+      "content": "+ \" | 云(账号/App)=\" + cloudAccount + \"/\" + cloudApp",
+      "strings": [
+        " | 云(账号/App)="
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.SteamBridge/SteamDebugMenu.cs",
+      "line": 36,
+      "content": "+ \" | 云配额=\" + available + \"/\" + total + \" bytes\");",
+      "strings": [
+        " | 云配额="
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.SteamBridge/SteamDebugMenu.cs",
+      "line": 39,
+      "content": "[MenuItem(MenuRoot + \"解锁测试成就 (Spacewar ACH_WIN_ONE_GAME)\")]",
+      "strings": [
+        "解锁测试成就 (Spacewar ACH_WIN_ONE_GAME)"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.SteamBridge/SteamDebugMenu.cs",
+      "line": 51,
+      "content": "[MenuItem(MenuRoot + \"重置全部成就与统计 (Dev)\")]",
+      "strings": [
+        "重置全部成就与统计 (Dev)"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.SteamBridge/SteamDebugMenu.cs",
+      "line": 62,
+      "content": "[MenuItem(MenuRoot + \"列出云存档文件\")]",
+      "strings": [
+        "列出云存档文件"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.SteamBridge/SteamPlatformBootstrap.cs",
+      "line": 58,
+      "content": "\"[Steam] SteamAPI.Init 失败（Steam 客户端未运行？），以无 Steam 模式继续，本地存档不受影响。\");",
+      "strings": [
+        "[Steam] SteamAPI.Init 失败（Steam 客户端未运行？），以无 Steam 模式继续，本地存档不受影响。"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.SteamBridge/SteamPlatformBootstrap.cs",
+      "line": 83,
+      "content": "+ \" (AppId \" + SteamAppIds.Current + \")，云存档镜像 \"",
+      "strings": [
+        ")，云存档镜像 "
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.SteamBridge/SteamPlatformBootstrap.cs",
+      "line": 84,
+      "content": "+ (sInnerStore != null ? \"已启用\" : \"跳过（本地存档后端缺失）\") + \"。\");",
+      "strings": [
+        "已启用",
+        "跳过（本地存档后端缺失）"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/Temporary Test/UITestLivingFormChoiceTest.cs",
+      "line": 51,
+      "content": "[ContextMenu(\"Keypad1 · 切换形态选择\")]",
+      "strings": [
+        "Keypad1 · 切换形态选择"
+      ]
+    }
+  ],
+  "B": [
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Cards/Anim/CardMainVisualMaskAnchor.cs",
+      "line": 13,
+      "content": "public const string NodeName = \"主视图Mask\";",
+      "strings": [
+        "主视图Mask"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Cards/Anim/CardMainVisualMaskAnchor.cs",
+      "line": 14,
+      "content": "public const string FaceBackgroundNodeName = \"背景图\";",
+      "strings": [
+        "背景图"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Cards/CardHandManagerSingleton.cs",
+      "line": 1814,
+      "content": "var named = recycleNotice.transform.Find(\"标准世界文字 (2)\");",
+      "strings": [
+        "标准世界文字 (2)"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/BattleInfoPreview/BattleInfoPreviewPresenter.cs",
+      "line": 24,
+      "content": "public const string RootObjectName = \"战斗信息展示BG\";",
+      "strings": [
+        "战斗信息展示BG"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/BattleInfoPreview/BattleInfoPreviewPresenter.cs",
+      "line": 202,
+      "content": "FindUiPanelRoot()?.transform.Find(\"半黑屏BG\")?.gameObject);",
+      "strings": [
+        "半黑屏BG"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/BattleInfoPreview/BattleInfoPreviewPresenter.cs",
+      "line": 748,
+      "content": "playerGroup = panelRoot.transform.Find(\"玩家\");",
+      "strings": [
+        "玩家"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/BattleInfoPreview/BattleInfoPreviewPresenter.cs",
+      "line": 753,
+      "content": "monsterGroup = panelRoot.transform.Find(\"怪物\");",
+      "strings": [
+        "怪物"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/BattleInfoPreview/BattleInfoPreviewPresenter.cs",
+      "line": 758,
+      "content": "environmentGroup = panelRoot.transform.Find(\"环境\");",
+      "strings": [
+        "环境"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/BattleInfoPreview/BattleInfoPreviewPresenter.cs",
+      "line": 768,
+      "content": "playerBodySlot = playerGroup.Find(\"玩家本体占位\");",
+      "strings": [
+        "玩家本体占位"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/BattleInfoPreview/BattleInfoPreviewPresenter.cs",
+      "line": 924,
+      "content": "if (t.gameObject.name == \"房间信息\"",
+      "strings": [
+        "房间信息"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/BattleInfoPreview/BattleInfoPreviewPresenter.cs",
+      "line": 930,
+      "content": "&& (parent.name == \"玩家\" || parent.name == \"怪物\" || parent.name == \"环境\"))",
+      "strings": [
+        "玩家",
+        "怪物",
+        "环境"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/BattleInfoPreview/BattleInfoPreviewPresenter.cs",
+      "line": 980,
+      "content": "if (t != null && t.name == \"UI面板\" && t.gameObject.scene.IsValid())",
+      "strings": [
+        "UI面板"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/BattleUiDimmerOverlay.cs",
+      "line": 216,
+      "content": "var root = GameObject.Find(\"UI面板\");",
+      "strings": [
+        "UI面板"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/BattleUiDimmerOverlay.cs",
+      "line": 235,
+      "content": "var dimmer = root.transform.Find(\"半黑屏BG\");",
+      "strings": [
+        "半黑屏BG"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/BoardBriefTip/BoardBriefTipPresenter.cs",
+      "line": 14,
+      "content": "public const string PanelObjectName = \"简要解释文字框\";",
+      "strings": [
+        "简要解释文字框"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/BoardBriefTip/FloorHintPresenter.cs",
+      "line": 14,
+      "content": "public const string RootObjectName = \"楼层提示\";",
+      "strings": [
+        "楼层提示"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/BoardBriefTip/FloorHintPresenter.cs",
+      "line": 15,
+      "content": "public const string FloorLevelHintObjectName = \"大楼层提示\";",
+      "strings": [
+        "大楼层提示"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/BoardBriefTip/FloorHintPresenter.cs",
+      "line": 16,
+      "content": "public const string RoomHintObjectName = \"小房间提示\";",
+      "strings": [
+        "小房间提示"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/CardInspectOverlayPresenter.cs",
+      "line": 96,
+      "content": "var inspectRoot = uiRoot.transform.Find(\"右键描述\");",
+      "strings": [
+        "右键描述"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/CardInspectOverlayPresenter.cs",
+      "line": 116,
+      "content": "uiPanelRoot != null ? uiPanelRoot.transform.Find(\"半黑屏BG\")?.gameObject : null);",
+      "strings": [
+        "半黑屏BG"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/CardInspectOverlayPresenter.cs",
+      "line": 118,
+      "content": "enemyPanel = FindChild(inspectRoot.transform, \"敌方描述专用BG\")?.gameObject;",
+      "strings": [
+        "敌方描述专用BG"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/CardInspectOverlayPresenter.cs",
+      "line": 119,
+      "content": "regularPanel = FindChild(inspectRoot.transform, \"常规描述BG\")?.gameObject;",
+      "strings": [
+        "常规描述BG"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/CardInspectOverlayPresenter.cs",
+      "line": 121,
+      "content": "enemyCardFace = FindChild(enemyPanel != null ? enemyPanel.transform : null, \"敌人卡模板占位\");",
+      "strings": [
+        "敌人卡模板占位"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/CardInspectOverlayPresenter.cs",
+      "line": 122,
+      "content": "regularCardFace = FindChild(regularPanel != null ? regularPanel.transform : null, \"道具卡标准模版\");",
+      "strings": [
+        "道具卡标准模版"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/CardInspectOverlayPresenter.cs",
+      "line": 325,
+      "content": "var uiRoot = transform.root != null && transform.root.name == \"UI面板\"",
+      "strings": [
+        "UI面板"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/CardInspectOverlayPresenter.cs",
+      "line": 671,
+      "content": "var frame = FindChild(face, \"卡框\") ?? FindChild(face, \"Card_Border_rectangle_bronze\");",
+      "strings": [
+        "卡框"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/CardInspectOverlayPresenter.cs",
+      "line": 834,
+      "content": "closeButton = FindChild(t, \"关闭面板 (1)\") ?? FindChild(t, \"关闭面板\");",
+      "strings": [
+        "关闭面板 (1)",
+        "关闭面板"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/PlayerInfoHudPresenter.cs",
+      "line": 19,
+      "content": "private const string PlayerInfoRootName = \"玩家信息\";",
+      "strings": [
+        "玩家信息"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/PlayerInfoHudPresenter.cs",
+      "line": 20,
+      "content": "private const string BloodBarName = \"血条\";",
+      "strings": [
+        "血条"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/PlayerInfoHudPresenter.cs",
+      "line": 21,
+      "content": "private const string BloodSlotName = \"血槽\";",
+      "strings": [
+        "血槽"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/PlayerInfoHudPresenter.cs",
+      "line": 22,
+      "content": "private const string BloodFillName = \"真实血量条\";",
+      "strings": [
+        "真实血量条"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/PlayerInfoHudPresenter.cs",
+      "line": 23,
+      "content": "private const string CurrentHpName = \"血量数值（当前）\";",
+      "strings": [
+        "血量数值（当前）"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/PlayerInfoHudPresenter.cs",
+      "line": 24,
+      "content": "private const string CurrentHpIconName = \"血量图标（当前）\";",
+      "strings": [
+        "血量图标（当前）"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/PlayerInfoHudPresenter.cs",
+      "line": 25,
+      "content": "private const string MaxHpName = \"血量数值（满血）\";",
+      "strings": [
+        "血量数值（满血）"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/PlayerInfoHudPresenter.cs",
+      "line": 26,
+      "content": "private const string MaxHpIconName = \"血量图标（满血）\";",
+      "strings": [
+        "血量图标（满血）"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/PlayerInfoHudPresenter.cs",
+      "line": 27,
+      "content": "private const string ArmorRootName = \"基础护甲\";",
+      "strings": [
+        "基础护甲"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/PlayerInfoHudPresenter.cs",
+      "line": 28,
+      "content": "private const string ArmorValueName = \"护甲数值\";",
+      "strings": [
+        "护甲数值"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/PlayerInfoHudPresenter.cs",
+      "line": 29,
+      "content": "private const string GoldValueName = \"金币数值\";",
+      "strings": [
+        "金币数值"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/PlayerInfoHudPresenter.cs",
+      "line": 30,
+      "content": "private const string GoldIconName = \"金币图标\";",
+      "strings": [
+        "金币图标"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/RelicIconSlotView.cs",
+      "line": 11,
+      "content": "public const string IconChildName = \"图标本体\";",
+      "strings": [
+        "图标本体"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/RelicIconSlotView.cs",
+      "line": 12,
+      "content": "public const string CounterChildName = \"计数\";",
+      "strings": [
+        "计数"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Flow/RelicIconSlotView.cs",
+      "line": 13,
+      "content": "public const string DisplayRootName = \"标准遗物图标模板\";",
+      "strings": [
+        "标准遗物图标模板"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Ui/CharacterSelectPanel.cs",
+      "line": 20,
+      "content": "public const string PanelRootName = \"人物选择BG\";",
+      "strings": [
+        "人物选择BG"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Ui/CharacterSelectPanel.cs",
+      "line": 21,
+      "content": "public const string WarriorSlotName = \"角色槽_战士\";",
+      "strings": [
+        "角色槽_战士"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Ui/CharacterSelectPanel.cs",
+      "line": 22,
+      "content": "public const string LockedSlotAName = \"角色槽_未解锁A\";",
+      "strings": [
+        "角色槽_未解锁A"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Ui/CharacterSelectPanel.cs",
+      "line": 23,
+      "content": "public const string LockedSlotBName = \"角色槽_未解锁B\";",
+      "strings": [
+        "角色槽_未解锁B"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Ui/CharacterSelectPanel.cs",
+      "line": 24,
+      "content": "public const string ConfirmButtonName = \"出发按钮\";",
+      "strings": [
+        "出发按钮"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Ui/CharacterSelectPanel.cs",
+      "line": 25,
+      "content": "public const string BackButtonName = \"返回按钮\";",
+      "strings": [
+        "返回按钮"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Ui/CharacterSelectPanel.cs",
+      "line": 26,
+      "content": "public const string HintTextName = \"提示文字\";",
+      "strings": [
+        "提示文字"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Ui/CharacterSelectPanel.cs",
+      "line": 27,
+      "content": "public const string SelectFrameName = \"选中框\";",
+      "strings": [
+        "选中框"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Ui/CharacterSelectPanel.cs",
+      "line": 28,
+      "content": "public const string StatsTextName = \"属性文字\";",
+      "strings": [
+        "属性文字"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Ui/CharacterSelectPanel.cs",
+      "line": 144,
+      "content": "var uiRoot = FindSceneNamed(\"UI面板\");",
+      "strings": [
+        "UI面板"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Ui/CharacterSelectPanel.cs",
+      "line": 146,
+      "content": "uiRoot != null ? uiRoot.transform.Find(\"半黑屏BG\")?.gameObject : null);",
+      "strings": [
+        "半黑屏BG"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Ui/PlayerAudioSettingsPanel.cs",
+      "line": 21,
+      "content": "public const string PanelRootName = \"局内功能菜单BG\";",
+      "strings": [
+        "局内功能菜单BG"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Ui/PlayerAudioSettingsPanel.cs",
+      "line": 22,
+      "content": "public const string MenuButtonName = \"菜单按钮\";",
+      "strings": [
+        "菜单按钮"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Ui/PlayerAudioSettingsPanel.cs",
+      "line": 23,
+      "content": "public const string VolumeModuleName = \"音量模块\";",
+      "strings": [
+        "音量模块"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Ui/PlayerAudioSettingsPanel.cs",
+      "line": 24,
+      "content": "public const string CloseButtonPath = \"功能模块/关闭面板\";",
+      "strings": [
+        "功能模块/关闭面板"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Ui/PlayerAudioSettingsPanel.cs",
+      "line": 25,
+      "content": "public const string ReturnToMainMenuButtonPath = \"功能模块/回到主菜单\";",
+      "strings": [
+        "功能模块/回到主菜单"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Ui/PlayerAudioSettingsPanel.cs",
+      "line": 26,
+      "content": "public const string QuitGameButtonPath = \"功能模块/退出游戏\";",
+      "strings": [
+        "功能模块/退出游戏"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Ui/PlayerAudioSettingsPanel.cs",
+      "line": 218,
+      "content": "var uiRoot = FindSceneNamed(\"UI面板\");",
+      "strings": [
+        "UI面板"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Ui/PlayerAudioSettingsPanel.cs",
+      "line": 220,
+      "content": "uiRoot != null ? uiRoot.transform.Find(\"半黑屏BG\")?.gameObject : null);",
+      "strings": [
+        "半黑屏BG"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Ui/PlayerAudioSettingsPanel.cs",
+      "line": 238,
+      "content": "mMasterMuteRoot = volume.Find(\"总音量关\");",
+      "strings": [
+        "总音量关"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Ui/PlayerAudioSettingsPanel.cs",
+      "line": 239,
+      "content": "mMasterMuteOn = volume.Find(\"总音量关/总音量开\");",
+      "strings": [
+        "总音量关/总音量开"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Ui/PlayerAudioSettingsPanel.cs",
+      "line": 240,
+      "content": "mBgmMuteRoot = volume.Find(\"音乐开\");",
+      "strings": [
+        "音乐开"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Ui/PlayerAudioSettingsPanel.cs",
+      "line": 241,
+      "content": "mBgmMuteOff = volume.Find(\"音乐开/音乐关\");",
+      "strings": [
+        "音乐开/音乐关"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Ui/PlayerAudioSettingsPanel.cs",
+      "line": 254,
+      "content": "mBgmSlider = WireSlider(volume.Find(\"bgm音量滑条\"), PlayerAudioBus.Bgm, \"player_audio.bgm.volume\");",
+      "strings": [
+        "bgm音量滑条"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Ui/PlayerAudioSettingsPanel.cs",
+      "line": 255,
+      "content": "mSfxSlider = WireSlider(volume.Find(\"SFX音量滑条 (1)\"), PlayerAudioBus.Sfx, \"player_audio.sfx.volume\");",
+      "strings": [
+        "SFX音量滑条 (1)"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Ui/PlayerAudioSettingsPanel.cs",
+      "line": 627,
+      "content": "var handle = track.Find(\"音量滑柄\");",
+      "strings": [
+        "音量滑柄"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Ui/RunSaveLoadPanel.cs",
+      "line": 21,
+      "content": "public const string ModuleName = \"存档/读档模块\";",
+      "strings": [
+        "存档/读档模块"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Ui/RunSaveLoadPanel.cs",
+      "line": 22,
+      "content": "private const string SaveButtonName = \"保存\";",
+      "strings": [
+        "保存"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Ui/RunSaveLoadPanel.cs",
+      "line": 23,
+      "content": "private const string LoadButtonName = \"加载\";",
+      "strings": [
+        "加载"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Ui/RunSaveLoadPanel.cs",
+      "line": 24,
+      "content": "private const string SlotPanelName = \"UI槽位\";",
+      "strings": [
+        "UI槽位"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Ui/RunSaveLoadPanel.cs",
+      "line": 25,
+      "content": "private const string SaveEntryTemplateName = \"保存条目模板\";",
+      "strings": [
+        "保存条目模板"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Ui/RunSaveLoadPanel.cs",
+      "line": 26,
+      "content": "private const string LoadEntryTemplateName = \"加载条目模板\";",
+      "strings": [
+        "加载条目模板"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Ui/RunSummaryPanel.cs",
+      "line": 25,
+      "content": "public const string PanelRootName = \"结算面板BG\";",
+      "strings": [
+        "结算面板BG"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Ui/RunSummaryPanel.cs",
+      "line": 26,
+      "content": "public const string TitleTextName = \"标题文字\";",
+      "strings": [
+        "标题文字"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Ui/RunSummaryPanel.cs",
+      "line": 27,
+      "content": "public const string SubtitleTextName = \"副标题文字\";",
+      "strings": [
+        "副标题文字"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Ui/RunSummaryPanel.cs",
+      "line": 28,
+      "content": "public const string HeroNameTextName = \"角色名字文字\";",
+      "strings": [
+        "角色名字文字"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Ui/RunSummaryPanel.cs",
+      "line": 29,
+      "content": "public const string ProgressTextName = \"数据_进度\";",
+      "strings": [
+        "数据_进度"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Ui/RunSummaryPanel.cs",
+      "line": 30,
+      "content": "public const string GoldTextName = \"数据_金币\";",
+      "strings": [
+        "数据_金币"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Ui/RunSummaryPanel.cs",
+      "line": 31,
+      "content": "public const string InteractionTextName = \"数据_互动\";",
+      "strings": [
+        "数据_互动"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Ui/RunSummaryPanel.cs",
+      "line": 32,
+      "content": "public const string StatsTextName = \"数据_属性\";",
+      "strings": [
+        "数据_属性"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Ui/RunSummaryPanel.cs",
+      "line": 33,
+      "content": "public const string RelicTitleTextName = \"遗物标题文字\";",
+      "strings": [
+        "遗物标题文字"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Ui/RunSummaryPanel.cs",
+      "line": 34,
+      "content": "public const string RelicIconAnchorName = \"遗物图标区\";",
+      "strings": [
+        "遗物图标区"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Ui/RunSummaryPanel.cs",
+      "line": 35,
+      "content": "public const string SeedTextName = \"种子文字\";",
+      "strings": [
+        "种子文字"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Ui/RunSummaryPanel.cs",
+      "line": 36,
+      "content": "public const string ReturnButtonName = \"返回按钮\";",
+      "strings": [
+        "返回按钮"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Ui/RunSummaryPanel.cs",
+      "line": 37,
+      "content": "public const string VictoryDecorName = \"胜利装饰\";",
+      "strings": [
+        "胜利装饰"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Ui/RunSummaryPanel.cs",
+      "line": 38,
+      "content": "public const string DefeatDecorName = \"失败装饰\";",
+      "strings": [
+        "失败装饰"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Ui/RunSummaryPanel.cs",
+      "line": 160,
+      "content": "var uiRoot = FindSceneNamed(\"UI面板\");",
+      "strings": [
+        "UI面板"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/NineGrid.Presentation/Ui/RunSummaryPanel.cs",
+      "line": 162,
+      "content": "uiRoot != null ? uiRoot.transform.Find(\"半黑屏BG\")?.gameObject : null);",
+      "strings": [
+        "半黑屏BG"
+      ]
+    }
+  ],
+  "C_file_summary": [
+    [
+      "Assets/Scripts/NineGrid.Foundation/NineGrid.Content.Editor/CardPresentationEditorWindow.cs",
+      266
+    ],
+    [
+      "Assets/Scripts/NineGrid.Foundation/NineGrid.Content.Editor/ContentVisualEditorWindow.cs",
+      116
+    ],
+    [
+      "Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Systems/PhaseSystem.cs",
+      116
+    ],
+    [
+      "Assets/Scripts/NineGrid.Presentation/Cards/CardDeckManagerSingleton.cs",
+      97
+    ],
+    [
+      "Assets/Scripts/NineGrid.Presentation/Flow/Diagnostics/PerfTraceModels.cs",
+      87
+    ],
+    [
+      "Assets/Scripts/NineGrid.Presentation/Cheat/CheatToolPanelController.cs",
+      83
+    ],
+    [
+      "Assets/Scripts/NineGrid.Foundation/NineGrid.Content.Editor/AudioAiInitialBinder.cs",
+      80
+    ],
+    [
+      "Assets/Scripts/NineGrid.Presentation/Cards/Ground/GroundMotionExecutor.cs",
+      80
+    ],
+    [
+      "Assets/Scripts/NineGrid.Presentation/Flow/Presentation/AudioCue.cs",
+      77
+    ],
+    [
+      "Assets/Scripts/NineGrid.Presentation/Flow/QuickTestDeckCatalog.cs",
+      75
+    ],
+    [
+      "Assets/Scripts/NineGrid.Foundation/NineGrid.Content.Editor/CardPresentationEditorSession.cs",
+      73
+    ],
+    [
+      "Assets/Scripts/NineGrid.Presentation/Flow/GameFlow/GameFlowOrchestrator.cs",
+      68
+    ],
+    [
+      "Assets/Scripts/NineGrid.Presentation/Cards/CardHandManagerSingleton.cs",
+      65
+    ],
+    [
+      "Assets/Scripts/NineGrid.Presentation/Flow/BattleSession/BoardPresentationPlayer.cs",
+      57
+    ],
+    [
+      "Assets/Scripts/NineGrid.Foundation/NineGrid.Content.Editor/AudioWorkbenchEditorState.cs",
+      55
+    ],
+    [
+      "Assets/Scripts/NineGrid.Presentation/Cards/CardManagerSingleton.cs",
+      54
+    ],
+    [
+      "Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Content/ContentDefinitions.cs",
+      49
+    ],
+    [
+      "Assets/Scripts/NineGrid.Presentation/Flow/BounceFanChoicePresenter.cs",
+      48
+    ],
+    [
+      "Assets/Scripts/NineGrid.Presentation/Flow/PlayerInfoHudPresenter.cs",
+      48
+    ],
+    [
+      "Assets/Scripts/NineGrid.Presentation/Cards/Battle/FieldBattlePresentationExecutor.cs",
+      47
+    ],
+    [
+      "Assets/Scripts/NineGrid.Presentation/Editor/DiagTraceEditorWindow.cs",
+      45
+    ],
+    [
+      "Assets/Scripts/NineGrid.Foundation/NineGrid.Content/CardPresentation/CardPresentationConfigDto.cs",
+      44
+    ],
+    [
+      "Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Systems/RewardSystem.cs",
+      43
+    ],
+    [
+      "Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Setup/RunSaveGame.cs",
+      38
+    ],
+    [
+      "Assets/Scripts/NineGrid.Presentation/Flow/CoreCardPresentationMapper.cs",
+      38
+    ],
+    [
+      "Assets/Scripts/NineGrid.Foundation/NineGrid.DevTest/Cards/GroundFieldManagerDevKeys.cs",
+      37
+    ],
+    [
+      "Assets/Scripts/NineGrid.Presentation/Flow/BattleSession/BattleSessionExecutor.Opening.cs",
+      37
+    ],
+    [
+      "Assets/Scripts/NineGrid.Presentation/Systems/Vfx/VfxProjectilePresetLibrary.cs",
+      37
+    ],
+    [
+      "Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Effects/EffectAtomLibrary.cs",
+      36
+    ],
+    [
+      "Assets/Scripts/NineGrid.Presentation/Flow/DamageNumberManagerSingleton.cs",
+      36
+    ],
+    [
+      "Assets/Scripts/NineGrid.Presentation/Tests/DeferredBoardMotionRegressionTests.cs",
+      36
+    ],
+    [
+      "Assets/Scripts/NineGrid.Foundation/NineGrid.Content.Editor/CardPresentationWorkbench/CardPresentationWorkbenchEditorState.cs",
+      35
+    ],
+    [
+      "Assets/Scripts/NineGrid.Presentation/Cards/CombatPresentationContracts.cs",
+      35
+    ],
+    [
+      "Assets/Scripts/NineGrid.Foundation/NineGrid.Content.Editor/MonsterLoadoutPresentationValidator.cs",
+      34
+    ],
+    [
+      "Assets/Scripts/NineGrid.Presentation/Tests/Flow/VfxProjectilePlayerContractTests.cs",
+      34
+    ],
+    [
+      "Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Domain/Actions/EffectActions.cs",
+      33
+    ],
+    [
+      "Assets/Scripts/NineGrid.Presentation/Flow/Tutorial/TutorialBattleDirector.cs",
+      33
+    ],
+    [
+      "Assets/Scripts/NineGrid.Foundation/NineGrid.Content.Editor/VfxBindingCatalogHygieneValidator.cs",
+      32
+    ],
+    [
+      "Assets/Scripts/NineGrid.Presentation/Flow/CardInspectOverlayPresenter.cs",
+      32
+    ],
+    [
+      "Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Domain/Actions/ContentActions.cs",
+      31
+    ],
+    [
+      "Assets/Scripts/NineGrid.Presentation/Cards/Anim/CardMainVisualMaskAnchor.cs",
+      31
+    ],
+    [
+      "Assets/Scripts/NineGrid.Presentation/Cards/CardAttackBasicAdapter.cs",
+      31
+    ],
+    [
+      "Assets/Scripts/UI/VisualLook/TableNineLookRig.cs",
+      31
+    ],
+    [
+      "Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Presentation/CardFaceReconciliation.cs",
+      30
+    ],
+    [
+      "Assets/Scripts/NineGrid.Presentation/Cards/CardAttackBasicDirectionRig.cs",
+      30
+    ],
+    [
+      "Assets/Scripts/NineGrid.Foundation/NineGrid.Content.Editor/VfxWorkbenchEditorState.cs",
+      29
+    ],
+    [
+      "Assets/Scripts/NineGrid.Presentation/Systems/Vfx/VfxParticlePresetLibrary.cs",
+      29
+    ],
+    [
+      "Assets/Scripts/NineGrid.Presentation/Flow/BattleSession/BattleSessionCheat.cs",
+      27
+    ],
+    [
+      "Assets/Scripts/NineGrid.Presentation/Flow/BattleSession/BattleSessionExecutor.cs",
+      27
+    ],
+    [
+      "Assets/Scripts/NineGrid.Foundation/NineGrid.Content.Editor/AudioBindingCatalogHygieneValidator.cs",
+      26
+    ],
+    [
+      "Assets/Scripts/NineGrid.Presentation/Tests/Flow/AudioAiInitialBinderTests.cs",
+      26
+    ],
+    [
+      "Assets/Scripts/NineGrid.Presentation/Cards/Presentation/CardFacePresentationBinder.cs",
+      25
+    ],
+    [
+      "Assets/Scripts/NineGrid.Presentation/Flow/BattleSession/BattleSessionExecutor.Choice.cs",
+      25
+    ],
+    [
+      "Assets/Scripts/NineGrid.Presentation/Flow/PointerHitRouter.cs",
+      25
+    ],
+    [
+      "Assets/Scripts/NineGrid.Foundation/NineGrid.Content.Editor/MonsterDeckUsageInspector.cs",
+      24
+    ],
+    [
+      "Assets/Scripts/NineGrid.Presentation/Cards/DealFlightLayoutSettings.cs",
+      24
+    ],
+    [
+      "Assets/Scripts/NineGrid.Presentation/Cards/Effects/CardEffectManager.cs",
+      24
+    ],
+    [
+      "Assets/Scripts/NineGrid.Presentation/Cards/GroundFieldLayoutSettings.cs",
+      24
+    ],
+    [
+      "Assets/Scripts/NineGrid.Presentation/Flow/BattleInfoPreview/BattleInfoPreviewPresenter.cs",
+      24
+    ],
+    [
+      "Assets/Scripts/NineGrid.Presentation/Tests/Flow/VfxParticlePlayerContractTests.cs",
+      24
+    ],
+    [
+      "Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Models/BattleContextModel.cs",
+      22
+    ],
+    [
+      "Assets/Scripts/NineGrid.Presentation/Cards/Vfx/CardEdgeDustFx.cs",
+      22
+    ],
+    [
+      "Assets/Scripts/NineGrid.Presentation/Flow/Diagnostics/FlowTraceModels.cs",
+      22
+    ],
+    [
+      "Assets/Scripts/NineGrid.Presentation/Flow/GameFlow/RunSave/RunSaveService.cs",
+      22
+    ],
+    [
+      "Assets/Scripts/NineGrid.Presentation/Flow/GameFlowController.cs",
+      22
+    ],
+    [
+      "Assets/Scripts/NineGrid.Presentation/Flow/Presentation/AttackIntentScriptFactory.cs",
+      22
+    ],
+    [
+      "Assets/Scripts/NineGrid.Presentation/Cards/Battle/BattleEncounterProfileSO.cs",
+      21
+    ],
+    [
+      "Assets/Scripts/NineGrid.Foundation/NineGrid.Content/Catalog/ContentHygieneValidator.cs",
+      20
+    ],
+    [
+      "Assets/Scripts/NineGrid.Foundation/NineGrid.Content/Catalog/ContentVisualSpriteCatalogSO.cs",
+      20
+    ],
+    [
+      "Assets/Scripts/NineGrid.Presentation/Cards/CardHandLayoutSettings.cs",
+      20
+    ],
+    [
+      "Assets/Scripts/NineGrid.Presentation/Flow/Presentation/BattleVfxCues.cs",
+      20
+    ],
+    [
+      "Assets/Scripts/NineGrid.Presentation/Flow/ShopBoard/ShopBoardPresenter.cs",
+      20
+    ],
+    [
+      "Assets/Scripts/NineGrid.Presentation/Tests/Flow/VfxStructureGuardTests.cs",
+      20
+    ],
+    [
+      "Assets/Scripts/NineGrid.SteamBridge/SteamCloudRunSaveStore.cs",
+      20
+    ],
+    [
+      "Assets/Scripts/NineGrid.Foundation/NineGrid.Content.Editor/CardDescriptionBulkIO.cs",
+      19
+    ],
+    [
+      "Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Effects/EffectAtoms.cs",
+      19
+    ],
+    [
+      "Assets/Scripts/NineGrid.Foundation/NineGrid.Core/Effects/EffectSystem.cs",
+      19
+    ],
+    [
+      "Assets/Scripts/NineGrid.Presentation/Flow/Diagnostics/BattleTraceRecorder.cs",
+      19
+    ],
+    [
+      "Assets/Scripts/NineGrid.Presentation/Flow/TavernBoard/TavernBoardPresenter.cs",
+      19
+    ],
+    [
+      "Assets/Scripts/NineGrid.Presentation/Tests/AvatarVitalityInvariantTests.cs",
+      19
+    ]
+  ]
+}

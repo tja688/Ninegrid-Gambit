@@ -60,12 +60,17 @@ namespace NineGrid.Cards.Presentation
 
                 if (catalog != null && catalog.TryGetByDisplayName(name, out var entry) && entry != null)
                 {
-                    var title = string.IsNullOrWhiteSpace(entry.displayNameZh)
+                    // 行标题与解释按当前语言取 glossary 表（键 = zh 名），缺翻译回中文（ADR-0046）。
+                    var zhName = string.IsNullOrWhiteSpace(entry.displayNameZh)
                         ? name
                         : entry.displayNameZh.Trim();
+                    var title = NineGrid.Core.Localization.LocalizationCatalog
+                        .ResolveGlossaryDisplayName(zhName);
+                    var explanation = NineGrid.Core.Localization.LocalizationCatalog
+                        .ResolveGlossaryIntro(zhName, entry.explanation ?? string.Empty);
                     result.Add(new ResolvedTerm(
                         title,
-                        entry.explanation ?? string.Empty,
+                        explanation,
                         matched: true,
                         hasColor: entry.HasColorOverride,
                         color: entry.color));

@@ -229,7 +229,7 @@ namespace NineGrid.Content
 
                     break;
                 case ContentVisualKind.Avatar:
-                    return "玩家";
+                    return NineGrid.Core.Localization.L10n.Tr("hud.avatar_fallback_name", "玩家");
                 case ContentVisualKind.ChoiceOption:
                     return ResolveChoiceOptionDisplayName(contentId);
             }
@@ -242,11 +242,11 @@ namespace NineGrid.Content
             switch (contentId)
             {
                 case "Attack":
-                    return "攻击+1";
+                    return NineGrid.Core.Localization.L10n.Tr("choice.attack_plus", "攻击+1");
                 case "Armor":
-                    return "护甲+1";
+                    return NineGrid.Core.Localization.L10n.Tr("choice.armor_plus", "护甲+1");
                 case "Hp":
-                    return "血量+2";
+                    return NineGrid.Core.Localization.L10n.Tr("choice.hp_plus", "血量+2");
                 default:
                     return contentId;
             }

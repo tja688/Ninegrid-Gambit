@@ -1,19 +1,27 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using NineGrid.Core.Localization;
 using UnityEngine;
 
 namespace NineGrid.Content.CardPresentation
 {
     /// <summary>
     /// 卡牌表现 JSON 目录缓存：Editor 优先 Authoring；运行时读 StreamingAssets。
+    /// 本地化覆盖缝（ADR-0046）：<see cref="TryGet"/> 是卡面文本唯一读口——非源语言时按
+    /// contentId 从 <see cref="LocalizationCatalog"/> cards 表覆盖 displayName/description/faceIntro
+    /// （返回覆盖副本，不污染中文原 DTO；缺字段回退中文），覆盖发生在令牌投影之前。
     /// </summary>
     public static class CardPresentationConfigCatalog
     {
         private static readonly Dictionary<string, CardPresentationConfigDto> ByContentId =
             new Dictionary<string, CardPresentationConfigDto>(StringComparer.Ordinal);
 
+        private static readonly Dictionary<string, CardPresentationConfigDto> LocalizedOverlays =
+            new Dictionary<string, CardPresentationConfigDto>(StringComparer.Ordinal);
+
         private static bool _loaded;
+        private static int _overlayTablesVersion;
 
         public static IEnumerable<string> AllContentIds
         {
@@ -33,13 +41,76 @@ namespace NineGrid.Content.CardPresentation
             }
 
             EnsureLoaded();
-            return ByContentId.TryGetValue(contentId, out dto) && dto != null;
+            if (!ByContentId.TryGetValue(contentId, out dto) || dto == null)
+            {
+                return false;
+            }
+
+            dto = ApplyLocalizationOverlay(contentId, dto);
+            return true;
         }
 
         public static void Invalidate()
         {
             ByContentId.Clear();
+            LocalizedOverlays.Clear();
             _loaded = false;
+        }
+
+        /// <summary>
+        /// 非源语言时返回文本覆盖副本（浅拷贝 + 三个文本字段替换）；zh / 无翻译条目时原样返回。
+        /// 覆盖副本按 contentId 缓存，语言切换 / 表重载（TablesVersion 变化）与 Invalidate 时失效。
+        /// </summary>
+        private static CardPresentationConfigDto ApplyLocalizationOverlay(
+            string contentId,
+            CardPresentationConfigDto source)
+        {
+            if (LocalizationCatalog.IsSourceLanguage)
+            {
+                return source;
+            }
+
+            if (_overlayTablesVersion != LocalizationCatalog.TablesVersion)
+            {
+                LocalizedOverlays.Clear();
+                _overlayTablesVersion = LocalizationCatalog.TablesVersion;
+            }
+
+            if (LocalizedOverlays.TryGetValue(contentId, out var cached) && cached != null)
+            {
+                return cached;
+            }
+
+            if (!LocalizationCatalog.TryGetCardText(contentId, out var text))
+            {
+                LocalizedOverlays[contentId] = source;
+                return source;
+            }
+
+            var overlay = CloneForTextOverlay(source);
+            if (!string.IsNullOrWhiteSpace(text.DisplayName))
+            {
+                overlay.displayName = text.DisplayName;
+            }
+
+            if (!string.IsNullOrWhiteSpace(text.Description))
+            {
+                overlay.description = text.Description;
+            }
+
+            if (!string.IsNullOrWhiteSpace(text.FaceIntro))
+            {
+                overlay.faceIntro = text.FaceIntro;
+            }
+
+            LocalizedOverlays[contentId] = overlay;
+            return overlay;
+        }
+
+        private static CardPresentationConfigDto CloneForTextOverlay(CardPresentationConfigDto source)
+        {
+            // 浅拷贝：非文本字段（sprites/effectAssemblies/…）与中文 DTO 共享引用，只有文本被替换。
+            return source.ShallowClone();
         }
 
         public static void Reload()

@@ -475,7 +475,7 @@ namespace NineGrid.Flow.RewardBoard
             RewardChoiceCoreHook.RequestWire();
             if (RewardChoiceCoreHook.SelectReward == null)
             {
-                ShowNotice("奖励房输入未接线");
+                ShowNotice(NineGrid.Core.Localization.L10n.Tr("notice.reward_not_wired", "奖励房输入未接线"));
                 return;
             }
 

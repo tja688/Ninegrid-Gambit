@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using NineGrid.Core.Content;
 using NineGrid.Core.Effects;
+using NineGrid.Core.Localization;
 using NineGrid.Core.Stats;
 using QFramework;
 
@@ -641,7 +642,11 @@ namespace NineGrid.Core.Systems
             if (WillAcquireHelpCardToItemSlots(card)
                 && this.GetModel<PlayerModel>().IsItemSlotsFull(this.GetModel<DeckModel>()))
             {
-                return Reject(GameCommandKind.PickupItem, "道具卡格已满", targetSlot, cardUid);
+                return Reject(
+                    GameCommandKind.PickupItem,
+                    L10n.Tr("notice.item_slots_full", "道具卡格已满"),
+                    targetSlot,
+                    cardUid);
             }
 
             var shouldRotate = requireInteractionLoopRotate && CurrentPhase == GamePhase.InteractionLoop;
@@ -873,7 +878,11 @@ namespace NineGrid.Core.Systems
                 && this.GetModel<PlayerModel>().IsRelicInventoryFull
                 && IsChestUseOfferingRelicPool(card))
             {
-                return Reject(GameCommandKind.UseItem, "遗物格子已满", SlotId.None, itemUid);
+                return Reject(
+                    GameCommandKind.UseItem,
+                    L10n.Tr("notice.relic_slots_full", "遗物格子已满"),
+                    SlotId.None,
+                    itemUid);
             }
 
             var pipeline = this.GetSystem<IActionPipelineSystem>();
@@ -933,7 +942,11 @@ namespace NineGrid.Core.Systems
             if (IsRelicRewardPool(poolId)
                 && this.GetModel<PlayerModel>().IsRelicInventoryFull)
             {
-                return Reject(GameCommandKind.SelectReward, "遗物格子已满", SlotId.None, 0);
+                return Reject(
+                    GameCommandKind.SelectReward,
+                    L10n.Tr("notice.relic_slots_full", "遗物格子已满"),
+                    SlotId.None,
+                    0);
             }
 
             var isShop = PendingChoiceModel.IsShopPool(poolId);
@@ -952,7 +965,11 @@ namespace NineGrid.Core.Systems
                     this.GetModel<DeckModel>(),
                     entry.Count < 1 ? 1 : entry.Count))
             {
-                return Reject(GameCommandKind.SelectReward, "道具卡格已满", SlotId.None, 0);
+                return Reject(
+                    GameCommandKind.SelectReward,
+                    L10n.Tr("notice.item_slots_full", "道具卡格已满"),
+                    SlotId.None,
+                    0);
             }
 
             if (IsRelicRewardPool(poolId))

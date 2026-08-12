@@ -28,8 +28,18 @@ Steam 集成复用同一范式，避免业务代码与 Steamworks SDK 耦合。
   文件级 `DISABLESTEAMWORKS` 守卫对齐 Steamworks.NET 官方模式。
 - `SteamPlatformBootstrap` 在 `RuntimeInitializeOnLoad(BeforeSceneLoad)` 自举：
   `RestartAppIfNecessary`（仅 Player）→ `SteamAPI.Init` → 挂常驻回调泵（每帧 `RunCallbacks`）→ 注册各 Hook。
+- **Editor 下自举默认关闭，须本机显式开启**（2026-08-12 修订）：`SteamAPI.Init` 在
+  Steam 客户端未运行 / 未登录的机器上会拉起 Steam 引导进程弹登录窗，个别环境直接崩溃 Editor。
+  故 Editor 下先查本机 EditorPrefs 开关（`NineGrid.Steam.EditorEnabled`，菜单
+  `NineGrid/Steam/在本机 Editor 启用 Steam`，按机器存储、不进版本库，默认 false），未开启则完全不碰
+  SteamAPI；开启后 Init 前再用 `SteamAPI.IsSteamRunning()`（只读本机状态、不拉起客户端）确认客户端在运行。
+- **Development Build 的 Player 整体跳过 Steam 自举**（2026-08-12 修订，临时措施）：
+  Steamworks.NET 打包不拷 `steam_appid.txt` 到输出目录，Development Build 直启时
+  `RestartAppIfNecessary` 会拉起 Steam 登录验证并退出游戏；未上架前打包分发（内部试玩）
+  一律用 Development Build，故运行时以 `Debug.isDebugBuild` 判定跳过。
+  仅正式（非 Development）Build 保持完整发行流程（`RestartAppIfNecessary` → `Init`）。
 - **行为不变量：平台可用性不得影响游戏规则与流程行为。**
-  Steam 客户端未运行 / Init 失败 / 原生库缺失时静默降级：Hook 不注册、本地存档照常，游戏与无 Steam 完全一致。
+  Steam 客户端未运行 / Init 失败 / 原生库缺失 / Editor 开关未开时静默降级：Hook 不注册、本地存档照常，游戏与无 Steam 完全一致。
 - 应用退出（含 Editor 退 Play）经回调泵显式还原全部 Hook 并 `SteamAPI.Shutdown`，
   保证关闭 Domain Reload 的 Enter Play Mode 下二次进 Play 状态干净。
 

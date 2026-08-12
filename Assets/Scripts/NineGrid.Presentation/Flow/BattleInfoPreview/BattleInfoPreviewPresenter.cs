@@ -376,13 +376,16 @@ namespace NineGrid.Flow.BattleInfoPreview
                 copyConfig = so;
             }
 
+            // SO 资产模板与代码兜底模板都当中文默认值，经 Tr 覆盖为英文（ADR-0046）。
             if (so != null && so.TryResolveTemplate(floor, displayNode, out var template)
                 && !string.IsNullOrWhiteSpace(template))
             {
-                return template;
+                return NineGrid.Core.Localization.L10n.Tr("preview.room_info", template);
             }
 
-            return "房间类型：{room}\n楼层：{floor}\n进度：{progress}";
+            return NineGrid.Core.Localization.L10n.Tr(
+                "preview.room_info",
+                "房间类型：{room}\n楼层：{floor}\n进度：{progress}");
         }
 
         /// <summary>

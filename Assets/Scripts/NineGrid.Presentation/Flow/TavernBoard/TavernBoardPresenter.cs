@@ -26,7 +26,8 @@ namespace NineGrid.Flow.TavernBoard
     /// </summary>
     public sealed class TavernBoardPresenter
     {
-        public const string CancelNestedTip = "取消选择";
+        public static string CancelNestedTip =>
+            NineGrid.Core.Localization.L10n.Tr("briefTip.cancel_select", "取消选择");
 
         public static TavernBoardPresenter Current { get; private set; } = new TavernBoardPresenter();
 
@@ -402,7 +403,7 @@ namespace NineGrid.Flow.TavernBoard
             }
 
             var tip = BoardBriefTipCopy.ForOptionOrShelf(
-                "刷新货架",
+                NineGrid.Core.Localization.L10n.Tr("briefTip.refresh_shelf", "刷新货架"),
                 pending.ShopRefreshPriceGold.Value);
             AttachClickProxy(mRefreshGo, TavernBoardHitKind.Refresh, -1, tip, TavernBoardSlotResolver.RefreshSlot);
         }
@@ -726,7 +727,9 @@ namespace NineGrid.Flow.TavernBoard
                 return;
             }
 
-            var tip = BoardBriefTipCopy.ForOptionOrShelf("刷新货架", refreshPrice);
+            var tip = BoardBriefTipCopy.ForOptionOrShelf(
+                NineGrid.Core.Localization.L10n.Tr("briefTip.refresh_shelf", "刷新货架"),
+                refreshPrice);
             AttachClickProxy(go, TavernBoardHitKind.Refresh, -1, tip, TavernBoardSlotResolver.RefreshSlot);
             mExtras.Add(go);
             mRefreshGo = go;
@@ -903,7 +906,7 @@ namespace NineGrid.Flow.TavernBoard
             RewardChoiceCoreHook.RequestWire();
             if (RewardChoiceCoreHook.SelectReward == null)
             {
-                ShowNotice("卡店输入未接线");
+                ShowNotice(NineGrid.Core.Localization.L10n.Tr("notice.tavern_not_wired", "卡店输入未接线"));
                 return;
             }
 
@@ -928,15 +931,15 @@ namespace NineGrid.Flow.TavernBoard
                     FlowRoomEconomyAudioCues.Pulse(
                         FlowRoomEconomyAudioCues.TavernInsufficientGold,
                         "TavernBoardPresenter.TrySelect");
-                    ShowNotice("金币不足");
+                    ShowNotice(NineGrid.Core.Localization.L10n.Tr("notice.gold_insufficient", "金币不足"));
                 }
                 else if (string.Equals(reason, "No item source pool", StringComparison.Ordinal))
                 {
-                    ShowNotice("暂无可固定的道具卡");
+                    ShowNotice(NineGrid.Core.Localization.L10n.Tr("notice.no_fixable_item", "暂无可固定的道具卡"));
                 }
                 else if (string.Equals(reason, "Item deck budget full", StringComparison.Ordinal))
                 {
-                    ShowNotice("塞卡预算已满");
+                    ShowNotice(NineGrid.Core.Localization.L10n.Tr("notice.fix_budget_full", "塞卡预算已满"));
                 }
                 else if (!string.IsNullOrEmpty(reason))
                 {
@@ -1150,7 +1153,7 @@ namespace NineGrid.Flow.TavernBoard
                     FlowRoomEconomyAudioCues.Pulse(
                         FlowRoomEconomyAudioCues.TavernInsufficientGold,
                         "TavernBoardPresenter.TryRefresh");
-                    ShowNotice("金币不足");
+                    ShowNotice(NineGrid.Core.Localization.L10n.Tr("notice.gold_insufficient", "金币不足"));
                 }
 
                 return;

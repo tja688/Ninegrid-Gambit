@@ -158,7 +158,11 @@ namespace NineGrid.Presentation.Ui
                 var slotIndex = i;
                 RunSaveSnapshot existing;
                 var has = RunSaveService.TryReadSlot(RunSaveService.ManualSlotId(slotIndex), out existing);
-                var label = has ? FormatEntry(existing) : "空存档位 " + slotIndex;
+                var label = has
+                    ? FormatEntry(existing)
+                    : string.Format(
+                        NineGrid.Core.Localization.L10n.Tr("save.empty_slot", "空存档位 {0}"),
+                        slotIndex);
                 var clickable = checkpoint != null;
                 SpawnRow(
                     mSaveEntryTemplate,
@@ -177,7 +181,11 @@ namespace NineGrid.Presentation.Ui
             SpawnRow(
                 mLoadEntryTemplate,
                 row++,
-                hasAuto ? "自动 " + FormatEntry(auto) : "自动存档（暂无）",
+                hasAuto
+                    ? string.Format(
+                        NineGrid.Core.Localization.L10n.Tr("save.auto_entry", "自动 {0}"),
+                        FormatEntry(auto))
+                    : NineGrid.Core.Localization.L10n.Tr("save.auto_none", "自动存档（暂无）"),
                 hasAuto,
                 () => OnLoadRowClicked(RunSaveService.AutoSlotId));
 
@@ -189,7 +197,11 @@ namespace NineGrid.Presentation.Ui
                 SpawnRow(
                     mLoadEntryTemplate,
                     row++,
-                    has ? FormatEntry(existing) : "空存档位 " + i,
+                    has
+                        ? FormatEntry(existing)
+                        : string.Format(
+                            NineGrid.Core.Localization.L10n.Tr("save.empty_slot", "空存档位 {0}"),
+                            i),
                     has,
                     () => OnLoadRowClicked(slotId));
             }
@@ -402,13 +414,20 @@ namespace NineGrid.Presentation.Ui
             if (ticks > 0)
             {
                 var time = new DateTime(ticks);
-                when = time.ToString("M月d日 HH:mm", CultureInfo.InvariantCulture);
+                when = time.ToString(
+                    NineGrid.Core.Localization.L10n.Tr("save.date_format", "M月d日 HH:mm"),
+                    CultureInfo.InvariantCulture);
             }
 
             var name = string.IsNullOrEmpty(snapshot.avatarDisplayName)
-                ? "冒险者"
+                ? NineGrid.Core.Localization.L10n.Tr("save.default_hero_name", "冒险者")
                 : snapshot.avatarDisplayName;
-            return $"{when} {name} 层{snapshot.floor}·{snapshot.DisplayNode}";
+            return string.Format(
+                NineGrid.Core.Localization.L10n.Tr("save.entry_format", "{0} {1} 层{2}·{3}"),
+                when,
+                name,
+                snapshot.floor,
+                snapshot.DisplayNode);
         }
 
         private static Transform FindDirectChild(Transform parent, string childName)

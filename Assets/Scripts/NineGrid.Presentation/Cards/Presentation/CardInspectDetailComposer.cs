@@ -101,7 +101,15 @@ namespace NineGrid.Cards.Presentation
                 && monsterDeck != null
                 && !string.IsNullOrWhiteSpace(monsterDeck.DisplayName))
             {
-                return monsterDeck.DisplayName.Trim();
+                // monster_decks.json display_name 与 deck JSON displayName 共用 deckId 键（ADR-0046）。
+                var deckName = monsterDeck.DisplayName.Trim();
+                if (NineGrid.Core.Localization.LocalizationCatalog.TryGetCardText(deckId, out var text)
+                    && !string.IsNullOrWhiteSpace(text.DisplayName))
+                {
+                    deckName = text.DisplayName.Trim();
+                }
+
+                return deckName;
             }
 
             return deckId;

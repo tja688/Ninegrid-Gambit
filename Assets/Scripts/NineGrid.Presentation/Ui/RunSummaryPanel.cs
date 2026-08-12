@@ -221,7 +221,9 @@ namespace NineGrid.Presentation.Ui
             var run = arch?.GetModel<RunModel>();
             var player = arch?.GetModel<PlayerModel>();
 
-            SetText(mTitleText, victory ? "凯旋而归" : "壮志未酬");
+            SetText(mTitleText, victory
+                ? NineGrid.Core.Localization.L10n.Tr("summary.title_victory", "凯旋而归")
+                : NineGrid.Core.Localization.L10n.Tr("summary.title_defeat", "壮志未酬"));
             if (mTitleText != null)
             {
                 mTitleText.color = victory
@@ -232,13 +234,17 @@ namespace NineGrid.Presentation.Ui
             SetText(
                 mSubtitleText,
                 victory
-                    ? "你征服了全部三层地城，九宫的传说将铭记你的名字！"
-                    : "地城的阴影暂时吞没了冒险者，重整旗鼓再来一局。");
+                    ? NineGrid.Core.Localization.L10n.Tr(
+                        "summary.subtitle_victory",
+                        "你征服了全部三层地城，九宫的传说将铭记你的名字！")
+                    : NineGrid.Core.Localization.L10n.Tr(
+                        "summary.subtitle_defeat",
+                        "地城的阴影暂时吞没了冒险者，重整旗鼓再来一局。"));
 
             SetDecorVisible(VictoryDecorName, victory);
             SetDecorVisible(DefeatDecorName, !victory);
 
-            var heroName = "战士";
+            var heroName = NineGrid.Core.Localization.L10n.Tr("charselect.warrior_name", "战士");
             if (CardPresentationConfigCatalog.TryGet(AvatarDefId, out var dto)
                 && dto != null
                 && !string.IsNullOrWhiteSpace(dto.displayName))
@@ -256,9 +262,16 @@ namespace NineGrid.Presentation.Ui
                 SetText(
                     mProgressText,
                     victory
-                        ? $"通关进度　全 {RunModel.FinalFloor} 层制霸"
-                        : $"通关进度　第 {floor} 层 · 第 {displayNode} 关");
-                SetText(mSeedText, $"本局种子 {run.Seed?.Value ?? 0}");
+                        ? string.Format(
+                            NineGrid.Core.Localization.L10n.Tr("summary.progress_victory", "通关进度　全 {0} 层制霸"),
+                            RunModel.FinalFloor)
+                        : string.Format(
+                            NineGrid.Core.Localization.L10n.Tr("summary.progress_defeat", "通关进度　第 {0} 层 · 第 {1} 关"),
+                            floor,
+                            displayNode));
+                SetText(mSeedText, string.Format(
+                    NineGrid.Core.Localization.L10n.Tr("summary.seed", "本局种子 {0}"),
+                    run.Seed?.Value ?? 0));
             }
             else
             {
@@ -269,12 +282,16 @@ namespace NineGrid.Presentation.Ui
             SetText(
                 mGoldText,
                 player != null && player.Coins != null
-                    ? $"持有金币　{Mathf.Max(0, player.Coins.Value)}"
+                    ? string.Format(
+                        NineGrid.Core.Localization.L10n.Tr("summary.gold", "持有金币　{0}"),
+                        Mathf.Max(0, player.Coins.Value))
                     : string.Empty);
             SetText(
                 mInteractionText,
                 player != null && player.InteractionCount != null
-                    ? $"九宫互动　{Mathf.Max(0, player.InteractionCount.Value)} 次"
+                    ? string.Format(
+                        NineGrid.Core.Localization.L10n.Tr("summary.interactions", "九宫互动　{0} 次"),
+                        Mathf.Max(0, player.InteractionCount.Value))
                     : string.Empty);
 
             SetText(mStatsText, BuildAvatarStatsLine(arch));
@@ -305,7 +322,14 @@ namespace NineGrid.Presentation.Ui
             var maxHp = Mathf.Max(hp, stats.GetEffectiveInt(avatar, StatId.MaxHp));
             var attack = Mathf.Max(0, stats.GetEffectiveInt(avatar, StatId.Attack));
             var armor = Mathf.Max(0, StatArmorUtility.GetEffectiveArmor(stats, avatar));
-            return $"最终属性　生命 {hp}/{maxHp} · 攻击 {attack} · 护甲 {armor}";
+            return string.Format(
+                NineGrid.Core.Localization.L10n.Tr(
+                    "summary.stats",
+                    "最终属性　生命 {0}/{1} · 攻击 {2} · 护甲 {3}"),
+                hp,
+                maxHp,
+                attack,
+                armor);
         }
 
         private void PopulateRelics(PlayerModel player)
@@ -313,7 +337,9 @@ namespace NineGrid.Presentation.Ui
             ClearRelicIcons();
             var relicIds = player != null ? player.RelicDefIds : null;
             var count = relicIds != null ? relicIds.Count : 0;
-            SetText(mRelicTitleText, $"持有遗物　{count} 件");
+            SetText(mRelicTitleText, string.Format(
+                NineGrid.Core.Localization.L10n.Tr("summary.relics", "持有遗物　{0} 件"),
+                count));
 
             if (mRelicIconAnchor == null || count == 0)
             {

@@ -49,6 +49,7 @@ namespace NineGrid.Cards.Presentation
 
         private Dictionary<string, Entry> _codeLookup;
         private Dictionary<string, Entry> _nameLookup;
+        private int _nameLookupL10nVersion;
 
         public IReadOnlyList<Entry> Entries => entries;
 
@@ -254,17 +255,39 @@ namespace NineGrid.Cards.Presentation
 
         private void EnsureLookup()
         {
-            if (_codeLookup != null && _nameLookup != null)
+            // 语言表重载（TablesVersion 变化）时重建：en 词条名键随 glossary 表变化。
+            if (_codeLookup != null
+                && _nameLookup != null
+                && _nameLookupL10nVersion == NineGrid.Core.Localization.LocalizationCatalog.TablesVersion)
             {
                 return;
             }
 
+            _nameLookupL10nVersion = NineGrid.Core.Localization.LocalizationCatalog.TablesVersion;
             _codeLookup = new Dictionary<string, Entry>(StringComparer.Ordinal);
             _nameLookup = new Dictionary<string, Entry>(StringComparer.Ordinal);
             if (entries == null)
             {
                 entries = new List<Entry>();
                 return;
+            }
+
+            // [[词条]] 匹配键 = zh 名 ∪ en 名（与当前语言无关，ADR-0046）：先登记 en 名，
+            // 再登记 zh 名，保证冲突时中文权威键胜出。
+            for (var i = 0; i < entries.Count; i++)
+            {
+                var entry = entries[i];
+                if (entry == null || string.IsNullOrWhiteSpace(entry.displayNameZh))
+                {
+                    continue;
+                }
+
+                var zhName = entry.displayNameZh.Trim();
+                if (NineGrid.Core.Localization.LocalizationCatalog.TryGetGlossary(zhName, out var glossary)
+                    && !string.IsNullOrWhiteSpace(glossary.DisplayName))
+                {
+                    _nameLookup[glossary.DisplayName.Trim()] = entry;
+                }
             }
 
             for (var i = 0; i < entries.Count; i++)
