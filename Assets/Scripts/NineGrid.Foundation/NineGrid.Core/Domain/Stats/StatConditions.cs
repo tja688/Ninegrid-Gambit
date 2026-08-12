@@ -156,6 +156,7 @@ namespace NineGrid.Core.Stats
 
     /// <summary>
     /// Owner 正交邻接是否存在匹配 defId 和/或 kind 的其他卡（用于 RuleModifier / Conditional 层）。
+    /// 怪-怪邻接与 IBoardSystem.AreAdjacent 对齐：VirtualAdjacency + 天涯若比邻（GlobalMonsterAdjacency）。
     /// </summary>
     public sealed class OwnerAdjacentHasCardCondition : IStatCondition
     {
@@ -181,14 +182,11 @@ namespace NineGrid.Core.Stats
             }
 
             var ownerUid = context.Owner.Uid;
+            var globalAdjacencyResolved = false;
+            var hasGlobalMonsterAdjacency = false;
             for (var i = SlotId.MinBoardIndex; i <= SlotId.MaxBoardIndex; i++)
             {
                 var slot = SlotId.Board(i);
-                if (!context.OwnerSlot.IsAdjacentTo(slot))
-                {
-                    continue;
-                }
-
                 var cardUid = context.Board.GetCardUid(slot);
                 if (cardUid == 0 || cardUid == ownerUid)
                 {
@@ -212,7 +210,32 @@ namespace NineGrid.Core.Stats
                     continue;
                 }
 
-                return true;
+                if (context.OwnerSlot.IsAdjacentTo(slot))
+                {
+                    return true;
+                }
+
+                if (context.Owner.Kind != CardKind.Monster || card.Kind != CardKind.Monster)
+                {
+                    continue;
+                }
+
+                if (MonsterBoardRules.HasVirtualAdjacency(context, context.Owner, card.Uid)
+                    || MonsterBoardRules.HasVirtualAdjacency(context, card, ownerUid))
+                {
+                    return true;
+                }
+
+                if (!globalAdjacencyResolved)
+                {
+                    globalAdjacencyResolved = true;
+                    hasGlobalMonsterAdjacency = MonsterBoardRules.HasGlobalMonsterAdjacency(context);
+                }
+
+                if (hasGlobalMonsterAdjacency)
+                {
+                    return true;
+                }
             }
 
             return false;
