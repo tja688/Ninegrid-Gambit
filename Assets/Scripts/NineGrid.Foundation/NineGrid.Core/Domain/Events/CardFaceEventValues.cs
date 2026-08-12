@@ -5,20 +5,22 @@ using NineGrid.Core.Systems;
 namespace NineGrid.Core
 {
     /// <summary>
-    /// 卡面生成类事件的结算后绝对值写入（攻=ResultValue，血/甲=Remaining*）；
-    /// 参与敌方行动的怪物另附行动倒计时事件（ADR-0005 / #81）。
+    /// 卡面数值的统一有效值口径（oracle）与生成类事件绝对值写入。
     /// <para>
-    /// Permanent 有效攻旁路：Conditional/常驻光环会改有效攻但不经血甲事件；
-    /// Core 主动发 <see cref="CoreEventType.BaseStatModified"/>（仍走 Settled 指令，表现层不对账）。
-    /// 玩家下一次对怪的规则乘区（如暴力卡 DamageMultiplier）经
-    /// <see cref="AppendProjectedBattleAttackFaceCommit"/> 投影到攻击槽，与 ADR-0028 结算一致。
+    /// 生成类事件（CardSpawned / 带 uid 的 CardDealt / AvatarAppeared）在造卡 / 发牌时写入
+    /// 攻=ResultValue、血/甲=Remaining*（ADR-0005）；参与敌方行动的怪物另附行动倒计时事件。
+    /// </para>
+    /// <para>
+    /// 生成之后的卡面数值完整性由 Core 统一对账缝自动保证（<see cref="CardFaceReconciliation"/>，
+    /// ADR-0045）：任何动作改动有效攻 / 当前甲 / 血 / 倒计时，都会在动作边界 diff-emit 绝对值
+    /// 提交事件，无需手工补发。历史上的 Append*FaceCommit 补扫家族已废除。
     /// </para>
     /// </summary>
     public static class CardFaceEventValues
     {
         /// <summary>
-        /// 卡面攻显示口径：有效攻；怪物另加 <see cref="RuleId.EnemyAttackDelta"/> 规则修正
-        /// （龙鳞甲全场-1、邻接光环+1 等），与 PhaseSystem.GetAttackDamage 的结算口径一致。
+        /// 卡面攻与伤害结算共用的唯一口径：有效攻；怪物另加 <see cref="RuleId.EnemyAttackDelta"/>
+        /// 规则修正（龙鳞甲全场-1、邻接光环+1 等）。PhaseSystem.GetAttackDamage 直接复用本函数。
         /// </summary>
         public static int GetFaceAttack(IStatSystem stats, CardInstance card)
         {
@@ -110,6 +112,7 @@ namespace NineGrid.Core
         /// <summary>
         /// 玩家下一次对怪物普通攻击的规则层伤害（DamageMultiplier + DamageFlatDelta），
         /// 对齐 <see cref="DealDamageAction"/> 的 statContext（Owner=受击怪、Actor=玩家）。
+        /// 盘面无怪或规则不改伤时退化为有效攻；也是玩家卡面攻的对账 oracle（ADR-0045）。
         /// </summary>
         public static int GetProjectedPlayerBattleAttack(GameActionContext context, CardInstance avatar)
         {
@@ -137,219 +140,6 @@ namespace NineGrid.Core
             var flatDamage = (int)Math.Round(
                 statSystem.EvaluateRule(RuleId.DamageFlatDelta, 0f, evaluationContext));
             return Math.Max(0, multipliedDamage + flatDamage);
-        }
-
-        /// <summary>
-        /// 规则乘区改变玩家下一次对怪交战伤害时，提交投影攻到卡面（如暴力卡 ×2）。
-        /// </summary>
-        public static void AppendProjectedBattleAttackFaceCommit(
-            GameActionResult result,
-            GameActionContext context,
-            CardInstance avatar,
-            string actionName,
-            string source = null,
-            string sourceDefId = null)
-        {
-            if (result == null || context == null || avatar == null)
-            {
-                return;
-            }
-
-            var statSystem = context.GetSystem<IStatSystem>();
-            var effectiveAttack = Math.Max(0, statSystem.GetEffectiveInt(avatar, StatId.Attack));
-            var projectedAttack = GetProjectedPlayerBattleAttack(context, avatar);
-            if (projectedAttack <= 0 || projectedAttack == effectiveAttack)
-            {
-                return;
-            }
-
-            result.AddEvent(new CoreGameEvent(CoreEventType.BaseStatModified, context.ActionId, actionName ?? "ProjectedBattleAttackFace")
-                .WithCard(avatar.Uid)
-                .WithTarget(avatar.Uid)
-                .WithAmount((int)StatId.Attack)
-                .WithDelta(projectedAttack - effectiveAttack)
-                .WithResultValue(projectedAttack)
-                .WithMessage(source ?? string.Empty)
-                .WithSource(sourceDefId ?? string.Empty, source ?? string.Empty));
-        }
-
-        /// <summary>
-        /// Permanent Attack 修饰器 Apply/条件翻转后：提交当前有效攻到卡面（ADR-0005 旁路，非直读对账）。
-        /// </summary>
-        public static void AppendPermanentAttackFaceCommit(
-            GameActionResult result,
-            GameActionContext context,
-            CardInstance card,
-            string actionName,
-            string source = null,
-            string sourceDefId = null,
-            int delta = 0)
-        {
-            if (result == null || card == null || context == null)
-            {
-                return;
-            }
-
-            var effectiveAttack = GetFaceAttack(context.GetSystem<IStatSystem>(), card);
-            result.AddEvent(new CoreGameEvent(CoreEventType.BaseStatModified, context.ActionId, actionName ?? "PermanentAttackFace")
-                .WithCard(card.Uid)
-                .WithTarget(card.Uid)
-                .WithAmount((int)StatId.Attack)
-                .WithDelta(delta)
-                .WithResultValue(effectiveAttack)
-                .WithMessage(source ?? string.Empty)
-                .WithSource(sourceDefId ?? string.Empty, source ?? string.Empty));
-        }
-
-        /// <summary>
-        /// CurrentArmor 变化后提交怪物卡面绝对甲（借甲光环等旁路；玩家仍走 ArmorChanged）。
-        /// </summary>
-        public static void AppendCurrentArmorFaceCommit(
-            GameActionResult result,
-            GameActionContext context,
-            CardInstance card,
-            string actionName,
-            string source = null,
-            string sourceDefId = null,
-            int delta = 0)
-        {
-            if (result == null || card == null || context == null || card.Kind != CardKind.Monster)
-            {
-                return;
-            }
-
-            var currentArmor = StatArmorUtility.GetCurrentArmor(card);
-            result.AddEvent(new CoreGameEvent(CoreEventType.BaseStatModified, context.ActionId, actionName ?? "CurrentArmorFace")
-                .WithCard(card.Uid)
-                .WithTarget(card.Uid)
-                .WithAmount((int)StatId.CurrentArmor)
-                .WithDelta(delta)
-                .WithResultValue(currentArmor)
-                .WithMessage(source ?? string.Empty)
-                .WithSource(sourceDefId ?? string.Empty, source ?? string.Empty));
-        }
-
-        /// <summary>
-        /// EnemyAttackDelta 规则装卸后（遗物获得/丢弃等）：对场上怪物提交含规则修正的卡面攻。
-        /// </summary>
-        public static void AppendEnemyAttackDeltaFaceCommitsForBoardMonsters(
-            GameActionResult result,
-            GameActionContext context,
-            string actionName,
-            string source = null,
-            string sourceDefId = null)
-        {
-            if (result == null || context == null)
-            {
-                return;
-            }
-
-            var board = context.GetModel<BoardModel>();
-            var registry = context.GetModel<CardRegistry>();
-            if (board == null || registry == null)
-            {
-                return;
-            }
-
-            for (var i = SlotId.MinBoardIndex; i <= SlotId.MaxBoardIndex; i++)
-            {
-                var uid = board.GetCardUid(SlotId.Board(i));
-                CardInstance card;
-                if (uid <= 0 || !registry.TryGet(uid, out card) || card == null || card.Kind != CardKind.Monster)
-                {
-                    continue;
-                }
-
-                AppendPermanentAttackFaceCommit(result, context, card, actionName, source, sourceDefId);
-            }
-        }
-
-        /// <summary>
-        /// 盘面拓扑/宿主移除后：对仍挂着「带条件的 Permanent Attack」修饰器的场上卡提交有效攻；
-        /// 存在条件型 EnemyAttackDelta（邻接光环等）时怪物卡面一并补扫（条件随拓扑翻转）。
-        /// </summary>
-        public static void AppendConditionalPermanentAttackFaceCommitsForBoard(
-            GameActionResult result,
-            GameActionContext context,
-            string actionName)
-        {
-            if (result == null || context == null)
-            {
-                return;
-            }
-
-            var board = context.GetModel<BoardModel>();
-            var registry = context.GetModel<CardRegistry>();
-            if (board == null || registry == null)
-            {
-                return;
-            }
-
-            var refreshMonsters = HasConditionalEnemyAttackDeltaRule(context);
-            for (var i = SlotId.MinBoardIndex; i <= SlotId.MaxBoardIndex; i++)
-            {
-                var uid = board.GetCardUid(SlotId.Board(i));
-                CardInstance card;
-                if (uid <= 0 || !registry.TryGet(uid, out card) || card == null)
-                {
-                    continue;
-                }
-
-                if (!HasConditionalPermanentAttackModifier(card)
-                    && !(refreshMonsters && card.Kind == CardKind.Monster))
-                {
-                    continue;
-                }
-
-                AppendPermanentAttackFaceCommit(result, context, card, actionName);
-            }
-        }
-
-        private static bool HasConditionalEnemyAttackDeltaRule(GameActionContext context)
-        {
-            var stats = context != null ? context.GetSystem<IStatSystem>() : null;
-            var modifiers = stats != null && stats.RuleModifiers != null
-                ? stats.RuleModifiers.Modifiers
-                : null;
-            if (modifiers == null)
-            {
-                return false;
-            }
-
-            for (var i = 0; i < modifiers.Count; i++)
-            {
-                var modifier = modifiers[i];
-                if (modifier != null
-                    && modifier.Rule == RuleId.EnemyAttackDelta
-                    && modifier.Condition != null)
-                {
-                    return true;
-                }
-            }
-
-            return false;
-        }
-
-        public static bool HasConditionalPermanentAttackModifier(CardInstance card)
-        {
-            if (card == null || card.Stats == null)
-            {
-                return false;
-            }
-
-            var modifiers = card.Stats.Modifiers;
-            for (var i = 0; i < modifiers.Count; i++)
-            {
-                var modifier = modifiers[i];
-                if (modifier.Stat == StatId.Attack
-                    && modifier.Scope == ModifierScope.Permanent
-                    && modifier.Condition != null)
-                {
-                    return true;
-                }
-            }
-
-            return false;
         }
 
         private static StatEvaluationContext CreatePlayerOutgoingDamageContext(

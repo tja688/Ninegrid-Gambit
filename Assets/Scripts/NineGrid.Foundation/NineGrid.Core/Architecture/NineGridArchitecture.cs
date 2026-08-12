@@ -21,6 +21,7 @@ namespace NineGrid.Core
             RegisterModel(new RunModel());
             RegisterModel(new BattleContextModel());
             RegisterModel(new PendingChoiceModel());
+            RegisterModel(new CardFaceLedgerModel());
 
             RegisterSystem<IStatSystem>(new StatSystem());
             RegisterSystem<IBattleScopeSystem>(new BattleScopeSystem());

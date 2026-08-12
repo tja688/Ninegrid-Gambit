@@ -189,23 +189,7 @@ namespace NineGrid.Core
                 result.AddFollowUp(new KillIfDeadAction(ActorUid, TargetUid));
             }
 
-            if (baseDamage > 0 && consumedDamageMultiplier.Count > 0)
-            {
-                CardInstance actor;
-                if (registry.TryGet(ActorUid, out actor)
-                    && actor != null
-                    && actor.Kind == CardKind.Avatar)
-                {
-                    CardFaceEventValues.AppendPermanentAttackFaceCommit(
-                        result,
-                        context,
-                        actor,
-                        ActionName,
-                        "DamageMultiplierConsumed",
-                        SourceDefId);
-                }
-            }
-
+            // Once 乘区消耗后的玩家卡面攻回退由统一对账缝自动提交（ADR-0045）。
             return result;
         }
 
@@ -564,7 +548,8 @@ namespace NineGrid.Core
                 board.MarkTrapVacated(fromSlot);
             }
 
-            var result = new GameActionResult()
+            // 拓扑变更引发的邻接光环卡面刷新由统一对账缝自动提交（ADR-0045）。
+            return new GameActionResult()
                 .AddEvent(new CoreGameEvent(CoreEventType.CardRemoved, context.ActionId, ActionName)
                     .WithCard(CardUid)
                     .WithSlots(fromSlot, SlotId.None)
@@ -572,11 +557,6 @@ namespace NineGrid.Core
                     .WithMessage(Reason)
                     .WithSource(SourceDefId, Reason))
                 .AddFollowUp(new DeactivateOwnerEffectsAction(CardUid, "remove:" + Reason));
-            CardFaceEventValues.AppendConditionalPermanentAttackFaceCommitsForBoard(
-                result,
-                context,
-                ActionName);
-            return result;
         }
 
         public override IEnumerable<TriggerPoint> GetPostTriggerPoints(GameActionContext context, IReadOnlyList<CoreGameEvent> events)
@@ -657,10 +637,7 @@ namespace NineGrid.Core
                 result.AddFollowUp(new ModifyGoldAction(goldReward, "kill:" + target.DefId, sourceCardUid: TargetUid));
             }
 
-            CardFaceEventValues.AppendConditionalPermanentAttackFaceCommitsForBoard(
-                result,
-                context,
-                ActionName);
+            // 击杀后的邻接光环 / EnemyAttackDelta 卡面刷新由统一对账缝自动提交（ADR-0045）。
             return result;
         }
 

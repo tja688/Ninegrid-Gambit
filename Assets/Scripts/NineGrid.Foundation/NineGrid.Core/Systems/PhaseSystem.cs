@@ -2273,13 +2273,8 @@ namespace NineGrid.Core.Systems
 
         private static int GetAttackDamage(IStatSystem statSystem, CardInstance card)
         {
-            var damage = statSystem.GetEffectiveInt(card, StatId.Attack);
-            if (card.Kind == CardKind.Monster)
-            {
-                damage += (int)System.Math.Round(statSystem.EvaluateRule(RuleId.EnemyAttackDelta, 0f, statSystem.CreateContext(card)));
-            }
-
-            return System.Math.Max(0, damage);
+            // 单一口径（ADR-0045）：伤害结算与卡面显示共用 GetFaceAttack，源头上不可能错位。
+            return CardFaceEventValues.GetFaceAttack(statSystem, card);
         }
 
         private static bool TryGetPlayerMonsterEngagement(

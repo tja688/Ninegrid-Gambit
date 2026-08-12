@@ -4,6 +4,8 @@ status: accepted
 
 # 卡面显示值由结算指令在表演锚点提交
 
+> **修订（ADR-0045）**：本文「不做兜底、不做强制对账」仅对**表现层**继续成立；Core 发射侧的完整性已由统一对账缝自动化（diff-emit），「Permanent 有效攻旁路」补扫家族（后果一节）已废除，见 [ADR-0045](0045-unified-card-face-stat-projection.md)。
+
 ## 决策
 
 记录 Spec #53 决策 1–6（输出侧唯一提交出口）：
@@ -46,7 +48,7 @@ v1 锚点：
 - 玩家信息 HUD、金币已由 #61 收口到指令 + FlushBeats；Bounce 候选项已由 #62 收口到 `RewardOffered`/`OfferReward` 投影 + Settled。伤害飘字与 FX 脉冲已由 #60 收口到 Impact。
 - **衔接补丁已移除（#61）**：Avatar 血甲 HUD 改由 `PlayerInfoHudBeatHandler` 在 Impact 用指令绝对值刷新；金币由 `GoldGainBeatHandler` 在 Settled 广播飞币。战中不再 `SyncFromCore`（开局/作弊白名单除外）。见 [ADR-0007](0007-unified-presentation-pipeline.md)。
 - **#198 修正**：金币装饰由 `Settled` 改至 `Impact`（尸体 Vacate 前保出生点，与飘字同缝）；`ModifyGoldAction` 可选来源卡并在 `GoldModified` 写 `CardUid`，击杀/移除赏金与拾取加金传正确来源 uid。
-- **Permanent 有效攻旁路（攻的绝对值语义）**：凡改「卡面可见攻」的路径（`AddStatModifier`/`CommitPermanentAttackFace`/补扫/`ModifyBaseStat` Attack 分支）一律发 `BaseStatModified(ResultValue=CardFaceEventValues.GetFaceAttack)`——卡面攻口径＝有效攻，**怪物另加 `EnemyAttackDelta` 规则修正**（龙鳞甲全场怪物-1、邻接光环+1 等），与伤害结算 `GetAttackDamage` 同口径；带常驻/条件修饰器（遗物、攻击图腾光环）时有效攻≠基础值，禁止 `ModifyBaseStat` 提交基础值（历史缺陷：加攻卡显示落后于真实攻击力）。含 `EnemyAttackDelta` 规则的遗物在 `GrantRelic`/`DiscardRelic` 时对场上怪物补扫卡面攻。`Delta`/`Amount=StatId` 语义不变。
+- **Permanent 有效攻旁路（攻的绝对值语义）** *（已由 ADR-0045 废除补扫、统一为自动对账缝；口径结论保留）*：卡面攻口径＝有效攻（`CardFaceEventValues.GetFaceAttack`），**怪物另加 `EnemyAttackDelta` 规则修正**（龙鳞甲全场怪物-1、邻接光环+1 等），与伤害结算 `GetAttackDamage` 同口径；带常驻/条件修饰器时有效攻≠基础值，禁止 `ModifyBaseStat` 提交基础值（历史缺陷：加攻卡显示落后于真实攻击力）。`Delta`/`Amount=StatId` 语义不变。历史上的 `Append*FaceCommit` 手工补扫家族及其 call site 清单见 [ADR-0045](0045-unified-card-face-stat-projection.md)「被废除的旧机制」。
 - **#62**：`RewardEntry` 携带展示用攻/甲/血；`RewardOffered` Beat=`Settled`；`CardFaceStatHandler` 消费 `OfferReward`；Bounce 删 `clearCombatStats` 数值旁路，spawn 后 `PresentStandalone` 二次提交。
 
 ## 相关

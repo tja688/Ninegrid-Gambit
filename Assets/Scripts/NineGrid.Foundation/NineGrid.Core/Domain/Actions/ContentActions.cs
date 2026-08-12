@@ -64,9 +64,9 @@ namespace NineGrid.Core
                 StatArmorUtility.SetCurrentArmor(card, currentArmorAfter);
             }
 
-            // 攻按 ADR-0005 Permanent 有效攻旁路：ResultValue 携带含常驻/条件修饰器的有效攻
-            // （与 AppendPermanentAttackFaceCommit 同构，怪物含 EnemyAttackDelta 规则），
-            // 否则加攻卡等路径会提交基础值、与伤害结算（有效攻）错位——带遗物/光环时显示落后于真实攻击力。
+            // 攻的 ResultValue 用统一口径 GetFaceAttack（有效攻，怪物含 EnemyAttackDelta 规则；
+            // ADR-0045）：主事件即携带正确绝对值，禁止发基础值——带遗物/光环时基础值会
+            // 落后于伤害结算；对账缝只兜漏发，不替主事件纠错（持有区卡不在对账范围）。
             var resultValue = Stat == StatId.Attack
                 ? CardFaceEventValues.GetFaceAttack(context.GetSystem<IStatSystem>(), card)
                 : next;
@@ -174,23 +174,10 @@ namespace NineGrid.Core
                 content.ActivateRelic(RelicDefId);
             }
 
-            var result = new GameActionResult()
+            // 遗物规则（EnemyAttackDelta 等）引发的场上卡面攻刷新由统一对账缝自动提交（ADR-0045）。
+            return new GameActionResult()
                 .AddEvent(new CoreGameEvent(CoreEventType.RelicGranted, context.ActionId, ActionName)
                     .WithMessage(RelicDefId));
-
-            // 遗物带 EnemyAttackDelta 规则（如龙鳞甲全场怪物攻击-1）：战斗中获得（宝箱等）
-            // 立即刷新场上怪物卡面攻，与伤害结算口径对齐。
-            if (RelicEnemyAttackDeltaRules.Has(context.GetSystem<IEffectSystem>(), RelicDefId))
-            {
-                CardFaceEventValues.AppendEnemyAttackDeltaFaceCommitsForBoardMonsters(
-                    result,
-                    context,
-                    ActionName,
-                    "enemyAttackDelta",
-                    RelicDefId);
-            }
-
-            return result;
         }
 
         private static bool PlayerOwnsRelic(PlayerModel player, string defId)
@@ -229,8 +216,6 @@ namespace NineGrid.Core
             }
 
             var effectSystem = context.GetSystem<IEffectSystem>();
-            // 反激活前取样：卸载后规则已不在注册表，事后查不到。
-            var hadEnemyAttackDeltaRule = RelicEnemyAttackDeltaRules.Has(effectSystem, RelicDefId);
             var instances = effectSystem.Instances;
             for (var i = instances.Count - 1; i >= 0; i--)
             {
@@ -265,61 +250,10 @@ namespace NineGrid.Core
                     new ModifierSource(RelicRunContributionModel.BuildModifierSourceId(RelicDefId, StatId.Armor)));
             }
 
-            var result = new GameActionResult()
+            // 卸下 EnemyAttackDelta 等规则遗物后的场上卡面攻回落由统一对账缝自动提交（ADR-0045）。
+            return new GameActionResult()
                 .AddEvent(new CoreGameEvent(CoreEventType.EffectDeactivated, context.ActionId, ActionName)
                     .WithMessage(RelicDefId));
-
-            // 卸下 EnemyAttackDelta 规则遗物（如龙鳞甲）后，场上怪物卡面攻回到无修正值。
-            if (hadEnemyAttackDeltaRule)
-            {
-                CardFaceEventValues.AppendEnemyAttackDeltaFaceCommitsForBoardMonsters(
-                    result,
-                    context,
-                    ActionName,
-                    "enemyAttackDelta",
-                    RelicDefId);
-            }
-
-            return result;
-        }
-    }
-
-    /// <summary>
-    /// 遗物效果集是否含 <see cref="RuleId.EnemyAttackDelta"/> 规则修正（全场怪物攻击±N 类），
-    /// 用于装卸时决定是否补扫场上怪物卡面攻。
-    /// </summary>
-    internal static class RelicEnemyAttackDeltaRules
-    {
-        internal static bool Has(IEffectSystem effectSystem, string relicDefId)
-        {
-            if (effectSystem == null || string.IsNullOrEmpty(relicDefId))
-            {
-                return false;
-            }
-
-            var instances = effectSystem.Instances;
-            for (var i = 0; i < instances.Count; i++)
-            {
-                var instance = instances[i];
-                if (instance == null
-                    || instance.Owner == null
-                    || instance.Owner.ContainerType != EffectContainerType.Relic
-                    || !string.Equals(instance.Owner.SourceDefId, relicDefId, System.StringComparison.Ordinal)
-                    || instance.Definition == null
-                    || instance.Definition.Kind != EffectKind.RuleModifier
-                    || instance.Definition.RuleModifier == null)
-                {
-                    continue;
-                }
-
-                if (instance.Definition.RuleModifier.Get("rule").AsEnum(RuleId.RecoveryMultiplier)
-                    == RuleId.EnemyAttackDelta)
-                {
-                    return true;
-                }
-            }
-
-            return false;
         }
     }
 
@@ -395,7 +329,8 @@ namespace NineGrid.Core
                         null));
             }
 
-            var result = new GameActionResult()
+            // 玩家卡面有效攻刷新由统一对账缝自动提交（ADR-0045）。
+            return new GameActionResult()
                 .AddEvent(new CoreGameEvent(CoreEventType.EffectModifierApplied, context.ActionId, ActionName)
                     .WithCard(avatarUid)
                     .WithTarget(avatarUid)
@@ -404,20 +339,6 @@ namespace NineGrid.Core
                     .WithMessage(sourceId)
                     .WithSource(RelicDefId, sourceId)
                     .WithResultValue(next));
-
-            if (Stat == StatId.Attack)
-            {
-                CardFaceEventValues.AppendPermanentAttackFaceCommit(
-                    result,
-                    context,
-                    avatar,
-                    ActionName,
-                    sourceId,
-                    RelicDefId,
-                    next);
-            }
-
-            return result;
         }
     }
 

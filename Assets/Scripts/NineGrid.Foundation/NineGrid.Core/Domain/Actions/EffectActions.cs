@@ -1277,7 +1277,8 @@ namespace NineGrid.Core
             var modifier = new StatModifier(Stat, Op, Value, Layer, source, Scope, Condition);
             statSystem.AddModifier(card, modifier);
 
-            var result = new GameActionResult()
+            // 卡面有效攻/甲变化由统一对账缝自动提交（ADR-0045），无需在此手工补发。
+            return new GameActionResult()
                 .AddEvent(new CoreGameEvent(CoreEventType.EffectModifierApplied, context.ActionId, ActionName)
                     .WithCard(TargetUid)
                     .WithTarget(TargetUid)
@@ -1285,21 +1286,6 @@ namespace NineGrid.Core
                     .WithDelta((int)Math.Round(Value))
                     .WithMessage(Source)
                     .WithSource(SourceDefId, Source));
-
-            // Permanent Attack 光环旁路提交有效攻（ADR-0005 / PresentationEventMap）。
-            if (Stat == StatId.Attack && Scope == ModifierScope.Permanent)
-            {
-                CardFaceEventValues.AppendPermanentAttackFaceCommit(
-                    result,
-                    context,
-                    card,
-                    ActionName,
-                    Source,
-                    SourceDefId,
-                    (int)Math.Round(Value));
-            }
-
-            return result;
         }
     }
 
@@ -1428,29 +1414,13 @@ namespace NineGrid.Core
             var modifier = new RuleModifier(Rule, Op, Value, Layer, new ModifierSource(Source), Scope, condition);
             context.GetSystem<IStatSystem>().RuleModifiers.Add(modifier);
 
-            var result = new GameActionResult()
+            // 玩家下一击乘区投影（DamageMultiplier 等）由统一对账缝按 Avatar 攻 oracle 自动提交（ADR-0045）。
+            return new GameActionResult()
                 .AddEvent(new CoreGameEvent(CoreEventType.EffectModifierApplied, context.ActionId, ActionName)
                     .WithCard(TargetUid)
                     .WithAmount((int)Rule)
                     .WithDelta((int)Math.Round(Value))
                     .WithMessage(Source));
-
-            CardInstance targetCard;
-            if (Rule == RuleId.DamageMultiplier
-                && context.GetModel<CardRegistry>().TryGet(TargetUid, out targetCard)
-                && targetCard != null
-                && targetCard.Kind == CardKind.Avatar)
-            {
-                CardFaceEventValues.AppendProjectedBattleAttackFaceCommit(
-                    result,
-                    context,
-                    targetCard,
-                    ActionName,
-                    Source,
-                    SourceDefId);
-            }
-
-            return result;
         }
     }
 
@@ -1663,40 +1633,6 @@ namespace NineGrid.Core
         }
     }
 
-    /// <summary>
-    /// kind:modifier 等非 AddStatModifier 路径：入队提交 Permanent 有效攻到卡面。
-    /// </summary>
-    public sealed class CommitPermanentAttackFaceAction : GameAction
-    {
-        public CommitPermanentAttackFaceAction(int targetUid, string source = null)
-        {
-            TargetUid = targetUid;
-            Source = source ?? string.Empty;
-        }
-
-        public int TargetUid { get; private set; }
-        public string Source { get; private set; }
-        public override string ActionName { get { return "CommitPermanentAttackFace"; } }
-
-        public override GameActionResult Apply(GameActionContext context)
-        {
-            CardInstance card;
-            if (TargetUid <= 0 || !context.GetModel<CardRegistry>().TryGet(TargetUid, out card) || card == null)
-            {
-                return GameActionResult.Empty;
-            }
-
-            var result = new GameActionResult();
-            CardFaceEventValues.AppendPermanentAttackFaceCommit(
-                result,
-                context,
-                card,
-                ActionName,
-                Source);
-            return result;
-        }
-    }
-
     public sealed class DeactivateOwnerEffectsAction : GameAction
     {
         public DeactivateOwnerEffectsAction(int ownerUid, string reason)
@@ -1716,6 +1652,7 @@ namespace NineGrid.Core
                 return GameActionResult.Empty;
             }
 
+            // 光环卸载后的卡面有效攻回落由统一对账缝自动提交（ADR-0045）。
             var ids = context.GetSystem<IContentSystem>().DeactivateRuntimeEffectsByOwner(OwnerUid);
             var result = new GameActionResult();
             for (var i = 0; i < ids.Count; i++)
@@ -1724,26 +1661,6 @@ namespace NineGrid.Core
                     .WithCard(OwnerUid)
                     .WithMessage(ids[i])
                     .WithSource(string.Empty, Reason));
-            }
-
-            // 邻接光环残留在友军上：条件翻转补扫。
-            CardFaceEventValues.AppendConditionalPermanentAttackFaceCommitsForBoard(
-                result,
-                context,
-                ActionName);
-
-            // kind:Modifier 自挂 Permanent Attack 被摘掉后条件扫扫不到，宿主本人仍在场则提交有效攻。
-            CardInstance owner;
-            if (context.GetModel<CardRegistry>().TryGet(OwnerUid, out owner)
-                && owner != null
-                && owner.Zone.Value == ZoneId.Board)
-            {
-                CardFaceEventValues.AppendPermanentAttackFaceCommit(
-                    result,
-                    context,
-                    owner,
-                    ActionName,
-                    Reason);
             }
 
             return result;
@@ -1845,24 +1762,15 @@ namespace NineGrid.Core
 
         private GameActionResult EmitArmorChanged(GameActionContext context, CardInstance target, int delta, int newArmor)
         {
+            // ArmorChanged 已携带绝对甲；漏发场景由统一对账缝兜住（ADR-0045）。
             var hp = Math.Max(0, (int)Math.Round(target.Stats.GetBase(StatId.Hp)));
-            var result = new GameActionResult()
+            return new GameActionResult()
                 .AddEvent(new CoreGameEvent(CoreEventType.ArmorChanged, context.ActionId, ActionName)
                     .WithTarget(target.Uid)
                     .WithCard(target.Uid)
                     .WithDelta(delta)
                     .WithRemaining(hp, newArmor)
                     .WithSource(SourceDefId, Source));
-
-            CardFaceEventValues.AppendCurrentArmorFaceCommit(
-                result,
-                context,
-                target,
-                ActionName,
-                Source,
-                SourceDefId,
-                delta);
-            return result;
         }
     }
 

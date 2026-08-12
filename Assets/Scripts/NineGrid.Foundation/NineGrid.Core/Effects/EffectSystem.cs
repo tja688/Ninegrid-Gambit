@@ -592,8 +592,8 @@ namespace NineGrid.Core.Effects
             var runtime = new EffectRuntimeContext(((IBelongToArchitecture)this).GetArchitecture(), instance, null);
             var targets = FilterMagicImmuneTargets(runtime, instance.Target.Resolve(runtime));
             var statSystem = this.GetSystem<IStatSystem>();
-            var pipeline = this.GetSystem<IActionPipelineSystem>();
 
+            // kind:Modifier 挂载后的卡面有效攻变化由统一对账缝在下一个动作边界自动提交（ADR-0045）。
             for (var i = 0; i < targets.Count; i++)
             {
                 CardInstance card;
@@ -605,14 +605,6 @@ namespace NineGrid.Core.Effects
                 var modifier = CreateStatModifier(instance);
                 statSystem.AddModifier(card, modifier);
                 instance.StatModifiers.Add(new AppliedStatModifier(card, modifier));
-
-                // kind:Modifier 不经 AddStatModifierAction；Permanent Attack 入队卡面旁路提交。
-                if (pipeline != null
-                    && modifier.Stat == StatId.Attack
-                    && modifier.Scope == ModifierScope.Permanent)
-                {
-                    pipeline.Enqueue(new CommitPermanentAttackFaceAction(card.Uid, modifier.Source.Id));
-                }
             }
         }
 

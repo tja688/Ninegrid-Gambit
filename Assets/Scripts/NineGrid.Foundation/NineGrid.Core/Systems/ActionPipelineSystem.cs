@@ -130,6 +130,8 @@ namespace NineGrid.Core.Systems
             mReactionStack.Clear();
             EventLog.Clear();
             mNextActionId = 1;
+            // 卡面投影账本随事件日志一起复位（扫描游标与日志长度锁步，ADR-0045）。
+            this.GetModel<CardFaceLedgerModel>().Reset();
         }
 
         private void ResolveAction(GameAction action, int depth)
@@ -148,6 +150,9 @@ namespace NineGrid.Core.Systems
 
             var result = action.Apply(context) ?? GameActionResult.Empty;
             EventLog.AppendRange(result.Events);
+            // 统一对账缝（ADR-0045）：动作自身事件入日志后立即 diff-emit 卡面提交，
+            // 使提交事件紧邻因果动作；触发器 / FollowUp 各自结算时再各对账一次。
+            CardFaceReconciliation.ReconcileAfterAction(context, EventLog, action.ActionName);
             DispatchTriggers(action, TriggerTiming.Post, action.GetPostTriggerPoints(context, result.Events), result.Events, context, depth);
             ResolveTriggeredActions(result.FollowUpActions, depth + 1);
 

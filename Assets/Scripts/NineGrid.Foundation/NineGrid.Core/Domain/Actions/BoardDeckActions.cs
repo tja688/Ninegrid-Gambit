@@ -627,10 +627,7 @@ namespace NineGrid.Core
                 .WithMessage(Clockwise ? "clockwise" : "counterClockwise")
                 .WithSource(SourceDefId, Cause));
             CardRhythmMoveTicks.AppendFromMovedEvents(result, context, result.Events);
-            CardFaceEventValues.AppendConditionalPermanentAttackFaceCommitsForBoard(
-                result,
-                context,
-                ActionName);
+            // 旋转后的邻接光环卡面刷新由统一对账缝自动提交（ADR-0045）。
             return result;
         }
 
@@ -701,10 +698,7 @@ namespace NineGrid.Core
                     .WithSlots(Left, Right)
                     .WithSource(SourceDefId, Cause));
             CardRhythmMoveTicks.AppendFromMovedEvents(result, context, result.Events);
-            CardFaceEventValues.AppendConditionalPermanentAttackFaceCommitsForBoard(
-                result,
-                context,
-                ActionName);
+            // 换位后的邻接光环卡面刷新由统一对账缝自动提交（ADR-0045）。
             return result;
         }
 

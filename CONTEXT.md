@@ -482,8 +482,8 @@ _Avoid_: 卡面回写 Core、为未使用字段强行占位 UI
 _Avoid_: 把权威值直接当成玩家此刻应看到的卡面数字
 
 **卡面显示值**：
-玩家在卡面上看到的攻/甲/血等，由结算指令在表演锚点驱动，**有意滞后于权威值**。卡面「甲」= **当前护甲**（本关可消耗；只认当前甲指令，不消费基础甲 `ResultValue`）；玩家信息 HUD「甲」= **有效护甲**（用于读成长上限）。文案用「护甲」，不用「防御」指战斗属性。
-_Avoid_: 表演中随时直读 Core 拉齐卡面、强制对账抹平滞后、HUD/卡面混用「防御」指护甲、用 `ModifyBaseStat(Armor)` 基础值直接写卡面甲
+玩家在卡面上看到的攻/甲/血等，由结算指令在表演锚点驱动，**有意滞后于权威值**。卡面「甲」= **当前护甲**（本关可消耗；只认当前甲指令，不消费基础甲 `ResultValue`）；玩家信息 HUD「甲」= **有效护甲**（用于读成长上限）。文案用「护甲」，不用「防御」指战斗属性。指令的**发射完整性**由 Core 统一对账缝自动保证（每个动作边界 diff-emit 卡面绝对值提交，[ADR-0045](docs/adr/0045-unified-card-face-stat-projection.md)）；「不对账」纪律只约束表现层。
+_Avoid_: 表演中随时直读 Core 拉齐卡面、表现层强制对账抹平滞后、新增数值源时手工补发卡面提交事件（旧 `Append*FaceCommit` 已废除）、HUD/卡面混用「防御」指护甲、用 `ModifyBaseStat(Armor)` 基础值直接写卡面甲
 
 **基础护甲**：
 角色/卡牌的静态护甲属性（`StatId.Armor` base）；永久成长与出生值落在这一层。`ModifyBaseStat(Armor)` 在改基础的同时按实际变化量同步 `CurrentArmor` 并发 `ArmorChanged`（详见 [ADR-0028](docs/adr/0028-damage-formula-armor-and-reduction.md)）。

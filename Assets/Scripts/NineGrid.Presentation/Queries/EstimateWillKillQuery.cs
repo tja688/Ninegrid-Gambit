@@ -29,12 +29,8 @@ namespace NineGrid.Presentation.Queries
             }
 
             var stats = this.GetSystem<IStatSystem>();
-            var attack = Math.Max(0, stats.GetEffectiveInt(attacker, StatId.Attack));
-            if (attacker.Kind == CardKind.Monster)
-            {
-                attack += (int)Math.Round(
-                    stats.EvaluateRule(RuleId.EnemyAttackDelta, 0f, stats.CreateContext(attacker)));
-            }
+            // 单一口径（ADR-0045）：与伤害结算 / 卡面显示同用 GetFaceAttack。
+            var attack = CardFaceEventValues.GetFaceAttack(stats, attacker);
 
             var armor = Math.Max(0, stats.GetEffectiveInt(target, StatId.Armor));
             var hp = Math.Max(0, stats.GetEffectiveInt(target, StatId.Hp));
