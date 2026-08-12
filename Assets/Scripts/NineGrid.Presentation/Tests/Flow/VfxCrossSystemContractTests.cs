@@ -15,7 +15,6 @@ namespace NineGrid.Presentation.Tests
 {
     /// <summary>
     /// #200 跨系统契约：Hub 三通道、金币迁移收口、正式播放器/素材路径。
-    /// Audio transport 回归由 #195 <see cref="EditorWorkbenchTransportTests"/> 承担。
     /// </summary>
     public sealed class VfxCrossSystemContractTests
     {
