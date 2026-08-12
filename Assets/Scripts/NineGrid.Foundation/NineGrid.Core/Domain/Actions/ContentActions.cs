@@ -196,6 +196,78 @@ namespace NineGrid.Core
     }
 
     /// <summary>
+    /// 遗物效果自愈重挂：装备栏里的遗物若无任何存活效果实例（授予链曾被异常打断、
+    /// 或历史存档带入「有遗物无效果」状态），在节点开始前重新激活其全部效果。
+    /// 幂等：已有存活实例的遗物跳过；无可挂效果（EffectIds 空 / 全部未实现）的遗物跳过。
+    /// </summary>
+    public sealed class ReactivateMissingRelicEffectsAction : GameAction
+    {
+        public override string ActionName { get { return "ReactivateMissingRelicEffects"; } }
+
+        public override GameActionResult Apply(GameActionContext context)
+        {
+            var player = context.GetModel<PlayerModel>();
+            var content = context.GetSystem<IContentSystem>();
+            var effectSystem = context.GetSystem<IEffectSystem>();
+            if (player == null || content == null || effectSystem == null)
+            {
+                return GameActionResult.Empty;
+            }
+
+            content.TryReloadFromConfig();
+            if (!content.HasCatalog || content.Catalog == null)
+            {
+                return GameActionResult.Empty;
+            }
+
+            var liveRelicDefIds = new HashSet<string>(StringComparer.Ordinal);
+            var instances = effectSystem.Instances;
+            for (var i = 0; i < instances.Count; i++)
+            {
+                var owner = instances[i].Owner;
+                if (owner != null
+                    && owner.ContainerType == EffectContainerType.Relic
+                    && !string.IsNullOrEmpty(owner.SourceDefId))
+                {
+                    liveRelicDefIds.Add(owner.SourceDefId);
+                }
+            }
+
+            GameActionResult result = null;
+            var relics = player.RelicDefIds;
+            for (var i = 0; i < relics.Count; i++)
+            {
+                var defId = relics[i];
+                if (string.IsNullOrEmpty(defId) || liveRelicDefIds.Contains(defId))
+                {
+                    continue;
+                }
+
+                RelicContentDefinition relic;
+                if (!content.Catalog.Relics.TryGetValue(defId, out relic)
+                    || relic == null
+                    || relic.EffectIds.Count == 0)
+                {
+                    continue;
+                }
+
+                var activated = content.ActivateRelic(defId);
+                if (activated.Count == 0)
+                {
+                    continue;
+                }
+
+                result = result ?? new GameActionResult();
+                result.AddEvent(new CoreGameEvent(CoreEventType.RelicGranted, context.ActionId, ActionName)
+                    .WithMessage(defId)
+                    .WithSource(defId, "reactivate"));
+            }
+
+            return result ?? GameActionResult.Empty;
+        }
+    }
+
+    /// <summary>
     /// 玩家丢弃已装备遗物：反激活遗物效果并从装备栏移除（金币由 EconomySystem 另发）。
     /// </summary>
     public sealed class DiscardRelicAction : GameAction

@@ -158,6 +158,9 @@ namespace NineGrid.Core.Systems
             options = options ?? NodeDeckOptions.CreateDefaultBattle();
             var pipeline = this.GetSystem<IActionPipelineSystem>();
             pipeline.Enqueue(new ClearPendingChoicesAction());
+            // 遗物效果自愈：装备栏有遗物但效果实例缺失（授予链曾被打断）时重挂，
+            // 须在 NodeStarted 前完成，OnNodeStart 类遗物当节点即可生效。
+            pipeline.Enqueue(new ReactivateMissingRelicEffectsAction());
             pipeline.Enqueue(new ChangePhaseAction(GamePhase.BuildEnemyPool));
             pipeline.Enqueue(new SetupNodeDeckAction(options));
             // 归位到中心格；zone 被异常置死（Removed/Graveyard 等）而 HP>0 时，
@@ -187,6 +190,7 @@ namespace NineGrid.Core.Systems
         {
             var pipeline = this.GetSystem<IActionPipelineSystem>();
             pipeline.Enqueue(new ClearPendingChoicesAction());
+            pipeline.Enqueue(new ReactivateMissingRelicEffectsAction());
             pipeline.Enqueue(new ChangePhaseAction(GamePhase.ResetNode));
             pipeline.Enqueue(new ResetCurrentArmorAction());
             pipeline.Enqueue(new NodeStartedAction());
