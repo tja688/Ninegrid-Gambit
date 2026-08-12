@@ -664,11 +664,16 @@ namespace NineGrid.Core.Systems
                 return;
             }
 
+            // 开局自动摇房只取注入 ≤1 张道具卡的战斗房（金币/恢复/宝箱），保证
+            // 开局道具卡 ≤ 容量 6 + 注入 1 = 7（ADR-0022 修订）。属性房（注入 2 张）
+            // 与困难房同精英房一样只经清关后选房进入。
             var rolled = RollRoomChoicesFromPool(
                 count: 1,
                 includeAllWeighted: false,
                 allowElite: false,
-                predicate: kind => IsBattleOfferRoom(kind) && kind != RoomKind.Elite);
+                predicate: kind => IsBattleOfferRoom(kind)
+                    && kind != RoomKind.Elite
+                    && kind != RoomKind.Attribute);
             if (rolled.Count > 0)
             {
                 run.Room.Value = rolled[0];
