@@ -2237,13 +2237,22 @@ namespace NineGrid.Core.Systems
                 return false;
             }
 
-            if (attacker.Kind != CardKind.Avatar || !CardCombatRules.IsBoardCombatTarget(target.Kind))
+            if (attacker.Kind == CardKind.Avatar && CardCombatRules.IsBoardCombatTarget(target.Kind))
             {
-                return false;
+                monsterUid = targetUid;
+                return true;
             }
 
-            monsterUid = targetUid;
-            return true;
+            // ADR-0012：交战自带回击——怪打玩家的先手/反击段同属交战作用域。
+            // 不开作用域则反击伤害不 raise OnBattle，玩家侧「战斗时」效果
+            // （如 relic.thorn_mail 损甲反伤）在反击段永不触发；齐射不经此入口，不受影响。
+            if (attacker.Kind == CardKind.Monster && target.Kind == CardKind.Avatar)
+            {
+                monsterUid = attackerUid;
+                return true;
+            }
+
+            return false;
         }
 
         private void RefreshLegalCommands()

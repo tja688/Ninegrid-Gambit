@@ -21,7 +21,7 @@
 | [ADR-0009](../adr/0009-parameterized-effect-templates.md) | 效果参数化模板、分类三轴、词条、奖池查询 |
 | [ADR-0010](../adr/0010-self-declared-effect-responsibility.md) | 效果责任自陈、拆除外部场域门禁 |
 | [ADR-0011](../adr/0011-monster-attack-pattern-intrinsic.md) | 怪物攻击模式为内生几何属性（**部分 superseded by ADR-0038**：频率表废止；**#77/#80/#82/#81 已落地**的几何与敌方开火仍有效） |
-| [ADR-0012](../adr/0012-enemy-action-phase-volley.md) | 敌方行动阶段：齐射与盘面冻结（**#79/#80/#81 已落地**：Core 报名/逐条/收尾 + 四模式单向打击；表现 Counter 分拍 + ActionCount Commit） |
+| [ADR-0012](../adr/0012-enemy-action-phase-volley.md) | 敌方行动阶段：齐射与盘面冻结（**#79/#80/#81 已落地**：Core 报名/逐条/收尾 + 四模式单向打击；表现 Counter 分拍 + ActionCount Commit；**补记 2026-08-12**：交战作用域双向——怪物先手/反击段同样 Begin/End，OnBattle 在反击批可触发（尖刺损甲反伤修复）；齐射仍在作用域外。同票新增目标原子 `Actor`（事件行动者，反伤类「对攻击者」）） |
 | [ADR-0013](../adr/0013-action-countdown-unified.md) | 倒计时语义与一次性开火窗口（**部分 superseded by ADR-0038**：模式与同步技能改为卡级共享倒计时；**#76/#79/#80/#81 数学与上屏已落地**） |
 | [ADR-0014](../adr/0014-theme-ids-are-legacy-opaque.md) | 主题化 contentId/deckId 是历史残留不透明主键；卡组仅内部渠道；勿被虚构命名带偏 |
 | [ADR-0016](../adr/0016-card-face-orientation.md) | 牌面朝向 Core 权威；背面双向惰性（不可伤害 / 不敌方开火 / 攻击倒计时冻结）；独立 `faceDownTick.*` |

@@ -1302,6 +1302,14 @@ namespace NineGrid.Core.Effects
         public IReadOnlyList<int> Resolve(EffectRuntimeContext context) { return TargetResolver.Single(context.FirstEventTargetUid()); }
     }
 
+    /// <summary>事件行动者（首个 ActorUid 非零事件）；反伤类「对攻击者」目标。行动者缺失时目标集为空。</summary>
+    [EffectAtom("Actor", EffectAtomKind.Target)]
+    public sealed class ActorTarget : ITarget
+    {
+        public void Configure(EffectDslNode config) { }
+        public IReadOnlyList<int> Resolve(EffectRuntimeContext context) { return TargetResolver.Single(TargetResolver.ResolveSingleCardRef(context, "Actor")); }
+    }
+
     /// <summary>
     /// 收集本次动作中盘面→盘面 CardMoved 事件卡；可选过滤 kind / 目标格。
     /// </summary>

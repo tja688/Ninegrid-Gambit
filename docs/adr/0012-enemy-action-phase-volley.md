@@ -62,6 +62,7 @@ status: accepted
 - **行动倒计时上卡面需要一条完整新链路。** 按 [ADR-0005](0005-card-face-beat-commit.md)，卡面数值只能经表演锚点上的结算指令赋值，不得在队列外直读 Core。因此需要新增 Core 事件类型 → `PresentationInstructionKind` → `PresentationEventMap` 里的 Beat 归属，不能在 View 上自己算倒计时。
 - **依赖互动计数的现有内容触发会变勤。** 「未击杀不计数」修复后，`OnInteract` 类遗物/技能的触发频率上升到设计值。这是修正漏计，但属可观测的平衡变化，需要过一遍相关内容。
 - **`OnBattle` 仅交战作用域（已定案，#78）。** `DealDamageAction` 只在 `IBattleScopeSystem.IsEngagementActive`（`BeginPlayerMonsterEngagement`…`EndBattleScopeCleanup`）为真时 raise `TriggerPoint.OnBattle`。交战作用域外的伤害（含单向打击）不触发 OnBattle；「每战斗 N 次」只数交战。既有带 `targetKind: Monster` 的模板在交战路径上行为保持。
+  **补记 2026-08-12：交战作用域覆盖交战的两个方向。** 表现层分拍交战里，怪物的先手/反击段（`ApplyCombatHit(怪→玩家)`）与玩家命中段同属交战，`TryGetPlayerMonsterEngagement` 双向识别并在反击批同样 Begin/End 作用域——否则反击伤害不 raise OnBattle，玩家侧「战斗时」效果（如 `relic.thorn_mail` 损甲反伤）永不触发。齐射不经 `ApplyCombatHit` 入口，仍在作用域外，本条不变。既有 OnBattle 模板均带 `targetKind: Monster/Trap` 或 `ActorIsPlayer` 约束，反击批 raise 不改变其行为。
 - **单向打击不开交战作用域**，因此 `UntilBattleEnds` 作用域的临时修正不会被敌方行动提前洗掉。
 - **确定性可测。** 名单顺序（uid 升序）、盘面冻结、收尾时刻均为确定量，齐射可被 EditMode 完整覆盖并可从战斗日志重放。
 - **进场先后序的可读性代价。** 玩家无法从盘面直接读出同拍多怪的开火顺序（格位序也做不到，因为盘面每拍在转）；「资历序」比格位序更容易被接受为「先来先打」，且卡面倒计时能让玩家看出**谁**要打，只是看不出**谁先**。
