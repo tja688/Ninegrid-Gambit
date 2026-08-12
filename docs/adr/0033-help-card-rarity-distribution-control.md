@@ -29,6 +29,14 @@ status: accepted
 - 契约测试 `FormalContentReachabilityContractTests`：来源池恰为 12 张常规；7 特殊卡必须各有 ≥1 个定向正式来源（原「全部 19 张进池」断言作废）。
 - 新增内容（编辑器新建道具卡）若未标稀有度（None）将**静默不进随机来源池**，只能经定向渠道投放；如需进随机池须标 White。
 
+## 修订（2026-08-12）：宝箱卡渠道收口
+
+策划确认宝箱卡（`help.common_chest_card` / `help.blue_chest_card` / `help.golden_chest_card`）**只由宝箱类房间与击杀掉落派发，不上商店货架、不进任何随机注入池**：
+
+- **保留渠道**：宝箱房（`Treasure.json` 开局固定注入 1 普通宝箱）、宝箱奖励房（`BuildTreasureRewardShelves` 固定 1 普通宝箱）、精英击杀（`kill.elite` 池 → 进阶宝箱，卡面 `tag.kill_elite`）、层主击杀（固定 1 金宝箱 + 2 金币卡，卡面 `tag.kill_boss`）、遗物效果（黄金宝匣等）。
+- **移除渠道**：商店固定货架第一格宝箱（`BuildShopShelves` 不再上架）；精英房开局混合注入池中的普通宝箱（`Elite.json` WeightedPool 移除，原约 1/3 概率随机混入开局玩家侧卡组）。
+- **来源池写回守卫**：`HelpCardDecks.FilterRegularSourcePool`——跑图存档（`RunSaveGame.RestoreAfterCreate`）与跨层库存（`BattleSessionExecutor.RestoreRunInventory`）恢复 `ItemSourcePoolDefIds` 前过滤，只放行 live 常规（White）道具卡；ADR-0033 前旧存档（全 19 张进池）不再把宝箱卡带回随机来源池。
+
 ## 相关
 
 - `CONTEXT.md` — 玩家侧卡组

@@ -14,7 +14,7 @@ namespace NineGrid.Core.Systems
         NodeDeckOptions BuildNodeDeckOptions(int nodeIndex, string monsterDeckId);
         int ResolveRoom(RoomKind roomKind);
 
-        /// <summary>商店四货架草案（宝箱 / 随机属性 / 药水 / 食品）。</summary>
+        /// <summary>商店货架草案（随机属性 / 药水 / 食品）；宝箱卡不上架（仅宝箱房渠道，ADR-0033 修订）。</summary>
         IReadOnlyList<RewardEntry> BuildShopShelves();
 
         /// <summary>
@@ -401,13 +401,13 @@ namespace NineGrid.Core.Systems
         }
 
         /// <summary>
-        /// 商店货架：宝箱 / 随机属性道具 / 恢复药水 / 食品；容量未满时追加「道具牌格升级」（#109 / ADR-0025）。
+        /// 商店货架：随机属性道具 / 恢复药水 / 食品；容量未满时追加「道具牌格升级」（#109 / ADR-0025）。
+        /// 宝箱卡不上商店货架（仅宝箱房 / 宝箱奖励房 / 击杀掉落渠道，ADR-0033 修订）。
         /// </summary>
         public IReadOnlyList<RewardEntry> BuildShopShelves()
         {
-            var shelves = new List<RewardEntry>(5)
+            var shelves = new List<RewardEntry>(4)
             {
-                new RewardEntry(ShopChestDefId, CardKind.HelpCard, 1, 1),
                 new RewardEntry(RollShopAttributeDefId(), CardKind.HelpCard, 1, 1),
                 new RewardEntry(ShopPotionDefId, CardKind.HelpCard, 1, 1),
                 new RewardEntry(ShopFoodDefId, CardKind.HelpCard, 1, 1),

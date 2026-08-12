@@ -306,7 +306,10 @@ namespace NineGrid.Core
                 player.SetItemSlotsCapacity(snapshot.itemSlotsCapacity);
             }
 
-            player.ReplaceItemSourcePool(snapshot.itemSourcePoolDefIds);
+            // 来源池写回守卫（ADR-0033）：旧存档可能含宝箱卡等特殊卡，过滤后再恢复。
+            player.ReplaceItemSourcePool(Content.HelpCardDecks.FilterRegularSourcePool(
+                content != null && content.HasCatalog ? content.Catalog : null,
+                snapshot.itemSourcePoolDefIds));
             player.ReplaceFixedItemCards(snapshot.fixedItemCardDefIds);
             player.SetItemStatBonus(snapshot.itemStatBonus);
             run.SetAttributePicks(snapshot.attributePickDefIds);

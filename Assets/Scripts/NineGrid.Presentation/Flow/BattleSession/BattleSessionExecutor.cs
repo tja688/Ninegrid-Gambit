@@ -440,7 +440,10 @@ namespace NineGrid.Flow
                 player.SetItemSlotsCapacity(inventory.ItemSlotsCapacity);
             }
 
-            player.ReplaceItemSourcePool(inventory.ItemSourcePoolDefIds);
+            // 来源池写回守卫（ADR-0033）：跨层快照可能含宝箱卡等特殊卡，过滤后再恢复。
+            player.ReplaceItemSourcePool(NineGrid.Core.Content.HelpCardDecks.FilterRegularSourcePool(
+                content != null && content.HasCatalog ? content.Catalog : null,
+                inventory.ItemSourcePoolDefIds));
             player.ReplaceFixedItemCards(inventory.FixedItemCardDefIds);
             player.SetItemStatBonus(inventory.ItemStatBonus);
 

@@ -389,6 +389,45 @@ namespace NineGrid.Core.Content
             return !string.IsNullOrEmpty(deckId)
                 && string.Equals(deckId, Archive, System.StringComparison.OrdinalIgnoreCase);
         }
+
+        /// <summary>
+        /// 来源池写回守卫（ADR-0033）：外部快照（跑图存档 / 跨层库存）恢复随机来源池前过滤，
+        /// 只放行 live 卡组常规（White）道具卡。ADR-0033 之前的旧存档来源池可能含宝箱卡等
+        /// 特殊卡，直接写回会让特殊卡回流随机装填。无 catalog 时原样放行（无从裁决）。
+        /// </summary>
+        public static List<string> FilterRegularSourcePool(GameContentCatalog catalog, IEnumerable<string> defIds)
+        {
+            var result = new List<string>();
+            if (defIds == null)
+            {
+                return result;
+            }
+
+            foreach (var defId in defIds)
+            {
+                if (string.IsNullOrEmpty(defId))
+                {
+                    continue;
+                }
+
+                if (catalog != null)
+                {
+                    CardContentDefinition card;
+                    if (!catalog.Cards.TryGetValue(defId, out card)
+                        || card == null
+                        || card.Kind != CardKind.HelpCard
+                        || IsArchive(card.DeckId)
+                        || !IsRegularRarity(card.Rarity))
+                    {
+                        continue;
+                    }
+                }
+
+                result.Add(defId);
+            }
+
+            return result;
+        }
     }
 
     public sealed class RelicContentDefinition
