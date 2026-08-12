@@ -89,7 +89,8 @@ namespace NineGrid.Flow
             read = new CardPresentationRead
             {
                 Kind = ToPresentationKind(card.Kind),
-                Attack = statSystem.GetEffectiveInt(card, StatId.Attack),
+                // 卡面攻口径：怪物含 EnemyAttackDelta 规则（与结算指令 WithFaceAbsolutes 同源）。
+                Attack = CardFaceEventValues.GetFaceAttack(statSystem, card),
                 Hp = statSystem.GetEffectiveInt(card, StatId.Hp),
                 // 卡面护甲 = 当前护甲（本关临时资源）；PlayerInfoText 护甲栏走有效护甲。
                 Armor = StatArmorUtility.GetCurrentArmor(card),

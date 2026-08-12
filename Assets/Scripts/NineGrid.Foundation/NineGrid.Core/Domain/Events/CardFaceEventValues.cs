@@ -16,6 +16,32 @@ namespace NineGrid.Core
     /// </summary>
     public static class CardFaceEventValues
     {
+        /// <summary>
+        /// 卡面攻显示口径：有效攻；怪物另加 <see cref="RuleId.EnemyAttackDelta"/> 规则修正
+        /// （龙鳞甲全场-1、邻接光环+1 等），与 PhaseSystem.GetAttackDamage 的结算口径一致。
+        /// </summary>
+        public static int GetFaceAttack(IStatSystem stats, CardInstance card)
+        {
+            if (card == null)
+            {
+                return 0;
+            }
+
+            if (stats == null)
+            {
+                return Math.Max(0, (int)card.Stats.GetBase(StatId.Attack));
+            }
+
+            var attack = stats.GetEffectiveInt(card, StatId.Attack);
+            if (card.Kind == CardKind.Monster)
+            {
+                attack += (int)Math.Round(
+                    stats.EvaluateRule(RuleId.EnemyAttackDelta, 0f, stats.CreateContext(card)));
+            }
+
+            return Math.Max(0, attack);
+        }
+
         public static CoreGameEvent WithFaceAbsolutes(
             this CoreGameEvent gameEvent,
             GameActionContext context,
@@ -30,9 +56,7 @@ namespace NineGrid.Core
             var hp = stats != null
                 ? stats.GetEffectiveInt(card, StatId.Hp)
                 : (int)card.Stats.GetBase(StatId.Hp);
-            var attack = stats != null
-                ? stats.GetEffectiveInt(card, StatId.Attack)
-                : (int)card.Stats.GetBase(StatId.Attack);
+            var attack = GetFaceAttack(stats, card);
             var armor = StatArmorUtility.GetCurrentArmor(card);
             return gameEvent.WithRemaining(hp, armor).WithResultValue(attack);
         }
@@ -166,7 +190,7 @@ namespace NineGrid.Core
                 return;
             }
 
-            var effectiveAttack = Math.Max(0, context.GetSystem<IStatSystem>().GetEffectiveInt(card, StatId.Attack));
+            var effectiveAttack = GetFaceAttack(context.GetSystem<IStatSystem>(), card);
             result.AddEvent(new CoreGameEvent(CoreEventType.BaseStatModified, context.ActionId, actionName ?? "PermanentAttackFace")
                 .WithCard(card.Uid)
                 .WithTarget(card.Uid)
@@ -206,7 +230,43 @@ namespace NineGrid.Core
         }
 
         /// <summary>
-        /// 盘面拓扑/宿主移除后：对仍挂着「带条件的 Permanent Attack」修饰器的场上卡提交有效攻。
+        /// EnemyAttackDelta 规则装卸后（遗物获得/丢弃等）：对场上怪物提交含规则修正的卡面攻。
+        /// </summary>
+        public static void AppendEnemyAttackDeltaFaceCommitsForBoardMonsters(
+            GameActionResult result,
+            GameActionContext context,
+            string actionName,
+            string source = null,
+            string sourceDefId = null)
+        {
+            if (result == null || context == null)
+            {
+                return;
+            }
+
+            var board = context.GetModel<BoardModel>();
+            var registry = context.GetModel<CardRegistry>();
+            if (board == null || registry == null)
+            {
+                return;
+            }
+
+            for (var i = SlotId.MinBoardIndex; i <= SlotId.MaxBoardIndex; i++)
+            {
+                var uid = board.GetCardUid(SlotId.Board(i));
+                CardInstance card;
+                if (uid <= 0 || !registry.TryGet(uid, out card) || card == null || card.Kind != CardKind.Monster)
+                {
+                    continue;
+                }
+
+                AppendPermanentAttackFaceCommit(result, context, card, actionName, source, sourceDefId);
+            }
+        }
+
+        /// <summary>
+        /// 盘面拓扑/宿主移除后：对仍挂着「带条件的 Permanent Attack」修饰器的场上卡提交有效攻；
+        /// 存在条件型 EnemyAttackDelta（邻接光环等）时怪物卡面一并补扫（条件随拓扑翻转）。
         /// </summary>
         public static void AppendConditionalPermanentAttackFaceCommitsForBoard(
             GameActionResult result,
@@ -225,6 +285,7 @@ namespace NineGrid.Core
                 return;
             }
 
+            var refreshMonsters = HasConditionalEnemyAttackDeltaRule(context);
             for (var i = SlotId.MinBoardIndex; i <= SlotId.MaxBoardIndex; i++)
             {
                 var uid = board.GetCardUid(SlotId.Board(i));
@@ -234,13 +295,39 @@ namespace NineGrid.Core
                     continue;
                 }
 
-                if (!HasConditionalPermanentAttackModifier(card))
+                if (!HasConditionalPermanentAttackModifier(card)
+                    && !(refreshMonsters && card.Kind == CardKind.Monster))
                 {
                     continue;
                 }
 
                 AppendPermanentAttackFaceCommit(result, context, card, actionName);
             }
+        }
+
+        private static bool HasConditionalEnemyAttackDeltaRule(GameActionContext context)
+        {
+            var stats = context != null ? context.GetSystem<IStatSystem>() : null;
+            var modifiers = stats != null && stats.RuleModifiers != null
+                ? stats.RuleModifiers.Modifiers
+                : null;
+            if (modifiers == null)
+            {
+                return false;
+            }
+
+            for (var i = 0; i < modifiers.Count; i++)
+            {
+                var modifier = modifiers[i];
+                if (modifier != null
+                    && modifier.Rule == RuleId.EnemyAttackDelta
+                    && modifier.Condition != null)
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         public static bool HasConditionalPermanentAttackModifier(CardInstance card)

@@ -418,7 +418,15 @@ namespace NineGrid.Core
 
         private static int GetAttackDamage(IStatSystem statSystem, CardInstance card)
         {
-            return Math.Max(0, statSystem.GetEffectiveInt(card, StatId.Attack));
+            // 与 PhaseSystem.GetAttackDamage 同口径：怪物攻击含 EnemyAttackDelta 规则（龙鳞甲等）。
+            var damage = statSystem.GetEffectiveInt(card, StatId.Attack);
+            if (card.Kind == CardKind.Monster)
+            {
+                damage += (int)Math.Round(
+                    statSystem.EvaluateRule(RuleId.EnemyAttackDelta, 0f, statSystem.CreateContext(card)));
+            }
+
+            return Math.Max(0, damage);
         }
     }
 

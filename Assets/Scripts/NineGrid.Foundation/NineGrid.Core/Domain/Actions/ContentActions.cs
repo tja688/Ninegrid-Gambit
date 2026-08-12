@@ -65,10 +65,10 @@ namespace NineGrid.Core
             }
 
             // 攻按 ADR-0005 Permanent 有效攻旁路：ResultValue 携带含常驻/条件修饰器的有效攻
-            // （与 AppendPermanentAttackFaceCommit 同构），否则加攻卡等路径会提交基础值、
-            // 与伤害结算（有效攻）错位——带遗物/光环时显示落后于真实攻击力。
+            // （与 AppendPermanentAttackFaceCommit 同构，怪物含 EnemyAttackDelta 规则），
+            // 否则加攻卡等路径会提交基础值、与伤害结算（有效攻）错位——带遗物/光环时显示落后于真实攻击力。
             var resultValue = Stat == StatId.Attack
-                ? Math.Max(0, context.GetSystem<IStatSystem>().GetEffectiveInt(card, StatId.Attack))
+                ? CardFaceEventValues.GetFaceAttack(context.GetSystem<IStatSystem>(), card)
                 : next;
 
             var evt = new CoreGameEvent(CoreEventType.BaseStatModified, context.ActionId, ActionName)
@@ -173,9 +173,24 @@ namespace NineGrid.Core
             {
                 content.ActivateRelic(RelicDefId);
             }
-            return new GameActionResult()
+
+            var result = new GameActionResult()
                 .AddEvent(new CoreGameEvent(CoreEventType.RelicGranted, context.ActionId, ActionName)
                     .WithMessage(RelicDefId));
+
+            // 遗物带 EnemyAttackDelta 规则（如龙鳞甲全场怪物攻击-1）：战斗中获得（宝箱等）
+            // 立即刷新场上怪物卡面攻，与伤害结算口径对齐。
+            if (RelicEnemyAttackDeltaRules.Has(context.GetSystem<IEffectSystem>(), RelicDefId))
+            {
+                CardFaceEventValues.AppendEnemyAttackDeltaFaceCommitsForBoardMonsters(
+                    result,
+                    context,
+                    ActionName,
+                    "enemyAttackDelta",
+                    RelicDefId);
+            }
+
+            return result;
         }
 
         private static bool PlayerOwnsRelic(PlayerModel player, string defId)
@@ -214,6 +229,8 @@ namespace NineGrid.Core
             }
 
             var effectSystem = context.GetSystem<IEffectSystem>();
+            // 反激活前取样：卸载后规则已不在注册表，事后查不到。
+            var hadEnemyAttackDeltaRule = RelicEnemyAttackDeltaRules.Has(effectSystem, RelicDefId);
             var instances = effectSystem.Instances;
             for (var i = instances.Count - 1; i >= 0; i--)
             {
@@ -248,9 +265,61 @@ namespace NineGrid.Core
                     new ModifierSource(RelicRunContributionModel.BuildModifierSourceId(RelicDefId, StatId.Armor)));
             }
 
-            return new GameActionResult()
+            var result = new GameActionResult()
                 .AddEvent(new CoreGameEvent(CoreEventType.EffectDeactivated, context.ActionId, ActionName)
                     .WithMessage(RelicDefId));
+
+            // 卸下 EnemyAttackDelta 规则遗物（如龙鳞甲）后，场上怪物卡面攻回到无修正值。
+            if (hadEnemyAttackDeltaRule)
+            {
+                CardFaceEventValues.AppendEnemyAttackDeltaFaceCommitsForBoardMonsters(
+                    result,
+                    context,
+                    ActionName,
+                    "enemyAttackDelta",
+                    RelicDefId);
+            }
+
+            return result;
+        }
+    }
+
+    /// <summary>
+    /// 遗物效果集是否含 <see cref="RuleId.EnemyAttackDelta"/> 规则修正（全场怪物攻击±N 类），
+    /// 用于装卸时决定是否补扫场上怪物卡面攻。
+    /// </summary>
+    internal static class RelicEnemyAttackDeltaRules
+    {
+        internal static bool Has(IEffectSystem effectSystem, string relicDefId)
+        {
+            if (effectSystem == null || string.IsNullOrEmpty(relicDefId))
+            {
+                return false;
+            }
+
+            var instances = effectSystem.Instances;
+            for (var i = 0; i < instances.Count; i++)
+            {
+                var instance = instances[i];
+                if (instance == null
+                    || instance.Owner == null
+                    || instance.Owner.ContainerType != EffectContainerType.Relic
+                    || !string.Equals(instance.Owner.SourceDefId, relicDefId, System.StringComparison.Ordinal)
+                    || instance.Definition == null
+                    || instance.Definition.Kind != EffectKind.RuleModifier
+                    || instance.Definition.RuleModifier == null)
+                {
+                    continue;
+                }
+
+                if (instance.Definition.RuleModifier.Get("rule").AsEnum(RuleId.RecoveryMultiplier)
+                    == RuleId.EnemyAttackDelta)
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
     }
 
