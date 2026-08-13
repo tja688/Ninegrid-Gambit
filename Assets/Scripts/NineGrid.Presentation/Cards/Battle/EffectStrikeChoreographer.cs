@@ -29,6 +29,7 @@ namespace NineGrid.Cards
         /// <summary>开批重建打击计划，并把计划内的 Impact 伤害指令移入排期器暂扣区。</summary>
         public static void OnBatchOpened(PresentationBatch batch)
         {
+            WarnDroppedUnplayedGroups(batch);
             sPlan = EffectStrikePlan.Build(batch, IsStrikerPresentable);
             if (sPlan.HeldInstructions.Count > 0)
             {
@@ -42,6 +43,37 @@ namespace NineGrid.Cards
                     "[EffectStrike] 打击计划 batchId=" + sPlan.BatchId
                     + " groups=" + sPlan.Groups.Count
                     + " held=" + sPlan.HeldInstructions.Count);
+            }
+        }
+
+        /// <summary>
+        /// 上一批仍有未播打击组即被新批覆盖：打击动作已静默丢失（纯移除组连兜底冲刷都不会留痕）。
+        /// Warning 级进 Console 抓取轨，出现即代表某条呈现路径漏掉了打击消费点。
+        /// </summary>
+        private static void WarnDroppedUnplayedGroups(PresentationBatch nextBatch)
+        {
+            var previous = sPlan;
+            if (previous == null || !previous.HasWork)
+            {
+                return;
+            }
+
+            for (var i = 0; i < previous.Groups.Count; i++)
+            {
+                var group = previous.Groups[i];
+                if (group.Played)
+                {
+                    continue;
+                }
+
+                Debug.LogWarning(
+                    "[EffectStrike] 打击组未播即被新批覆盖（攻击动作丢失）"
+                    + " previousBatchId=" + previous.BatchId
+                    + " nextBatchId=" + (nextBatch != null ? nextBatch.BatchId : 0)
+                    + " striker=" + group.StrikerUid
+                    + " victim=" + group.VictimUid
+                    + " source=" + group.SourceDefId
+                    + " victimRemoved=" + group.VictimRemoved);
             }
         }
 
@@ -114,10 +146,13 @@ namespace NineGrid.Cards
 
                 if (!played)
                 {
-                    Debug.Log(
+                    // Warning 级进 Console 抓取轨：打击动作未播出（参与者视图/占格缺失或 rig 不可用）。
+                    Debug.LogWarning(
                         "[EffectStrike] 打击组降级为普通冲刷 striker=" + group.StrikerUid
                         + " victim=" + group.VictimUid
-                        + " source=" + group.SourceDefId);
+                        + " source=" + group.SourceDefId
+                        + " victimRemoved=" + group.VictimRemoved
+                        + " " + DescribeParticipants(group));
                 }
             }
             catch (OperationCanceledException)
@@ -148,7 +183,38 @@ namespace NineGrid.Cards
             }
 
             var geometry = NineGridArchitecture.Interface?.GetSystem<IGroundFieldGeometrySystem>();
-            return geometry != null && geometry.TryGetSlotOf(uid, out _);
+            if (geometry == null)
+            {
+                return false;
+            }
+
+            // 主索引 → 双向表短暂不一致扫描 → 补牌飞行中（本批新发卡随后落格）。
+            return geometry.TryGetSlotOf(uid, out _)
+                || geometry.TryFindOccupiedSlotForUid(uid, out _)
+                || geometry.IsDealInFlight(uid);
+        }
+
+        /// <summary>降级诊断辅助：报告参与者视图/占格现状，便于定位打击丢失原因。</summary>
+        private static string DescribeParticipants(EffectStrikeGroup group)
+        {
+            var cards = NineGridArchitecture.Interface?.GetSystem<ICardEntityLifecycleSystem>();
+            var geometry = NineGridArchitecture.Interface?.GetSystem<IGroundFieldGeometrySystem>();
+            string Describe(int uid)
+            {
+                if (cards == null || geometry == null)
+                {
+                    return "?";
+                }
+
+                var hasView = cards.TryGet(uid, out var card) && card != null && card.Transform != null;
+                var onSlot = geometry.TryGetSlotOf(uid, out var slot);
+                return (hasView ? "view" : "noView")
+                    + "/" + (onSlot ? ("slot" + slot) : "noSlot")
+                    + (hasView && card.IsFieldDead ? "/fieldDead" : string.Empty);
+            }
+
+            return "strikerState=" + Describe(group.StrikerUid)
+                + " victimState=" + Describe(group.VictimUid);
         }
     }
 }

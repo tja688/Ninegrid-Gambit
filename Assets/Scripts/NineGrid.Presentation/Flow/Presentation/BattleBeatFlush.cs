@@ -160,38 +160,60 @@ namespace NineGrid.Flow.Presentation
         }
 
         /// <summary>
-        /// 非锁步 + 效果打击编排（ADR-0050 拾取补丁）：盘面运动已由调用方 Drain 落地后调用，
-        /// 与 PresentStep 两相同构——OpenBatch（触发打击计划构建/暂扣）→ 触发脉冲 →
-        /// 串行效果打击 → FlushBeats（其余 Impact + Settled）→ FinishBatch。
-        /// 已有打开批次时退回 <see cref="PresentEventLogSlice"/> 旁路（不搅乱锁步当批）。
+        /// 非锁步 + 效果打击编排（ADR-0050 拾取补丁 / 补记「先开批后 Drain」）：
+        /// 与 PresentStep 锁步语义同构——**OpenBatch（打击计划构建 + 伤害指令暂扣）必须先于盘面 Drain**，
+        /// 这样 Drain 中的移除呈现（<c>PresentSkillRemovedCardsAsync → PlayStrikesInvolving</c>）
+        /// 才找得到打击组（滚石等「纯移除」打击若在建计划前就演完退场，只能静默降级为直接破坏）。
+        /// 完整顺序：OpenBatch →（可选 Vacate 前非触发 Impact 冲刷）→ 调用方 Drain（含移除打击）→
+        /// 触发脉冲 → 节拍 → 串行剩余打击 → FlushBeats（其余 Impact + Settled）→ FinishBatch。
+        /// 已有打开批次时退回旁路：先 Drain，再 <see cref="PresentEventLogSlice"/>（不搅乱锁步当批）。
+        /// 取消/异常也保证收批（残留暂扣由 FlushBeats 兜底放行）；OperationCanceledException 收批后上抛。
         /// </summary>
+        /// <param name="presentBoardDrainAsync">调用方的盘面 Drain（运动/移除/补牌呈现）；无盘面变化可传 null。</param>
+        /// <param name="flushNonTriggerImpactBeforeDrain">
+        /// Drain 前先冲非触发类 Impact（ADR-0018：尸体 Vacate 前飘字保坐标）；打击暂扣区不受该锚点影响。
+        /// </param>
         public static async UniTask PresentEventLogSliceWithStrikesAsync(
             IArchitecture architecture,
             int startIndex,
+            System.Func<CancellationToken, UniTask> presentBoardDrainAsync = null,
+            bool flushNonTriggerImpactBeforeDrain = false,
             CancellationToken cancellationToken = default)
         {
-            if (architecture == null || startIndex < 0)
+            var pipeline = architecture?.GetSystem<IActionPipelineSystem>();
+            var sync = architecture?.GetSystem<IPresentationSyncSystem>();
+            var entries = pipeline?.EventLog?.Entries;
+            if (architecture == null
+                || startIndex < 0
+                || sync == null
+                || entries == null
+                || startIndex >= entries.Count)
             {
-                return;
-            }
+                // 无可呈现切片：盘面 Drain 仍须执行（调用方运动不能因空切片而丢）。
+                if (presentBoardDrainAsync != null)
+                {
+                    await presentBoardDrainAsync(cancellationToken);
+                }
 
-            var pipeline = architecture.GetSystem<IActionPipelineSystem>();
-            var sync = architecture.GetSystem<IPresentationSyncSystem>();
-            if (pipeline?.EventLog == null || sync == null)
-            {
-                return;
-            }
-
-            var entries = pipeline.EventLog.Entries;
-            if (entries == null || startIndex >= entries.Count)
-            {
                 return;
             }
 
             if (sync.ActiveBatchId > 0)
             {
-                // 锁步批打开中：该情形不应由本路径编排打击，维持旧旁路语义。
-                PresentEventLogSlice(architecture, startIndex);
+                // 锁步批打开中：该情形不应由本路径编排打击，维持旧旁路语义（先 Drain 再冲切片）。
+                // Drain 取消/异常也保证切片被消费（节拍不丢失）。
+                try
+                {
+                    if (presentBoardDrainAsync != null)
+                    {
+                        await presentBoardDrainAsync(cancellationToken);
+                    }
+                }
+                finally
+                {
+                    PresentEventLogSlice(architecture, startIndex);
+                }
+
                 return;
             }
 
@@ -202,13 +224,29 @@ namespace NineGrid.Flow.Presentation
                 snapshot: null);
             if (batch.Instructions.Count == 0)
             {
+                if (presentBoardDrainAsync != null)
+                {
+                    await presentBoardDrainAsync(cancellationToken);
+                }
+
                 return;
             }
 
             // OpenBatch 经 Evt_PresentationBatchOpened 同时驱动排期器装载与 EffectStrikePlan 构建/暂扣。
+            // 必须在 Drain 之前：移除呈现要在退场前消费涉及本卡的打击组。
             sync.OpenBatch(batch);
             try
             {
+                if (flushNonTriggerImpactBeforeDrain)
+                {
+                    FlushImpactExcept(PresentationInstructionKind.TriggerEffect);
+                }
+
+                if (presentBoardDrainAsync != null)
+                {
+                    await presentBoardDrainAsync(cancellationToken);
+                }
+
                 var dispatched = FlushImpactOnly(PresentationInstructionKind.TriggerEffect);
                 if (dispatched > 0)
                 {
@@ -221,7 +259,8 @@ namespace NineGrid.Flow.Presentation
             }
             catch (System.OperationCanceledException)
             {
-                // 取消也必须收批；残留暂扣由 FlushBeats 兜底放行。
+                // 收批后上抛：切片已消费，调用方不得再兜底重放同一切片。
+                throw;
             }
             catch (System.Exception ex)
             {

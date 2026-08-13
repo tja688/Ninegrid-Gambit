@@ -17,6 +17,14 @@ status: accepted
 4. **通用打击 rig。** `CardAttackBasicAdapter.PlayEffectStrikeAsync`：场上任意打击者 → 任意受击者，强制相对冲刺 + 相对击退（rig 方向仅选烘焙时间线），不绑死亡回调（退场统一由移除/击杀呈现接手）；受击者将被移除时不回锚。经 `IFieldBattlePresentationSystem.PlayEffectStrikePresentAsync` 暴露；在攻击/反击 Present 内部（Drain 中）调用时不得新建战斗 CTS（会取消外层交战表演）。
 5. **全局两倍速（`BattlePresentationSpeed.CombatMultiplier = 2`）。** 单点常量：交战 rig 的 DOTween Sequence `timeScale`（起手/冲刺/命中/击退/回位与命中、死亡回调全部等比缩短，玩家攻击/反击/齐射/决斗/效果打击全路径生效）、rig 缺 Sequence 的兜底等待（0.9s→0.45s）、起手音效对齐延迟、`PresentStep.TriggerCadenceSec`（0.35s→0.175s）。
 
+**补记（2026-08-13d）——切片「先开批后 Drain」不变量 + 按卡直伤回退（滚石偶发直接破坏的实际根因）。** 补记 c 只把拾取切片的**节拍冲刷**挪到 Drain 之后，但打击计划仍在 Drain **之后**才随 OpenBatch 构建——Drain 中的移除呈现（`PresentSkillRemovedCardsAsync → PlayStrikesInvolving`）查到的还是上一批的旧计划：**纯移除打击组（滚石破坏卡片）在拾取转盘路径必然静默降级为直接破坏**（伤害组因双方仍在场、由 Drain 后的 `PlayAllPendingStrikes` 侥幸补上；这正是「走攻击/探索主线转盘会打、走拾取转盘不打」的偶发观感）。奖励 Choice 的盘面 Drain 路径（`Excluding/Only` 双旁路批）则从未构建过打击计划，效果伤害/移除整段直伤。修复与整合：
+
+1. **`BattleBeatFlush.PresentEventLogSliceWithStrikesAsync` 改为「先开批后 Drain」**：接受调用方盘面 Drain 委托——OpenBatch（打击计划构建 + 暂扣）→（可选 `flushNonTriggerImpactBeforeDrain`，ADR-0018 保飘字坐标）→ 调用方 Drain（移除呈现在退场前消费打击组）→ 触发脉冲 → 节拍 → 串行剩余打击 → FlushBeats → FinishBatch。拾取两路径（入手 / RemovedWithoutHand）与奖励 Choice 盘面 Drain 路径统一接入；Choice 原 `PresentEventLogSliceExcluding/Only` 双批旁路退役。锁步批打开中的嵌套调用维持旧旁路（先 Drain 再整批冲刷，且取消也保证切片消费）。**新不变量⑤：任何带盘面 Drain 的切片呈现必须先开批（构建打击计划）再 Drain。**
+2. **按卡直伤回退登记 `EffectStrikePresentationRules`（Flow/Presentation/）**：互殴打击为**默认**表演；确认观感不佳的卡把**效果容器 defId**（事件 `SourceDefId`）登记进 `DirectFlushSources` 即回退为旧直伤——不建组、不暂扣，指令走常规 Impact 锚点。默认清单为空。
+3. **专属表演排除扩展**：骷髅融合技能（`skill.recombine_head` / `skill.recombine_body` / `skill.strong_combo`，`SkeletonFusionPresentationScanner.IsFusionSkillId`）与神圣决斗同列不入打击计划——融合参与者由专用融合动画呈现，建组只会在视图卸场后降级并制造告警噪音。
+4. **诊断升级（打击丢失必留 Console 痕迹）**：打击组降级冲刷由 Log 升为 **Warning**（附打击者/受击者视图与占格状态）；`EffectStrikeChoreographer.OnBatchOpened` 新增「打击组未播即被新批覆盖」**Warning**——纯移除组丢失此前无任何日志，现在必可从 Console 抓取轨定位。
+5. **打击者占格判定加固**：`IsStrikerPresentable` 由单一 `TryGetSlotOf` 扩为「主索引 → 双向表短暂不一致扫描（`TryFindOccupiedSlotForUid`）→ 补牌飞行中（`IsDealInFlight`）」，消除运动窗口内的归因误杀。
+
 **补记（2026-08-13c）——拾取旁路补第四消费点（倒刺打玩家丢动作的实际根因）。** 拾取（`ApplyPickupItemCommand`）推动互动数→Core 转盘在**拾取切片**内完成，但该切片此前由命令内 `BattleBeatFlush.PresentEventLogSlice` 立即 Impact→Settled 冲刷：打击组要么随 Settled 兜底被直接放行、要么根本无人编排——**倒刺经拾取转盘打玩家/怪的攻击动作全部静默丢失**（实测日志：只有击杀后的 PostKill 转盘批走 `AttackIntentScriptFactory` 的 PresentStep 才能看到倒刺打击，与「击杀邻怪后才打玩家」的观察一致）。修复：拾取切片的节拍冲刷延迟到手牌侧盘面 Drain（补牌+转盘运动）落地后，经新增 `BattleBeatFlush.PresentEventLogSliceWithStrikesAsync` 统一消费——OpenBatch（触发打击计划构建/暂扣）→ 触发脉冲 → 串行效果打击 → FlushBeats → FinishBatch，与 PresentStep 两相同构；顺带消灭拾取路径「旋转前掉血」错拍。拾取失败/无 Drain/Drain 取消路径按旧旁路立即冲刷兜底（节拍不丢失，仅无打击编排）。排期器 Settled 兜底放行日志升级为 Warning（进 Console 抓取轨，出现即代表仍有未播打击组）。
 
 **补记（2026-08-13b）——命中反馈永不静默丢失（rig 层兜底）。** 交战/打击 rig 的 DOTween Sequence 可能生成失败，或被外部对参与者 transform 的 `DOKill`（卡面脉冲、收敛 SnapHome 等 `KillMotion`）中途整条杀掉——此前命中帧回调随之丢失，表现为「攻击/打击动作与受击反馈静默消失、只剩掉血」（倒刺打带甲玩家偶发丢反馈属此类）。`CardAttackBasicDirectionRig` 现把命中帧反馈（闪白 + `onCombatHit`）打包为可兜底补发的动作：Timeline 命中帧正常触达则原样播；Sequence 生成失败或播放中断时在 `PlayAsync` 末尾补发并留 `[CardAttackBasicDirectionRig] 命中帧未经 Timeline 触达` 告警（Console 抓取轨可持久化定位打断者）。配套：`CardAttackBasicAdapter.PlayEffectStrikeAsync` 返回是否真的播出，静默跳过如实上抛给编排器按降级冲刷处理。
@@ -45,7 +53,7 @@ status: accepted
 - **行为变化**：藤蔓/滚石/捕熊/翻面出伤/反伤等场上卡效果伤害，从「瞬间掉血飘字」变为「来源卡逐个冲刺打击 + 受击闪白/击退 + 该目标飘字」；被破坏的卡先被撞击再碎裂退场；捕熊等自毁来源先打完再自毁。全体交战表演（玩家攻击/反击/齐射/决斗/效果打击）时长减半；触发脉冲→后续表演的节拍 0.35s→0.175s。
 - **新不变量**：① 批内可见顺序 = 运动停稳 → 触发脉冲 → 效果打击（串行）→ 其余 Impact → Settled；② 效果伤害指令只在打击命中帧或 Settled 兜底放行，任何提前锚点不得冲刷暂扣区；③ 打击者判定 = 当批 `EffectTriggered` 持有卡且当前占格（离场来源降级）；④ 交战表演速度只经 `BattlePresentationSpeed` 单点调整。
 - **已知限制（有意接受）**：① 战斗通道（攻击/反击）内翻面延迟到 FlushBeats，翻面触发的伤害（紫蝎在交战批内翻面）打击可能先于翻面动画可见（板面批不受影响：翻面在通道 Begin 前）；② Drain 内移除打击发生在触发脉冲第一相之前，机关的 `trap.trigger` 音效脉冲晚于打击（机关缩放脉冲本被 CoreKind 拦截，观感影响很小）；③ 卡面受击闪白/死亡退场等 SO 资产时长未随两倍速缩放（rig 时间线内的击退/回位已缩放）；④ 跨批场景（伤害事件批 N、可见运动批 N+1）仍需 Core 侧挂起（ADR-0044），本票只保证批内锚定。
-- **回归**：`PresentationBeatOrderingContractTests` 新增——暂扣区躲过命中帧锚点与全量 Impact 报点、按组谓词放行、Settled 兜底不丢指令、打击计划归因（持有卡/移除标记）与排除（交战伤害/决斗/离场来源）。
+- **回归**：`PresentationBeatOrderingContractTests` 新增——暂扣区躲过命中帧锚点与全量 Impact 报点、按组谓词放行、Settled 兜底不丢指令、打击计划归因（持有卡/移除标记）与排除（交战伤害/决斗/离场来源）；**补记 d**：按卡直伤回退登记生效时不建组、不暂扣，未登记来源不受影响（`StrikePlan_DirectFlushFallback_SkipsGroupingAndHold`）。
 
 ## 相关
 

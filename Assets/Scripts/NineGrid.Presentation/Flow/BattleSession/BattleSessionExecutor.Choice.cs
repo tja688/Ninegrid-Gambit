@@ -165,18 +165,18 @@ namespace NineGrid.Flow
 
                     if (hasBoardDrain)
                     {
-                        // ADR-0018：有盘面 Drain 时勿在运动前整批冲 TriggerEffect；先 Present 非触发类。
-                        BattleBeatFlush.PresentEventLogSliceExcluding(
+                        // ADR-0050 补记「先开批后 Drain」：与拾取切片同构——OpenBatch（打击计划/暂扣）
+                        // → Drain 前冲非触发 Impact（ADR-0018 保飘字坐标）→ Drain（含移除打击）
+                        // → 触发脉冲 → 剩余打击 → 其余 Impact/Settled。
+                        await BattleBeatFlush.PresentEventLogSliceWithStrikesAsync(
                             NineGridArchitecture.Current,
                             startIndex,
-                            PresentationInstructionKind.TriggerEffect);
-                        BoardPlayer.PresentShuffleIntoDeckFromEventLog(startIndex);
-                        await DrainPostKillBoardAsync(boardDelta, EnsurePresentationToken());
-                        // 运动落地后再消费本切片 TriggerEffect（脉冲 / 可见因果）。
-                        BattleBeatFlush.PresentEventLogSliceOnly(
-                            NineGridArchitecture.Current,
-                            startIndex,
-                            PresentationInstructionKind.TriggerEffect);
+                            async _ =>
+                            {
+                                BoardPlayer.PresentShuffleIntoDeckFromEventLog(startIndex);
+                                await DrainPostKillBoardAsync(boardDelta, EnsurePresentationToken());
+                            },
+                            flushNonTriggerImpactBeforeDrain: true);
                     }
                     else
                     {

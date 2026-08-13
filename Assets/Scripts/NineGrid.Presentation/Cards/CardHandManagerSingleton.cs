@@ -756,13 +756,15 @@ namespace NineGrid.Cards
         {
             try
             {
-                await BattleSessionSystem.EnsureRegistered().DrainPostKillBoardAsync(postKill);
-                // ADR-0050 拾取补丁：运动落地后统一消费本切片节拍（触发脉冲 → 效果打击 → 其余 Impact/Settled）。
-                await PresentPickupSliceWithStrikesAsync(eventLogStartIndex);
+                // ADR-0050 补记「先开批后 Drain」：打击计划必须在盘面 Drain 之前构建，
+                // 滚石等纯移除打击才能在受击卡退场呈现前被消费（否则静默降级为直接破坏）。
+                await PresentPickupSliceWithStrikesAsync(
+                    eventLogStartIndex,
+                    _ => BattleSessionSystem.EnsureRegistered().DrainPostKillBoardAsync(postKill));
             }
             catch (OperationCanceledException)
             {
-                PresentPickupSliceFallback(eventLogStartIndex);
+                // 切片已由编排收批（FlushBeats 兜底放行），节拍不丢失；不得旁路重放同一切片。
             }
             finally
             {
@@ -771,13 +773,17 @@ namespace NineGrid.Cards
         }
 
         /// <summary>
-        /// 拾取切片节拍统一收口（ADR-0050 拾取补丁）：盘面 Drain 落地后带效果打击串行编排消费。
+        /// 拾取切片节拍统一收口（ADR-0050）：先开批（打击计划构建/暂扣）→ 盘面 Drain（含移除打击）→
+        /// 触发脉冲 → 剩余打击 → 其余 Impact/Settled。
         /// </summary>
-        private static async UniTask PresentPickupSliceWithStrikesAsync(int startIndex)
+        private static async UniTask PresentPickupSliceWithStrikesAsync(
+            int startIndex,
+            Func<System.Threading.CancellationToken, UniTask> presentBoardDrainAsync)
         {
             await BattleBeatFlush.PresentEventLogSliceWithStrikesAsync(
                 NineGridArchitecture.Interface ?? NineGridArchitecture.Current,
-                startIndex);
+                startIndex,
+                presentBoardDrainAsync);
         }
 
         /// <summary>
@@ -835,20 +841,22 @@ namespace NineGrid.Cards
                 }
 
                 FlowFieldTraceSink.PickupSuccess?.Invoke(card.Uid, ResolveHandSlotForTrace(card));
-                await BattleSessionSystem.EnsureRegistered().DrainPostKillBoardAsync(
-                    new PostKillBoardPresentationResult
-                    {
-                        Accepted = true,
-                        Steps = pickup.Steps,
-                        Moves = pickup.Moves,
-                        Deals = pickup.Deals,
-                        RemovedUids = pickup.RemovedUids,
-                        NodeClearedOrRewardPhase = pickup.NodeClearedOrRewardPhase,
-                    });
+                var pickupDelta = new PostKillBoardPresentationResult
+                {
+                    Accepted = true,
+                    Steps = pickup.Steps,
+                    Moves = pickup.Moves,
+                    Deals = pickup.Deals,
+                    RemovedUids = pickup.RemovedUids,
+                    NodeClearedOrRewardPhase = pickup.NodeClearedOrRewardPhase,
+                };
 
-                // ADR-0050 拾取补丁：运动落地后统一消费本切片节拍（触发脉冲 → 效果打击 → 其余 Impact/Settled）。
-                await PresentPickupSliceWithStrikesAsync(pickup.EventLogStartIndex);
+                // ADR-0050 补记「先开批后 Drain」：打击计划先于盘面 Drain 构建，
+                // Drain 中的移除呈现才找得到打击组（滚石纯移除打击不再静默降级）。
                 sliceConsumed = true;
+                await PresentPickupSliceWithStrikesAsync(
+                    pickup.EventLogStartIndex,
+                    _ => BattleSessionSystem.EnsureRegistered().DrainPostKillBoardAsync(pickupDelta));
 
                 // #10 / V3：占格权威在 Core；冲突只记诊断，禁止 force-sync heal。
                 var field = GroundFieldGeometryHook.FieldOrNull();

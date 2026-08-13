@@ -230,6 +230,46 @@ namespace NineGrid.Presentation.Tests
         }
 
         [Test]
+        public void StrikePlan_DirectFlushFallback_SkipsGroupingAndHold()
+        {
+            // 按卡回退（ADR-0050 补记）：登记为直伤的容器 defId 不建打击组、不暂扣——
+            // 伤害/移除保持旧「直接掉血/直接破坏」冲刷路径；未登记来源不受影响。
+            EffectStrikePresentationRules.SetOverrideForTests(new[] { "trap.rolling_stone" });
+            try
+            {
+                var stoneTrigger = new CoreGameEvent(CoreEventType.EffectTriggered, actionId: 1, actionName: "ExecuteEffect")
+                    .WithCard(28)
+                    .WithMessage("trap.rolling_stone.slot3")
+                    .WithSource("trap.rolling_stone", "trap.rolling_stone.slot3");
+                var stoneRemoved = new CoreGameEvent(CoreEventType.CardRemoved, actionId: 2, actionName: "RemoveCard")
+                    .WithCard(24)
+                    .WithSource("trap.rolling_stone", "trap.rolling_stone");
+                var spikeTrigger = new CoreGameEvent(CoreEventType.EffectTriggered, actionId: 3, actionName: "ExecuteEffect")
+                    .WithCard(5)
+                    .WithMessage("trap.spike.move")
+                    .WithSource("trap.spike", "trap.spike.move");
+                var spikeDamage = new CoreGameEvent(CoreEventType.DamageDealt, actionId: 4, actionName: "DealDamage")
+                    .WithActor(5)
+                    .WithTarget(7)
+                    .WithCard(7)
+                    .WithAmount(1)
+                    .WithDelta(1)
+                    .WithSource("trap.spike", "trap.spike.move");
+                var batch = MakeBatch(stoneTrigger, stoneRemoved, spikeTrigger, spikeDamage);
+
+                var plan = EffectStrikePlan.Build(batch, uid => true);
+
+                Assert.AreEqual(1, plan.Groups.Count, "回退来源不建组；未登记来源（倒刺）照常建组");
+                Assert.AreEqual(5, plan.Groups[0].StrikerUid, "剩余打击组应属未登记来源");
+                Assert.AreEqual(1, plan.HeldInstructions.Count, "回退来源伤害不暂扣（保持常规 Impact 锚点）");
+            }
+            finally
+            {
+                EffectStrikePresentationRules.ResetForTests();
+            }
+        }
+
+        [Test]
         public void StrikePlan_ExcludesCombatDamage_OffFieldStriker_AndHolyDuel()
         {
             var combatDamage = new CoreGameEvent(CoreEventType.DamageDealt, actionId: 1, actionName: "DealDamage")

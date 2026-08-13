@@ -68,6 +68,16 @@ namespace NineGrid.Flow.Presentation
         /// <summary>神圣决斗有独立的隔离区编排（ADR-0048 例外），不并入打击计划。</summary>
         private const string HolyDuelSourceDefId = "skill.holy_duel";
 
+        /// <summary>
+        /// 已有专属表演的来源不入打击计划：神圣决斗（隔离区编排）、骷髅融合（专用融合动画，
+        /// 参与者由融合 purge 呈现，若建组只会在参与者视图卸场后降级）。
+        /// </summary>
+        private static bool HasDedicatedPresentation(string sourceDefId)
+        {
+            return string.Equals(sourceDefId, HolyDuelSourceDefId, StringComparison.Ordinal)
+                   || NineGrid.Flow.SkeletonFusionPresentationScanner.IsFusionSkillId(sourceDefId);
+        }
+
         public static EffectStrikePlan Build(
             PresentationBatch batch,
             Func<int, bool> isStrikerPresentable)
@@ -115,6 +125,13 @@ namespace NineGrid.Flow.Presentation
 
                 if (IsStrikeDamageInstruction(instruction, gameEvent))
                 {
+                    // 按卡回退（ADR-0050 补记）：登记为直伤的来源不建组、不暂扣，
+                    // 指令保持常规 Impact 锚点冲刷。
+                    if (EffectStrikePresentationRules.UseDirectFlush(gameEvent.SourceDefId))
+                    {
+                        continue;
+                    }
+
                     if (!TryResolveStriker(
                             holderBySource,
                             gameEvent.SourceDefId,
@@ -152,7 +169,8 @@ namespace NineGrid.Flow.Presentation
                     // 直接移除类（滚石破坏卡片等）：无伤害指令，仍需一次打击表演。
                     if (gameEvent.Type == CoreEventType.CardRemoved
                         && !string.IsNullOrEmpty(gameEvent.SourceDefId)
-                        && !string.Equals(gameEvent.SourceDefId, HolyDuelSourceDefId, StringComparison.Ordinal)
+                        && !HasDedicatedPresentation(gameEvent.SourceDefId)
+                        && !EffectStrikePresentationRules.UseDirectFlush(gameEvent.SourceDefId)
                         && TryResolveStriker(
                             holderBySource,
                             gameEvent.SourceDefId,
@@ -254,7 +272,7 @@ namespace NineGrid.Flow.Presentation
 
             if (gameEvent.CardUid <= 0
                 || string.IsNullOrEmpty(gameEvent.SourceDefId)
-                || string.Equals(gameEvent.SourceDefId, HolyDuelSourceDefId, StringComparison.Ordinal))
+                || HasDedicatedPresentation(gameEvent.SourceDefId))
             {
                 return false;
             }
