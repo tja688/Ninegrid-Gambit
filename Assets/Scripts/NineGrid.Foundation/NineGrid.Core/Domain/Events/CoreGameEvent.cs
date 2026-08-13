@@ -21,6 +21,14 @@ namespace NineGrid.Core
         public CoreEventType Type { get; private set; }
         public int ActionId { get; private set; }
         public string ActionName { get; private set; }
+
+        /// <summary>
+        /// 因果嵌套深度（动作管线结算时盖章）：0 = 根动作直接产出；
+        /// 每层触发 / FollowUp 子动作 +1。同一 ActionId 的事件共享同一深度。
+        /// 与 <see cref="Sequence"/> 一起构成事件链的时间/因果语义：
+        /// Sequence 定全序，CausalDepth 定「谁派生自谁」的层级（ADR-0048）。
+        /// </summary>
+        public int CausalDepth { get; private set; }
         public int ActorUid { get; private set; }
         public int TargetUid { get; private set; }
         public int CardUid { get; private set; }
@@ -130,9 +138,16 @@ namespace NineGrid.Core
             Sequence = sequence;
         }
 
+        /// <summary>动作管线结算时盖章因果深度（ADR-0048）；业务动作不应自行调用。</summary>
+        public CoreGameEvent WithCausalDepth(int depth)
+        {
+            CausalDepth = depth < 0 ? 0 : depth;
+            return this;
+        }
+
         public override string ToString()
         {
-            return "#" + Sequence + " " + Type + " action=" + ActionId + " card=" + CardUid + " target=" + TargetUid + " source=" + SourceDefId + " cause=" + Cause + " " + Message;
+            return "#" + Sequence + " " + Type + " action=" + ActionId + " depth=" + CausalDepth + " card=" + CardUid + " target=" + TargetUid + " source=" + SourceDefId + " cause=" + Cause + " " + Message;
         }
     }
 }

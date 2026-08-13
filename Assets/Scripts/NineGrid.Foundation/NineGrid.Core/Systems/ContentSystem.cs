@@ -20,6 +20,8 @@ namespace NineGrid.Core.Systems
         IReadOnlyList<EffectInstance> ActivateCardEffects(CardInstance card);
         IReadOnlyList<EffectInstance> ActivateSkillsOnCard(CardInstance card, IReadOnlyList<string> skillIds);
         IReadOnlyList<EffectInstance> ActivateRelic(string relicDefId);
+        /// <summary>装配级激活：只挂 <paramref name="effectIdFilter"/> 放行的效果（自愈补挂缺失装配用）。</summary>
+        IReadOnlyList<EffectInstance> ActivateRelic(string relicDefId, Func<string, bool> effectIdFilter);
         IReadOnlyList<string> DeactivateRuntimeEffectsByOwner(int ownerUid);
         void ClearRuntimeEffects();
     }
@@ -286,6 +288,11 @@ namespace NineGrid.Core.Systems
 
         public IReadOnlyList<EffectInstance> ActivateRelic(string relicDefId)
         {
+            return ActivateRelic(relicDefId, null);
+        }
+
+        public IReadOnlyList<EffectInstance> ActivateRelic(string relicDefId, Func<string, bool> effectIdFilter)
+        {
             var result = new List<EffectInstance>();
             TryReloadFromConfig();
             if (Catalog == null)
@@ -299,7 +306,7 @@ namespace NineGrid.Core.Systems
                 return result;
             }
 
-            ActivateEffectIds(relic.EffectIds, EffectContainerType.Relic, relic.DefId, 0, result);
+            ActivateEffectIds(relic.EffectIds, EffectContainerType.Relic, relic.DefId, 0, result, effectIdFilter);
             return result;
         }
 
@@ -579,7 +586,8 @@ namespace NineGrid.Core.Systems
             EffectContainerType containerType,
             string sourceDefId,
             int ownerUid,
-            List<EffectInstance> result)
+            List<EffectInstance> result,
+            Func<string, bool> effectIdFilter = null)
         {
             if (effectIds == null || effectIds.Count == 0)
             {
@@ -589,6 +597,11 @@ namespace NineGrid.Core.Systems
             var effectSystem = this.GetSystem<IEffectSystem>();
             for (var i = 0; i < effectIds.Count; i++)
             {
+                if (effectIdFilter != null && !effectIdFilter(effectIds[i]))
+                {
+                    continue;
+                }
+
                 ContentEffectDefinition contentEffect;
                 if (!Catalog.TryGetEffect(effectIds[i], out contentEffect)
                     || contentEffect.State != ContentImplementationState.Implemented)

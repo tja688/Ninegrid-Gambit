@@ -69,6 +69,7 @@ namespace NineGrid.Flow.Presentation
             if (!IsMainlineBusy)
             {
                 DirectorTrace.BeginChain();
+                TriggerPulseChainDedup.Reset();
                 mScriptFactory.BuildScript(intent, mMainline);
                 DirectorTrace.IntentAccepted(intent.Kind, intent.TargetId);
                 PublishBusy();
@@ -90,6 +91,7 @@ namespace NineGrid.Flow.Presentation
             mBypass.Clear();
             mExternalHoldReleased = true;
             mExternalHoldNestDepth = 0;
+            TriggerPulseChainDedup.Reset();
             // IntentHardClear 内 ClearChain；此处再 PublishBusy。
             DirectorTrace.IntentHardClear(reason.ToString());
             PublishBusy();
@@ -170,6 +172,8 @@ namespace NineGrid.Flow.Presentation
             {
                 // defer 补牌等兄弟 batch 仍在同一脚本内；仅整条主线跑空时清连锁根。
                 DirectorTrace.ClearChain();
+                // 触发脉冲链级去重窗口与连锁根同生命周期（ADR-0048）。
+                TriggerPulseChainDedup.Reset();
             }
 
             PublishBusy();

@@ -291,7 +291,8 @@ namespace NineGrid.Flow
             PostKillBoardPresentationResult result,
             CancellationToken ct)
         {
-            // 与步骤流一致：先位移落地 → Impact（脉冲/飘字）→ Remove → Deal。
+            // 与步骤流一致：先位移落地 → 非触发类 Impact（飘字/血甲，尸体消失前必须可见）
+            // → Remove → Deal。TriggerEffect 留给 PresentStep 两相冲刷（ADR-0048）。
             if (result.Moves != null && result.Moves.Length > 0)
             {
                 await Field.ApplyBoardMovesAndHopAsync(
@@ -300,7 +301,7 @@ namespace NineGrid.Flow
                     skipBusyGuard: true);
             }
 
-            BattleBeatHook.NotifyBeat(PresentationBeat.Impact);
+            BattleBeatHook.NotifyFlushImpactExcept(PresentationInstructionKind.TriggerEffect);
 
             if (result.RemovedUids != null && result.RemovedUids.Length > 0)
             {
@@ -327,7 +328,9 @@ namespace NineGrid.Flow
             var choreoRotateCount = 0;
             // 探索等无命中帧：须在运动落地之后冲刷 Impact。
             // 同批常见 [Deal, Rotate, Remove…]——绝不能在首个 Deal 前抢跑，否则脉冲/扣血会早于旋转。
-            // 规则：首个 Remove 之前冲刷；若无 Remove，则在全部步骤播完后冲刷。
+            // 规则（ADR-0048）：首个 Remove 之前只冲非触发类 Impact（尸体消失前飘字必须可见）；
+            // TriggerEffect 与其余未消费 Impact 统一留给 PresentStep 两相冲刷
+            // （全部运动步落地 → 触发脉冲 → 节拍间隔 → 其余飘字）。
             var impactFlushed = false;
             for (var i = 0; i < steps.Length; i++)
             {
@@ -339,7 +342,7 @@ namespace NineGrid.Flow
 
                 if (!impactFlushed && step.Kind == BoardPresentationStepKind.Remove)
                 {
-                    BattleBeatHook.NotifyBeat(PresentationBeat.Impact);
+                    BattleBeatHook.NotifyFlushImpactExcept(PresentationInstructionKind.TriggerEffect);
                     impactFlushed = true;
                 }
 
@@ -423,11 +426,9 @@ namespace NineGrid.Flow
                 }
             }
 
-            if (!impactFlushed)
-            {
-                BattleBeatHook.NotifyBeat(PresentationBeat.Impact);
-            }
-
+            // 无 Remove 步时不再在 Drain 尾部兜底冲刷：留给 PresentStep 两相冲刷，
+            // 保证「运动落地 → 触发脉冲 → 飘字」的全批次统一顺序（ADR-0048）。
+            // 锁步不变量：每个已开批必经 PresentStep FlushBeats 后才 ack，pending 不会滞留。
             if (rotateCount > 0 && rotateCount != choreoRotateCount)
             {
                 FieldTraceHelper.RecordBoardRotateChoreoMismatch(

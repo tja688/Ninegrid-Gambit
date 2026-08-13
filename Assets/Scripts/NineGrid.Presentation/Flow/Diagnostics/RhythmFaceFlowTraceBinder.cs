@@ -201,6 +201,36 @@ namespace NineGrid.Flow.Diagnostics
                         { "message", e.Message ?? string.Empty },
                     });
                     break;
+                case CoreEventType.RelicGranted:
+                    // 遗物挂载可观测：入栏事实（route 区分授予 / 自愈重挂）。
+                    Record(FlowTraceCategory.CombatSummary, FlowTraceNames.RelicGranted, new Dictionary<string, string>
+                    {
+                        { "defId", e.Message ?? string.Empty },
+                        { "route", string.IsNullOrEmpty(e.Cause) ? "grant" : e.Cause },
+                        { "action", e.ActionName ?? string.Empty },
+                    });
+                    break;
+                case CoreEventType.RelicEffectMountAudited:
+                    // 遗物挂载审计：declared/implemented/mounted/modifiers 四数核对，
+                    // 「有遗物无效果」可直接从 corelog 判定缺在哪一层。
+                    Record(FlowTraceCategory.CombatSummary, FlowTraceNames.RelicMountAudit, new Dictionary<string, string>
+                    {
+                        { "defId", e.SourceDefId ?? string.Empty },
+                        { "mounted", e.Amount.ToString() },
+                        { "declared", e.Delta.ToString() },
+                        { "modifiers", e.ResultValue.ToString() },
+                        { "detail", e.Message ?? string.Empty },
+                    });
+                    break;
+                case CoreEventType.PipelineFaultContained:
+                    // ADR-0047 熔断事实入 corelog（此前只有 Console 报错，release 局无痕）。
+                    Record(FlowTraceCategory.CombatSummary, FlowTraceNames.PipelineFault, new Dictionary<string, string>
+                    {
+                        { "actionName", e.ActionName ?? string.Empty },
+                        { "depth", e.Amount.ToString() },
+                        { "detail", e.Message ?? string.Empty },
+                    });
+                    break;
             }
         }
 

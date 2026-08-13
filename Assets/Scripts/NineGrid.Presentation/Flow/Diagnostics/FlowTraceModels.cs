@@ -104,6 +104,14 @@ namespace NineGrid.Flow.Diagnostics
         /// </summary>
         public const string CounterVerdict = "CounterVerdict";
 
+        // 遗物挂载可观测轨（授予/自愈全路径）
+        /// <summary>遗物入装备栏（route=grant 授予 / reactivate 自愈重挂）。</summary>
+        public const string RelicGranted = "RelicGranted";
+        /// <summary>遗物效果挂载审计：declared/implemented/mounted/modifiers 四数核对。</summary>
+        public const string RelicMountAudit = "RelicMountAudit";
+        /// <summary>ADR-0047 管线熔断遏制（深度/总量超限或 Apply 异常，分支被丢弃）。</summary>
+        public const string PipelineFault = "PipelineFault";
+
         // V2 Field / Presentation / Hand
         public const string DrainBegin = "DrainBegin";
         public const string DrainEnd = "DrainEnd";

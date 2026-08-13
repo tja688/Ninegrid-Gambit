@@ -147,6 +147,38 @@ namespace NineGrid.Flow.Presentation
         }
 
         /// <summary>
+        /// 只冲刷指定 Kind 的 Impact 指令（ADR-0048 两相 Impact：盘面运动落地后先演触发脉冲，
+        /// 停一拍再冲其余 Impact 飘字/血甲）。返回实际派发条数，供调用方决定是否插入节拍间隔。
+        /// </summary>
+        public int FlushImpactOnly(PresentationInstructionKind onlyKind)
+        {
+            var dispatched = 0;
+            for (var i = 0; i < mPending.Count;)
+            {
+                var instruction = mPending[i];
+                if (instruction == null
+                    || instruction.MapEntry == null
+                    || instruction.MapEntry.Beat != PresentationBeat.Impact
+                    || instruction.Kind != onlyKind)
+                {
+                    i++;
+                    continue;
+                }
+
+                if (!TryDispatch(instruction))
+                {
+                    i++;
+                    continue;
+                }
+
+                mPending.RemoveAt(i);
+                dispatched++;
+            }
+
+            return dispatched;
+        }
+
+        /// <summary>
         /// 从当批暂挂移出满足谓词的 Impact 指令进隔离区（神圣决斗：惩罚伤害与持有者脉冲
         /// 留给决斗者攻击表演的命中帧，而不是玩家攻击命中帧就掉血）。
         /// </summary>

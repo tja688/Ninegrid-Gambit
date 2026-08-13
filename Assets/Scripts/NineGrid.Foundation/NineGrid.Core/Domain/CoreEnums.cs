@@ -210,7 +210,13 @@ namespace NineGrid.Core
         /// 诊断（ADR-0047）：反应链深度/总量熔断——失控触发环被遏制、后续分支丢弃，
         /// 命令仍原子收尾（不再抛异常炸穿命令导致 Core/表现分叉）。不进表现批次。
         /// </summary>
-        PipelineFaultContained
+        PipelineFaultContained,
+        /// <summary>
+        /// 诊断：遗物效果挂载审计——授予/自愈路径每次 ActivateRelic 后落一条
+        /// 「申报装配数 vs 实挂实例数 vs 修饰符数」，corelog 可直接判定遗物是否真正生效。
+        /// 不进表现批次。
+        /// </summary>
+        RelicEffectMountAudited
     }
 
     public enum PresentationEventCategory

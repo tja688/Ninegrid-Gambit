@@ -24,6 +24,13 @@ namespace NineGrid.Flow.Presentation
                 return true;
             }
 
+            // 链级去重（ADR-0048）：同一交互连锁内同一持有卡的同一效果只演一次触发反馈。
+            // Message = 效果实例 defId（ExecuteEffectAction 写入）；重复触发静默消费。
+            if (!TriggerPulseChainDedup.TryMarkFirst(gameEvent.CardUid, gameEvent.Message))
+            {
+                return true;
+            }
+
             // FX 脉冲仍要求卡在场（Board）；手牌/道具槽 HelpCard 的 OnSelfUsed 不在此列。
             if (IsCoreCardOnBoard(gameEvent.CardUid))
             {

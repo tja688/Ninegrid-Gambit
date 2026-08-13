@@ -14,6 +14,10 @@ status: accepted
 4. **现场可见。** Core 同时发 QF 事件 `Evt_PipelineFaultContained`，`BattleSessionExecutor` 订阅后 `Debug.LogError`——开发构建 Console 直接可见，QA 第一时间能发现内容死循环。
 5. **熔断是兜底，不是许可。** 失控环的根治永远在内容层（效果 DSL 的 cause 防环标记、触发条件收敛）；熔断只保证「内容 bug 不把整局玩死」。触发熔断一律视为待修 bug。
 
+### 补遗（2026-08-12 晚）：Apply / 触发分发异常同等遏制
+
+**`action.Apply` 内抛出的任意异常（目标卡缺失 `KeyNotFoundException`、坏内容定义的 `InvalidOperationException` 等）与深度熔断同等对待**：丢弃该动作的事件/触发/FollowUp，落 `PipelineFaultContained`（message 前缀 `Action apply faulted: <异常类型>`），补 `ActionFinished` 保持 Started/Finished 配对，兄弟动作与命令收尾不受牵连。`DispatchTriggers` 的每个触发点分发（反应构建 `React`/`CanTrigger` 求值）同样单独遏制。理由：深度熔断只治了两种保险丝，Apply 内异常仍能炸穿命令、重现「遗物进装备栏但效果实例未挂、整局哑火」的二次灾害形态——防线必须覆盖全部异常出口。回归：`RelicMountResilienceTests`（FollowUp 链中途炸、遗物照常挂载、事件日志配对）。
+
 ## 为什么
 
 **异常炸穿命令中途是比效果丢失严重得多的二次灾害。** 管线没有事务回滚：异常抛出时已 Apply 的动作留在 Core 模型里，`CoreCommandDispatcher.Send` 的批次不开、`Evt_PresentationBatchOpened` 不发，表现层永远收不到该命令的事实切片。后果是 Core 与表现盘面永久分叉：卡面还画在盘上但 Core 里已被移除（点击被门禁拒绝、"卡无法点击"）、遗物授予链被拦腰炸断（效果实例没挂上、整局哑火，2026-08-12 corelog-124012 的复合盔甲/生命护符事故）、流程协程死在半途。熔断遏制后命令保证收尾，两个世界保持锁步，最坏结果是「某条效果链被截断」——可见、可报、可继续玩。

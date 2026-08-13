@@ -119,7 +119,16 @@ namespace NineGrid.Core
                 false,
                 PresentationBeat.None,
                 "Pipeline fault contained",
-                "Diagnostics-only trace (ADR-0047) — runaway reaction chain truncated; no playback")
+                "Diagnostics-only trace (ADR-0047) — runaway reaction chain truncated; no playback"),
+            Entry(
+                CoreEventType.RelicEffectMountAudited,
+                PresentationInstructionKind.None,
+                PresentationEventCategory.Content,
+                false,
+                false,
+                PresentationBeat.None,
+                "Relic effect mount audited",
+                "Diagnostics-only trace — declared vs mounted relic effect instances; no playback")
         };
 
         private static readonly Dictionary<CoreEventType, PresentationEventMapEntry> sByType = BuildLookup();

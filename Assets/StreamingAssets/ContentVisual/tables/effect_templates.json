@@ -394,10 +394,10 @@
  {
   "id": "tpl.relic.wood_armor.base",
   "state": "Implemented",
-  "design_text": "血量上限+2",
+  "design_text": "血量上限+N（获得时回复等量血量；卸下时上限回落）",
   "requires_json": "[\"NoOwnerEntity\"]",
   "conditions_json": "[]",
-  "body": "{\"kind\":\"Modifier\",\"target\":{\"atom\":\"Player\"},\"modifier\":{\"stat\":\"MaxHp\",\"op\":\"Add\",\"value\":\"{{value}}\",\"layer\":\"Persistent\",\"scope\":\"Permanent\"}}"
+  "body": "{\"kind\":\"Modifier\",\"target\":{\"atom\":\"Player\"},\"modifier\":{\"stat\":\"MaxHp\",\"op\":\"Add\",\"value\":\"{{value}}\",\"layer\":\"Persistent\",\"scope\":\"Permanent\",\"healOnAttach\":true}}"
  },
  {
   "id": "tpl.relic.wood_armor.set",
@@ -1554,10 +1554,10 @@
  {
   "id": "tpl.relic.composite_armor.node_start",
   "state": "Implemented",
-  "design_text": "[每关卡开始时] 每有三点攻击，获得1点当前护甲",
+  "design_text": "[每关卡开始时] 每有 every 点攻击，获得 gain 点当前护甲（参数与行为同源）",
   "requires_json": "[\"NoOwnerEntity\"]",
   "conditions_json": "[]",
-  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnNodeStart\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"GainArmor\",\"value\":{\"op\":\"Floor\",\"values\":[{\"op\":\"Divide\",\"values\":[{\"source\":\"Player\",\"stat\":\"Attack\",\"effective\":true},{\"constant\":3}]}]}}}"
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnNodeStart\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"GainArmor\",\"value\":{\"op\":\"Multiply\",\"values\":[{\"op\":\"Floor\",\"values\":[{\"op\":\"Divide\",\"values\":[{\"source\":\"Player\",\"stat\":\"Attack\",\"effective\":true},{\"constant\":\"{{every}}\"}]}]},{\"constant\":\"{{gain}}\"}]}}}"
  },
  {
   "id": "tpl.relic.gold_blood.taken",

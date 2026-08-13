@@ -36,7 +36,7 @@
 | Kind | 激活行为 |
 |---|---|
 | `Triggered` | 创建 Trigger/Target/Action 原子；`OnActivate` 触发点则立即求值入队动作（跳过区域 requires——造卡时还在暂存池）；否则向 TriggerSystem 注册 `(Point, Timing)` 反应 |
-| `Modifier` | 立即解析 Target、对每个目标挂 `StatModifier`（记录以便 Deactivate 回收）；卡面攻刷新由统一对账缝自动提交（ADR-0045） |
+| `Modifier` | 立即解析 Target、对每个目标挂 `StatModifier`（记录以便 Deactivate 回收）；卡面攻刷新由统一对账缝自动提交（ADR-0045）。modifier 节点可自声明 `healOnAttach:true`（限 `MaxHp`+`Add`+常数 value）：挂载时对同目标入队等量 `HealAction`——「加上限回等量血」与 `ModifyBaseStat` 局内约定对齐（木甲系 `tpl.relic.wood_armor.base` 全体使用者生效）；`HealAction` 自动钳到挂载后的新有效上限，跨层重挂/自愈重挂语义均自洽 |
 | `RuleModifier` | 构建 `RuleModifier` 挂入全局注册表（AttackTargetRestriction 自动以 Owner uid 为值；target=Self/Player 生成 TargetUidCondition） |
 
 ### 触发链（CanTrigger）

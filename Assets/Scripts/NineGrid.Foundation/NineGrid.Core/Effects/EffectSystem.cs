@@ -593,6 +593,18 @@ namespace NineGrid.Core.Effects
             var targets = FilterMagicImmuneTargets(runtime, instance.Target.Resolve(runtime));
             var statSystem = this.GetSystem<IStatSystem>();
 
+            // healOnAttach（自声明字段）：MaxHp 增益修饰在挂载时同步回等量血——
+            // 与 ModifyBaseStat 的「加上限同时加等量当前血」局内统一约定对齐（木甲系遗物）。
+            // 只支持常数 value；HealAction 自动钳到挂载后的新有效上限。
+            var modifierNode = instance.Definition.Modifier;
+            var healOnAttach = modifierNode != null
+                && modifierNode.Get("healOnAttach").AsBool(false)
+                && modifierNode.Get("stat").AsEnum(StatId.Attack) == StatId.MaxHp
+                && modifierNode.Get("op").AsEnum(ModifierOp.Add) == ModifierOp.Add;
+            var healAmount = healOnAttach
+                ? Math.Max(0, (int)Math.Round(modifierNode.Get("value").AsFloat(0f)))
+                : 0;
+
             // kind:Modifier 挂载后的卡面有效攻变化由统一对账缝在下一个动作边界自动提交（ADR-0045）。
             for (var i = 0; i < targets.Count; i++)
             {
@@ -605,6 +617,13 @@ namespace NineGrid.Core.Effects
                 var modifier = CreateStatModifier(instance);
                 statSystem.AddModifier(card, modifier);
                 instance.StatModifiers.Add(new AppliedStatModifier(card, modifier));
+
+                if (healAmount > 0)
+                {
+                    var sourceDefId = instance.Owner != null ? instance.Owner.SourceDefId : instance.Definition.Id;
+                    this.GetSystem<IActionPipelineSystem>().Enqueue(
+                        new HealAction(card.Uid, card.Uid, healAmount, sourceDefId, "maxhp-attach"));
+                }
             }
         }
 

@@ -169,15 +169,18 @@ namespace NineGrid.Core
             }
 
             player.AddRelic(RelicDefId);
+            IReadOnlyList<EffectInstance> mounted = null;
             if (content != null)
             {
-                content.ActivateRelic(RelicDefId);
+                mounted = content.ActivateRelic(RelicDefId);
             }
 
             // 遗物规则（EnemyAttackDelta 等）引发的场上卡面攻刷新由统一对账缝自动提交（ADR-0045）。
-            return new GameActionResult()
+            var result = new GameActionResult()
                 .AddEvent(new CoreGameEvent(CoreEventType.RelicGranted, context.ActionId, ActionName)
                     .WithMessage(RelicDefId));
+            result.AddEvent(RelicMountAudit.BuildEvent(context, ActionName, content, RelicDefId, mounted, "grant"));
+            return result;
         }
 
         private static bool PlayerOwnsRelic(PlayerModel player, string defId)
@@ -196,9 +199,67 @@ namespace NineGrid.Core
     }
 
     /// <summary>
-    /// 遗物效果自愈重挂：装备栏里的遗物若无任何存活效果实例（授予链曾被异常打断、
-    /// 或历史存档带入「有遗物无效果」状态），在节点开始前重新激活其全部效果。
-    /// 幂等：已有存活实例的遗物跳过；无可挂效果（EffectIds 空 / 全部未实现）的遗物跳过。
+    /// 遗物挂载审计（诊断事实）：每次 ActivateRelic 后核对「申报装配数 / 已实现数 /
+    /// 实挂实例数 / 修饰符数」，corelog 可直接判定遗物是否真正生效、缺在哪一层。
+    /// </summary>
+    internal static class RelicMountAudit
+    {
+        public static CoreGameEvent BuildEvent(
+            GameActionContext context,
+            string actionName,
+            IContentSystem content,
+            string relicDefId,
+            IReadOnlyList<EffectInstance> mounted,
+            string route)
+        {
+            var declared = 0;
+            var implemented = 0;
+            if (content != null
+                && content.Catalog != null
+                && content.Catalog.Relics.TryGetValue(relicDefId, out var relic)
+                && relic != null)
+            {
+                declared = relic.EffectIds.Count;
+                for (var i = 0; i < relic.EffectIds.Count; i++)
+                {
+                    if (content.Catalog.TryGetEffect(relic.EffectIds[i], out var effect)
+                        && effect.State == ContentImplementationState.Implemented)
+                    {
+                        implemented++;
+                    }
+                }
+            }
+
+            var mountedCount = mounted != null ? mounted.Count : 0;
+            var modifierCount = 0;
+            if (mounted != null)
+            {
+                for (var i = 0; i < mounted.Count; i++)
+                {
+                    modifierCount += mounted[i].StatModifiers.Count + mounted[i].RuleModifiers.Count;
+                }
+            }
+
+            return new CoreGameEvent(CoreEventType.RelicEffectMountAudited, context.ActionId, actionName)
+                .WithAmount(mountedCount)
+                .WithDelta(declared)
+                .WithResultValue(modifierCount)
+                .WithMessage(
+                    relicDefId + " route=" + route
+                    + " declared=" + declared
+                    + " implemented=" + implemented
+                    + " mounted=" + mountedCount
+                    + " modifiers=" + modifierCount)
+                .WithSource(relicDefId, route);
+        }
+    }
+
+    /// <summary>
+    /// 遗物效果自愈重挂（装配级）：装备栏里每个遗物逐条核对其申报装配——缺失的效果实例
+    /// （授予链曾被异常打断、历史存档带入、或部分装配丢失）在节点开始前单独补挂。
+    /// 空挂检测：kind=Modifier 的遗物实例若一个修饰符都没挂上（挂载时刻目标缺位造成的
+    /// 「有实例无效果」死实例），先反激活再当缺失补挂。
+    /// 幂等：装配齐全的遗物跳过；无可挂效果（EffectIds 空 / 全部未实现）的遗物跳过。
     /// </summary>
     public sealed class ReactivateMissingRelicEffectsAction : GameAction
     {
@@ -220,16 +281,36 @@ namespace NineGrid.Core
                 return GameActionResult.Empty;
             }
 
-            var liveRelicDefIds = new HashSet<string>(StringComparer.Ordinal);
+            // 存活装配盘点：遗物 defId → 存活效果定义 id 集；同时清除 Modifier 空挂死实例。
+            var liveEffectIds = new Dictionary<string, HashSet<string>>(StringComparer.Ordinal);
             var instances = effectSystem.Instances;
             for (var i = 0; i < instances.Count; i++)
             {
-                var owner = instances[i].Owner;
-                if (owner != null
-                    && owner.ContainerType == EffectContainerType.Relic
-                    && !string.IsNullOrEmpty(owner.SourceDefId))
+                var instance = instances[i];
+                var owner = instance.Owner;
+                if (owner == null
+                    || owner.ContainerType != EffectContainerType.Relic
+                    || string.IsNullOrEmpty(owner.SourceDefId))
                 {
-                    liveRelicDefIds.Add(owner.SourceDefId);
+                    continue;
+                }
+
+                if (IsDeadModifierMount(instance))
+                {
+                    effectSystem.Deactivate(instance.InstanceId);
+                    continue;
+                }
+
+                HashSet<string> ids;
+                if (!liveEffectIds.TryGetValue(owner.SourceDefId, out ids))
+                {
+                    ids = new HashSet<string>(StringComparer.Ordinal);
+                    liveEffectIds.Add(owner.SourceDefId, ids);
+                }
+
+                if (instance.Definition != null && !string.IsNullOrEmpty(instance.Definition.Id))
+                {
+                    ids.Add(instance.Definition.Id);
                 }
             }
 
@@ -238,7 +319,7 @@ namespace NineGrid.Core
             for (var i = 0; i < relics.Count; i++)
             {
                 var defId = relics[i];
-                if (string.IsNullOrEmpty(defId) || liveRelicDefIds.Contains(defId))
+                if (string.IsNullOrEmpty(defId))
                 {
                     continue;
                 }
@@ -251,7 +332,13 @@ namespace NineGrid.Core
                     continue;
                 }
 
-                var activated = content.ActivateRelic(defId);
+                var missing = CollectMissingImplementedEffectIds(content, relic, liveEffectIds);
+                if (missing == null || missing.Count == 0)
+                {
+                    continue;
+                }
+
+                var activated = content.ActivateRelic(defId, missing.Contains);
                 if (activated.Count == 0)
                 {
                     continue;
@@ -261,9 +348,57 @@ namespace NineGrid.Core
                 result.AddEvent(new CoreGameEvent(CoreEventType.RelicGranted, context.ActionId, ActionName)
                     .WithMessage(defId)
                     .WithSource(defId, "reactivate"));
+                result.AddEvent(RelicMountAudit.BuildEvent(context, ActionName, content, defId, activated, "reactivate"));
             }
 
             return result ?? GameActionResult.Empty;
+        }
+
+        /// <summary>
+        /// Modifier 空挂死实例：挂载时刻目标解析为空（如 Avatar 缺位）导致一个
+        /// StatModifier/RuleModifier 都没挂上。遗物无实体卡（OwnerUid=0），不存在
+        /// 背面压制暂卸的情形，列表全空即真空挂。
+        /// </summary>
+        private static bool IsDeadModifierMount(EffectInstance instance)
+        {
+            return instance != null
+                && instance.Owner != null
+                && instance.Owner.OwnerUid == 0
+                && instance.Definition != null
+                && instance.Definition.Kind == EffectKind.Modifier
+                && instance.StatModifiers.Count == 0
+                && instance.RuleModifiers.Count == 0;
+        }
+
+        private static HashSet<string> CollectMissingImplementedEffectIds(
+            IContentSystem content,
+            RelicContentDefinition relic,
+            Dictionary<string, HashSet<string>> liveEffectIds)
+        {
+            HashSet<string> live;
+            liveEffectIds.TryGetValue(relic.DefId, out live);
+
+            HashSet<string> missing = null;
+            for (var i = 0; i < relic.EffectIds.Count; i++)
+            {
+                var effectId = relic.EffectIds[i];
+                if (live != null && live.Contains(effectId))
+                {
+                    continue;
+                }
+
+                ContentEffectDefinition effect;
+                if (!content.Catalog.TryGetEffect(effectId, out effect)
+                    || effect.State != ContentImplementationState.Implemented)
+                {
+                    continue;
+                }
+
+                missing = missing ?? new HashSet<string>(StringComparer.Ordinal);
+                missing.Add(effectId);
+            }
+
+            return missing;
         }
     }
 
@@ -320,6 +455,15 @@ namespace NineGrid.Core
                 stats.RemoveModifiersBySource(
                     avatar,
                     new ModifierSource(RelicRunContributionModel.BuildModifierSourceId(RelicDefId, StatId.Armor)));
+
+                // 卸下 MaxHp 修饰遗物（木甲系）后当前血可能高于新有效上限：按
+                // 「降上限钳当前血」局内统一约定钳制（与 ModifyBaseStat 负增量一致）。
+                var effectiveMaxHp = Math.Max(0, (int)Math.Round(stats.GetEffectiveValue(avatar, StatId.MaxHp)));
+                var hp = (int)Math.Round(avatar.Stats.GetBase(StatId.Hp));
+                if (hp > effectiveMaxHp)
+                {
+                    avatar.Stats.SetBase(StatId.Hp, effectiveMaxHp);
+                }
             }
 
             // 卸下 EnemyAttackDelta 等规则遗物后的场上卡面攻回落由统一对账缝自动提交（ADR-0045）。

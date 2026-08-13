@@ -169,18 +169,43 @@ namespace NineGrid.Core.Systems
             // 失控环的「根治」在内容层（效果 DSL 的 cause 防环标记），这里只保证不把局玩死。
             if (depth > MaxReactionDepth || mResolvedThisRun >= MaxResolvedPerRun)
             {
-                ContainPipelineFault(action, depth);
+                ContainPipelineFault(action, depth, null);
                 return;
             }
 
             mResolvedThisRun++;
             var actionId = mNextActionId++;
             var context = new GameActionContext(((IBelongToArchitecture)this).GetArchitecture(), EventLog, actionId, depth);
-            EventLog.Append(new CoreGameEvent(CoreEventType.ActionStarted, actionId, action.ActionName));
+            EventLog.Append(new CoreGameEvent(CoreEventType.ActionStarted, actionId, action.ActionName).WithCausalDepth(depth));
 
             DispatchTriggers(action, TriggerTiming.Pre, action.GetPreTriggerPoints(context), sNoEvents, context, depth);
 
-            var result = action.Apply(context) ?? GameActionResult.Empty;
+            // ADR-0047 补遗：Apply 内任意异常（目标卡缺失 KeyNotFound、内容坏定义的
+            // InvalidOperation 等）与深度熔断同等对待——丢弃该动作的事件/触发/FollowUp、
+            // 落诊断事件、保持 Started/Finished 配对，兄弟动作与命令收尾不受牵连。
+            // 曾经的形态：GrantRelic 链上一个动作炸穿 → 遗物进装备栏但效果实例未挂（整局哑火）。
+            GameActionResult result;
+            try
+            {
+                result = action.Apply(context) ?? GameActionResult.Empty;
+            }
+            catch (Exception ex)
+            {
+                ContainPipelineFault(action, depth, ex);
+                EventLog.Append(new CoreGameEvent(CoreEventType.ActionFinished, actionId, action.ActionName).WithCausalDepth(depth));
+                return;
+            }
+
+            // ADR-0048：动作产出事件统一盖章因果深度——Sequence 定全序，CausalDepth 定派生层级，
+            // 为表现层时序编排（触发脉冲后置、链级去重）提供内核侧因果语义。
+            if (result.Events != null)
+            {
+                for (var i = 0; i < result.Events.Count; i++)
+                {
+                    result.Events[i]?.WithCausalDepth(depth);
+                }
+            }
+
             EventLog.AppendRange(result.Events);
             // 统一对账缝（ADR-0045）：动作自身事件入日志后立即 diff-emit 卡面提交，
             // 使提交事件紧邻因果动作；触发器 / FollowUp 各自结算时再各对账一次。
@@ -188,10 +213,10 @@ namespace NineGrid.Core.Systems
             DispatchTriggers(action, TriggerTiming.Post, action.GetPostTriggerPoints(context, result.Events), result.Events, context, depth);
             ResolveTriggeredActions(result.FollowUpActions, depth + 1);
 
-            EventLog.Append(new CoreGameEvent(CoreEventType.ActionFinished, actionId, action.ActionName));
+            EventLog.Append(new CoreGameEvent(CoreEventType.ActionFinished, actionId, action.ActionName).WithCausalDepth(depth));
         }
 
-        private void ContainPipelineFault(GameAction action, int depth)
+        private void ContainPipelineFault(GameAction action, int depth, Exception applyFault)
         {
             if (mFaultEventsThisRun >= MaxFaultEventsPerRun)
             {
@@ -199,9 +224,11 @@ namespace NineGrid.Core.Systems
             }
 
             mFaultEventsThisRun++;
-            var reason = depth > MaxReactionDepth
-                ? "Reaction chain exceeded max depth " + MaxReactionDepth
-                : "Run exceeded max resolved actions " + MaxResolvedPerRun;
+            var reason = applyFault != null
+                ? "Action apply faulted: " + applyFault.GetType().Name + ": " + applyFault.Message
+                : depth > MaxReactionDepth
+                    ? "Reaction chain exceeded max depth " + MaxReactionDepth
+                    : "Run exceeded max resolved actions " + MaxResolvedPerRun;
             var actionName = action != null ? action.ActionName : "<null>";
             EventLog.Append(new CoreGameEvent(CoreEventType.PipelineFaultContained, 0, actionName)
                 .WithAmount(depth)
@@ -226,7 +253,20 @@ namespace NineGrid.Core.Systems
             foreach (var point in points)
             {
                 var triggerContext = new TriggerContext(point, timing, action, events, context);
-                ResolveTriggeredActions(triggerSystem.Dispatch(triggerContext), depth + 1);
+                // 反应构建（React/CanTrigger 求值）异常与 Apply 异常同等遏制：
+                // 丢弃该触发点分支，不炸穿命令（ADR-0047 补遗）。
+                IReadOnlyList<GameAction> reactions;
+                try
+                {
+                    reactions = triggerSystem.Dispatch(triggerContext);
+                }
+                catch (Exception ex)
+                {
+                    ContainPipelineFault(action, depth, ex);
+                    continue;
+                }
+
+                ResolveTriggeredActions(reactions, depth + 1);
             }
         }
 

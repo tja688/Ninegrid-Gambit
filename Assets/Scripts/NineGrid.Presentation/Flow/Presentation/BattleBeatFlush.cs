@@ -32,6 +32,14 @@ namespace NineGrid.Flow.Presentation
         }
 
         /// <summary>
+        /// 只冲刷指定 Kind 的 Impact，返回派发条数（ADR-0048：运动落地后先演触发脉冲）。
+        /// </summary>
+        public static int FlushImpactOnly(PresentationInstructionKind onlyKind)
+        {
+            return BattleBeatHook.NotifyFlushImpactOnly(onlyKind);
+        }
+
+        /// <summary>
         /// 非锁步：将事件日志切片经排期器消费。
         /// 无打开批次时 OpenBatch → FlushBeats → FinishBatch；
         /// 已有打开批次时走旁路 PresentStandalone，避免清掉当批 pending。

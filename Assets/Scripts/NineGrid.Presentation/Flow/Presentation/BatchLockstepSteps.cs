@@ -98,6 +98,9 @@ namespace NineGrid.Flow.Presentation
     /// </summary>
     public sealed class PresentStep : ITimelineStep
     {
+        /// <summary>触发脉冲与后续 Impact 飘字之间的节拍间隔（秒，ADR-0048 两相 Impact）。</summary>
+        public const float TriggerCadenceSec = 0.35f;
+
         private readonly IPresentationBatchGate mGate;
         private readonly IPresentChannel mChannel;
         private readonly string mChannelName;
@@ -107,6 +110,8 @@ namespace NineGrid.Flow.Presentation
         private bool mStarted;
         private bool mFaceUpFlushed;
         private bool mChannelBegun;
+        private bool mTriggersFlushed;
+        private float mTriggerCadenceRemaining;
         private bool mBeatsFlushed;
         private bool mAcknowledged;
         private bool mChoreoOpen;
@@ -190,9 +195,25 @@ namespace NineGrid.Flow.Presentation
                 return TimelineStepStatus.Continue;
             }
 
+            if (!mTriggersFlushed)
+            {
+                // ADR-0048 两相 Impact 第一相：通道运动全部落地后，先单独演触发脉冲
+                // （旋转停稳 → 光环/技能触发反馈），有脉冲则停一拍再冲其余 Impact。
+                var dispatched = BattleBeatFlush.FlushImpactOnly(PresentationInstructionKind.TriggerEffect);
+                mTriggersFlushed = true;
+                mTriggerCadenceRemaining = dispatched > 0 ? TriggerCadenceSec : 0f;
+            }
+
+            if (mTriggerCadenceRemaining > 0f)
+            {
+                mTriggerCadenceRemaining -= deltaTime;
+                return TimelineStepStatus.Continue;
+            }
+
             if (!mBeatsFlushed)
             {
-                // 表演通道完成后、就位回执前：与非锁步路径同构的统一冲刷报点。
+                // ADR-0048 两相 Impact 第二相：其余 Impact（伤害/护甲/血量飘字等）与 Settled，
+                // 与非锁步路径同构的统一冲刷报点。
                 BattleBeatFlush.FlushBeats();
                 mBeatsFlushed = true;
             }

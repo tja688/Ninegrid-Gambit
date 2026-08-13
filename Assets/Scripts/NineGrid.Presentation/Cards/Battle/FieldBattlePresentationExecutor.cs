@@ -299,7 +299,9 @@ namespace NineGrid.Cards
                 }
 
                 hitFrameApplied = true;
-                BattleBeatHook.NotifyBeat(PresentationBeat.Impact);
+                // ADR-0048：命中帧只冲飘字/血甲（触发条件先可见，ADR-0018）；
+                // TriggerEffect 留到本批盘面运动落地后由 PresentStep 两相冲刷统一演出。
+                BattleBeatHook.NotifyFlushImpactExcept(PresentationInstructionKind.TriggerEffect);
             }
 
             var holdAcquired = false;
@@ -409,7 +411,9 @@ namespace NineGrid.Cards
                 }
 
                 hitFrameApplied = true;
-                BattleBeatHook.NotifyBeat(PresentationBeat.Impact);
+                // ADR-0048：命中帧只冲飘字/血甲（触发条件先可见，ADR-0018）；
+                // TriggerEffect 留到本批盘面运动落地后由 PresentStep 两相冲刷统一演出。
+                BattleBeatHook.NotifyFlushImpactExcept(PresentationInstructionKind.TriggerEffect);
             }
 
             // 神圣决斗惩罚：把「决斗者脉冲 + 对玩家伤害」指令从当批暂挂隔离，
