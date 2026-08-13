@@ -128,7 +128,16 @@ namespace NineGrid.Core
                 false,
                 PresentationBeat.None,
                 "Relic effect mount audited",
-                "Diagnostics-only trace — declared vs mounted relic effect instances; no playback")
+                "Diagnostics-only trace — declared vs mounted relic effect instances; no playback"),
+            Entry(
+                CoreEventType.ConditionalModifierAudited,
+                PresentationInstructionKind.None,
+                PresentationEventCategory.Effect,
+                false,
+                false,
+                PresentationBeat.None,
+                "Conditional modifier state audited",
+                "Diagnostics-only trace — conditional stat modifier activate/deactivate sampling; no playback")
         };
 
         private static readonly Dictionary<CoreEventType, PresentationEventMapEntry> sByType = BuildLookup();

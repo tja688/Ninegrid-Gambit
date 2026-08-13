@@ -231,6 +231,19 @@ namespace NineGrid.Flow.Diagnostics
                         { "detail", e.Message ?? string.Empty },
                     });
                     break;
+                case CoreEventType.ConditionalModifierAudited:
+                    // 条件修饰符激活态：route=initial 首见 / flip 翻转；「遗物挂上了但
+                    // 条件从未满足」可直接从 corelog 判定（如 HpBelow 类低血触发遗物）。
+                    Record(FlowTraceCategory.CombatSummary, FlowTraceNames.ConditionalModifierAudit, new Dictionary<string, string>
+                    {
+                        { "uid", e.CardUid.ToString() },
+                        { "defId", ResolveDefId(registry, e.CardUid) },
+                        { "source", e.SourceDefId ?? string.Empty },
+                        { "active", e.ResultValue.ToString() },
+                        { "route", string.IsNullOrEmpty(e.Cause) ? "flip" : e.Cause },
+                        { "detail", e.Message ?? string.Empty },
+                    });
+                    break;
             }
         }
 

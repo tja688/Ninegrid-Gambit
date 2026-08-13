@@ -109,6 +109,8 @@ namespace NineGrid.Flow.Diagnostics
         public const string RelicGranted = "RelicGranted";
         /// <summary>遗物效果挂载审计：declared/implemented/mounted/modifiers 四数核对。</summary>
         public const string RelicMountAudit = "RelicMountAudit";
+        /// <summary>条件修饰符激活态采样：route=initial 首见 / flip 翻转，detail 带 hp/有效上限快照。</summary>
+        public const string ConditionalModifierAudit = "ConditionalModifierAudit";
         /// <summary>ADR-0047 管线熔断遏制（深度/总量超限或 Apply 异常，分支被丢弃）。</summary>
         public const string PipelineFault = "PipelineFault";
 

@@ -107,7 +107,10 @@ namespace NineGrid.Core.Stats
                 return false;
             }
 
-            var maxHp = context.Owner.Stats.GetBase(StatId.MaxHp);
+            // 分母口径＝有效上限（与 HealAction 钳血 / UI EffectiveMaxHp 同源）：
+            // 遗物等以修饰符形式加的 MaxHp 必须计入，否则触发线与玩家看到的上限脱节
+            // （如血液暴力自带 MaxHp+4，用基础上限判「低于50%」会比卡面语义低 2 血）。
+            var maxHp = StatConditionMaxHp.GetEffectiveMaxHp(context);
             if (maxHp <= 0f)
             {
                 return false;
@@ -115,6 +118,42 @@ namespace NineGrid.Core.Stats
 
             var hp = context.Owner.Stats.GetBase(StatId.Hp);
             return hp / maxHp < Pct;
+        }
+    }
+
+    /// <summary>
+    /// 条件求值内取有效 MaxHp 的共用护栏：MaxHp 修饰若自身也挂 HP 百分比类条件，
+    /// 全管线求值会无限递归——重入时退回基础上限，保证求值终止。
+    /// </summary>
+    public static class StatConditionMaxHp
+    {
+        private static readonly StatPipeline sPipeline = new StatPipeline();
+
+        [System.ThreadStatic]
+        private static bool sEvaluating;
+
+        public static float GetEffectiveMaxHp(StatEvaluationContext context)
+        {
+            if (context == null || context.Owner == null)
+            {
+                return 0f;
+            }
+
+            var block = context.Owner.Stats;
+            if (sEvaluating)
+            {
+                return block.GetBase(StatId.MaxHp);
+            }
+
+            sEvaluating = true;
+            try
+            {
+                return sPipeline.Evaluate(block, StatId.MaxHp, context);
+            }
+            finally
+            {
+                sEvaluating = false;
+            }
         }
     }
 

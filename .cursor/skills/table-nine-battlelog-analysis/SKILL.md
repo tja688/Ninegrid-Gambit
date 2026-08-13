@@ -53,10 +53,13 @@ CoreLog（FlowTrace）`category=Rhythm`，由 `RhythmFaceFlowTraceBinder` 全互
 | name | 关键 payload | 含义 |
 |------|--------------|------|
 | `RelicGranted` | defId/route(grant·reactivate)/action | 遗物入装备栏；`route=reactivate` 表示 StartNode 自愈重挂曾发生（说明之前挂载被打断过） |
-| `RelicMountAudit` | defId/declared/mounted/modifiers/detail | 挂载审计四数核对：`declared`=申报装配数、`mounted`=实挂实例数、`modifiers`=修饰符数。**mounted < declared 中 Implemented 数 → 有装配没挂上；`kind:Modifier` 遗物 modifiers=0 → 空挂死实例** |
+| `RelicMountAudit` | defId/declared/mounted/modifiers/detail | 挂载审计四数核对：`declared`=申报装配数、`mounted`=实挂实例数、`modifiers`=修饰符数。detail 尾部 `mods=[…]` 列出每条修饰符形态（stat/op/value@层，带条件的标 `[cond]`）。**mounted < declared 中 Implemented 数 → 有装配没挂上；`kind:Modifier` 遗物 modifiers=0 → 空挂死实例** |
+| `ConditionalModifierAudit` | uid/defId/source/active/route(initial·flip)/detail | 条件修饰符激活态采样（2026-08-13 起）：`route=initial` 挂载后首见、`flip` 激活态翻转；detail 带 `hp=X/有效上限` 快照。**带 `[cond]` 修饰符的遗物全程只有 initial(active=0)、没有 flip → 条件从未满足（判定口径或内容配错）** |
 | `PipelineFault` | actionName/depth/detail | ADR-0047 熔断遏制（深度/总量超限或动作 Apply 异常）。detail 含异常类型名；出现即为待修 bug，紧邻的 RelicGranted/RewardChosen 极可能受害 |
 
-审「遗物没效果」流程：先查该局 `RelicMountAudit`（挂载层）→ 再查 `EffectTriggered`（开火层，OnNodeStart 类遗物每关开始应有 sourceDefId=该遗物的记录）→ 最后查 `BaseStatModified`/伤害/护甲事件（结算层）。三层都在即为生效；哪层缺失即为断点。`PipelineFault` 任何出现都按 Error 同级处理。
+审「遗物没效果」流程：先查该局 `RelicMountAudit`（挂载层）→ 条件修饰符类（detail 有 `[cond]`）查 `ConditionalModifierAudit`（条件层，激活/翻转轨迹）→ 再查 `EffectTriggered`（开火层，OnNodeStart 类遗物每关开始应有 sourceDefId=该遗物的记录）→ 最后查 `BaseStatModified`/伤害/护甲事件（结算层）。各层都在即为生效；哪层缺失即为断点。`PipelineFault` 任何出现都按 Error 同级处理。
+
+**HP 百分比条件口径**（2026-08-13 修正）：`HpBelow` 类条件分母＝**有效** MaxHp（含遗物 MaxHp 修饰，与 UI/HealAction 同源）；「低于」为严格小于（恰等于阈值不触发）。
 
 ## BattleTrace 交战 op reason（2026-08-12 起）
 

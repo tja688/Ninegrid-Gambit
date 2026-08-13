@@ -2254,7 +2254,9 @@ namespace NineGrid.Core.Effects
                 return false;
             }
 
-            var maxHp = card.Stats.GetBase(StatId.MaxHp);
+            // 分母口径＝有效上限（与 HpBelowPctCondition / HealAction 同源），
+            // 修饰符形式的 MaxHp 增益（遗物等）必须计入。
+            var maxHp = context.Architecture.GetSystem<IStatSystem>().GetEffectiveValue(card, StatId.MaxHp);
             return maxHp > 0f && card.Stats.GetBase(StatId.Hp) / maxHp < mPct;
         }
 

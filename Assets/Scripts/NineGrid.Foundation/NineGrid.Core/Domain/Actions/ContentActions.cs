@@ -249,8 +249,60 @@ namespace NineGrid.Core
                     + " declared=" + declared
                     + " implemented=" + implemented
                     + " mounted=" + mountedCount
-                    + " modifiers=" + modifierCount)
+                    + " modifiers=" + modifierCount
+                    + DescribeModifiers(mounted))
                 .WithSource(relicDefId, route);
+        }
+
+        /// <summary>
+        /// 每条修饰符的形态摘要（诊断）：stat/op/value@层，带条件的追加 [cond]——
+        /// 挂载当下即可看出「条件修饰符遗物」，配合 ConditionalModifierAudited 追激活态。
+        /// </summary>
+        private static string DescribeModifiers(IReadOnlyList<EffectInstance> mounted)
+        {
+            if (mounted == null || mounted.Count == 0)
+            {
+                return string.Empty;
+            }
+
+            System.Text.StringBuilder sb = null;
+            for (var i = 0; i < mounted.Count; i++)
+            {
+                var instance = mounted[i];
+                for (var j = 0; j < instance.StatModifiers.Count; j++)
+                {
+                    var modifier = instance.StatModifiers[j]?.Modifier;
+                    if (modifier == null)
+                    {
+                        continue;
+                    }
+
+                    sb = Append(sb, modifier.Stat + " " + modifier.Op + " " + modifier.Value
+                        + "@" + modifier.Layer + (modifier.Condition != null ? "[cond]" : string.Empty));
+                }
+
+                for (var j = 0; j < instance.RuleModifiers.Count; j++)
+                {
+                    var rule = instance.RuleModifiers[j];
+                    if (rule == null)
+                    {
+                        continue;
+                    }
+
+                    sb = Append(sb, rule.Rule + " " + rule.Op + " " + rule.Value
+                        + "@" + rule.Layer + (rule.Condition != null ? "[cond]" : string.Empty));
+                }
+            }
+
+            return sb == null ? string.Empty : sb.Append("]").ToString();
+
+            static System.Text.StringBuilder Append(System.Text.StringBuilder sb, string entry)
+            {
+                sb = sb == null
+                    ? new System.Text.StringBuilder(" mods=[")
+                    : sb.Append("; ");
+                return sb.Append(entry);
+            }
         }
     }
 

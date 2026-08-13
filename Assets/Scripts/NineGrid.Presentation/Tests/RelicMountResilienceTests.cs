@@ -242,6 +242,74 @@ namespace NineGrid.Presentation.Tests
             StringAssert.Contains("mounted=", audit.Message, "审计事件 message 应携带四数核对明细");
         }
 
+        // ==================== 6. 条件修饰符：分母口径 + 激活态审计 ====================
+
+        [Test]
+        public void BloodViolence_HpBelowUsesEffectiveMaxHp()
+        {
+            var avatar = CreateAvatar(hp: 20);
+            Run(new GrantRelicAction("relic.blood_violence"));
+
+            var stats = mArch.GetSystem<IStatSystem>();
+            Assert.AreEqual(
+                24,
+                stats.GetEffectiveInt(avatar, StatId.MaxHp),
+                "血液暴力应加 4 点有效血量上限（20 → 24）");
+            Assert.AreEqual(
+                5,
+                stats.GetEffectiveInt(avatar, StatId.Attack),
+                "满血时低血攻击加成不应激活");
+
+            // 11/24 < 50%（有效上限口径应触发）；11/20 = 55%（旧基础上限口径会漏触发——回归点）。
+            avatar.Stats.SetBase(StatId.Hp, 11);
+            Assert.AreEqual(
+                7,
+                stats.GetEffectiveInt(avatar, StatId.Attack),
+                "血量低于有效上限 50% 时玩家攻击 +2（分母须含遗物自身的 MaxHp 修饰）");
+
+            // 恰等于 50% 不触发：「低于」为严格小于。
+            avatar.Stats.SetBase(StatId.Hp, 12);
+            Assert.AreEqual(
+                5,
+                stats.GetEffectiveInt(avatar, StatId.Attack),
+                "恰为 50% 不应触发（低于＝严格小于）");
+        }
+
+        [Test]
+        public void ConditionalModifier_AuditsInitialStateAndFlip()
+        {
+            var avatar = CreateAvatar(hp: 20);
+            Run(new GrantRelicAction("relic.blood_violence"));
+
+            Assert.IsTrue(
+                HasConditionalAudit(ConditionalModifierAudit.CauseInitial, active: 0),
+                "授予后应落首见采样事件（active=0）");
+
+            avatar.Stats.SetBase(StatId.Hp, 5);
+            Run(new HealAction(avatar.Uid, avatar.Uid, 0));
+
+            Assert.IsTrue(
+                HasConditionalAudit(ConditionalModifierAudit.CauseFlip, active: 1),
+                "低血后的下一个动作边界应落翻转采样事件（active=1）");
+        }
+
+        private bool HasConditionalAudit(string route, int active)
+        {
+            var entries = mArch.GetSystem<IActionPipelineSystem>().EventLog.Entries;
+            for (var i = 0; i < entries.Count; i++)
+            {
+                var entry = entries[i];
+                if (entry.Type == CoreEventType.ConditionalModifierAudited
+                    && entry.Cause == route
+                    && entry.ResultValue == active)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
         // ==================== 基建 ====================
 
         private CardInstance CreateAvatar(int hp = 20)

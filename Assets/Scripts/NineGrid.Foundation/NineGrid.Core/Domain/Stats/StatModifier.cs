@@ -56,6 +56,12 @@ namespace NineGrid.Core.Stats
         public IStatCondition Condition { get; private set; }
         public Func<StatEvaluationContext, float> ValueProvider { get; private set; }
 
+        /// <summary>
+        /// 诊断专用（<see cref="ConditionalModifierAudit"/> 审计缝持有）：上次采样的激活态，
+        /// null＝尚未采样。不参与规则结算，随修饰符实例生灭，无跨局残留。
+        /// </summary>
+        public bool? DiagLastActive { get; set; }
+
         public bool IsActive(StatEvaluationContext context)
         {
             return Condition == null || Condition.IsMet(context);

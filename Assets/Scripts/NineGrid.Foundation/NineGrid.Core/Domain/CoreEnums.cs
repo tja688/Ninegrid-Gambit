@@ -216,7 +216,13 @@ namespace NineGrid.Core
         /// 「申报装配数 vs 实挂实例数 vs 修饰符数」，corelog 可直接判定遗物是否真正生效。
         /// 不进表现批次。
         /// </summary>
-        RelicEffectMountAudited
+        RelicEffectMountAudited,
+        /// <summary>
+        /// 诊断：条件修饰符激活态采样——Conditional 层修饰符按查询惰性求值、
+        /// 本身不发事件，「挂上了但条件从未满足」在日志里完全隐形（血液暴力排查痛点）。
+        /// 动作边界采样盘面 + Avatar，首见与翻转时各落一条。不进表现批次。
+        /// </summary>
+        ConditionalModifierAudited
     }
 
     public enum PresentationEventCategory

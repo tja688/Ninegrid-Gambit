@@ -210,6 +210,9 @@ namespace NineGrid.Core.Systems
             // 统一对账缝（ADR-0045）：动作自身事件入日志后立即 diff-emit 卡面提交，
             // 使提交事件紧邻因果动作；触发器 / FollowUp 各自结算时再各对账一次。
             CardFaceReconciliation.ReconcileAfterAction(context, EventLog, action.ActionName);
+            // 条件修饰符审计缝（诊断）：采样 Conditional 层激活态，首见/翻转落事件，
+            // 让「遗物挂上了但条件从未满足」在 corelog 可见。
+            ConditionalModifierAudit.AuditAfterAction(context, EventLog, action.ActionName);
             DispatchTriggers(action, TriggerTiming.Post, action.GetPostTriggerPoints(context, result.Events), result.Events, context, depth);
             ResolveTriggeredActions(result.FollowUpActions, depth + 1);
 
