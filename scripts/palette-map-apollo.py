@@ -184,7 +184,11 @@ def process_image(args):
         os.makedirs(os.path.dirname(target), exist_ok=True)
     else:
         target = path
-    Image.fromarray(out, "RGBA").save(target, optimize=True)
+    try:
+        Image.fromarray(out, "RGBA").save(target, optimize=True)
+    except Exception as e:
+        # 文件被占用（如 Unity 资源刷新）等瞬时错误：报告后可幂等重跑
+        return (relpath, profile, "ERROR", f"save: {e}")
     return (relpath, profile, "OK", f"uniq={len(uniq)} changed={changed}")
 
 
