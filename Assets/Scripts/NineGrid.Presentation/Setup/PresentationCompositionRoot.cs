@@ -242,6 +242,14 @@ namespace NineGrid.Presentation.Setup
             BattleBeatHook.FlushImpactOnly = mBeatScheduler.FlushImpactOnly;
             BattleBeatHook.QuarantineImpactWhere = mBeatScheduler.QuarantineImpactWhere;
             BattleBeatHook.ReleaseQuarantined = mBeatScheduler.ReleaseQuarantined;
+            BattleBeatHook.HoldStrikeImpactWhere = mBeatScheduler.HoldStrikeImpactWhere;
+            BattleBeatHook.FlushStrikeHeldWhere = mBeatScheduler.FlushStrikeHeldWhere;
+            // ADR-0050 效果打击编排：开批建打击计划（暂扣效果伤害指令），
+            // Drain 退场前 / PresentStep 两相之间串行播「攻击动作 + 受击反馈」。
+            EffectStrikeChoreographer.Reset();
+            EffectStrikeHook.OnBatchOpened = EffectStrikeChoreographer.OnBatchOpened;
+            EffectStrikeHook.PlayAllPendingStrikes = EffectStrikeChoreographer.PlayAllPendingStrikesAsync;
+            EffectStrikeHook.PlayStrikesInvolving = EffectStrikeChoreographer.PlayStrikesInvolvingAsync;
             if (architecture != null)
             {
                 mBatchOpenedUnRegister = architecture.RegisterEvent<Evt_PresentationBatchOpened>(e =>
@@ -249,6 +257,7 @@ namespace NineGrid.Presentation.Setup
                     if (e != null)
                     {
                         BattleBeatHook.NotifyBatchOpened(e.Batch);
+                        EffectStrikeHook.NotifyBatchOpened(e.Batch);
                     }
                 });
             }
@@ -259,6 +268,8 @@ namespace NineGrid.Presentation.Setup
             mBatchOpenedUnRegister?.UnRegister();
             mBatchOpenedUnRegister = null;
             BattleBeatHook.Reset();
+            EffectStrikeHook.Reset();
+            EffectStrikeChoreographer.Reset();
             FlipPlaybackCoordinator.Reset();
             mBeatScheduler = null;
         }

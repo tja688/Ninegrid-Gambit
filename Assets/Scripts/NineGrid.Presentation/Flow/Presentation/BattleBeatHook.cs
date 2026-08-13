@@ -27,6 +27,12 @@ namespace NineGrid.Flow.Presentation
         /// <summary>放回隔离区指令（决斗者攻击命中帧报点前）。</summary>
         public static Action ReleaseQuarantined;
 
+        /// <summary>效果打击暂扣：把满足谓词的 Impact 指令移入打击暂扣区（ADR-0050）。</summary>
+        public static Action<Func<PresentationInstruction, bool>> HoldStrikeImpactWhere;
+
+        /// <summary>冲刷打击暂扣区中满足谓词的指令（打击组命中帧），返回派发条数（ADR-0050）。</summary>
+        public static Func<Func<PresentationInstruction, bool>, int> FlushStrikeHeldWhere;
+
         public static void Reset()
         {
             OnBatchOpened = null;
@@ -37,6 +43,8 @@ namespace NineGrid.Flow.Presentation
             FlushImpactOnly = null;
             QuarantineImpactWhere = null;
             ReleaseQuarantined = null;
+            HoldStrikeImpactWhere = null;
+            FlushStrikeHeldWhere = null;
         }
 
         public static void NotifyBatchOpened(PresentationBatch batch)
@@ -77,6 +85,16 @@ namespace NineGrid.Flow.Presentation
         public static void NotifyReleaseQuarantined()
         {
             ReleaseQuarantined?.Invoke();
+        }
+
+        public static void NotifyHoldStrikeImpactWhere(Func<PresentationInstruction, bool> predicate)
+        {
+            HoldStrikeImpactWhere?.Invoke(predicate);
+        }
+
+        public static int NotifyFlushStrikeHeldWhere(Func<PresentationInstruction, bool> predicate)
+        {
+            return FlushStrikeHeldWhere != null ? FlushStrikeHeldWhere(predicate) : 0;
         }
     }
 }

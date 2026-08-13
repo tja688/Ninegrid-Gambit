@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Cysharp.Threading.Tasks;
 using NineGrid.Core;
 using UnityEngine;
 using NineGrid.Flow.Diagnostics;
@@ -98,8 +99,11 @@ namespace NineGrid.Flow.Presentation
     /// </summary>
     public sealed class PresentStep : ITimelineStep
     {
-        /// <summary>触发脉冲与后续 Impact 飘字之间的节拍间隔（秒，ADR-0048 两相 Impact）。</summary>
-        public const float TriggerCadenceSec = 0.35f;
+        /// <summary>
+        /// 触发脉冲与后续打击/飘字之间的节拍间隔（秒，ADR-0048 两相 Impact）。
+        /// 基准 0.35s，按全局交战表演倍速折算（ADR-0050 两倍速 → 0.175s）。
+        /// </summary>
+        public static readonly float TriggerCadenceSec = BattlePresentationSpeed.ScaleSeconds(0.35f);
 
         private readonly IPresentationBatchGate mGate;
         private readonly IPresentChannel mChannel;
@@ -112,6 +116,8 @@ namespace NineGrid.Flow.Presentation
         private bool mChannelBegun;
         private bool mTriggersFlushed;
         private float mTriggerCadenceRemaining;
+        private bool mStrikesBegun;
+        private bool mStrikesDone;
         private bool mBeatsFlushed;
         private bool mAcknowledged;
         private bool mChoreoOpen;
@@ -210,6 +216,21 @@ namespace NineGrid.Flow.Presentation
                 return TimelineStepStatus.Continue;
             }
 
+            if (!mStrikesBegun)
+            {
+                // ADR-0050 效果打击编排：触发脉冲之后、其余飘字之前，
+                // 把本批场上卡造成的伤害/破坏逐组打成「攻击动作 + 受击反馈」（串行）。
+                // 未装配 / 无打击组时立即完成；异常不拆主线（残留暂扣由 FlushBeats 兜底放行）。
+                mStrikesBegun = true;
+                RunStrikesAsync().Forget();
+            }
+
+            if (!mStrikesDone)
+            {
+                MaybeStall(DirectorTrace.StallPhaseNotComplete);
+                return TimelineStepStatus.Continue;
+            }
+
             if (!mBeatsFlushed)
             {
                 // ADR-0048 两相 Impact 第二相：其余 Impact（伤害/护甲/血量飘字等）与 Settled，
@@ -235,6 +256,22 @@ namespace NineGrid.Flow.Presentation
             TryEndChoreo("ok");
             mAcknowledged = true;
             return TimelineStepStatus.Finished;
+        }
+
+        private async UniTaskVoid RunStrikesAsync()
+        {
+            try
+            {
+                await EffectStrikeHook.NotifyPlayAllPendingStrikesAsync(System.Threading.CancellationToken.None);
+            }
+            catch (Exception ex)
+            {
+                Debug.LogWarning("[PresentStep] 效果打击编排失败（残留指令由 FlushBeats 兜底）: " + ex.Message);
+            }
+            finally
+            {
+                mStrikesDone = true;
+            }
         }
 
         private void TryBeginChoreo()

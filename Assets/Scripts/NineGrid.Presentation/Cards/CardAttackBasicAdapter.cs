@@ -351,6 +351,110 @@ namespace NineGrid.Cards
         }
 
         /// <summary>
+        /// 通用效果打击 Present（ADR-0050）：场上任意打击者 → 任意受击者（含 Avatar）。
+        /// 强制相对冲刺/相对击退（rig 方向仅用于挑选烘焙时间线），命中帧回调 <paramref name="onStrikeHit"/>
+        /// 与受击闪白同帧；不绑死亡回调——受击者退场由移除/击杀呈现另行接手。
+        /// </summary>
+        public async UniTask PlayEffectStrikeAsync(
+            ManagedCard striker,
+            ManagedCard victim,
+            BattleBindParams bind,
+            Action onStrikeHit,
+            CancellationToken cancellationToken = default)
+        {
+            if (striker?.Transform == null || victim?.Transform == null)
+            {
+                Debug.LogWarning("[CardAttackBasicAdapter] 效果打击参与者无效，跳过。");
+                return;
+            }
+
+            var field = GroundFieldGeometryHook.FieldOrNull();
+            if (field == null || !field.TryGetSlotOf(striker.Uid, out var strikerSlot))
+            {
+                Debug.LogWarning("[CardAttackBasicAdapter] 效果打击者不在场地中，跳过。");
+                return;
+            }
+
+            EnsureRigsCollected();
+            var victimSlot = 0;
+            field.TryGetSlotOf(victim.Uid, out victimSlot);
+            if (!TryResolveEffectStrikeRig(strikerSlot, victimSlot, out var rig))
+            {
+                Debug.LogWarning("[CardAttackBasicAdapter] 无可用效果打击 rig，跳过。", this);
+                return;
+            }
+
+            // 任意几何对：必须相对冲刺 + 相对击退，否则会播错烘焙轴向。
+            if (!bind.UseRelativeAttackerMotion || !bind.UseRelativeVictimKnockback)
+            {
+                bind = WithForcedRelativeMotion(in bind);
+            }
+
+            var strikerTransform = striker.Transform;
+            var victimTransform = victim.Transform;
+            victim.TryGetEffectManager(out var victimEffects);
+
+            var strikerSnapshot = BattleFinalStateGuard.Capture(striker, field, strikerSlot);
+            var victimSnapshot = BattleFinalStateGuard.Capture(victim, field);
+
+            PrepareAttackerAtSlotAnchor(field, strikerTransform, strikerSlot, victimTransform);
+            rig.ResetParticipantMotion(strikerTransform, victimTransform);
+            rig.BindParticipants(
+                strikerTransform,
+                victimTransform,
+                victimEffects,
+                in bind,
+                onLungeBegin: () => BattleCombatAudioCues.Pulse(
+                    BattleCombatAudioCues.AttackPrepare,
+                    "CardAttackBasicAdapter.EffectStrikeLungeBegin",
+                    striker.DefId),
+                onStrikeHit);
+
+            await PlayBoundRigAsync(
+                rig,
+                strikerTransform,
+                strikerSnapshot,
+                victimSnapshot,
+                bind,
+                cancellationToken);
+        }
+
+        /// <summary>
+        /// 效果打击 rig 选择：优先受击者相对打击者的方向；对角/无格位回退分量正交向，再任意可用 rig。
+        /// 相对冲刺模式下 rig 方向只决定烘焙时间线形状，几何由真实双方位置重绑。
+        /// </summary>
+        private bool TryResolveEffectStrikeRig(int strikerSlot, int victimSlot, out CardAttackBasicDirectionRig rig)
+        {
+            rig = null;
+            var direction = CardBoardDirection.None;
+            if (GroundSlotTopology.IsValidSlot(strikerSlot) && GroundSlotTopology.IsValidSlot(victimSlot))
+            {
+                direction = CardBoardDirectionUtility.ComputeSelfDirection(victimSlot, strikerSlot);
+            }
+
+            if (direction != CardBoardDirection.None
+                && _rigByDirection.TryGetValue(direction, out rig))
+            {
+                return true;
+            }
+
+            if (direction != CardBoardDirection.None
+                && TryPickFallbackCounterRig(CardBoardDirectionUtility.GetOpposite(direction), out var fallback)
+                && _rigByDirection.TryGetValue(fallback, out rig))
+            {
+                return true;
+            }
+
+            foreach (var pair in _rigByDirection)
+            {
+                rig = pair.Value;
+                return true;
+            }
+
+            return false;
+        }
+
+        /// <summary>
         /// 兼容旧调用：按 lethal 构造默认绑参后播放反击。
         /// </summary>
         public UniTask PlayBasicCounterAttackAsync(

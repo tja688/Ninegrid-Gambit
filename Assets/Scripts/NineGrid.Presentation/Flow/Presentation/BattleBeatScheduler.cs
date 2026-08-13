@@ -14,6 +14,7 @@ namespace NineGrid.Flow.Presentation
         private readonly IBattleBeatHandler[] mHandlers;
         private readonly List<PresentationInstruction> mPending = new List<PresentationInstruction>(16);
         private readonly List<PresentationInstruction> mQuarantined = new List<PresentationInstruction>(4);
+        private readonly List<PresentationInstruction> mStrikeHeld = new List<PresentationInstruction>(8);
         private int mActiveBatchId;
 
         public BattleBeatScheduler(params IBattleBeatHandler[] handlers)
@@ -31,8 +32,9 @@ namespace NineGrid.Flow.Presentation
         public void OnBatchOpened(PresentationBatch batch)
         {
             DiagnoseDiscardedPending();
-            // 隔离区只属于当批：开新批即失效丢弃。
+            // 隔离区与打击暂扣区只属于当批：开新批即失效丢弃。
             mQuarantined.Clear();
+            mStrikeHeld.Clear();
             mPending.Clear();
             mActiveBatchId = batch != null ? batch.BatchId : 0;
             if (batch?.Instructions == null)
@@ -62,6 +64,16 @@ namespace NineGrid.Flow.Presentation
             if (beat == PresentationBeat.None)
             {
                 return;
+            }
+
+            if (beat == PresentationBeat.Settled && mStrikeHeld.Count > 0)
+            {
+                // 兜底（ADR-0050）：打击编排未消费的暂扣伤害指令在 Settled 前放行，
+                // 保证飘字/血甲永不丢失（正常路径由打击组在命中帧 FlushStrikeHeldWhere 消费）。
+                Debug.Log(
+                    "[BattleBeatScheduler] Flushing " + mStrikeHeld.Count
+                    + " strike-held instruction(s) before Settled (fallback) batchId=" + mActiveBatchId);
+                FlushStrikeHeldWhere(_ => true);
             }
 
             for (var i = 0; i < mPending.Count;)
@@ -206,6 +218,76 @@ namespace NineGrid.Flow.Presentation
         }
 
         /// <summary>
+        /// 效果打击暂扣（ADR-0050）：把满足谓词的 Impact 指令从当批暂挂移入打击暂扣区。
+        /// 暂扣指令不被命中帧 FlushImpactExcept / Drain「首个 Remove 前」等提前锚点冲刷，
+        /// 只由打击组命中帧 <see cref="FlushStrikeHeldWhere"/> 或 Settled 兜底消费。
+        /// </summary>
+        public void HoldStrikeImpactWhere(Func<PresentationInstruction, bool> predicate)
+        {
+            if (predicate == null)
+            {
+                return;
+            }
+
+            for (var i = mPending.Count - 1; i >= 0; i--)
+            {
+                var instruction = mPending[i];
+                if (instruction == null
+                    || instruction.MapEntry == null
+                    || instruction.MapEntry.Beat != PresentationBeat.Impact
+                    || !predicate(instruction))
+                {
+                    continue;
+                }
+
+                mPending.RemoveAt(i);
+                mStrikeHeld.Add(instruction);
+            }
+
+            // 保持事件序（倒序摘取会反转）。
+            mStrikeHeld.Sort((a, b) => a.Sequence.CompareTo(b.Sequence));
+        }
+
+        /// <summary>
+        /// 冲刷打击暂扣区中满足谓词的指令（打击组命中帧调用），返回派发条数。
+        /// </summary>
+        public int FlushStrikeHeldWhere(Func<PresentationInstruction, bool> predicate)
+        {
+            if (predicate == null)
+            {
+                return 0;
+            }
+
+            var dispatched = 0;
+            for (var i = 0; i < mStrikeHeld.Count;)
+            {
+                var instruction = mStrikeHeld[i];
+                if (instruction == null)
+                {
+                    mStrikeHeld.RemoveAt(i);
+                    continue;
+                }
+
+                if (!predicate(instruction))
+                {
+                    i++;
+                    continue;
+                }
+
+                if (!TryDispatch(instruction))
+                {
+                    i++;
+                    continue;
+                }
+
+                mStrikeHeld.RemoveAt(i);
+                dispatched++;
+            }
+
+            return dispatched;
+        }
+
+        /// <summary>
         /// 把隔离区指令放回当批暂挂（决斗者攻击命中帧报点前调用；随后 ReportBeat(Impact) 消费）。
         /// 未放回就开新批会被 OnBatchOpened 丢弃（不该发生；由调用方兜底释放）。
         /// </summary>
@@ -226,11 +308,13 @@ namespace NineGrid.Flow.Presentation
         public void PresentStandalone(PresentationBatch batch)
         {
             var savedPending = new List<PresentationInstruction>(mPending);
+            var savedStrikeHeld = new List<PresentationInstruction>(mStrikeHeld);
             var savedBatchId = mActiveBatchId;
             try
             {
-                // 所有权先挪到 savedPending，避免 OnBatchOpened 误报「开批丢弃未消费」。
+                // 所有权先挪到 saved*，避免 OnBatchOpened 误报「开批丢弃未消费」。
                 mPending.Clear();
+                mStrikeHeld.Clear();
                 OnBatchOpened(batch);
                 ReportBeat(PresentationBeat.Impact);
                 ReportBeat(PresentationBeat.Settled);
@@ -239,6 +323,8 @@ namespace NineGrid.Flow.Presentation
             {
                 mPending.Clear();
                 mPending.AddRange(savedPending);
+                mStrikeHeld.Clear();
+                mStrikeHeld.AddRange(savedStrikeHeld);
                 mActiveBatchId = savedBatchId;
             }
         }
@@ -285,19 +371,26 @@ namespace NineGrid.Flow.Presentation
         /// </summary>
         private void DiagnoseDiscardedPending()
         {
-            if (mPending.Count == 0)
+            DiagnoseDiscardedList(mPending, "pending");
+            DiagnoseDiscardedList(mStrikeHeld, "strikeHeld");
+        }
+
+        private void DiagnoseDiscardedList(List<PresentationInstruction> list, string lane)
+        {
+            if (list.Count == 0)
             {
                 return;
             }
 
-            for (var i = 0; i < mPending.Count; i++)
+            for (var i = 0; i < list.Count; i++)
             {
-                var instruction = mPending[i];
+                var instruction = list[i];
                 var type = instruction.Event != null ? instruction.Event.Type.ToString() : "?";
                 var beat = instruction.MapEntry != null ? instruction.MapEntry.Beat.ToString() : "?";
                 Debug.LogError(
                     "[BattleBeatScheduler] Discarding unconsumed presentation instruction on new batch"
                     + " previousBatchId=" + mActiveBatchId
+                    + " lane=" + lane
                     + " type=" + type
                     + " beat=" + beat
                     + " seq=" + instruction.Sequence

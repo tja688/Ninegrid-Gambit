@@ -125,6 +125,21 @@ namespace NineGrid.Presentation.Systems
             return mExecutor.PresentRemovedFieldCardAsync(victim, cancellationToken);
         }
 
+        public UniTask<bool> PlayEffectStrikePresentAsync(
+            int strikerUid,
+            int victimUid,
+            bool victimWillBeRemoved,
+            System.Action onStrikeHit,
+            CancellationToken cancellationToken = default)
+        {
+            return mExecutor.PlayEffectStrikePresentAsync(
+                strikerUid,
+                victimUid,
+                victimWillBeRemoved,
+                onStrikeHit,
+                cancellationToken);
+        }
+
         protected override void OnInit()
         {
         }

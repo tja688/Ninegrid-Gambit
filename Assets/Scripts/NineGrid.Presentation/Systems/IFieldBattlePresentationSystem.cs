@@ -1,3 +1,4 @@
+using System;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using NineGrid.Cards;
@@ -52,6 +53,17 @@ namespace NineGrid.Presentation.Systems
 
         UniTask PresentRemovedFieldCardAsync(
             ManagedCard victim,
+            CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// 效果打击 Present（ADR-0050）：场上打击者对受击者播「攻击动作 + 受击反馈」，
+        /// 命中帧回调 onStrikeHit。打击者不可用返回 false（调用方降级为普通冲刷）。
+        /// </summary>
+        UniTask<bool> PlayEffectStrikePresentAsync(
+            int strikerUid,
+            int victimUid,
+            bool victimWillBeRemoved,
+            Action onStrikeHit,
             CancellationToken cancellationToken = default);
     }
 }

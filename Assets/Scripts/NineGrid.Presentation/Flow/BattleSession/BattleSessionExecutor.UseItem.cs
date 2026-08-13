@@ -65,7 +65,7 @@ namespace NineGrid.Flow
             // 击杀必须先 Vacate 尸体，再 Drain/Sync；否则 Register 会静默挤占格留下钉住幽灵。
             if (useResult.TargetKilled)
             {
-                BeginUseItemLethalVictims(useResult, ct);
+                await BeginUseItemLethalVictimsAsync(useResult, ct);
             }
 
             if (useResult.PostKillBoard.Accepted
@@ -121,10 +121,13 @@ namespace NineGrid.Flow
 
         /// <summary>
         /// UseItem 击杀：对齐 FieldBattle 卸尸（MarkFieldDead → Vacate → 异步 Release）。
+        /// ADR-0050：卸尸前先串行打完涉及该卡的效果打击组（场上机关等连锁伤害），保飘字可见。
         /// </summary>
-        private void BeginUseItemLethalVictims(UseItemPresentationResult useResult, CancellationToken cancellationToken)
+        private async UniTask BeginUseItemLethalVictimsAsync(
+            UseItemPresentationResult useResult,
+            CancellationToken cancellationToken)
         {
-                        var battle = ResolveBattlePresentation();
+            var battle = ResolveBattlePresentation();
             if (battle == null || Cards == null)
             {
                 Debug.LogWarning("[BattleSession] UseItem 击杀卸尸缺少 FieldBattle/CardManager。");
@@ -145,6 +148,7 @@ namespace NineGrid.Flow
                     continue;
                 }
 
+                await EffectStrikeHook.NotifyPlayStrikesInvolvingAsync(uid, cancellationToken);
                 battle.TryBeginLethalVictimPresentation(victim, cancellationToken);
             }
         }

@@ -1327,6 +1327,10 @@ namespace NineGrid.Flow
                     continue;
                 }
 
+                // ADR-0050：退场呈现前先串行打完涉及本卡的效果打击组——
+                // 它作为受击者（滚石破坏卡片：先被撞击再碎裂）或打击者（捕熊陷阱：先打完再自毁）。
+                await EffectStrikeHook.NotifyPlayStrikesInvolvingAsync(uid, ct);
+
                 tasks.Add(battle.PresentRemovedFieldCardAsync(card, ct));
             }
 

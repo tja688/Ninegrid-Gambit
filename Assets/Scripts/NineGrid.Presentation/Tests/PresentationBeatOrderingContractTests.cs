@@ -130,6 +130,140 @@ namespace NineGrid.Presentation.Tests
                 "链结束复位后，下一次交互允许再次演出");
         }
 
+        // ==================== ⑤ 效果打击暂扣（ADR-0050） ====================
+
+        [Test]
+        public void StrikeHold_SkipsEarlyAnchors_FlushedByGroupPredicate()
+        {
+            var handler = new RecordingBeatHandler();
+            var scheduler = new BattleBeatScheduler(handler);
+            var damage = MakeEvent(CoreEventType.DamageDealt, seq: 2);
+            scheduler.OnBatchOpened(MakeBatch(
+                MakeEvent(CoreEventType.EffectTriggered, seq: 1),
+                damage));
+
+            // 暂扣效果伤害后，命中帧锚点（FlushImpactExcept）不得提前冲刷它。
+            scheduler.HoldStrikeImpactWhere(i => i.Event == damage);
+            scheduler.FlushImpactExcept(PresentationInstructionKind.TriggerEffect);
+            Assert.AreEqual(0, handler.Applied.Count, "暂扣的效果伤害不得在命中帧锚点被提前冲刷");
+
+            // 打击组命中帧按谓词放行。
+            var dispatched = scheduler.FlushStrikeHeldWhere(i => i.Event == damage);
+            Assert.AreEqual(1, dispatched, "打击组命中帧必须派发本组暂扣指令");
+            Assert.AreEqual(
+                new[] { PresentationInstructionKind.ShowDamage },
+                handler.Applied.ToArray());
+
+            scheduler.FlushImpactOnly(PresentationInstructionKind.TriggerEffect);
+            scheduler.ReportBeat(PresentationBeat.Impact);
+            scheduler.ReportBeat(PresentationBeat.Settled);
+        }
+
+        [Test]
+        public void StrikeHold_LeftoverFlushedBeforeSettled_NeverLost()
+        {
+            var handler = new RecordingBeatHandler();
+            var scheduler = new BattleBeatScheduler(handler);
+            var damage = MakeEvent(CoreEventType.DamageDealt, seq: 1);
+            scheduler.OnBatchOpened(MakeBatch(damage));
+            scheduler.HoldStrikeImpactWhere(i => i.Event == damage);
+
+            scheduler.ReportBeat(PresentationBeat.Impact);
+            Assert.AreEqual(0, handler.Applied.Count, "全量 Impact 报点也不消费暂扣区（决斗帧等不误伤）");
+
+            scheduler.ReportBeat(PresentationBeat.Settled);
+            Assert.IsTrue(
+                handler.Applied.Contains(PresentationInstructionKind.ShowDamage),
+                "打击编排未消费时，Settled 前兜底放行，飘字不丢失");
+        }
+
+        [Test]
+        public void StrikePlan_AttributesDamageToEffectHolder_AndMarksRemovedVictim()
+        {
+            // 真实事件语义：EffectTriggered.Message=效果实例 defId、SourceDefId=容器 defId；
+            // 伤害/移除事件只携带容器 defId（EffectRuntimeContext.SourceDefId）。
+            var trigger = new CoreGameEvent(CoreEventType.EffectTriggered, actionId: 1, actionName: "ExecuteEffect")
+                .WithCard(5)
+                .WithMessage("trap.spike.move")
+                .WithSource("trap.spike", "trap.spike.move");
+            var damage = new CoreGameEvent(CoreEventType.DamageDealt, actionId: 2, actionName: "DealDamage")
+                .WithActor(5)
+                .WithTarget(7)
+                .WithCard(7)
+                .WithAmount(2)
+                .WithDelta(2)
+                .WithSource("trap.spike", "trap.spike.move");
+            var removed = new CoreGameEvent(CoreEventType.CardRemoved, actionId: 3, actionName: "RemoveCard")
+                .WithCard(7)
+                .WithSource("trap.spike", "kill");
+            var batch = MakeBatch(trigger, damage, removed);
+
+            var plan = EffectStrikePlan.Build(batch, uid => true);
+
+            Assert.AreEqual(1, plan.Groups.Count, "同源同受击者归入一个打击组");
+            Assert.AreEqual(5, plan.Groups[0].StrikerUid, "打击者 = 同批 EffectTriggered 的持有卡（容器 defId 键命中）");
+            Assert.AreEqual(7, plan.Groups[0].VictimUid);
+            Assert.IsTrue(plan.Groups[0].VictimRemoved, "受击者同批被移除须标记（打击后由退场呈现接手）");
+            Assert.AreEqual(1, plan.HeldInstructions.Count, "伤害指令入暂扣区；CardRemoved（Beat=None）不入");
+        }
+
+        [Test]
+        public void StrikePlan_PureRemoval_BuildsStrikeGroup_RollingStoneStyle()
+        {
+            // 滚石：无伤害指令，直接 RemoveCard——仍须一次打击表演（容器 defId 归因）。
+            var trigger = new CoreGameEvent(CoreEventType.EffectTriggered, actionId: 1, actionName: "ExecuteEffect")
+                .WithCard(28)
+                .WithMessage("trap.rolling_stone.slot3")
+                .WithSource("trap.rolling_stone", "trap.rolling_stone.slot3");
+            var removed = new CoreGameEvent(CoreEventType.CardRemoved, actionId: 2, actionName: "RemoveCard")
+                .WithCard(24)
+                .WithSource("trap.rolling_stone", "trap.rolling_stone");
+            var batch = MakeBatch(trigger, removed);
+
+            var plan = EffectStrikePlan.Build(batch, uid => true);
+
+            Assert.AreEqual(1, plan.Groups.Count, "纯移除也建打击组（先撞击再碎裂）");
+            Assert.AreEqual(28, plan.Groups[0].StrikerUid);
+            Assert.AreEqual(24, plan.Groups[0].VictimUid);
+            Assert.IsTrue(plan.Groups[0].VictimRemoved);
+            Assert.AreEqual(0, plan.HeldInstructions.Count, "纯移除组无暂扣指令");
+        }
+
+        [Test]
+        public void StrikePlan_ExcludesCombatDamage_OffFieldStriker_AndHolyDuel()
+        {
+            var combatDamage = new CoreGameEvent(CoreEventType.DamageDealt, actionId: 1, actionName: "DealDamage")
+                .WithActor(9)
+                .WithTarget(7)
+                .WithCard(7)
+                .WithAmount(3); // 交战/单向打击：无 SourceDefId
+            var duelTrigger = new CoreGameEvent(CoreEventType.EffectTriggered, actionId: 2, actionName: "ExecuteEffect")
+                .WithCard(6)
+                .WithMessage("skill.holy_duel");
+            var duelDamage = new CoreGameEvent(CoreEventType.DamageDealt, actionId: 3, actionName: "DealDamage")
+                .WithActor(6)
+                .WithTarget(1)
+                .WithCard(1)
+                .WithAmount(2)
+                .WithSource("skill.holy_duel", "skill.holy_duel");
+            var offFieldTrigger = new CoreGameEvent(CoreEventType.EffectTriggered, actionId: 4, actionName: "ExecuteEffect")
+                .WithCard(30)
+                .WithMessage("help.bomb.use");
+            var offFieldDamage = new CoreGameEvent(CoreEventType.DamageDealt, actionId: 5, actionName: "DealDamage")
+                .WithActor(1)
+                .WithTarget(7)
+                .WithCard(7)
+                .WithAmount(4)
+                .WithSource("help.bomb.use", "help.bomb.use");
+            var batch = MakeBatch(combatDamage, duelTrigger, duelDamage, offFieldTrigger, offFieldDamage);
+
+            // 只有 uid<=20 在场（30 = 用出的道具卡，不在场）。
+            var plan = EffectStrikePlan.Build(batch, uid => uid <= 20);
+
+            Assert.AreEqual(0, plan.Groups.Count, "交战伤害 / 神圣决斗 / 离场来源均不入打击计划");
+            Assert.AreEqual(0, plan.HeldInstructions.Count, "上述指令保持原冲刷路径（命中帧 / 决斗帧）");
+        }
+
         // ==================== ④ Core 因果深度盖章 ====================
 
         [Test]

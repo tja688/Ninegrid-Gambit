@@ -15,7 +15,7 @@ description: >-
 
 用户的工作方式：自己多玩多体验，逐条下达「某效果现在 X 时演，改到 Y 时演」的调整指令，以他的观察和标准为准。本 skill 让你不必全量重学编排系统就能接单：把观感描述翻译成系统词汇 → 取证定位 → 选最小杠杆 → 改动并给出复现路径。
 
-**默认序（ADR-0048 不变量）**：锁步批内可见顺序固定为 **运动停稳 → 触发脉冲 → 飘字/血甲 → Settled**（`PresentStep` 两相冲刷，脉冲后停 0.35s 节拍）。用户新诉求通常是两类：某条路径**没走在**这个默认序上（bug），或想为个别效果**定制**不同时点（需求）。宁可串行拉长演出，也要顺序正确——这是用户已明示的验收标准。
+**默认序（ADR-0048 + ADR-0050 不变量）**：锁步批内可见顺序固定为 **运动停稳 → 触发脉冲 → 效果打击（串行）→ 飘字/血甲 → Settled**（`PresentStep` 两相冲刷，脉冲后停 `TriggerCadenceSec` 节拍——基准 0.35s，经 `BattlePresentationSpeed` 两倍速 = 0.175s）。**场上卡造成的伤害/移除**统一走「攻击动作 + 受击反馈」打击表演（ADR-0050）：伤害指令入排期器打击暂扣区，打击命中帧才冲刷该目标飘字/血甲；被移除的卡先被撞击再退场。交战表演整体两倍速由 `BattlePresentationSpeed.CombatMultiplier` 单点控制。用户新诉求通常是两类：某条路径**没走在**这个默认序上（bug），或想为个别效果**定制**不同时点（需求）。宁可串行拉长演出，也要顺序正确——这是用户已明示的验收标准。
 
 ## 接单流程
 
@@ -46,7 +46,7 @@ description: >-
 ## 杠杆阶梯（从小到大，够用即止）
 
 1. **绑定延迟**：`Assets/Resources/audio/audio_bindings.json` 绑定 delay、`Assets/Resources/VFX/vfx_bindings.json` `startOffsetSeconds`——几百毫秒内的音画对齐。弹道命中对齐用 `ProjectileVfxCues.PulseFromTo` 回传的 `PresentationPlan`。
-2. **节拍参数**：`PresentStep.TriggerCadenceSec`（0.35s，脉冲→飘字间隔）。
+2. **节拍与速度参数**：`PresentStep.TriggerCadenceSec`（脉冲→打击/飘字间隔，基准 0.35s÷倍速）；交战/打击表演整体速度 `BattlePresentationSpeed.CombatMultiplier`（ADR-0050，当前 2）。
 3. **批内锚点归属**：Core `Presentation/PresentationEventMap.cs` 的 Beat 声明（Impact/Settled）；各锚点 `FlushImpactExcept` / `FlushImpactOnly` 的 Kind 分工。只能在**同一批内**挪时点。
 4. **去重与白名单语义**：`TriggerPulseChainDedup` 的键 `(CardUid, 效果 defId)` 与复位点；给某效果定制「命中帧就演」= 改白名单 = 修订 ADR-0048，不是加一行 Flush。
 5. **跨批后置**：pending 是批级的（`OnBatchOpened` 换代），表现侧挪不过批。先例二选一：Core 侧挂起（`BattleScopeSystem.TryDeferBoardMotion`，ADR-0044）或表现隔离区（`QuarantineImpactWhere`，神圣决斗先例）。必须写 ADR。
@@ -75,6 +75,9 @@ description: >-
 | 白名单锚点①② 命中帧 / ③ 决斗惩罚帧 | `Cards/Battle/FieldBattlePresentationExecutor.cs` |
 | 白名单锚点 Drain 首个 Remove 前 | `Flow/BattleSession/BoardPresentationPlayer.cs` |
 | 触发脉冲消费 + 音/VFX 路由 | `Flow/Presentation/EffectTriggerPulseBeatHandler.cs` |
+| 效果打击计划（归因/建组/暂扣集，ADR-0050） | `Flow/Presentation/EffectStrikePlan.cs`；装配缝 `EffectStrikeHook.cs` |
+| 效果打击编排（串行打击 + 命中帧放行） | `Cards/Battle/EffectStrikeChoreographer.cs`；rig 入口 `Cards/CardAttackBasicAdapter.PlayEffectStrikeAsync` |
+| 交战表演全局倍速（ADR-0050 两倍速） | `Flow/Presentation/BattlePresentationSpeed.cs` |
 | 链级去重（键与登记） | `Flow/Presentation/TriggerPulseChainDedup.cs`；复位点在 `PresentationDirector.cs` |
 | 事件 → 锚点（Impact/Settled）映射 | Core `Presentation/PresentationEventMap.cs` |
 | Core 效果触发 / `EffectTriggered` 产生 | Core `Effects/EffectSystem.cs`；盖章 `Systems/ActionPipelineSystem.cs` |
@@ -87,4 +90,4 @@ description: >-
 
 - `Assets/Docs/Presentation/Flow/05-表演锚点排期与触发脉冲.md` —— 锚点/Handler 链/脉冲通道全量事实
 - `Assets/Docs/Presentation/Flow/03-表演导演时间线与编排调度.md` —— Director/Timeline/Step/通道/调度骨架
-- `docs/adr/0048-two-phase-impact-and-trigger-chain-dedup.md`（两相 + 去重 + CausalDepth）、`0044`（交战窗挂起）、`0018`（触发可见因果）、`0001`（Batch-ack）
+- `docs/adr/0048-two-phase-impact-and-trigger-chain-dedup.md`（两相 + 去重 + CausalDepth）、`0050`（效果打击统一表演 + 打击暂扣区 + 交战两倍速）、`0044`（交战窗挂起）、`0018`（触发可见因果）、`0001`（Batch-ack）

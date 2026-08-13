@@ -5,6 +5,7 @@ using System.Threading;
 using Cysharp.Threading.Tasks;
 using DG.Tweening;
 using NineGrid.Cards.Convergence;
+using NineGrid.Flow.Presentation;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -285,8 +286,17 @@ namespace NineGrid.Cards
             timelinePlayer.RestartTimeline();
 
             var sequence = ResolveSequence(timeline);
+            // ADR-0050：攻击/受击表演全局提速——重建后的 Sequence 统一按倍速播放，
+            // 烘焙 delay/duration 与命中/死亡回调随 timeScale 等比缩短。
+            if (sequence != null && sequence.IsActive())
+            {
+                sequence.timeScale = BattlePresentationSpeed.CombatMultiplier;
+            }
+
             ProbeCombatRigMotionBegin();
-            var lungeBeginDelay = ResolveLungeBeginDelaySeconds();
+            // 烘焙 delay 是序列内时间；对照真实 elapsed 须按倍速折算。
+            var lungeBeginDelay = BattlePresentationSpeed.ScaleSeconds(
+                ResolveLungeBeginDelaySeconds());
             var lungeBeginInvoked = false;
             try
             {
@@ -298,7 +308,9 @@ namespace NineGrid.Cards
                         _onLungeBegin.Invoke();
                     }
 
-                    await UniTask.Delay(TimeSpan.FromSeconds(0.9f), cancellationToken: cancellationToken);
+                    await UniTask.Delay(
+                        TimeSpan.FromSeconds(BattlePresentationSpeed.ScaleSeconds(0.9f)),
+                        cancellationToken: cancellationToken);
                     ProbeCombatRigMotionEnd("fallback");
                     return;
                 }

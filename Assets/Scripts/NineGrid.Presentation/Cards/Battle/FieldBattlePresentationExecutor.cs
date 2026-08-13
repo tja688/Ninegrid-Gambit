@@ -484,6 +484,13 @@ namespace NineGrid.Cards
                 // Rotate 步只带方向，旋转「无尸体的环」；Move/Swap 步中尸体位移已在
                 // ForHitPresentDrain 剥离。终态占格与 Core 击杀后一致。
                 var killed = HasRemovedUid(hitProjection, combatVictim.Uid) || combatVictim.IsFieldDead;
+                if (killed)
+                {
+                    // ADR-0050：主目标退场前先打完涉及它的效果打击组（反伤等），
+                    // 保证打击与飘字在尸体离锚之前可见。
+                    await EffectStrikeHook.NotifyPlayStrikesInvolvingAsync(combatVictim.Uid, ct);
+                }
+
                 var hitBoardDelta = BoardPresentationMerge.ForHitPresentDrain(
                     hitProjection,
                     combatVictim.Uid,
@@ -544,6 +551,81 @@ namespace NineGrid.Cards
                 SyncAfterCombatRound();
                 DisposeBattleCts(linkedCts);
             }
+        }
+
+        /// <summary>
+        /// 效果打击 Present（ADR-0050）：场上打击者对受击者播一段「攻击动作 + 受击反馈」，
+        /// 命中帧回调 <paramref name="onStrikeHit"/>（由调用方冲刷该组暂扣的伤害/血甲指令）。
+        /// 打击者不在场 / 参与者不可用时返回 false，调用方降级为普通冲刷。
+        /// 注意：本方法可能在攻击/反击 Present 内部（Drain 中）被调用，
+        /// 不得创建新的战斗 CTS（会取消外层交战表演），只透传调用方 token。
+        /// </summary>
+        public async UniTask<bool> PlayEffectStrikePresentAsync(
+            int strikerUid,
+            int victimUid,
+            bool victimWillBeRemoved,
+            Action onStrikeHit,
+            CancellationToken cancellationToken = default)
+        {
+            var geometry = ResolveGeometry();
+            var adapter = EnsureAdapter();
+            var cards = CardEntityLifecycleHook.CardsOrNull();
+            if (adapter == null || geometry == null || cards == null)
+            {
+                return false;
+            }
+
+            if (strikerUid <= 0
+                || !cards.TryGet(strikerUid, out var striker)
+                || striker == null
+                || striker.Transform == null
+                || striker.IsFieldDead
+                || !geometry.TryGetSlotOf(strikerUid, out _))
+            {
+                return false;
+            }
+
+            if (victimUid <= 0
+                || !cards.TryGet(victimUid, out var victim)
+                || victim == null
+                || victim.Transform == null)
+            {
+                return false;
+            }
+
+            var strikerIsAvatar = strikerUid == ResolveAvatarUid(geometry);
+            var intent = BattleIntentUtility.FromFlags(counter: !strikerIsAvatar, lethal: false);
+            var profileCard = strikerIsAvatar ? victim : striker;
+            var resolved = ResolveBindParams(intent, profileCard, out var profile);
+            // 效果打击定制：不绑死亡回调（退场由移除/击杀呈现接手）；
+            // 受击者将被移除时不回锚，避免「打飞 → 拽回 → 再碎裂」。
+            var bind = new BattleBindParams(
+                intent,
+                resolved.ProfileId,
+                resolved.RigFamily,
+                useRelativeAttackerMotion: true,
+                useRelativeVictimKnockback: true,
+                resolved.VictimKnockbackCoefficient,
+                bindDeathCallback: false,
+                resolved.HitFlashTimingPolicy,
+                resolved.HitFlashCallbackDelay,
+                deathCallbackDelay: 0f,
+                restoreAttackerToSlot: true,
+                restoreVictimToSlot: !victimWillBeRemoved,
+                requireFinalStateGuard: resolved.RequireFinalStateGuard);
+            LogBattleBindResolve(strikerUid, victimUid, bind, profile, victimWillBeRemoved, isCounter: !strikerIsAvatar);
+
+            await adapter.PlayEffectStrikeAsync(striker, victim, bind, onStrikeHit, cancellationToken);
+            return true;
+        }
+
+        private static int ResolveAvatarUid(IGroundFieldGeometrySystem geometry)
+        {
+            return geometry != null
+                && geometry.TryGetCardAt(GroundSlotTopology.AvatarReservedSlot, out var avatar)
+                && avatar != null
+                    ? avatar.Uid
+                    : 0;
         }
 
         /// <summary>
