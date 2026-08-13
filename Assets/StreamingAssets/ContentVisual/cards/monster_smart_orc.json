@@ -7,7 +7,8 @@
     "displayName": "紫蝎",
     "designSlotName": "",
     "description": "[[普通近战]]，[[跳杀]]，[[潜伏]]",
-    "faceIntro": "哎，扎死你呀哈哈哈哈",    "attackPattern": "普通近战",
+    "faceIntro": "哎，扎死你呀哈哈哈哈",
+    "attackPattern": "普通近战",
     "rhythmSource": "行动计数",
     "rhythmPeriod": 5,
     "gold": 5,
@@ -20,7 +21,7 @@
     },
     "sprites": {
         "mainIcon": "Assets/Resources/ContentArt/Multiple/pixel_art_card_pack 1.png",
-        "faceBackground": "Assets/Resources/ContentArt/Png/Other/\u5bc6\u6797_\u8840\u8272.png",
+        "faceBackground": "Assets/Resources/ContentArt/Png/Other/密林_血色.png",
         "cardFrame": "",
         "banner": "",
         "backBorder": "",
@@ -29,7 +30,7 @@
     },
     "mainVisual": {
         "offsetX": -0.10000000149011612,
-        "offsetY": 0.0,
+        "offsetY": -0.10000000149011612,
         "uniformScale": 1.0
     },
     "animations": {

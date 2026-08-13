@@ -8,7 +8,7 @@ status: accepted
 
 在 **Windows Standalone Player**（非 Editor）进程内启用高回报率鼠标缓解：
 
-1. 以 `RegisterRawInputDevices` 注册鼠标设备并带 **`RIDEV_NOLEGACY`**，让 Windows 跳过 legacy `WM_MOUSE*` 翻译，消除高回报率（1k/2k/8kHz）下主线程消息泵洪水。
+1. 以 `RegisterRawInputDevices` 注册鼠标设备并带 **`RIDEV_NOLEGACY`**，让 Windows 跳过 legacy `WM_MOUSE*` 翻译，消除高回报率（1k/2k/8kHz）下主线程消息泵洪水。**（2026-08-13 修订）NOLEGACY 只在「窗口聚焦且光标在客户区内」时启用**：光标移入非客户区（标题栏 / 边框 / 关闭钮）或窗口失焦时，重注册为 `dwFlags=0`（保留 Raw Input、恢复 legacy 翻译）。legacy 鼠标消息同时承担标题栏拖动、边框缩放、关闭按钮与点击激活；常开 NOLEGACY 会把打包版窗口变成拖不动、缩放不了、关不掉的死窗口（Win10 / Win11 实测复现，Win10 上叠加超尺寸窗口钉左上角被报为「卡死」）。
 2. 在 `InputSystem.onBeforeUpdate` 中用 **`GetCursorPos` + `ScreenToClient` + `GetAsyncKeyState`** 轮询指针与按键，经 **`InputSystem.QueueStateEvent(Mouse.current, MouseState)`** 注回 New Input System。
 3. 项目 **`activeInputHandler = New Input System only`**；业务指针一律经 [`WorldPointerUtility`](../../Assets/Scripts/NineGrid.Presentation/Flow/WorldPointerUtility.cs) 读取。
 4. 卡牌/槽位命中 **禁止 `OnMouse*`**，改由 [`PointerHitRouter`](../../Assets/Scripts/NineGrid.Presentation/Flow/PointerHitRouter.cs) 每帧轮询 `IPointerHitTarget`（Enter/Exit/Down 边沿）。`OnMouse*` 依赖 legacy 消息，与 NOLEGACY 不兼容，且注入 Input System **不会**复活 `OnMouse*`。
@@ -33,6 +33,7 @@ status: accepted
 ## 后果
 
 - Win Player 启动即注册 mitigation（`RuntimeInitializeOnLoad`）；失焦时不注入按键，避免窗外点击串入。
+- NOLEGACY 为逐帧期望态开关（聚焦 + 光标在客户区），非客户区交互（拖动 / 缩放 / 关闭 / 点击激活）交还系统 legacy 路径；回归时须同时验证「客户区内高回报率不卡」与「窗口 chrome 可正常操作」。
 - 回归矩阵（专项验收，非每票默认）：回报率 125 / 1000 / 4000+ Hz × 窗口 / 无边框 / 全屏；覆盖地面 hover、点空槽、点怪、手牌拖放、BoardSelect、BounceFan。
 - 结构护栏：HitProxy 源码禁 `OnMouse*`；ADR-0006 accepted。
 - 退出策略：引擎修复后关 mitigation，删 `Platform/WindowsHighPollingMouseMitigation` P/Invoke 实现，保留指针缝与 HitRouter（它们仍是更稳的输入架构）。
