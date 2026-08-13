@@ -9,6 +9,7 @@ using UnityEngine;
 /// 调色板映射工具：把指定文件夹（含子目录）下所有 PNG 的像素颜色就地映射到
 /// GPL 调色板（Oklab 最近色，明度权重 1.15 / 色度权重 1.30，仅处理 alpha&gt;0 像素）。
 /// 与 scripts/palette-map-apollo.py 同源算法；映射幂等，可对新导入素材重复执行。
+/// 入口：窗口 NineGrid/Tools/Palette Map Folder；Project 右键 Assets/NineGrid 调色板映射。
 /// 默认调色板：Assets/Arts/配色文件/apollo.gpl。
 /// </summary>
 public sealed class PaletteMapFolderWindow : EditorWindow
@@ -29,6 +30,47 @@ public sealed class PaletteMapFolderWindow : EditorWindow
         var window = GetWindow<PaletteMapFolderWindow>("调色板映射");
         window.minSize = new Vector2(420f, 320f);
     }
+
+    // ---------------------------------------------------------------- Project 右键快捷入口
+
+    private const string ContextMenuPath = "Assets/NineGrid 调色板映射（递归子文件夹）";
+
+    [MenuItem(ContextMenuPath, true)]
+    private static bool ValidateContextMap()
+    {
+        return GetSelectedFolders().Count > 0;
+    }
+
+    [MenuItem(ContextMenuPath, false, 2000)]
+    private static void ContextMap()
+    {
+        var folders = GetSelectedFolders();
+        if (folders.Count == 0)
+        {
+            return;
+        }
+
+        ExecuteMapping(folders, DefaultPalettePath, dryRun: false, log: m => Debug.Log($"[PaletteMap] {m}"));
+    }
+
+    private static List<string> GetSelectedFolders()
+    {
+        var folders = new List<string>();
+        foreach (var obj in Selection.objects)
+        {
+            var path = AssetDatabase.GetAssetPath(obj);
+            if (!string.IsNullOrEmpty(path)
+                && AssetDatabase.IsValidFolder(path)
+                && !folders.Contains(path))
+            {
+                folders.Add(path);
+            }
+        }
+
+        return folders;
+    }
+
+    // ---------------------------------------------------------------- 窗口 UI
 
     private void OnEnable()
     {
@@ -62,12 +104,12 @@ public sealed class PaletteMapFolderWindow : EditorWindow
             {
                 if (GUILayout.Button("干跑统计（不写文件）", GUILayout.Height(28f)))
                 {
-                    Run(folderPath, dryRun: true);
+                    RunFromWindow(folderPath, dryRun: true);
                 }
 
                 if (GUILayout.Button("执行映射（就地覆写）", GUILayout.Height(28f)))
                 {
-                    Run(folderPath, dryRun: false);
+                    RunFromWindow(folderPath, dryRun: false);
                 }
             }
         }
@@ -85,14 +127,11 @@ public sealed class PaletteMapFolderWindow : EditorWindow
 
     private void TryAdoptSelectionFolder()
     {
-        foreach (var obj in Selection.objects)
+        var folders = GetSelectedFolders();
+        if (folders.Count > 0)
         {
-            var path = AssetDatabase.GetAssetPath(obj);
-            if (!string.IsNullOrEmpty(path) && AssetDatabase.IsValidFolder(path))
-            {
-                targetFolder = AssetDatabase.LoadAssetAtPath<DefaultAsset>(path);
-                return;
-            }
+            targetFolder = AssetDatabase.LoadAssetAtPath<DefaultAsset>(folders[0]);
+            return;
         }
 
         ShowNotification(new GUIContent("请在 Project 窗口选中一个文件夹"));
@@ -109,12 +148,30 @@ public sealed class PaletteMapFolderWindow : EditorWindow
         return AssetDatabase.IsValidFolder(path) ? path : null;
     }
 
-    private void Run(string folderAssetPath, bool dryRun)
+    private void RunFromWindow(string folderAssetPath, bool dryRun)
     {
         logs.Clear();
         var palettePath = paletteAsset != null
             ? AssetDatabase.GetAssetPath(paletteAsset)
             : DefaultPalettePath;
+        ExecuteMapping(new List<string> { folderAssetPath }, palettePath, dryRun, Log);
+        Repaint();
+    }
+
+    private void Log(string message)
+    {
+        logs.Add(message);
+        Debug.Log($"[PaletteMap] {message}");
+    }
+
+    // ---------------------------------------------------------------- 映射核心（窗口 / 右键共用）
+
+    private static void ExecuteMapping(
+        IReadOnlyList<string> folderAssetPaths,
+        string palettePath,
+        bool dryRun,
+        Action<string> log)
+    {
         Color32[] palette;
         try
         {
@@ -122,22 +179,31 @@ public sealed class PaletteMapFolderWindow : EditorWindow
         }
         catch (Exception e)
         {
-            Log($"调色板加载失败 {palettePath}: {e.Message}");
+            log($"调色板加载失败 {palettePath}: {e.Message}");
             return;
         }
 
-        var folderAbs = AssetPathToAbsolute(folderAssetPath);
-        var files = Directory.GetFiles(folderAbs, "*.png", SearchOption.AllDirectories);
-        if (files.Length == 0)
+        var files = new List<string>();
+        foreach (var folder in folderAssetPaths)
         {
-            Log("文件夹下没有 PNG。");
+            files.AddRange(Directory.GetFiles(
+                AssetPathToAbsolute(folder), "*.png", SearchOption.AllDirectories));
+        }
+
+        if (files.Count == 0)
+        {
+            log("选中文件夹下没有 PNG。");
             return;
         }
 
+        var folderSummary = folderAssetPaths.Count == 1
+            ? folderAssetPaths[0]
+            : $"{folderAssetPaths.Count} 个文件夹";
         if (!dryRun && !EditorUtility.DisplayDialog(
                 "调色板映射",
-                $"将就地覆写 {files.Length} 张 PNG（{folderAssetPath}），映射到 {Path.GetFileName(palettePath)}"
-                + $"（{palette.Length} 色）。\n映射幂等，已映射过的图不会再变。\n\n继续？",
+                $"将就地覆写 {files.Count} 张 PNG（{folderSummary}，含子目录），"
+                + $"映射到 {Path.GetFileName(palettePath)}（{palette.Length} 色）。\n"
+                + "映射幂等，已映射过的图不会再变。\n\n继续？",
                 "执行", "取消"))
         {
             return;
@@ -147,15 +213,15 @@ public sealed class PaletteMapFolderWindow : EditorWindow
         int okCount = 0, changedFiles = 0, errorCount = 0;
         try
         {
-            for (var i = 0; i < files.Length; i++)
+            for (var i = 0; i < files.Count; i++)
             {
                 var file = files[i];
                 if (EditorUtility.DisplayCancelableProgressBar(
                         "调色板映射",
-                        $"{i + 1}/{files.Length}  {Path.GetFileName(file)}",
-                        (i + 1f) / files.Length))
+                        $"{i + 1}/{files.Count}  {Path.GetFileName(file)}",
+                        (i + 1f) / files.Count))
                 {
-                    Log($"已取消（完成 {i}/{files.Length}）。");
+                    log($"已取消（完成 {i}/{files.Count}）。");
                     break;
                 }
 
@@ -171,7 +237,7 @@ public sealed class PaletteMapFolderWindow : EditorWindow
                 catch (Exception e)
                 {
                     errorCount++;
-                    Log($"失败 {ToAssetPath(file)}: {e.Message}");
+                    log($"失败 {ToAssetPath(file)}: {e.Message}");
                 }
             }
         }
@@ -180,18 +246,16 @@ public sealed class PaletteMapFolderWindow : EditorWindow
             EditorUtility.ClearProgressBar();
         }
 
-        Log($"{(dryRun ? "干跑" : "映射")}完成：处理 {okCount}/{files.Length}，"
+        log($"{(dryRun ? "干跑" : "映射")}完成：处理 {okCount}/{files.Count}，"
             + $"有改动 {changedFiles}，失败 {errorCount}。");
         if (!dryRun)
         {
             AssetDatabase.Refresh();
             if (errorCount > 0)
             {
-                Log("失败文件多为被占用（导入中），稍后重按「执行映射」补跑即可（幂等）。");
+                log("失败文件多为被占用（导入中），稍后重跑一次即可（幂等）。");
             }
         }
-
-        Repaint();
     }
 
     /// <summary>返回被改动的像素颜色种数；0 表示本图已在调色板内。</summary>
@@ -271,12 +335,6 @@ public sealed class PaletteMapFolderWindow : EditorWindow
     {
         var projectRoot = Path.GetDirectoryName(Application.dataPath) ?? string.Empty;
         return absolutePath.Replace('\\', '/').Replace(projectRoot.Replace('\\', '/') + "/", string.Empty);
-    }
-
-    private void Log(string message)
-    {
-        logs.Add(message);
-        Debug.Log($"[PaletteMap] {message}");
     }
 
     /// <summary>Oklab 加权最近色映射器（带按颜色缓存，跨文件复用）。</summary>
