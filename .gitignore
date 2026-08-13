@@ -11,6 +11,10 @@
 # Visual Studio cache directory
 .vs/
 
+# Agent scratch workspace & Python cache
+.scratch/
+__pycache__/
+
 # Gradle cache directory (Unity 2019.3+)
 .gradle/
 
