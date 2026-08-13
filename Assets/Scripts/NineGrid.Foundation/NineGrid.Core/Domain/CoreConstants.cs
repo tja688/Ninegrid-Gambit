@@ -26,6 +26,12 @@ namespace NineGrid.Core
     /// <summary>邻接图腾借甲光环：在目标卡上按来源 uid 记录借出前的 CurrentArmor 基线。</summary>
     public static class BorrowedArmorAuraKeys
     {
+        /// <summary>
+        /// 借甲自然流失（离开邻接）事件 cause：图腾不主动索取，
+        /// 表现层不得把该负甲变化编排成「图腾攻击目标」的打击表演。
+        /// </summary>
+        public const string DecayCause = "borrowedArmorDecay";
+
         public static string BaselineKey(int sourceUid)
         {
             return CoreCounterKeys.EffectCounterPrefix + "borrowedArmor." + sourceUid;

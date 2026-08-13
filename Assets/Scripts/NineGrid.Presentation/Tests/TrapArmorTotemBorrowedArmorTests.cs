@@ -60,6 +60,85 @@ namespace NineGrid.Presentation.Tests
         }
 
         [Test]
+        public void Adjacent_ConsumedBorrowedArmor_ToppedUpOnNextRefresh()
+        {
+            var avatar = CreateAvatarOnBoard(SlotId.Board(5));
+            var totem = CreateTrapOnBoard("trap.armor_totem", SlotId.Board(8));
+            var near = CreateMonsterOnBoard("monster.test.near", SlotId.Board(7));
+            var far = CreateMonsterOnBoard("monster.test.far", SlotId.Board(1));
+            ActivateTotemEffects(totem);
+
+            // 远处怪 1↔2 换位仅用于触发 CardMoved 刷新。
+            Run(new SwapBoardSlotsAction(SlotId.Board(1), SlotId.Board(2)));
+            Assert.AreEqual(1, StatArmorUtility.GetCurrentArmor(near), "邻接怪 +1 借甲");
+
+            // 借甲被外部消耗（交战吸收/反伤等）后仍保持邻接：下次刷新应补回。
+            StatArmorUtility.SetCurrentArmor(near, 0);
+            Run(new SwapBoardSlotsAction(SlotId.Board(1), SlotId.Board(2)));
+            Assert.AreEqual(1, StatArmorUtility.GetCurrentArmor(near), "邻接期间借甲被消耗后应补回");
+        }
+
+        [Test]
+        public void Leave_UnconsumedBorrowedArmorDecays_PreexistingArmorUntouched()
+        {
+            var avatar = CreateAvatarOnBoard(SlotId.Board(5));
+            var totem = CreateTrapOnBoard("trap.armor_totem", SlotId.Board(8));
+            var near = CreateMonsterOnBoard("monster.test.near", SlotId.Board(7));
+            var far = CreateMonsterOnBoard("monster.test.far", SlotId.Board(1));
+            StatArmorUtility.SetCurrentArmor(near, 2);
+            ActivateTotemEffects(totem);
+
+            Run(new SwapBoardSlotsAction(SlotId.Board(1), SlotId.Board(2)));
+            Assert.AreEqual(3, StatArmorUtility.GetCurrentArmor(near), "自有 2 + 借 1");
+
+            // 未被消耗：离开邻接后借出的 1 点自然流失，自有 2 点保留。
+            Run(new MoveCardAction(near.Uid, SlotId.Board(1)));
+            Assert.AreEqual(2, StatArmorUtility.GetCurrentArmor(near), "流失只回收借出的部分");
+        }
+
+        [Test]
+        public void Leave_ConsumedBorrowedArmor_NeverTakesPreexistingArmor()
+        {
+            var avatar = CreateAvatarOnBoard(SlotId.Board(5));
+            var totem = CreateTrapOnBoard("trap.armor_totem", SlotId.Board(8));
+            var near = CreateMonsterOnBoard("monster.test.near", SlotId.Board(7));
+            var far = CreateMonsterOnBoard("monster.test.far", SlotId.Board(1));
+            StatArmorUtility.SetCurrentArmor(near, 2);
+            ActivateTotemEffects(totem);
+
+            Run(new SwapBoardSlotsAction(SlotId.Board(1), SlotId.Board(2)));
+            Assert.AreEqual(3, StatArmorUtility.GetCurrentArmor(near), "自有 2 + 借 1");
+
+            // 借甲已被消耗（3→2），随后离开邻接：不得倒扣自有甲。
+            StatArmorUtility.SetCurrentArmor(near, 2);
+            Run(new MoveCardAction(near.Uid, SlotId.Board(1)));
+            Assert.AreEqual(2, StatArmorUtility.GetCurrentArmor(near), "已消耗借甲不追回，自有甲不动");
+        }
+
+        [Test]
+        public void Adjacent_OwnArmorConsumed_BaselineLowered_TopUpOnlyBorrowedPart()
+        {
+            var avatar = CreateAvatarOnBoard(SlotId.Board(5));
+            var totem = CreateTrapOnBoard("trap.armor_totem", SlotId.Board(8));
+            var near = CreateMonsterOnBoard("monster.test.near", SlotId.Board(7));
+            var far = CreateMonsterOnBoard("monster.test.far", SlotId.Board(1));
+            StatArmorUtility.SetCurrentArmor(near, 2);
+            ActivateTotemEffects(totem);
+
+            Run(new SwapBoardSlotsAction(SlotId.Board(1), SlotId.Board(2)));
+            Assert.AreEqual(3, StatArmorUtility.GetCurrentArmor(near), "自有 2 + 借 1");
+
+            // 自有甲 + 借甲全被打光：刷新只补回借出的 1 点，不替目标恢复自有甲。
+            StatArmorUtility.SetCurrentArmor(near, 0);
+            Run(new SwapBoardSlotsAction(SlotId.Board(1), SlotId.Board(2)));
+            Assert.AreEqual(1, StatArmorUtility.GetCurrentArmor(near), "只补借出的部分");
+
+            // 之后离开邻接：只回收这 1 点，不得打到负数/自有甲。
+            Run(new MoveCardAction(near.Uid, SlotId.Board(3)));
+            Assert.AreEqual(0, StatArmorUtility.GetCurrentArmor(near), "流失后归零");
+        }
+
+        [Test]
         public void Rotate_BorrowedArmorFollowsAdjacency_NeverAccumulates()
         {
             var avatar = CreateAvatarOnBoard(SlotId.Board(5));

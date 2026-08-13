@@ -17,6 +17,8 @@ status: accepted
 4. **通用打击 rig。** `CardAttackBasicAdapter.PlayEffectStrikeAsync`：场上任意打击者 → 任意受击者，强制相对冲刺 + 相对击退（rig 方向仅选烘焙时间线），不绑死亡回调（退场统一由移除/击杀呈现接手）；受击者将被移除时不回锚。经 `IFieldBattlePresentationSystem.PlayEffectStrikePresentAsync` 暴露；在攻击/反击 Present 内部（Drain 中）调用时不得新建战斗 CTS（会取消外层交战表演）。
 5. **全局两倍速（`BattlePresentationSpeed.CombatMultiplier = 2`）。** 单点常量：交战 rig 的 DOTween Sequence `timeScale`（起手/冲刺/命中/击退/回位与命中、死亡回调全部等比缩短，玩家攻击/反击/齐射/决斗/效果打击全路径生效）、rig 缺 Sequence 的兜底等待（0.9s→0.45s）、起手音效对齐延迟、`PresentStep.TriggerCadenceSec`（0.35s→0.175s）。
 
+**补记（2026-08-13）——借甲自然流失不入打击组。** 护甲图腾（`trap.armor_totem`）类借甲光环：邻接期间维持「基线 + 借出值」（借出的甲被消耗后下次刷新补回，基线随自有甲消耗下修）；离开邻接时未消耗借甲**自然流失**，Core 侧 `SyncAdjacentBorrowedArmorAction` 以 `cause = BorrowedArmorAuraKeys.DecayCause`（`borrowedArmorDecay`）发负向 `ArmorChanged`，`EffectStrikePlan.IsStrikeDamageInstruction` 按该 cause 排除——图腾从不「主动索取」，流失不得演成图腾攻击目标；且回收只取「当前甲 − 基线」的未消耗部分，永不扣目标自有护甲。
+
 ## 为什么
 
 **症状：伤害/破坏缺可见来源。** 藤蔓机关（`tpl.trap.spike.move*`）与紫蝎翻面同批出伤时，玩家只看到自己瞬间掉一串血；滚石（`tpl.trap.rolling_stone.slot3`）移除卡片、捕熊陷阱（`tpl.trap.bear_trap.fill`）打伤害/移除时，卡片「怎么就突然没了」。根因：效果伤害只有 Impact 飘字/血甲，没有任何指向攻击来源的动作表演；且这些指令常被同批命中帧 `FlushImpactExcept` 一起冲掉，与交战飘字混在同一帧。

@@ -1699,7 +1699,10 @@ namespace NineGrid.Core
     }
 
     /// <summary>
-    /// 邻接图腾借甲光环：邻接时 Gain CurrentArmor 并记基线；离开邻接时按基线回收未消耗部分（挡伤后不追回）。
+    /// 邻接图腾借甲光环：邻接期间维持「基线 + 借出值」——首次邻接记基线并借出，
+    /// 借出的甲被消耗后在下次刷新补回（不替目标恢复自有甲，基线随自有甲消耗下修）；
+    /// 离开邻接时未消耗的借甲自然流失（cause=<see cref="BorrowedArmorAuraKeys.DecayCause"/>，
+    /// 不作打击表演），永不扣目标自有护甲。
     /// </summary>
     public sealed class SyncAdjacentBorrowedArmorAction : GameAction
     {
@@ -1755,16 +1758,33 @@ namespace NineGrid.Core
 
             if (isAdjacent)
             {
+                var current = StatArmorUtility.GetCurrentArmor(target);
+                int baseline;
                 if (isTracking)
+                {
+                    baseline = target.Counters.Get(counterKey);
+                    if (current < baseline)
+                    {
+                        // 自有甲在邻接期间被消耗：基线随之下修，图腾只补自己借出的部分。
+                        baseline = current;
+                        target.Counters.Set(counterKey, baseline);
+                    }
+                }
+                else
+                {
+                    baseline = current;
+                    target.Counters.Set(counterKey, baseline);
+                }
+
+                var topUp = baseline + Value - current;
+                if (topUp <= 0)
                 {
                     return GameActionResult.Empty;
                 }
 
-                var baseline = StatArmorUtility.GetCurrentArmor(target);
-                target.Counters.Set(counterKey, baseline);
-                var newArmor = baseline + Value;
+                var newArmor = current + topUp;
                 StatArmorUtility.SetCurrentArmor(target, newArmor);
-                return EmitArmorChanged(context, target, Value, newArmor);
+                return EmitArmorChanged(context, target, topUp, newArmor, Source);
             }
 
             if (!isTracking)
@@ -1774,16 +1794,16 @@ namespace NineGrid.Core
 
             var baselineStored = target.Counters.Get(counterKey);
             target.Counters.Remove(counterKey);
-            var current = StatArmorUtility.GetCurrentArmor(target);
-            var remove = Math.Min(Value, Math.Max(0, current - baselineStored));
+            var currentOnLeave = StatArmorUtility.GetCurrentArmor(target);
+            var remove = Math.Min(Value, Math.Max(0, currentOnLeave - baselineStored));
             if (remove <= 0)
             {
                 return GameActionResult.Empty;
             }
 
-            var reclaimedArmor = current - remove;
+            var reclaimedArmor = currentOnLeave - remove;
             StatArmorUtility.SetCurrentArmor(target, reclaimedArmor);
-            return EmitArmorChanged(context, target, -remove, reclaimedArmor);
+            return EmitArmorChanged(context, target, -remove, reclaimedArmor, BorrowedArmorAuraKeys.DecayCause);
         }
 
         public override IEnumerable<TriggerPoint> GetPostTriggerPoints(GameActionContext context, IReadOnlyList<CoreGameEvent> events)
@@ -1791,7 +1811,7 @@ namespace NineGrid.Core
             return sPostTriggers;
         }
 
-        private GameActionResult EmitArmorChanged(GameActionContext context, CardInstance target, int delta, int newArmor)
+        private GameActionResult EmitArmorChanged(GameActionContext context, CardInstance target, int delta, int newArmor, string cause)
         {
             // ArmorChanged 已携带绝对甲；漏发场景由统一对账缝兜住（ADR-0045）。
             var hp = Math.Max(0, (int)Math.Round(target.Stats.GetBase(StatId.Hp)));
@@ -1801,7 +1821,7 @@ namespace NineGrid.Core
                     .WithCard(target.Uid)
                     .WithDelta(delta)
                     .WithRemaining(hp, newArmor)
-                    .WithSource(SourceDefId, Source));
+                    .WithSource(SourceDefId, cause));
         }
     }
 

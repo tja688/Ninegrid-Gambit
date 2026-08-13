@@ -27,7 +27,7 @@
 | `KillIfDeadAction` / `ConditionalDealDamageIfAliveAction` / `ForceBattleAction` | 同上 | 血≤0 补击杀 / 攻击方活着才出手 / 强制交战（自开交战作用域，先手裁决同交战） |
 | `MoveCardAction` / `SetBoardMarkAction` / `ShuffleIntoDrawPileAction` / `ShuffleCardIntoDrawPileAction` / `SpawnCardAction` / `ShuffleRandomContentIntoDrawPileAction` / `ExchangeWithDrawPileAction` | 同上 | 位移（入场落地按 CardDealt）/ 祝福标记 / 生成洗入（可延后补牌）/ 现有卡洗回 / 生成落位（同槽竞态先到先得；亡语占原槽）/ 随机内容洗入 / 与牌堆换牌 |
 | `AddStatModifierAction` / `AddRuleModifierAction` / `RemoveRuleModifiersBySourceAction` | 同上 | 挂属性修正 / 挂规则修正（组合条件）/ 按来源清规则——三者引发的卡面数值刷新均由统一对账缝自动提交（ADR-0045，旧手工补扫与 `CommitPermanentAttackFaceAction` 已删除） |
-| `ReplayHelpCardEffectsAction` / `DeactivateEffectAction` / `DeactivateOwnerEffectsAction` / `SyncAdjacentBorrowedArmorAction` / `MarkLeaveTrapBrokenAction` | 同上 | 倍增塔重放他卡用牌效果 / 卸载效果（含倒计时投影清除；遗物容器缺省落一次性消费标记，`removeRelic:true` 才撤持有，ADR-0049）/ 按 owner 反激活 / 邻接图腾借甲（基线记账，离邻回收未耗部分）/ 置清关标志（「离开」技能终点） |
+| `ReplayHelpCardEffectsAction` / `DeactivateEffectAction` / `DeactivateOwnerEffectsAction` / `SyncAdjacentBorrowedArmorAction` / `MarkLeaveTrapBrokenAction` | 同上 | 倍增塔重放他卡用牌效果 / 卸载效果（含倒计时投影清除；遗物容器缺省落一次性消费标记，`removeRelic:true` 才撤持有，ADR-0049）/ 邻接图腾借甲（邻接期间维持「基线+借出值」——借甲被消耗后刷新补回、基线随自有甲消耗下修；离邻未耗部分自然流失 `cause=borrowedArmorDecay` 不作打击表演、永不扣自有甲，ADR-0050 补记）/ 按 owner 反激活 / 置清关标志（「离开」技能终点） |
 
 ## 核心流程与数据流
 

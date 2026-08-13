@@ -360,7 +360,7 @@ MainScene 加载
 | `Tests/HolyDuelMarkRegressionTests.cs` | 神圣决斗标记先罚后转回归 | 10 |
 | `Tests/NodeEndTransientResetTests.cs` | 清关即清临时修正与当前甲回落回归 | 10 |
 | `Tests/RelicCompositeArmorNodeStartTests.cs` | StartNode 遗物效果自愈重挂回归（复合盔甲） | 10 |
-| `Tests/TrapArmorTotemBorrowedArmorTests.cs` | 护甲图腾借甲光环回归（邻接+1/离邻回收） | 10 |
+| `Tests/TrapArmorTotemBorrowedArmorTests.cs` | 护甲图腾借甲光环回归（邻接维持+1/消耗补回/离邻自然流失不扣自有甲） | 10 |
 | `Tests/Flow/AudioSystemBehaviorTests.cs` | AudioSystem 冷却/变体/排期/工作台热调音行为 | 10 |
 | `Tests/Flow/MusicDiagnosticsBehaviorTests.cs` | MusicSystem 切歌代数/审计/试听恢复行为 | 10 |
 | `Tests/Flow/PlayerAudioSettingsBehaviorTests.cs` | 三总线音量/静音/落库重置行为 | 10 |
