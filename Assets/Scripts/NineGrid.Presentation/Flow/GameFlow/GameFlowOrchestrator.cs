@@ -227,7 +227,11 @@ namespace NineGrid.Flow
             FinishTutorialAndContinueAsync(continueToFormal).Forget();
         }
 
-        /// <summary>教学收口：短暂完成提示 → 回主菜单收干净 →（可选）下一帧转正式开局。</summary>
+        /// <summary>
+        /// 教学收口：短暂完成提示 →（转正式时）跨层洞形转场盖住 →
+        /// 遮罩下回主菜单收干净并开正式局 → 揭开；主菜单帧藏在遮罩下不闪帧。
+        /// 仅回主菜单路径保持原样。
+        /// </summary>
         private async UniTaskVoid FinishTutorialAndContinueAsync(bool continueToFormal)
         {
             var view = mShell.View;
@@ -242,14 +246,42 @@ namespace NineGrid.Flow
             {
             }
 
-            EnterMainMenuImmediate();
             if (!continueToFormal)
             {
+                EnterMainMenuImmediate();
                 return;
             }
 
-            await UniTask.Yield();
-            mShell.BeginRun(GameFlowRunOptions.CreateFormal());
+            // 与楼层切换同一转场（洞形 iris）：收场清理与正式开局的硬切全部在遮罩下完成。
+            var transition = RunSceneTransitionService.InstanceOrNull;
+            var covered = false;
+            if (transition != null && transition.IsEnabled)
+            {
+                try
+                {
+                    await transition.BeginCoverAsync(crossFloor: true, CancellationToken.None);
+                    covered = transition.IsCoverHeld;
+                }
+                catch (OperationCanceledException)
+                {
+                    transition.ForceClearFaders();
+                }
+            }
+
+            try
+            {
+                EnterMainMenuImmediate();
+                await UniTask.Yield();
+                mShell.BeginRun(GameFlowRunOptions.CreateFormal());
+                await UniTask.Yield();
+            }
+            finally
+            {
+                if (covered)
+                {
+                    await RevealHeldTransitionIfAnyAsync();
+                }
+            }
         }
 
         /// <summary>

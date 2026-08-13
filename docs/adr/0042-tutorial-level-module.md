@@ -15,7 +15,7 @@
 
 ### 2. 首次判定走既有存档后端；完成标记独立槽位
 
-`TutorialProgressStore` 经 `RunSaveStoreHook`（ES3 桥）读写独立槽位 `tutorial_profile`，与跑图检查点（auto / manual_N）互不干扰。主菜单「开始游戏」（`GameFlowController.BeginFormalRun`）在无完成标记时改派教学开局（`continueToFormalRun=true`，通关后自动转正式开局）；有标记直接正式开局。主菜单独立「教学」按钮（`TutorialRun`）任何时候可重进，完成后回主菜单。**教学战败不标记完成**，且不触发 `RunSaveService.HandleRunEnded`（不得误删玩家早前正式局自动存档）。
+`TutorialProgressStore` 经 `RunSaveStoreHook`（ES3 桥）读写独立槽位 `tutorial_profile`，与跑图检查点（auto / manual_N）互不干扰。主菜单「开始游戏」（`GameFlowController.BeginFormalRun`）在无完成标记时改派教学开局（`continueToFormalRun=true`，通关后自动转正式开局）；有标记直接正式开局。主菜单独立「教学」按钮（`TutorialRun`）任何时候可重进，完成后回主菜单。**教学战败不标记完成**，且不触发 `RunSaveService.HandleRunEnded`（不得误删玩家早前正式局自动存档）。**补记（2026-08-13）**：教学通关转正式开局走跨层洞形转场（`RunSceneTransitionService.BeginCoverAsync(crossFloor:true)`）——回主菜单收场与 `BeginRun(CreateFormal)` 的硬切全部在遮罩下完成，不再闪一帧主菜单。
 
 ### 3. 受控发牌：保序抽牌堆 + 波次脚本挂主线
 
