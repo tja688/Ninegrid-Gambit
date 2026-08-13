@@ -1114,11 +1114,9 @@ namespace NineGrid.Core.Systems
 
             var resolved = pipeline.RunToCompletion();
             player.SetItemSlotsCapacity(player.ItemSlotsCapacity + 1);
-            if (player.ItemSlotsCapacity >= PlayerModel.MaxItemSlotsCapacity)
-            {
-                this.GetModel<PendingChoiceModel>().RemoveRewardOptionAt(optionIndex);
-            }
-
+            // 购后即下架本轮货架（与普通商品一致，不自动补货）；
+            // 再购走付费刷新通道——BuildShopShelves 未满级会重新上架。
+            this.GetModel<PendingChoiceModel>().RemoveRewardOptionAt(optionIndex);
             return CoreCommandResult.Accept(resolved);
         }
 
