@@ -41,6 +41,7 @@ namespace NineGrid.Presentation.Commands
             {
                 Accepted = result.Accepted,
                 Reason = result.Reason ?? string.Empty,
+                EventLogStartIndex = startIndex,
             };
             if (!result.Accepted)
             {

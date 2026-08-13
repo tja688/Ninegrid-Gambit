@@ -70,7 +70,8 @@ namespace NineGrid.Flow.Presentation
             {
                 // 兜底（ADR-0050）：打击编排未消费的暂扣伤害指令在 Settled 前放行，
                 // 保证飘字/血甲永不丢失（正常路径由打击组在命中帧 FlushStrikeHeldWhere 消费）。
-                Debug.Log(
+                // Warning 级：触发即代表有打击组未被播出（攻击动作丢失），须进 Console 抓取轨可查。
+                Debug.LogWarning(
                     "[BattleBeatScheduler] Flushing " + mStrikeHeld.Count
                     + " strike-held instruction(s) before Settled (fallback) batchId=" + mActiveBatchId);
                 FlushStrikeHeldWhere(_ => true);

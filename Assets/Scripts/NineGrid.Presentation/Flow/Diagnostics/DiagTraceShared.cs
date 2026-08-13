@@ -193,7 +193,20 @@ namespace NineGrid.Flow.Diagnostics
 #if UNITY_EDITOR
             var path = Path.Combine(Application.dataPath, "Notes");
 #else
-            var path = Application.persistentDataPath;
+            // 打包体：日志落在可执行文件旁 GameLogs（试玩者可直接找到并打包发给开发者，
+            // 与 ManualBugSnapshots 同级）；目录异常回退 persistentDataPath。
+            string path;
+            try
+            {
+                var dataParent = Directory.GetParent(Application.dataPath);
+                path = dataParent != null
+                    ? Path.Combine(dataParent.FullName, "GameLogs")
+                    : Application.persistentDataPath;
+            }
+            catch
+            {
+                path = Application.persistentDataPath;
+            }
 #endif
             for (var i = 0; i < parts.Length; i++)
             {

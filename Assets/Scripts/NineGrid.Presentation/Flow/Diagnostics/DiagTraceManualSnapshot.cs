@@ -103,6 +103,11 @@ namespace NineGrid.Flow.Diagnostics
                         return session == null ? null : RegistryTraceJson.Serialize(session);
                     },
                     written);
+                TryWriteTrack(
+                    folder,
+                    "consolelog",
+                    ConsoleTraceRecorder.SerializeCurrent,
+                    written);
 
                 var readmePath = Path.Combine(folder, AiReadmeFileName);
                 File.WriteAllText(readmePath, BuildAiReadme(tag, folder, written), Encoding.UTF8);

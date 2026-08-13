@@ -355,7 +355,11 @@ namespace NineGrid.Cards
         /// 强制相对冲刺/相对击退（rig 方向仅用于挑选烘焙时间线），命中帧回调 <paramref name="onStrikeHit"/>
         /// 与受击闪白同帧；不绑死亡回调——受击者退场由移除/击杀呈现另行接手。
         /// </summary>
-        public async UniTask PlayEffectStrikeAsync(
+        /// <summary>
+        /// 效果打击 rig 播放；返回是否真的播出（false = 参与者/场地/rig 缺失被跳过，
+        /// 调用方须降级为普通冲刷，不得当作已表演）。
+        /// </summary>
+        public async UniTask<bool> PlayEffectStrikeAsync(
             ManagedCard striker,
             ManagedCard victim,
             BattleBindParams bind,
@@ -365,14 +369,14 @@ namespace NineGrid.Cards
             if (striker?.Transform == null || victim?.Transform == null)
             {
                 Debug.LogWarning("[CardAttackBasicAdapter] 效果打击参与者无效，跳过。");
-                return;
+                return false;
             }
 
             var field = GroundFieldGeometryHook.FieldOrNull();
             if (field == null || !field.TryGetSlotOf(striker.Uid, out var strikerSlot))
             {
                 Debug.LogWarning("[CardAttackBasicAdapter] 效果打击者不在场地中，跳过。");
-                return;
+                return false;
             }
 
             EnsureRigsCollected();
@@ -381,7 +385,7 @@ namespace NineGrid.Cards
             if (!TryResolveEffectStrikeRig(strikerSlot, victimSlot, out var rig))
             {
                 Debug.LogWarning("[CardAttackBasicAdapter] 无可用效果打击 rig，跳过。", this);
-                return;
+                return false;
             }
 
             // 任意几何对：必须相对冲刺 + 相对击退，否则会播错烘焙轴向。
@@ -417,6 +421,7 @@ namespace NineGrid.Cards
                 victimSnapshot,
                 bind,
                 cancellationToken);
+            return true;
         }
 
         /// <summary>

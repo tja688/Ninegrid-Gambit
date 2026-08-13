@@ -1,20 +1,22 @@
-# 诊断与日志（Diagnostics）—— 四轨 Trace · 关联键 · 手动 Bug 快照
+# 诊断与日志（Diagnostics）—— 五轨 Trace · 关联键 · 手动 Bug 快照
 
-> 权威代码：`Flow/Diagnostics/`（23 个文件）。
+> 权威代码：`Flow/Diagnostics/`（24 个文件）。
 > 关联 ADR：ADR-0003（chainId + choreoSeqId 诊断关联）、ADR-0039（判死谓词对齐 Core）；相关票 #142（floor/nodeIndex 统一关联字段）、#51（占格分叉降级为断言）
 
 ## 职责综述
 
-四条互相独立又共享会话身份的旁路日志轨，Play 结束自动落盘到 `Assets/Notes/Logs/`，供人与 AI 事后排查（配套技能 `table-nine-battlelog-analysis`）：
+五条互相独立又共享会话身份的旁路日志轨，Play 结束自动落盘（配套技能 `table-nine-battlelog-analysis`）。
+**落盘根目录**：Editor → `Assets/Notes/Logs/`；**Development Player → exe 旁 `GameLogs/Logs/`**（2026-08-13 起，此前为 persistentDataPath；试玩者可直接找到打包发给开发者）。
 
-| 轨 | 记录器 | 内容 | 落盘目录 |
+| 轨 | 记录器 | 内容 | 落盘子目录 |
 |----|--------|------|---------|
-| **Battle** | `BattleTraceRecorder` | 每次结算门（CombatHit / PostKillBoard / StartNode）的 EventLog 切片 + 表现 verdict | `Assets/Notes/Logs/OtherLog/BattleLog/` |
-| **Flow（CoreLog）** | `FlowTraceRecorder` | 全流程语义事件（节点、奖励、占格、编排、Pickup、Lease 等 50+ 具名事件） | `Assets/Notes/Logs/CoreLog/` |
-| **Perf** | `PerfTraceRecorder` | 表现层时间线（Motion / BoardSnap / Director 剧本 / 音频 / VFX / Anomaly） | `Assets/Notes/Logs/PerfLog/` |
-| **Registry** | `RegistryTraceRecorder` | CardManager 注册表生命周期（Delta / Release / Audit / FieldVisualGap / 拾取门禁） | `Assets/Notes/Logs/OtherLog/RegistryLog/` |
+| **Battle** | `BattleTraceRecorder` | 每次结算门（CombatHit / PostKillBoard / StartNode）的 EventLog 切片 + 表现 verdict | `Logs/OtherLog/BattleLog/` |
+| **Flow（CoreLog）** | `FlowTraceRecorder` | 全流程语义事件（节点、奖励、占格、编排、Pickup、Lease 等 50+ 具名事件） | `Logs/CoreLog/` |
+| **Perf** | `PerfTraceRecorder` | 表现层时间线（Motion / BoardSnap / Director 剧本 / 音频 / VFX / Anomaly） | `Logs/PerfLog/` |
+| **Registry** | `RegistryTraceRecorder` | CardManager 注册表生命周期（Delta / Release / Audit / FieldVisualGap / 拾取门禁） | `Logs/OtherLog/RegistryLog/` |
+| **Console** | `ConsoleTraceRecorder` | Debug Console 抓取（Warning / Error / Exception / Assert，主抓报错；普通 Log 不进轨；环形上限 2000 条） | `Logs/OtherLog/ConsoleLog/` |
 
-**总纪律**：打点失败一律吞掉，绝不影响结算/表演路径；Editor/Development 默认四轨启用（经 `DiagTraceExportPreferences` 可关）。
+**总纪律**：打点失败一律吞掉，绝不影响结算/表演路径；Editor/Development 默认启用（四轨经 `DiagTraceExportPreferences` 可关；Console 轨只受自动落盘总开关约束）。
 
 ## 关键类型表
 
@@ -34,7 +36,8 @@
 | `RegistryTraceJson`（静态类） | `Diagnostics/RegistryTraceJson.cs` | Registry 轨手写 JSON 序列化 |
 | `DiagTraceShared`（静态类） | `Diagnostics/DiagTraceShared.cs` | 四轨共享会话身份（sessionId/seed/runTag）、落盘基础设施、Play 退出去重 |
 | `DiagTraceExportPreferences` + `DiagTraceTrack` | `Diagnostics/DiagTraceExportPreferences.cs` | 自动落盘与内存记录偏好（EditorPrefs 持久化；手动导出不受限） |
-| `DiagTraceManualSnapshot`（静态类） | `Diagnostics/DiagTraceManualSnapshot.cs` | 试玩者手动 Bug 快照：四轨物理写盘 + AI 必读说明 md |
+| `DiagTraceManualSnapshot`（静态类） | `Diagnostics/DiagTraceManualSnapshot.cs` | 试玩者手动 Bug 快照：五轨物理写盘 + AI 必读说明 md |
+| `ConsoleTraceRecorder`（静态类） | `Diagnostics/ConsoleTraceRecorder.cs` | Console 抓取轨：`logMessageReceivedThreaded` 环形缓冲 Warning/Error/Exception/Assert；随四轨自动/手动落盘；Player 下另挂 `Application.quitting` 退出兜底导出 |
 | `DiagBeatClock` + `DiagBeatKinds` | `Diagnostics/DiagBeatClock.cs` | 共用 beatId 单调时钟（Core/Perf/Registry 节奏对齐） |
 | `DiagBoardSnapCapture` + `CardSnap` | `Diagnostics/DiagBoardSnapCapture.cs` | 共享 BoardSnap 采集（uid/slot/xy/active/mode/tween） |
 | `DiagFieldVisualCapture` + `FieldVisualReport` | `Diagnostics/DiagFieldVisualCapture.cs` | 场地「肉眼可见满场」审计：Core 占格 vs 可见 Ground 卡逐槽对比 |
@@ -50,7 +53,8 @@
 
 1. **会话身份**：首次 Record / `BeginSessionIfNeeded` 时 `DiagTraceShared.EnsureSessionIdentity` 统一 sessionId（时间戳）与 seed（RunModel）；同一次 Play 四轨 sessionId/seed **必须一致**。QuickTest 等经 `SetRunTag` 打标（进文件名前缀）。
 2. **重开轮转**：`BattleTraceRecorder.RotateSessionForNewRun`（由 Orchestrator 开局调）——先 `ExportBothNow` 四轨落盘，再清空 + `ForceNewSessionIdentity` + `DiagBeatClock.Reset` + `ChoreoTraceContext.ForceCloseOpenChoreos`。
-3. **Play 退出**：`BattleTraceRecorder.ExportOnPlayExit`（去重，`AlreadyExportedThisPlayExit`）串联 Flow/Perf/Registry 导出；导出前各轨写入 `SessionChoreoSummary` 汇总事件。受 `DiagTraceExportPreferences.AutoExport*` 总开关约束；胜负/DevKeys 可 `ExportBothNow` 立即落盘（不受去重影响）。
+3. **Play 退出**：`BattleTraceRecorder.ExportOnPlayExit`（去重，`AlreadyExportedThisPlayExit`）串联 Flow/Perf/Registry/Console 导出；导出前各轨写入 `SessionChoreoSummary` 汇总事件。受 `DiagTraceExportPreferences.AutoExport*` 总开关约束；胜负/DevKeys 可 `ExportBothNow` 立即落盘（不受去重影响）。
+4. **每局自动落盘（Player 也生效）**：整局胜/负回主菜单时 `GameFlowOrchestrator.ShowBattleEndAndReturnAsync` 调 `ExportBothNow`；失败重开/再点开始经 `RotateSessionForNewRun` 先导出上一局再轮转；Development Player 另有 `Application.quitting` 兜底（`ConsoleTraceRecorder` 挂接）。同一会话同名文件覆盖写，最终文件即该局全量。
 
 ### 2. 关联键体系（跨轨对齐的钥匙）
 
@@ -74,7 +78,7 @@
 
 ### 5. 手动 Bug 快照（DiagTraceManualSnapshot）
 
-试玩者填 `userTag` → `Save`：先 `PerfTraceRecorder.StampUserObservation`（UserMark + 全量 BoardSnap + RegistryAudit）→ 四轨 `CurrentSession` 直接序列化（**不受自动落盘开关限制**）写入独立目录 —— Editor：`Assets/Notes/Logs/ManualBugSnapshots/!!!AI-BUG-REPORT!!!-{时间}_{tag}/`；Player：exe 旁 `ManualBugSnapshots/`。同目录生成 `!!!AI_READ_THIS_FIRST!!!.md`（USER_PROBLEM_TAG、sessionId/seed/runTag、按 floor/node → opIndex 排查指引）。少于 2 个文件（仅 readme）视为失败并 Warning。
+试玩者填 `userTag` → `Save`：先 `PerfTraceRecorder.StampUserObservation`（UserMark + 全量 BoardSnap + RegistryAudit）→ 五轨（四轨 + Console 抓取）`CurrentSession` 直接序列化（**不受自动落盘开关限制**）写入独立目录 —— Editor：`Assets/Notes/Logs/ManualBugSnapshots/!!!AI-BUG-REPORT!!!-{时间}_{tag}/`；Player：exe 旁 `ManualBugSnapshots/`。同目录生成 `!!!AI_READ_THIS_FIRST!!!.md`（USER_PROBLEM_TAG、sessionId/seed/runTag、按 floor/node → opIndex 排查指引）。少于 2 个文件（仅 readme）视为失败并 Warning。
 
 ### 6. 打点门面与 Sink 接线
 
@@ -104,6 +108,6 @@ ADR-0003（chainId/choreoSeqId 必须成对出现在编排 payload；sceneTag �
 - 空会话（仅 schema 壳）手动快照仍可能写出，读日志时先看 ops/events 数。
 - `rejectReason` 在 accepted=true 时为空；`ChaseSample` Kind 已废弃仅兼容保留。
 
-## 本篇文件清单（23）
+## 本篇文件清单（24）
 
-`BattleTraceRecorder.cs`、`BattleTraceModels.cs`、`BattleTraceJson.cs`、`FlowTraceRecorder.cs`、`FlowTraceModels.cs`、`FlowTraceJson.cs`、`PerfTraceRecorder.cs`、`PerfTraceModels.cs`、`PerfTraceJson.cs`、`RegistryTraceRecorder.cs`、`RegistryTraceModels.cs`、`RegistryTraceJson.cs`、`DiagTraceShared.cs`、`DiagTraceExportPreferences.cs`、`DiagTraceManualSnapshot.cs`、`DiagBeatClock.cs`、`DiagBoardSnapCapture.cs`、`DiagFieldVisualCapture.cs`、`DirectorTrace.cs`、`ChoreoTraceContext.cs`、`FieldTraceHelper.cs`、`BoardIntentGateDiagnostics.cs`、`CombatHitTraceContext.cs`（均在 `Flow/Diagnostics/`）。
+`BattleTraceRecorder.cs`、`BattleTraceModels.cs`、`BattleTraceJson.cs`、`FlowTraceRecorder.cs`、`FlowTraceModels.cs`、`FlowTraceJson.cs`、`PerfTraceRecorder.cs`、`PerfTraceModels.cs`、`PerfTraceJson.cs`、`RegistryTraceRecorder.cs`、`RegistryTraceModels.cs`、`RegistryTraceJson.cs`、`ConsoleTraceRecorder.cs`、`DiagTraceShared.cs`、`DiagTraceExportPreferences.cs`、`DiagTraceManualSnapshot.cs`、`DiagBeatClock.cs`、`DiagBoardSnapCapture.cs`、`DiagFieldVisualCapture.cs`、`DirectorTrace.cs`、`ChoreoTraceContext.cs`、`FieldTraceHelper.cs`、`BoardIntentGateDiagnostics.cs`、`CombatHitTraceContext.cs`（均在 `Flow/Diagnostics/`）。

@@ -39,13 +39,14 @@ namespace NineGrid.Flow
         }
 
         /// <summary>
-        /// Pickup Command 写 Core 后的旁路演出：经统一 FlushBeats 消费金币/HUD；洗牌仍旁路。
+        /// Pickup Command 写 Core 后的旁路演出：只承接洗牌；节拍冲刷（金币/HUD/伤害）延迟到
+        /// 手牌侧盘面 Drain 落地后统一消费（触发脉冲 → 效果打击 → 其余 Impact/Settled，
+        /// ADR-0050 拾取补丁——此前在此立即 FlushBeats，倒刺等机关的打击组永远没人播）。
         /// </summary>
         public static void PresentPickupPostApplyEffects(int startIndex, int pickedUid)
         {
             _ = pickedUid;
             var arch = NineGridArchitecture.Interface ?? NineGridArchitecture.Current;
-            BattleBeatFlush.PresentEventLogSlice(arch, startIndex);
             arch?.GetSystem<IBattleSessionSystem>()?.PresentShuffleIntoDeckFromEventLog(startIndex);
         }
 

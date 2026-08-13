@@ -17,6 +17,10 @@ status: accepted
 4. **通用打击 rig。** `CardAttackBasicAdapter.PlayEffectStrikeAsync`：场上任意打击者 → 任意受击者，强制相对冲刺 + 相对击退（rig 方向仅选烘焙时间线），不绑死亡回调（退场统一由移除/击杀呈现接手）；受击者将被移除时不回锚。经 `IFieldBattlePresentationSystem.PlayEffectStrikePresentAsync` 暴露；在攻击/反击 Present 内部（Drain 中）调用时不得新建战斗 CTS（会取消外层交战表演）。
 5. **全局两倍速（`BattlePresentationSpeed.CombatMultiplier = 2`）。** 单点常量：交战 rig 的 DOTween Sequence `timeScale`（起手/冲刺/命中/击退/回位与命中、死亡回调全部等比缩短，玩家攻击/反击/齐射/决斗/效果打击全路径生效）、rig 缺 Sequence 的兜底等待（0.9s→0.45s）、起手音效对齐延迟、`PresentStep.TriggerCadenceSec`（0.35s→0.175s）。
 
+**补记（2026-08-13c）——拾取旁路补第四消费点（倒刺打玩家丢动作的实际根因）。** 拾取（`ApplyPickupItemCommand`）推动互动数→Core 转盘在**拾取切片**内完成，但该切片此前由命令内 `BattleBeatFlush.PresentEventLogSlice` 立即 Impact→Settled 冲刷：打击组要么随 Settled 兜底被直接放行、要么根本无人编排——**倒刺经拾取转盘打玩家/怪的攻击动作全部静默丢失**（实测日志：只有击杀后的 PostKill 转盘批走 `AttackIntentScriptFactory` 的 PresentStep 才能看到倒刺打击，与「击杀邻怪后才打玩家」的观察一致）。修复：拾取切片的节拍冲刷延迟到手牌侧盘面 Drain（补牌+转盘运动）落地后，经新增 `BattleBeatFlush.PresentEventLogSliceWithStrikesAsync` 统一消费——OpenBatch（触发打击计划构建/暂扣）→ 触发脉冲 → 串行效果打击 → FlushBeats → FinishBatch，与 PresentStep 两相同构；顺带消灭拾取路径「旋转前掉血」错拍。拾取失败/无 Drain/Drain 取消路径按旧旁路立即冲刷兜底（节拍不丢失，仅无打击编排）。排期器 Settled 兜底放行日志升级为 Warning（进 Console 抓取轨，出现即代表仍有未播打击组）。
+
+**补记（2026-08-13b）——命中反馈永不静默丢失（rig 层兜底）。** 交战/打击 rig 的 DOTween Sequence 可能生成失败，或被外部对参与者 transform 的 `DOKill`（卡面脉冲、收敛 SnapHome 等 `KillMotion`）中途整条杀掉——此前命中帧回调随之丢失，表现为「攻击/打击动作与受击反馈静默消失、只剩掉血」（倒刺打带甲玩家偶发丢反馈属此类）。`CardAttackBasicDirectionRig` 现把命中帧反馈（闪白 + `onCombatHit`）打包为可兜底补发的动作：Timeline 命中帧正常触达则原样播；Sequence 生成失败或播放中断时在 `PlayAsync` 末尾补发并留 `[CardAttackBasicDirectionRig] 命中帧未经 Timeline 触达` 告警（Console 抓取轨可持久化定位打断者）。配套：`CardAttackBasicAdapter.PlayEffectStrikeAsync` 返回是否真的播出，静默跳过如实上抛给编排器按降级冲刷处理。
+
 **补记（2026-08-13）——借甲自然流失不入打击组。** 护甲图腾（`trap.armor_totem`）类借甲光环：邻接期间维持「基线 + 借出值」（借出的甲被消耗后下次刷新补回，基线随自有甲消耗下修）；离开邻接时未消耗借甲**自然流失**，Core 侧 `SyncAdjacentBorrowedArmorAction` 以 `cause = BorrowedArmorAuraKeys.DecayCause`（`borrowedArmorDecay`）发负向 `ArmorChanged`，`EffectStrikePlan.IsStrikeDamageInstruction` 按该 cause 排除——图腾从不「主动索取」，流失不得演成图腾攻击目标；且回收只取「当前甲 − 基线」的未消耗部分，永不扣目标自有护甲。
 
 ## 为什么

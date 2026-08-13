@@ -101,6 +101,7 @@ namespace NineGrid.Flow.Diagnostics
                 FlowTraceRecorder.Clear();
                 PerfTraceRecorder.Clear();
                 RegistryTraceRecorder.Clear();
+                ConsoleTraceRecorder.Clear();
                 DiagBeatClock.Reset();
                 ChoreoTraceContext.Reset();
                 DiagTraceShared.ForceNewSessionIdentity(seed);
@@ -463,6 +464,7 @@ namespace NineGrid.Flow.Diagnostics
                 FlowTraceRecorder.ExportOnPlayExit(source);
                 PerfTraceRecorder.ExportOnPlayExit(source);
                 RegistryTraceRecorder.ExportJson(silentIfEmpty: true, automatic: true);
+                ConsoleTraceRecorder.ExportJson(silentIfEmpty: true, automatic: true);
                 DiagTraceShared.MarkExportedThisPlayExit();
                 return battlePath;
             }
@@ -513,6 +515,15 @@ namespace NineGrid.Flow.Diagnostics
             catch (Exception ex)
             {
                 Debug.LogWarning("[BattleTrace] ExportBothNow registry: " + ex.Message);
+            }
+
+            try
+            {
+                ConsoleTraceRecorder.ExportJson(silentIfEmpty: true, automatic);
+            }
+            catch (Exception ex)
+            {
+                Debug.LogWarning("[BattleTrace] ExportBothNow console: " + ex.Message);
             }
         }
 

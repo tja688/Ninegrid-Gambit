@@ -1,4 +1,6 @@
 using System.Collections.Generic;
+using System.Threading;
+using Cysharp.Threading.Tasks;
 using NineGrid.Core;
 using NineGrid.Core.Systems;
 using QFramework;
@@ -155,6 +157,82 @@ namespace NineGrid.Flow.Presentation
             }
 
             return new PresentationBatch(batch.BatchId, filtered, batch.Snapshot);
+        }
+
+        /// <summary>
+        /// 非锁步 + 效果打击编排（ADR-0050 拾取补丁）：盘面运动已由调用方 Drain 落地后调用，
+        /// 与 PresentStep 两相同构——OpenBatch（触发打击计划构建/暂扣）→ 触发脉冲 →
+        /// 串行效果打击 → FlushBeats（其余 Impact + Settled）→ FinishBatch。
+        /// 已有打开批次时退回 <see cref="PresentEventLogSlice"/> 旁路（不搅乱锁步当批）。
+        /// </summary>
+        public static async UniTask PresentEventLogSliceWithStrikesAsync(
+            IArchitecture architecture,
+            int startIndex,
+            CancellationToken cancellationToken = default)
+        {
+            if (architecture == null || startIndex < 0)
+            {
+                return;
+            }
+
+            var pipeline = architecture.GetSystem<IActionPipelineSystem>();
+            var sync = architecture.GetSystem<IPresentationSyncSystem>();
+            if (pipeline?.EventLog == null || sync == null)
+            {
+                return;
+            }
+
+            var entries = pipeline.EventLog.Entries;
+            if (entries == null || startIndex >= entries.Count)
+            {
+                return;
+            }
+
+            if (sync.ActiveBatchId > 0)
+            {
+                // 锁步批打开中：该情形不应由本路径编排打击，维持旧旁路语义。
+                PresentEventLogSlice(architecture, startIndex);
+                return;
+            }
+
+            var batch = PresentationBatchFactory.FromEventLog(
+                pipeline.EventLog,
+                startIndex,
+                System.Math.Max(1, startIndex + 1),
+                snapshot: null);
+            if (batch.Instructions.Count == 0)
+            {
+                return;
+            }
+
+            // OpenBatch 经 Evt_PresentationBatchOpened 同时驱动排期器装载与 EffectStrikePlan 构建/暂扣。
+            sync.OpenBatch(batch);
+            try
+            {
+                var dispatched = FlushImpactOnly(PresentationInstructionKind.TriggerEffect);
+                if (dispatched > 0)
+                {
+                    await UniTask.Delay(
+                        System.TimeSpan.FromSeconds(PresentStep.TriggerCadenceSec),
+                        cancellationToken: cancellationToken);
+                }
+
+                await EffectStrikeHook.NotifyPlayAllPendingStrikesAsync(cancellationToken);
+            }
+            catch (System.OperationCanceledException)
+            {
+                // 取消也必须收批；残留暂扣由 FlushBeats 兜底放行。
+            }
+            catch (System.Exception ex)
+            {
+                UnityEngine.Debug.LogWarning(
+                    "[BattleBeatFlush] 切片效果打击编排失败（残留由 FlushBeats 兜底）: " + ex.Message);
+            }
+            finally
+            {
+                FlushBeats();
+                sync.FinishBatch(batch.BatchId);
+            }
         }
 
         /// <summary>

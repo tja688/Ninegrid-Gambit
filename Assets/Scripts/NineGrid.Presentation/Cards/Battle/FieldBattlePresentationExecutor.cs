@@ -615,8 +615,9 @@ namespace NineGrid.Cards
                 requireFinalStateGuard: resolved.RequireFinalStateGuard);
             LogBattleBindResolve(strikerUid, victimUid, bind, profile, victimWillBeRemoved, isCounter: !strikerIsAvatar);
 
-            await adapter.PlayEffectStrikeAsync(striker, victim, bind, onStrikeHit, cancellationToken);
-            return true;
+            // adapter 内部可能因参与者/rig 缺失静默跳过；把结果如实上抛，
+            // 让编排器按「降级为普通冲刷」处理而不是误当已表演（ADR-0050 补丁）。
+            return await adapter.PlayEffectStrikeAsync(striker, victim, bind, onStrikeHit, cancellationToken);
         }
 
         private static int ResolveAvatarUid(IGroundFieldGeometrySystem geometry)

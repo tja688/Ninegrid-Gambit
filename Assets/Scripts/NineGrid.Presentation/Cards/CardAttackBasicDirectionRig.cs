@@ -68,6 +68,8 @@ namespace NineGrid.Cards
         private bool _bindDeathCallbackRequested;
         private bool _hitConfirmedKill;
         private Action _onLungeBegin;
+        private Action _pendingHitCallback;
+        private bool _hitCallbackFired;
 
         /// <summary>命中帧后是否已确认受击者被击杀（用于门控 Timeline 死亡回调）。</summary>
         public bool LastHitConfirmedKill => _hitConfirmedKill;
@@ -302,18 +304,28 @@ namespace NineGrid.Cards
             {
                 if (sequence == null || !sequence.IsActive())
                 {
+                    Debug.LogWarning(
+                        $"[{nameof(CardAttackBasicDirectionRig)}] {name} 交战 Sequence 生成失败，"
+                        + "本次攻击动作不可见（走定时兜底），命中反馈已补发。",
+                        this);
                     if (_onLungeBegin != null && !lungeBeginInvoked)
                     {
                         lungeBeginInvoked = true;
                         _onLungeBegin.Invoke();
                     }
 
-                    await UniTask.Delay(
-                        TimeSpan.FromSeconds(BattlePresentationSpeed.ScaleSeconds(0.9f)),
-                        cancellationToken: cancellationToken);
+                    var halfWait = TimeSpan.FromSeconds(BattlePresentationSpeed.ScaleSeconds(0.45f));
+                    await UniTask.Delay(halfWait, cancellationToken: cancellationToken);
+                    FirePendingHitCallbackIfMissed("fallbackNoSequence", warn: false);
+                    await UniTask.Delay(halfWait, cancellationToken: cancellationToken);
                     ProbeCombatRigMotionEnd("fallback");
                     return;
                 }
+
+                // 自然完成与「被外部 DOKill 中途杀掉」都会退出等待循环；
+                // 用 OnComplete 区分两者（killed 序列的 IsComplete() 恒为 false，事后不可判）。
+                var completedNaturally = false;
+                sequence.OnComplete(() => completedNaturally = true);
 
                 var elapsed = 0f;
                 while (sequence.IsActive() && !sequence.IsComplete())
@@ -336,7 +348,14 @@ namespace NineGrid.Cards
                     _onLungeBegin.Invoke();
                 }
 
-                ProbeCombatRigMotionEnd("complete");
+                // 外部 KillMotion（卡面脉冲 / 收敛等对参与者 transform 的 DOKill）会把整条交战
+                // Sequence 连命中帧回调一起杀掉——此前表现为「攻击/打击反馈静默丢失」。
+                // 兜底补发命中反馈；被打断时留告警（配合 ConsoleTrace 轨可直接从日志定位）。
+                FirePendingHitCallbackIfMissed(
+                    completedNaturally ? "timelineMissingHitCallback" : "sequenceInterrupted",
+                    warn: !completedNaturally);
+
+                ProbeCombatRigMotionEnd(completedNaturally ? "complete" : "interrupted");
             }
             catch (OperationCanceledException)
             {
@@ -346,6 +365,7 @@ namespace NineGrid.Cards
             finally
             {
                 _onLungeBegin = null;
+                _pendingHitCallback = null;
             }
         }
 
@@ -1160,6 +1180,25 @@ namespace NineGrid.Cards
 
         private void ConfigureHitFlashCallback(CardEffectManager victimEffects, Action onCombatHit)
         {
+            // 命中帧反馈打包成可兜底补发的动作：正常由 Timeline 命中帧回调触发；
+            // Sequence 生成失败 / 被外部 DOKill 中途整条杀掉时，由 PlayAsync 末尾补发，
+            // 保证受击闪白 + onCombatHit（飘字/血甲冲刷）永不静默丢失（倒刺打玩家偶发丢反馈即此类）。
+            _hitCallbackFired = false;
+            _pendingHitCallback = () =>
+            {
+                if (_hitCallbackFired)
+                {
+                    return;
+                }
+
+                _hitCallbackFired = true;
+                ProbeCombatHitFrame();
+                victimEffects?.CallbackPlayHitFlash();
+                _hitConfirmedKill = false;
+                onCombatHit?.Invoke();
+                _hitConfirmedKill = TryReadVictimConfirmedKill(_boundVictim);
+            };
+
             if (hitFlashCallback == null)
             {
                 return;
@@ -1172,14 +1211,36 @@ namespace NineGrid.Cards
             }
 
             unityEvent.RemoveAllListeners();
-            unityEvent.AddListener(() =>
+            unityEvent.AddListener(() => _pendingHitCallback?.Invoke());
+        }
+
+        /// <summary>
+        /// 命中帧未经 Timeline 触达时兜底补发（<paramref name="warn"/> 控制是否留告警便于日志定位）。
+        /// </summary>
+        private void FirePendingHitCallbackIfMissed(string reason, bool warn)
+        {
+            if (_hitCallbackFired)
             {
-                ProbeCombatHitFrame();
-                victimEffects?.CallbackPlayHitFlash();
-                _hitConfirmedKill = false;
-                onCombatHit?.Invoke();
-                _hitConfirmedKill = TryReadVictimConfirmedKill(_boundVictim);
-            });
+                return;
+            }
+
+            var pending = _pendingHitCallback;
+            if (pending == null)
+            {
+                return;
+            }
+
+            if (warn)
+            {
+                Debug.LogWarning(
+                    $"[{nameof(CardAttackBasicDirectionRig)}] {name} 命中帧未经 Timeline 触达（{reason}），已兜底补发命中反馈"
+                    + " attacker=" + TryResolveUid(_boundAttacker)
+                    + " victim=" + TryResolveUid(_boundVictim)
+                    + "。",
+                    this);
+            }
+
+            pending.Invoke();
         }
 
         private void ConfigureDeathCallback(CardEffectManager victimEffects, bool bindDeathCallback)

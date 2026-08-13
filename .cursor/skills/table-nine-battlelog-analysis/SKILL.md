@@ -10,18 +10,20 @@ description: >-
 
 # TableNine 战斗/流程日志分析（终验分析入口）
 
-Play 结束自动导出至 `Assets/Notes/Logs/`（Editor 路径；Player 下为 persistentDataPath）。
+自动导出时机：Editor Play 结束、**每局胜/负回主菜单**、失败重开轮转、Player 退出（2026-08-13 起）。
+Editor 落 `Assets/Notes/Logs/`；**Development Player 落 exe 旁 `GameLogs/Logs/`**（2026-08-13 起，此前为 persistentDataPath）。
 本技能提供**终验分析入口**：关联 Run/Floor/Node/Battle + 扫描 Error/Exception/Assert。
 
 ## 日志落盘位置
 
-| 轨 | 目录 | 文件前缀 |
+| 轨 | 目录（Editor；Player 把 `Assets/Notes/` 换成 exe 旁 `GameLogs/`） | 文件前缀 |
 |----|------|----------|
 | BattleTrace | `Assets/Notes/Logs/OtherLog/BattleLog/` | `battlelog-…-seed<N>.json` |
 | FlowTrace (CoreLog) | `Assets/Notes/Logs/CoreLog/` | `corelog-…-seed<N>.json` |
 | Perf | `Assets/Notes/Logs/PerfLog/` | `perflog-…` |
 | Registry | `Assets/Notes/Logs/OtherLog/RegistryLog/` | `registrylog-…` |
-| **手动 Bug 快照** | Editor：`Assets/Notes/Logs/ManualBugSnapshots/`；Player：可执行文件旁 `ManualBugSnapshots/` | 目录/文件名带 `!!!AI-BUG-REPORT!!!`；必读 `!!!AI_READ_THIS_FIRST!!!.md`（含 `USER_PROBLEM_TAG`） |
+| **Console（2026-08-13 起）** | `Assets/Notes/Logs/OtherLog/ConsoleLog/` | `consolelog-…`；抓 Warning/Error/Exception/Assert（环形上限 2000 条），查「报错在哪」优先看它 |
+| **手动 Bug 快照** | Editor：`Assets/Notes/Logs/ManualBugSnapshots/`；Player：可执行文件旁 `ManualBugSnapshots/`（含 consolelog） | 目录/文件名带 `!!!AI-BUG-REPORT!!!`；必读 `!!!AI_READ_THIS_FIRST!!!.md`（含 `USER_PROBLEM_TAG`） |
 
 试玩者 F12 →「记录log」→ 填 Tag → 保存：走 `DiagTraceManualSnapshot.Save`（先 `PerfTraceRecorder.StampUserObservation`，再导出四轨到上述快照目录）。
 

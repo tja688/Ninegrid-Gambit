@@ -653,6 +653,8 @@ namespace NineGrid.Cards
                     + groundSlot
                     + " uid="
                     + pickup.CardUid);
+                // 表现跳过也必须消费本次拾取切片的节拍（金币/血甲/飘字不丢失）。
+                PresentPickupSliceFallback(pickup.EventLogStartIndex);
                 return;
             }
 
@@ -710,7 +712,8 @@ namespace NineGrid.Cards
                         Moves = pickup.Moves,
                         Deals = pickup.Deals,
                         NodeClearedOrRewardPhase = pickup.NodeClearedOrRewardPhase,
-                    }).Forget();
+                    },
+                    pickup.EventLogStartIndex).Forget();
                 FlowFieldTraceSink.PickupSuccess?.Invoke(pickup.CardUid, -1);
                 return true;
             }
@@ -718,6 +721,7 @@ namespace NineGrid.Cards
             if (!pickup.AcquiredToHand)
             {
                 Debug.LogWarning($"[CardHandManager] Pickup 已接受但未入手 uid={pickup.CardUid}");
+                PresentPickupSliceFallback(pickup.EventLogStartIndex);
                 PresentationInputGates.EndExternalHold("Pickup-no-hand");
                 FlowFieldTraceSink.PickupGate?.Invoke(pickup.CardUid, "NoAcquire", false, null);
                 return false;
@@ -725,6 +729,7 @@ namespace NineGrid.Cards
 
             if (card == null || field == null)
             {
+                PresentPickupSliceFallback(pickup.EventLogStartIndex);
                 PresentationInputGates.EndExternalHold("Pickup-missing-view");
                 FlowFieldTraceSink.PickupGate?.Invoke(pickup.CardUid, "MissingView", false, null);
                 return false;
@@ -733,6 +738,7 @@ namespace NineGrid.Cards
             if (!field.TryTakeCardFromField(card.Uid, out var taken, startExplore: false, skipBusyGuard: true)
                 || taken != card)
             {
+                PresentPickupSliceFallback(pickup.EventLogStartIndex);
                 PresentationInputGates.EndExternalHold("Pickup-take-failed");
                 FlowFieldTraceSink.PickupGate?.Invoke(card.Uid, "TakeFail", false, null);
                 return false;
@@ -746,14 +752,17 @@ namespace NineGrid.Cards
             return true;
         }
 
-        private async UniTaskVoid RunPickupDrainAsync(PostKillBoardPresentationResult postKill)
+        private async UniTaskVoid RunPickupDrainAsync(PostKillBoardPresentationResult postKill, int eventLogStartIndex)
         {
             try
             {
                 await BattleSessionSystem.EnsureRegistered().DrainPostKillBoardAsync(postKill);
+                // ADR-0050 拾取补丁：运动落地后统一消费本切片节拍（触发脉冲 → 效果打击 → 其余 Impact/Settled）。
+                await PresentPickupSliceWithStrikesAsync(eventLogStartIndex);
             }
             catch (OperationCanceledException)
             {
+                PresentPickupSliceFallback(eventLogStartIndex);
             }
             finally
             {
@@ -761,10 +770,39 @@ namespace NineGrid.Cards
             }
         }
 
+        /// <summary>
+        /// 拾取切片节拍统一收口（ADR-0050 拾取补丁）：盘面 Drain 落地后带效果打击串行编排消费。
+        /// </summary>
+        private static async UniTask PresentPickupSliceWithStrikesAsync(int startIndex)
+        {
+            await BattleBeatFlush.PresentEventLogSliceWithStrikesAsync(
+                NineGridArchitecture.Interface ?? NineGridArchitecture.Current,
+                startIndex);
+        }
+
+        /// <summary>
+        /// 拾取失败 / 无 Drain / Drain 取消路径兜底：按旧旁路立即冲刷，节拍（金币/血甲/飘字）不丢失。
+        /// 只允许在切片尚未消费的路径调用（重复调用会重放同一切片指令）。
+        /// </summary>
+        private static void PresentPickupSliceFallback(int startIndex)
+        {
+            try
+            {
+                BattleBeatFlush.PresentEventLogSlice(
+                    NineGridArchitecture.Interface ?? NineGridArchitecture.Current,
+                    startIndex);
+            }
+            catch (Exception ex)
+            {
+                Debug.LogWarning("[CardHandManager] Pickup 切片兜底冲刷失败: " + ex.Message);
+            }
+        }
+
         private async UniTaskVoid RunPickupFromGroundAsync(
             ManagedCard card,
             PickupItemPresentationResult pickup)
         {
+            var sliceConsumed = false;
             try
             {
                 var success = await PullFromGroundAsync(card);
@@ -791,6 +829,8 @@ namespace NineGrid.Cards
                         cm.Release(card, "Hand.PickupFail");
                     }
 
+                    PresentPickupSliceFallback(pickup.EventLogStartIndex);
+                    sliceConsumed = true;
                     return;
                 }
 
@@ -805,6 +845,10 @@ namespace NineGrid.Cards
                         RemovedUids = pickup.RemovedUids,
                         NodeClearedOrRewardPhase = pickup.NodeClearedOrRewardPhase,
                     });
+
+                // ADR-0050 拾取补丁：运动落地后统一消费本切片节拍（触发脉冲 → 效果打击 → 其余 Impact/Settled）。
+                await PresentPickupSliceWithStrikesAsync(pickup.EventLogStartIndex);
+                sliceConsumed = true;
 
                 // #10 / V3：占格权威在 Core；冲突只记诊断，禁止 force-sync heal。
                 var field = GroundFieldGeometryHook.FieldOrNull();
@@ -822,6 +866,10 @@ namespace NineGrid.Cards
             }
             catch (OperationCanceledException)
             {
+                if (!sliceConsumed)
+                {
+                    PresentPickupSliceFallback(pickup.EventLogStartIndex);
+                }
             }
             finally
             {

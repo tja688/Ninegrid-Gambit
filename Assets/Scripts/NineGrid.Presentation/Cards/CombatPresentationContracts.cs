@@ -160,6 +160,12 @@ namespace NineGrid.Cards
         public BoardPresentationStep[] Steps;
         public bool NodeClearedOrRewardPhase;
 
+        /// <summary>
+        /// 本次拾取 Core 事件切片起点：节拍冲刷延迟到盘面 Drain 落地后统一消费
+        /// （触发脉冲 → 效果打击 → 其余 Impact/Settled，ADR-0050 拾取补丁）。
+        /// </summary>
+        public int EventLogStartIndex;
+
         public readonly bool HasOrderedSteps => Steps != null && Steps.Length > 0;
     }
 
