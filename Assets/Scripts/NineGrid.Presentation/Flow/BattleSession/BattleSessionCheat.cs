@@ -639,6 +639,7 @@ namespace NineGrid.Flow
                 DetailDescription = source.DetailDescription,
                 FaceIntro = source.FaceIntro,
                 FrameColor = source.FrameColor,
+                Rarity = source.Rarity,
             };
         }
 

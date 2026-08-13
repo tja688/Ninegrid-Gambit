@@ -3785,6 +3785,7 @@ namespace NineGrid.Content.Editor
                 Hp = isDeckEntry ? 0 : Mathf.Max(0, stats.hp),
                 ActionCount = isDeckEntry ? 0 : Mathf.Max(0, dto.rhythmPeriod > 0 ? dto.rhythmPeriod : stats.action),
                 FaceUp = faceUp,
+                Rarity = ParsePreviewRarity(isDeckEntry ? null : dto.rarity),
             };
 
             if (!isDeckEntry && kind == CardPresentationKind.Trap)
@@ -3795,6 +3796,17 @@ namespace NineGrid.Content.Editor
             }
 
             return true;
+        }
+
+        private static NineGrid.Core.Content.ContentRarity ParsePreviewRarity(string raw)
+        {
+            if (!string.IsNullOrWhiteSpace(raw)
+                && Enum.TryParse(raw.Trim(), true, out NineGrid.Core.Content.ContentRarity rarity))
+            {
+                return rarity;
+            }
+
+            return NineGrid.Core.Content.ContentRarity.None;
         }
 
         /// <summary>

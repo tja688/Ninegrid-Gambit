@@ -78,8 +78,9 @@ namespace NineGrid.Core
         }
 
         /// <summary>
-        /// 开局写入生成规则：容量 + 从来源卡组收集**常规稀有度**（White，ADR-0033）道具卡 defId。
-        /// 特殊（蓝/金/红）道具卡不进随机来源池，仅经商店/宝箱/精英击杀/层主注入等定向渠道投放。
+        /// 开局写入生成规则：容量 + 从来源卡组收集**常规稀有度**（白/蓝/金 = 高/中/低，ADR-0033 修订）
+        /// 道具卡 defId。特殊（红）道具卡不进随机来源池，仅经宝箱房/金币房/属性房注入、商店固定货架、
+        /// 击杀掉落等定向渠道投放。装填时按 高60/中30/低10 加权（RewardSystem）。
         /// </summary>
         public static void SeedItemGenerationRules(
             PlayerModel player,

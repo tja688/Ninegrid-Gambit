@@ -458,10 +458,14 @@ namespace NineGrid.Flow
             }
 
             // 来源池写回守卫（ADR-0033）：跨层快照可能含宝箱卡等特殊卡，过滤后再恢复。
+            var restoreCatalog = content != null && content.HasCatalog ? content.Catalog : null;
             player.ReplaceItemSourcePool(NineGrid.Core.Content.HelpCardDecks.FilterRegularSourcePool(
-                content != null && content.HasCatalog ? content.Catalog : null,
+                restoreCatalog,
                 inventory.ItemSourcePoolDefIds));
-            player.ReplaceFixedItemCards(inventory.FixedItemCardDefIds);
+            // 固定卡每关重进卡组，须同为 live 常规档；归档卡/特殊卡在此拦截（ADR-0033 修订）。
+            player.ReplaceFixedItemCards(NineGrid.Core.Content.HelpCardDecks.FilterRegularSourcePool(
+                restoreCatalog,
+                inventory.FixedItemCardDefIds));
             player.SetItemStatBonus(inventory.ItemStatBonus);
 
             // 消费标记先于遗物重装写回：一次性效果（黄金鱼竿给宝箱卡）跨层不得重复发放。
@@ -492,17 +496,15 @@ namespace NineGrid.Flow
                 }
             }
 
+            // 道具卡格写回守卫（ADR-0033 修订）：只放行 live 道具卡（含特殊档），归档卡不得跨层带回。
             if (inventory.ItemSlotDefIds != null && content != null)
             {
-                for (var i = 0; i < inventory.ItemSlotDefIds.Length; i++)
+                var liveItemSlots = NineGrid.Core.Content.HelpCardDecks.FilterLiveHelpCards(
+                    restoreCatalog,
+                    inventory.ItemSlotDefIds);
+                for (var i = 0; i < liveItemSlots.Count; i++)
                 {
-                    var defId = inventory.ItemSlotDefIds[i];
-                    if (string.IsNullOrEmpty(defId))
-                    {
-                        continue;
-                    }
-
-                    var draft = content.CreateDraft(defId);
+                    var draft = content.CreateDraft(liveItemSlots[i]);
                     if (draft == null)
                     {
                         continue;

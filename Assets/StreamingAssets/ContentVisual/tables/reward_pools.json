@@ -7,9 +7,9 @@
     "roles": [],
     "tags_any": [],
     "default_weight": 1,
-    "rarity_weight_white": 65,
+    "rarity_weight_white": 60,
     "rarity_weight_blue": 30,
-    "rarity_weight_gold": 5,
+    "rarity_weight_gold": 10,
     "rarity_weight_red": 0,
     "balance_min_attack": 1,
     "balance_min_defense": 1
@@ -127,9 +127,9 @@
     "roles": [],
     "tags_any": [],
     "default_weight": 1,
-    "rarity_weight_white": 65,
+    "rarity_weight_white": 60,
     "rarity_weight_blue": 30,
-    "rarity_weight_gold": 5,
+    "rarity_weight_gold": 10,
     "rarity_weight_red": 0,
     "balance_min_attack": 1,
     "balance_min_defense": 1

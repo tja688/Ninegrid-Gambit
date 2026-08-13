@@ -291,6 +291,7 @@ namespace NineGrid.Flow
                 DetailDescription = source.DetailDescription ?? string.Empty,
                 FaceIntro = source.FaceIntro ?? string.Empty,
                 FrameColor = source.FrameColor,
+                Rarity = source.Rarity,
                 CommittedCountdownRemaining = CopyCommittedRemaining(source.CommittedCountdownRemaining),
             };
         }
@@ -544,6 +545,7 @@ namespace NineGrid.Flow
                 CardFacePresentationBinder.PeekDescriptionIconCatalog());
 
             snapshot.FrameColor = ResolveFrameColor(dto);
+            snapshot.Rarity = ResolveRarity(dto);
 
             // ADR-0038：预览/无 Core uid 路径从 JSON 填节奏矩阵字段（攻击模式→卡面图标见 CardFaceAttackPatternIconResolver）。
             if (AttackPatternRules.TryParse(dto.attackPattern, out var pattern))
@@ -670,6 +672,17 @@ namespace NineGrid.Flow
             }
 
             return new Color(0f, 0f, 0f, 0f);
+        }
+
+        private static ContentRarity ResolveRarity(CardPresentationConfigDto dto)
+        {
+            if (dto != null
+                && System.Enum.TryParse(dto.rarity ?? string.Empty, ignoreCase: true, out ContentRarity rarity))
+            {
+                return rarity;
+            }
+
+            return ContentRarity.None;
         }
 
         private static Color ToUnityColor(ContentColor color)

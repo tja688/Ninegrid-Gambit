@@ -30,7 +30,7 @@ namespace NineGrid.Core.Systems
         IReadOnlyList<RewardEntry> BuildItemRewardShelves();
 
         /// <summary>
-        /// 卡店「道具卡固定」二级候选：从来源池均匀随机抽 N 张（可重复、可含已固定 defId）。
+        /// 卡店「道具卡固定」二级候选：从来源池按常规稀有度加权抽 N 张（可重复、可含已固定 defId）。
         /// </summary>
         IReadOnlyList<RewardEntry> BuildTavernFixItemCandidates(int count = 3);
 
@@ -489,11 +489,11 @@ namespace NineGrid.Core.Systems
                 return new List<RewardEntry>();
             }
 
-            var rng = this.GetUtility<IRngUtility>();
+            var catalog = CatalogOrNull();
             var list = new List<RewardEntry>(count);
             for (var i = 0; i < count; i++)
             {
-                var defId = pool[rng.Range(0, pool.Count)];
+                var defId = RollRegularItemDefIdWeighted(catalog, pool);
                 if (string.IsNullOrEmpty(defId))
                 {
                     continue;
@@ -546,16 +546,95 @@ namespace NineGrid.Core.Systems
             return "help.attack_card";
         }
 
-        /// <summary>从玩家道具来源池均匀抽一张；池空时回退属性三卡。</summary>
+        /// <summary>从玩家道具来源池按常规稀有度加权抽一张；池空时回退属性三卡。</summary>
         private string RollRandomItemDefId()
         {
-            var pool = this.GetModel<PlayerModel>().ItemSourcePoolDefIds;
-            if (pool != null && pool.Count > 0)
+            var picked = RollRegularItemDefIdWeighted(
+                CatalogOrNull(),
+                this.GetModel<PlayerModel>().ItemSourcePoolDefIds);
+            return picked ?? RollShopAttributeDefId();
+        }
+
+        /// <summary>
+        /// 常规道具随机抽取（ADR-0033 修订，策划案「卡组生成流程」）：按稀有度档位加权
+        /// 高（White）60 / 中（Blue）30 / 低（Gold）10，同档内均匀。池内缺档时该档不参与；
+        /// catalog 缺失或池内无可归档卡时回退全池均匀。池空返回 null。
+        /// </summary>
+        private string RollRegularItemDefIdWeighted(GameContentCatalog catalog, IReadOnlyList<string> pool)
+        {
+            if (pool == null || pool.Count == 0)
             {
-                return pool[this.GetUtility<IRngUtility>().Range(0, pool.Count)];
+                return null;
             }
 
-            return RollShopAttributeDefId();
+            var rng = this.GetUtility<IRngUtility>();
+            if (catalog != null)
+            {
+                var tiers = new List<string>[]
+                {
+                    new List<string>(),
+                    new List<string>(),
+                    new List<string>(),
+                };
+                var weights = new[]
+                {
+                    HelpCardDecks.RegularWeightHigh,
+                    HelpCardDecks.RegularWeightMid,
+                    HelpCardDecks.RegularWeightLow,
+                };
+                for (var i = 0; i < pool.Count; i++)
+                {
+                    var defId = pool[i];
+                    CardContentDefinition card;
+                    if (string.IsNullOrEmpty(defId) || !catalog.TryGetCard(defId, out card) || card == null)
+                    {
+                        continue;
+                    }
+
+                    switch (card.Rarity)
+                    {
+                        case ContentRarity.White:
+                            tiers[0].Add(defId);
+                            break;
+                        case ContentRarity.Blue:
+                            tiers[1].Add(defId);
+                            break;
+                        case ContentRarity.Gold:
+                            tiers[2].Add(defId);
+                            break;
+                    }
+                }
+
+                var total = 0;
+                for (var k = 0; k < tiers.Length; k++)
+                {
+                    if (tiers[k].Count > 0)
+                    {
+                        total += weights[k];
+                    }
+                }
+
+                if (total > 0)
+                {
+                    var roll = rng.Range(0, total);
+                    for (var k = 0; k < tiers.Length; k++)
+                    {
+                        if (tiers[k].Count == 0)
+                        {
+                            continue;
+                        }
+
+                        if (roll < weights[k])
+                        {
+                            return tiers[k][rng.Range(0, tiers[k].Count)];
+                        }
+
+                        roll -= weights[k];
+                    }
+                }
+            }
+
+            return pool[rng.Range(0, pool.Count)];
         }
 
         private IEnumerable<GameAction> ReactToKill(TriggerContext context)
@@ -609,7 +688,6 @@ namespace NineGrid.Core.Systems
         {
             var player = this.GetModel<PlayerModel>();
             var content = this.GetSystem<IContentSystem>();
-            var rng = this.GetUtility<IRngUtility>();
 
             var fixedCards = player.FixedItemCardDefIds;
             var fixedCount = fixedCards.Count;
@@ -621,13 +699,13 @@ namespace NineGrid.Core.Systems
                 TryAddPlayerCard(catalog, content, options, fixedCards[i]);
             }
 
-            // 2) 剩余预算从来源池随机生成
+            // 2) 剩余预算从来源池随机生成（常规稀有度加权 高60/中30/低10，ADR-0033 修订）
             var pool = player.ItemSourcePoolDefIds;
             if (pool.Count > 0 && randomCount > 0)
             {
                 for (var i = 0; i < randomCount; i++)
                 {
-                    var defId = pool[rng.Range(0, pool.Count)];
+                    var defId = RollRegularItemDefIdWeighted(catalog, pool);
                     TryAddPlayerCard(catalog, content, options, defId);
                 }
             }
@@ -1052,7 +1130,8 @@ namespace NineGrid.Core.Systems
         }
 
         /// <summary>
-        /// 设计品质表：通关/商店帮助卡白65蓝30金5；普通箱/血液转换同；蓝箱白40蓝50金10；金箱蓝50金50。
+        /// 设计品质表：道具卡常规档 高60/中30/低10（ADR-0033 修订）；遗物池维持
+        /// 普通箱/血液转换 白65蓝30金5、蓝箱白40蓝50金10、金箱蓝50金50。
         /// </summary>
         private static bool TryGetRarityWeights(
             RewardPoolDefinition pool,
@@ -1101,9 +1180,10 @@ namespace NineGrid.Core.Systems
 
             if (poolId == "help.choice" || poolId == "shop.helpCards")
             {
-                white = 65;
+                // ADR-0033 修订：道具卡常规档 高60/中30/低10（白/蓝/金），特殊（红）不进。
+                white = 60;
                 blue = 30;
-                gold = 5;
+                gold = 10;
                 return true;
             }
 

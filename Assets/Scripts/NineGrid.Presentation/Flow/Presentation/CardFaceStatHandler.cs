@@ -493,6 +493,7 @@ namespace NineGrid.Flow.Presentation
                 DetailDescription = source.DetailDescription ?? string.Empty,
                 FaceIntro = source.FaceIntro ?? string.Empty,
                 FrameColor = source.FrameColor,
+                Rarity = source.Rarity,
                 CommittedCountdownRemaining = CopyCommittedRemaining(source.CommittedCountdownRemaining),
             };
         }

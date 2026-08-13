@@ -10,7 +10,7 @@
     "faceIntro": "昂贵的礼品",    "attackPattern": "",
     "rhythmSource": "",
     "rhythmPeriod": 0,
-    "gold": 400,
+    "gold": 100,
     "stats": {
         "hp": 0,
         "armor": 0,

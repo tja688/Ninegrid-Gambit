@@ -310,10 +310,14 @@ namespace NineGrid.Core
             }
 
             // 来源池写回守卫（ADR-0033）：旧存档可能含宝箱卡等特殊卡，过滤后再恢复。
+            var restoreCatalog = content != null && content.HasCatalog ? content.Catalog : null;
             player.ReplaceItemSourcePool(Content.HelpCardDecks.FilterRegularSourcePool(
-                content != null && content.HasCatalog ? content.Catalog : null,
+                restoreCatalog,
                 snapshot.itemSourcePoolDefIds));
-            player.ReplaceFixedItemCards(snapshot.fixedItemCardDefIds);
+            // 固定卡每关重进卡组，须同为 live 常规档；旧存档的归档卡/特殊卡在此拦截。
+            player.ReplaceFixedItemCards(Content.HelpCardDecks.FilterRegularSourcePool(
+                restoreCatalog,
+                snapshot.fixedItemCardDefIds));
             player.SetItemStatBonus(snapshot.itemStatBonus);
             run.SetAttributePicks(snapshot.attributePickDefIds);
 
@@ -366,17 +370,16 @@ namespace NineGrid.Core
             pipeline.RunToCompletion();
 
             // 3. 道具卡格：按 defId 重造（与跨层 preserveRunInventory 同语义）。
+            // 写回守卫（ADR-0033 修订）：只放行 live 道具卡（含特殊档）；归档卡（倍增塔/瞭望塔等）
+            // 仍在 Catalog 中可被重造，旧存档不得把老道具带回正式局。
             if (snapshot.itemSlotDefIds != null && content != null)
             {
-                for (var i = 0; i < snapshot.itemSlotDefIds.Length; i++)
+                var liveItemSlots = Content.HelpCardDecks.FilterLiveHelpCards(
+                    restoreCatalog,
+                    snapshot.itemSlotDefIds);
+                for (var i = 0; i < liveItemSlots.Count; i++)
                 {
-                    var defId = snapshot.itemSlotDefIds[i];
-                    if (string.IsNullOrEmpty(defId))
-                    {
-                        continue;
-                    }
-
-                    var draft = content.CreateDraft(defId);
+                    var draft = content.CreateDraft(liveItemSlots[i]);
                     if (draft == null || draft.Kind == CardKind.Unknown)
                     {
                         continue;

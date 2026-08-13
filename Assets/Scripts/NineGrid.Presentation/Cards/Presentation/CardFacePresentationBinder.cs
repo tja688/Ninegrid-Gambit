@@ -64,6 +64,7 @@ namespace NineGrid.Cards.Presentation
             CaptureTemplateDefaultsIfNeeded();
             ApplyMainIcon(snapshot.MainIcon);
             ApplyDirectSprites(snapshot);
+            ApplyRarityVariants(snapshot.Rarity);
             // 遗物等六边框模板：矩形背景须吃 Mask_hexagon，否则四角漏出卡框。
             CardMainVisualMaskAnchor.EnsureFaceBackgroundHexMask(transform);
             ApplyName(snapshot.DisplayName);
@@ -171,6 +172,165 @@ namespace NineGrid.Cards.Presentation
             TryApplySprite(CardFaceSlotCodes.BackLogo, snapshot.BackLogo);
             TryApplySprite(CardFaceSlotCodes.CardFrame, snapshot.CardFrame);
             TryApplySprite(CardFaceSlotCodes.Banner, snapshot.Banner);
+        }
+
+        /// <summary>
+        /// 稀有度变体切换：卡面模板「卡框 / 横幅」节点下若存在「白 / 蓝 / 金」子变体
+        /// （当前仅遗物卡标准模版），按内容稀有度只保留匹配的一个；
+        /// 「副Icon」节点下若存在「高常规 / 中常规 / 低常规 / 特殊」档位子对象
+        /// （当前仅道具卡标准模版），按道具卡稀有度四档切换（ADR-0033 修订）。
+        /// 模板无变体子节点时 no-op（其余 Kind 模板不受影响）。
+        /// </summary>
+        private void ApplyRarityVariants(NineGrid.Core.Content.ContentRarity rarity)
+        {
+            ApplyRarityVariant(CardFaceSlotCodes.CardFrame, rarity);
+            ApplyRarityVariant(CardFaceSlotCodes.Banner, rarity);
+            ApplySubIconRarityVariant(rarity);
+        }
+
+        private const string SubIconRootName = "副Icon";
+        private const string SubIconHighRegularName = "高常规";
+        private const string SubIconMidRegularName = "中常规";
+        private const string SubIconLowRegularName = "低常规";
+        private const string SubIconSpecialName = "特殊";
+
+        /// <summary>
+        /// 道具卡副图标档位切换（ADR-0033 修订）：白=高常规 / 蓝=中常规 / 金=低常规 / 红=特殊。
+        /// 模板无「副Icon」节点时 no-op；稀有度 None（未声明）时整组隐藏，不留错误档位。
+        /// </summary>
+        private void ApplySubIconRarityVariant(NineGrid.Core.Content.ContentRarity rarity)
+        {
+            var subIconRoot = FindDeepByName(transform, SubIconRootName);
+            if (subIconRoot == null)
+            {
+                return;
+            }
+
+            string targetName;
+            switch (rarity)
+            {
+                case NineGrid.Core.Content.ContentRarity.White:
+                    targetName = SubIconHighRegularName;
+                    break;
+                case NineGrid.Core.Content.ContentRarity.Blue:
+                    targetName = SubIconMidRegularName;
+                    break;
+                case NineGrid.Core.Content.ContentRarity.Gold:
+                    targetName = SubIconLowRegularName;
+                    break;
+                case NineGrid.Core.Content.ContentRarity.Red:
+                    targetName = SubIconSpecialName;
+                    break;
+                default:
+                    targetName = null;
+                    break;
+            }
+
+            var matchedAny = false;
+            for (var i = 0; i < subIconRoot.childCount; i++)
+            {
+                var child = subIconRoot.GetChild(i);
+                switch (child.name)
+                {
+                    case SubIconHighRegularName:
+                    case SubIconMidRegularName:
+                    case SubIconLowRegularName:
+                    case SubIconSpecialName:
+                        var match = targetName != null && child.name == targetName;
+                        child.gameObject.SetActive(match);
+                        matchedAny |= match;
+                        break;
+                }
+            }
+
+            subIconRoot.gameObject.SetActive(matchedAny);
+        }
+
+        private static Transform FindDeepByName(Transform root, string name)
+        {
+            if (root == null || string.IsNullOrEmpty(name))
+            {
+                return null;
+            }
+
+            if (root.name == name)
+            {
+                return root;
+            }
+
+            for (var i = 0; i < root.childCount; i++)
+            {
+                var found = FindDeepByName(root.GetChild(i), name);
+                if (found != null)
+                {
+                    return found;
+                }
+            }
+
+            return null;
+        }
+
+        private void ApplyRarityVariant(string slotCode, NineGrid.Core.Content.ContentRarity rarity)
+        {
+            if (!CardFaceSlotNodeMap.TryFindRenderer(transform, slotCode, out var renderer)
+                || renderer == null)
+            {
+                return;
+            }
+
+            var parent = renderer.transform;
+            Transform white = null;
+            Transform blue = null;
+            Transform gold = null;
+            for (var i = 0; i < parent.childCount; i++)
+            {
+                var child = parent.GetChild(i);
+                switch (child.name)
+                {
+                    case "白":
+                        white = child;
+                        break;
+                    case "蓝":
+                        blue = child;
+                        break;
+                    case "金":
+                        gold = child;
+                        break;
+                }
+            }
+
+            if (white == null && blue == null && gold == null)
+            {
+                return;
+            }
+
+            // Red（独特）暂无专属卡框/横幅美术：兜底用金档；None/未知兜底白档。
+            var target = rarity switch
+            {
+                NineGrid.Core.Content.ContentRarity.Blue => blue,
+                NineGrid.Core.Content.ContentRarity.Gold => gold,
+                NineGrid.Core.Content.ContentRarity.Red => gold,
+                _ => white,
+            };
+            if (target == null)
+            {
+                target = white != null ? white : (blue != null ? blue : gold);
+            }
+
+            if (white != null)
+            {
+                white.gameObject.SetActive(white == target);
+            }
+
+            if (blue != null)
+            {
+                blue.gameObject.SetActive(blue == target);
+            }
+
+            if (gold != null)
+            {
+                gold.gameObject.SetActive(gold == target);
+            }
         }
 
         private void TryApplySprite(string slotCode, Sprite sprite)

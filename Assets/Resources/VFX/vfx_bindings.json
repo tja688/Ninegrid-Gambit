@@ -82,7 +82,7 @@
             "playerId": "sprite-sheet",
             "spatialOwnership": "independent",
             "materialKey": "vfx.fantasy_spells.spell_defense_up_001.small_blue",
-            "fps": 16,
+            "fps": 32,
             "scale": 0.8,
             "timeBase": "scaled",
             "authoringStatus": "aiDraft"
@@ -95,7 +95,7 @@
             "playerId": "sprite-sheet",
             "spatialOwnership": "independent",
             "materialKey": "vfx.fantasy_spells.spell_attack_up_001.small_red",
-            "fps": 16,
+            "fps": 32,
             "scale": 0.8,
             "timeBase": "scaled",
             "authoringStatus": "aiDraft"

@@ -70,6 +70,12 @@ namespace NineGrid.Cards.Presentation
         public Color FrameColor = new Color(0f, 0f, 0f, 0f);
 
         /// <summary>
+        /// 内容稀有度（JSON <c>rarity</c> 投影）；驱动卡面模板内「卡框 / 横幅」稀有度变体切换。
+        /// None = 内容未声明稀有度（Binder 保留模板默认变体）。
+        /// </summary>
+        public NineGrid.Core.Content.ContentRarity Rarity = NineGrid.Core.Content.ContentRarity.None;
+
+        /// <summary>
         /// 已提交倒计时投影值（ADR-0035）：键为完整「装配id.键」（如 <c>trap.flame.remove.every</c>），
         /// 只经 Settled 结算指令（<c>UpdateCountdownRemaining</c>）写入；null = 无已提交剩余。
         /// 仅实例/预览表面消费；Inspect 模式由投影缝恒忽略。

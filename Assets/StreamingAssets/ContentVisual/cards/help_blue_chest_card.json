@@ -10,7 +10,7 @@
     "faceIntro": "普通宝箱进修归来",    "attackPattern": "",
     "rhythmSource": "",
     "rhythmPeriod": 0,
-    "gold": 150,
+    "gold": 100,
     "stats": {
         "hp": 0,
         "armor": 0,
@@ -73,7 +73,7 @@
         ]
     },
     "extraSlots": [],
-    "rarity": "Gold",
+    "rarity": "Red",
     "tags": [
         "tag.economy",
         "tag.kill_elite"

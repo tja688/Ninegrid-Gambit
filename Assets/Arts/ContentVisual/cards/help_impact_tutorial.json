@@ -10,7 +10,7 @@
     "faceIntro": "头铁也是一种装备",    "attackPattern": "",
     "rhythmSource": "",
     "rhythmPeriod": 0,
-    "gold": 80,
+    "gold": 30,
     "stats": {
         "hp": 0,
         "armor": 0,
@@ -73,7 +73,7 @@
         ]
     },
     "extraSlots": [],
-    "rarity": "White",
+    "rarity": "Blue",
     "tags": [
         "tag.hp_scaling"
     ],

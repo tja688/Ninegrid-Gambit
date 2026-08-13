@@ -30,6 +30,9 @@ namespace NineGrid.Presentation.Editor
         public bool ShowActionCount;
         public bool FaceUp = true;
 
+        /// <summary>内容稀有度（驱动卡框/横幅变体与道具卡副图标档位预览）；None = 不切换。</summary>
+        public NineGrid.Core.Content.ContentRarity Rarity = NineGrid.Core.Content.ContentRarity.None;
+
         public CardPresentationSnapshot ToSnapshot()
         {
             return new CardPresentationSnapshot
@@ -49,6 +52,7 @@ namespace NineGrid.Presentation.Editor
                 ActionCount = Mathf.Max(0, ActionCount),
                 ShowActionCount = ShowActionCount,
                 FaceUp = FaceUp,
+                Rarity = Rarity,
             };
         }
     }

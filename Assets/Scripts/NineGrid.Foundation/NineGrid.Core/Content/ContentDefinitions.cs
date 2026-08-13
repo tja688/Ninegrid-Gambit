@@ -367,21 +367,50 @@ namespace NineGrid.Core.Content
     /// 道具卡组约定（#139）：live 进奖池/道具来源池/房间注入；archive 仅保留 JSON 参考。
     /// 非策划现行道具卡（破击锤/血液转换/倍增塔/盾击教程/属性提升/庇佑/瞭望塔）归归档卡组，
     /// 不参与奖池展开与职业道具来源池（<see cref="RewardPoolQueryExpander"/> 与 ProfessionCatalog 均按此约定过滤）。
-    /// 稀有度分级（ADR-0033）：白 = 常规（进玩家侧卡组随机来源池）；蓝/金/红 = 特殊（仅经商店/
-    /// 宝箱/精英击杀/层主注入等定向渠道投放，随机装填不得抽取）。
+    /// 稀有度分级（ADR-0033 修订 2026-08-13）：常规三档 白=高 / 蓝=中 / 金=低，可进玩家侧卡组
+    /// 随机来源池，随机装填按 高60/中30/低10 加权（策划案「卡组生成流程」）；红 = 特殊，
+    /// 不进任何随机来源池，仅经定向渠道投放（宝箱房/金币房/属性房注入、商店固定货架、
+    /// 精英/层主击杀、遗物效果等）。
     /// </summary>
     public static class HelpCardDecks
     {
         public const string Live = "deck.help";
         public const string Archive = "deck.help_archive";
 
-        /// <summary>常规稀有度（ADR-0033）：唯一可进玩家侧卡组随机来源池的道具卡档位。</summary>
-        public const ContentRarity RegularRarity = ContentRarity.White;
+        /// <summary>特殊稀有度（ADR-0033 修订）：不进随机来源池，仅定向渠道投放。</summary>
+        public const ContentRarity SpecialRarity = ContentRarity.Red;
 
-        /// <summary>该稀有度是否属于常规档（可进玩家侧卡组随机来源池）。</summary>
+        /// <summary>常规高档（White）随机装填权重（策划案 60%）。</summary>
+        public const int RegularWeightHigh = 60;
+
+        /// <summary>常规中档（Blue）随机装填权重（策划案 30%）。</summary>
+        public const int RegularWeightMid = 30;
+
+        /// <summary>常规低档（Gold）随机装填权重（策划案 10%）。</summary>
+        public const int RegularWeightLow = 10;
+
+        /// <summary>该稀有度是否属于常规档（可进玩家侧卡组随机来源池）：白/蓝/金 = 高/中/低。</summary>
         public static bool IsRegularRarity(ContentRarity rarity)
         {
-            return rarity == RegularRarity;
+            return rarity == ContentRarity.White
+                || rarity == ContentRarity.Blue
+                || rarity == ContentRarity.Gold;
+        }
+
+        /// <summary>常规档随机装填权重（高60/中30/低10）；非常规档返回 0。</summary>
+        public static int GetRegularFillWeight(ContentRarity rarity)
+        {
+            switch (rarity)
+            {
+                case ContentRarity.White:
+                    return RegularWeightHigh;
+                case ContentRarity.Blue:
+                    return RegularWeightMid;
+                case ContentRarity.Gold:
+                    return RegularWeightLow;
+                default:
+                    return 0;
+            }
         }
 
         public static bool IsArchive(string deckId)
@@ -418,6 +447,45 @@ namespace NineGrid.Core.Content
                         || card.Kind != CardKind.HelpCard
                         || IsArchive(card.DeckId)
                         || !IsRegularRarity(card.Rarity))
+                    {
+                        continue;
+                    }
+                }
+
+                result.Add(defId);
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// 道具卡格 / 固定卡写回守卫（ADR-0033 修订）：外部快照（跑图存档 / 跨层库存）按 defId
+        /// 重造持有道具卡前过滤，只放行 live 卡组道具卡（特殊稀有度允许——宝箱卡等可合法驻留
+        /// 道具卡格）。归档卡（倍增塔/瞭望塔等）仍在 Catalog 中可被 CreateDraft 重造，若不在此
+        /// 拦截，旧存档会把老道具带回正式局。无 catalog 时原样放行（无从裁决）。
+        /// </summary>
+        public static List<string> FilterLiveHelpCards(GameContentCatalog catalog, IEnumerable<string> defIds)
+        {
+            var result = new List<string>();
+            if (defIds == null)
+            {
+                return result;
+            }
+
+            foreach (var defId in defIds)
+            {
+                if (string.IsNullOrEmpty(defId))
+                {
+                    continue;
+                }
+
+                if (catalog != null)
+                {
+                    CardContentDefinition card;
+                    if (!catalog.Cards.TryGetValue(defId, out card)
+                        || card == null
+                        || card.Kind != CardKind.HelpCard
+                        || IsArchive(card.DeckId))
                     {
                         continue;
                     }
