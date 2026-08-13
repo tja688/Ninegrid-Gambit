@@ -20,7 +20,7 @@
     },
     "sprites": {
         "mainIcon": "Assets/Resources/ContentArt/Multiple/pixel_art_card_pack 1.png",
-        "faceBackground": "",
+        "faceBackground": "Assets/Resources/ContentArt/Png/Other/\u5bc6\u6797_\u5931\u843d\u9057\u8ff9.png",
         "cardFrame": "",
         "banner": "",
         "backBorder": "",

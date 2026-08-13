@@ -102,7 +102,6 @@ namespace NineGrid.Cards
         {
             ResolveSceneReferences();
             CacheAnchors();
-            GroundSlotEnvironmentSkin.EnsureAttached(groundAnchorsRoot);
             EnsureHitProxies();
             // ADR-0023：九框恒开；合法性交 IntentIntake，禁止规则型启停。
             RefreshAllSlotHits(_ => true);

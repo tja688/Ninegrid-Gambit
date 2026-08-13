@@ -20,7 +20,7 @@
     },
     "sprites": {
         "mainIcon": "Assets/Resources/ContentArt/Png/像素怪物合集/sprites/004skull_die/004skull_die_07.png",
-        "faceBackground": "",
+        "faceBackground": "Assets/Resources/ContentArt/Png/Other/\u5ca9\u5c42_\u85cf\u9aa8\u5802.png",
         "cardFrame": "",
         "banner": "",
         "backBorder": "",

@@ -20,7 +20,7 @@
     },
     "sprites": {
         "mainIcon": "Assets/Resources/ContentArt/Png/像素怪物合集2/sprites/Icey_die/Icey_die_10.png",
-        "faceBackground": "",
+        "faceBackground": "Assets/Resources/ContentArt/Png/Other/\u5bc6\u6797_\u8840\u8272.png",
         "cardFrame": "",
         "banner": "",
         "backBorder": "",

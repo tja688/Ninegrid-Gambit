@@ -20,7 +20,7 @@
     },
     "sprites": {
         "mainIcon": "",
-        "faceBackground": "",
+        "faceBackground": "Assets/Resources/ContentArt/Png/Other/\u5ca9\u5c42_\u7194\u5ca9\u4e4b\u5730.png",
         "cardFrame": "",
         "banner": "",
         "backBorder": "",
