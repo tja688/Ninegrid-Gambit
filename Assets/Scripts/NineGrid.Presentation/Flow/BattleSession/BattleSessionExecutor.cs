@@ -351,6 +351,7 @@ namespace NineGrid.Flow
         private sealed class RunInventorySnapshot
         {
             public string[] RelicDefIds;
+            public string[] ConsumedRelicEffectIds;
             public int ItemDeckCapacity;
             public int ItemSlotsCapacity;
             public string[] ItemSourcePoolDefIds;
@@ -389,9 +390,11 @@ namespace NineGrid.Flow
                     : string.Empty;
             }
 
+            var consumed = player.ConsumedRelicEffectIds;
             var snapshot = new RunInventorySnapshot
             {
                 RelicDefIds = new string[relics.Count],
+                ConsumedRelicEffectIds = new string[consumed.Count],
                 ItemDeckCapacity = player.ItemDeckCapacity,
                 ItemSlotsCapacity = player.ItemSlotsCapacity,
                 ItemSourcePoolDefIds = new string[sourcePool.Count],
@@ -408,6 +411,11 @@ namespace NineGrid.Flow
             for (var i = 0; i < relics.Count; i++)
             {
                 snapshot.RelicDefIds[i] = relics[i];
+            }
+
+            for (var i = 0; i < consumed.Count; i++)
+            {
+                snapshot.ConsumedRelicEffectIds[i] = consumed[i];
             }
 
             for (var i = 0; i < sourcePool.Count; i++)
@@ -455,6 +463,9 @@ namespace NineGrid.Flow
                 inventory.ItemSourcePoolDefIds));
             player.ReplaceFixedItemCards(inventory.FixedItemCardDefIds);
             player.SetItemStatBonus(inventory.ItemStatBonus);
+
+            // 消费标记先于遗物重装写回：一次性效果（黄金鱼竿给宝箱卡）跨层不得重复发放。
+            player.ReplaceConsumedRelicEffects(inventory.ConsumedRelicEffectIds);
 
             if (inventory.RelicDefIds != null)
             {

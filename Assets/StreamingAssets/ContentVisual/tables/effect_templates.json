@@ -325,7 +325,7 @@
   "design_text": "[受到致命伤害时] 恢复50%血量并永久移除本遗物",
   "requires_json": "[\"NoOwnerEntity\"]",
   "conditions_json": "[]",
-  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnFatalDamage\",\"target\":\"Player\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"Sequence\",\"actions\":[{\"atom\":\"Heal\",\"amount\":{\"op\":\"Floor\",\"values\":[{\"op\":\"Multiply\",\"values\":[{\"source\":\"{{source}}\",\"stat\":\"MaxHp\",\"effective\":true},{\"constant\":0.5}]}]},\"actor\":\"Player\"},{\"atom\":\"DeactivateSelfEffect\"}]}}"
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnFatalDamage\",\"target\":\"Player\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"Sequence\",\"actions\":[{\"atom\":\"Heal\",\"amount\":{\"op\":\"Floor\",\"values\":[{\"op\":\"Multiply\",\"values\":[{\"source\":\"{{source}}\",\"stat\":\"MaxHp\",\"effective\":true},{\"constant\":0.5}]}]},\"actor\":\"Player\"},{\"atom\":\"DeactivateSelfEffect\",\"removeRelic\":true}]}}"
  },
  {
   "id": "tpl.relic.potion_bag.node_start",

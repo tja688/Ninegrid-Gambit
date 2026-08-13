@@ -276,6 +276,6 @@ Cards/
 
 | # | 文件 | 一句话说明 | 篇 |
 |---|---|---|---|
-| 164 | `Vfx/BoardRangeGlowFx.cs` | 悬停威胁范围荧光（程序化 9-slice 光环 + 加色材质 + 自检淡出） | 07 |
+| 164 | `Vfx/BoardRangeGlowFx.cs` | 悬停范围荧光：怪物威胁（暖橙）/ 机关邻接影响（冷青）/ Avatar 可攻击范围（暖橙）；程序化 9-slice 光环 + 加色材质 + 自检淡出 | 07 |
 | 165 | `Vfx/CardEdgeDustFx.cs` | 边沿尘雾（Place 喷发 / Trail 双尾迹，池化与预算保护） | 07 |
 | 166 | `Vfx/CardEdgeDustFxSettingsSO.cs` | 尘雾参数 SO（全局开关默认关） | 07 |

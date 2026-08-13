@@ -24,8 +24,8 @@ namespace NineGrid.Flow.Presentation
         [VfxCue("vfx.combat.armor_gain", "获得护甲蓝盾上升", "Battle", "DamageFloaterBeatHandler.TryApply", VfxCueContexts.CardDefId)]
         public const string ArmorGain = "vfx.combat.armor_gain";
 
-        [VfxCue("vfx.combat.death", "单位战斗死亡骷髅烟雾", "Battle", "CardEffectManager.PlayDeathAsync", VfxCueContexts.CardDefId)]
-        public const string Death = "vfx.combat.death";
+        [VfxCue("vfx.combat.attack_gain", "攻击提升红刃升腾", "Battle", "DamageFloaterBeatHandler.TryApply", VfxCueContexts.CardDefId)]
+        public const string AttackGain = "vfx.combat.attack_gain";
     }
 
     /// <summary>卡牌生命周期视觉特效稳定声明；发射点对齐既有生命周期 Audio Cue。</summary>
@@ -37,13 +37,18 @@ namespace NineGrid.Flow.Presentation
         [VfxCue("vfx.card.item_use", "道具卡使用金色光爆", "Cards", "CardEffectManager.PlayUseAsync", VfxCueContexts.CardDefId)]
         public const string ItemUse = "vfx.card.item_use";
 
-        /// <summary>死亡/退场脉冲：战斗死亡（battle.combat.death）走骷髅烟雾，其余退场走轻烟。</summary>
+        /// <summary>
+        /// 死亡/退场脉冲：战斗死亡不再叠加爆发特效（只保留卡面碎裂退场帧动画），
+        /// 其余非战斗退场仍走轻烟。
+        /// </summary>
         public static void PulseDeathOrExit(string audioCueId, Vector3 position, string cardDefId)
         {
-            var cueId = string.Equals(audioCueId, BattleCombatAudioCues.Death, System.StringComparison.Ordinal)
-                ? BattleCombatVfxCues.Death
-                : Exit;
-            VfxPulseEmit.PulseAt(cueId, "CardEffectManager.PlayDeathAsync", cardDefId, null, position);
+            if (string.Equals(audioCueId, BattleCombatAudioCues.Death, System.StringComparison.Ordinal))
+            {
+                return;
+            }
+
+            VfxPulseEmit.PulseAt(Exit, "CardEffectManager.PlayDeathAsync", cardDefId, null, position);
         }
 
         public static void PulseItemUse(Vector3 position, string cardDefId)
@@ -111,6 +116,17 @@ namespace NineGrid.Flow.Presentation
             }
 
             VfxPulseEmit.PulseAt(BattleCombatVfxCues.ArmorGain, diagnosticSource, gameEvent.SourceDefId, null, targetPosition, gameEvent.TargetUid);
+        }
+
+        /// <summary>攻击提升脉冲：BaseStatModified(Attack) 正增量时播放，怪物与玩家同缝。</summary>
+        public static void PulseAttackGain(NineGrid.Core.CoreGameEvent gameEvent, Vector3 targetPosition, string diagnosticSource)
+        {
+            if (gameEvent == null || gameEvent.Delta <= 0)
+            {
+                return;
+            }
+
+            VfxPulseEmit.PulseAt(BattleCombatVfxCues.AttackGain, diagnosticSource, gameEvent.SourceDefId, null, targetPosition, gameEvent.TargetUid);
         }
     }
 

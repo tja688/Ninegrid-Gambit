@@ -778,6 +778,19 @@ namespace NineGrid.Core
             var deck = context.GetModel<DeckModel>();
             var result = new GameActionResult();
 
+            // 战斗互动期向 PlayerCardPool 授予帮助卡（如黄金鱼竿获得时给宝箱卡）：
+            // 玩家侧暂存池只在开局发牌被消费，互动期投入会滞留死区、下节点 ClearBattleZones 直接丢卡。
+            // 改洗入抽牌堆（与战斗内奖励帮助卡同语义），空位补牌时自然上场。
+            if (Count > 0
+                && Zone == ZoneId.PlayerCardPool
+                && Kind == CardKind.HelpCard
+                && !NodeStartDrawPileGrant
+                && context.GetModel<RunModel>().Phase.Value == GamePhase.InteractionLoop)
+            {
+                result.AddFollowUp(new ShuffleIntoDrawPileAction(DefId, Kind, Count, false, Cause));
+                return result;
+            }
+
             for (var i = 0; i < Count; i++)
             {
                 if (NodeStartDrawPileGrant
@@ -1585,12 +1598,22 @@ namespace NineGrid.Core
 
     public sealed class DeactivateEffectAction : GameAction
     {
-        public DeactivateEffectAction(string instanceId)
+        public DeactivateEffectAction(string instanceId, bool removeOwnerRelic = false)
         {
             InstanceId = instanceId ?? string.Empty;
+            RemoveOwnerRelic = removeOwnerRelic;
         }
 
         public string InstanceId { get; private set; }
+
+        /// <summary>
+        /// 遗物容器效果显式声明「本遗物随效果消耗」（如凤凰羽毛）时为 true：
+        /// 反激活同时把遗物从装备栏移除。默认 false——一次性效果（如黄金鱼竿
+        /// 获得时给宝箱卡）只停用效果本身、遗物留在装备栏，并落消费标记防止
+        /// 存档恢复 / 跨层重装 / StartNode 自愈重挂时重复发放。
+        /// </summary>
+        public bool RemoveOwnerRelic { get; private set; }
+
         public override string ActionName { get { return "DeactivateEffect"; } }
 
         public override GameActionResult Apply(GameActionContext context)
@@ -1610,10 +1633,18 @@ namespace NineGrid.Core
             var isRelic = instance.Owner != null
                 && instance.Owner.ContainerType == EffectContainerType.Relic;
 
-            if (instance.Owner != null
-                && instance.Owner.ContainerType == EffectContainerType.Relic)
+            if (isRelic)
             {
-                context.GetModel<PlayerModel>().RemoveRelic(instance.Owner.SourceDefId);
+                var player = context.GetModel<PlayerModel>();
+                if (RemoveOwnerRelic)
+                {
+                    player.RemoveRelic(sourceDefId);
+                    RelicConsumedEffectMarks.ClearForRelic(context, player, sourceDefId);
+                }
+                else if (instance.Definition != null && !string.IsNullOrEmpty(instance.Definition.Id))
+                {
+                    player.MarkRelicEffectConsumed(instance.Definition.Id);
+                }
             }
 
             effectSystem.Deactivate(InstanceId);

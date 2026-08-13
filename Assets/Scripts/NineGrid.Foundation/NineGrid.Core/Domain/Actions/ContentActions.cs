@@ -403,6 +403,36 @@ namespace NineGrid.Core
     }
 
     /// <summary>
+    /// 一次性遗物效果消费标记的清除口：遗物离开装备栏（丢弃 / removeRelic 消耗）时
+    /// 按目录 EffectIds 逐个清标记，之后再次获得该遗物可重新触发一次性效果。
+    /// </summary>
+    internal static class RelicConsumedEffectMarks
+    {
+        public static void ClearForRelic(GameActionContext context, PlayerModel player, string relicDefId)
+        {
+            if (player == null || string.IsNullOrEmpty(relicDefId))
+            {
+                return;
+            }
+
+            var content = context.GetSystem<IContentSystem>();
+            RelicContentDefinition relic;
+            if (content == null
+                || content.Catalog == null
+                || !content.Catalog.Relics.TryGetValue(relicDefId, out relic)
+                || relic == null)
+            {
+                return;
+            }
+
+            for (var i = 0; i < relic.EffectIds.Count; i++)
+            {
+                player.ClearRelicEffectConsumed(relic.EffectIds[i]);
+            }
+        }
+    }
+
+    /// <summary>
     /// 玩家丢弃已装备遗物：反激活遗物效果并从装备栏移除（金币由 EconomySystem 另发）。
     /// </summary>
     public sealed class DiscardRelicAction : GameAction
@@ -438,7 +468,10 @@ namespace NineGrid.Core
                 effectSystem.Deactivate(instance.InstanceId);
             }
 
-            context.GetModel<PlayerModel>().RemoveRelic(RelicDefId);
+            var player = context.GetModel<PlayerModel>();
+            player.RemoveRelic(RelicDefId);
+            // 丢弃后再次获得应重新触发一次性效果（如黄金鱼竿给宝箱卡）。
+            RelicConsumedEffectMarks.ClearForRelic(context, player, RelicDefId);
 
             // #120：丢弃时清掉本遗物 run 贡献，并拆掉汇入 Avatar 的 Persistent modifier。
             var contributions = context.GetModel<RelicRunContributionModel>();

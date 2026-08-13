@@ -107,6 +107,28 @@ namespace NineGrid.Flow.Presentation
                 return false;
             }
 
+            if (instruction.Kind == PresentationInstructionKind.ModifyBaseStat
+                && gameEvent.Type == CoreEventType.BaseStatModified
+                && (StatId)gameEvent.Amount == StatId.Attack)
+            {
+                // 旁路装饰：攻击提升（含显式加攻与卡面对账提交）播 spell_attack_up 帧动画，
+                // 怪物与玩家同缝；不认领指令，卡面数值仍由 CardFaceStatHandler 提交。
+                if (gameEvent.Delta <= 0)
+                {
+                    return false;
+                }
+
+                var attackCardUid = gameEvent.CardUid > 0 ? gameEvent.CardUid : gameEvent.TargetUid;
+                var attackPos = PresentationOutputProjector.ResolveCardWorldPosition(attackCardUid);
+                if (!attackPos.HasValue)
+                {
+                    return false;
+                }
+
+                CombatOutcomeVfx.PulseAttackGain(gameEvent, attackPos.Value, "DamageFloaterBeatHandler.TryApply");
+                return false;
+            }
+
             if (instruction.Kind == PresentationInstructionKind.UpdateArmor
                 && gameEvent.Type == CoreEventType.ArmorChanged)
             {

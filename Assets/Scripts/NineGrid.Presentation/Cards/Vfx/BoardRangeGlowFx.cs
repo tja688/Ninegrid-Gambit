@@ -1,3 +1,6 @@
+using System;
+using NineGrid.Content;
+using NineGrid.Content.CardPresentation;
 using NineGrid.Core;
 using QFramework;
 using UnityEngine;
@@ -5,13 +8,16 @@ using UnityEngine;
 namespace NineGrid.Cards.Vfx
 {
     /// <summary>
-    /// 悬停威胁范围荧光：悬停场地怪物卡时，按其攻击模式（ADR-0011：正交 / 斜角 / 全向）
-    /// 在受威胁的邻格边缘点亮一圈柔和的加色荧光描边。
+    /// 悬停范围荧光：在相关邻格边缘点亮一圈柔和的加色荧光描边。三类来源——
+    /// ① 怪物卡：按攻击模式（ADR-0011：正交 / 斜角 / 全向）点亮威胁范围（暖橙威胁色）；
+    /// ② 机关卡：效果模板含邻接原子（正交邻接语义）时点亮影响范围（冷青影响色，与怪物区分）；
+    /// ③ 玩家本体：悬停 Avatar 格时按互动范围（Avatar 槽四向正交，与 Core AreAdjacent 同源）
+    ///   点亮可攻击范围（与怪物同威胁色）。
     /// 纯装饰、不占主线、不进命中路由；背面卡（ADR-0016 双向惰性不开火）与「无」模式不显示。
     /// </summary>
     public static class BoardRangeGlowFx
     {
-        /// <summary>悬停进入：解析该卡的威胁范围并点亮；无范围时等价于清除本请求者的显示。</summary>
+        /// <summary>悬停进入：解析该卡的威胁/影响范围并点亮；无范围时等价于清除本请求者的显示。</summary>
         public static void ShowThreatRange(Behaviour requester, ManagedCard card)
         {
             if (requester == null)
@@ -20,6 +26,20 @@ namespace NineGrid.Cards.Vfx
             }
 
             BoardRangeGlowRunner.Ensure().Show(requester, card);
+        }
+
+        /// <summary>
+        /// 悬停玩家本体：hoveredSlot 为 Avatar 槽时点亮玩家可攻击范围，否则清除本请求者的显示。
+        /// 供场地面在无认领者格位的悬停分支调用（Avatar 永不认领，ADR-0023）。
+        /// </summary>
+        public static void ShowAvatarInteractionRange(Behaviour requester, int hoveredSlot)
+        {
+            if (requester == null)
+            {
+                return;
+            }
+
+            BoardRangeGlowRunner.Ensure().ShowAvatarIfSlotMatches(requester, hoveredSlot);
         }
 
         /// <summary>悬停离开 / 认领释放：仅当当前显示属于该请求者时清除。</summary>
@@ -38,6 +58,8 @@ namespace NineGrid.Cards.Vfx
     {
         // --- 视觉调参（微微荧光、不抢戏） ---
         private static readonly Color ThreatColor = new Color(1f, 0.45f, 0.22f);
+        // 机关影响范围用冷青色，与怪物威胁的暖橙拉开区分。
+        private static readonly Color TrapInfluenceColor = new Color(0.3f, 0.85f, 1f);
         private const float BaseAlpha = 0.4f;
         private const float AvatarEmphasisWeight = 1.45f;
         private const float FadeInSeconds = 0.16f;
@@ -66,6 +88,8 @@ namespace NineGrid.Cards.Vfx
         private Behaviour _requester;
         private int _originUid;
         private int _originSlot;
+        private bool _avatarMode;
+        private Color _activeColor = ThreatColor;
 
         private Sprite _glowSprite;
         private Material _glowMaterial;
@@ -100,6 +124,7 @@ namespace NineGrid.Cards.Vfx
         {
             ClearTargets();
             _requester = null;
+            _avatarMode = false;
 
             if (requester == null || card == null)
             {
@@ -112,7 +137,7 @@ namespace NineGrid.Cards.Vfx
                 return;
             }
 
-            if (!TryResolveThreatFilter(card, out var filter))
+            if (!TryResolveRange(card, out var filter, out var color))
             {
                 return;
             }
@@ -142,6 +167,62 @@ namespace NineGrid.Cards.Vfx
                 _requester = requester;
                 _originUid = card.Uid;
                 _originSlot = originSlot;
+                _activeColor = color;
+            }
+        }
+
+        /// <summary>
+        /// 悬停 Avatar 格：点亮玩家可攻击范围（Avatar 槽四向正交，与 Core 互动范围同源）。
+        /// hoveredSlot 非 Avatar 槽时仅清除本请求者显示；重复悬停同格幂等（避免逐帧重建）。
+        /// </summary>
+        public void ShowAvatarIfSlotMatches(Behaviour requester, int hoveredSlot)
+        {
+            var avatarSlot = ResolveAvatarSlotOrMinusOne();
+            if (requester == null
+                || avatarSlot < GroundSlotTopology.MinSlot
+                || hoveredSlot != avatarSlot)
+            {
+                HideIfOwnedBy(requester);
+                return;
+            }
+
+            if (_avatarMode
+                && ReferenceEquals(_requester, requester)
+                && _originSlot == avatarSlot)
+            {
+                return;
+            }
+
+            ClearTargets();
+            _requester = null;
+            _avatarMode = false;
+
+            var field = GroundFieldGeometryHook.FieldOrNull();
+            if (field == null)
+            {
+                return;
+            }
+
+            var reachable = GroundSlotTopology.GetNeighbors(avatarSlot, GroundSlotRelation.Orthogonal);
+            var shown = false;
+            for (var i = 0; i < reachable.Count; i++)
+            {
+                if (!TryPrepareCellRenderer(field, reachable[i]))
+                {
+                    continue;
+                }
+
+                _targetWeight[reachable[i]] = 1f;
+                shown = true;
+            }
+
+            if (shown)
+            {
+                _requester = requester;
+                _originUid = 0;
+                _originSlot = avatarSlot;
+                _avatarMode = true;
+                _activeColor = ThreatColor;
             }
         }
 
@@ -153,6 +234,7 @@ namespace NineGrid.Cards.Vfx
             }
 
             _requester = null;
+            _avatarMode = false;
             ClearTargets();
         }
 
@@ -182,7 +264,7 @@ namespace NineGrid.Cards.Vfx
 
         /// <summary>
         /// 悬停离开事件之外的兜底：源卡换格 / 死亡 / 主线开跑 / 请求者失活时自动淡出，
-        /// 避免旋转、齐射期间残留过期的威胁提示。
+        /// 避免旋转、齐射期间残留过期的威胁提示。Avatar 模式改验 Avatar 槽未变。
         /// </summary>
         private void ValidateActiveRequest()
         {
@@ -197,15 +279,23 @@ namespace NineGrid.Cards.Vfx
 
             if (stillValid)
             {
-                var field = GroundFieldGeometryHook.FieldOrNull();
-                stillValid = field != null
-                    && field.TryGetSlotOf(_originUid, out var slot)
-                    && slot == _originSlot;
+                if (_avatarMode)
+                {
+                    stillValid = ResolveAvatarSlotOrMinusOne() == _originSlot;
+                }
+                else
+                {
+                    var field = GroundFieldGeometryHook.FieldOrNull();
+                    stillValid = field != null
+                        && field.TryGetSlotOf(_originUid, out var slot)
+                        && slot == _originSlot;
+                }
             }
 
             if (!stillValid)
             {
                 _requester = null;
+                _avatarMode = false;
                 ClearTargets();
             }
         }
@@ -249,17 +339,31 @@ namespace NineGrid.Cards.Vfx
 
                 renderer.enabled = true;
                 var alpha = Mathf.Clamp01(BaseAlpha * current * breath);
-                renderer.color = new Color(ThreatColor.r, ThreatColor.g, ThreatColor.b, alpha);
+                renderer.color = new Color(_activeColor.r, _activeColor.g, _activeColor.b, alpha);
             }
         }
 
-        private static bool TryResolveThreatFilter(ManagedCard card, out GroundSlotRelation filter)
+        private static bool TryResolveRange(ManagedCard card, out GroundSlotRelation filter, out Color color)
         {
             filter = GroundSlotRelation.None;
+            color = ThreatColor;
             var snapshot = card.CommittedPresentation;
             if (snapshot == null || !snapshot.FaceUp)
             {
                 return false;
+            }
+
+            // 机关影响范围：效果模板含邻接原子（Core 邻接语义 = 正交）才点亮；无邻接影响的机关不显示。
+            if (card.CoreKind == CardPresentationKind.Trap)
+            {
+                if (!TrapHasAdjacentInfluence(card.DefId))
+                {
+                    return false;
+                }
+
+                filter = GroundSlotRelation.Orthogonal;
+                color = TrapInfluenceColor;
+                return true;
             }
 
             switch (snapshot.AttackPattern)
@@ -276,6 +380,40 @@ namespace NineGrid.Cards.Vfx
                 default:
                     return false;
             }
+        }
+
+        /// <summary>
+        /// 机关是否具有邻接影响范围：任一效果模板 Body 含邻接原子
+        /// （SyncAdjacentBorrowedArmor / AdjacentMonstersAndPlayer / adjacentTo 等，均为正交邻接语义）。
+        /// 与 CoreCardPresentationMapper.DetectSyncRhythmFromDto 同款模板扫描；不缓存，跟随 Catalog 重载。
+        /// </summary>
+        private static bool TrapHasAdjacentInfluence(string defId)
+        {
+            if (string.IsNullOrEmpty(defId)
+                || !CardPresentationConfigCatalog.TryGet(defId, out var dto)
+                || dto?.effectAssemblies == null)
+            {
+                return false;
+            }
+
+            for (var i = 0; i < dto.effectAssemblies.Length; i++)
+            {
+                var assembly = dto.effectAssemblies[i];
+                if (assembly == null || string.IsNullOrWhiteSpace(assembly.templateId))
+                {
+                    continue;
+                }
+
+                if (EffectTemplateCatalog.TryGet(assembly.templateId.Trim(), out var template)
+                    && template != null
+                    && !string.IsNullOrEmpty(template.BodyJson)
+                    && template.BodyJson.IndexOf("Adjacent", StringComparison.Ordinal) >= 0)
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         private static int ResolveAvatarSlotOrMinusOne()
@@ -347,7 +485,7 @@ namespace NineGrid.Cards.Vfx
             renderer.sprite = sprite;
             renderer.drawMode = SpriteDrawMode.Sliced;
             renderer.sharedMaterial = EnsureGlowMaterial();
-            renderer.color = new Color(ThreatColor.r, ThreatColor.g, ThreatColor.b, 0f);
+            renderer.color = new Color(_activeColor.r, _activeColor.g, _activeColor.b, 0f);
             renderer.enabled = false;
             return renderer;
         }

@@ -88,15 +88,15 @@
             "authoringStatus": "aiDraft"
         },
         {
-            "cueId": "vfx.combat.death",
-            "note": "单位战斗死亡骷髅烟雾",
+            "cueId": "vfx.combat.attack_gain",
+            "note": "攻击提升红刃升腾",
             "module": "Battle",
             "enabled": true,
             "playerId": "sprite-sheet",
             "spatialOwnership": "independent",
-            "materialKey": "vfx.smoke_bursts.stylized_skull_smoke_burst_001.small_white",
-            "fps": 14,
-            "scale": 1.6,
+            "materialKey": "vfx.fantasy_spells.spell_attack_up_001.small_red",
+            "fps": 16,
+            "scale": 0.8,
             "timeBase": "scaled",
             "authoringStatus": "aiDraft"
         },

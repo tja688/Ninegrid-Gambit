@@ -594,10 +594,21 @@ namespace NineGrid.Core.Systems
                 return;
             }
 
+            // 一次性遗物效果（OnActivate + DeactivateSelfEffect，如黄金鱼竿给宝箱卡）
+            // 消费后不再重挂：存档恢复 / 跨层重装 / StartNode 自愈统一走本口。
+            var player = containerType == EffectContainerType.Relic
+                ? this.GetModel<PlayerModel>()
+                : null;
+
             var effectSystem = this.GetSystem<IEffectSystem>();
             for (var i = 0; i < effectIds.Count; i++)
             {
                 if (effectIdFilter != null && !effectIdFilter(effectIds[i]))
+                {
+                    continue;
+                }
+
+                if (player != null && player.IsRelicEffectConsumed(effectIds[i]))
                 {
                     continue;
                 }

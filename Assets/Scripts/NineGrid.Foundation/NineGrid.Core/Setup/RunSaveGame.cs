@@ -72,6 +72,8 @@ namespace NineGrid.Core
         public int itemSlotsCapacity;
         public int itemStatBonus;
         public string[] relicDefIds = Array.Empty<string>();
+        /// <summary>已消费的一次性遗物效果 id（如黄金鱼竿给宝箱卡），恢复时先写回再重装遗物，防重复发放。</summary>
+        public string[] consumedRelicEffectIds = Array.Empty<string>();
         public string[] itemSourcePoolDefIds = Array.Empty<string>();
         public string[] fixedItemCardDefIds = Array.Empty<string>();
 
@@ -182,6 +184,7 @@ namespace NineGrid.Core
                 itemSlotsCapacity = player.ItemSlotsCapacity,
                 itemStatBonus = player.ItemStatBonus,
                 relicDefIds = CopyList(player.RelicDefIds),
+                consumedRelicEffectIds = CopyList(player.ConsumedRelicEffectIds),
                 itemSourcePoolDefIds = CopyList(player.ItemSourcePoolDefIds),
                 fixedItemCardDefIds = CopyList(player.FixedItemCardDefIds),
             };
@@ -315,6 +318,8 @@ namespace NineGrid.Core
             run.SetAttributePicks(snapshot.attributePickDefIds);
 
             // 2. 遗物对齐：先弃掉初始局多出的（如职业初始遗物已被玩家丢弃），再补装快照遗物。
+            // 消费标记必须先于遗物重装写回，否则一次性效果（黄金鱼竿给宝箱卡）会在恢复时重复发放。
+            player.ReplaceConsumedRelicEffects(snapshot.consumedRelicEffectIds);
             var wanted = new HashSet<string>(StringComparer.Ordinal);
             if (snapshot.relicDefIds != null)
             {

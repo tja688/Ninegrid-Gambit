@@ -4187,11 +4187,18 @@ namespace NineGrid.Core.Effects
     [EffectAtom("DeactivateSelfEffect", EffectAtomKind.Action)]
     public sealed class DeactivateSelfEffectActionAtom : IAction
     {
-        public void Configure(EffectDslNode config) { }
+        // removeRelic：遗物容器专用——true 表示效果消耗时遗物一并从装备栏移除
+        // （凤凰羽毛「永久移除本遗物」）；缺省 false 只停用效果并落一次性消费标记。
+        private bool mRemoveRelic;
+
+        public void Configure(EffectDslNode config)
+        {
+            mRemoveRelic = config.Get("removeRelic").AsBool(false);
+        }
 
         public IReadOnlyList<GameAction> BuildActions(EffectRuntimeContext context, IReadOnlyList<int> targets)
         {
-            return new[] { new DeactivateEffectAction(context.Instance.InstanceId) };
+            return new[] { new DeactivateEffectAction(context.Instance.InstanceId, mRemoveRelic) };
         }
     }
 

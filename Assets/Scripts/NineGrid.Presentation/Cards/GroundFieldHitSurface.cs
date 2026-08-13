@@ -1,3 +1,4 @@
+using NineGrid.Cards.Vfx;
 using NineGrid.Flow;
 using NineGrid.Flow.BoardBriefTip;
 using NineGrid.Presentation;
@@ -67,6 +68,7 @@ namespace NineGrid.Cards
         {
             PointerHitRegistry.Unregister(this);
             ClearHoverState();
+            BoardRangeGlowFx.Hide(this);
         }
 
         /// <summary>绑定场景九格命中框；不写 size / offset。</summary>
@@ -130,6 +132,7 @@ namespace NineGrid.Cards
         public void HandlePointerExit()
         {
             ClearHoverState();
+            BoardRangeGlowFx.Hide(this);
             _resolvedSlot = 0;
             _resolvedCollider = null;
         }
@@ -145,6 +148,7 @@ namespace NineGrid.Cards
             if (!GroundSlotTopology.IsValidSlot(_resolvedSlot))
             {
                 ClearHoverState();
+                BoardRangeGlowFx.Hide(this);
                 return;
             }
 
@@ -153,7 +157,9 @@ namespace NineGrid.Cards
             var hasClaim = field != null && field.TryGetSlotClaimant(_resolvedSlot, out claimant);
             if (!hasClaim)
             {
+                // Avatar 永不认领（ADR-0023）：无认领者格位的悬停在此接玩家攻击范围光圈。
                 ClearHoverState();
+                ApplyAvatarRangeGlow();
                 return;
             }
 
@@ -163,6 +169,7 @@ namespace NineGrid.Cards
             }
 
             ClearHoverState();
+            BoardRangeGlowFx.Hide(this);
             _hoveredClaimant = claimant;
             if (!string.IsNullOrEmpty(claimant.BriefTipText))
             {
@@ -171,6 +178,24 @@ namespace NineGrid.Cards
             }
 
             claimant.HoverEnter?.Invoke();
+        }
+
+        /// <summary>
+        /// 悬停玩家本体：指向 Avatar 格时点亮可攻击范围（与怪物威胁同色）；
+        /// 拖拽 / 手牌忙（非 BoardSelect）时不显示。非 Avatar 格由光圈内部按请求者清除。
+        /// </summary>
+        private void ApplyAvatarRangeGlow()
+        {
+            var hand = CardEntityLifecycleHook.HandOrNull();
+            if (hand != null
+                && (hand.IsDragging
+                    || (hand.IsBusy && !PresentationInputGates.BoardSelectModeActive)))
+            {
+                BoardRangeGlowFx.Hide(this);
+                return;
+            }
+
+            BoardRangeGlowFx.ShowAvatarInteractionRange(this, _resolvedSlot);
         }
 
         public void HandlePointerDown()

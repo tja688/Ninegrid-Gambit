@@ -1,6 +1,6 @@
 # Tests 现状（NineGrid.Presentation.Tests）
 
-> 覆盖范围：`Tests/` 目录，共 **32 个 .cs**（根目录 7 + `Tests/Flow/` 25），全部 EditMode / NUnit。
+> 覆盖范围：`Tests/` 目录，共 **33 个 .cs**（根目录 8 + `Tests/Flow/` 25），全部 EditMode / NUnit。
 > 背景澄清：`docs/code-map/tests.md` 记载的「冲刺期测试套件整体清空」**不适用于本程序集**——音频/VFX 主题的行为测试、结构护栏、交付卫生门禁都**仍在且生效**。`AudioStructureGuardTests`、`VfxStructureGuardTests` 等护栏测试没有被清掉；本目录其他篇章若提"护栏只靠文字纪律"，以本篇为准（已同步修正）。
 > 2026-08-12 变更：三个工作台 web 层测试（`AudioWorkbenchServerTests` / `VfxWorkbenchServerTests` / `EditorWorkbenchTransportTests`）已删除——跑测试不再拉起回环服务器与网页；根目录新增六个规则回归测试（对账缝 / 位移挂起 / 神圣决斗 / 清关残留重置 / 遗物开局自愈 / 借甲图腾）。
 
@@ -14,7 +14,7 @@ unity command run_tests --mode EditMode --filter NineGrid.Presentation.Tests --f
 
 ---
 
-## 根目录（7）
+## 根目录（8）
 
 | 文件 | 验证行为 | 守护的不变量 |
 |------|---------|-------------|
@@ -24,6 +24,7 @@ unity command run_tests --mode EditMode --filter NineGrid.Presentation.Tests --f
 | `HolyDuelMarkRegressionTests` | 双持有者连打时旧标记惩罚先结算、标记后转移，不因新目标同为持有者而静默 | 神圣决斗（skill.holy_duel）标记结算语义 |
 | `NodeEndTransientResetTests` | 清关（节点完成）即清四档临时修正 + 当前甲回落有效甲，不拖到下局 StartNode | 「对战残留不出局」（`ClearNodeTransientModifiersAction`） |
 | `RelicCompositeArmorNodeStartTests` | 装备栏遗物效果实例缺失时 StartNode 自愈重挂——复合盔甲开局按攻击加当前甲不再哑火 | `ReactivateMissingRelicEffectsAction` 幂等自愈 |
+| `RelicGoldenCofferGrantTests` | 黄金鱼竿战斗内拾取：2 张宝箱卡洗入抽牌堆且遗物留装备栏；重挂/次节点自愈/读档语义不重发；局外拾取进道具卡格；丢弃后重获再发；凤凰羽毛 `removeRelic:true` 正常挂载 | ADR-0049 一次性遗物效果消费标记 + 战斗内 `Spawn` 帮助卡洗入抽牌堆 |
 | `TrapArmorTotemBorrowedArmorTests` | 护甲图腾邻接怪 +1 借甲且只加一次、离邻回收、远处怪不涨甲 | 借甲光环基线记账（`SyncAdjacentBorrowedArmorAction`） |
 
 ## Tests/Flow/（25）

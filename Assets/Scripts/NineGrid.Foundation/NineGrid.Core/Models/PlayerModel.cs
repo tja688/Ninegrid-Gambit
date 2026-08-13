@@ -15,6 +15,9 @@ namespace NineGrid.Core
         public const int MaxRelicSlots = 12;
 
         private readonly List<string> mRelicDefIds = new List<string>();
+        // 一次性遗物效果消费标记（如黄金鱼竿「获得时给宝箱卡」）：
+        // 阻止存档恢复 / 跨层重装 / StartNode 自愈重挂时重复发放。键=目录效果 id。
+        private readonly List<string> mConsumedRelicEffectIds = new List<string>();
         private readonly List<string> mItemSourcePoolDefIds = new List<string>();
         private readonly List<string> mFixedItemCardDefIds = new List<string>();
         private int mItemDeckCapacity = DefaultItemDeckCapacity;
@@ -159,6 +162,54 @@ namespace NineGrid.Core
             return removed;
         }
 
+        /// <summary>已消费的一次性遗物效果 id（供存档/跨层快照捕获）。</summary>
+        public IReadOnlyList<string> ConsumedRelicEffectIds
+        {
+            get { return mConsumedRelicEffectIds; }
+        }
+
+        public bool IsRelicEffectConsumed(string effectId)
+        {
+            return !string.IsNullOrEmpty(effectId) && mConsumedRelicEffectIds.Contains(effectId);
+        }
+
+        public void MarkRelicEffectConsumed(string effectId)
+        {
+            if (string.IsNullOrEmpty(effectId) || mConsumedRelicEffectIds.Contains(effectId))
+            {
+                return;
+            }
+
+            mConsumedRelicEffectIds.Add(effectId);
+            Touch();
+        }
+
+        /// <summary>移除单个消费标记（遗物被丢弃/移除时按目录效果 id 逐个清除，重获后可再次生效）。</summary>
+        public void ClearRelicEffectConsumed(string effectId)
+        {
+            if (mConsumedRelicEffectIds.Remove(effectId))
+            {
+                Touch();
+            }
+        }
+
+        public void ReplaceConsumedRelicEffects(IEnumerable<string> effectIds)
+        {
+            mConsumedRelicEffectIds.Clear();
+            if (effectIds != null)
+            {
+                foreach (var effectId in effectIds)
+                {
+                    if (!string.IsNullOrEmpty(effectId) && !mConsumedRelicEffectIds.Contains(effectId))
+                    {
+                        mConsumedRelicEffectIds.Add(effectId);
+                    }
+                }
+            }
+
+            Touch();
+        }
+
         public void SetItemSlotsCapacity(int capacity)
         {
             var next = capacity < DefaultItemSlotsCapacity
@@ -295,6 +346,7 @@ namespace NineGrid.Core
             InteractionCount.Value = 0;
             ProfessionId.Value = string.Empty;
             mRelicDefIds.Clear();
+            mConsumedRelicEffectIds.Clear();
             mItemDeckCapacity = DefaultItemDeckCapacity;
             mItemSlotsCapacity = DefaultItemSlotsCapacity;
             mItemSourcePoolDefIds.Clear();
