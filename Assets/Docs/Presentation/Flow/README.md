@@ -1,6 +1,6 @@
 # Presentation/Flow 代码文档库 —— 总览
 
-> 对应代码：`Assets/Scripts/NineGrid.Presentation/Flow/`（211 个 .cs 文件，2026-08 快照）。
+> 对应代码：`Assets/Scripts/NineGrid.Presentation/Flow/`（2026-08 快照 211 个 .cs；2026-08-13 新增 `Presentation/ScreenImpact.cs`、`Presentation/BoardImpactSignatures.cs` 后 213）。
 > 本文档库是预发布一次性权威镜像（用户明确豁免），以当下代码实际实现为准；日常维护仍以 [`docs/code-map/`](../../../../docs/code-map/) 与 [`docs/adr/`](../../../../docs/adr/) 为准。
 > 兄弟文档库：[`Assets/Docs/Presentation/Cards/`](../Cards/)、[`Assets/Docs/Presentation/Systems与通信/`](../Systems与通信/)。
 
@@ -27,7 +27,7 @@ Flow/
 ├── Platform/                 平台接入（成就 ID / 成就与信息 Hook 面）
 ├── Transitions/              局内过场（方向袋 / 过场服务 / 参数 SO）
 ├── BattleSession/            战斗会话（Executor 六件 + 投影协调 + 盘面播放器 + 作弊）
-├── Presentation/             导演时间线 / 意图剧本 / 锚点排期 / 脉冲与 Cue（80 个文件，全区最大）
+├── Presentation/             导演时间线 / 意图剧本 / 锚点排期 / 脉冲与 Cue / 抖屏（82 个文件，全区最大）
 ├── Diagnostics/              四轨诊断日志（Battle / Flow / Perf / Registry + 手动快照）
 ├── RoomIcons/                选房图标（Presenter / 落格 / 驻留 / 软占）
 ├── ShopBoard/                商店房场地板
@@ -48,7 +48,7 @@ Flow/
 | [02-战斗会话与批次投影](02-战斗会话与批次投影.md) | BattleSession/、会话 Controller、EventLog 投影与扫描器、卡面映射 | 20 |
 | [03-表演导演时间线与编排调度](03-表演导演时间线与编排调度.md) | Director、Timeline、Step、Present 通道、稳定化/敌方行动/洗回调度 | 27 |
 | [04-意图门禁与剧本工厂](04-意图门禁与剧本工厂.md) | InputIntent、合法性裁决、八个 IntentScriptFactory、Avatar 走格 | 22 |
-| [05-表演锚点排期与触发脉冲](05-表演锚点排期与触发脉冲.md) | BeatScheduler 与六 Handler、TriggerPulseHub 与 Sink、Cue 声明、金币表现 | 29 |
+| [05-表演锚点排期与触发脉冲](05-表演锚点排期与触发脉冲.md) | BeatScheduler 与六 Handler、TriggerPulseHub 与 Sink、抖屏与签名冲击、Cue 声明、金币表现 | 31 |
 | [06-教学关卡模块（Tutorial）](06-教学关卡模块（Tutorial）.md) | Tutorial/ 五件 | 5 |
 | [07-平台接入（Platform）](07-平台接入（Platform）.md) | Platform/ 三件 | 3 |
 | [08-房间流程与场地板](08-房间流程与场地板.md) | RoomIcons/、四套房内板、InRoomBoard/、BoardBriefTip/、Bounce 选择、两 CoreHook | 33 |
@@ -264,6 +264,8 @@ flowchart TD
 | `Presentation/EffectTriggerPulseBeatHandler.cs` | 链⑤ TriggerEffect 脉冲装饰 | 05 |
 | `Presentation/GoldGainBeatHandler.cs` | 链⑥ UpdateGold 飞币/HUD 广播 | 05 |
 | `Presentation/TriggerPulseHub.cs` | FX/音效/VFX 三通道脉冲唯一出口 | 05 |
+| `Presentation/ScreenImpact.cs` | 抖屏门面 + Runner（整像素量化、不旋转相机，ADR-0051） | 05 |
+| `Presentation/BoardImpactSignatures.cs` | 「触发即爆点」效果的抖屏/冲击波档位登记表（ADR-0051） | 05 |
 | `Presentation/AudioTriggerPulseSink.cs` | 音频脉冲落地 IAudioSystem | 05 |
 | `Presentation/CardEffectTriggerPulseSink.cs` | 旧 FX 通道（fx.card.{uid} → 卡面脉冲） | 05 |
 | `Presentation/DebouncingTriggerPulseSink.cs` | 同 cue 去抖装饰 sink | 05 |

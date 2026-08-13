@@ -1311,6 +1311,13 @@ namespace NineGrid.Cards
 
             var dragZ = card.Transform.position.z;
 
+            // 惯性倾斜写 L1（拖拽期无人占用该层），不与 hover 在 L0 的 punch 旋转互踩。
+            var tiltFrame = ResolveDragTiltFrame(card);
+            PlayDragPickupSquash(tiltFrame);
+            var tiltPreviousX = card.Transform.position.x;
+            var tiltVelocityX = 0f;
+            var tiltDegrees = 0f;
+
             try
             {
                 while (WorldPointerUtility.IsPrimaryHeld())
@@ -1327,6 +1334,20 @@ namespace NineGrid.Cards
                     card.Transform.position = world;
                     UpdateRecycleValueHover(world);
 
+                    var tiltDt = Mathf.Max(Time.unscaledDeltaTime, 0.0001f);
+                    var instantVelocityX = (world.x - tiltPreviousX) / tiltDt;
+                    tiltPreviousX = world.x;
+                    tiltVelocityX = Mathf.Lerp(
+                        tiltVelocityX,
+                        instantVelocityX,
+                        1f - Mathf.Exp(-DragTiltVelocitySmoothing * tiltDt));
+                    var tiltTarget = Mathf.Clamp(
+                        -tiltVelocityX * DragTiltDegreesPerUnitSpeed,
+                        -DragTiltMaxDegrees,
+                        DragTiltMaxDegrees);
+                    tiltDegrees = Mathf.Lerp(tiltDegrees, tiltTarget, 1f - Mathf.Exp(-DragTiltFollow * tiltDt));
+                    ApplyDragTilt(tiltFrame, tiltDegrees);
+
                     var inZone = IsPointInApplyZone(world);
                     var overGround = IsOverGroundCard(world);
                     CardOpacityUtility.SetAlpha(
@@ -1335,6 +1356,8 @@ namespace NineGrid.Cards
 
                     await UniTask.Yield(PlayerLoopTiming.Update, cancellationToken);
                 }
+
+                ResetDragTilt(tiltFrame);
 
                 if (!WorldPointerUtility.TryGetPointerScreen(out var releaseScreen))
                 {
@@ -1367,6 +1390,55 @@ namespace NineGrid.Cards
                     await FinishDragWithReturnAsync(session);
                 }
             }
+            finally
+            {
+                ResetDragTilt(tiltFrame);
+            }
+        }
+
+        /// <summary>拖拽惯性倾斜参数：横向速度平滑、每单位速度倾角、最大倾角、倾角跟随。</summary>
+        private const float DragTiltVelocitySmoothing = 16f;
+        private const float DragTiltDegreesPerUnitSpeed = 0.3f;
+        private const float DragTiltMaxDegrees = 9f;
+        private const float DragTiltFollow = 18f;
+
+        private static Transform ResolveDragTiltFrame(ManagedCard card)
+        {
+            return SlotFrameConvergence.TryGetTower(card, out var tower) ? tower.BoardFrame : null;
+        }
+
+        /// <summary>拾起挤压：L1 缩放一次弹性 punch，给"抓起来"的手感。</summary>
+        private static void PlayDragPickupSquash(Transform frame)
+        {
+            if (frame == null)
+            {
+                return;
+            }
+
+            frame.DOKill();
+            frame.localScale = Vector3.one;
+            frame.DOPunchScale(new Vector3(-0.05f, 0.07f, 0f), 0.26f, 7, 0.7f)
+                .SetLink(frame.gameObject, LinkBehaviour.KillOnDestroy);
+        }
+
+        private static void ApplyDragTilt(Transform frame, float degrees)
+        {
+            if (frame != null)
+            {
+                frame.localRotation = Quaternion.Euler(0f, 0f, degrees);
+            }
+        }
+
+        private static void ResetDragTilt(Transform frame)
+        {
+            if (frame == null)
+            {
+                return;
+            }
+
+            frame.DOKill();
+            frame.localRotation = Quaternion.identity;
+            frame.localScale = Vector3.one;
         }
 
         private async UniTask CompleteDragApplyInternalAsync(DragSession session)

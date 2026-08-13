@@ -1,6 +1,6 @@
 # Presentation / Cards 区权威文档
 
-> 生成于 2026-08-12，以当日代码实际实现为准。范围：`Assets/Scripts/NineGrid.Presentation/Cards/` 全部 166 个 .cs（逐文件阅读后成文）。
+> 生成于 2026-08-12，以当日代码实际实现为准。范围：`Assets/Scripts/NineGrid.Presentation/Cards/` 全部 .cs（逐文件阅读后成文；初版 166 个，2026-08-13 新增 `Vfx/BoardCardLifeFx.cs` 后 167）。
 > 兄弟区块：[`../Flow/`](../Flow/)（导演/时间线/排期器/房间流程）与 [`../Systems与通信/`](../Systems与通信/)（QF System/Controller/Command/Query）由对应文档负责；本区正文提及的 Flow/Systems 类型请到彼处查详情。
 
 ## Cards 区在 Presentation 中的角色
@@ -23,7 +23,7 @@ Cards/
 ├─ Ground/      (8)     几何占格表、认领登记、飞牌协调器、盘面运动执行器
 ├─ Presentation/(16)    卡面投影快照、Binder、描述投影/合成、词条与详述、翻牌
 ├─ Slots/       (8)     卡面装配槽表（代号/角色/节点映射/排序分区/校验）
-└─ Vfx/         (3)     程序化装饰：边沿尘雾、威胁范围荧光
+└─ Vfx/         (4)     程序化装饰：边沿尘雾、威胁范围荧光、场地卡生命层（L1 飘动/冲击）
 ```
 
 ## 分篇导航
@@ -36,7 +36,7 @@ Cards/
 | 04 | [04-手牌卡组与发牌飞行.md](./04-手牌卡组与发牌飞行.md) | 手牌 hover/拖拽/回收、卡组三模式与发牌、回库 in-flight、飞牌协调器、炸牌入组、骷髅合体 |
 | 05 | [05-变换塔收敛与盘面运动.md](./05-变换塔收敛与盘面运动.md) | L0–L4 塔、五次 Hermite 收敛、租约与栅栏、旋转/hop/换位执行、Step 契约与合并 |
 | 06 | [06-交战表现.md](./06-交战表现.md) | Encounter Catalog 路由、rig 重绑与播放、命中帧 Impact、致死 Vacate、决斗惩罚隔离、终态守卫 |
-| 07 | [07-卡面特效与装饰.md](./07-卡面特效与装饰.md) | CardEffect SO 体系（闪白/冲刺/死亡 Burn/缩小退场/触发脉冲）、尘雾、威胁荧光 |
+| 07 | [07-卡面特效与装饰.md](./07-卡面特效与装饰.md) | CardEffect SO 体系（闪白/冲刺/死亡 Burn/缩小退场/触发脉冲）、尘雾、威胁荧光、场地卡生命层 |
 | 08 | [08-静态Hook与诊断旁路.md](./08-静态Hook与诊断旁路.md) | 15 个 Hook 装配缝、4 个 TraceSink、CardPresentationProbe 打点门面 |
 
 ## 卡牌从数据到上屏的完整链路
@@ -272,10 +272,11 @@ Cards/
 | 162 | `Slots/CardFaceSortingLayers.cs` | 卡面通层 sortingOrder 分区常量（0–99）与 Mask 偏移 | 01 |
 | 163 | `Slots/CardFaceSortingOrderValidator.cs` | 通层重复 order 编辑器校验 | 01 |
 
-### Vfx/（3）
+### Vfx/（4）
 
 | # | 文件 | 一句话说明 | 篇 |
 |---|---|---|---|
 | 164 | `Vfx/BoardRangeGlowFx.cs` | 悬停范围荧光：怪物威胁（暖橙）/ 机关邻接影响（冷青）/ Avatar 可攻击范围（暖橙）；程序化 9-slice 光环 + 加色材质 + 自检淡出 | 07 |
 | 165 | `Vfx/CardEdgeDustFx.cs` | 边沿尘雾（Place 喷发 / Trail 双尾迹，池化与预算保护） | 07 |
 | 166 | `Vfx/CardEdgeDustFxSettingsSO.cs` | 尘雾参数 SO（全局开关默认关） | 07 |
+| 167 | `Vfx/BoardCardLifeFx.cs` | 场地卡生命层（ADR-0051）：L1 唯一写者，悬浮飘动 + 冲击弹簧 + 落位沉降，权威运动接手即硬归零 | 07 |

@@ -1,7 +1,9 @@
 using System;
 using NineGrid.Cards;
+using NineGrid.Cards.Vfx;
 using NineGrid.Core;
 using NineGrid.Flow;
+using UnityEngine;
 
 namespace NineGrid.Flow.Presentation
 {
@@ -61,6 +63,9 @@ namespace NineGrid.Flow.Presentation
 
                 // 与飘字同缝的受击视觉脉冲：格挡/护甲碎裂/血飞溅（独立型，不占主线）。
                 CombatOutcomeVfx.PulseShowDamage(gameEvent, pos.Value, "DamageFloaterBeatHandler.TryApply");
+
+                // 同缝的物理反馈：抖屏 + 受击卡一颤（装饰，不占主线 ack）。
+                ApplyHitFeedback(gameEvent);
 
                 if (DisplayMode == DamageFloaterDisplayMode.SplitDamage)
                 {
@@ -153,6 +158,27 @@ namespace NineGrid.Flow.Presentation
             }
 
             return false;
+        }
+
+        /// <summary>
+        /// 命中物理反馈：按扣血 + 破甲量抖屏，并给受击卡一次颤动。
+        /// 正被打击表演搬动的卡会在 <see cref="BoardCardLifeFx"/> 侧自动让位，不与击退叠加。
+        /// </summary>
+        private static void ApplyHitFeedback(CoreGameEvent gameEvent)
+        {
+            var magnitude = Math.Max(0, gameEvent.HpDamage) + Math.Max(0, gameEvent.ArmorDamage);
+            if (magnitude <= 0)
+            {
+                magnitude = Math.Max(0, gameEvent.Amount);
+            }
+
+            if (magnitude <= 0)
+            {
+                return;
+            }
+
+            ScreenImpact.Hit(magnitude);
+            BoardCardLifeFx.PlayJolt(gameEvent.TargetUid, Mathf.Clamp(magnitude / 12f, 0.3f, 1f));
         }
     }
 }

@@ -1,6 +1,8 @@
+using NineGrid.Cards.Vfx;
 using NineGrid.Content.Audio;
 using NineGrid.Core;
 using NineGrid.Core.Systems;
+using UnityEngine;
 
 namespace NineGrid.Flow.Presentation
 {
@@ -57,8 +59,55 @@ namespace NineGrid.Flow.Presentation
                 gameEvent.Cause,
                 "EffectTriggerPulseBeatHandler.TryApply",
                 gameEvent.CardUid);
+
+            ApplySignatureImpact(gameEvent);
             return true;
         }
+
+        /// <summary>
+        /// 签名冲击（纯装饰）：仅登记过的"触发即爆点"效果抖屏 / 推开场地卡。
+        /// 与音频同样不受棋盘门禁——爆弹等道具槽效果的爆点也要有物理反馈。
+        /// </summary>
+        private static void ApplySignatureImpact(CoreGameEvent gameEvent)
+        {
+            if (!BoardImpactSignatures.TryResolve(gameEvent.SourceDefId, out var impact))
+            {
+                return;
+            }
+
+            if (impact.Shake > 0.001f)
+            {
+                ScreenImpact.Burst(impact.Shake);
+            }
+
+            if (impact.Shock <= 0.001f)
+            {
+                return;
+            }
+
+            var center = ResolveImpactCenter(gameEvent.CardUid, impact.Origin);
+            if (center.HasValue)
+            {
+                BoardCardLifeFx.PlayRadialShock(center.Value, impact.Shock);
+            }
+        }
+
+        private static Vector3? ResolveImpactCenter(int holderUid, BoardImpactOrigin origin)
+        {
+            if (origin == BoardImpactOrigin.Holder)
+            {
+                var holder = NineGrid.Flow.PresentationOutputProjector.ResolveCardWorldPosition(holderUid);
+                if (holder.HasValue)
+                {
+                    return holder;
+                }
+            }
+
+            return NineGrid.Flow.PresentationOutputProjector.ResolveBoardSlotWorldPosition(BoardCenterSlot);
+        }
+
+        /// <summary>棋盘几何中心格（Avatar 起始格）。离场来源的冲击原点。</summary>
+        private const int BoardCenterSlot = 5;
 
         private static bool IsCoreCardOnBoard(int uid)
         {

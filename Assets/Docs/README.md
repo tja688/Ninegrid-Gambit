@@ -10,7 +10,7 @@
 |------|------|
 | [00-架构总览](00-架构总览.md) | 分层架构、核心运行循环（Run→Floor→Node→Battle）、十大架构范式鸟瞰 |
 | [01-程序集与场景装配](01-程序集与场景装配.md) | 13 个 asmdef + 2 处 Assembly-CSharp 的清单/引用/文件数；MainScene 装配链与无场景自举点 |
-| [02-ADR索引与代码对照](02-ADR索引与代码对照.md) | 46 篇 ADR 逐条：决策一句话、已核实落地代码位置、关键行为不变量——「从行为规则找代码」的关键索引 |
+| [02-ADR索引与代码对照](02-ADR索引与代码对照.md) | ADR 逐条（0001–0051）：决策一句话、已核实落地代码位置、关键行为不变量——「从行为规则找代码」的关键索引 |
 | [03-领域词汇表](03-领域词汇表.md) | 领域词汇 → 含义 + 代码体现位置 |
 | [04-预发布可疑问题总清单](04-预发布可疑问题总清单.md) | 六区读码发现的可疑问题汇总（31 条，其中 #31 已修）：疑似真 bug / 出包风险 / 废止残留与死代码 / 文档与口径矛盾 / 代码卫生，每条附出处链接 |
 | [Core/](Core/) | `NineGrid.Core` 规则核（93 文件）区域文档 |
@@ -43,6 +43,7 @@
 | 教学关异常 / 首次进游戏流程错 | Flow/Tutorial + TutorialProgressStore | 0042 |
 | 房间/商店/图标交互异常 | Flow/RoomIcons + ShopBoard/TavernBoard/RewardBoard | 0020, 0021, 0022, 0025 |
 | 画面异常（扫描线/像素/文字发糊） | [工具与实验/](工具与实验/README.md)（VisualLook 管线；FxLab 仅 Dev） | — |
+| 卡在格子里飘/抖不停 / 抖屏太晃 / 卡带着偏移收敛歪位 | L1 装饰层单一写者 `BoardCardLifeFx`（[Cards/07](Presentation/Cards/07-卡面特效与装饰.md) §8）+ 抖屏 `ScreenImpact`（[Flow/05](Presentation/Flow/05-表演锚点排期与触发脉冲.md) §5）；三个全局旋钮可直接关 | 0051 |
 | Windows 掉帧 / 高回报率鼠标 / 进程卡死 | Presentation/Platform（mitigation + WindowsHangWatchdog，命令行开关 `-ng-no-rawinput`/`-ng-no-watchdog`） | 0006 |
 | 想从日志定位 | 诊断关联键 chainId/choreoSeqId；日志在 `Assets/Notes/Logs/`，分析用技能 `table-nine-battlelog-analysis` | 0003 |
 
