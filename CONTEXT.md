@@ -598,15 +598,15 @@ _Avoid_: 简单式同键首个装配、defId 前缀歧义匹配、用 templateId
 _Avoid_: 按 UTF-16/字节数另算、代码块按展开后数字位数计价、把 `[[…]]` 拆成两个 `[…]` 计格
 
 **详细描述**：
-供右键（或等价）打开的详述面板内容；检查侧以**卡面基础描述**为人手概括源（静态）。效果信息区只展示检查描述里 `[[展示名]]` 抽出的**词条行**（多行 ScrollView）；内联图标词条默认隐藏，仅在详述卡面预览上 hover 时填入临时解释槽。不拼接效果 `design_text`；不把局内剩余次数写进检查面板。（[ADR-0037](docs/adr/0037-inspect-detail-is-glossary-rows.md)）
-_Avoid_: 用悬停描述顶替详细描述面板、把详述长文塞进卡面基础描述、详述再堆效果原子文案、检查面板展示局内倒计时剩余
+供右键（或等价）打开的详述面板内容；检查侧以**卡面基础描述**为人手概括源（静态）。效果信息区只展示检查描述里 `[[展示名]]` 抽出的**词条行**（多行 ScrollView）；图标词条默认隐藏，仅在详述卡面预览上 hover 时填入**首行**临时解释槽——覆盖描述内联 `[code]` 图标与卡面机制图标（攻击 / 护甲 / 血量、倒计时、攻击模式、技能同步触发）。不拼接效果 `design_text`；不把局内剩余次数写进检查面板。（[ADR-0037](docs/adr/0037-inspect-detail-is-glossary-rows.md)）
+_Avoid_: 用悬停描述顶替详细描述面板、把详述长文塞进卡面基础描述、详述再堆效果原子文案、检查面板展示局内倒计时剩余、把图标词条常驻堆进词条栏、hover 解释槽挂在列表末尾
 
 **卡面装配槽**：
 卡面装配系统中的唯一槽表条目；以代码内部代号标识（如 `Action_Icon`、`Main_Icon`），编辑器悬停显示中文注释（如行动图标/攻击图标）。图标槽可装配 Sprite，缺省回退到该卡面源模板自带图标；数值槽缺省统一为 0。
 _Avoid_: 中文当主键、描述写资源路径、缺省找全局图、缺省数值用 -1 或隐藏当「无」
 
 **描述方括号引用**：
-描述中两种括号语法：① **`[[展示名]]`** 显式文字词条——按词条表名字精确匹配，卡面去括号显示（可着色），右键详情默认展开介绍；② **`[code]`** 内联图标——装配 Insertable 槽（如 `[Action_Icon]`）只由高层装配下行，其余走项目级词条表代号 → sprite；卡面渲染 TMP sprite，详情默认不展开，仅 Inspect 预览 hover 解释。词条表（`CardFaceDescriptionIconCatalog`：名字 + 介绍 + 可选颜色 + 可选代号/图标 + 分区）全局共用。内联布局仍由 `CardFaceDescriptionInlineIconStyle` 按代号管理。编辑入口：「NineGrid/表现层配置 → 词条」。（[ADR-0037](docs/adr/0037-inspect-detail-is-glossary-rows.md)）
+描述中两种括号语法：① **`[[展示名]]`** 显式文字词条——按词条表名字精确匹配，卡面去括号显示（可着色），右键详情默认展开介绍；② **`[code]`** 内联图标——装配 Insertable 槽（如 `[Action_Icon]`）只由高层装配下行，其余走项目级词条表代号 → sprite；卡面渲染 TMP sprite，详情默认不展开，仅 Inspect 预览 hover 解释（卡面机制图标同样 hover 解释，靶表见 `CardFaceIconGlossaryTargets`）。词条表（`CardFaceDescriptionIconCatalog`：名字 + 介绍 + 可选颜色 + 可选代号/图标 + 分区）全局共用。内联布局仍由 `CardFaceDescriptionInlineIconStyle` 按代号管理。编辑入口：「NineGrid/表现层配置 → 词条」。（[ADR-0037](docs/adr/0037-inspect-detail-is-glossary-rows.md)）
 _Avoid_: 用词条表覆盖 `Main_Icon`/`Action_Icon`、占用装配槽保留代号、把 `[[…]]` 当图标、详情再堆 `design_text`、表情字符、裸路径、把内联布局或词条映射写进单卡 JSON
 
 **装配槽注册表**：

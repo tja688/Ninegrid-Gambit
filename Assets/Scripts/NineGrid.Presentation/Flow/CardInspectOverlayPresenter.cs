@@ -276,7 +276,7 @@ namespace NineGrid.Flow
 
                 SetText(enemyFaceIntro, texts.FaceIntro);
                 SetText(enemyDeckIntro, texts.DeckIntro);
-                BindGlossaryPanel(enemyGlossaryList, terms, _enemyBinder, glossaryCatalog);
+                BindGlossaryPanel(enemyGlossaryList, terms, _enemyBinder, glossaryCatalog, snapshot);
             }
             else
             {
@@ -291,7 +291,7 @@ namespace NineGrid.Flow
 
                 SetText(regularFaceIntro, texts.FaceIntro);
                 SetText(regularDeckIntro, texts.DeckIntro);
-                BindGlossaryPanel(regularGlossaryList, terms, _regularBinder, glossaryCatalog);
+                BindGlossaryPanel(regularGlossaryList, terms, _regularBinder, glossaryCatalog, snapshot);
             }
 
             return true;
@@ -424,42 +424,44 @@ namespace NineGrid.Flow
             CardInspectGlossaryListView list,
             IReadOnlyList<CardGlossaryTerms.ResolvedTerm> terms,
             CardFacePresentationBinder binder,
-            CardFaceDescriptionIconCatalogSO glossaryCatalog)
+            CardFaceDescriptionIconCatalogSO glossaryCatalog,
+            CardPresentationSnapshot snapshot)
         {
             if (list != null)
             {
                 list.BindExplicitTerms(terms);
             }
 
-            WireInlineIconHover(binder, list, glossaryCatalog);
+            WireIconHover(binder, list, glossaryCatalog, snapshot);
         }
 
-        private static void WireInlineIconHover(
+        /// <summary>
+        /// 预览卡面挂图标 hover 探针：描述内联 <c>[code]</c> 与卡面机制图标共用词条栏首行解释槽。
+        /// 描述槽可缺（遗物等模板），此时只解释卡面图标。
+        /// </summary>
+        private static void WireIconHover(
             CardFacePresentationBinder binder,
             CardInspectGlossaryListView list,
-            CardFaceDescriptionIconCatalogSO catalog)
+            CardFaceDescriptionIconCatalogSO catalog,
+            CardPresentationSnapshot snapshot)
         {
             if (binder == null)
             {
                 return;
             }
 
-            if (!CardFaceSlotNodeMap.TryFindText(
-                    binder.transform,
-                    CardFaceSlotCodes.BasicDescription,
-                    out var description)
-                || description == null)
-            {
-                return;
-            }
+            CardFaceSlotNodeMap.TryFindText(
+                binder.transform,
+                CardFaceSlotCodes.BasicDescription,
+                out var description);
 
-            var hover = binder.GetComponent<CardInspectInlineIconHover>();
+            var hover = binder.GetComponent<CardInspectIconHover>();
             if (hover == null)
             {
-                hover = binder.gameObject.AddComponent<CardInspectInlineIconHover>();
+                hover = binder.gameObject.AddComponent<CardInspectIconHover>();
             }
 
-            hover.Configure(description, list, catalog, Camera.main);
+            hover.Configure(description, list, catalog, Camera.main, snapshot);
         }
 
         private void HideAllImmediate()

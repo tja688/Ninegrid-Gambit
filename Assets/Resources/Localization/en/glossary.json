@@ -51,6 +51,7 @@
     "呼唤": { "displayName": "Beckon", "intro": "Every 5 Interactions: calls a Melee 6 into the combat deck." },
     "死亡召唤": { "displayName": "Death Summon", "intro": "On removal: plays a Revive Stone to its cell." },
     "吟唱": { "displayName": "Chant", "intro": "Every 6 Interactions: calls a Melee 3 into the combat deck." },
-    "休养": { "displayName": "Recuperate", "intro": "On flipping face-up: attack +1, Armor +2." }
+    "休养": { "displayName": "Recuperate", "intro": "On flipping face-up: attack +1, Armor +2." },
+    "技能同步触发": { "displayName": "Synced Skill", "intro": "This card carries a skill synced to its countdown: when the count hits zero, the attack and the skill fire on the same beat, without spending an extra count." }
   }
 }

@@ -78,9 +78,27 @@ namespace NineGrid.Cards.Slots
                 return false;
             }
 
-            for (var i = 0; i < names.Length; i++)
+            return TryFindRendererByNodeNames(faceRoot, names, out renderer);
+        }
+
+        /// <summary>
+        /// 按节点名候选查 SpriteRenderer；供未登记进槽表的按名解析调用方
+        /// （如检视预览的图标 hover 靶）复用同一套节点名查找。
+        /// </summary>
+        public static bool TryFindRendererByNodeNames(
+            Transform faceRoot,
+            IReadOnlyList<string> nodeNames,
+            out SpriteRenderer renderer)
+        {
+            renderer = null;
+            if (faceRoot == null || nodeNames == null)
             {
-                var node = FindDeep(faceRoot, names[i]);
+                return false;
+            }
+
+            for (var i = 0; i < nodeNames.Count; i++)
+            {
+                var node = FindDeep(faceRoot, nodeNames[i]);
                 if (node == null)
                 {
                     continue;

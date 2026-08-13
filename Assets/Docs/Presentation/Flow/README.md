@@ -105,7 +105,7 @@ flowchart TD
 | `BoardPresentationStepProjector.cs` | EventLog → 带 Commitment 标签的有序盘面表演步骤投影 | 02 |
 | `BoardSlotWorldPlacement.cs` | 落格只对齐世界位置、不 parent 锚点（ADR-0024） | 08 |
 | `BounceFanChoicePresenter.cs` | Bounce 扇形三选一点选表现（纯表现卡入场/推挤/掉落） | 08 |
-| `CardInspectInlineIconHover.cs` | 详述卡面内联 sprite 术语悬停解析（ADR-0037） | 09 |
+| `CardInspectIconHover.cs` | 详述卡面图标悬停解析：内联 sprite + 卡面机制图标 → 词条栏首行（ADR-0037） | 09 |
 | `CardInspectOverlayPresenter.cs` | 右键卡牌详述覆层（真卡面 + 术语表 + 半黑屏） | 09 |
 | `ContentIconSlotBinder.cs` | content defId 列表刷到锚点槽 SpriteRenderer | 09 |
 | `ContentIconSlotHitProxy.cs` | 遗物/技能图标槽命中代理（左拖右检由 Router 特判） | 09 |

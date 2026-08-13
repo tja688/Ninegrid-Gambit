@@ -6,6 +6,7 @@ namespace NineGrid.Cards.Presentation
 {
     /// <summary>
     /// 右键详情 ScrollView Content：按词条动态装行 + 一条可复用 hover 槽（ADR-0037）。
+    /// hover 槽恒在首行——列表可滚动，落在末尾时词条多了就会滚出视野。
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class CardInspectGlossaryListView : MonoBehaviour
@@ -44,12 +45,7 @@ namespace NineGrid.Cards.Presentation
                     row.name = "词条行_" + term.DisplayName;
                     row.EnsureLayoutElement();
                     row.Bind(term.DisplayName, term.Explanation, term.HasColor, term.Color);
-                    // 默认词条在 hover 槽之前。
-                    if (hoverRow != null)
-                    {
-                        row.transform.SetSiblingIndex(hoverRow.transform.GetSiblingIndex());
-                    }
-
+                    row.transform.SetAsLastSibling();
                     _spawned.Add(row);
                 }
             }
@@ -59,7 +55,7 @@ namespace NineGrid.Cards.Presentation
             {
                 hoverRow.gameObject.SetActive(true);
                 hoverRow.BindHint(HoverHintText);
-                hoverRow.transform.SetAsLastSibling();
+                hoverRow.transform.SetAsFirstSibling();
             }
         }
 
@@ -73,7 +69,7 @@ namespace NineGrid.Cards.Presentation
 
             hoverRow.gameObject.SetActive(true);
             hoverRow.Bind(displayName, explanation, hasColor, color);
-            hoverRow.transform.SetAsLastSibling();
+            hoverRow.transform.SetAsFirstSibling();
         }
 
         public void ClearHover()
@@ -118,6 +114,7 @@ namespace NineGrid.Cards.Presentation
             hoverRow.name = "词条Hover槽";
             hoverRow.EnsureLayoutElement();
             hoverRow.BindHint(HoverHintText);
+            hoverRow.transform.SetAsFirstSibling();
         }
 
         private void EnsureLayout()

@@ -12,6 +12,9 @@ namespace NineGrid.Cards.Presentation
     {
         [SerializeField] private TMP_Text body;
 
+        private bool _hasDefaultColor;
+        private Color _defaultColor;
+
         public void Bind(string displayName, string explanation, bool hasColor, Color color)
         {
             EnsureBody();
@@ -31,10 +34,8 @@ namespace NineGrid.Cards.Presentation
                 body.text = title + "\n" + detail.Trim();
             }
 
-            if (hasColor)
-            {
-                body.color = color;
-            }
+            // hover 槽跨词条复用：未着色的词条须退回模板默认色，不留上一条的颜色。
+            body.color = hasColor ? color : _defaultColor;
         }
 
         public void BindHint(string hint)
@@ -46,6 +47,7 @@ namespace NineGrid.Cards.Presentation
             }
 
             body.text = hint ?? string.Empty;
+            body.color = _defaultColor;
         }
 
         public void Clear()
@@ -59,15 +61,19 @@ namespace NineGrid.Cards.Presentation
 
         private void EnsureBody()
         {
-            if (body != null)
-            {
-                return;
-            }
-
-            body = GetComponent<TMP_Text>();
             if (body == null)
             {
-                body = GetComponentInChildren<TMP_Text>(true);
+                body = GetComponent<TMP_Text>();
+                if (body == null)
+                {
+                    body = GetComponentInChildren<TMP_Text>(true);
+                }
+            }
+
+            if (body != null && !_hasDefaultColor)
+            {
+                _defaultColor = body.color;
+                _hasDefaultColor = true;
             }
         }
 
