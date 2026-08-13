@@ -29,6 +29,9 @@ namespace NineGrid.Flow
         [Tooltip("主菜单「开始」按钮；留空则运行时查找 MainPanel/StartRun。")]
         [SerializeField] private Collider2D startRunHit;
 
+        [Tooltip("主菜单「继续游戏」按钮；留空则运行时查找 MainPanel/ContinueGame。")]
+        [SerializeField] private Collider2D continueGameHit;
+
         [Tooltip("主菜单「退出」按钮；留空则运行时查找 MainPanel/QuitGame。")]
         [SerializeField] private Collider2D quitGameHit;
 
@@ -140,6 +143,18 @@ namespace NineGrid.Flow
             InteractionAudioCues.MainMenuPress,
             "GameFlowController.MainMenu.LanguagePress",
             "main_menu.language");
+        private static readonly AudioCueRequest ContinueHoverRequest = CreateMenuRequest(
+            InteractionAudioCues.MainMenuHover,
+            "GameFlowController.MainMenu.ContinueHover",
+            "main_menu.continue");
+        private static readonly AudioCueRequest ContinuePressRequest = CreateMenuRequest(
+            InteractionAudioCues.MainMenuPress,
+            "GameFlowController.MainMenu.ContinuePress",
+            "main_menu.continue");
+        private static readonly AudioCueRequest ContinueRejectRequest = CreateMenuRequest(
+            InteractionAudioCues.MainMenuReject,
+            "GameFlowController.MainMenu.ContinueReject",
+            "main_menu.continue");
 
         private void Awake()
         {
@@ -189,9 +204,12 @@ namespace NineGrid.Flow
             }
 
             // 场景引用只在 Awake / 显式调用 EnsureViewBindings 时解析；Update 仅轮询缓存。
-            // 局内功能菜单（音量等）打开时半黑屏盖住主菜单，勿再响应开始/退出。
+            // 局内功能菜单（音量等）/ 选人界面（纯黑屏）/ 继续游戏加载弹窗打开时勿再响应主菜单按钮。
             if (NineGrid.Presentation.Ui.PlayerAudioSettingsPanel.IsOpen
-                || BattleUiDimmerOverlay.IsActive)
+                || BattleUiDimmerOverlay.IsActive
+                || NineGrid.Presentation.Ui.PureBlackScreenOverlay.IsActive
+                || NineGrid.Presentation.Ui.CharacterSelectPanel.IsOpen
+                || NineGrid.Presentation.Ui.MainMenuLoadPanel.IsOpen)
             {
                 ClearMenuHover();
                 return;
@@ -216,6 +234,27 @@ namespace NineGrid.Flow
                 if (!NineGrid.Presentation.Ui.CharacterSelectPanel.RequestOpen())
                 {
                     BeginFormalRun();
+                }
+
+                return;
+            }
+
+            if (WorldPointerUtility.TryOverlapColliderOnPlane(worldCamera, continueGameHit))
+            {
+                if (shell.IsBusy || RunSaveService.IsLoading)
+                {
+                    PulseMenuRequest(ContinueRejectRequest);
+                    return;
+                }
+
+                PulseMenuRequest(ContinuePressRequest);
+                if (!NineGrid.Presentation.Ui.MainMenuLoadPanel.RequestOpen())
+                {
+                    // 无任何存档：拒绝反馈 + 短暂提示。
+                    PulseMenuRequest(ContinueRejectRequest);
+                    ShowNotice(L10n.Tr("menu.continue_no_save", "暂无可用存档"));
+                    CancelInvoke(nameof(HideNotice));
+                    Invoke(nameof(HideNotice), 1.6f);
                 }
 
                 return;
@@ -376,6 +415,15 @@ namespace NineGrid.Flow
                 }
             }
 
+            if (continueGameHit == null)
+            {
+                var continueGame = FindDeep("ContinueGame");
+                if (continueGame != null)
+                {
+                    continueGameHit = continueGame.GetComponent<Collider2D>();
+                }
+            }
+
             if (languageHit == null)
             {
                 var language = FindDeep("LanguageToggle");
@@ -470,6 +518,10 @@ namespace NineGrid.Flow
             {
                 next = startRunHit;
             }
+            else if (WorldPointerUtility.TryOverlapColliderOnPlane(worldCamera, continueGameHit))
+            {
+                next = continueGameHit;
+            }
             else if (WorldPointerUtility.TryOverlapColliderOnPlane(worldCamera, settingsHit))
             {
                 next = settingsHit;
@@ -500,11 +552,13 @@ namespace NineGrid.Flow
                 next.transform.localScale = hoveredMenuBaseScale * MenuHoverScale;
                 PulseMenuRequest(next == startRunHit
                     ? StartHoverRequest
-                    : (next == settingsHit
-                        ? SettingsHoverRequest
-                        : (next == tutorialHit
-                            ? TutorialHoverRequest
-                            : (next == languageHit ? LanguageHoverRequest : QuitHoverRequest))));
+                    : (next == continueGameHit
+                        ? ContinueHoverRequest
+                        : (next == settingsHit
+                            ? SettingsHoverRequest
+                            : (next == tutorialHit
+                                ? TutorialHoverRequest
+                                : (next == languageHit ? LanguageHoverRequest : QuitHoverRequest)))));
             }
         }
 

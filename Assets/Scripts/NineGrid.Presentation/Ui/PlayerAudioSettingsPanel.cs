@@ -24,6 +24,7 @@ namespace NineGrid.Presentation.Ui
         public const string CloseButtonPath = "功能模块/关闭面板";
         public const string ReturnToMainMenuButtonPath = "功能模块/回到主菜单";
         public const string QuitGameButtonPath = "功能模块/退出游戏";
+        public const string ConfirmPromptPath = "功能模块/提示框";
         private const string DimmerReason = "in-run-function-menu";
         private const float SliderHandleHalfPad = 0.28f;
 
@@ -40,6 +41,7 @@ namespace NineGrid.Presentation.Ui
         private Transform mBgmMuteOff;
         private VolumeSliderBinder mBgmSlider;
         private VolumeSliderBinder mSfxSlider;
+        private UiConfirmPrompt mPrompt;
         private bool mDimmerHeld;
         private bool mBound;
         private VolumeSliderBinder mDragging;
@@ -179,6 +181,12 @@ namespace NineGrid.Presentation.Ui
                 return false;
             }
 
+            // 提示框开着（或本帧刚被它消费）时 Esc 让位给提示框，不连带关整个功能菜单。
+            if (UiConfirmPrompt.IsAnyOpen || UiConfirmPrompt.EscapeHandledThisFrame)
+            {
+                return true;
+            }
+
             TriggerPulseHub.PulseAudio(AudioCueRequest.Simple(
                 InteractionAudioCues.PlayerAudioEscape,
                 "PlayerAudioSettingsPanel.Update.Escape"));
@@ -227,6 +235,9 @@ namespace NineGrid.Presentation.Ui
             WireFlowMenuButton(
                 mPanelRoot.transform.Find(QuitGameButtonPath),
                 RequestQuitGame);
+
+            // 危险操作二次确认提示框（覆盖存档 / 退出 / 回主菜单共用）。
+            mPrompt = UiConfirmPrompt.Attach(mPanelRoot.transform.Find(ConfirmPromptPath));
 
             // 存档/读档模块（名字含 '/'，不能走 transform.Find 路径语义）。
             RunSaveLoadPanel.EnsureBound(
@@ -474,8 +485,23 @@ namespace NineGrid.Presentation.Ui
         private void RequestReturnToMainMenu()
         {
             InteractionAudioCues.Pulse(
-                InteractionAudioCues.UiConfirm,
+                InteractionAudioCues.UiPress,
                 "PlayerAudioSettingsPanel.RequestReturnToMainMenu",
+                "in_run_function_menu.return_main_menu");
+            if (mPrompt != null)
+            {
+                mPrompt.Show(UiConfirmPrompt.ReturnMainMenuMessage, DoReturnToMainMenu);
+                return;
+            }
+
+            DoReturnToMainMenu();
+        }
+
+        private void DoReturnToMainMenu()
+        {
+            InteractionAudioCues.Pulse(
+                InteractionAudioCues.UiConfirm,
+                "PlayerAudioSettingsPanel.DoReturnToMainMenu",
                 "in_run_function_menu.return_main_menu");
             SetOpen(false);
 
@@ -492,12 +518,27 @@ namespace NineGrid.Presentation.Ui
         private void RequestQuitGame()
         {
             InteractionAudioCues.Pulse(
-                InteractionAudioCues.MainMenuPress,
+                InteractionAudioCues.UiPress,
                 "PlayerAudioSettingsPanel.RequestQuitGame",
+                "main_menu.quit");
+            if (mPrompt != null)
+            {
+                mPrompt.Show(UiConfirmPrompt.QuitGameMessage, DoQuitGame);
+                return;
+            }
+
+            DoQuitGame();
+        }
+
+        private void DoQuitGame()
+        {
+            InteractionAudioCues.Pulse(
+                InteractionAudioCues.MainMenuPress,
+                "PlayerAudioSettingsPanel.DoQuitGame",
                 "main_menu.quit");
             InteractionAudioCues.Pulse(
                 InteractionAudioCues.MainMenuCancel,
-                "PlayerAudioSettingsPanel.RequestQuitGame",
+                "PlayerAudioSettingsPanel.DoQuitGame",
                 "main_menu.quit");
             SetOpen(false);
             ResolveFlowController()?.QuitGame();

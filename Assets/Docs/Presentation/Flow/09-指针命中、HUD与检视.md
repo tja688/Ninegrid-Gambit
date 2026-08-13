@@ -87,6 +87,7 @@ PointerHitRouter（RuntimeInitializeOnLoad 自举，DontDestroyOnLoad）每帧 T
 ### 3. 遗物栏与倒计时投影（ADR-0027/0035）
 
 - 同步：`RelicHudSyncRequestedEvent` → `RelicHudController`（Systems/）→ `RelicHudHook` → `RelicManagerSingleton.SyncFromCore/ApplyDefIds` 刷 `RelicIconSlotView`（锚点留 `ContentIconSlotHitProxy`，显示在子树标准模板——命中与显示分离，ADR-0027）。
+- 显示壳 prefab：`Assets/Resources/Prefabs/标准遗物图标模板.prefab`（`CardChassisPaths.RelicHudIconPrefab`）——**必须在 Resources 下**：Player 端 `LoadGameObject` 只认含 `/Resources/` 的路径（ADR-0008），否则打包后遗物栏静默全空（2026-08 修复：原在 `Assets/Prefabs/` 下导致仅编辑器可见）；加载失败现会打 Error 日志。
 - 倒计时：JSON `effectAssemblies` 经 `EffectCountdownProjection` 解析 `projectKey`+period（≤1 跳过）→ 栏位显示首个 period>1 键；Settled 后经 `RelicHudHook.CommitCountdownRemaining` 提交剩余值刷计数 TMP，未提交显示装配初值——**禁止 View 直读 Core 计数器**。
 - 交互（Router 特判）：左键 `TryBeginDragUnderPointer`（ghost + 回收区，拖动中栏位隐藏不改布局）；右键 `TryInspectRelic` 开详述。
 

@@ -15,6 +15,7 @@ namespace NineGrid.Presentation.Ui
         private BoxCollider2D mCollider;
         private Action mOnClick;
         private Action mOnHoverEnter;
+        private Action mOnHoverExit;
         private int mHitSort = BattleUiDimmerOverlay.CloseHitSort;
         private int mTypePriority = PointerHitSurfacePriorities.Overlay;
         private float mHoverScale = 1f;
@@ -33,13 +34,15 @@ namespace NineGrid.Presentation.Ui
             int hitSort,
             int typePriority,
             float hoverScale = 1f,
-            Action onHoverEnter = null)
+            Action onHoverEnter = null,
+            Action onHoverExit = null)
         {
             mOnClick = onClick;
             mHitSort = hitSort;
             mTypePriority = typePriority;
             mHoverScale = Mathf.Max(0.5f, hoverScale);
             mOnHoverEnter = onHoverEnter;
+            mOnHoverExit = onHoverExit;
         }
 
         private void Awake()
@@ -77,6 +80,7 @@ namespace NineGrid.Presentation.Ui
         public void HandlePointerExit()
         {
             RestoreBaseScale();
+            mOnHoverExit?.Invoke();
         }
 
         public void HandlePointerDown()

@@ -1,62 +1,63 @@
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using NineGrid.Content.CardPresentation;
 using NineGrid.Core;
-using NineGrid.Core.Stats;
-using NineGrid.Core.Systems;
 using NineGrid.Flow;
 using NineGrid.Flow.Presentation;
+using NineGrid.Presentation.Systems;
 using TMPro;
 using UnityEngine;
 
 namespace NineGrid.Presentation.Ui
 {
     /// <summary>
-    /// 局终结算面板：胜负收口时展示本局数据（进度 / 金币 / 属性 / 遗物 / 角色），
-    /// 等玩家点「返回主菜单」再放行 <c>EnterMainMenuImmediate</c>。
-    /// 场景预置 <c>UI面板/结算面板BG</c>（默认失活）；缺预置时调用方回退旧 Notice 路径。
+    /// 完结结算面板：胜负收口时以纯黑屏底幕展示本局数据，等玩家选择去向再放行。
+    /// 场景预置 <c>UI面板/完结结算BG</c>（默认失活）：
+    /// - 会动的玩家立绘 + 本局所选难度图标 + 本局遗物墙（12 格占位）；
+    /// - 右侧文字统计（所用时长 / 击败怪物数 / 损失血量 / 使用道具卡数，数据源 <see cref="RunRecapTracker"/>）；
+    /// - 「回到主菜单」「退出游戏」走提示框二次确认；「再来一局」直接回到选人界面重开。
     /// 只读展示，不发 Core 指令（终端相位纪律）。
     /// </summary>
     [DisallowMultipleComponent]
     [DefaultExecutionOrder(100)]
     public sealed class RunSummaryPanel : MonoBehaviour
     {
-        public const string PanelRootName = "结算面板BG";
-        public const string TitleTextName = "标题文字";
-        public const string SubtitleTextName = "副标题文字";
-        public const string HeroNameTextName = "角色名字文字";
-        public const string ProgressTextName = "数据_进度";
-        public const string GoldTextName = "数据_金币";
-        public const string InteractionTextName = "数据_互动";
-        public const string StatsTextName = "数据_属性";
-        public const string RelicTitleTextName = "遗物标题文字";
-        public const string RelicIconAnchorName = "遗物图标区";
-        public const string SeedTextName = "种子文字";
-        public const string ReturnButtonName = "返回按钮";
-        public const string VictoryDecorName = "胜利装饰";
-        public const string DefeatDecorName = "失败装饰";
+        public const string PanelRootName = "完结结算BG";
+        public const string TitleTextName = "房间信息";
+        public const string StatsBodyTextName = "房间信息2 (1)";
+        public const string CharacterInfoName = "角色信息";
+        public const string PortraitNodeName = "立绘";
+        public const string DifficultyIconName = "此次对局所选的难度";
+        public const string RelicWallName = "此次对局所使用的遗物";
+        public const string QuitButtonName = "退出游戏";
+        public const string RestartButtonName = "再来一局";
+        public const string ReturnButtonName = "回到主菜单";
 
-        private const string DimmerReason = "run-summary";
-        private const string AvatarDefId = "avatar.default";
-        private const int RelicIconsPerRow = 6;
-        private const float RelicIconSpacing = 1.2f;
+        private const string OverlayReason = "run-summary";
+        private const string WarriorIdleKey =
+            "ContentArt/Multiple/MonstersAndHumans/SpriteSheets(96x96)/Human_Soldier_Sword_Shield/No_Shadows/Human_Soldier_Sword_Shield_Idle-Sheet";
+        // 战士序列帧主体只占 96x96 一小块，帧高按选人界面同参（Play 实测校准）。
+        private const float PortraitWorldHeight = 5.6f;
+        private const float RelicIconWorldHeight = 0.72f;
+        private const int PortraitSortingOrder = 40;
+        private const int RelicIconSortingOrder = 24;
+
+        private static readonly Color VictoryTitleColor = new Color(0.95f, 0.82f, 0.42f, 1f);
+        private static readonly Color DefeatTitleColor = new Color(0.82f, 0.55f, 0.5f, 1f);
 
         private static RunSummaryPanel sInstance;
 
         private GameObject mPanelRoot;
         private TMP_Text mTitleText;
-        private TMP_Text mSubtitleText;
-        private TMP_Text mHeroNameText;
-        private TMP_Text mProgressText;
-        private TMP_Text mGoldText;
-        private TMP_Text mInteractionText;
-        private TMP_Text mStatsText;
-        private TMP_Text mRelicTitleText;
-        private TMP_Text mSeedText;
-        private Transform mRelicIconAnchor;
+        private TMP_Text mStatsBodyText;
+        private SpriteRenderer mPortraitArt;
+        private SpriteRenderer mDifficultyIcon;
+        private readonly List<Transform> mRelicSlots = new List<Transform>(12);
+        private UiConfirmPrompt mPrompt;
         private bool mBound;
-        private bool mDimmerHeld;
+        private bool mOverlayHeld;
         private UniTaskCompletionSource mCloseTcs;
 
         public static bool IsOpen =>
@@ -65,7 +66,7 @@ namespace NineGrid.Presentation.Ui
             && sInstance.mPanelRoot.activeSelf;
 
         /// <summary>
-        /// 展示结算并阻塞到玩家确认返回；场景缺预置时返回 false（调用方回退旧 Notice）。
+        /// 展示结算并阻塞到玩家确认去向；场景缺预置时返回 false（调用方回退旧 Notice）。
         /// 取消（强退回菜单）时面板自动收起。
         /// </summary>
         public static async UniTask<bool> TryShowAndWaitAsync(bool victory, CancellationToken ct)
@@ -77,8 +78,8 @@ namespace NineGrid.Presentation.Ui
             }
 
             live.EnsureBound();
-            live.Populate(victory);
             live.SetOpen(true);
+            live.Populate(victory);
             live.mCloseTcs = new UniTaskCompletionSource();
             try
             {
@@ -115,10 +116,10 @@ namespace NineGrid.Presentation.Ui
 
         private void OnDestroy()
         {
-            if (mDimmerHeld)
+            if (mOverlayHeld)
             {
-                BattleUiDimmerOverlay.Release(DimmerReason);
-                mDimmerHeld = false;
+                PureBlackScreenOverlay.Release(OverlayReason);
+                mOverlayHeld = false;
             }
 
             if (sInstance == this)
@@ -136,6 +137,12 @@ namespace NineGrid.Presentation.Ui
 
             if (KeyboardUtility.GetKeyDown(KeyCode.Escape))
             {
+                // 提示框开着时由它消费 Esc；同帧刚被消费也不再叠加。
+                if (UiConfirmPrompt.IsAnyOpen || UiConfirmPrompt.EscapeHandledThisFrame)
+                {
+                    return;
+                }
+
                 RequestReturn();
             }
         }
@@ -157,24 +164,35 @@ namespace NineGrid.Presentation.Ui
                 return;
             }
 
-            var uiRoot = FindSceneNamed("UI面板");
-            BattleUiDimmerOverlay.EnsureBound(
-                uiRoot != null ? uiRoot.transform.Find("半黑屏BG")?.gameObject : null);
-
-            WirePanelSwallow(mPanelRoot);
-
             mTitleText = FindTmp(mPanelRoot.transform, TitleTextName);
-            mSubtitleText = FindTmp(mPanelRoot.transform, SubtitleTextName);
-            mHeroNameText = FindTmp(mPanelRoot.transform, HeroNameTextName);
-            mProgressText = FindTmp(mPanelRoot.transform, ProgressTextName);
-            mGoldText = FindTmp(mPanelRoot.transform, GoldTextName);
-            mInteractionText = FindTmp(mPanelRoot.transform, InteractionTextName);
-            mStatsText = FindTmp(mPanelRoot.transform, StatsTextName);
-            mRelicTitleText = FindTmp(mPanelRoot.transform, RelicTitleTextName);
-            mSeedText = FindTmp(mPanelRoot.transform, SeedTextName);
-            mRelicIconAnchor = FindChild(mPanelRoot.transform, RelicIconAnchorName);
+            mStatsBodyText = FindTmp(mPanelRoot.transform, StatsBodyTextName);
 
-            WireButton(mPanelRoot.transform.Find(ReturnButtonName), RequestReturn);
+            var characterInfo = FindDirectChild(mPanelRoot.transform, CharacterInfoName);
+            if (characterInfo != null)
+            {
+                var portrait = FindDirectChild(characterInfo, PortraitNodeName);
+                if (portrait != null)
+                {
+                    mPortraitArt = PanelArtUtility.EnsureLoopArt(
+                        portrait,
+                        WarriorIdleKey,
+                        Color.white,
+                        PortraitSortingOrder);
+                    DisableSlotCollider(portrait);
+                }
+
+                var difficulty = FindDirectChild(characterInfo, DifficultyIconName);
+                mDifficultyIcon = difficulty != null ? difficulty.GetComponent<SpriteRenderer>() : null;
+
+                CollectRelicSlots(FindDirectChild(characterInfo, RelicWallName));
+            }
+
+            mPrompt = UiConfirmPrompt.Attach(FindDirectChild(mPanelRoot.transform, UiConfirmPrompt.NodeName));
+
+            WireButton(FindDirectChild(mPanelRoot.transform, ReturnButtonName), RequestReturn);
+            WireButton(FindDirectChild(mPanelRoot.transform, QuitButtonName), RequestQuit);
+            WireButton(FindDirectChild(mPanelRoot.transform, RestartButtonName), RequestRestart);
+
             mBound = true;
         }
 
@@ -187,9 +205,9 @@ namespace NineGrid.Presentation.Ui
 
             if (open)
             {
-                if (BattleUiDimmerOverlay.TryAcquire(DimmerReason))
+                if (PureBlackScreenOverlay.Acquire(OverlayReason))
                 {
-                    mDimmerHeld = true;
+                    mOverlayHeld = true;
                 }
 
                 mPanelRoot.SetActive(true);
@@ -198,157 +216,66 @@ namespace NineGrid.Presentation.Ui
             {
                 mPanelRoot.SetActive(false);
                 ClearRelicIcons();
-                if (mDimmerHeld)
+                if (mOverlayHeld)
                 {
-                    BattleUiDimmerOverlay.Release(DimmerReason);
-                    mDimmerHeld = false;
+                    PureBlackScreenOverlay.Release(OverlayReason);
+                    mOverlayHeld = false;
                 }
             }
         }
 
-        private void RequestReturn()
-        {
-            InteractionAudioCues.Pulse(
-                InteractionAudioCues.UiConfirm,
-                "RunSummaryPanel.RequestReturn",
-                "run_summary.return_main_menu");
-            mCloseTcs?.TrySetResult();
-        }
-
         private void Populate(bool victory)
         {
-            var arch = NineGridArchitecture.Current;
-            var run = arch?.GetModel<RunModel>();
-            var player = arch?.GetModel<PlayerModel>();
+            RunRecapTracker.ScanNow();
 
             SetText(mTitleText, victory
-                ? NineGrid.Core.Localization.L10n.Tr("summary.title_victory", "凯旋而归")
-                : NineGrid.Core.Localization.L10n.Tr("summary.title_defeat", "壮志未酬"));
+                ? NineGrid.Core.Localization.L10n.Tr("summary.title_victory", "胜利！！！！")
+                : NineGrid.Core.Localization.L10n.Tr("summary.title_defeat", "失败……"));
             if (mTitleText != null)
             {
-                mTitleText.color = victory
-                    ? new Color(0.95f, 0.82f, 0.42f, 1f)
-                    : new Color(0.78f, 0.62f, 0.58f, 1f);
+                mTitleText.color = victory ? VictoryTitleColor : DefeatTitleColor;
             }
 
-            SetText(
-                mSubtitleText,
-                victory
-                    ? NineGrid.Core.Localization.L10n.Tr(
-                        "summary.subtitle_victory",
-                        "你征服了全部三层地城，九宫的传说将铭记你的名字！")
-                    : NineGrid.Core.Localization.L10n.Tr(
-                        "summary.subtitle_defeat",
-                        "地城的阴影暂时吞没了冒险者，重整旗鼓再来一局。"));
-
-            SetDecorVisible(VictoryDecorName, victory);
-            SetDecorVisible(DefeatDecorName, !victory);
-
-            var heroName = NineGrid.Core.Localization.L10n.Tr("charselect.warrior_name", "战士");
-            if (CardPresentationConfigCatalog.TryGet(AvatarDefId, out var dto)
-                && dto != null
-                && !string.IsNullOrWhiteSpace(dto.displayName))
+            if (mPortraitArt != null)
             {
-                heroName = dto.displayName;
+                PanelArtUtility.FitWorldHeight(mPortraitArt, PortraitWorldHeight);
             }
 
-            SetText(mHeroNameText, heroName);
-
-            if (run != null)
+            if (mDifficultyIcon != null && RunSetupSelection.DifficultyIcon != null)
             {
-                var floor = run.Floor != null ? run.Floor.Value : 1;
-                var displayNode = MapNodeProgression.ToDisplayNode(
-                    run.NodeIndex != null ? run.NodeIndex.Value : 0);
-                SetText(
-                    mProgressText,
-                    victory
-                        ? string.Format(
-                            NineGrid.Core.Localization.L10n.Tr("summary.progress_victory", "通关进度　全 {0} 层制霸"),
-                            RunModel.FinalFloor)
-                        : string.Format(
-                            NineGrid.Core.Localization.L10n.Tr("summary.progress_defeat", "通关进度　第 {0} 层 · 第 {1} 关"),
-                            floor,
-                            displayNode));
-                SetText(mSeedText, string.Format(
-                    NineGrid.Core.Localization.L10n.Tr("summary.seed", "本局种子 {0}"),
-                    run.Seed?.Value ?? 0));
-            }
-            else
-            {
-                SetText(mProgressText, string.Empty);
-                SetText(mSeedText, string.Empty);
+                mDifficultyIcon.sprite = RunSetupSelection.DifficultyIcon;
             }
 
-            SetText(
-                mGoldText,
-                player != null && player.Coins != null
-                    ? string.Format(
-                        NineGrid.Core.Localization.L10n.Tr("summary.gold", "持有金币　{0}"),
-                        Mathf.Max(0, player.Coins.Value))
-                    : string.Empty);
-            SetText(
-                mInteractionText,
-                player != null && player.InteractionCount != null
-                    ? string.Format(
-                        NineGrid.Core.Localization.L10n.Tr("summary.interactions", "九宫互动　{0} 次"),
-                        Mathf.Max(0, player.InteractionCount.Value))
-                    : string.Empty);
-
-            SetText(mStatsText, BuildAvatarStatsLine(arch));
-            PopulateRelics(player);
+            PopulateStats();
+            PopulateRelics();
         }
 
-        private static string BuildAvatarStatsLine(QFramework.IArchitecture arch)
+        private void PopulateStats()
         {
-            if (arch == null)
-            {
-                return string.Empty;
-            }
-
-            var board = arch.GetModel<BoardModel>();
-            var avatarUid = board?.AvatarUid != null ? board.AvatarUid.Value : 0;
-            if (avatarUid <= 0 || !arch.GetModel<CardRegistry>().TryGet(avatarUid, out var avatar))
-            {
-                return string.Empty;
-            }
-
-            var stats = arch.GetSystem<IStatSystem>();
-            if (stats == null)
-            {
-                return string.Empty;
-            }
-
-            var hp = Mathf.Max(0, stats.GetEffectiveInt(avatar, StatId.Hp));
-            var maxHp = Mathf.Max(hp, stats.GetEffectiveInt(avatar, StatId.MaxHp));
-            var attack = Mathf.Max(0, stats.GetEffectiveInt(avatar, StatId.Attack));
-            var armor = Mathf.Max(0, StatArmorUtility.GetEffectiveArmor(stats, avatar));
-            return string.Format(
-                NineGrid.Core.Localization.L10n.Tr(
-                    "summary.stats",
-                    "最终属性　生命 {0}/{1} · 攻击 {2} · 护甲 {3}"),
-                hp,
-                maxHp,
-                attack,
-                armor);
-        }
-
-        private void PopulateRelics(PlayerModel player)
-        {
-            ClearRelicIcons();
-            var relicIds = player != null ? player.RelicDefIds : null;
-            var count = relicIds != null ? relicIds.Count : 0;
-            SetText(mRelicTitleText, string.Format(
-                NineGrid.Core.Localization.L10n.Tr("summary.relics", "持有遗物　{0} 件"),
-                count));
-
-            if (mRelicIconAnchor == null || count == 0)
+            if (mStatsBodyText == null)
             {
                 return;
             }
 
-            var rootRenderer = mPanelRoot.GetComponent<SpriteRenderer>();
-            var spawned = 0;
-            for (var i = 0; i < relicIds.Count; i++)
+            mStatsBodyText.text = string.Format(
+                NineGrid.Core.Localization.L10n.Tr(
+                    "summary.stats_body",
+                    "所用时长：{0}\n\n击败的怪物数量：{1}\n\n损失血量：{2}\n\n使用道具卡数量：{3}"),
+                RunRecapTracker.FormatElapsed(),
+                RunRecapTracker.MonstersKilled,
+                RunRecapTracker.HpLost,
+                RunRecapTracker.ItemCardsUsed);
+        }
+
+        private void PopulateRelics()
+        {
+            ClearRelicIcons();
+            var player = NineGridArchitecture.Current?.GetModel<PlayerModel>();
+            var relicIds = player != null ? player.RelicDefIds : null;
+            var count = relicIds != null ? relicIds.Count : 0;
+
+            var filled = 0;
+            for (var i = 0; i < count && filled < mRelicSlots.Count; i++)
             {
                 var sprite = ResolveRelicSprite(relicIds[i]);
                 if (sprite == null)
@@ -356,40 +283,164 @@ namespace NineGrid.Presentation.Ui
                     continue;
                 }
 
-                var icon = new GameObject("遗物图标_" + relicIds[i]);
-                icon.transform.SetParent(mRelicIconAnchor, worldPositionStays: false);
-                var row = spawned / RelicIconsPerRow;
-                var col = spawned % RelicIconsPerRow;
-                icon.transform.localPosition = new Vector3(
-                    col * RelicIconSpacing,
-                    -row * RelicIconSpacing,
-                    0f);
-                icon.transform.localScale = Vector3.one;
-
-                var renderer = icon.AddComponent<SpriteRenderer>();
-                renderer.sprite = sprite;
-                if (rootRenderer != null)
-                {
-                    renderer.sortingLayerID = rootRenderer.sortingLayerID;
-                    renderer.sortingOrder = rootRenderer.sortingOrder + 3;
-                    renderer.sharedMaterial = rootRenderer.sharedMaterial;
-                }
-
-                spawned++;
+                var art = PanelArtUtility.SetStaticArt(mRelicSlots[filled], sprite, RelicIconSortingOrder);
+                PanelArtUtility.FitWorldHeight(art, RelicIconWorldHeight);
+                filled++;
             }
         }
 
         private void ClearRelicIcons()
         {
-            if (mRelicIconAnchor == null)
+            for (var i = 0; i < mRelicSlots.Count; i++)
+            {
+                PanelArtUtility.SetStaticArt(mRelicSlots[i], null, RelicIconSortingOrder);
+            }
+        }
+
+        /// <summary>遗物墙 12 个占位槽：按视觉顺序（先上行后下行、从左到右）排序。</summary>
+        private void CollectRelicSlots(Transform wall)
+        {
+            mRelicSlots.Clear();
+            if (wall == null)
             {
                 return;
             }
 
-            for (var i = mRelicIconAnchor.childCount - 1; i >= 0; i--)
+            for (var i = 0; i < wall.childCount; i++)
             {
-                Destroy(mRelicIconAnchor.GetChild(i).gameObject);
+                var child = wall.GetChild(i);
+                if (child != null && child.name.StartsWith("占位模板", StringComparison.Ordinal))
+                {
+                    mRelicSlots.Add(child);
+                    DisableSlotCollider(child);
+                }
             }
+
+            mRelicSlots.Sort((a, b) =>
+            {
+                var ay = a.localPosition.y;
+                var by = b.localPosition.y;
+                if (Mathf.Abs(ay - by) > 0.05f)
+                {
+                    return by.CompareTo(ay);
+                }
+
+                return a.localPosition.x.CompareTo(b.localPosition.x);
+            });
+        }
+
+        private void RequestReturn()
+        {
+            InteractionAudioCues.Pulse(
+                InteractionAudioCues.UiPress,
+                "RunSummaryPanel.RequestReturn",
+                "run_summary.return_main_menu");
+            if (mPrompt != null)
+            {
+                mPrompt.Show(UiConfirmPrompt.ReturnMainMenuMessage, CompleteReturn);
+                return;
+            }
+
+            CompleteReturn();
+        }
+
+        private void CompleteReturn()
+        {
+            InteractionAudioCues.Pulse(
+                InteractionAudioCues.UiConfirm,
+                "RunSummaryPanel.CompleteReturn",
+                "run_summary.return_main_menu");
+            mCloseTcs?.TrySetResult();
+        }
+
+        private void RequestQuit()
+        {
+            InteractionAudioCues.Pulse(
+                InteractionAudioCues.UiPress,
+                "RunSummaryPanel.RequestQuit",
+                "run_summary.quit_game");
+            if (mPrompt != null)
+            {
+                mPrompt.Show(UiConfirmPrompt.QuitGameMessage, CompleteQuit);
+                return;
+            }
+
+            CompleteQuit();
+        }
+
+        private void CompleteQuit()
+        {
+            InteractionAudioCues.Pulse(
+                InteractionAudioCues.MainMenuCancel,
+                "RunSummaryPanel.CompleteQuit",
+                "run_summary.quit_game");
+            var controller = UnityEngine.Object.FindFirstObjectByType<GameFlowController>();
+            if (controller != null)
+            {
+                controller.QuitGame();
+                return;
+            }
+
+            Application.Quit();
+        }
+
+        /// <summary>再来一局：收面板放行回主菜单收口，随后自动打开选人界面重开。</summary>
+        private void RequestRestart()
+        {
+            InteractionAudioCues.Pulse(
+                InteractionAudioCues.UiConfirm,
+                "RunSummaryPanel.RequestRestart",
+                "run_summary.restart");
+            mCloseTcs?.TrySetResult();
+            OpenCharacterSelectAfterReturnAsync().Forget();
+        }
+
+        private static async UniTaskVoid OpenCharacterSelectAfterReturnAsync()
+        {
+            var shell = NineGridArchitecture.Interface?.GetSystem<IGameFlowShellSystem>()
+                        ?? NineGridArchitecture.Current?.GetSystem<IGameFlowShellSystem>();
+            var deadline = Time.realtimeSinceStartup + 8f;
+            while (shell != null
+                   && (shell.IsBusy || shell.State.Value != GameFlowShellState.MainMenu)
+                   && Time.realtimeSinceStartup < deadline)
+            {
+                await UniTask.Yield();
+            }
+
+            // 收口后再让一帧，避开 EnterMainMenu 的同帧表现清理。
+            await UniTask.Yield();
+            if (shell != null && shell.State.Value != GameFlowShellState.MainMenu)
+            {
+                Debug.LogWarning("[RunSummary] 再来一局：主菜单收口超时，放弃自动打开选人界面。");
+                return;
+            }
+
+            CharacterSelectPanel.RequestOpen();
+        }
+
+        private void WireButton(Transform target, Action onClick)
+        {
+            if (target == null || onClick == null)
+            {
+                return;
+            }
+
+            EnsureButtonCollider(target);
+            var button = target.GetComponent<WorldUiHitButton>();
+            if (button == null)
+            {
+                button = target.gameObject.AddComponent<WorldUiHitButton>();
+            }
+
+            button.Configure(
+                onClick,
+                BattleUiDimmerOverlay.CloseHitSort + 1,
+                PointerHitSurfacePriorities.Overlay,
+                hoverScale: 1.08f,
+                onHoverEnter: () => InteractionAudioCues.Pulse(
+                    InteractionAudioCues.MainMenuHover,
+                    "RunSummaryPanel.ButtonHover",
+                    "run_summary.button"));
         }
 
         private static Sprite ResolveRelicSprite(string defId)
@@ -413,38 +464,36 @@ namespace NineGrid.Presentation.Ui
             return ContentIconSlotBinder.TryLoadLegacyRelicIconPublic(defId);
         }
 
-        private void SetDecorVisible(string decorName, bool visible)
+        private static void EnsureButtonCollider(Transform node)
         {
-            var decor = FindChild(mPanelRoot.transform, decorName);
-            if (decor != null && decor.gameObject.activeSelf != visible)
+            var collider = node.GetComponent<BoxCollider2D>();
+            if (collider == null)
             {
-                decor.gameObject.SetActive(visible);
+                collider = node.gameObject.AddComponent<BoxCollider2D>();
             }
+
+            if (collider.size.x < 0.01f || collider.size.y < 0.01f)
+            {
+                var renderer = node.GetComponent<SpriteRenderer>();
+                var size = renderer != null && renderer.sprite != null
+                    ? (renderer.drawMode == SpriteDrawMode.Simple
+                        ? (Vector2)renderer.sprite.bounds.size
+                        : renderer.size)
+                    : new Vector2(0.5f, 0.5f);
+                collider.size = size;
+            }
+
+            collider.isTrigger = false;
+            collider.enabled = true;
         }
 
-        private void WireButton(Transform target, System.Action onClick)
+        private static void DisableSlotCollider(Transform node)
         {
-            if (target == null || onClick == null)
+            var collider = node.GetComponent<BoxCollider2D>();
+            if (collider != null)
             {
-                return;
+                collider.enabled = false;
             }
-
-            EnsureCollider(target.gameObject, PreferSpriteSize(target));
-            var button = target.GetComponent<WorldUiHitButton>();
-            if (button == null)
-            {
-                button = target.gameObject.AddComponent<WorldUiHitButton>();
-            }
-
-            button.Configure(
-                onClick,
-                BattleUiDimmerOverlay.CloseHitSort + 1,
-                PointerHitSurfacePriorities.Overlay,
-                hoverScale: 1.06f,
-                onHoverEnter: () => InteractionAudioCues.Pulse(
-                    InteractionAudioCues.MainMenuHover,
-                    "RunSummaryPanel.ButtonHover",
-                    "run_summary.button"));
         }
 
         private static void SetText(TMP_Text target, string text)
@@ -455,78 +504,19 @@ namespace NineGrid.Presentation.Ui
             }
         }
 
-        private static void WirePanelSwallow(GameObject panel)
+        private static Transform FindDirectChild(Transform parent, string childName)
         {
-            if (panel == null)
-            {
-                return;
-            }
-
-            var col = panel.GetComponent<BoxCollider2D>();
-            if (col == null)
-            {
-                col = panel.AddComponent<BoxCollider2D>();
-            }
-
-            var size = PreferSpriteSize(panel.transform);
-            col.size = new Vector2(Mathf.Max(3f, size.x), Mathf.Max(3f, size.y));
-            col.offset = Vector2.zero;
-            col.isTrigger = false;
-            col.enabled = true;
-
-            var proxy = panel.GetComponent<UiOverlayHitProxy>();
-            if (proxy == null)
-            {
-                proxy = panel.AddComponent<UiOverlayHitProxy>();
-            }
-
-            proxy.Configure(
-                UiOverlayHitAction.Swallow,
-                BattleUiDimmerOverlay.HitSort + 1,
-                PointerHitSurfacePriorities.Overlay);
-        }
-
-        private static BoxCollider2D EnsureCollider(GameObject go, Vector2 size)
-        {
-            var col = go.GetComponent<BoxCollider2D>();
-            if (col == null)
-            {
-                col = go.AddComponent<BoxCollider2D>();
-            }
-
-            col.size = size;
-            col.offset = Vector2.zero;
-            col.isTrigger = false;
-            col.enabled = true;
-            return col;
-        }
-
-        private static Vector2 PreferSpriteSize(Transform t)
-        {
-            var sr = t.GetComponent<SpriteRenderer>();
-            if (sr != null && sr.sprite != null)
-            {
-                var size = sr.drawMode == SpriteDrawMode.Simple
-                    ? (Vector2)sr.sprite.bounds.size
-                    : sr.size;
-                return new Vector2(Mathf.Max(0.25f, size.x), Mathf.Max(0.25f, size.y));
-            }
-
-            return new Vector2(0.5f, 0.5f);
-        }
-
-        private static Transform FindChild(Transform root, string childName)
-        {
-            if (root == null || string.IsNullOrEmpty(childName))
+            if (parent == null)
             {
                 return null;
             }
 
-            foreach (var t in root.GetComponentsInChildren<Transform>(true))
+            for (var i = 0; i < parent.childCount; i++)
             {
-                if (t != null && t.name == childName)
+                var child = parent.GetChild(i);
+                if (child != null && string.Equals(child.name, childName, StringComparison.Ordinal))
                 {
-                    return t;
+                    return child;
                 }
             }
 
@@ -535,7 +525,7 @@ namespace NineGrid.Presentation.Ui
 
         private static TMP_Text FindTmp(Transform root, string childName)
         {
-            var child = FindChild(root, childName);
+            var child = FindDirectChild(root, childName);
             return child != null ? child.GetComponent<TMP_Text>() : null;
         }
 

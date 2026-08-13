@@ -61,6 +61,8 @@ namespace NineGrid.Flow
             CancelLoopWork();
             mLoopCts = new CancellationTokenSource();
             PresentationInputGates.Reset("BeginRun");
+            // 结算统计（时长/击杀/损血/道具使用）随新 run 清零重开（只读旁路）。
+            RunRecapTracker.HandleRunStarted();
             NineGridArchitecture.Interface?.GetSystem<IFieldBattlePresentationSystem>()?.CancelBattleWork();
             ResolveSession()?.ClearCardPresentationSurface();
 

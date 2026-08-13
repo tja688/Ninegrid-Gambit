@@ -23,7 +23,8 @@
 | `IGameFlowView` | `GameFlow/IGameFlowView.cs` | 流程场景视图接口：Notice / Panel 显隐 / 时序参数 / QuitGame |
 | `RunSaveService`（静态类） | `GameFlow/RunSave/RunSaveService.cs` | 存档服务：检查点捕获→自动槽、手动槽写入、读档收口重开 |
 | `IRunSaveStore` + `RunSaveStoreHook` | `GameFlow/RunSave/RunSaveStore.cs` | 落盘后端接口 + 装配缝（ES3 桥在 `NineGrid.SaveBridge` 注册） |
-| `GameFlowController` | `GameFlowController.cs` | 主流程场景 View：主菜单按钮（开始/教学/设置/退出 + 语言切换）轮询命中 + 悬停缩放 + 菜单音效；语言切换按钮（`MainPanel/LanguageToggle`）经 `LanguageSettingsSystem.Toggle` 切 zh↔en 并自刷 label（ADR-0046）；胜负 Notice 文案经 `L10n.Tr` 包装；实现 `IGameFlowView` |
+| `RunRecapTracker` | `GameFlow/RunRecapTracker.cs` | 结算统计只读旁路：EventLog 游标累计击杀/损血/道具使用 + 开局计时；`HandleRunStarted` 随 BeginRun 清零，完结结算面板消费 |
+| `GameFlowController` | `GameFlowController.cs` | 主流程场景 View：主菜单按钮（开始/**继续游戏**/教学/设置/退出 + 语言切换）轮询命中 + 悬停缩放 + 菜单音效；「继续游戏」→ `MainMenuLoadPanel.RequestOpen()`（无档拒绝音+短 Notice）；选人界面/纯黑屏/加载弹窗任一激活时按钮轮询让位；语言切换按钮（`MainPanel/LanguageToggle`）经 `LanguageSettingsSystem.Toggle` 切 zh↔en 并自刷 label（ADR-0046）；胜负 Notice 文案经 `L10n.Tr` 包装；实现 `IGameFlowView` |
 | `GameFlowShellHook`（静态类） | `GameFlowShellHook.cs` | 流程壳 Controller 接线入口；`PublishState` 镜像路径**已停用**（no-op，防旧路径偷写第二份相位） |
 | `GameFlowShellState`（enum） | `Presentation/GameFlowShellState.cs` | 壳相位七态：MainMenu / BattleStub / RewardChoice / RoomChoice / RoomEvent / VictoryNotice / DefeatNotice |
 | `GameFlowShellStateChangedEvent`（struct） | `Presentation/GameFlowShellStateChangedEvent.cs` | 相位变更一次性广播（From/To） |
@@ -87,8 +88,10 @@ while 未取消:
 1. 非教学局 `RunSaveService.HandleRunEnded()`（清内存检查点 + 删自动存档，手动槽保留）。
 2. `CancelLoopWork` → 清卡表面、刷持久 HUD、`CancelBattleWork`。
 3. `RequestSetState(VictoryNotice/DefeatNotice)`（音乐切 Victory/Defeat）+ 胜负 SFX（`FlowRoomEconomyAudioCues`）+ 胜负 VFX（`FlowBattleEndVfxCues`）+ `BattleTraceRecorder.ExportBothNow`。
-4. **结算面板**：`RunSummaryPanel.TryShowAndWaitAsync(victory, ct)`（只读展示 `ClearRunSession` 前快照，等玩家点返回）；场景缺预置回退旧 Notice + 延时。
+4. **结算面板**：`RunSummaryPanel.TryShowAndWaitAsync(victory, ct)`（只读展示 `ClearRunSession` 前数据 + `RunRecapTracker` 统计，等玩家选去向：回主菜单/退出经提示框确认、「再来一局」放行后自动重开选人界面）；场景缺预置回退旧 Notice + 延时。
 5. `EnterMainMenuImmediate`：`RunSummaryPanel.CloseIfOpen` 兜底（强退路径可能未走面板 finally）→ HideNotice → `PresentationInputGates.Reset` → `ClearPresentationSurface` → `ShowMainMenuPanels` → 回菜单 SFX → `RequestSetState(MainMenu)`（音乐回主菜单）→ `mShell.ClearRunSession` → timeScale 复位。
+
+**结算统计（2026-08-13）**：`GameFlow/RunRecapTracker`（只读旁路 MonoBehaviour）——`Orchestrator.Start` 每次 BeginRun 调 `HandleRunStarted` 清零重开计时；EventLog 游标累计击杀（`CardKilled`+Kind=Monster）/ 玩家损血（`HpChanged` Delta<0+Kind=Avatar）/ 道具卡使用（`ItemUsed`，cause=replay 的存档重放不计）；结算面板取数前 `ScanNow()` 追扫末批；读档恢复后从恢复点重新累计（已知限制）。
 
 **取消令牌纪律**（代码注释）：`ShowVictoryAndReturnAsync` 不可把节点循环 ct 传给胜负回菜单——`ShowBattleEnd` 开头 `CancelLoopWork` 会立刻取消该 ct，Delay 抛取消后 `EnterMainMenuImmediate` 走不到，DisableDomainReload 下残留非 MainMenu。胜负收口用独立 `mBattleEndCts`。
 

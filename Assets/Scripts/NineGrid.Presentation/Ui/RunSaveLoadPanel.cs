@@ -11,7 +11,10 @@ namespace NineGrid.Presentation.Ui
 {
     /// <summary>
     /// 局内功能菜单「存档/读档模块」接线：
-    /// 「保存」「加载」双按钮切换共享「UI槽位」列表的模式；
+    /// 默认展示保存面板（保存钮激活 / 加载钮失活），「加载」切换到读档列表；
+    /// 保存视图恒四行：槽位一为默认存档（自动档，系统维护），槽位二至四手动可存——
+    /// 空位直接存，已有存档先经「提示框」确认覆盖；
+    /// 加载视图只列出已有存档（自动档 + 手动槽，至多 4 条），点击即读档。
     /// 条目按场景预置的「保存条目模板」「加载条目模板」克隆。
     /// 存档颗粒度 = 当前/最近一场战斗的开始（<see cref="RunSaveService"/> 检查点）。
     /// </summary>
@@ -24,6 +27,7 @@ namespace NineGrid.Presentation.Ui
         private const string SlotPanelName = "UI槽位";
         private const string SaveEntryTemplateName = "保存条目模板";
         private const string LoadEntryTemplateName = "加载条目模板";
+        private const string FunctionModuleName = "功能模块";
 
         // UI槽位面板本地可视区 Y∈[-1.5,+1.5]（Play 实测）；行高 0.5，4 行正好铺满。
         private const float RowTopLocalY = 1.05f;
@@ -48,6 +52,7 @@ namespace NineGrid.Presentation.Ui
         private Transform mSlotPanel;
         private GameObject mSaveEntryTemplate;
         private GameObject mLoadEntryTemplate;
+        private UiConfirmPrompt mPrompt;
         private readonly List<GameObject> mRows = new List<GameObject>(8);
 
         /// <summary>由 <see cref="PlayerAudioSettingsPanel"/> 在功能菜单接线时调用。</summary>
@@ -67,10 +72,10 @@ namespace NineGrid.Presentation.Ui
         private void OnEnable()
         {
             EnsureWired();
-            // 每次打开菜单按当前上下文选默认页：局内有检查点 → 保存；主菜单/无进度 → 加载。
+            // 每次打开菜单默认展示保存面板（保存钮激活 / 加载钮失活）。
             if (!mModeChosenThisOpen)
             {
-                mMode = RunSaveService.CurrentCheckpoint != null ? PanelMode.Save : PanelMode.Load;
+                mMode = PanelMode.Save;
             }
 
             Refresh();
@@ -103,6 +108,10 @@ namespace NineGrid.Presentation.Ui
 
             WireModeButton(mSaveButton, () => SetMode(PanelMode.Save));
             WireModeButton(mLoadButton, () => SetMode(PanelMode.Load));
+
+            // 覆盖确认提示框在兄弟模块「功能模块/提示框」（与退出/回主菜单共用）。
+            var functionModule = FindDirectChild(transform.parent, FunctionModuleName);
+            mPrompt = UiConfirmPrompt.Attach(FindDirectChild(functionModule, UiConfirmPrompt.NodeName));
 
             if (mSlotPanel == null || mSaveEntryTemplate == null || mLoadEntryTemplate == null)
             {
@@ -153,6 +162,24 @@ namespace NineGrid.Presentation.Ui
         {
             var checkpoint = RunSaveService.CurrentCheckpoint;
             var row = 0;
+
+            // 槽位一：默认存档（自动档，进入战斗自动写入，不可手动覆盖）。
+            RunSaveSnapshot auto;
+            var hasAuto = RunSaveService.TryReadSlot(RunSaveService.AutoSlotId, out auto);
+            SpawnRow(
+                mSaveEntryTemplate,
+                row++,
+                hasAuto
+                    ? string.Format(
+                        NineGrid.Core.Localization.L10n.Tr("save.default_entry", "默认存档　{0}"),
+                        FormatEntry(auto))
+                    : NineGrid.Core.Localization.L10n.Tr(
+                        "save.default_none",
+                        "默认存档（进入战斗自动写入）"),
+                clickable: false,
+                null);
+
+            // 槽位二至四：手动槽。空位直接存；已有存档点击先确认覆盖。
             for (var i = 1; i <= RunSaveService.ManualSlotCount; i++)
             {
                 var slotIndex = i;
@@ -169,7 +196,7 @@ namespace NineGrid.Presentation.Ui
                     row++,
                     label,
                     clickable,
-                    () => OnSaveRowClicked(slotIndex));
+                    () => OnSaveRowClicked(slotIndex, has));
             }
         }
 
@@ -177,43 +204,67 @@ namespace NineGrid.Presentation.Ui
         {
             var row = 0;
             RunSaveSnapshot auto;
-            var hasAuto = RunSaveService.TryReadSlot(RunSaveService.AutoSlotId, out auto);
-            SpawnRow(
-                mLoadEntryTemplate,
-                row++,
-                hasAuto
-                    ? string.Format(
+            if (RunSaveService.TryReadSlot(RunSaveService.AutoSlotId, out auto))
+            {
+                SpawnRow(
+                    mLoadEntryTemplate,
+                    row++,
+                    string.Format(
                         NineGrid.Core.Localization.L10n.Tr("save.auto_entry", "自动 {0}"),
-                        FormatEntry(auto))
-                    : NineGrid.Core.Localization.L10n.Tr("save.auto_none", "自动存档（暂无）"),
-                hasAuto,
-                () => OnLoadRowClicked(RunSaveService.AutoSlotId));
+                        FormatEntry(auto)),
+                    clickable: true,
+                    () => OnLoadRowClicked(RunSaveService.AutoSlotId));
+            }
 
             for (var i = 1; i <= RunSaveService.ManualSlotCount; i++)
             {
                 var slotId = RunSaveService.ManualSlotId(i);
                 RunSaveSnapshot existing;
-                var has = RunSaveService.TryReadSlot(slotId, out existing);
+                if (!RunSaveService.TryReadSlot(slotId, out existing))
+                {
+                    continue;
+                }
+
                 SpawnRow(
                     mLoadEntryTemplate,
                     row++,
-                    has
-                        ? FormatEntry(existing)
-                        : string.Format(
-                            NineGrid.Core.Localization.L10n.Tr("save.empty_slot", "空存档位 {0}"),
-                            i),
-                    has,
+                    FormatEntry(existing),
+                    clickable: true,
                     () => OnLoadRowClicked(slotId));
+            }
+
+            if (row == 0)
+            {
+                SpawnRow(
+                    mLoadEntryTemplate,
+                    0,
+                    NineGrid.Core.Localization.L10n.Tr("save.none", "暂无存档"),
+                    clickable: false,
+                    null);
             }
         }
 
-        private void OnSaveRowClicked(int slotIndex)
+        private void OnSaveRowClicked(int slotIndex, bool occupied)
         {
             if (RunSaveService.CurrentCheckpoint == null)
             {
                 return;
             }
 
+            if (occupied && mPrompt != null)
+            {
+                // 已有存档：先经提示框确认覆盖，同意才写入。
+                mPrompt.Show(
+                    UiConfirmPrompt.OverwriteSaveMessage,
+                    () => SaveToSlot(slotIndex));
+                return;
+            }
+
+            SaveToSlot(slotIndex);
+        }
+
+        private void SaveToSlot(int slotIndex)
+        {
             var ok = RunSaveService.SaveCheckpointToSlot(slotIndex);
             InteractionAudioCues.Pulse(
                 ok ? InteractionAudioCues.UiConfirm : InteractionAudioCues.UiCancel,
@@ -402,7 +453,8 @@ namespace NineGrid.Presentation.Ui
                 PointerHitSurfacePriorities.Overlay);
         }
 
-        private static string FormatEntry(RunSaveSnapshot snapshot)
+        /// <summary>存档条目展示文案（主菜单「继续游戏」加载面板共用）。</summary>
+        internal static string FormatEntry(RunSaveSnapshot snapshot)
         {
             if (snapshot == null)
             {

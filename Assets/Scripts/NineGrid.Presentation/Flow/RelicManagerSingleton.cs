@@ -628,6 +628,11 @@ namespace NineGrid.Flow
             if (iconPrefab == null)
             {
                 iconPrefab = CardChassisPaths.LoadGameObject(CardChassisPaths.RelicHudIconPrefab);
+                if (iconPrefab == null)
+                {
+                    Debug.LogError(
+                        $"[RelicManagerSingleton] 遗物图标显示壳加载失败：{CardChassisPaths.RelicHudIconPrefab}（Player 端要求路径在 Assets/Resources/ 下），遗物栏将无法显示。");
+                }
             }
 
             if ((_slots == null || _slots.Length == 0) && panelAnchors != null)
