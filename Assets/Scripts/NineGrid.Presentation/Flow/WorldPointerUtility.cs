@@ -7,7 +7,7 @@ namespace NineGrid.Flow
 {
     /// <summary>
     /// 世界空间点选工具：唯一指针读口（屏幕 / 世界 / 主键边沿）。
-    /// 高回报率 mitigation 激活时由 Win32 注入 Input System，本类仍只读 Mouse.current。
+    /// 读 New Input System 的 Mouse.current（或测试注入源）。
     /// </summary>
     public static class WorldPointerUtility
     {

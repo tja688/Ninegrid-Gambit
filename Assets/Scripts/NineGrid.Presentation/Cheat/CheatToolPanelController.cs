@@ -10,7 +10,6 @@ using NineGrid.Core.Systems;
 using NineGrid.Flow;
 using NineGrid.Flow.Diagnostics;
 using NineGrid.Flow.Presentation;
-using NineGrid.Presentation.Platform;
 using QFramework;
 using TMPro;
 using UnityEngine;
@@ -487,20 +486,13 @@ namespace NineGrid.Presentation.Cheat
 
         private static void LogDiagnosticPaths()
         {
-#if UNITY_STANDALONE_WIN && !UNITY_EDITOR
-            var summary = WindowsHangReportPaths.FormatDiagnosticPathSummary();
-            Debug.Log("[CheatTool] " + summary.Replace("\n", " | "));
-#endif
+            Debug.Log("[CheatTool] 业务日志: " + DiagTraceShared.ResolveNotesDir("Logs")
+                + " | 手动快照: " + DiagTraceManualSnapshot.RootFolderName);
         }
 
         private static string BuildLogMenuNotice()
         {
-#if UNITY_STANDALONE_WIN && !UNITY_EDITOR
-            return "填写问题 Tag 后点保存。卡死取证路径："
-                + WindowsHangReportPaths.ResolvePortableReportsDir();
-#else
-            return "填写问题 Tag 后点保存。";
-#endif
+            return "填写问题 Tag 后点保存。日志: " + DiagTraceShared.ResolveNotesDir("Logs");
         }
 
         private void TryAddCardToDeckTop(string defId)

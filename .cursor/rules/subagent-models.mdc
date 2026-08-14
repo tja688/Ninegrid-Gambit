@@ -1,12 +1,36 @@
 ---
-description: 子代理模型建议（软约束，无 hooks 硬拦截）
+description: Subagent 模型白名单与选型（配合 Cursor 全局 hooks 硬拦截）
 alwaysApply: true
 ---
 
-# 子代理模型建议
+# Subagent 模型策略
 
-开子代理（Task 工具）时，**优先选用较为经济实惠的模型**。
+## 硬拦截（全局 hooks）
 
-- 简单探索、检索、清单类任务：优先低成本模型
-- 仅当任务确实需要深度推理时，再考虑更强模型
-- 子代理失败时由父 agent 接手，避免反复开子代理
+配置在 **Cursor 用户全局目录**：`%USERPROFILE%\.cursor\hooks.json`（脚本在同级 `hooks\`）。`preToolUse`（matcher: `Task`）与 `subagentStart` 均 `failClosed`。
+
+**白名单 slug**（Task `model` 或子代理 resolved model）：
+
+| slug | 用途 |
+|------|------|
+| `composer-2.5` | 简单 / 探查了解 / 快速落地 |
+| `composer-2.5-fast` | 探查 / 并行检索 / 低成本 |
+| `cursor-grok-4.6-high` | 复杂 / 需分析 / 有难度 |
+
+**Hook 行为（精简）**：
+
+- `inherit` 或空 `model` → **放行**（走 Cursor 默认 / 用户子代理设置）
+- `cursor-grok-4.5-high` 等 4.5 写法 → **映射为** `cursor-grok-4.6-high` 后放行
+- 任意 Grok `*-fast`（含 `cursor-grok-4.6-high-fast`）→ **拒绝**
+- 非白名单（Claude / GPT / Opus / Sonnet / Auto 等）→ **拒绝**；父 agent 改模型或自行完成，勿反复 spawn
+
+## 选型（软约束）
+
+- **难任务**：Task + `model: cursor-grok-4.6-high`
+- **简单探索 / 检索**：`composer-2.5-fast`，或内置 `explore` 子代理（省略 `model` 或显式 fast slug）
+- **简单落地**：`composer-2.5`（或 omit `model` 继承父模型）
+- 子代理失败 → 父 agent 接手，避免反复开子代理
+
+## 与 worktree 规则并存
+
+禁止 `best-of-n-runner`、worktree、旁路克隆（见 [`no-worktrees.mdc`](no-worktrees.mdc)）。

@@ -12,8 +12,7 @@
 
 1. **硬要求**：`unity command recompile` 后 Console 无**由本票改动导致**的新增 Error / Exception / Assert
 2. **手动验证**：Play 模式、QuickTest 通道（`\0`–`\9`）、场景目视检查——按任务需要自行执行
-3. **Win Player 切屏/卡死票（专项）**：`recompile` 无新增 Error 后打 `Desktop/game1` Development 包；启动确认 `GameLogs/HangReports/watchdog-alive-*.txt` 与试玩 bat/说明存在；本机 Win11 做 Alt-Tab + 拖标题栏冒烟；Win10 回归交给试玩者按包内说明
-4. **内容卫生**（改 Catalog / JSON 时）：Editor 菜单 `NineGrid/Content/…` 校验与 `ContentHygieneValidator` 汇总（见 [`README.md`](./README.md) `NineGrid.Content.Editor` 行）
+3. **内容卫生**（改 Catalog / JSON 时）：Editor 菜单 `NineGrid/Content/…` 校验与 `ContentHygieneValidator` 汇总（见 [`README.md`](./README.md) `NineGrid.Content.Editor` 行）
 
 **两击放弃**：同一验证动作（recompile / 查 Console）2 次尝试仍无果（超时 / 卡死 / 状态不明）即停，不换命令绕路；直接汇报改动结果，并建议人手动验证。
 

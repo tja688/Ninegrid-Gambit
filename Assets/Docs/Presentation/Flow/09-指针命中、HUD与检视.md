@@ -1,7 +1,7 @@
 # 指针命中、HUD 与检视 —— PointerHitRouter · 玩家信息 HUD · 遗物栏 · 卡牌详述 · 战前预览
 
 > 权威代码：根下指针/输入/面板 13 个、HUD/遗物/检视 14 个、`Flow/BattleInfoPreview/`（6），共 33 个文件。
-> 关联 ADR：ADR-0006（轮询式指针命中）、ADR-0023（命中面身份仲裁）、ADR-0027（遗物栏命中与拖拽）、ADR-0028（有效护甲）、ADR-0035（倒计时静态投影）、ADR-0037（内联图标术语悬停）
+> 关联 ADR：ADR-0023（轮询式指针命中与格位认领）、ADR-0027（遗物栏命中与拖拽）、ADR-0028（有效护甲）、ADR-0035（倒计时静态投影）、ADR-0037（内联图标术语悬停）
 
 ## 职责综述
 
@@ -63,7 +63,7 @@
 
 ## 核心流程
 
-### 1. 指针命中仲裁链（ADR-0006/0023）
+### 1. 指针命中仲裁链（ADR-0023）
 
 ```text
 各 HitProxy / FieldSurface  OnEnable → PointerHitRegistry.Register
@@ -132,7 +132,7 @@ PointerHitRouter（RuntimeInitializeOnLoad 自举，DontDestroyOnLoad）每帧 T
 
 ## 关联 ADR
 
-ADR-0006（轮询命中替代 OnMouse）、ADR-0023（表面身份仲裁 / 任意距离点击 / z 平面 Overlap）、ADR-0027（遗物锚点命中 + 子树显示 + 左拖右检）、ADR-0028（HUD 甲=有效护甲）、ADR-0035（倒计时只消费 Settled 提交值；检视静态投影）、ADR-0037（内联图标术语悬停）。
+ADR-0023（轮询命中替代 OnMouse* / 表面身份仲裁 / 任意距离点击 / z 平面 Overlap）、ADR-0027（遗物锚点命中 + 子树显示 + 左拖右检）、ADR-0028（HUD 甲=有效护甲）、ADR-0035（倒计时只消费 Settled 提交值；检视静态投影）、ADR-0037（内联图标术语悬停）。
 
 ## 不变量与坑
 

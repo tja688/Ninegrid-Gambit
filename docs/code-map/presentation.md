@@ -11,7 +11,6 @@
 | 目录 | 约 `.cs` | 命名空间（主） | 放什么 |
 |------|----------|----------------|--------|
 | `Setup/` | 3 | `NineGrid.Presentation.Setup` | `PresentationSceneRoot`、`PresentationCompositionRoot`、`PresentationSceneBindings` |
-| `Platform/` | 3 | `NineGrid.Presentation.Platform` | Windows Player 高回报率鼠标 mitigation（ADR-0006；失焦保持 NOLEGACY、chrome 用 RIDEV_REMOVE、WndProc 激活点；`-ng-no-rawinput` 排除法）+ `WindowsHangWatchdog` 卡死看门狗（双写 `GameLogs/HangReports` 与 AppData；2s `stall-in-progress.txt`；默认 5s dump；`watchdog-alive-*.txt`；`-ng-no-watchdog` / `-ng-hang-dump-seconds=N`）+ `WindowsHangReportPaths` |
 | `Controllers/` | ~21 | `NineGrid.Presentation.Controllers` | QF `PresentationController` 场景入口 |
 | `Commands/` | 25 | `NineGrid.Presentation.Commands` | 写意图 |
 | `Queries/` | 11 | `NineGrid.Presentation.Queries` | 读裁决（合法性等） |
@@ -43,7 +42,7 @@
 | `BattleInfoPreview/` | 战斗信息预览：正式 Run 在 `StartBattleNodeAsync` 前硬阻塞；数据源为 `BuildNodeDeckOptions` 的 `PlayerCards`（含房间开局注入 + 固定卡 + 来源池）；槽位不足时**优先**展示房间注入候选与固定卡（属性房加权属性卡、恢复房食品卡等）；图标按 **defId 种类去重**；槽位图标 **复用卡面 `mainVisual` + idle 槽偏移**，以槽框为 Mask 做 **BottomCenter** 锚定（`BattleInfoSlotArtFit.ApplyMainVisual` / `__Art`），再叠 Presenter 分类外部缩放（怪物/玩家道具/环境/本体）；悬停为九宫四角框 `F_U_Frame3`（`BattleInfoPreviewHighlight`，框住图标包围盒）；`BattleInfoPreviewCopySO`（Resources `Flow/BattleInfoPreviewCopy`）；半黑屏 + 详述嵌套退回预览 |
 | `Diagnostics/` | Battle/Flow/Perf/Registry/Console Trace Recorder 与 Sink（Console 轨 2026-08-13 起：`ConsoleTraceRecorder` 抓 Warning/Error/Exception/Assert 随四轨落盘；Player 日志根从 persistentDataPath 改为 exe 旁 `GameLogs/`，另挂 `Application.quitting` 退出兜底导出） |
 | `BattleLog/` | **人读战斗日志**（2026-08-13）：`Diagnostics/` 五轨是给 AI 排查的原生流水，本目录是给人看的提炼版，两者互不相干。`BattleLogRecorder`（MonoBehaviour，`PresentationSceneRoot.WireHosts` 装配）游标增量扫描 `EventLog`，**同因去重**（DealDamage 的 ArmorChanged/HpChanged 归并进 DamageDealt、Heal 的 HpChanged 归并进 Healed）+ **语义聚合**（按 `SourceDefId` 相邻分组：一个效果由多少内核原子拼成日志一概不管，只认效果容器；`EffectTriggered` 一律另起一组，同效果多次触发不糊在一个头下），产出成品行写 `BattleLogStore`（静态，按 `NodeStarted` 分房间段，段上限 64 / 段内 600 行）。`BattleLogNaming` 是唯一取名口——表现层配置器 `displayName`（`CardPresentationAuthority`）优先、Catalog 定义名兜底、都没有才露 defId；`BattleLogPalette` 是配色真源（色相跟飘字，明度按浅米色面板底压暗）；`BattleLogEntry` / `BattleLogSection` 为行与段模型 |
-| （根下） | `BattleSessionController`、`GameFlowController`、若干 `*ManagerSingleton`（Presenter 壳名）；**指针缝** `WorldPointerUtility`、**命中路由** `PointerHitRouter` / `IPointerHitTarget` / `PointerHitRegistry`（替代 OnMouse*，ADR-0006）；**开局选项** `GameFlowRunOptions`（`CreateFormal` 正式无作弊 / `CreateQuickTest` QuickTest；`QuickTestMode` 由载荷推导，`TestMode` 布尔已删，#125）；**QuickTest 通道** `QuickTestDeckCatalog` / `QuickTestRunOptions`（主菜单 `\0`=流程测试 Sequential 空技能；`\1`–`\9`：`skillIds` 一怪一技挂载 + **`trapContentIds` 经 `AddEnemyCard` 注入敌池**；正式开局不挂怪技能/不注机关；挂载经 `BattleSessionCheat.TryAttachSkillsToBoardMonsters`：**一怪一技**按格号升序，不够则 Spawn 白板宿主 + 至少一只无技能同伴）。**批1** `CardKind.Trap` / 双桶 / 五套卡面（ADR-0017）；**批2** 滚石/捕熊/烈焰迁 Trap + QT `\1`/`\6`/`\8`/`\9` 机关注入；**批3** 倒刺/三图腾/治疗泉 + QT `\1`–`\9` 九机关齐全（`help.healing_spring` 已删）；**#111** 离开机关 `trap.leave` + `tpl.trap.door`/`tpl.trap.magic_immunity`/`tpl.trap.leave`（可注入）；**#112** 普通房开局编入离开机关（`BuildNodeDeckOptions` → 敌池 → 发牌；`OpeningDeal` 洗牌后 `LeaveTrapDrawPileRules` 落后半段）；层主房击破开局层主后置顶洗入（`DeckSystem` OnKill → `ShuffleIntoDrawPile(top)`，下一张补牌）；**#113** `IsNodeCleared`=`IsLeaveTrapBroken`（真怪清零不清关；击破离开机关清关；清场不兑金；QT 跳关置标志；**清关后禁止 PostKill Fill 补牌**） |
+| （根下） | `BattleSessionController`、`GameFlowController`、若干 `*ManagerSingleton`（Presenter 壳名）；**指针缝** `WorldPointerUtility`、**命中路由** `PointerHitRouter` / `IPointerHitTarget` / `PointerHitRegistry`（替代 OnMouse*，ADR-0023）；**开局选项** `GameFlowRunOptions`（`CreateFormal` 正式无作弊 / `CreateQuickTest` QuickTest；`QuickTestMode` 由载荷推导，`TestMode` 布尔已删，#125）；**QuickTest 通道** `QuickTestDeckCatalog` / `QuickTestRunOptions`（主菜单 `\0`=流程测试 Sequential 空技能；`\1`–`\9`：`skillIds` 一怪一技挂载 + **`trapContentIds` 经 `AddEnemyCard` 注入敌池**；正式开局不挂怪技能/不注机关；挂载经 `BattleSessionCheat.TryAttachSkillsToBoardMonsters`：**一怪一技**按格号升序，不够则 Spawn 白板宿主 + 至少一只无技能同伴）。**批1** `CardKind.Trap` / 双桶 / 五套卡面（ADR-0017）；**批2** 滚石/捕熊/烈焰迁 Trap + QT `\1`/`\6`/`\8`/`\9` 机关注入；**批3** 倒刺/三图腾/治疗泉 + QT `\1`–`\9` 九机关齐全（`help.healing_spring` 已删）；**#111** 离开机关 `trap.leave` + `tpl.trap.door`/`tpl.trap.magic_immunity`/`tpl.trap.leave`（可注入）；**#112** 普通房开局编入离开机关（`BuildNodeDeckOptions` → 敌池 → 发牌；`OpeningDeal` 洗牌后 `LeaveTrapDrawPileRules` 落后半段）；层主房击破开局层主后置顶洗入（`DeckSystem` OnKill → `ShuffleIntoDrawPile(top)`，下一张补牌）；**#113** `IsNodeCleared`=`IsLeaveTrapBroken`（真怪清零不清关；击破离开机关清关；清场不兑金；QT 跳关置标志；**清关后禁止 PostKill Fill 补牌**） |
 
 ### `Cards/` 子树
 
@@ -64,7 +63,7 @@
 - **场景根**：`Setup/PresentationSceneRoot`（`IController` → `NineGridArchitecture.Interface`）
 - **组合根**：`Setup/PresentationCompositionRoot.Install(bindings)` —— 唯一生产装配入口
 - **绑定表**：`Setup/PresentationSceneBindings`（场景 Host 引用）
-- **窗口引导**：`Setup/DisplayModeBootstrap`（2026-08-13 起，Player-only `RuntimeInitializeOnLoadMethod`）：启动强制窗口化，尺寸按当前桌面分辨率从 16:9 档位（1920x1080 / 1600x900 / 1280x720 / 960x540）选「含窗框/任务栏余量能完整放下」的最大一档（1080p 桌面 → 1600x900，2K+ → 1920x1080），覆盖 Unity 记忆的旧分辨率/全屏偏好；改档时（Windows）经 `SetWindowPos` 把窗口居中到所在显示器工作区，未改档保留玩家上次位置。放大时的整数倍缩放与黑边由 MainScene 主摄像机 PixelPerfectCamera（960x540 参考分辨率，Crop Frame=Windowbox）承担。PlayerSettings 同步改为 1920x1080 / Windowed / 非原生分辨率
+- **窗口引导**：`Setup/DisplayModeBootstrap`（2026-08-13 起，Player-only `RuntimeInitializeOnLoadMethod`）：启动强制窗口化，尺寸按当前桌面分辨率从 16:9 档位（1920x1080 / 1600x900 / 1280x720 / 960x540）选「含窗框/任务栏余量能完整放下」的最大一档（1080p 桌面 → 1600x900，2K+ → 1920x1080），覆盖 Unity 记忆的旧分辨率/全屏偏好；运行时 `WindowRenderSync`（Windows `GetClientRect` → `Screen.SetResolution`）把拖拽/最大化后的客户区写回渲染分辨率，避免画面仍按启动尺寸居中留黑边。放大时的整数倍缩放与黑边由 MainScene 主摄像机 PixelPerfectCamera（960x540 参考分辨率，Crop Frame=Windowbox，Grid Snapping=Upscale Render Texture）承担。PlayerSettings 同步改为 1920x1080 / Windowed / 非原生分辨率 / `resetResolutionOnWindowResize`
 
 主线 busy 真相：`PresentationDirector.IsMainlineBusy`（经 `IPresentationRuntimeSystem` / InputState 只读投影）。`BattleBusy` / `FieldBusy` 不作独立输入门禁；`OccupancyDesyncLatched` 仅为诊断断言。
 
@@ -336,12 +335,11 @@
 - 非战斗 Avatar 正交跳格（ADR-0019）；战斗相位禁走  
 - 卡面**数值**只经结算指令在表演锚点提交，不直读 Core（ADR-0005）；装饰消费者经同一排期器多处理器分发（ADR-0007）  
 - **触发可见因果** / **基础触发表现**：无命中帧、靠运动落地才成立的触发，Impact 须在条件可见之后；Triggered 卡牌触发须 `EffectTriggered` + 在场持有者 v1 缩放（ADR-0018）  
-- Windows Player 高回报率鼠标：`RIDEV_NOLEGACY`（聚焦+客户区）；chrome=`RIDEV_REMOVE`；**失焦保持 NOLEGACY**；`WM_ACTIVATE` 子类化抢先注册；轮询注入 Input System；禁 `OnMouse*`（ADR-0006，2026-08-14 修订）
 - 格位命中框为九宫格唯一命中权威、一格一认领者、命中恒成功、禁用启停 collider 表达规则（ADR-0023 / #101+#102）
 - 落格对象不 SetParent 到格位锚点、尺寸权威在预制体、运行时不写 `localScale` 绝对值修正；mode/hover/hop 倍率为相对预制体基准且可还原（ADR-0024 / #104）
 - 装饰运动只写 L1（单一写者 `BoardCardLifeFx`）、权威运动接手即硬归零；抖屏独占主相机 `localPosition` 且只走整像素、不旋转相机（ADR-0051）
 
-## 指针与命中（ADR-0006 / ADR-0023）
+## 指针与命中（ADR-0023）
 
 - **读口**：`Flow/WorldPointerUtility` —— 屏幕/世界/主键边沿；优先 New Input `Mouse.current`，可 `SetOverrideSource`（测试 / 未来平台）；右键边沿 `WasSecondaryPressedThisFrame`
 - **键盘**：`Flow/KeyboardUtility` —— New Input only 下替代 `Input.GetKey*`（DevTest 热键 / UITestBootstrap / Escape Esc 跳过）
@@ -350,10 +348,7 @@
 - **局内 UI 叠层**：`BattleUiDimmerOverlay` + `UiOverlayHitProxy`（`DimmerBackground`：详述优先关，再关战斗信息预览；面板内 `Swallow` 不关预览；关闭钮 `CloseCardInspect`）；`PresentationInputGates.BattleUiOverlayActive` 只读投影
 - **战斗信息预览**：`BattleInfoPreviewPresenter.ShowAndWaitAsync`（`GameFlowOrchestrator.PlayRealBattleAsync` 正式 Run、发牌前）；槽 `BattleInfoPreviewSlotView` **暂不**注册 `PointerHitRegistry`（无悬停黄边 / 槽右键详述，待动态框选）；面板根仍 `UiOverlayHitProxy.Swallow`；关详述不 Complete 预览；图标复用卡面 `mainVisual` + **BottomCenter 相对槽框** 见上表 `BattleInfoPreview/`
 - **代理**：`GroundFieldHitSurface`（场地面单一注册，解格号 → 查 `SlotClaimRegistry`）/ `HandCardHitProxy` / `BoardSelectParkedCardHitProxy` 实现 `IPointerHitTarget`；落格 `GroundCardHitProxy` / `BoardBriefTipHitProxy` / 商店·卡店·奖励 Board HitProxy 改为**认领登记**（无自建命中盒、不注册 Router）；`GroundSlotHitProxy` 遗留壳
-- **Win Player mitigation**：`Platform/WindowsHighPollingMouseMitigation`（`#if UNITY_STANDALONE_WIN && !UNITY_EDITOR`；`-ng-no-rawinput` 停用；`GetForegroundWindow` + 主窗口句柄缓存；WndProc `WM_ACTIVATE`）
-- **Win Player 卡死取证**：`Platform/WindowsHangWatchdog` + `WindowsHangReportPaths`（双写 exe 旁 `GameLogs/HangReports/` 与 `%USERPROFILE%\AppData\LocalLow\<company>\<product>\HangReports`；game1 打包附带试玩 bat/说明）
-- **工程设置**：`activeInputHandler = 1`（New Input System only）
-- **专项回归**：125 / 1000 / 4000+ Hz × 窗口/无边框/全屏；hover、空槽、点怪、手牌拖放、BoardSelect、BounceFan、右键详述
+- **工程设置**：`activeInputHandler = 1`（New Input System only）；Win Player 走引擎原生鼠标，不再注入 Raw Input / HangWatchdog
 
 ### 命中权威盘点（现状）
 
@@ -395,4 +390,4 @@
 - **触发脉冲链级去重（ADR-0048）**：`TriggerPulseChainDedup` 按 `(CardUid, 效果实例 defId)` 收敛——同一输入意图连锁（导演主线接单到跑空）内同效果只演一次（FX + 类型化 VFX + 音频一并收敛），重复触发由 `EffectTriggerPulseBeatHandler` 静默消费；复位点为 `PresentationDirector` 新链接单 / 主线跑空 / `HardClearIntents`。Core 侧每个 qualifying 动作照发 `EffectTriggered`（规则事实不改），`CoreGameEvent.CausalDepth` 由 `ActionPipelineSystem` 盖章因果嵌套深度供日志审查
 - **组合根**：`PresentationCompositionRoot` 注册排期器（`PlayerInfoHudBeatHandler` + `DamageFloaterBeatHandler` + `CardFaceStatHandler` + `CardFaceFlipBeatHandler` + FX/金币装饰处理器——飘字须在卡面处理器之前以旁路接住 `Healed` 的 `UpdateHp`），接线 `FlushUpdateFaceUp` / `FlushImpactExcept`，并订阅 `Evt_PresentationBatchOpened`
 - **读写约定补则**：卡面数值只经排期器/生成引导，禁止 Mapper 首次 `TryRead` 写数值；JSON `stats` 仅 Catalog 造卡用；用道具 Present 只 `RefreshVisualsPreservingCommittedStatsOnAllSpawned`；探索/用道具批次投影不写卡面数值；`MarkFieldDead` 只标死亡态不改血量；底盘数值 Setter 非公开；禁 `PresentEffectTriggersFromEventLog` / `SpawnDamagePopups` / `PresentGoldGainsFromEventLog` EventLog 旁路；战中 PlayerInfo 不经 `SyncFromCore`（开局/作弊白名单除外）；Bounce 不得靠 DefId 清战斗数值上数；**战败收口**（[ADR-0039](../adr/0039-avatar-hp-defeat-invariant.md)）：`EnsureBattleEndedIfAvatarDefeated` 除投影 `AvatarDefeated`（`phase==Defeat`）外兼读 Core phase / Avatar base Hp≤0；Opening 后 `[AvatarDefeatProbe]` 诊断日志（Editor/Dev）
-- **ADR**：[ADR-0005](../adr/0005-card-face-beat-commit.md)、[ADR-0007](../adr/0007-unified-presentation-pipeline.md)、[ADR-0018](../adr/0018-trigger-visible-causality.md)、[ADR-0045](../adr/0045-unified-card-face-stat-projection.md)、[ADR-0048](../adr/0048-two-phase-impact-and-trigger-chain-dedup.md)、[ADR-0050](../adr/0050-effect-strike-unified-damage-presentation.md)、[ADR-0051](../adr/0051-decorative-motion-layers-board-life-and-screen-impact.md)（与 0001/0002/0004 交叉引用）；指针/高回报率见 [ADR-0006](../adr/0006-windows-high-polling-mouse-mitigation.md)
+- **ADR**：[ADR-0005](../adr/0005-card-face-beat-commit.md)、[ADR-0007](../adr/0007-unified-presentation-pipeline.md)、[ADR-0018](../adr/0018-trigger-visible-causality.md)、[ADR-0045](../adr/0045-unified-card-face-stat-projection.md)、[ADR-0048](../adr/0048-two-phase-impact-and-trigger-chain-dedup.md)、[ADR-0050](../adr/0050-effect-strike-unified-damage-presentation.md)、[ADR-0051](../adr/0051-decorative-motion-layers-board-life-and-screen-impact.md)（与 0001/0002/0004 交叉引用）；指针命中见 [ADR-0023](../adr/0023-slot-hit-frame-and-claim.md)

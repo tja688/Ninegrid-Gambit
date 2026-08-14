@@ -11,49 +11,32 @@
 | 文档 | 何时读 |
 |------|--------|
 | [`docs/code-map/`](docs/code-map/) | 代码现状入口（程序集、Presentation 目录、验证约定） |
-| [`Assets/Docs/`](Assets/Docs/) | 权威代码事实文档库（分层区域文档 + ADR 对照 + 领域词汇表 + 按 bug 症状导航），**随代码改动同步维护** |
+| [`Assets/Docs/`](Assets/Docs/) | 权威代码事实文档库（分层区域文档 + ADR 对照 + 领域词汇表 + 按 bug 症状导航） |
 | [`docs/adr/`](docs/adr/) | 长期架构决策与行为不变量 |
 | [`CONTEXT.md`](CONTEXT.md) | 仓库当下事实 |
-| `Assets/Notes/` | 进行时过程笔记 |
-| `C:\Users\jinji\Desktop\文档\MyNote\游戏开发项目\九宫格登神` | 策划设计文档，可参考；与实现细节 / 开发要求冲突时，提出问题让用户确认 |
+| `Assets/Notes/` | 进行时过程笔记（非权威） |
+| 策划设计文档（本地 MyNote） | 可参考；与实现 / 开发要求冲突时，向用户确认 |
 
-## Code Map 维护（开发后必做）
+## Agent 规则索引
 
-先文档、后或同 PR 改代码。代码现状写进 `docs/code-map/` + `docs/adr/`，并**同步维护 [`Assets/Docs/`](Assets/Docs/) 权威代码事实文档库**（`Assets/Notes/` 不存代码现状；未落地 Spec 的目标树不写入）。
+硬规则均在 [`.cursor/rules/`](.cursor/rules/)（`alwaysApply: true`）。改代码、开子代理、调 Unity 前先对表：
 
-| 改动类型 | 更新目标 |
-|----------|----------|
-| 表现层目录 / 程序集边界 / 装配入口（`Setup/`、`CompositionRoot`、场景绑定） | [`docs/code-map/README.md`](docs/code-map/README.md) |
-| Controller / System / Command·Query 边界、Hook 矩阵、读写与扩展点 | [`docs/code-map/presentation.md`](docs/code-map/presentation.md) |
-| 验证门槛与手动检查约定 | [`docs/code-map/tests.md`](docs/code-map/tests.md) |
-| 长期行为不变量（Batch-ack、占格权威、IntentIntake、卡面 Commit 等） | 新增或修订 [`docs/adr/`](docs/adr/)，并在 code-map 中引用 |
-| **上述任一代码事实变化（新增/删改类、行为变更、目录调整等）** | 同步更新 [`Assets/Docs/`](Assets/Docs/) 对应区域文档（架构总览 / Core / Content / Presentation / ADR 对照 / 领域词汇表） |
+| 主题 | 规则文件 | 要点 |
+|------|----------|------|
+| Unity 协作 | [`unity-cli.mdc`](.cursor/rules/unity-cli.mdc) | **MCP 首选**；不可用 / 缺能力 / 卡死时回退 CLI + Pipeline；禁 Safe Mode |
+| 文档维护 | [`code-map-maintenance.mdc`](.cursor/rules/code-map-maintenance.mdc) | 同步 `docs/code-map/`、`docs/adr/`、`Assets/Docs/`；验证门槛与两击放弃 |
+| 工作区 | [`no-worktrees.mdc`](.cursor/rules/no-worktrees.mdc) | 禁止 worktree、旁路克隆、best-of-n 第二目录 |
+| 子代理模型 | [`subagent-models.mdc`](.cursor/rules/subagent-models.mdc) | 全局 hooks 白名单 + Task 选型；见 `%USERPROFILE%\.cursor\hooks.json` |
 
-**验证门槛**（见 [`docs/code-map/tests.md`](docs/code-map/tests.md)）：硬要求——`recompile` 后 Console 无**由你的改动导致**的新增 Error / Exception / Assert；其余按任务需要手动 Play / QuickTest 验证。
+CLI 回退细则：[`docs/agents/unity-cli.md`](docs/agents/unity-cli.md)。Issue / 领域：[`docs/agents/issue-tracker.md`](docs/agents/issue-tracker.md)、[`docs/agents/domain.md`](docs/agents/domain.md)。
 
-## 工具与工作流
+## 技能索引
 
-**严禁 worktree**：禁止 `git worktree add`、旁路克隆、best-of-n 第二目录；所有改动只在本仓库根目录进行。
-
-**Unity MCP（首选）**：与 Editor 协作优先用 Unity MCP（`mcpforunity://` 资源 + `manage_*` 工具）。不可用、缺能力或出问题卡死时，回退 `unity` CLI + `com.unity.pipeline`（`unity command …`）。详见 `docs/agents/unity-cli.md`；硬规则 `.cursor/rules/unity-cli.mdc`。
-
-**场景中文名检索**：`.unity` / `.prefab` YAML 里中文 `m_Name` 常写成 `\uXXXX` 转义（如 `作弊工具BG` → `"\u4F5C\u5F0A\u5DE5\u5177BG"`）。用明文中文 `grep` 会误报「不存在」——应搜 Unicode 转义、在 Editor 里 `FindObjectsOfTypeAll` / Pipeline `find_gameobjects`，或先解码再比。
-
-**Pipeline 长命令纪律**：
-- `recompile` 后轮询 `recompile_status` 至 `completed`，再发下一个命令
-- 命令超时后先查 `recompile_status` / `api/status` 确认执行状态，再决定是否重试，避免重复启动同一命令
-- **两击放弃**：同一验证动作（recompile / 查 Console）2 次尝试仍无果（超时 / 卡死 / 状态不明）即停，不换命令绕路、不再重试；直接汇报改动结果，并建议人手动验证
-
-**技能与工具**：
-
-| 工具 / 技能 | 何时用 | 位置 |
-|-------------|--------|------|
-| Editor 启动 | 开 / 重开 Editor：直启 + `-automated`，避免外部改 `.unity` 弹窗卡死 Pipeline；重启前先保存当前工作 | `.cursor/skills/unity-automated-launch/` |
-| 日志分析 | 战斗 / 流程 / 表现日志（Play 结束导出至 `Assets/Notes/Logs/`） | `.cursor/skills/table-nine-battlelog-analysis/` |
-| 像素描边 | 像素画 snap 且不糊 SDF / TMP 文本 | `.cursor/skills/sprite-owned-pixel-snap/` |
-| QuickTest 通道 | 主菜单 `\` + `\0`–`\9` 效果体验通道（JSON 空怪、动态技能组装、卡面技能描述；近义技能占位规则） | `.cursor/skills/quick-test-effect-channels/` |
-| Live Lab 运行时协作 | 人 Play 游玩、agent 经 `execute_code` 注入探针/补丁边玩边调音画手感；痕迹重放与落地 | `.cursor/skills/live-lab/` |
-| 表演时序调整 | 用户报「效果在旋转/落地前后错拍、重复、缺反馈」等观感问题时接单：翻译成批/锚点词汇 → 取证 → 最小杠杆 | `.cursor/skills/table-nine-presentation-timing/` |
-| Issue tracker | 本项目 Issue 走 GitHub Issues（`gh`） | `docs/agents/issue-tracker.md` |
-| Triage labels | 标签词表：`needs-triage`、`needs-info`、`ready-for-agent`、`ready-for-human`、`wontfix` | `docs/agents/triage-labels.md` |
-| Domain docs | 单一上下文：根 `CONTEXT.md` + `docs/adr/` | `docs/agents/domain.md` |
+| 技能 | 何时用 | 位置 |
+|------|--------|------|
+| Editor 启动 | 开 / 重开 Editor（`-automated`） | `.cursor/skills/unity-automated-launch/` |
+| 日志分析 | 战斗 / 流程 / 表现日志 | `.cursor/skills/table-nine-battlelog-analysis/` |
+| 像素描边 | 像素 snap 且不糊 SDF / TMP | `.cursor/skills/sprite-owned-pixel-snap/` |
+| QuickTest | 主菜单 `\` + `\0`–`\9` 效果通道 | `.cursor/skills/quick-test-effect-channels/` |
+| Live Lab | Play 中注入探针 / 补丁边玩边调 | `.cursor/skills/live-lab/` |
+| 表演时序 | 效果错拍、重复、缺反馈 | `.cursor/skills/table-nine-presentation-timing/` |

@@ -27,7 +27,7 @@
 | ADR（状态） | 决策 | 落地代码 | 关键不变量 |
 |---|---|---|---|
 | [0004](../../docs/adr/0004-input-intake-two-axis-gating.md) IntentIntake 两轴门禁 | 输入唯一收口，时序互斥 × 输入所有权两轴裁决；忙时 strict-drop | `P/Systems/IntentIntakeSystem.cs`、`PresentationInputStateSystem.cs`；互斥权威 `PresentationDirector.IsMainlineBusy` | 任何输入路径不得绕过 Intake；忙时不缓冲；门禁内禁壁钟；`OccupancyDesyncLatched` 仅诊断断言 |
-| [0006](../../docs/adr/0006-windows-high-polling-mouse-mitigation.md) Win 高回报率鼠标 | Player 内 `RIDEV_NOLEGACY` + 轮询注入 New Input System；命中走轮询 Router | `P/Platform/WindowsHighPollingMouseMitigation.cs`、`P/Flow/PointerHitRouter.cs`、`WorldPointerUtility.cs` | 禁 `OnMouse*`；Editor 禁开 NOLEGACY；`-ng-no-rawinput` 可整体关闭；引擎修复后可退出 |
+| [0006](../../docs/adr/0006-windows-high-polling-mouse-mitigation.md) ~~Win 高回报率鼠标~~ **已废止** | 放弃进程内 Win32 鼠标管控与 HangWatchdog；改走 Unity 原生 New Input System | 已删 `P/Platform/` | 命中仍走 `PointerHitRouter`（ADR-0023）；若 Win10 仍卡视为引擎/系统问题 |
 | [0023](../../docs/adr/0023-slot-hit-frame-and-claim.md) 格位命中框与认领 | 命中权威=场景格位命中框；落格对象向格「认领」语义；棋盘作单一场地面 | `P/Cards/Ground/SlotClaimRegistry.cs`、`P/Cards/GroundFieldHitSurface.cs` | 运行时永不写命中框 size/offset；一格一认领者（冲突=断言）；九框恒开命中恒成功；表面优先级互异、权限不进几何 |
 | [0024](../../docs/adr/0024-board-placement-and-prefab-authored-size.md) 落格与预制体尺寸权威 | 落格只对齐世界位置，尺寸权威唯一在预制体，运行时无自动改尺寸 | `P/Flow/BoardSlotWorldPlacement.cs`；战斗侧 `SlotFrameConvergence.SnapHome` | 禁 SetParent 到 `GroundAnchors`；禁运行时写 `localScale` 绝对值；动效倍率必须可还原的相对量 |
 

@@ -65,7 +65,7 @@
 
 ## 关联 ADR
 
-ADR-0004（输入唯一收口——Hook 只是运输，不裁决）、ADR-0020（简要解释/Notice 通路不走 DescriptionDisplayHook）、ADR-0003（诊断关联层 chainId/choreoSeqId）、ADR-0006（输入提交源头是 PointerHitRouter 体系）。
+ADR-0004（输入唯一收口——Hook 只是运输，不裁决）、ADR-0020（简要解释/Notice 通路不走 DescriptionDisplayHook）、ADR-0003（诊断关联层 chainId/choreoSeqId）、ADR-0023（输入提交源头是 PointerHitRouter 体系）。
 
 ## 不变量与坑
 

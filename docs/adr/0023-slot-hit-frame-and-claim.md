@@ -17,7 +17,7 @@ status: accepted
 - **Router 塌缩**：棋盘作为**一个**「场地面」表面注册，内部查格位 → 认领者。`PointerHitRouter` 只在少数固定表面间仲裁（场地面 / 手牌带 / 覆层），优先级显式声明且**互不相同**，同分即判为装配错误并告警（对齐既有「通层排序值」约定）。
 - **权限不进几何**：表面优先级只回答「这个点落在哪个表面」；「此刻哪个表面有权收输入」只由 ADR-0004 的输入所有权轴回答。覆层不再靠排序抢——它在场时场地面照常命中、照常拿到认领语义，然后在 IntentIntake 被所有权轴显式拒。
 - **手牌交棒**：手牌只管两件事——自己的手牌区，以及无目标释放的连通大区。拖拽时「落到哪一格」的裁决交给场地面；`CardHandManagerSingleton` 的 `Physics2D.OverlapPointAll` 落点解算退役。
-- **野生拾取路径退役**：`WorldPointerUtility.TryPickCollider` 的 z=0 拾取、legacy `OnMouseEnter` / `OnMouseExit`（`RIDEV_NOLEGACY` 下 Player 内根本不触发，属假实现）、`PlayerInfoHudPresenter` 私有 `ScreenToWorldPoint`。
+- **野生拾取路径退役**：`WorldPointerUtility.TryPickCollider` 的 z=0 拾取、legacy `OnMouseEnter` / `OnMouseExit`、`PlayerInfoHudPresenter` 私有 `ScreenToWorldPoint`。命中一律走 `PointerHitRouter` 轮询，禁止业务 `OnMouse*`。
 
 ## 为什么
 
@@ -61,7 +61,7 @@ status: accepted
 ## 相关
 
 - [ADR-0004](0004-input-intake-two-axis-gating.md) — 两轴门禁；本 ADR 把「谁有权收输入」全部交还给它
-- [ADR-0006](0006-windows-high-polling-mouse-mitigation.md) — `PointerHitRouter` 取代 `OnMouse*` 的既有约定
+- [ADR-0006](0006-windows-high-polling-mouse-mitigation.md) — **已废止** Win32 鼠标兜底；`PointerHitRouter` 取代 `OnMouse*` 的约定改由本 ADR 承担
 - [ADR-0019](0019-avatar-board-walk.md) — 跳格；软占不再靠关 collider 表达
 - [ADR-0020](0020-board-as-interaction-surface.md) — 场地即交互面；本 ADR 是它的命中侧收口
 - [ADR-0024](0024-board-placement-and-prefab-authored-size.md) — 同一根问题的尺寸侧

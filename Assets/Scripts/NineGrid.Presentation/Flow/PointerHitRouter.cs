@@ -7,8 +7,7 @@ using UnityEngine.EventSystems;
 namespace NineGrid.Flow
 {
     /// <summary>
-    /// 每帧轮询指针命中：合成 Enter / Exit / Down，替代 legacy OnMouse*。
-    /// 与 ADR-0006 配套——RIDEV_NOLEGACY 后 OnMouse* 不再可用。
+    /// 每帧轮询指针命中：合成 Enter / Exit / Down，替代 legacy OnMouse*（ADR-0023）。
     /// 手牌拖拽优先走本帧已刷新的 hover 槽位带（Hand 在 -50 先于本路由），
     /// 避免 Overlap 与 band 不一致导致「能悬停不能拖」。
     /// </summary>

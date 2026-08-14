@@ -29,7 +29,7 @@
 | 卡面数字错 / 血甲攻显示与结算不符 / 抢跳变 | [02](02-ADR索引与代码对照.md) 表演编排组 → CardFaceStatHandler/BattleBeatScheduler；Core 发射侧对账缝 CardFaceReconciliation（Cause=faceReconcile 可过滤诊断） | 0005, 0045, 0007, 0028 |
 | 交战/齐射中盘面转动时机怪 / 转走还挨打 | BattleScopeSystem 位移锁定窗口 + PhaseSystem 收尾锚点排水 | 0044, 0012 |
 | 文本语言不对 / 英文缺失回中文 / 词条断链 | LanguageSettingsSystem + LocalizationCatalog 三表；卡面覆盖缝 CardPresentationConfigCatalog.TryGet | 0046 |
-| 点击点不中 / 悬停粘连 / 命中区怪异 | [02](02-ADR索引与代码对照.md) 输入命中组 → SlotClaimRegistry/GroundFieldHitSurface/PointerHitRouter | 0006, 0023, 0024 |
+| 点击点不中 / 悬停粘连 / 命中区怪异 | [02](02-ADR索引与代码对照.md) 输入命中组 → SlotClaimRegistry/GroundFieldHitSurface/PointerHitRouter | 0023, 0024 |
 | 补牌/旋转时机错 / 空格不补 / 补牌触发效果误伤 | BoardStabilizationSystem + Scheduler | 0034, 0012 |
 | 怪物不开火 / 开火节奏错 / 倒计时显示错 | CardRhythm + PhaseSystem 敌方行动 + ActionCount 提交链 | 0011, 0012, 0013, 0038 |
 | 清关不触发 / 离开机关打不死 / 清场残留 | PhaseSystem 清关链 + CardCombatRules 双桶 | 0026, 0017 |
@@ -44,7 +44,6 @@
 | 房间/商店/图标交互异常 | Flow/RoomIcons + ShopBoard/TavernBoard/RewardBoard | 0020, 0021, 0022, 0025 |
 | 画面异常（扫描线/像素/文字发糊） | [工具与实验/](工具与实验/README.md)（VisualLook 管线；FxLab 仅 Dev） | — |
 | 卡在格子里飘/抖不停 / 抖屏太晃 / 卡带着偏移收敛歪位 | L1 装饰层单一写者 `BoardCardLifeFx`（[Cards/07](Presentation/Cards/07-卡面特效与装饰.md) §8）+ 抖屏 `ScreenImpact`（[Flow/05](Presentation/Flow/05-表演锚点排期与触发脉冲.md) §5）；三个全局旋钮可直接关 | 0051 |
-| Windows 掉帧 / 高回报率鼠标 / 进程卡死 | Presentation/Platform（mitigation + WindowsHangWatchdog，命令行开关 `-ng-no-rawinput`/`-ng-no-watchdog`） | 0006 |
 | 想从日志定位 | 诊断关联键 chainId/choreoSeqId；日志在 `Assets/Notes/Logs/`，分析用技能 `table-nine-battlelog-analysis` | 0003 |
 | 想当场看伤害对不对 / 某效果到底触没触发 | 局内「战斗日志」按钮 → 人读日志面板（每笔数值 + 来源效果名，按房间分段）；实现见 [Flow/11](Presentation/Flow/11-人读战斗日志（BattleLog）.md) | — |
 

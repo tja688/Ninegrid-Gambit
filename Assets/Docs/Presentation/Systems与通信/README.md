@@ -8,7 +8,7 @@
 | 篇 | 覆盖 | 何时读 |
 |----|------|--------|
 | [01-装配与场景绑定](./01-装配与场景绑定.md) | `Setup/`（3 文件） | 想知道"这个 System/Hook/Handler 是谁、什么时候接上的" |
-| [02-输入门禁与平台守护](./02-输入门禁与平台守护.md) | 根 2 文件 + 门禁 Systems 5 + `Platform/` 2 | 点击没反应/点了两次/忙时怪态/Win 掉帧卡死 |
+| [02-输入门禁与平台守护](./02-输入门禁与平台守护.md) | 根 2 文件 + 门禁 Systems 5 | 点击没反应/点了两次/忙时怪态 |
 | [03-Systems-核心系统](./03-Systems-核心系统.md) | `Systems/` 核心 16 文件 | 会话/几何/交战/流程壳/卡实体/语言偏好的权威归属 |
 | [04-音频系统](./04-音频系统.md) | `Systems/` 音频 10 文件 | 没声音/声音重复/BGM 串轨/音量不对 |
 | [05-VFX系统](./05-VFX系统.md) | `Systems/VfxSystem+两契约` + `Systems/Vfx/` 共 27 文件 | 特效不播/播错位置/播不停/金币与弹道 |
@@ -116,12 +116,11 @@ MainScene 加载
 | 特效不播 / 播不停 | VfxCueResult outcome + `VfxLifecycle*` PerfTrace + EndReason 分类 | 05 |
 | 占格错乱 | 逻辑占格看 Core BoardModel；几何镜像看 GeometrySystem；禁 force sync | 03 |
 | 面板打不开 / 按钮点不中 | 失活面板自举（AfterSceneLoad Install）+ PointerHitRegistry 注册 | 08 |
-| Win 打包版掉帧 / 卡死 | `-ng-no-rawinput` 排除法；exe 旁 `GameLogs/HangReports`（优先）+ `收集诊断包.bat` | 02 |
 | 流程相位 / BGM 切换错 | `GameFlowShellSystem` 相位映射 + `SetGameFlowShellStateCommand` | 03/06 |
 
 ## 关联 ADR 索引（本区块直接落地的）
 
-0001（时间线/Batch-ack）、0003（chainId/choreoSeqId 诊断关联）、0004（两轴门禁）、0005/0007（锚点提交/统一管线）、0006（Win 鼠标兜底）、0016（翻面）、0019（跳格）、0020（场地即交互面/描述退役）、0023（格位认领）、0025/0027（回收/遗物丢弃）、0028（护甲联动 HUD）、0034（补牌锁步）、0035（倒计时投影）、0036（音频）、0039（战败收口）、0040（VFX）、0041（存档）、0042（教学）、0043（平台桥——本区块不含实现，业务门面在 Flow/Platform）。
+0001（时间线/Batch-ack）、0003（chainId/choreoSeqId 诊断关联）、0004（两轴门禁）、0005/0007（锚点提交/统一管线）、0016（翻面）、0019（跳格）、0020（场地即交互面/描述退役）、0023（格位认领）、0025/0027（回收/遗物丢弃）、0028（护甲联动 HUD）、0034（补牌锁步）、0035（倒计时投影）、0036（音频）、0039（战败收口）、0040（VFX）、0041（存档）、0042（教学）、0043（平台桥——本区块不含实现，业务门面在 Flow/Platform）。
 
 ---
 
@@ -143,13 +142,6 @@ MainScene 加载
 | `Setup/PresentationSceneRoot.cs` | 场景组合根：宿主引用、Hook 接线、Runtime 生命周期与 Tick | 01 |
 | `Setup/PresentationCompositionRoot.cs` | 生产装配：Present 通道×剧本工厂×排期器×System 注册 | 01 |
 | `Setup/PresentationSceneBindings.cs` | 场景宿主绑定不可变快照 | 01 |
-
-### Platform/（2）
-
-| 文件 | 说明 | 篇 |
-|------|------|----|
-| `Platform/WindowsHighPollingMouseMitigation.cs` | Win Player 高回报率鼠标兜底（NOLEGACY+轮询注入） | 02 |
-| `Platform/WindowsHangWatchdog.cs` | Win Player 卡死看门狗（心跳+minidump 取证） | 02 |
 
 ### Systems/ 输入门禁（5）
 
