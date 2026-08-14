@@ -63,7 +63,7 @@
 - **场景根**：`Setup/PresentationSceneRoot`（`IController` → `NineGridArchitecture.Interface`）
 - **组合根**：`Setup/PresentationCompositionRoot.Install(bindings)` —— 唯一生产装配入口
 - **绑定表**：`Setup/PresentationSceneBindings`（场景 Host 引用）
-- **窗口引导**：`Setup/DisplayModeBootstrap`（2026-08-13 起，Player-only `RuntimeInitializeOnLoadMethod`）：启动强制窗口化，尺寸按当前桌面分辨率从 16:9 档位（1920x1080 / 1600x900 / 1280x720 / 960x540）选「含窗框/任务栏余量能完整放下」的最大一档（1080p 桌面 → 1600x900，2K+ → 1920x1080），覆盖 Unity 记忆的旧分辨率/全屏偏好；运行时 `WindowRenderSync`（Windows `GetClientRect` → `Screen.SetResolution`）把拖拽/最大化后的客户区写回渲染分辨率，避免画面仍按启动尺寸居中留黑边。放大时的整数倍缩放与黑边由 MainScene 主摄像机 PixelPerfectCamera（960x540 参考分辨率，Crop Frame=Windowbox，Grid Snapping=Upscale Render Texture）承担。PlayerSettings 同步改为 1920x1080 / Windowed / 非原生分辨率 / `resetResolutionOnWindowResize`
+- **显示引导**：`Setup/DisplayModeBootstrap`（Player-only `RuntimeInitializeOnLoadMethod`）：启动即 `FullScreenWindow` + 桌面原生分辨率（`BeforeSceneLoad` / `AfterSceneLoad` 各断言一次，覆盖 Unity 记忆的旧窗口偏好；不每帧 `SetResolution`）。16:9 内容按高度铺满、宽屏左右留黑边由 MainScene 主摄像机 PixelPerfectCamera（960x540 参考分辨率，Crop Frame=StretchFill，Filter Mode=Point，Grid Snapping=None；像素感由 Sprite 材质顶点 snap 承担）处理。PlayerSettings：`fullscreenMode=FullScreenWindow`、`defaultIsNativeResolution=1`、`allowFullscreenSwitch=0`、`resizableWindow=0`
 
 主线 busy 真相：`PresentationDirector.IsMainlineBusy`（经 `IPresentationRuntimeSystem` / InputState 只读投影）。`BattleBusy` / `FieldBusy` 不作独立输入门禁；`OccupancyDesyncLatched` 仅为诊断断言。
 

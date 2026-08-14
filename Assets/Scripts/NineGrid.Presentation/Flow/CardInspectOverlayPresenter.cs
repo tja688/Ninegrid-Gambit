@@ -271,6 +271,7 @@ namespace NineGrid.Flow
                 ApplyFace(_enemyBinder, snapshot);
                 if (_enemyBinder != null)
                 {
+                    FinalizeInspectLiveFace(_enemyBinder);
                     ApplyInspectSorting(_enemyBinder.gameObject);
                 }
 
@@ -286,6 +287,7 @@ namespace NineGrid.Flow
                 ApplyFace(_regularBinder, snapshot);
                 if (_regularBinder != null)
                 {
+                    FinalizeInspectLiveFace(_regularBinder);
                     ApplyInspectSorting(_regularBinder.gameObject);
                 }
 
@@ -497,6 +499,20 @@ namespace NineGrid.Flow
             }
 
             binder.ApplyPresentation(snapshot);
+        }
+
+        /// <summary>
+        /// Binder.Commit 会经 <see cref="CardSpriteAnimPlayer"/> 把主图标设回 VisibleInsideMask；
+        /// 检视在 UI SortingGroup 下已关掉 SpriteMask，须再消毒否则主图整段消失。
+        /// </summary>
+        private static void FinalizeInspectLiveFace(CardFacePresentationBinder binder)
+        {
+            if (binder == null)
+            {
+                return;
+            }
+
+            CardMainVisualMaskAnchor.DisableMasking(binder.transform);
         }
 
         /// <summary>
