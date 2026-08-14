@@ -612,7 +612,7 @@ namespace NineGrid.Flow.Presentation
         [AudioCue("attribute.pick", "属性提升选择", "Attribute", "AttributeBoardPresenter.TrySelect", AudioCueContexts.ContentId)]
         public const string AttributePick = "attribute.pick";
 
-        [AudioCue("economy.gold_gain", "获得金币", "Economy", "GoldGainPresentationBinder.OnGoldGainPresentationRequested", AudioCueContexts.None)]
+        [AudioCue("economy.gold_gain", "获得金币（哗啦啦按数量重复，小随机池）", "Economy", "GoldCoinGainClatter.Pulse / GoldGainPresentationBinder.OnGoldGainPresentationRequested", AudioCueContexts.None)]
         public const string GoldGain = "economy.gold_gain";
 
         [AudioCue("economy.gold_spend", "消耗金币", "Economy", "GoldGainPresentationBinder.OnGoldGainPresentationRequested", AudioCueContexts.None)]

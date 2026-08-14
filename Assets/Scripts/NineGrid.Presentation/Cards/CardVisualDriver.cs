@@ -1,4 +1,5 @@
 using DG.Tweening;
+using NineGrid.Cards.Vfx;
 using UnityEngine;
 
 namespace NineGrid.Cards
@@ -86,6 +87,19 @@ namespace NineGrid.Cards
 
             if (_currentTarget == target)
             {
+                if (target == CardVisualTarget.Base
+                    && _card?.DisplayMode == CardDisplayMode.HandCardMode
+                    && TryResolveHandLayoutPosition(out var layoutPosition))
+                {
+                    var delta = _transform.position - layoutPosition;
+                    delta.z = 0f;
+                    if (delta.sqrMagnitude > HandCardLifeEngagementPolicy.AnchorEngagedEpsilonSq)
+                    {
+                        KillFeedbackMotion();
+                        PlayHandBase();
+                    }
+                }
+
                 return;
             }
 

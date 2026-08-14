@@ -51,11 +51,17 @@ namespace NineGrid.Flow
 
         /// <summary>
         /// 直连增益视觉（未用帮助卡 / DevTest 等）：发 gold-flight VFX + HUD 数字窗 + 增益音效，不写 FlowTrace。
+        /// 清关变卖残留道具卡入账时 isVictorySettlement=true，命中「只留胜利结算哗啦啦」开关。
         /// </summary>
-        public static VfxCueResult PresentGainVisual(int delta, int amountAfter, Vector3? originWorld)
+        public static VfxCueResult PresentGainVisual(
+            int delta,
+            int amountAfter,
+            Vector3? originWorld,
+            bool isVictorySettlement = false)
         {
-            FlowRoomEconomyAudioCues.PulseGoldPresentation(
-                isSpend: false,
+            GoldCoinGainClatter.Pulse(
+                delta,
+                isVictorySettlement,
                 "GoldGainPresentationBinder.PresentGainVisual");
             return RequestGoldFlightAndDriveHud(delta, amountAfter, originWorld);
         }
@@ -123,12 +129,11 @@ namespace NineGrid.Flow
 
         private static void OnGoldGainPresentationRequested(GoldGainPresentationRequested e)
         {
-            FlowRoomEconomyAudioCues.PulseGoldPresentation(
-                e.IsSpend,
-                "GoldGainPresentationBinder.OnGoldGainPresentationRequested");
-
             if (e.IsSpend)
             {
+                FlowRoomEconomyAudioCues.PulseGoldPresentation(
+                    isSpend: true,
+                    "GoldGainPresentationBinder.OnGoldGainPresentationRequested");
                 var hud = PlayerInfoHudPresenter.TryGetInstance();
                 hud?.SnapGold(e.AmountAfter);
                 GoldHudDomainHost.Instance?.SnapIconToBase();
@@ -142,6 +147,10 @@ namespace NineGrid.Flow
                 return;
             }
 
+            GoldCoinGainClatter.Pulse(
+                e.Delta,
+                isVictorySettlement: false,
+                "GoldGainPresentationBinder.OnGoldGainPresentationRequested");
             RequestGoldFlightAndDriveHud(e.Delta, e.AmountAfter, e.OriginWorld);
             RecordGoldChangedFlow(
                 FlowTraceNames.GoldGained,

@@ -8,7 +8,8 @@ namespace NineGrid.Cards.Vfx
     /// 手牌"活着"的表现层：独占 L1 BoardFrame，做低频悬浮飘动（ADR-0051 补记）。
     /// 纯装饰：不读写 Core 规则状态、不参与 Batch-ack、不改手牌槽权威（L0/L2/L3 一律不碰）。
     /// 飘动常驻非阻塞（修订 2026-08-14）：主线表演 / 场地忙碌期间照常飘动，不受编排门禁暂停——
-    /// 唯一特例是鼠标正指向（hover 弹出）的卡，随 hover 让位归零；拖拽 / ripple 搬动同样自动归零，回位后飘动恢复。
+    /// 唯一特例是本帧仍被手牌 hover 解析选中的卡（活 hover），随弹出让位归零；拖拽 / ripple 搬动同样自动归零，
+    /// 搬动中断残留经槽位权威贴回布局后恢复飘动。
     /// 命中判定不受影响：手牌 hover 以槽位布局坐标为基准（CardHandSlotContainer.GetLayoutPosition），
     /// 不看卡的当前世界位置，飘动只改可见位置（约 3–4 像素）。
     /// </summary>
@@ -102,22 +103,6 @@ namespace NineGrid.Cards.Vfx
         private const float DriftHzMin = 0.30f;
         private const float DriftHzMax = 0.52f;
 
-        /// <summary>
-        /// L0 距手牌锚点超过此值视为"正在被别的系统搬动 / hover 弹出"，L1 让位归零。
-        /// hover 上浮 0.35、ripple 飞行全程都远超此值；静态卡 L0 与锚点严格重合。
-        /// </summary>
-        private const float AnchorEngagedEpsilon = 0.05f;
-
-        /// <summary>L0 帧间位移低于此值视为"搬动已停"（hover 退出动画被中断后的静止残留）。</summary>
-        private const float StillEpsilon = 0.0002f;
-
-        /// <summary>
-        /// 离锚且静止超过此秒数判定为"搬动中断残留"，自愈恢复浮动——
-        /// 否则 hover 退出动画被 KillMotion 掐断 / base 缓存过期时，卡停在非锚点即永久让位（死卡）。
-        /// 0.25s 远长于任何搬动动画末段的速度低谷，不会误判真搬动。
-        /// </summary>
-        private const float StuckGraceSeconds = 0.25f;
-
         private const float SettleEpsilon = 0.0004f;
 
         private sealed class CardLife
@@ -132,8 +117,7 @@ namespace NineGrid.Cards.Vfx
             public float Weight;
             public bool Dirty;
             public int SeenTick;
-            public Vector3 LastWorldPos;
-            public float StillSeconds;
+            public HandCardLifeEngagementState Engagement;
         }
 
         private readonly Dictionary<int, CardLife> _lives = new();
@@ -259,66 +243,38 @@ namespace NineGrid.Cards.Vfx
         }
 
         /// <summary>
-        /// 逐卡"正被权威运动接手"判定（带静止自愈，2026-08-14 强化）：
-        /// 让位只服务"正在动的卡"；卡静止在非锚点（hover 退出动画被掐断、base 缓存过期、ripple 中断）
-        /// 视为搬动残留——超过宽限秒数后自愈恢复浮动，避免永久让位成死卡。
-        /// 唯一特例：鼠标正指向（hover / selected 置顶）的卡保持让位，不计入自愈。
+        /// 逐卡让位判定：活 hover / 真搬动让位；搬动中断残留贴回槽位布局后恢复飘动。
         /// </summary>
-        private bool IsEngaged(CardLife life, float dt)
+        private static bool IsEngaged(CardLife life, float dt)
         {
             var card = life.Card;
-            if (card?.Transform == null || card.DisplayMode != CardDisplayMode.HandCardMode)
+            if (card?.Transform == null)
             {
                 return true;
             }
 
-            if (!TryResolveAnchorWorld(life, out var anchorWorld))
-            {
-                // 锚点解析失败（卡暂离槽容器 / 管理器过渡）：以当前位置为锚，不误判为搬动；
-                // 卡离槽由 SyncMembership 摘除，此回退只覆盖极短的过渡窗口。
-                life.LastWorldPos = card.Transform.position;
-                life.StillSeconds = 0f;
-                return false;
-            }
-
+            var hand = CardEntityLifecycleHook.HandOrNull();
+            var hasAnchor = TryResolveAnchorWorld(life, out var anchorWorld);
+            var isLiveHover = hand != null && hand.IsLiveHandHover(card);
             var current = card.Transform.position;
-            var delta = current - anchorWorld;
-            delta.z = 0f;
-            if (delta.sqrMagnitude <= AnchorEngagedEpsilon * AnchorEngagedEpsilon)
+
+            var outcome = HandCardLifeEngagementPolicy.Evaluate(
+                card.DisplayMode,
+                hasAnchor,
+                current,
+                anchorWorld,
+                isLiveHover,
+                ref life.Engagement,
+                dt);
+
+            if (outcome == HandCardLifeEngagementOutcome.SnapAndFloat)
             {
-                life.LastWorldPos = current;
-                life.StillSeconds = 0f;
+                hand?.SnapHandCardToLayout(card);
+                life.Engagement.LastWorldPos = card.Transform.position;
                 return false;
             }
 
-            // 指针占用（hover 上浮 / selected 置顶）：保持让位，不累计静止——用户要求的唯一特例。
-            if (life.Visual != null
-                && (life.Visual.CurrentTarget == CardVisualTarget.Hover
-                    || life.Visual.CurrentTarget == CardVisualTarget.Selected))
-            {
-                life.LastWorldPos = current;
-                life.StillSeconds = 0f;
-                return true;
-            }
-
-            // L0 仍在动 → 真搬动（ripple / hop / 回位动画），让位。
-            if ((current - life.LastWorldPos).sqrMagnitude > StillEpsilon * StillEpsilon)
-            {
-                life.LastWorldPos = current;
-                life.StillSeconds = 0f;
-                return true;
-            }
-
-            // 离锚但静止：累计静止时长，超过宽限视为搬动中断残留，自愈恢复浮动。
-            life.StillSeconds += dt;
-            if (life.StillSeconds < StuckGraceSeconds)
-            {
-                return true;
-            }
-
-            life.StillSeconds = StuckGraceSeconds;
-            life.LastWorldPos = current;
-            return false;
+            return outcome == HandCardLifeEngagementOutcome.Yield;
         }
 
         private static bool TryResolveAnchorWorld(CardLife life, out Vector3 anchorWorld)
@@ -379,6 +335,12 @@ namespace NineGrid.Cards.Vfx
             {
                 existing.Card = card;
                 existing.SeenTick = _tick;
+                if (SlotFrameConvergence.TryGetTower(card, out var existingTower))
+                {
+                    existing.Tower = existingTower;
+                }
+
+                existing.Visual = card.Transform.GetComponent<CardVisualDriver>();
                 return;
             }
 
@@ -411,7 +373,10 @@ namespace NineGrid.Cards.Vfx
                 // 避免新 CardLife 权重为 0 时因 Dirty=false 跳过 WriteHome 留下残影。
                 Dirty = true,
                 SeenTick = tick,
-                LastWorldPos = card.Transform.position,
+                Engagement = new HandCardLifeEngagementState
+                {
+                    LastWorldPos = card.Transform.position,
+                },
             };
         }
 

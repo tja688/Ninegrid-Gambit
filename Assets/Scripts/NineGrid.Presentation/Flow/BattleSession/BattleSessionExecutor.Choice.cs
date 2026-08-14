@@ -465,7 +465,8 @@ namespace NineGrid.Flow
                 GoldGainPresentationBinder.PresentGainVisual(
                     totalDelta - credited,
                     amountAfter,
-                    ResolveDeckGoldOriginWorld());
+                    ResolveDeckGoldOriginWorld(),
+                    isVictorySettlement: true);
             }
         }
 
@@ -487,7 +488,11 @@ namespace NineGrid.Flow
             if (goldSlice > 0)
             {
                 // 保留卸视图前 origin 快照，改发 gold-flight VFX（#199）。
-                GoldGainPresentationBinder.PresentGainVisual(goldSlice, goldTargetAfterSlice, origin);
+                GoldGainPresentationBinder.PresentGainVisual(
+                    goldSlice,
+                    goldTargetAfterSlice,
+                    origin,
+                    isVictorySettlement: true);
             }
 
             await VanishAndReleaseHelpCardAsync(card, cancellationToken);

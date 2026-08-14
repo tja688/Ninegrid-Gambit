@@ -1988,21 +1988,43 @@
         },
         {
             "cueId": "economy.gold_gain",
-            "note": "获得金币（硬币叮当单声，去随机池）",
+            "note": "获得金币（硬币叮当哗啦啦，按数量高频重复 + 小随机池）",
             "module": "Economy",
             "enabled": true,
-            "clipKey": "audio/SFX/硬币叮当",
+            "clipKey": "",
             "volumeDb": -3,
             "startOffsetSeconds": 0,
             "bindingDelaySeconds": 0,
             "minimumIntervalSeconds": 0.05,
-            "variants": [],
+            "variants": [
+                {
+                    "variantId": "ding-a",
+                    "clipKey": "audio/SFX/硬币叮当",
+                    "weight": 1,
+                    "volumeTrimDb": 0,
+                    "startOffsetSeconds": 0
+                },
+                {
+                    "variantId": "ding-b",
+                    "clipKey": "audio/SFX/硬币叮当",
+                    "weight": 1,
+                    "volumeTrimDb": -1,
+                    "startOffsetSeconds": 0
+                },
+                {
+                    "variantId": "ding-c",
+                    "clipKey": "audio/SFX/硬币叮当",
+                    "weight": 1,
+                    "volumeTrimDb": 0.5,
+                    "startOffsetSeconds": 0.004
+                }
+            ],
             "selectorCardDefId": "",
             "selectorSkillId": "",
             "selectorRoomId": "",
             "selectorItemDefId": "",
             "selectorContentId": "",
-            "authoringStatus": "aiDraft"
+            "authoringStatus": "humanConfirmed"
         },
         {
             "cueId": "economy.gold_spend",

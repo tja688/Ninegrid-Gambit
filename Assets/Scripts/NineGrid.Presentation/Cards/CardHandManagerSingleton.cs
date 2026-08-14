@@ -5,6 +5,7 @@ using System.Threading;
 using Cysharp.Threading.Tasks;
 using DG.Tweening;
 using NineGrid.Cards.Convergence;
+using NineGrid.Cards.Vfx;
 using NineGrid.Core;
 using NineGrid.Core.Systems;
 using NineGrid.Flow;
@@ -887,8 +888,18 @@ namespace NineGrid.Cards
 
         private void TickHandHover()
         {
-            if (IsBusy || IsDragging || _slotContainer == null)
+            if (_slotContainer == null)
             {
+                return;
+            }
+
+            if (IsBusy || IsDragging)
+            {
+                if (_hoveredCard != null)
+                {
+                    ClearHandHoverState(_hoveredCard);
+                }
+
                 return;
             }
 
@@ -902,11 +913,21 @@ namespace NineGrid.Cards
             var camera = Camera.main;
             if (camera == null)
             {
+                if (_hoveredCard != null)
+                {
+                    ClearHandHoverState(_hoveredCard);
+                }
+
                 return;
             }
 
             if (!WorldPointerUtility.TryGetPointerScreen(out var pointerScreen))
             {
+                if (_hoveredCard != null)
+                {
+                    ClearHandHoverState(_hoveredCard);
+                }
+
                 return;
             }
 
@@ -1163,6 +1184,12 @@ namespace NineGrid.Cards
             }
         }
 
+        /// <summary>
+        /// 本帧仍被手牌 hover 解析选中的卡（活指针占用）。装饰层让位以此为准，不用 <see cref="CardVisualTarget"/>。
+        /// </summary>
+        internal bool IsLiveHandHover(ManagedCard card) =>
+            card != null && IsLiveHandCard(card) && _hoveredCard == card;
+
         internal void ResetHandCardHoverVisual(ManagedCard card)
         {
             if (!IsLiveHandCard(card))
@@ -1173,6 +1200,16 @@ namespace NineGrid.Cards
             var driver = card.View.GetComponent<CardVisualDriver>();
             driver?.SetTarget(CardVisualTarget.Base);
             RestoreHandCardSorting(card);
+
+            if (TryGetHandLayoutWorldPosition(card, out var layoutPosition))
+            {
+                var delta = card.Transform.position - layoutPosition;
+                delta.z = 0f;
+                if (delta.sqrMagnitude > HandCardLifeEngagementPolicy.AnchorEngagedEpsilonSq)
+                {
+                    SnapHandCardToLayout(card);
+                }
+            }
         }
 
         private void RestoreHandCardSorting(ManagedCard card)
@@ -1767,7 +1804,7 @@ namespace NineGrid.Cards
             }
         }
 
-        private void SnapHandCardToLayout(ManagedCard card)
+        internal void SnapHandCardToLayout(ManagedCard card)
         {
             if (card?.Transform == null)
             {
