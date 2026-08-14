@@ -145,6 +145,8 @@ namespace NineGrid.Presentation.Ui
                 return;
             }
 
+            TryHandleClosePointer();
+
             if (mDirty)
             {
                 mDirty = false;
@@ -171,7 +173,7 @@ namespace NineGrid.Presentation.Ui
             mToggleButton = FindSceneNamed(ToggleButtonName);
             WireToggleButton(mToggleButton);
             WirePanelSwallow(mPanelRoot);
-            WireCloseButton(mPanelRoot.transform.Find(CloseButtonName));
+            WireCloseButton(FindChildRecursive(mPanelRoot.transform, CloseButtonName));
             EnsureTextView();
 
             mBound = true;
@@ -490,6 +492,7 @@ namespace NineGrid.Presentation.Ui
         {
             if (close == null)
             {
+                Debug.LogWarning("[BattleLogPanel] 未找到 " + CloseButtonName + "，关闭按钮无法接线。");
                 return;
             }
 
@@ -505,6 +508,32 @@ namespace NineGrid.Presentation.Ui
                 CloseHitSort,
                 PointerHitSurfacePriorities.Overlay,
                 hoverScale: 1.12f);
+        }
+
+        /// <summary>
+        /// 关闭钮与 Scroll View 同面板：指针落在 WorldSpace uGUI 上时
+        /// <see cref="PointerHitRouter"/> 会让出世界命中，须在此兜底。
+        /// </summary>
+        private void TryHandleClosePointer()
+        {
+            if (mCloseCollider == null
+                || !mCloseCollider.enabled
+                || BattleUiDimmerOverlay.IsActive
+                || !WorldPointerUtility.WasPrimaryPressedThisFrame())
+            {
+                return;
+            }
+
+            var planeZ = mCloseCollider.transform.position.z;
+            if (!WorldPointerUtility.TryGetPointerWorldOnPlane(null, planeZ, out var world))
+            {
+                return;
+            }
+
+            if (mCloseCollider.OverlapPoint(world))
+            {
+                SetOpen(false);
+            }
         }
 
         /// <summary>
@@ -604,6 +633,31 @@ namespace NineGrid.Presentation.Ui
                 }
 
                 return t.gameObject;
+            }
+
+            return null;
+        }
+
+        private static Transform FindChildRecursive(Transform parent, string objectName)
+        {
+            if (parent == null)
+            {
+                return null;
+            }
+
+            for (var i = 0; i < parent.childCount; i++)
+            {
+                var child = parent.GetChild(i);
+                if (child.name == objectName)
+                {
+                    return child;
+                }
+
+                var found = FindChildRecursive(child, objectName);
+                if (found != null)
+                {
+                    return found;
+                }
             }
 
             return null;
