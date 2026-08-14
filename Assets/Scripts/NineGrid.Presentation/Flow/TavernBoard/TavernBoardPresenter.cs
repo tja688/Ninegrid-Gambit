@@ -31,6 +31,12 @@ namespace NineGrid.Flow.TavernBoard
 
         public static TavernBoardPresenter Current { get; private set; } = new TavernBoardPresenter();
 
+        /// <summary>当前二级候选真卡（表现权威只读投影，供房内装饰层 InRoomCardLifeFx 聚合）。</summary>
+        public IReadOnlyList<ManagedCard> CandidateCards => mCandidateCards;
+
+        /// <summary>当前服务选项卡（非塔型选项，供 InRoomCardLifeFx 聚合）。</summary>
+        public IReadOnlyList<GameObject> ServiceGos => mServiceGos;
+
         private readonly List<ManagedCard> mCandidateCards = new List<ManagedCard>(6);
         private readonly List<string> mCandidateDefIds = new List<string>(6);
         private readonly List<GameObject> mServiceGos = new List<GameObject>(3);

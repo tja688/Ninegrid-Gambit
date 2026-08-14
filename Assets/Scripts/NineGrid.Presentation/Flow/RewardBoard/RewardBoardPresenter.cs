@@ -28,6 +28,9 @@ namespace NineGrid.Flow.RewardBoard
     {
         public static RewardBoardPresenter Current { get; private set; } = new RewardBoardPresenter();
 
+        /// <summary>当前货架真卡（表现权威只读投影，供房内装饰层 InRoomCardLifeFx 聚合）。</summary>
+        public IReadOnlyList<ManagedCard> ShelfCards => mShelfCards;
+
         private readonly List<ManagedCard> mShelfCards = new List<ManagedCard>(5);
         private readonly List<string> mShelfDefIds = new List<string>(5);
         private readonly List<GameObject> mExtras = new List<GameObject>(1);

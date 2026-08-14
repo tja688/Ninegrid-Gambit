@@ -29,6 +29,9 @@ namespace NineGrid.Flow.AttributeBoard
     {
         public static AttributeBoardPresenter Current { get; private set; } = new AttributeBoardPresenter();
 
+        /// <summary>当前候选真卡（表现权威只读投影，供房内装饰层 InRoomCardLifeFx 聚合）。</summary>
+        public IReadOnlyList<ManagedCard> CandidateCards => mCandidateCards;
+
         private readonly List<ManagedCard> mCandidateCards = new List<ManagedCard>(3);
         private readonly List<bool> mSelectedFlags = new List<bool>(3);
         private readonly List<GameObject> mExtras = new List<GameObject>(1);

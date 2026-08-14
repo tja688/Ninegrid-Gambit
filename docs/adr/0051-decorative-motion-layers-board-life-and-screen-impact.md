@@ -4,7 +4,7 @@ status: accepted
 
 # 装饰运动层：L1 场地卡生命层 + 整像素抖屏
 
-> **修订（2026-08-14）**：悬浮飘动改为**常驻非阻塞**——不再受 `MainlineBusy` / `IsFieldBusy` 门禁暂停。手牌（`HandCardLifeFx`）与场地卡（`BoardCardLifeFx`）在主线开演、场地忙碌期间照常飘动，不占主线、不进编排、纯视觉；唯一特例是手牌中正被鼠标指向（hover 弹出）的卡，仍随 hover 让位归零。逐卡「权威运动让位」（第 2 条）不变量不变。
+> **修订（2026-08-14）**：悬浮飘动改为**常驻非阻塞**——不再受 `MainlineBusy` / `IsFieldBusy` 门禁暂停。手牌（`HandCardLifeFx`）与场地卡（`BoardCardLifeFx`）在主线开演、场地忙碌期间照常飘动，不占主线、不进编排、纯视觉；唯一特例是手牌中正被鼠标指向（hover 弹出）的卡，仍随 hover 让位归零。逐卡「权威运动让位」（第 2 条）不变量不变。**同日扩展（二）**：新增房内板面同族 `InRoomCardLifeFx` / `InRoomCardLifeRunner`——商店货架、卡店二级候选与服务、奖励货架、属性板候选的持续呈现对象做同款常驻低频飘动；真卡写独占 L1（收敛动画期间逐卡让位），非塔型选项卡（`RoomOptionFacePrefab` 系）退化为根 localPosition 增量偏移（不存基准快照、外部 tween 搬动可跟随、归零精确回写、不旋转）；刷新/离开等纯图标按钮不纳入。
 
 ## 决策
 

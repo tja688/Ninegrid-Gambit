@@ -28,6 +28,12 @@ namespace NineGrid.Flow.ShopBoard
     {
         public static ShopBoardPresenter Current { get; private set; } = new ShopBoardPresenter();
 
+        /// <summary>当前货架真卡（表现权威只读投影，供房内装饰层 InRoomCardLifeFx 聚合）。</summary>
+        public IReadOnlyList<ManagedCard> ShelfCards => mShelfCards;
+
+        /// <summary>当前货架选项卡（道具牌格升级等非塔型选项，供 InRoomCardLifeFx 聚合）。</summary>
+        public IReadOnlyList<GameObject> ShelfOptionGos => mShelfOptionGos;
+
         private readonly List<ManagedCard> mShelfCards = new List<ManagedCard>(5);
         private readonly List<GameObject> mShelfOptionGos = new List<GameObject>(5);
         private readonly List<string> mShelfDefIds = new List<string>(5);
