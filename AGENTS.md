@@ -2,39 +2,41 @@
 
 ## 项目
 
-**Ninegrid Gambit（九宫牌局）**：Unity 6.3 LTS · URP · 2D 卡牌像素风 Roguelike，九宫格棋盘驱动的卡牌战斗。
+**Ninegrid Gambit（九宫牌局）**：Unity 6.3 LTS · URP · 2D 像素 Roguelike，九宫格驱动卡牌战斗。
 
-**内容代号**：`monster.skull_head`、`deck.dragon`、`SkeletonFusion*` 等主题词是历史虚构命名（不透明主键 / 类名），以实现效果为准；`deckId` 只作内部渠道（卡背 / 遭遇分组），玩家可见称呼另行映射。（[ADR-0014](docs/adr/0014-theme-ids-are-legacy-opaque.md)）
+**内容代号**（[ADR-0014](docs/adr/0014-theme-ids-are-legacy-opaque.md)）：`monster.*`、`deck.*`、`SkeletonFusion*` 等是实现侧不透明主键，勿从命名推断玩法。
 
 ## 文档地图
 
 | 文档 | 何时读 |
 |------|--------|
-| [`docs/code-map/`](docs/code-map/) | 代码现状入口（程序集、Presentation 目录、验证约定） |
-| [`docs/adr/`](docs/adr/) | 长期架构决策与行为不变量 |
+| [`docs/code-map/`](docs/code-map/) | 程序集、Presentation、验证门槛 |
+| [`docs/adr/`](docs/adr/) | 行为不变量 |
 | [`CONTEXT.md`](CONTEXT.md) | 仓库当下事实 |
-| [`Assets/Notes/`] | 进行时过程笔记（非权威） |
-| [`C:/Users/jinji/Desktop/文档/MyNote/游戏开发项目/九宫格登神`] | 策划设计文档 （半权威，部分在项目中有适应性改动）|
+| `Assets/Notes/` | 过程笔记（非权威） |
+| 策划 MyNote（本地） | 半权威；与实现冲突时问用户 |
 
-## Agent 规则索引
+## 规则索引
 
-硬规则均在 [`.cursor/rules/`](.cursor/rules/)（`alwaysApply: true`）。改代码、开子代理、调 Unity 前先对表：
+[`.cursor/rules/`](.cursor/rules/) 均 `alwaysApply`。改代码 / Unity / 子代理 / **交付**前先对表：
 
-| 主题 | 规则文件 | 要点 |
-|------|----------|------|
-| Unity 协作 | [`unity-cli.mdc`](.cursor/rules/unity-cli.mdc) | **MCP 首选**；不可用 / 缺能力 / 卡死时回退 CLI + Pipeline；|
-| 文档维护 | [`code-map-maintenance.mdc`](.cursor/rules/code-map-maintenance.mdc) | 同步 `docs/code-map/`、`docs/adr/`；验证门槛与两击放弃 |
-| 工作区 | [`no-worktrees.mdc`](.cursor/rules/no-worktrees.mdc) | 禁止 worktree、旁路克隆、best-of-n 第二目录 |
-| 子代理模型 | [`subagent-models.mdc`](.cursor/rules/subagent-models.mdc) | 全局 hooks 白名单 + Task 选型；见 `%USERPROFILE%\.cursor\hooks.json` |
+| 主题 | 文件 | 触发 |
+|------|------|------|
+| Unity | [`unity-cli.mdc`](.cursor/rules/unity-cli.mdc) | 开 Editor、MCP/CLI、场景检索 |
+| 文档 | [`code-map-maintenance.mdc`](.cursor/rules/code-map-maintenance.mdc) | 改结构、ADR、验证 |
+| 工作区 | [`no-worktrees.mdc`](.cursor/rules/no-worktrees.mdc) | worktree、旁路目录 |
+| 子代理 | [`subagent-models.mdc`](.cursor/rules/subagent-models.mdc) | Task / 子代理 model |
+| 提交 | [`agent-git-commit.mdc`](.cursor/rules/agent-git-commit.mdc) | 任务完成、准备交付 |
 
-Issue / 领域：[`docs/agents/issue-tracker.md`](docs/agents/issue-tracker.md)、[`docs/agents/domain.md`](docs/agents/domain.md)。
+细则：[`docs/agents/`](docs/agents/)（Issue、CLI 回退命令等）。
 
 ## 技能索引
 
-| 技能 | 何时用 | 位置 |
-|------|--------|------|
-| Editor 启动 | 开 / 重开 Editor（`-automated`） | `.cursor/skills/unity-automated-launch/` |
-| 日志分析 | 战斗 / 流程 / 表现日志 | `.cursor/skills/table-nine-battlelog-analysis/` |
-| QuickTest | 主菜单 `\` + `\0`–`\9` 效果通道 | `.cursor/skills/quick-test-effect-channels/` |
-| Live Lab | Play 中注入探针 / 补丁边玩边调 | `.cursor/skills/live-lab/` |
-| 表演时序 | 效果错拍、重复、缺反馈 | `.cursor/skills/table-nine-presentation-timing/` |
+| 技能 | 触发 | 路径 |
+|------|------|------|
+| Editor 启动 | 开/重开、`-automated` | `.cursor/skills/unity-automated-launch/` |
+| 日志分析 | 战斗/流程日志 | `.cursor/skills/table-nine-battlelog-analysis/` |
+| QuickTest | `\` + `\0`–`\9` | `.cursor/skills/quick-test-effect-channels/` |
+| Live Lab | Play 中探针/补丁 | `.cursor/skills/live-lab/` |
+| 表演时序 | 错拍/重复/缺反馈 | `.cursor/skills/table-nine-presentation-timing/` |
+| 像素 snap | sprite snap 且不糊 TMP | `.cursor/skills/sprite-owned-pixel-snap/` |

@@ -1,55 +1,47 @@
 ---
-description: Code Map 与 ADR 的开发后维护义务；改表现层结构须同步 docs/code-map/
+description: Code Map 与 ADR 维护义务；改结构/验证时必读
 alwaysApply: true
 ---
 
 # Code Map 维护规范
 
-本仓库代码现状的**权威导航**是 [`docs/code-map/`](../../docs/code-map/)，配合 [`docs/adr/`](../../docs/adr/) 与根目录 [`CONTEXT.md`](../../CONTEXT.md)。细则入口见 [`docs/code-map/README.md`](../../docs/code-map/README.md)。
+权威导航：[`docs/code-map/`](../../docs/code-map/) + [`docs/adr/`](../../docs/adr/) + [`CONTEXT.md`](../../CONTEXT.md)。入口 [`docs/code-map/README.md`](../../docs/code-map/README.md)。
 
 ## 权威层级
 
 | 层级 | 路径 | 角色 |
 |------|------|------|
-| 代码现状 | `docs/code-map/` | 程序集、目录、装配、验证约定——**只写当下事实** |
+| 代码现状 | `docs/code-map/` | 程序集、目录、装配、验证——**只写当下事实** |
 | 长期决策 | `docs/adr/`、`CONTEXT.md` | 行为不变量、领域词汇 |
 | 过程笔记 | `Assets/Notes/` | 复盘与 Spec 草稿，**非权威** |
 
-## 必须同步 Code Map 的改动
+## 须同步 code-map 的改动
 
 改下列内容时，**先改或同 PR 改** `docs/code-map/`，再改业务代码：
 
-- `NineGrid.Presentation` 顶层目录、程序集边界、场景装配（`Setup/`、`PresentationCompositionRoot`、`PresentationSceneBindings`）
-- 新增/删除/重命名 Controller、System、Command、Query，或变更通信范式（Command / Query / Event / IntentIntake）
+- `NineGrid.Presentation` 目录/程序集/场景装配（`Setup/`、`PresentationCompositionRoot`、`PresentationSceneBindings`）
+- 新增/删改 Controller、System、Command、Query，或变更 Command / Query / Event / IntentIntake 范式
 - 静态 Hook 矩阵、`*ManagerSingleton` 壳、效果扩展点
 
 | 改什么 | 改哪个文件 |
 |--------|------------|
-| 程序集一览、场景入口、维护约定 | `docs/code-map/README.md` |
-| Presentation 目录、装配、读写约定、扩展点 | `docs/code-map/presentation.md` |
+| 程序集、场景入口、维护约定 | `docs/code-map/README.md` |
+| Presentation 目录、装配、扩展点 | `docs/code-map/presentation.md` |
 | 验证门槛 | `docs/code-map/tests.md` |
 
-## 必须写 ADR 的改动
+## 须写 ADR 的改动
 
-下列属于**长期行为不变量**，不能只改 code-map 摘要：
+Batch-ack、占格权威、卡面 Commit、IntentIntake 两轴、跨层通信禁令等**长期不变量**——新增/修订 `docs/adr/` 并在 code-map 引用编号。
 
-- 时间线 / Batch-ack、占格权威、卡面 Commit 时机
-- 输入门禁 / IntentIntake 两轴裁决
-- 诊断关联层、跨层通信禁令（如禁业务静态 Sink、禁绕过 IntentIntake）
+## 验证与两击放弃
 
-新增或修订 `docs/adr/`，并在相关 code-map 段落引用 ADR 编号。
+硬要求：`recompile` 后 Console 无**本改动导致**的新增 Error / Exception / Assert；其余按需 Play / QuickTest。完整门槛见 [`docs/code-map/tests.md`](../../docs/code-map/tests.md)。
 
-## 实施票验证门槛
-
-每张普通实施票合并前：
-
-1. 硬要求：`unity command recompile` 后 Console 无**由本票改动导致**的新增 Error / Exception / Assert
-2. 其余按任务需要手动 Play / QuickTest 验证
-
-**两击放弃**：同一验证动作（recompile / 查 Console）2 次尝试仍无果（超时 / 卡死 / 状态不明）即停，不换命令绕路、不再重试；直接汇报改动结果，并建议人手动验证。
+**两击放弃**：同一验证动作（recompile / 查 Console）2 次仍无果即停，不换命令绕路；汇报改动并建议人手验证。
 
 ## 禁止
 
-- 把未落地的 Spec 目标树（如平铺 `Architecture/`、`Views/`、`Events/` 顶层目录）写入 code-map 当作既成事实
-- 新增业务静态 Sink，或在 View 上直接改 Core 规则状态（见 `presentation.md`）
-- 仅改 `Assets/Notes/` 而不更新 code-map/ADR，却声称架构或目录已变更
+- 把未落地 Spec 目标树写入 code-map 当既成事实
+- 新增业务静态 Sink，或 View 直接改 Core 规则状态（见 `presentation.md`）
+- 仅改 `Assets/Notes/` 却声称架构已变更
+- 从 git 历史恢复已清空的旧测试套件（除非用户明确要求）

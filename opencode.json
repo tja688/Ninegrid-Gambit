@@ -7,7 +7,7 @@
   "permission": "allow",
   "instructions": [
     "AGENTS.md",
-    ".cursor/rules/*.md"
+    ".cursor/rules/*.mdc"
   ],
   "agent": {
     "ticket-implementer": {

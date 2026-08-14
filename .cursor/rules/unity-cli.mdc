@@ -1,27 +1,27 @@
 ---
-description: Unity 协作（MCP 首选、CLI 回退）
+description: Unity 协作（MCP 首选、CLI 回退）；禁 Safe Mode
 alwaysApply: true
 ---
 
 # Unity 协作规范
 
-与 Editor 协作**优先 Unity MCP**（`mcpforunity://` 资源 + `manage_*` 等 MCP 工具）。**仅在** MCP 不可用、缺能力或调用卡死时，回退 `unity` CLI + `com.unity.pipeline`（`unity command …`）。
+与 Editor 协作**优先 Unity MCP**（`mcpforunity://` 资源 + `manage_*` 等 MCP 工具）。**仅在** MCP 不可用、缺能力或调用卡死时，回退 `unity` CLI + `com.unity.pipeline`。CLI 命令见 [`docs/agents/unity-cli.md`](../../docs/agents/unity-cli.md)。
 
 ## MCP 首选
 
-- 读资源、查场景 / 组件、改 GameObject、执行 Editor 脚本等，优先 MCP。
-- MCP 正常时不必为了「统一口径」强行改走 CLI。
+读资源、查改场景/组件、执行 Editor 脚本等，优先 MCP。MCP 可用时不必强行改走 CLI。
 
-## CLI 回退（必须）
+## CLI 回退
 
-- Editor 已打开本工程，且启动带 **`-automated`**（Hub 双击不够）。开/重开用 [`.cursor/skills/unity-automated-launch/`](../../.cursor/skills/unity-automated-launch/)。
-- 改脚本后：`unity command recompile`（或等自动编译），`unity command console` 读 Console。
-- 改场景 / GameObject / 组件：Pipeline 命令（`create_gameobject`、`find_gameobjects`、`add_component`、`set_component_properties` 等）。
-- 调用一律带 `--project-path "<本仓库绝对路径>"`，建议 `--format json`。
-- `recompile` 后轮询 `recompile_status` 至 `completed`，再发下一命令。
-- 命令超时后先查 `recompile_status` / `api/status`，再决定是否重试，避免重复启动同一命令。
-- **两击放弃**：同一验证动作（recompile / 查 Console）2 次仍无果（超时 / 卡死 / 状态不明）即停；汇报改动并建议人手验证。
+- Editor 须带 **`-automated`** 启动；开/重开见 [`.cursor/skills/unity-automated-launch/`](../../.cursor/skills/unity-automated-launch/)。
+- 改脚本：`unity command recompile` + `console`；改场景/GO/组件：Pipeline 命令（`find_gameobjects`、`add_component` 等）。
+- 一律带 `--project-path "<本仓库绝对路径>"`，建议 `--format json`。
+- 验证纪律（**两击放弃**、recompile 轮询）：见 [`code-map-maintenance.mdc`](code-map-maintenance.mdc) 与 [`docs/code-map/tests.md`](../../docs/code-map/tests.md)。
 
 ## 场景中文名检索
 
-`.unity` / `.prefab` YAML 里中文 `m_Name` 常写成 `\uXXXX` 转义（如 `作弊工具BG` → `"\u4F5C\u5F0A\u5DE5\u5177BG"`）。明文中文 `grep` 会误报「不存在」——应搜 Unicode 转义、用 MCP / Editor `FindObjectsOfTypeAll` / Pipeline `find_gameobjects`，或先解码再比。
+`.unity` / `.prefab` YAML 里中文 `m_Name` 常为 `\uXXXX` 转义。明文 `grep` 会漏——搜转义、用 MCP/Editor 查找，或 Pipeline `find_gameobjects`。
+
+## 严禁 Safe Mode
+
+不准进入 Safe Mode，也不准在 Safe Mode 下继续 Agent 操作。编译错误弹窗选 **Ignore** 或 **Quit**；已进 Safe Mode 则退出 Editor，修好编译后以 `-automated` 重开。无例外。

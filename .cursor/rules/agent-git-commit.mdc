@@ -1,0 +1,16 @@
+---
+description: 任务完成后 Agent 须单独 commit 自身改动
+alwaysApply: true
+---
+
+# Agent 提交规范
+
+任务完成、准备交付前，**须提交本任务改动**（本规则即 commit 授权）：
+
+1. **范围**：只 `git add` 本任务改过的路径；不含用户并行编辑或未授权文件。
+2. **独占**：本任务一个 commit；不与无关 WIP 或他人改动混提。
+3. **说明**：commit message 1–2 句完整句，写清**为何改**（目的），非文件清单。
+4. **门槛**：`git status` / `git diff` 确认暂存区仅含本任务文件后再 `git commit`。
+5. **例外**：用户当次对话明确要求**不要 commit** 时停手。
+
+未改任何 tracked 文件则跳过 commit。
