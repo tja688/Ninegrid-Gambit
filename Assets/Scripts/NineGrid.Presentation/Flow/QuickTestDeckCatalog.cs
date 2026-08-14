@@ -283,7 +283,7 @@ namespace NineGrid.Flow
                 { "skill.death_summon", "死时召复活石" },
                 { "skill.lord_of_death", "他死召复活石" },
                 { "skill.holy_duel", "战后打他怪伤2" },
-                { "skill.ambush_melee", "开火窗邻攻打翻面" },
+                { "skill.ambush_melee", "计数归零邻接翻面" },
                 { "skill.assassin_leader", "发牌后翻面" },
                 { "skill.world_as_neighbors", "怪技能皆相邻" },
             };
@@ -311,7 +311,7 @@ namespace NineGrid.Flow
                 { "skill.death_summon", "死亡召唤" },
                 { "skill.lord_of_death", "死亡之主" },
                 { "skill.holy_duel", "神圣决斗" },
-                { "skill.ambush_melee", "潜伏近战" },
+                { "skill.ambush_melee", "潜伏" },
                 { "skill.assassin_leader", "刺客领袖" },
                 { "skill.world_as_neighbors", "天涯若比邻" },
             };

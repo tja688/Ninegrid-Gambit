@@ -5,7 +5,8 @@ using QFramework;
 namespace NineGrid.Flow.Presentation
 {
     /// <summary>
-    /// 开局等非锁步路径：从事件日志重放生成类指令到卡面数值处理器（与 Settled 同一出口）。
+    /// 开局等非锁步路径：从事件日志重放生成类与开局批内卡面数值指令（与 Handler 同一出口）。
+    /// 生成/翻面仍限 Settled；Impact 数值（如 OnNodeStart GainArmor）按日志顺序一并重放，避免只套 AvatarAppeared 钉回旧甲。
     /// </summary>
     public static class CardFaceGenerationBootstrap
     {
@@ -27,13 +28,21 @@ namespace NineGrid.Flow.Presentation
             for (var i = startIndex; i < entries.Count; i++)
             {
                 var entry = entries[i];
-                if (!IsGenerationFaceEvent(entry))
+                var isGeneration = IsGenerationFaceEvent(entry);
+                var isOpeningStat = IsOpeningBootstrapStatEvent(entry);
+                if (!isGeneration && !isOpeningStat)
                 {
                     continue;
                 }
 
                 var map = PresentationEventMap.Get(entry.Type);
-                if (map.Beat != PresentationBeat.Settled)
+                if (map.Beat == PresentationBeat.None)
+                {
+                    continue;
+                }
+
+                // 生成/翻面仍走 Settled；Impact 甲血等数值指令不得被此处过滤（复合盔甲等 OnNodeStart GainArmor）。
+                if (isGeneration && map.Beat != PresentationBeat.Settled)
                 {
                     continue;
                 }
@@ -101,6 +110,24 @@ namespace NineGrid.Flow.Presentation
                 || entry.Type == CoreEventType.EffectCountdownChanged
                 || entry.Type == CoreEventType.EffectCountdownCleared
                 || entry.Type == CoreEventType.CardFaceChanged;
+        }
+
+        /// <summary>
+        /// 开局切片内除生成类外的卡面数值事件（含 Impact 的 ArmorChanged 等）。
+        /// 与 <see cref="ApplyFaceHistoryForUid"/> 的数值集合对齐，供 Opening 按序重放。
+        /// </summary>
+        internal static bool IsOpeningBootstrapStatEvent(CoreGameEvent entry)
+        {
+            if (entry == null || (entry.CardUid <= 0 && entry.TargetUid <= 0))
+            {
+                return false;
+            }
+
+            return entry.Type == CoreEventType.HpChanged
+                || entry.Type == CoreEventType.Healed
+                || entry.Type == CoreEventType.ArmorChanged
+                || entry.Type == CoreEventType.BaseStatModified
+                || entry.Type == CoreEventType.CardKilled;
         }
 
         private static bool IsCardFaceStatEvent(CoreEventType type)

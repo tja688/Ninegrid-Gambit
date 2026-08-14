@@ -415,65 +415,12 @@ namespace NineGrid.Flow
 
             plan.BoardPlacements.AddRange(boardPlacements);
 
-            // 视觉卡组顺序：开局环板上牌优先（ClockwiseRing 末位是 slot4，便于开局就位），
-            // 再拼抽牌堆剩余。
-            var ring = GroundSlotTopology.ClockwiseRing;
-            for (var i = 0; i < ring.Count; i++)
-            {
-                var groundSlot = ring[i];
-                BoardPlacement placement = null;
-                for (var p = 0; p < plan.BoardPlacements.Count; p++)
-                {
-                    if (plan.BoardPlacements[p].GroundSlot == groundSlot)
-                    {
-                        placement = plan.BoardPlacements[p];
-                        break;
-                    }
-                }
-
-                if (placement == null)
-                {
-                    continue;
-                }
-
-                var view = Cards.SpawnView(
-                    placement.Uid,
-                    placement.DefId,
-                    initialMode: CardDisplayMode.CardDeckMode,
-                    kind: CoreCardPresentationMapper.ResolvePresentationKind(placement.Uid, placement.DefId));
-                if (view != null)
-                {
-                    plan.DeckCards.Add(view);
-                    CoreCardPresentationMapper.ApplyToManagedCard(view);
-                }
-            }
-
-            // 环序未覆盖的板上牌（兜底）
-            for (var p = 0; p < plan.BoardPlacements.Count; p++)
-            {
-                var placement = plan.BoardPlacements[p];
-                if (Cards.TryGet(placement.Uid, out _))
-                {
-                    continue;
-                }
-
-                var view = Cards.SpawnView(
-                    placement.Uid,
-                    placement.DefId,
-                    initialMode: CardDisplayMode.CardDeckMode,
-                    kind: CoreCardPresentationMapper.ResolvePresentationKind(placement.Uid, placement.DefId));
-                if (view != null)
-                {
-                    plan.DeckCards.Add(view);
-                    CoreCardPresentationMapper.ApplyToManagedCard(view);
-                }
-            }
-
             // 遗物/技能开局授予须先入 PendingDeckAddUids，再构建抽牌堆 Inject 列表；
             // 否则同一 uid 既 InjectDeck 又 DeckAdds，卡组槽位重复入列，战中补牌会
             // 卡组↔场地来回抢跑（#180 药水袋 / 飞刀袋等同路径）。
             CaptureOpeningDeckAdds(arch, plan);
 
+            // 视觉卡组只注入 Core 抽牌堆（不含已在盘面上的开局 8 张；盘面环飞走发牌原点，不占 slot0）。
             for (var i = 0; i < deck.DrawPileUids.Count; i++)
             {
                 var uid = deck.DrawPileUids[i];
@@ -686,12 +633,13 @@ namespace NineGrid.Flow
             PresentationInputGates.SetOpening(true);
             try
             {
+            Deck.ResetToStandby();
             if (plan.DeckCards.Count > 0)
             {
-                Deck.ResetToStandby();
                 Deck.InjectDeck(plan.DeckCards);
-                await Deck.BeginEntryAsync(cancellationToken);
             }
+
+            await Deck.BeginEntryAsync(cancellationToken);
 
             if (plan.AvatarUid > 0)
             {
@@ -724,13 +672,29 @@ namespace NineGrid.Flow
                 }
             }
 
-            // 按内核盘面 uid→slot 就位：走卡组管理器完整发牌缓动（与 DealOpeningRing 同轨迹）。
+            // 按内核盘面 uid→slot 就位：从发牌原点飞向格位（不占抽牌堆视觉 slot0）。
             var ring = GroundSlotTopology.ClockwiseRing;
             var dealInterval = Deck.LayoutSettings != null
                 ? Deck.LayoutSettings.dealInterval
                 : 0.06f;
             var flightHandles = new List<DealFlightHandle>();
+            var openingBoardDealUids = new List<int>();
+            for (var i = 0; i < ring.Count; i++)
+            {
+                var groundSlot = ring[i];
+                for (var p = 0; p < plan.BoardPlacements.Count; p++)
+                {
+                    if (plan.BoardPlacements[p].GroundSlot == groundSlot)
+                    {
+                        openingBoardDealUids.Add(plan.BoardPlacements[p].Uid);
+                        break;
+                    }
+                }
+            }
 
+            Deck.SetOpeningBoardDealPendingUids(openingBoardDealUids);
+            try
+            {
                 for (var i = 0; i < ring.Count; i++)
                 {
                     cancellationToken.ThrowIfCancellationRequested();
@@ -750,18 +714,44 @@ namespace NineGrid.Flow
                         continue;
                     }
 
-                    Cards.TryGet(placement.Uid, out var ensureCard);
+                    if (!Cards.TryGet(placement.Uid, out var boardCard) || boardCard == null)
+                    {
+                        boardCard = Cards.SpawnView(
+                            placement.Uid,
+                            placement.DefId,
+                            initialMode: CardDisplayMode.GroundCardMode,
+                            kind: CoreCardPresentationMapper.ResolvePresentationKind(
+                                placement.Uid,
+                                placement.DefId));
+                        if (boardCard != null)
+                        {
+                            CoreCardPresentationMapper.ApplyToManagedCard(boardCard);
+                        }
+                    }
+
+                    if (boardCard == null)
+                    {
+                        Debug.LogWarning(
+                            $"[BattleSession] 开局盘面 Spawn 失败 uid={placement.Uid} slot={placement.GroundSlot}。");
+                        continue;
+                    }
+
                     var flightContext = new DealFlightContext(
                         Field.IsFieldBusy,
                         Field.ActiveDealFlightCount + flightHandles.Count + 1,
                         pendingRotateSteps: 0);
-                    var (ok, handle) = await Deck.DealCardByUidWithFlightAsync(
-                        placement.Uid,
+                    var (ok, handle) = await Deck.LaunchOpeningBoardDealFromOriginAsync(
+                        boardCard,
                         placement.GroundSlot,
-                        ensureCard: ensureCard,
                         skipBusyGuard: true,
                         flightContext: flightContext,
                         cancellationToken: cancellationToken);
+                    if (ok && openingBoardDealUids.Count > 0 && openingBoardDealUids[0] == placement.Uid)
+                    {
+                        openingBoardDealUids.RemoveAt(0);
+                        Deck.SetOpeningBoardDealPendingUids(openingBoardDealUids);
+                    }
+
                     FieldTraceHelper.RecordOpeningDealProgress(
                         placement.Uid,
                         placement.GroundSlot,
@@ -793,6 +783,11 @@ namespace NineGrid.Flow
                         flightHandles,
                         cancellationToken);
                 }
+            }
+            finally
+            {
+                Deck.ClearOpeningBoardDealPendingUids();
+            }
 
                 if (plan.DeckAdds.Count > 0)
                 {

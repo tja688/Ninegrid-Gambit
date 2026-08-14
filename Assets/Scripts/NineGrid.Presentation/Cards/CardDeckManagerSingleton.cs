@@ -48,6 +48,8 @@ namespace NineGrid.Cards
         private ManagedCard _hoveredDeckCard;
         private readonly HashSet<int> _returnInFlightUids = new();
         private readonly Dictionary<int, UniTaskCompletionSource> _returnSettledWaiters = new();
+        /// <summary>开局环飞剩余盘面 uid 序；TryDealCard 顶牌断言用，避免与抽牌堆顶混淆。</summary>
+        private List<int> _openingBoardDealPendingUids;
 
         /// <summary>
         /// 入组索引：交由管理器解析落点——优先对齐 Core 抽牌堆真实位置（只读对账），
@@ -941,6 +943,123 @@ namespace NineGrid.Cards
         }
 
         /// <summary>
+        /// 开局环飞前登记剩余盘面发牌序，供顶牌断言与抽牌堆视觉分离。
+        /// </summary>
+        public void SetOpeningBoardDealPendingUids(IReadOnlyList<int> uids)
+        {
+            if (uids == null || uids.Count == 0)
+            {
+                _openingBoardDealPendingUids = null;
+                return;
+            }
+
+            _openingBoardDealPendingUids = new List<int>(uids);
+        }
+
+        public void ClearOpeningBoardDealPendingUids()
+        {
+            _openingBoardDealPendingUids = null;
+        }
+
+        /// <summary>
+        /// 开局环飞：卡不在抽牌堆视觉中，从默认发牌原点飞向盘面格（不占 slot0）。
+        /// </summary>
+        public UniTask<(bool ok, DealFlightHandle handle)> LaunchOpeningBoardDealFromOriginAsync(
+            ManagedCard card,
+            int groundSlot,
+            bool skipBusyGuard,
+            DealFlightContext? flightContext,
+            CancellationToken cancellationToken = default)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            if (card == null || card.Transform == null)
+            {
+                return UniTask.FromResult<(bool, DealFlightHandle)>((false, null));
+            }
+
+            if (!EnsureInGameForDeal())
+            {
+                return UniTask.FromResult<(bool, DealFlightHandle)>((false, null));
+            }
+
+            var field = ResolveFieldManager();
+            if (field == null || !IsValidGroundSlot(groundSlot))
+            {
+                return UniTask.FromResult<(bool, DealFlightHandle)>((false, null));
+            }
+
+            if (field.TryGetSlotOf(card.Uid, out var occupiedSlot))
+            {
+                if (occupiedSlot == groundSlot)
+                {
+                    return UniTask.FromResult<(bool, DealFlightHandle)>((true, null));
+                }
+
+                if (field.IsPlaceable(groundSlot)
+                    && field.RequestRelocateOccupancy(
+                        card.Uid,
+                        groundSlot,
+                        snapToAnchor: true,
+                        skipBusyGuard: true))
+                {
+                    return UniTask.FromResult<(bool, DealFlightHandle)>((true, null));
+                }
+
+                Debug.LogWarning(
+                    $"[CardDeckManager] 开局就位 Uid={card.Uid} 已在场地 slot={occupiedSlot}，无法迁至格 {groundSlot}。");
+                return UniTask.FromResult<(bool, DealFlightHandle)>((false, null));
+            }
+
+            if (!TryGetDefaultDealOrigin(out var origin) || origin == null)
+            {
+                Debug.LogWarning($"[CardDeckManager] 开局就位 Uid={card.Uid} 无发牌原点。");
+                return UniTask.FromResult<(bool, DealFlightHandle)>((false, null));
+            }
+
+            ReportDealAttempt(card.Uid, groundSlot);
+            card.Transform.position = origin.position;
+
+            var cardManager = CardEntityLifecycleHook.CardsOrNull();
+            cardManager?.SetDisplayMode(card, CardDisplayMode.GroundCardMode);
+            if (!field.RequestPlaceCard(groundSlot, card, skipBusyGuard))
+            {
+                Debug.LogWarning(
+                    $"[CardDeckManager] 开局场地拒收 uid={card.Uid} slot={groundSlot}。");
+                ReportDealTrace(card.Uid, groundSlot, placeable: true, ok: false, rollback: false, reason: "placeDenied");
+                return UniTask.FromResult<(bool, DealFlightHandle)>((false, null));
+            }
+
+            if (card.View == null || card.Transform == null)
+            {
+                field.ClearSlotOccupancy(groundSlot, skipBusyGuard: true);
+                ReportDealTrace(card.Uid, groundSlot, placeable: true, ok: false, rollback: true, reason: "nullView");
+                return UniTask.FromResult<(bool, DealFlightHandle)>((false, null));
+            }
+
+            var context = flightContext ?? BuildDefaultFlightContext(field);
+            var launchPos = origin.position;
+            var handle = field.LaunchDrainDealFlight(card, groundSlot, launchPos, context);
+            if (handle == null)
+            {
+                var anchorIndex = CardSlotAnchorUtility.SlotToAnchorIndex(groundSlot);
+                var groundAnchor = anchorIndex >= 0 && anchorIndex < _groundAnchors.Count
+                    ? _groundAnchors[anchorIndex]
+                    : null;
+                if (groundAnchor != null)
+                {
+                    SlotFrameConvergence.BeginDealFromLaunch(
+                        card,
+                        launchPos,
+                        groundAnchor.position,
+                        layoutSettings.moveDuration);
+                }
+            }
+
+            ReportDealTrace(card.Uid, groundSlot, placeable: true, ok: true, rollback: false, reason: string.Empty);
+            return UniTask.FromResult((true, handle));
+        }
+
+        /// <summary>
         /// 将卡牌退回牌组（探求失败回滚，仅 InGame）。发射后不管：垂直上飞离画后经 AddAnchors 随机 ripple 入组（非空不进最左）。
         /// </summary>
         public bool TryReturnCardToDeckFront(ManagedCard card, out IReadOnlyList<CardDeckRippleMove> rippleMoves)
@@ -1469,7 +1588,7 @@ namespace NineGrid.Cards
             }
 
             ReportDealTrace(dealUid, groundSlot, placeable: true, ok: true, rollback: false, reason: string.Empty);
-            AssertTopMatchesCoreDrawPile("TryDealCard");
+            AssertTopMatchesCoreDrawPile("TryDealCard", _openingBoardDealPendingUids);
             return true;
         }
 
@@ -1781,7 +1900,9 @@ namespace NineGrid.Cards
             }
         }
 
-        private void AssertTopMatchesCoreDrawPile(string site)
+        private void AssertTopMatchesCoreDrawPile(
+            string site,
+            IReadOnlyList<int> pendingDealUids = null)
         {
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
             var deck = NineGridArchitecture.Current?.GetModel<DeckModel>();
@@ -1790,7 +1911,8 @@ namespace NineGrid.Cards
                 return;
             }
 
-            AssertTopMatchesDrawPile(deck.DrawPileUids, site);
+            var pending = pendingDealUids ?? _openingBoardDealPendingUids;
+            AssertTopMatchesDrawPile(deck.DrawPileUids, site, pending);
 #endif
         }
 

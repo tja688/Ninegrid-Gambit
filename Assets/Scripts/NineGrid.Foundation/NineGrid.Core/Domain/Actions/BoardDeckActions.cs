@@ -421,6 +421,54 @@ namespace NineGrid.Core
         }
     }
 
+    /// <summary>
+    /// Top=false 洗入语义：只移动刚插入的卡到随机下标（非空排除 slot 0），不整堆 Fisher–Yates 重洗。
+    /// 与表现层 <c>RandomInsertIndex</c> / ADR-0034 抽牌堆视觉序对账一致。
+    /// </summary>
+    internal static class DrawPileInsertRules
+    {
+        public static void RandomizeNonTopInsert(DeckModel deck, int cardUid, IRngUtility rng)
+        {
+            if (deck == null || rng == null || cardUid <= 0)
+            {
+                return;
+            }
+
+            var pile = deck.DrawPileUids;
+            var count = pile.Count;
+            if (count <= 1)
+            {
+                return;
+            }
+
+            var currentIndex = -1;
+            for (var i = 0; i < count; i++)
+            {
+                if (pile[i] == cardUid)
+                {
+                    currentIndex = i;
+                    break;
+                }
+            }
+
+            if (currentIndex < 0)
+            {
+                return;
+            }
+
+            var targetIndex = rng.Range(1, count);
+            if (targetIndex == currentIndex)
+            {
+                return;
+            }
+
+            var ordered = new List<int>(pile);
+            ordered.RemoveAt(currentIndex);
+            ordered.Insert(targetIndex, cardUid);
+            deck.ReorderDrawPile(ordered);
+        }
+    }
+
     public sealed class FillEmptySlotsAction : GameAction
     {
         private static readonly SlotId[] sFillOrder =

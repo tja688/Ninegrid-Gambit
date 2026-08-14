@@ -610,10 +610,16 @@ namespace NineGrid.Core
             var deck = context.GetModel<DeckModel>();
             var result = new GameActionResult();
 
+            var rng = context.Architecture.GetUtility<IRngUtility>();
             for (var i = 0; i < Count; i++)
             {
                 var card = CreateConfiguredCard(context, registry, DefId, Kind);
                 deck.AddToDrawPile(card, Top);
+                if (!Top)
+                {
+                    DrawPileInsertRules.RandomizeNonTopInsert(deck, card.Uid, rng);
+                }
+
                 if (DeferDuringBoardStabilization)
                 {
                     context.GetSystem<IBoardStabilizationSystem>().DeferDrawUid(card.Uid, Top);
@@ -627,31 +633,12 @@ namespace NineGrid.Core
                         .WithSource(DefId, Cause));
             }
 
-            if (!Top && Count > 0)
-            {
-                Shuffle(deck, context.Architecture.GetUtility<IRngUtility>());
-            }
-
             return result;
         }
 
         public override IEnumerable<TriggerPoint> GetPostTriggerPoints(GameActionContext context, IReadOnlyList<CoreGameEvent> events)
         {
             return sPostTriggers;
-        }
-
-        private static void Shuffle(DeckModel deck, IRngUtility rng)
-        {
-            var shuffled = new List<int>(deck.DrawPileUids);
-            for (var i = shuffled.Count - 1; i > 0; i--)
-            {
-                var swapIndex = rng.Range(0, i + 1);
-                var temp = shuffled[i];
-                shuffled[i] = shuffled[swapIndex];
-                shuffled[swapIndex] = temp;
-            }
-
-            deck.ReorderDrawPile(shuffled);
         }
 
         private static CardInstance CreateConfiguredCard(GameActionContext context, CardRegistry registry, string defId, CardKind fallbackKind)
@@ -698,10 +685,12 @@ namespace NineGrid.Core
             var deck = context.GetModel<DeckModel>();
             board.RemoveCard(card);
             deck.AddToDrawPile(card, Top);
-
             if (!Top)
             {
-                Shuffle(deck, context.Architecture.GetUtility<IRngUtility>());
+                DrawPileInsertRules.RandomizeNonTopInsert(
+                    deck,
+                    card.Uid,
+                    context.Architecture.GetUtility<IRngUtility>());
             }
 
             return new GameActionResult()
@@ -718,20 +707,6 @@ namespace NineGrid.Core
         public override IEnumerable<TriggerPoint> GetPostTriggerPoints(GameActionContext context, IReadOnlyList<CoreGameEvent> events)
         {
             return sPostTriggers;
-        }
-
-        private static void Shuffle(DeckModel deck, IRngUtility rng)
-        {
-            var shuffled = new List<int>(deck.DrawPileUids);
-            for (var i = shuffled.Count - 1; i > 0; i--)
-            {
-                var swapIndex = rng.Range(0, i + 1);
-                var temp = shuffled[i];
-                shuffled[i] = shuffled[swapIndex];
-                shuffled[swapIndex] = temp;
-            }
-
-            deck.ReorderDrawPile(shuffled);
         }
     }
 
@@ -969,6 +944,11 @@ namespace NineGrid.Core
                 var card = draft.Kind == CardKind.Unknown ? registry.Create(definition.DefId, Kind) : draft.Create(registry);
                 content.ApplyContentToCard(card);
                 deck.AddToDrawPile(card, Top);
+                if (!Top)
+                {
+                    DrawPileInsertRules.RandomizeNonTopInsert(deck, card.Uid, rng);
+                }
+
                 result.AddWithFaceAbsolutes(
                     context,
                     card,
@@ -976,11 +956,6 @@ namespace NineGrid.Core
                         .WithCard(card.Uid)
                         .WithMessage("shuffleRandom:" + definition.DefId)
                         .WithSource(definition.DefId, SourceDefId));
-            }
-
-            if (!Top)
-            {
-                Shuffle(deck, rng);
             }
 
             return result;
@@ -1049,20 +1024,6 @@ namespace NineGrid.Core
 
             return result;
         }
-
-        private static void Shuffle(DeckModel deck, IRngUtility rng)
-        {
-            var shuffled = new List<int>(deck.DrawPileUids);
-            for (var i = shuffled.Count - 1; i > 0; i--)
-            {
-                var swapIndex = rng.Range(0, i + 1);
-                var temp = shuffled[i];
-                shuffled[i] = shuffled[swapIndex];
-                shuffled[swapIndex] = temp;
-            }
-
-            deck.ReorderDrawPile(shuffled);
-        }
     }
 
     public sealed class ExchangeWithDrawPileAction : GameAction
@@ -1127,7 +1088,7 @@ namespace NineGrid.Core
             deck.RemoveUid(drawnUid);
             board.PlaceCard(drawn, fromSlot);
             deck.AddToDrawPile(target, false);
-            Shuffle(deck, rng);
+            DrawPileInsertRules.RandomizeNonTopInsert(deck, target.Uid, rng);
 
             // 换出腿必须先于换入 Deal：Present 投影为 Remove→Deal，避免幽灵占格导致 placeDenied。
             return new GameActionResult()
@@ -1195,20 +1156,6 @@ namespace NineGrid.Core
             }
 
             return result;
-        }
-
-        private static void Shuffle(DeckModel deck, IRngUtility rng)
-        {
-            var shuffled = new List<int>(deck.DrawPileUids);
-            for (var i = shuffled.Count - 1; i > 0; i--)
-            {
-                var swapIndex = rng.Range(0, i + 1);
-                var temp = shuffled[i];
-                shuffled[i] = shuffled[swapIndex];
-                shuffled[swapIndex] = temp;
-            }
-
-            deck.ReorderDrawPile(shuffled);
         }
     }
 

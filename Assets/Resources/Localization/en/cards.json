@@ -790,8 +790,8 @@
       "description": "Moving to a corner cell: deal 2 damage to the player"
     },
     "skill.ambush_melee": {
-      "displayName": "Ambush Melee",
-      "description": "[On Board] At the card fire window: if face-up and orthogonally adjacent to the player, deal this card's attack to the player and flip"
+      "displayName": "Lurk",
+      "description": "[On Board] At the card fire window: if face-up and orthogonally adjacent to the player, flip"
     },
     "skill.assassin_leader": {
       "displayName": "Assassin Leader",

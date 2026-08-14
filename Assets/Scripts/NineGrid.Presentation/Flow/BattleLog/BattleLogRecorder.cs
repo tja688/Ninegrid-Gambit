@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using NineGrid.Core;
 using NineGrid.Core.Localization;
@@ -168,6 +169,7 @@ namespace NineGrid.Flow.BattleLog
                     FlushPending();
                     mGroupSourceDefId = string.Empty;
                     BattleLogStore.BeginSection(BuildSectionTitle());
+                    AppendOpeningBaselineArmorLine(entries, i, e.Sequence);
                     continue;
                 }
 
@@ -254,6 +256,98 @@ namespace NineGrid.Flow.BattleLog
             }
 
             mPending.Add(new BattleLogEntry(e.Sequence, BattleLogEntryKind.EffectHeader, 0, text));
+        }
+
+        private void AppendOpeningBaselineArmorLine(IReadOnlyList<CoreGameEvent> entries, int nodeStartedIndex, long sequence)
+        {
+            if (!TryFindOpeningBaselineArmor(entries, nodeStartedIndex, out var subjectUid, out var armor))
+            {
+                return;
+            }
+
+            var line = BuildOpeningBaselineArmorLine(subjectUid, armor);
+            if (string.IsNullOrEmpty(line))
+            {
+                return;
+            }
+
+            mPending.Add(new BattleLogEntry(sequence, BattleLogEntryKind.Note, 0, line));
+        }
+
+        /// <summary>
+        /// 节点开战前重置到有效基础甲的绝对值：优先 resetCurrentArmor，否则 AvatarAppeared 携带甲。
+        /// </summary>
+        internal static bool TryFindOpeningBaselineArmor(
+            IReadOnlyList<CoreGameEvent> entries,
+            int nodeStartedIndex,
+            out int subjectUid,
+            out int armor)
+        {
+            subjectUid = 0;
+            armor = 0;
+            if (entries == null || nodeStartedIndex <= 0)
+            {
+                return false;
+            }
+
+            var windowStart = 0;
+            for (var j = nodeStartedIndex - 1; j >= 0; j--)
+            {
+                if (entries[j]?.Type == CoreEventType.NodeStarted)
+                {
+                    windowStart = j + 1;
+                    break;
+                }
+            }
+
+            CoreGameEvent resetEvent = null;
+            CoreGameEvent avatarAppeared = null;
+            for (var j = windowStart; j < nodeStartedIndex; j++)
+            {
+                var candidate = entries[j];
+                if (candidate == null)
+                {
+                    continue;
+                }
+
+                if (candidate.Type == CoreEventType.ArmorChanged
+                    && string.Equals(candidate.Message, "resetCurrentArmor", System.StringComparison.Ordinal))
+                {
+                    resetEvent = candidate;
+                }
+                else if (candidate.Type == CoreEventType.AvatarAppeared)
+                {
+                    avatarAppeared = candidate;
+                }
+            }
+
+            var source = resetEvent ?? avatarAppeared;
+            if (source == null)
+            {
+                return false;
+            }
+
+            subjectUid = ResolveSubjectUid(source);
+            armor = Math.Max(0, source.RemainingArmor);
+            return subjectUid > 0;
+        }
+
+        internal static string BuildOpeningBaselineArmorLine(int subjectUid, int armor)
+        {
+            if (subjectUid <= 0)
+            {
+                return string.Empty;
+            }
+
+            var target = BattleLogNaming.ResolveCardName(subjectUid);
+            if (string.IsNullOrEmpty(target))
+            {
+                return string.Empty;
+            }
+
+            var label = L10n.Tr("battleLog.openingBaselineArmor", "基础护甲");
+            return target
+                + " " + BattleLogPalette.Wrap(BattleLogPalette.Armor, label + " " + armor + " 甲");
         }
 
         private static string BuildSectionTitle()

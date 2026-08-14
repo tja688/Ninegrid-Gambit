@@ -3,8 +3,8 @@
   "contentId": "skill.ambush_melee",
   "kind": "Skill",
   "deckId": "",
-  "displayName": "潜伏近战",
-  "description": "[场上]卡级开火窗口时，若本卡正面且与玩家卡正交相邻，对玩家造成等同本卡攻击的伤害并翻面",
+  "displayName": "潜伏",
+  "description": "[场上]卡级开火窗口时，若本卡正面且与玩家卡正交相邻，[翻面]",
   "gold": 0,
   "stats": {
     "hp": 0,

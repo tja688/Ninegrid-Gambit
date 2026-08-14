@@ -24,6 +24,8 @@ unity command run_tests --mode EditMode --filter NineGrid.Presentation.Tests --f
 | `HolyDuelMarkRegressionTests` | 双持有者连打时旧标记惩罚先结算、标记后转移，不因新目标同为持有者而静默 | 神圣决斗（skill.holy_duel）标记结算语义 |
 | `NodeEndTransientResetTests` | 清关（节点完成）即清四档临时修正 + 当前甲回落有效甲，不拖到下局 StartNode | 「对战残留不出局」（`ClearNodeTransientModifiersAction`） |
 | `RelicCompositeArmorNodeStartTests` | 装备栏遗物效果实例缺失时 StartNode 自愈重挂——复合盔甲开局按攻击加当前甲不再哑火 | `ReactivateMissingRelicEffectsAction` 幂等自愈 |
+| `CardFaceGenerationBootstrapOpeningTests` | Opening `ApplyFromEventLog` 须重放 OnNodeStart `GainArmor` 的 Impact 甲，不能停在 `AvatarAppeared` 旧值 | 复合盔甲卡面 +2 逃逸回归 |
+| `BattleLogOpeningBaselineArmorTests` | 节点开始战斗日志回看 `resetCurrentArmor`/`AvatarAppeared` 写入「基础护甲 N 甲」 | `BattleLogRecorder.TryFindOpeningBaselineArmor` |
 | `RelicGoldenCofferGrantTests` | 黄金鱼竿战斗内拾取：2 张宝箱卡洗入抽牌堆且遗物留装备栏；重挂/次节点自愈/读档语义不重发；局外拾取进道具卡格；丢弃后重获再发；凤凰羽毛 `removeRelic:true` 正常挂载 | ADR-0049 一次性遗物效果消费标记 + 战斗内 `Spawn` 帮助卡洗入抽牌堆 |
 | `TrapArmorTotemBorrowedArmorTests` | 护甲图腾邻接怪 +1 借甲不叠加、借甲被消耗后刷新补回、离邻只流失未耗借甲（不扣自有甲）、远处怪不涨甲 | 借甲光环基线记账 + 维持补满 + 自然流失（`SyncAdjacentBorrowedArmorAction`，ADR-0050 补记） |
 
