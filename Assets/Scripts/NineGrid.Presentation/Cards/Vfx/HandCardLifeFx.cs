@@ -7,7 +7,8 @@ namespace NineGrid.Cards.Vfx
     /// <summary>
     /// 手牌"活着"的表现层：独占 L1 BoardFrame，做低频悬浮飘动（ADR-0051 补记）。
     /// 纯装饰：不读写 Core 规则状态、不参与 Batch-ack、不改手牌槽权威（L0/L2/L3 一律不碰）。
-    /// hover 弹出 / 置顶显示、拖拽、ripple 搬动期间该卡自动回位归零；回位后飘动恢复。
+    /// 飘动常驻非阻塞（修订 2026-08-14）：主线表演 / 场地忙碌期间照常飘动，不受编排门禁暂停——
+    /// 唯一特例是鼠标正指向（hover 弹出）的卡，随 hover 让位归零；拖拽 / ripple 搬动同样自动归零，回位后飘动恢复。
     /// 命中判定不受影响：手牌 hover 以槽位布局坐标为基准（CardHandSlotContainer.GetLayoutPosition），
     /// 不看卡的当前世界位置，飘动只改可见位置（约 3–4 像素）。
     /// </summary>
@@ -150,16 +151,15 @@ namespace NineGrid.Cards.Vfx
 
             var dt = Mathf.Min(Time.unscaledDeltaTime, 0.05f);
             var time = Time.unscaledTime;
-            var boardCalm = IsBoardCalm();
             var driftScale = Mathf.Max(0f, HandCardLifeFx.DriftScale);
 
             foreach (var life in _lives.Values)
             {
-                TickCard(life, dt, time, boardCalm, driftScale);
+                TickCard(life, dt, time, driftScale);
             }
         }
 
-        private void TickCard(CardLife life, float dt, float time, bool boardCalm, float driftScale)
+        private void TickCard(CardLife life, float dt, float time, float driftScale)
         {
             if (life.Tower == null || life.Tower.BoardFrame == null)
             {
@@ -175,7 +175,8 @@ namespace NineGrid.Cards.Vfx
                 return;
             }
 
-            var wantsDrift = boardCalm && driftScale > 0.001f;
+            // 飘动常驻：不被主线/场地门禁暂停（修订 2026-08-14）。权重只在 DriftScale 归零时回落。
+            var wantsDrift = driftScale > 0.001f;
             var target = wantsDrift ? 1f : 0f;
             var rate = target > life.Weight ? WeightRiseSeconds : WeightFallSeconds;
             life.Weight = Mathf.MoveTowards(life.Weight, target, dt / Mathf.Max(0.0001f, rate));
@@ -242,18 +243,6 @@ namespace NineGrid.Cards.Vfx
             frame.localPosition = Vector3.zero;
             frame.localRotation = Quaternion.identity;
             life.Dirty = false;
-        }
-
-        /// <summary>棋盘整体是否处于"可以呼吸"的状态：主线空闲且场地不忙（与场地层同一门禁）。</summary>
-        private static bool IsBoardCalm()
-        {
-            if (NineGrid.Presentation.PresentationInputGates.MainlineBusy)
-            {
-                return false;
-            }
-
-            var field = GroundFieldGeometryHook.FieldOrNull();
-            return field == null || !field.IsFieldBusy;
         }
 
         private static bool IsEngaged(CardLife life)

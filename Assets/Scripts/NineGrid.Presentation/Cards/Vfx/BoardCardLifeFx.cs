@@ -7,7 +7,8 @@ namespace NineGrid.Cards.Vfx
     /// <summary>
     /// 场地卡"活着"的表现层：独占 L1 BoardFrame，做低频悬浮飘动与冲击波位移。
     /// 纯装饰：不读写 Core 规则状态、不参与 Batch-ack、不改占格权威（L0/L2/L3 一律不碰）。
-    /// 交战/受击/换位期间该卡自动回位归零（"战斗与受击回位"）。
+    /// 飘动常驻非阻塞（修订 2026-08-14）：主线表演 / 场地忙碌期间照常飘动，不受编排门禁暂停；
+    /// 只有卡自身正被权威系统搬动（交战/受击/换位）时逐卡让位归零（"战斗与受击回位"）。
     /// </summary>
     public static class BoardCardLifeFx
     {
@@ -304,16 +305,15 @@ namespace NineGrid.Cards.Vfx
 
             var dt = Mathf.Min(Time.unscaledDeltaTime, 0.05f);
             var time = Time.unscaledTime;
-            var boardCalm = IsBoardCalm();
             var driftScale = Mathf.Max(0f, BoardCardLifeFx.DriftScale);
 
             foreach (var life in _lives.Values)
             {
-                TickCard(life, dt, time, boardCalm, driftScale);
+                TickCard(life, dt, time, driftScale);
             }
         }
 
-        private void TickCard(CardLife life, float dt, float time, bool boardCalm, float driftScale)
+        private void TickCard(CardLife life, float dt, float time, float driftScale)
         {
             if (life.Tower == null || life.Tower.BoardFrame == null)
             {
@@ -358,7 +358,8 @@ namespace NineGrid.Cards.Vfx
                 }
             }
 
-            var wantsDrift = boardCalm && driftScale > 0.001f;
+            // 飘动常驻：不被主线/场地门禁暂停（修订 2026-08-14）。权重只在 DriftScale 归零时回落。
+            var wantsDrift = driftScale > 0.001f;
             var target = wantsDrift ? 1f : 0f;
             var rate = target > life.Weight ? WeightRiseSeconds : WeightFallSeconds;
             life.Weight = Mathf.MoveTowards(life.Weight, target, dt / Mathf.Max(0.0001f, rate));
@@ -468,18 +469,6 @@ namespace NineGrid.Cards.Vfx
             frame.localPosition = Vector3.zero;
             frame.localRotation = Quaternion.identity;
             life.Dirty = false;
-        }
-
-        /// <summary>棋盘整体是否处于"可以呼吸"的状态：主线空闲且场地不忙。</summary>
-        private static bool IsBoardCalm()
-        {
-            if (NineGrid.Presentation.PresentationInputGates.MainlineBusy)
-            {
-                return false;
-            }
-
-            var field = GroundFieldGeometryHook.FieldOrNull();
-            return field == null || !field.IsFieldBusy;
         }
 
         private static bool IsEngaged(CardLife life)
