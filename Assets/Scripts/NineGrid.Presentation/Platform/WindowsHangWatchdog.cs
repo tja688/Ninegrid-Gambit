@@ -4,15 +4,15 @@ namespace NineGrid.Presentation.Platform
 {
     /// <summary>
     /// 标记类型：Windows Player 卡死看门狗见条件编译实现。
-    /// 主线程每帧喂心跳；后台线程发现心跳停滞（窗口「未响应」级卡死）时，
-    /// 向 persistentDataPath/HangReports 落文本报告 + minidump（含全线程原生栈），
-    /// 短暂停滞（>2s 后恢复）记入 stalls 流水账。用于外部打包版无 Editor 取证。
+    /// 主线程每帧喂心跳；后台线程发现心跳停滞时双写
+    /// GameLogs/HangReports（exe 旁）与 persistentDataPath/HangReports。
     /// </summary>
     public static class WindowsHangWatchdogInfo
     {
         public const string ReportFolderName = "HangReports";
         public const string DisableArg = "-ng-no-watchdog";
         public const string DumpSecondsArgPrefix = "-ng-hang-dump-seconds=";
+        public const string StallInProgressFileName = "stall-in-progress.txt";
     }
 
 #if UNITY_STANDALONE_WIN && !UNITY_EDITOR
@@ -21,7 +21,7 @@ namespace NineGrid.Presentation.Platform
     {
         private const int PollIntervalMs = 500;
         private const int StallNoteThresholdMs = 2000;
-        private const int DefaultDumpThresholdSeconds = 12;
+        private const int DefaultDumpThresholdSeconds = 5;
         private const int MaxDumpsPerSession = 2;
         private const int MaxKeptDumpFiles = 3;
         private const int MaxKeptTextFiles = 12;
@@ -33,13 +33,17 @@ namespace NineGrid.Presentation.Platform
         private static volatile bool sQuitting;
 
         private System.Threading.Thread mThread;
-        private string mReportDir;
-        private string mSessionStamp;
+        private string[] mReportDirs = System.Array.Empty<string>();
+        private string mSessionStamp = string.Empty;
         private string mSystemSummary = string.Empty;
+        private string mPlayerLogHint = string.Empty;
+        private string mCommandLineSummary = string.Empty;
         private long mStartTimestamp;
         private int mDumpThresholdMs = DefaultDumpThresholdSeconds * 1000;
         private bool mRunInBackground;
         private uint mProcessId;
+        private bool mCrashHandlersInstalled;
+        private WindowsHangWatchdogUnhandledExceptionFilter mNativeCrashFilter;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         private static void Bootstrap()
@@ -71,14 +75,14 @@ namespace NineGrid.Presentation.Platform
 
         private void Awake()
         {
-            // 主线程缓存所有 Unity / 系统信息；看门狗线程绝不触碰 Unity API。
-            mReportDir = System.IO.Path.Combine(
-                Application.persistentDataPath, WindowsHangWatchdogInfo.ReportFolderName);
             mSessionStamp = System.DateTime.Now.ToString(
                 "yyyyMMdd-HHmmss", System.Globalization.CultureInfo.InvariantCulture);
             mRunInBackground = Application.runInBackground;
             mProcessId = GetCurrentProcessId();
             mStartTimestamp = System.Diagnostics.Stopwatch.GetTimestamp();
+            mPlayerLogHint = "%USERPROFILE%\\AppData\\LocalLow\\"
+                + Application.companyName + "\\" + Application.productName;
+            mCommandLineSummary = string.Join(" ", System.Environment.GetCommandLineArgs());
             mSystemSummary =
                 "app=" + Application.productName + " " + Application.version
                 + " unity=" + Application.unityVersion
@@ -87,22 +91,28 @@ namespace NineGrid.Presentation.Platform
                 + "\ncpu=" + SystemInfo.processorType
                 + " ram=" + SystemInfo.systemMemorySize + "MB"
                 + "\ngpu=" + SystemInfo.graphicsDeviceName
-                + " api=" + SystemInfo.graphicsDeviceType;
+                + " api=" + SystemInfo.graphicsDeviceType
+                + "\ncmdline=" + mCommandLineSummary;
 
             ParseDumpThresholdOverride();
+            mReportDirs = BuildReportDirectories();
 
             try
             {
-                System.IO.Directory.CreateDirectory(mReportDir);
-                PruneOldReports();
+                for (var i = 0; i < mReportDirs.Length; i++)
+                {
+                    System.IO.Directory.CreateDirectory(mReportDirs[i]);
+                    PruneOldReports(mReportDirs[i]);
+                }
             }
             catch (System.Exception ex)
             {
                 Debug.LogWarning("[WindowsHangWatchdog] 报告目录初始化失败: " + ex.Message);
             }
 
-            // 预载 dbghelp，避免卡死时在看门狗线程首次触发 DllImport 解析撞 loader lock。
             LoadLibrary("dbghelp.dll");
+            InstallCrashHandlers();
+            WriteWatchdogAliveFiles();
 
             Beat();
             UnityEngine.SceneManagement.SceneManager.sceneLoaded += OnSceneLoaded;
@@ -117,7 +127,20 @@ namespace NineGrid.Presentation.Platform
             mThread.Start();
             Debug.Log(
                 "[WindowsHangWatchdog] 已启动：主线程停滞 >" + (mDumpThresholdMs / 1000)
-                + "s 将写报告与 minidump 到 " + mReportDir);
+                + "s 将写报告与 minidump。优先目录："
+                + WindowsHangReportPaths.ResolvePortableReportsDir());
+        }
+
+        private static string[] BuildReportDirectories()
+        {
+            var persistent = WindowsHangReportPaths.ResolvePersistentReportsDir();
+            var portable = WindowsHangReportPaths.ResolvePortableReportsDir();
+            if (string.Equals(persistent, portable, System.StringComparison.OrdinalIgnoreCase))
+            {
+                return new[] { persistent };
+            }
+
+            return new[] { portable, persistent };
         }
 
         private void ParseDumpThresholdOverride()
@@ -138,6 +161,47 @@ namespace NineGrid.Presentation.Platform
                     mDumpThresholdMs = seconds * 1000;
                 }
             }
+        }
+
+        private void InstallCrashHandlers()
+        {
+            if (mCrashHandlersInstalled)
+            {
+                return;
+            }
+
+            mCrashHandlersInstalled = true;
+            mNativeCrashFilter = new WindowsHangWatchdogUnhandledExceptionFilter(this);
+            mNativeCrashFilter.Install();
+            System.AppDomain.CurrentDomain.UnhandledException += OnManagedUnhandledException;
+        }
+
+        private void OnManagedUnhandledException(object sender, System.UnhandledExceptionEventArgs args)
+        {
+            var ex = args.ExceptionObject as System.Exception;
+            var detail = ex != null ? ex.ToString() : (args.ExceptionObject?.ToString() ?? "unknown");
+            TryWriteCrashReport("managed-unhandled", detail, args.IsTerminating);
+        }
+
+        internal void TryWriteCrashReport(string kind, string detail, bool terminating)
+        {
+            var baseName = "crash-" + mSessionStamp + "-" + kind;
+            var body = BuildCommonReportHeader("crash", 0, sLastFrame, sSceneName)
+                + "terminating=" + terminating + System.Environment.NewLine
+                + "detail=" + detail + System.Environment.NewLine;
+            WriteTextToAllReports(baseName + ".txt", body);
+            TryWriteDumpToAllReports(baseName + ".dmp", baseName + ".txt");
+        }
+
+        private void WriteWatchdogAliveFiles()
+        {
+            var body = BuildCommonReportHeader("watchdog-alive", 0, 0, sSceneName)
+                + "dumpThresholdSeconds=" + (mDumpThresholdMs / 1000) + System.Environment.NewLine
+                + "stallNoteThresholdMs=" + StallNoteThresholdMs + System.Environment.NewLine
+                + "reportDirs=" + string.Join(" | ", mReportDirs) + System.Environment.NewLine
+                + "portableGameLogs=" + WindowsHangReportPaths.ResolvePortableGameLogsDir()
+                + System.Environment.NewLine;
+            WriteTextToAllReports("watchdog-alive-" + mSessionStamp + ".txt", body);
         }
 
         private static void OnSceneLoaded(
@@ -178,12 +242,15 @@ namespace NineGrid.Presentation.Platform
         private void OnDestroy()
         {
             UnityEngine.SceneManagement.SceneManager.sceneLoaded -= OnSceneLoaded;
+            System.AppDomain.CurrentDomain.UnhandledException -= OnManagedUnhandledException;
+            mNativeCrashFilter?.Uninstall();
         }
 
         private void WatchLoop()
         {
             var inStall = false;
             var dumpedThisStall = false;
+            var inProgressWritten = false;
             var dumpsWritten = 0;
             long stallMaxMs = 0;
             var stallFrame = 0;
@@ -200,13 +267,14 @@ namespace NineGrid.Presentation.Platform
                 if (System.Diagnostics.Debugger.IsAttached)
                 {
                     inStall = false;
+                    inProgressWritten = false;
                     continue;
                 }
 
-                // 主循环合法暂停（失焦且不后台运行）不算卡死。
                 if (!sHasFocus && !mRunInBackground)
                 {
                     inStall = false;
+                    inProgressWritten = false;
                     continue;
                 }
 
@@ -219,6 +287,7 @@ namespace NineGrid.Presentation.Platform
                     {
                         inStall = true;
                         dumpedThisStall = false;
+                        inProgressWritten = false;
                         stallMaxMs = elapsedMs;
                         stallFrame = sLastFrame;
                         stallScene = sSceneName;
@@ -228,13 +297,19 @@ namespace NineGrid.Presentation.Platform
                         stallMaxMs = elapsedMs;
                     }
 
+                    if (!inProgressWritten)
+                    {
+                        inProgressWritten = true;
+                        TryWriteStallInProgress(stallMaxMs, stallFrame, stallScene);
+                    }
+
                     if (!dumpedThisStall && elapsedMs >= mDumpThresholdMs)
                     {
                         dumpedThisStall = true;
                         if (dumpsWritten < MaxDumpsPerSession)
                         {
                             dumpsWritten++;
-                            TryWriteHangReportAndDump(elapsedMs, stallFrame, stallScene, dumpsWritten);
+                            TryWriteHangReportAndDump(stallMaxMs, stallFrame, stallScene, dumpsWritten);
                         }
                     }
 
@@ -244,7 +319,9 @@ namespace NineGrid.Presentation.Platform
                 if (inStall)
                 {
                     inStall = false;
+                    inProgressWritten = false;
                     TryAppendStallLog(stallMaxMs, stallFrame, stallScene, dumpedThisStall);
+                    TryFinalizeStallInProgress(stallMaxMs, stallFrame, stallScene, dumpedThisStall);
                 }
             }
         }
@@ -254,62 +331,146 @@ namespace NineGrid.Presentation.Platform
             return timestampDelta * 1000 / System.Diagnostics.Stopwatch.Frequency;
         }
 
-        private void TryWriteHangReportAndDump(long elapsedMs, int frame, string scene, int dumpIndex)
+        private string BuildCommonReportHeader(string kind, long elapsedMs, int frame, string scene)
         {
-            var baseName = "hang-" + mSessionStamp + "-" + dumpIndex;
-            var reportPath = System.IO.Path.Combine(mReportDir, baseName + ".txt");
-            var dumpPath = System.IO.Path.Combine(mReportDir, baseName + ".dmp");
+            var uptimeSeconds = TimestampToMs(
+                System.Diagnostics.Stopwatch.GetTimestamp() - mStartTimestamp) / 1000;
+            return "[NineGrid HangWatchdog] " + kind + System.Environment.NewLine
+                + "time=" + System.DateTime.Now.ToString(
+                    "yyyy-MM-dd HH:mm:ss", System.Globalization.CultureInfo.InvariantCulture)
+                + System.Environment.NewLine
+                + "mainThreadStalledMs>=" + elapsedMs + System.Environment.NewLine
+                + "lastFrame=" + frame + " scene=" + scene + System.Environment.NewLine
+                + "uptimeSeconds=" + uptimeSeconds + System.Environment.NewLine
+                + "unityFocus=" + sHasFocus
+                + " runInBackground=" + mRunInBackground + System.Environment.NewLine
+                + "mitigationEnabled=" + WindowsHighPollingMouseMitigationRuntime.MitigationEnabled
+                + " nolegacyActive=" + WindowsHighPollingMouseMitigationRuntime.NolegacyActive
+                + " nativeFocus=" + WindowsHighPollingMouseMitigationRuntime.HasNativeFocus
+                + " insideClient=" + WindowsHighPollingMouseMitigationRuntime.InsideClient
+                + System.Environment.NewLine
+                + mSystemSummary + System.Environment.NewLine
+                + "playerLogDir=" + mPlayerLogHint + System.Environment.NewLine
+                + "portableHangReports=" + WindowsHangReportPaths.ResolvePortableReportsDir()
+                + System.Environment.NewLine
+                + "portableGameLogs=" + WindowsHangReportPaths.ResolvePortableGameLogsDir()
+                + System.Environment.NewLine;
+        }
 
-            // 先落文本再尝试 dump：即使 MiniDumpWriteDump 本身出问题，报告也已保住。
-            try
-            {
-                var uptimeSeconds = TimestampToMs(
-                    System.Diagnostics.Stopwatch.GetTimestamp() - mStartTimestamp) / 1000;
-                var report = new System.Text.StringBuilder();
-                report.AppendLine("[NineGrid HangWatchdog] 检测到主线程卡死");
-                report.AppendLine("time=" + System.DateTime.Now.ToString(
-                    "yyyy-MM-dd HH:mm:ss", System.Globalization.CultureInfo.InvariantCulture));
-                report.AppendLine("mainThreadStalledMs>=" + elapsedMs);
-                report.AppendLine("lastFrame=" + frame + " scene=" + scene);
-                report.AppendLine("uptimeSeconds=" + uptimeSeconds);
-                report.AppendLine(mSystemSummary);
-                report.AppendLine("dump=" + dumpPath);
-                report.AppendLine("Player.log 同目录上级：%USERPROFILE%\\AppData\\LocalLow\\"
-                    + Application.companyName + "\\" + Application.productName);
-                report.AppendLine("dump 可用 Visual Studio / WinDbg 打开，看 Main Thread 卡在哪个调用栈。");
-                System.IO.File.WriteAllText(reportPath, report.ToString());
-            }
-            catch
-            {
-                // 报告失败不阻止 dump。
-            }
+        private void TryWriteStallInProgress(long elapsedMs, int frame, string scene)
+        {
+            var body = BuildCommonReportHeader("stall-in-progress", elapsedMs, frame, scene)
+                + "note=主线程仍在卡死中；若任务管理器结束进程，本文件会保留供开发者分析。"
+                + System.Environment.NewLine;
+            WriteTextToAllReports(WindowsHangWatchdogInfo.StallInProgressFileName, body);
+        }
 
-            var dumpOk = false;
-            try
+        private void TryFinalizeStallInProgress(long stallMaxMs, int frame, string scene, bool dumped)
+        {
+            for (var i = 0; i < mReportDirs.Length; i++)
             {
-                dumpOk = WriteMiniDump(dumpPath);
-            }
-            catch
-            {
-                dumpOk = false;
-            }
+                try
+                {
+                    var inProgress = System.IO.Path.Combine(
+                        mReportDirs[i], WindowsHangWatchdogInfo.StallInProgressFileName);
+                    if (!System.IO.File.Exists(inProgress))
+                    {
+                        continue;
+                    }
 
-            try
-            {
-                System.IO.File.AppendAllText(
-                    reportPath,
-                    "dumpResult=" + (dumpOk ? "ok" : "failed") + System.Environment.NewLine);
-            }
-            catch
-            {
-                // 忽略：取证尽力而为。
+                    var recovered = System.IO.Path.Combine(
+                        mReportDirs[i],
+                        "stall-recovered-" + mSessionStamp + ".txt");
+                    var footer = System.Environment.NewLine
+                        + "recoveredAfterMs=" + stallMaxMs
+                        + " frame=" + frame
+                        + " scene=" + scene
+                        + (dumped ? " dumped=true" : string.Empty)
+                        + System.Environment.NewLine;
+                    System.IO.File.AppendAllText(inProgress, footer);
+                    System.IO.File.Move(inProgress, recovered);
+                }
+                catch
+                {
+                    // 尽力而为。
+                }
             }
         }
 
-        private bool WriteMiniDump(string dumpPath)
+        private void TryWriteHangReportAndDump(long elapsedMs, int frame, string scene, int dumpIndex)
         {
-            // 紧凑取证 dump：全线程栈 + 线程信息 + 句柄表（查死锁链）+ 内存布局，
-            // 不含全量堆内存，体积可控（几 MB ~ 几十 MB），玩家可直接回传。
+            var baseName = "hang-" + mSessionStamp + "-" + dumpIndex;
+            var reportBody = BuildCommonReportHeader("hang", elapsedMs, frame, scene)
+                + "dumpFile=" + baseName + ".dmp" + System.Environment.NewLine
+                + "dumpHint=用 Visual Studio / WinDbg 打开，查看 Main Thread 调用栈。"
+                + System.Environment.NewLine;
+            WriteTextToAllReports(baseName + ".txt", reportBody);
+            TryWriteDumpToAllReports(baseName + ".dmp", baseName + ".txt");
+        }
+
+        private void WriteTextToAllReports(string fileName, string body)
+        {
+            for (var i = 0; i < mReportDirs.Length; i++)
+            {
+                try
+                {
+                    System.IO.File.WriteAllText(
+                        System.IO.Path.Combine(mReportDirs[i], fileName), body);
+                }
+                catch
+                {
+                    // 尽力而为。
+                }
+            }
+        }
+
+        private void TryWriteDumpToAllReports(string dumpFileName, string reportFileName)
+        {
+            for (var i = 0; i < mReportDirs.Length; i++)
+            {
+                var dumpPath = System.IO.Path.Combine(mReportDirs[i], dumpFileName);
+                var reportPath = System.IO.Path.Combine(mReportDirs[i], reportFileName);
+                var dumpOk = false;
+                var lastError = 0;
+                try
+                {
+                    dumpOk = WriteMiniDump(dumpPath, out lastError);
+                }
+                catch (System.Exception ex)
+                {
+                    lastError = MarshalGetLastErrorSafe();
+                    try
+                    {
+                        System.IO.File.AppendAllText(
+                            reportPath,
+                            "dumpResult=exception:" + ex.GetType().Name + " " + ex.Message
+                            + " lastError=" + lastError + System.Environment.NewLine);
+                    }
+                    catch
+                    {
+                        // 忽略。
+                    }
+
+                    continue;
+                }
+
+                try
+                {
+                    System.IO.File.AppendAllText(
+                        reportPath,
+                        "dumpResult=" + (dumpOk ? "ok" : "failed")
+                        + " lastError=" + lastError
+                        + " path=" + dumpPath + System.Environment.NewLine);
+                }
+                catch
+                {
+                    // 忽略。
+                }
+            }
+        }
+
+        private bool WriteMiniDump(string dumpPath, out int lastError)
+        {
             const uint MiniDumpWithDataSegs = 0x00000001;
             const uint MiniDumpWithHandleData = 0x00000004;
             const uint MiniDumpWithUnloadedModules = 0x00000020;
@@ -335,7 +496,7 @@ namespace NineGrid.Presentation.Platform
                 System.IO.FileAccess.ReadWrite,
                 System.IO.FileShare.None))
             {
-                return MiniDumpWriteDump(
+                var ok = MiniDumpWriteDump(
                     GetCurrentProcess(),
                     mProcessId,
                     stream.SafeFileHandle,
@@ -343,36 +504,42 @@ namespace NineGrid.Presentation.Platform
                     System.IntPtr.Zero,
                     System.IntPtr.Zero,
                     System.IntPtr.Zero);
+                lastError = ok ? 0 : MarshalGetLastErrorSafe();
+                return ok;
             }
         }
 
         private void TryAppendStallLog(long stallMaxMs, int frame, string scene, bool dumped)
         {
-            try
+            var line = "[" + System.DateTime.Now.ToString(
+                    "yyyy-MM-dd HH:mm:ss", System.Globalization.CultureInfo.InvariantCulture)
+                + "] 主线程停滞约 " + stallMaxMs + " ms 后恢复"
+                + "（frame " + frame + ", scene " + scene + (dumped ? ", 已写 dump" : string.Empty)
+                + "）" + System.Environment.NewLine;
+            for (var i = 0; i < mReportDirs.Length; i++)
             {
-                var line = "[" + System.DateTime.Now.ToString(
-                        "yyyy-MM-dd HH:mm:ss", System.Globalization.CultureInfo.InvariantCulture)
-                    + "] 主线程停滞约 " + stallMaxMs + " ms 后恢复"
-                    + "（frame " + frame + ", scene " + scene + (dumped ? ", 已写 dump" : string.Empty)
-                    + "）" + System.Environment.NewLine;
-                System.IO.File.AppendAllText(
-                    System.IO.Path.Combine(mReportDir, "stalls-" + mSessionStamp + ".txt"), line);
-            }
-            catch
-            {
-                // 忽略：流水账尽力而为。
+                try
+                {
+                    System.IO.File.AppendAllText(
+                        System.IO.Path.Combine(mReportDirs[i], "stalls-" + mSessionStamp + ".txt"),
+                        line);
+                }
+                catch
+                {
+                    // 忽略。
+                }
             }
         }
 
-        private void PruneOldReports()
+        private void PruneOldReports(string reportDir)
         {
-            PruneByPattern("*.dmp", MaxKeptDumpFiles);
-            PruneByPattern("*.txt", MaxKeptTextFiles);
+            PruneByPattern(reportDir, "*.dmp", MaxKeptDumpFiles);
+            PruneByPattern(reportDir, "*.txt", MaxKeptTextFiles);
         }
 
-        private void PruneByPattern(string pattern, int keep)
+        private static void PruneByPattern(string reportDir, string pattern, int keep)
         {
-            var files = System.IO.Directory.GetFiles(mReportDir, pattern);
+            var files = System.IO.Directory.GetFiles(reportDir, pattern);
             if (files.Length <= keep)
             {
                 return;
@@ -395,6 +562,18 @@ namespace NineGrid.Presentation.Platform
             }
         }
 
+        private static int MarshalGetLastErrorSafe()
+        {
+            try
+            {
+                return System.Runtime.InteropServices.Marshal.GetLastWin32Error();
+            }
+            catch
+            {
+                return 0;
+            }
+        }
+
         [System.Runtime.InteropServices.DllImport("dbghelp.dll", SetLastError = true)]
         private static extern bool MiniDumpWriteDump(
             System.IntPtr hProcess,
@@ -413,6 +592,97 @@ namespace NineGrid.Presentation.Platform
 
         [System.Runtime.InteropServices.DllImport("kernel32.dll", CharSet = System.Runtime.InteropServices.CharSet.Unicode, SetLastError = true)]
         private static extern System.IntPtr LoadLibrary(string fileName);
+    }
+
+    internal sealed class WindowsHangWatchdogUnhandledExceptionFilter
+    {
+        private readonly WindowsHangWatchdog mOwner;
+        private WindowsHangWatchdogNativeFilter mFilter;
+        private bool mInstalled;
+
+        internal WindowsHangWatchdogUnhandledExceptionFilter(WindowsHangWatchdog owner)
+        {
+            mOwner = owner;
+        }
+
+        internal void Install()
+        {
+            if (mInstalled)
+            {
+                return;
+            }
+
+            mFilter = new WindowsHangWatchdogNativeFilter(OnNativeUnhandledException);
+            mFilter.Install();
+            mInstalled = true;
+        }
+
+        internal void Uninstall()
+        {
+            if (!mInstalled)
+            {
+                return;
+            }
+
+            mFilter?.Uninstall();
+            mInstalled = false;
+        }
+
+        private int OnNativeUnhandledException(ref WindowsHangWatchdogNativeFilter.ExceptionPointers pointers)
+        {
+            try
+            {
+                mOwner.TryWriteCrashReport(
+                    "native-unhandled",
+                    "exceptionRecordPtr=" + pointers.ExceptionRecord
+                    + " contextRecordPtr=" + pointers.ContextRecord,
+                    true);
+            }
+            catch
+            {
+                // 过滤器内不得抛。
+            }
+
+            return 0;
+        }
+    }
+
+    internal sealed class WindowsHangWatchdogNativeFilter
+    {
+        [System.Runtime.InteropServices.StructLayout(System.Runtime.InteropServices.LayoutKind.Sequential)]
+        internal struct ExceptionPointers
+        {
+            public System.IntPtr ExceptionRecord;
+            public System.IntPtr ContextRecord;
+        }
+
+        internal delegate int UnhandledExceptionFilterDelegate(ref ExceptionPointers exceptionInfo);
+
+        private readonly UnhandledExceptionFilterDelegate mDelegate;
+        private System.IntPtr mPreviousFilter;
+
+        internal WindowsHangWatchdogNativeFilter(UnhandledExceptionFilterDelegate handler)
+        {
+            mDelegate = handler;
+        }
+
+        internal void Install()
+        {
+            mPreviousFilter = SetUnhandledExceptionFilter(
+                System.Runtime.InteropServices.Marshal.GetFunctionPointerForDelegate(mDelegate));
+        }
+
+        internal void Uninstall()
+        {
+            if (mPreviousFilter != System.IntPtr.Zero)
+            {
+                SetUnhandledExceptionFilter(mPreviousFilter);
+                mPreviousFilter = System.IntPtr.Zero;
+            }
+        }
+
+        [System.Runtime.InteropServices.DllImport("kernel32.dll")]
+        private static extern System.IntPtr SetUnhandledExceptionFilter(System.IntPtr filter);
     }
 #endif
 }

@@ -11,7 +11,7 @@
 | 目录 | 约 `.cs` | 命名空间（主） | 放什么 |
 |------|----------|----------------|--------|
 | `Setup/` | 3 | `NineGrid.Presentation.Setup` | `PresentationSceneRoot`、`PresentationCompositionRoot`、`PresentationSceneBindings` |
-| `Platform/` | 2 | `NineGrid.Presentation.Platform` | Windows Player 高回报率鼠标 mitigation（ADR-0006；仅 Standalone Win 非 Editor 生效；命令行 `-ng-no-rawinput` 可整体关闭做排除法）+ `WindowsHangWatchdog` 卡死看门狗（主线程心跳 + 后台线程检测；停滞 >2s 恢复记 `persistentDataPath/HangReports/stalls-*.txt`，停滞 ≥12s 落文本报告 + minidump（全线程栈/句柄表，非全量内存），每次会话最多 2 个 dump；`-ng-no-watchdog` 关闭、`-ng-hang-dump-seconds=N` 调阈值） |
+| `Platform/` | 3 | `NineGrid.Presentation.Platform` | Windows Player 高回报率鼠标 mitigation（ADR-0006；失焦保持 NOLEGACY、chrome 用 RIDEV_REMOVE、WndProc 激活点；`-ng-no-rawinput` 排除法）+ `WindowsHangWatchdog` 卡死看门狗（双写 `GameLogs/HangReports` 与 AppData；2s `stall-in-progress.txt`；默认 5s dump；`watchdog-alive-*.txt`；`-ng-no-watchdog` / `-ng-hang-dump-seconds=N`）+ `WindowsHangReportPaths` |
 | `Controllers/` | ~21 | `NineGrid.Presentation.Controllers` | QF `PresentationController` 场景入口 |
 | `Commands/` | 25 | `NineGrid.Presentation.Commands` | 写意图 |
 | `Queries/` | 11 | `NineGrid.Presentation.Queries` | 读裁决（合法性等） |
@@ -336,7 +336,7 @@
 - 非战斗 Avatar 正交跳格（ADR-0019）；战斗相位禁走  
 - 卡面**数值**只经结算指令在表演锚点提交，不直读 Core（ADR-0005）；装饰消费者经同一排期器多处理器分发（ADR-0007）  
 - **触发可见因果** / **基础触发表现**：无命中帧、靠运动落地才成立的触发，Impact 须在条件可见之后；Triggered 卡牌触发须 `EffectTriggered` + 在场持有者 v1 缩放（ADR-0018）  
-- Windows Player 高回报率鼠标：`RIDEV_NOLEGACY`（仅聚焦且光标在客户区时启用，非客户区/失焦切回 legacy 允许，保住窗口拖动/缩放/关闭）+ 轮询注入 Input System；命中走 `PointerHitRouter`，禁 `OnMouse*`（ADR-0006，2026-08-13 修订）
+- Windows Player 高回报率鼠标：`RIDEV_NOLEGACY`（聚焦+客户区）；chrome=`RIDEV_REMOVE`；**失焦保持 NOLEGACY**；`WM_ACTIVATE` 子类化抢先注册；轮询注入 Input System；禁 `OnMouse*`（ADR-0006，2026-08-14 修订）
 - 格位命中框为九宫格唯一命中权威、一格一认领者、命中恒成功、禁用启停 collider 表达规则（ADR-0023 / #101+#102）
 - 落格对象不 SetParent 到格位锚点、尺寸权威在预制体、运行时不写 `localScale` 绝对值修正；mode/hover/hop 倍率为相对预制体基准且可还原（ADR-0024 / #104）
 - 装饰运动只写 L1（单一写者 `BoardCardLifeFx`）、权威运动接手即硬归零；抖屏独占主相机 `localPosition` 且只走整像素、不旋转相机（ADR-0051）
@@ -350,8 +350,8 @@
 - **局内 UI 叠层**：`BattleUiDimmerOverlay` + `UiOverlayHitProxy`（`DimmerBackground`：详述优先关，再关战斗信息预览；面板内 `Swallow` 不关预览；关闭钮 `CloseCardInspect`）；`PresentationInputGates.BattleUiOverlayActive` 只读投影
 - **战斗信息预览**：`BattleInfoPreviewPresenter.ShowAndWaitAsync`（`GameFlowOrchestrator.PlayRealBattleAsync` 正式 Run、发牌前）；槽 `BattleInfoPreviewSlotView` **暂不**注册 `PointerHitRegistry`（无悬停黄边 / 槽右键详述，待动态框选）；面板根仍 `UiOverlayHitProxy.Swallow`；关详述不 Complete 预览；图标复用卡面 `mainVisual` + **BottomCenter 相对槽框** 见上表 `BattleInfoPreview/`
 - **代理**：`GroundFieldHitSurface`（场地面单一注册，解格号 → 查 `SlotClaimRegistry`）/ `HandCardHitProxy` / `BoardSelectParkedCardHitProxy` 实现 `IPointerHitTarget`；落格 `GroundCardHitProxy` / `BoardBriefTipHitProxy` / 商店·卡店·奖励 Board HitProxy 改为**认领登记**（无自建命中盒、不注册 Router）；`GroundSlotHitProxy` 遗留壳
-- **Win Player mitigation**：`Platform/WindowsHighPollingMouseMitigation`（`#if UNITY_STANDALONE_WIN && !UNITY_EDITOR`；`-ng-no-rawinput` 停用；主窗口句柄缓存，禁每帧 `Process.MainWindowHandle`）
-- **Win Player 卡死取证**：`Platform/WindowsHangWatchdog`（同编译隔离；报告目录 `%USERPROFILE%\AppData\LocalLow\<company>\<product>\HangReports`）
+- **Win Player mitigation**：`Platform/WindowsHighPollingMouseMitigation`（`#if UNITY_STANDALONE_WIN && !UNITY_EDITOR`；`-ng-no-rawinput` 停用；`GetForegroundWindow` + 主窗口句柄缓存；WndProc `WM_ACTIVATE`）
+- **Win Player 卡死取证**：`Platform/WindowsHangWatchdog` + `WindowsHangReportPaths`（双写 exe 旁 `GameLogs/HangReports/` 与 `%USERPROFILE%\AppData\LocalLow\<company>\<product>\HangReports`；game1 打包附带试玩 bat/说明）
 - **工程设置**：`activeInputHandler = 1`（New Input System only）
 - **专项回归**：125 / 1000 / 4000+ Hz × 窗口/无边框/全屏；hover、空槽、点怪、手牌拖放、BoardSelect、BounceFan、右键详述
 

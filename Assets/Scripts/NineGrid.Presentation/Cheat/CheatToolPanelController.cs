@@ -10,6 +10,7 @@ using NineGrid.Core.Systems;
 using NineGrid.Flow;
 using NineGrid.Flow.Diagnostics;
 using NineGrid.Flow.Presentation;
+using NineGrid.Presentation.Platform;
 using QFramework;
 using TMPro;
 using UnityEngine;
@@ -192,6 +193,7 @@ namespace NineGrid.Presentation.Cheat
             }
 
             CloseAllSecondLayers();
+            LogDiagnosticPaths();
             Debug.Log("[CheatTool] 作弊面板已打开（F12 切换 / Esc 关闭）。");
         }
 
@@ -382,6 +384,7 @@ namespace NineGrid.Presentation.Cheat
 
             _logLayer.gameObject.SetActive(true);
             ResetLogNotice();
+            SetLogNotice(BuildLogMenuNotice());
 
             if (_logTagInput != null)
             {
@@ -480,6 +483,24 @@ namespace NineGrid.Presentation.Cheat
             {
                 _logNoticeText.text = message ?? string.Empty;
             }
+        }
+
+        private static void LogDiagnosticPaths()
+        {
+#if UNITY_STANDALONE_WIN && !UNITY_EDITOR
+            var summary = WindowsHangReportPaths.FormatDiagnosticPathSummary();
+            Debug.Log("[CheatTool] " + summary.Replace("\n", " | "));
+#endif
+        }
+
+        private static string BuildLogMenuNotice()
+        {
+#if UNITY_STANDALONE_WIN && !UNITY_EDITOR
+            return "填写问题 Tag 后点保存。卡死取证路径："
+                + WindowsHangReportPaths.ResolvePortableReportsDir();
+#else
+            return "填写问题 Tag 后点保存。";
+#endif
         }
 
         private void TryAddCardToDeckTop(string defId)

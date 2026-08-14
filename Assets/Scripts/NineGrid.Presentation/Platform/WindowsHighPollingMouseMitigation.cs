@@ -19,32 +19,54 @@ namespace NineGrid.Presentation.Platform
         public const string DisableArg = "-ng-no-rawinput";
     }
 
+    /// <summary>看门狗可读的运行时快照（主线程写入）。</summary>
+    public static class WindowsHighPollingMouseMitigationRuntime
+    {
+        public static volatile bool MitigationEnabled = true;
+        public static volatile bool NolegacyActive;
+        public static volatile bool HasNativeFocus;
+        public static volatile bool InsideClient;
+    }
+
 #if UNITY_STANDALONE_WIN && !UNITY_EDITOR
     /// <summary>
     /// Windows Player 高回报率鼠标兜底：RIDEV_NOLEGACY 掐掉 legacy WM_MOUSE 洪水，
     /// 再每帧用 GetCursorPos / GetAsyncKeyState 注入 Input System。
-    /// NOLEGACY 只在「窗口聚焦且光标在客户区内」时启用：legacy 消息同时承担
-    /// 标题栏拖动、边框缩放、关闭按钮与点击激活（非客户区交互），常开会把窗口变成
-    /// 拖不动、关不掉的死窗口。光标移出客户区或窗口失焦时切回 legacy 允许档
-    /// （保持 Raw Input 注册但 dwFlags=0），窗口框架行为恢复系统默认。
+    /// 聚焦且光标在客户区内启用 NOLEGACY；光标在标题栏/边框时用 RIDEV_REMOVE 交还 chrome；
+    /// 失焦时保持 NOLEGACY（禁止 dwFlags=0 重注册，避免 Alt-Tab 切回消息洪水）。
+    /// WM_ACTIVATE / WM_SETFOCUS 在 WndProc 内立刻重开 NOLEGACY，不等待 onBeforeUpdate。
     /// </summary>
     [DefaultExecutionOrder(-1000)]
     public sealed class WindowsHighPollingMouseMitigation : MonoBehaviour
     {
         private const ushort HidUsagePageGeneric = 0x01;
         private const ushort HidUsageGenericMouse = 0x02;
+        private const uint RidevRemove = 0x00000001;
         private const uint RidevNolegacy = 0x00000030;
         private const int VkLButton = 0x01;
         private const int VkRButton = 0x02;
         private const int VkMButton = 0x04;
+        private const int ClientHysteresisPx = 4;
+        private const int WmActivate = 0x0006;
+        private const int WmSetfocus = 0x0007;
+        private const int WaInactive = 0;
+        private const int GwlpWndproc = -4;
+        private const int MaxWndProcInstallFrames = 300;
+
+        private delegate IntPtr WndProcDelegate(IntPtr hwnd, uint msg, IntPtr wParam, IntPtr lParam);
 
         private Vector2 _lastPos;
         private bool _hasLastPos;
         private bool _nolegacyActive;
+        private bool _wasInsideClient;
         private bool _nolegacyFailureLogged;
-        private bool _legacyRestoreFailureLogged;
+        private bool _removeFailureLogged;
         private IntPtr _cachedHwnd;
         private bool _mainWindowResolveAttempted;
+        private bool _wndProcInstalled;
+        private IntPtr _originalWndProc;
+        private WndProcDelegate _wndProcDelegate;
+        private int _wndProcInstallFrames;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         private static void Bootstrap()
@@ -57,6 +79,7 @@ namespace NineGrid.Presentation.Platform
                         WindowsHighPollingMouseMitigationInfo.DisableArg,
                         StringComparison.OrdinalIgnoreCase))
                 {
+                    WindowsHighPollingMouseMitigationRuntime.MitigationEnabled = false;
                     Debug.Log("[WindowsHighPollingMouseMitigation] 已按命令行参数禁用（走引擎默认鼠标路径）。");
                     return;
                 }
@@ -75,67 +98,130 @@ namespace NineGrid.Presentation.Platform
         private void OnDisable()
         {
             InputSystem.onBeforeUpdate -= OnBeforeInputUpdate;
-            // 退出/禁用时确保 legacy 消息已恢复，别让死窗口状态泄漏到关停路径。
-            UpdateLegacySuppression(false);
+            RemoveRegistration();
+            UninstallWndProc();
+        }
+
+        private void Update()
+        {
+            if (_wndProcInstalled)
+            {
+                return;
+            }
+
+            if (_wndProcInstallFrames++ >= MaxWndProcInstallFrames)
+            {
+                return;
+            }
+
+            var hwnd = ResolveWindowHandle();
+            if (hwnd != IntPtr.Zero)
+            {
+                TryInstallWndProc(hwnd);
+            }
         }
 
         private void OnBeforeInputUpdate()
         {
-            var hasClientPoint = TryReadClientPosition(out var pos, out var insideClient);
-
-            // NOLEGACY 期望态：聚焦 + 光标确在客户区内。任何一条不满足（含句柄未解析、
-            // 光标在标题栏/边框/窗外）都回到 legacy 允许档，把非客户区交互还给系统。
-            UpdateLegacySuppression(Application.isFocused && hasClientPoint && insideClient);
-
-            if (!Application.isFocused || !hasClientPoint)
+            if (!WindowsHighPollingMouseMitigationRuntime.MitigationEnabled)
             {
                 return;
             }
 
-            InjectMouseState(pos);
+            var hwnd = ResolveWindowHandle();
+            var hasNativeFocus = hwnd != IntPtr.Zero && GetForegroundWindow() == hwnd;
+            WindowsHighPollingMouseMitigationRuntime.HasNativeFocus = hasNativeFocus;
+
+            if (!hasNativeFocus)
+            {
+                // 失焦：保持 NOLEGACY，不改注册；不注入指针（防窗外点击串入）。
+                WindowsHighPollingMouseMitigationRuntime.InsideClient = false;
+                return;
+            }
+
+            var hasClientPoint = TryReadClientPosition(hwnd, out var pos, out var insideClient);
+            WindowsHighPollingMouseMitigationRuntime.InsideClient = insideClient;
+
+            if (hasClientPoint && insideClient)
+            {
+                EnsureNolegacy();
+                InjectMouseState(pos);
+                return;
+            }
+
+            if (hasClientPoint && !insideClient)
+            {
+                RemoveRegistration();
+            }
         }
 
-        private void UpdateLegacySuppression(bool suppress)
+        private void EnsureNolegacy()
         {
-            // 初始态 _nolegacyActive=false：首次需要 NOLEGACY 前不注册任何 Raw Input，
-            // 保持引擎自身注册不被顶掉。
-            if (suppress == _nolegacyActive)
+            if (_nolegacyActive)
             {
+                WindowsHighPollingMouseMitigationRuntime.NolegacyActive = true;
                 return;
             }
 
-            var devices = new[]
+            if (!RegisterMouseDevice(RidevNolegacy))
             {
-                new RAWINPUTDEVICE
-                {
-                    usUsagePage = HidUsagePageGeneric,
-                    usUsage = HidUsageGenericMouse,
-                    dwFlags = suppress ? RidevNolegacy : 0u,
-                    hwndTarget = IntPtr.Zero,
-                },
-            };
-
-            if (!RegisterRawInputDevices(devices, (uint)devices.Length, (uint)Marshal.SizeOf<RAWINPUTDEVICE>()))
-            {
-                if (suppress && !_nolegacyFailureLogged)
+                if (!_nolegacyFailureLogged)
                 {
                     _nolegacyFailureLogged = true;
                     Debug.LogWarning(
                         "[WindowsHighPollingMouseMitigation] RegisterRawInputDevices(RIDEV_NOLEGACY) failed; "
                         + "high polling mice may still stall the main thread.");
                 }
-                else if (!suppress && !_legacyRestoreFailureLogged)
+
+                return;
+            }
+
+            _nolegacyActive = true;
+            WindowsHighPollingMouseMitigationRuntime.NolegacyActive = true;
+        }
+
+        private void RemoveRegistration()
+        {
+            if (!_nolegacyActive)
+            {
+                WindowsHighPollingMouseMitigationRuntime.NolegacyActive = false;
+                return;
+            }
+
+            if (!RegisterMouseDevice(RidevRemove))
+            {
+                if (!_removeFailureLogged)
                 {
-                    _legacyRestoreFailureLogged = true;
+                    _removeFailureLogged = true;
                     Debug.LogWarning(
-                        "[WindowsHighPollingMouseMitigation] RegisterRawInputDevices(legacy restore) failed; "
+                        "[WindowsHighPollingMouseMitigation] RegisterRawInputDevices(RIDEV_REMOVE) failed; "
                         + "window chrome (drag/resize/close) may stay unresponsive.");
                 }
 
                 return;
             }
 
-            _nolegacyActive = suppress;
+            _nolegacyActive = false;
+            WindowsHighPollingMouseMitigationRuntime.NolegacyActive = false;
+        }
+
+        private bool RegisterMouseDevice(uint flags)
+        {
+            var devices = new[]
+            {
+                new RAWINPUTDEVICE
+                {
+                    usUsagePage = HidUsagePageGeneric,
+                    usUsage = HidUsageGenericMouse,
+                    dwFlags = flags,
+                    hwndTarget = IntPtr.Zero,
+                },
+            };
+
+            return RegisterRawInputDevices(
+                devices,
+                (uint)devices.Length,
+                (uint)Marshal.SizeOf<RAWINPUTDEVICE>());
         }
 
         private void InjectMouseState(Vector2 pos)
@@ -165,7 +251,7 @@ namespace NineGrid.Presentation.Platform
             InputSystem.QueueStateEvent(mouse, state);
         }
 
-        private bool TryReadClientPosition(out Vector2 unityPos, out bool insideClient)
+        private bool TryReadClientPosition(IntPtr hwnd, out Vector2 unityPos, out bool insideClient)
         {
             unityPos = default;
             insideClient = false;
@@ -174,47 +260,36 @@ namespace NineGrid.Presentation.Platform
                 return false;
             }
 
-            var hwnd = GetActiveWindow();
-            if (hwnd == IntPtr.Zero)
-            {
-                hwnd = ResolveFallbackWindowHandle();
-            }
-
-            if (hwnd == IntPtr.Zero)
-            {
-                return false;
-            }
-
-            _cachedHwnd = hwnd;
             if (!ScreenToClient(hwnd, ref point))
             {
-                // 句柄可能已失效（窗口重建等），丢弃缓存下帧重解析。
                 _cachedHwnd = IntPtr.Zero;
                 _mainWindowResolveAttempted = false;
+                _wndProcInstalled = false;
                 return false;
             }
 
             if (GetClientRect(hwnd, out var clientRect))
             {
-                insideClient = point.X >= 0
-                    && point.Y >= 0
-                    && point.X < clientRect.Right
-                    && point.Y < clientRect.Bottom;
+                var margin = _wasInsideClient ? -ClientHysteresisPx : ClientHysteresisPx;
+                insideClient = point.X >= margin
+                    && point.Y >= margin
+                    && point.X < clientRect.Right - margin
+                    && point.Y < clientRect.Bottom - margin;
+                _wasInsideClient = insideClient;
             }
 
-            // Win32 client: origin top-left, Y down. Unity: origin bottom-left, Y up.
             unityPos = new Vector2(point.X, Screen.height - point.Y);
             return true;
         }
 
-        private IntPtr ResolveFallbackWindowHandle()
+        private IntPtr ResolveWindowHandle()
         {
-            if (_cachedHwnd != IntPtr.Zero)
+            if (_cachedHwnd != IntPtr.Zero && IsWindow(_cachedHwnd))
             {
                 return _cachedHwnd;
             }
 
-            // Process.MainWindowHandle 会枚举全系统顶层窗口，禁止每帧调用：只解析一次并缓存。
+            _cachedHwnd = IntPtr.Zero;
             if (_mainWindowResolveAttempted)
             {
                 return IntPtr.Zero;
@@ -223,8 +298,68 @@ namespace NineGrid.Presentation.Platform
             _mainWindowResolveAttempted = true;
             using (var process = System.Diagnostics.Process.GetCurrentProcess())
             {
-                return process.MainWindowHandle;
+                var hwnd = process.MainWindowHandle;
+                if (hwnd != IntPtr.Zero && IsWindow(hwnd))
+                {
+                    _cachedHwnd = hwnd;
+                }
             }
+
+            return _cachedHwnd;
+        }
+
+        private void TryInstallWndProc(IntPtr hwnd)
+        {
+            if (_wndProcInstalled || hwnd == IntPtr.Zero)
+            {
+                return;
+            }
+
+            _wndProcDelegate = CustomWndProc;
+            _originalWndProc = GetWindowLongPtr(hwnd, GwlpWndproc);
+            if (_originalWndProc == IntPtr.Zero)
+            {
+                return;
+            }
+
+            var newProc = Marshal.GetFunctionPointerForDelegate(_wndProcDelegate);
+            if (SetWindowLongPtr(hwnd, GwlpWndproc, newProc) == IntPtr.Zero)
+            {
+                return;
+            }
+
+            _wndProcInstalled = true;
+        }
+
+        private void UninstallWndProc()
+        {
+            if (!_wndProcInstalled || _cachedHwnd == IntPtr.Zero || _originalWndProc == IntPtr.Zero)
+            {
+                return;
+            }
+
+            SetWindowLongPtr(_cachedHwnd, GwlpWndproc, _originalWndProc);
+            _wndProcInstalled = false;
+            _originalWndProc = IntPtr.Zero;
+            _wndProcDelegate = null;
+        }
+
+        private IntPtr CustomWndProc(IntPtr hwnd, uint msg, IntPtr wParam, IntPtr lParam)
+        {
+            if (msg == WmActivate)
+            {
+                var active = (wParam.ToInt32() & 0xFFFF) != WaInactive;
+                if (active)
+                {
+                    EnsureNolegacy();
+                }
+            }
+            else if (msg == WmSetfocus)
+            {
+                EnsureNolegacy();
+            }
+
+            return CallWindowProc(_originalWndProc, hwnd, msg, wParam, lParam);
         }
 
         [StructLayout(LayoutKind.Sequential)]
@@ -271,7 +406,24 @@ namespace NineGrid.Presentation.Platform
         private static extern short GetAsyncKeyState(int vKey);
 
         [DllImport("user32.dll")]
-        private static extern IntPtr GetActiveWindow();
+        private static extern IntPtr GetForegroundWindow();
+
+        [DllImport("user32.dll")]
+        private static extern bool IsWindow(IntPtr hWnd);
+
+        [DllImport("user32.dll", EntryPoint = "GetWindowLongPtr")]
+        private static extern IntPtr GetWindowLongPtr(IntPtr hWnd, int nIndex);
+
+        [DllImport("user32.dll", EntryPoint = "SetWindowLongPtr")]
+        private static extern IntPtr SetWindowLongPtr(IntPtr hWnd, int nIndex, IntPtr dwNewLong);
+
+        [DllImport("user32.dll")]
+        private static extern IntPtr CallWindowProc(
+            IntPtr lpPrevWndFunc,
+            IntPtr hWnd,
+            uint msg,
+            IntPtr wParam,
+            IntPtr lParam);
     }
 #endif
 }

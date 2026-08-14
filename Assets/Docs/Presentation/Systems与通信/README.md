@@ -116,7 +116,7 @@ MainScene 加载
 | 特效不播 / 播不停 | VfxCueResult outcome + `VfxLifecycle*` PerfTrace + EndReason 分类 | 05 |
 | 占格错乱 | 逻辑占格看 Core BoardModel；几何镜像看 GeometrySystem；禁 force sync | 03 |
 | 面板打不开 / 按钮点不中 | 失活面板自举（AfterSceneLoad Install）+ PointerHitRegistry 注册 | 08 |
-| Win 打包版掉帧 / 卡死 | `-ng-no-rawinput` 排除法；`HangReports` 目录取证 | 02 |
+| Win 打包版掉帧 / 卡死 | `-ng-no-rawinput` 排除法；exe 旁 `GameLogs/HangReports`（优先）+ `收集诊断包.bat` | 02 |
 | 流程相位 / BGM 切换错 | `GameFlowShellSystem` 相位映射 + `SetGameFlowShellStateCommand` | 03/06 |
 
 ## 关联 ADR 索引（本区块直接落地的）
