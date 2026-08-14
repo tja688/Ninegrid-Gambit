@@ -40,37 +40,15 @@
         },
         {
             "cueId": "battle.attack.hit",
-            "note": "攻击命中（斩击/剑攻击同族池，不再混入挥动声）",
+            "note": "攻击命中（卡牌撞击瞬间默认音）",
             "module": "Battle",
             "enabled": true,
-            "clipKey": "",
+            "clipKey": "audio/SFX/卡牌打击1",
             "volumeDb": -3,
             "startOffsetSeconds": 0,
             "bindingDelaySeconds": 0,
             "minimumIntervalSeconds": 0.05,
-            "variants": [
-                {
-                    "variantId": "slash",
-                    "clipKey": "audio/SFX/斩击",
-                    "weight": 1,
-                    "volumeTrimDb": 0,
-                    "startOffsetSeconds": 0
-                },
-                {
-                    "variantId": "sword-a",
-                    "clipKey": "audio/SFX/07 人类剑攻击",
-                    "weight": 1,
-                    "volumeTrimDb": -1,
-                    "startOffsetSeconds": 0
-                },
-                {
-                    "variantId": "sword-b",
-                    "clipKey": "audio/SFX/07 人类剑攻击_1",
-                    "weight": 1,
-                    "volumeTrimDb": -1,
-                    "startOffsetSeconds": 0
-                }
-            ],
+            "variants": [],
             "selectorCardDefId": "",
             "selectorSkillId": "",
             "selectorRoomId": "",
