@@ -14,7 +14,7 @@
 | [05-VFX系统](./05-VFX系统.md) | `Systems/VfxSystem+两契约` + `Systems/Vfx/` 共 27 文件 | 特效不播/播错位置/播不停/金币与弹道 |
 | [06-Commands与Queries](./06-Commands与Queries.md) | `Commands/` 27 + `Queries/` 10 文件 | 逐条查"这个写入/读取从哪来到哪去" |
 | [07-Controllers](./07-Controllers.md) | `Controllers/` 21 文件 | Hook 委托挂在谁身上、输入桥断在哪 |
-| [08-Ui与Cheat](./08-Ui与Cheat.md) | `Ui/` 8 + `Cheat/` 6 文件 | 面板打不开/按钮点不中/F12 后门/场景标签本地化 |
+| [08-Ui与Cheat](./08-Ui与Cheat.md) | `Ui/` 14 + `Cheat/` 6 文件 | 面板打不开/按钮点不中/战斗日志面板/F12 后门/场景标签本地化 |
 | [09-Editor工具](./09-Editor工具.md) | `Editor/` 14 文件 | 预览/日志导出/打包/资产批处理 |
 | [10-Tests现状](./10-Tests现状.md) | `Tests/` 32 文件（根 7 + `Tests/Flow/` 25） | 现存自动化测试（行为/护栏/卫生/规则回归）与验证门槛 |
 

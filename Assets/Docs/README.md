@@ -15,7 +15,7 @@
 | [04-预发布可疑问题总清单](04-预发布可疑问题总清单.md) | 六区读码发现的可疑问题汇总（31 条，其中 #31 已修）：疑似真 bug / 出包风险 / 废止残留与死代码 / 文档与口径矛盾 / 代码卫生，每条附出处链接 |
 | [Core/](Core/) | `NineGrid.Core` 规则核（93 文件）区域文档 |
 | [Content/](Content/) | `NineGrid.Content` + `Content.Editor` + `DevTest`（149 文件）区域文档 |
-| [Presentation/Flow/](Presentation/Flow/) | 表现层 Flow 子树（211 文件）：导演/时间线/流程壳/房间/存档/教学/诊断 |
+| [Presentation/Flow/](Presentation/Flow/) | 表现层 Flow 子树（216 文件）：导演/时间线/流程壳/房间/存档/教学/诊断/人读战斗日志 |
 | [Presentation/Cards/](Presentation/Cards/) | 表现层 Cards 子树（166 文件）：卡视图/场地/手牌/牌库/卡面/特效 SO/静态 Hook |
 | [Presentation/Systems与通信/](Presentation/Systems与通信/) | Systems/Commands/Queries/Controllers/Setup/Ui/Cheat/Platform/Editor/Tests（约 183 文件） |
 | [Platform桥接/](Platform桥接/README.md) | `NineGrid.SteamBridge`（7）+ `NineGrid.SaveBridge`（1）：Steam 成就/云存档/回调泵 + ES3 落盘桥 |
@@ -46,6 +46,7 @@
 | 卡在格子里飘/抖不停 / 抖屏太晃 / 卡带着偏移收敛歪位 | L1 装饰层单一写者 `BoardCardLifeFx`（[Cards/07](Presentation/Cards/07-卡面特效与装饰.md) §8）+ 抖屏 `ScreenImpact`（[Flow/05](Presentation/Flow/05-表演锚点排期与触发脉冲.md) §5）；三个全局旋钮可直接关 | 0051 |
 | Windows 掉帧 / 高回报率鼠标 / 进程卡死 | Presentation/Platform（mitigation + WindowsHangWatchdog，命令行开关 `-ng-no-rawinput`/`-ng-no-watchdog`） | 0006 |
 | 想从日志定位 | 诊断关联键 chainId/choreoSeqId；日志在 `Assets/Notes/Logs/`，分析用技能 `table-nine-battlelog-analysis` | 0003 |
+| 想当场看伤害对不对 / 某效果到底触没触发 | 局内「战斗日志」按钮 → 人读日志面板（每笔数值 + 来源效果名，按房间分段）；实现见 [Flow/11](Presentation/Flow/11-人读战斗日志（BattleLog）.md) | — |
 
 ## 使用建议
 

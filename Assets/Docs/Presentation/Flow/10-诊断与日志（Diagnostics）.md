@@ -6,6 +6,8 @@
 ## 职责综述
 
 五条互相独立又共享会话身份的旁路日志轨，Play 结束自动落盘（配套技能 `table-nine-battlelog-analysis`）。
+
+> 本篇是**给 AI 深挖的原生流水**：全量、带程序噪音、用内部 defId/uid。给人当场看的提炼版是另一套东西，见 [11-人读战斗日志（BattleLog）](11-人读战斗日志（BattleLog）.md)——两者代码与数据均不相干，只是同读 `EventLog`。
 **落盘根目录**：Editor → `Assets/Notes/Logs/`；**Development Player → exe 旁 `GameLogs/Logs/`**（2026-08-13 起，此前为 persistentDataPath；试玩者可直接找到打包发给开发者）。
 
 | 轨 | 记录器 | 内容 | 落盘子目录 |

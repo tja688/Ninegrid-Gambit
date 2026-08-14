@@ -133,9 +133,14 @@ namespace NineGrid.Cards
         /// <summary>
         /// 按 Core 抽牌堆 uid 序重排已入组卡。slot 0 = 下一张。
         /// 缺席 uid 跳过并 Warning；组内多余卡（Core 已移出、通常为本批待飞出的发牌）
-        /// 保持相对序前置到队首——它们才是接下来真正要飞出的「下一张」。序未变返回 false。
+        /// 前置到队首——它们才是接下来真正要飞出的「下一张」。序未变返回 false。
+        /// <paramref name="pendingDealUids"/> 为本批 Core 发牌序：批内若发生洗牌，
+        /// 多余卡的旧视觉相对序已不等于 Core 抽出序，必须按发牌序排队首，
+        /// 否则 slot 0 显示的牌与下一张真正飞出的牌不是同一张。
         /// </summary>
-        public bool TryReorderToUids(IReadOnlyList<int> orderedUids)
+        public bool TryReorderToUids(
+            IReadOnlyList<int> orderedUids,
+            IReadOnlyList<int> pendingDealUids = null)
         {
             if (orderedUids == null || _slots.Count == 0)
             {
@@ -186,10 +191,19 @@ namespace NineGrid.Cards
                     continue;
                 }
 
-                Debug.LogWarning(
-                    $"[CardDeckSlotContainer] TryReorderToUids 多余视觉卡 uid={card.Uid}（Core 已移出），前置队首待飞出。");
+                if (!IsPendingDealUid(pendingDealUids, card.Uid))
+                {
+                    Debug.LogWarning(
+                        $"[CardDeckSlotContainer] TryReorderToUids 多余视觉卡 uid={card.Uid}（Core 已移出且非本批发牌），前置队首待飞出。");
+                }
+
                 extras.Add(card);
                 placed.Add(card.Uid);
+            }
+
+            if (extras.Count > 1)
+            {
+                SortExtrasByPendingDealOrder(extras, pendingDealUids);
             }
 
             if (extras.Count > 0)
@@ -225,6 +239,108 @@ namespace NineGrid.Cards
         public IReadOnlyList<ManagedCard> SnapshotCards()
         {
             return new List<ManagedCard>(_slots);
+        }
+
+        /// <summary>
+        /// 重排后 slot 0 的期望 uid：本批还没飞出的第一张发牌；无发牌序时取 0（不可无歧义判定）。
+        /// </summary>
+        public int ResolvePendingTopUid(IReadOnlyList<int> pendingDealUids)
+        {
+            if (pendingDealUids == null)
+            {
+                return 0;
+            }
+
+            for (var i = 0; i < pendingDealUids.Count; i++)
+            {
+                var uid = pendingDealUids[i];
+                if (uid <= 0)
+                {
+                    continue;
+                }
+
+                for (var j = 0; j < _slots.Count; j++)
+                {
+                    var card = _slots[j];
+                    if (card != null && card.Uid == uid)
+                    {
+                        return uid;
+                    }
+                }
+            }
+
+            return 0;
+        }
+
+        private static bool IsPendingDealUid(IReadOnlyList<int> pendingDealUids, int uid)
+        {
+            if (pendingDealUids == null || uid <= 0)
+            {
+                return false;
+            }
+
+            for (var i = 0; i < pendingDealUids.Count; i++)
+            {
+                if (pendingDealUids[i] == uid)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// 待飞出卡按本批 Core 发牌序排前，其余（去向不明的多余卡）保持视觉相对序在后。
+        /// </summary>
+        private static void SortExtrasByPendingDealOrder(
+            List<ManagedCard> extras,
+            IReadOnlyList<int> pendingDealUids)
+        {
+            if (pendingDealUids == null || pendingDealUids.Count == 0)
+            {
+                return;
+            }
+
+            var rankByUid = new Dictionary<int, int>(pendingDealUids.Count);
+            for (var i = 0; i < pendingDealUids.Count; i++)
+            {
+                var uid = pendingDealUids[i];
+                if (uid > 0 && !rankByUid.ContainsKey(uid))
+                {
+                    rankByUid.Add(uid, i);
+                }
+            }
+
+            if (rankByUid.Count == 0)
+            {
+                return;
+            }
+
+            var ranked = new List<ManagedCard>(extras.Count);
+            var unranked = new List<ManagedCard>(extras.Count);
+            for (var i = 0; i < extras.Count; i++)
+            {
+                var card = extras[i];
+                if (card != null && rankByUid.ContainsKey(card.Uid))
+                {
+                    ranked.Add(card);
+                }
+                else
+                {
+                    unranked.Add(card);
+                }
+            }
+
+            if (ranked.Count <= 1)
+            {
+                return;
+            }
+
+            ranked.Sort((left, right) => rankByUid[left.Uid].CompareTo(rankByUid[right.Uid]));
+            extras.Clear();
+            extras.AddRange(ranked);
+            extras.AddRange(unranked);
         }
 
         public Vector3 GetLayoutPosition(int slotIndex)
@@ -358,7 +474,10 @@ namespace NineGrid.Cards
 
                 var target = GetLayoutPosition(i);
                 var current = card.Transform.position;
-                if (Vector3.SqrMagnitude(current - target) < 0.0001f)
+                // 已在目标位但仍有在飞的旧缓动时不能跳过：那条缓动的落点是改序前的旧槽位，
+                // 放它跑完会把牌拖离本槽（视觉最左 ≠ slot 0）。收进 moves 由 MoveToWorld 掐死重瞄。
+                if (Vector3.SqrMagnitude(current - target) < 0.0001f
+                    && !CardDeckTween.IsMotionActive(card.Transform))
                 {
                     continue;
                 }

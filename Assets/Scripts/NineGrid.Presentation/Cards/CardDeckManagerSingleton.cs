@@ -433,8 +433,12 @@ namespace NineGrid.Cards
         /// <summary>
         /// 将 InGame 视觉槽序对齐 Core <c>DrawPileUids</c>（slot 0 = 下一张）。
         /// Busy / 回库 in-flight / 非 InGame 时拒绝。瞬时改序 + sorting，无洗牌动画。
+        /// <paramref name="pendingDealUids"/> 传本批 Core 发牌序：Core 已抽出但还没飞出的牌
+        /// 按该序排队首，否则批内洗牌后「slot 0 显示的牌」与「下一张飞出的牌」会错位。
         /// </summary>
-        public bool SyncVisualOrderFromDrawPile(IReadOnlyList<int> orderedUids)
+        public bool SyncVisualOrderFromDrawPile(
+            IReadOnlyList<int> orderedUids,
+            IReadOnlyList<int> pendingDealUids = null)
         {
             if (CurrentMode != CardDeckMode.InGame || _slotContainer == null)
             {
@@ -453,21 +457,24 @@ namespace NineGrid.Cards
                 return false;
             }
 
-            if (_slotContainer.TryReorderToUids(orderedUids))
+            if (_slotContainer.TryReorderToUids(orderedUids, pendingDealUids))
             {
                 SnapDeckCardsToLayoutPositions();
                 _slotContainer.ApplySortingOrders();
             }
 
-            AssertTopMatchesDrawPile(orderedUids, "SyncVisualOrderFromDrawPile");
+            AssertTopMatchesDrawPile(orderedUids, "SyncVisualOrderFromDrawPile", pendingDealUids);
             return true;
         }
 
         /// <summary>
-        /// Dev：视觉 slot0 须等于 Core 抽牌堆顶。双方都非空且张数一致时失配打 Error
-        /// （开局/补牌 Present 中途 Core 已抽、视觉未抽完时张数不等，跳过以免误报）。
+        /// Dev：视觉 slot0 须等于「下一张要发的牌」。给了本批发牌序时以其中还在组内的第一张为准
+        /// （Drain 中途张数必不等，正是失同步高发窗口）；否则退回双方等长时比 Core 堆顶。
         /// </summary>
-        public void AssertTopMatchesDrawPile(IReadOnlyList<int> orderedUids, string site)
+        public void AssertTopMatchesDrawPile(
+            IReadOnlyList<int> orderedUids,
+            string site,
+            IReadOnlyList<int> pendingDealUids = null)
         {
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
             if (_slotContainer == null || orderedUids == null)
@@ -480,10 +487,16 @@ namespace NineGrid.Cards
                 return;
             }
 
-            // Present 滞后：Core 已移除、视觉尚未抽出 → 张数不等，跳过。
-            if (_slotContainer.Count != orderedUids.Count)
+            var expectedTop = _slotContainer.ResolvePendingTopUid(pendingDealUids);
+            if (expectedTop <= 0)
             {
-                return;
+                // Present 滞后：Core 已移除、视觉尚未抽出 → 张数不等，跳过。
+                if (_slotContainer.Count != orderedUids.Count)
+                {
+                    return;
+                }
+
+                expectedTop = orderedUids[0];
             }
 
             if (!_slotContainer.TryGetCardAt(0, out var top) || top == null)
@@ -491,16 +504,16 @@ namespace NineGrid.Cards
                 return;
             }
 
-            var coreTop = orderedUids[0];
-            if (top.Uid == coreTop)
+            if (top.Uid == expectedTop)
             {
                 return;
             }
 
             Debug.LogError(
-                $"[CardDeckManager] 顶牌失同步 site={site} visualSlot0={top.Uid} coreTop={coreTop}\n"
+                $"[CardDeckManager] 顶牌失同步 site={site} visualSlot0={top.Uid} expectTop={expectedTop}\n"
                 + $"visual=[{FormatDeckUidList(_slotContainer)}]\n"
-                + $"core=[{FormatUidList(orderedUids)}]");
+                + $"core=[{FormatUidList(orderedUids)}]\n"
+                + $"pendingDeals=[{FormatUidList(pendingDealUids)}]");
 #endif
         }
 
@@ -1761,6 +1774,9 @@ namespace NineGrid.Cards
                     continue;
                 }
 
+                // 改序 snap 前必须掐死在飞的卡组缓动（发牌 ripple 是 Forget 起飞、入组 ripple 亦可能未落）：
+                // 那些缓动的落点是改序前的旧槽位，跑完会把牌拖离新槽，视觉最左就不再是 slot 0。
+                CardDeckTween.KillMotion(card.Transform, "Deck.SyncOrderSnap", card.Uid);
                 card.Transform.position = _slotContainer.GetLayoutPosition(i);
             }
         }

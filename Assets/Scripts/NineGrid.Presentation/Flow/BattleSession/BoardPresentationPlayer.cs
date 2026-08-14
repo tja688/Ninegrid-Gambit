@@ -27,6 +27,9 @@ namespace NineGrid.Flow
         private Transform _shuffleOriginScratch;
         private readonly ShuffleIntoDeckPresentSink _shuffleIntoSink = new ShuffleIntoDeckPresentSink();
         private readonly ShuffleIntoDeckScheduler _shuffleIntoScheduler = new ShuffleIntoDeckScheduler();
+
+        /// <summary>本批 Core 发牌序（待飞出的牌）；卡组序对账据此把待飞出卡按真实抽出序排队首。</summary>
+        private readonly List<int> _pendingDealUids = new();
         private readonly Dictionary<int, HashSet<int>> _pendingFusionRemoves = new();
         private readonly HashSet<int> _completedFusionActionIds = new();
 
@@ -179,6 +182,7 @@ namespace NineGrid.Flow
                     ranDrainBody = true;
                     try
                     {
+                        CollectPendingDealOrder(result);
                         var fusionState = BuildFusionDrainState(result, _session.NodeEventLogStart);
                         PurgeFusionResultsFromShuffleQueue(fusionState);
                         await FlushPendingShuffleIntoPresentationAsync(ct);
@@ -273,17 +277,67 @@ namespace NineGrid.Flow
                 // 视觉卡组序回归 DrawPileUids，slot 0 = 下一张要发。
                 try
                 {
-                    await SyncDeckVisualOrderFromCoreAsync(Deck, CancellationToken.None);
+                    await SyncDeckVisualOrderFromCoreAsync(
+                        Deck,
+                        CancellationToken.None,
+                        pendingDealUids: _pendingDealUids);
                 }
                 catch (Exception ex)
                 {
                     Debug.LogWarning("[InBattleManager] Drain 尾部卡组序对账失败: " + ex.Message);
                 }
+
+                _pendingDealUids.Clear();
             }
 
             if (pendingCancel != null)
             {
                 throw pendingCancel;
+            }
+        }
+
+        /// <summary>
+        /// 收本批「Core 已抽出、表现还没飞出」的发牌序（Step 流为权威，回退扁平 Deals）。
+        /// Core 批内洗牌后抽出序与旧视觉序无关，卡组序对账必须拿这份序当队首依据。
+        /// </summary>
+        private void CollectPendingDealOrder(PostKillBoardPresentationResult result)
+        {
+            _pendingDealUids.Clear();
+            if (result.Steps != null && result.Steps.Length > 0)
+            {
+                for (var i = 0; i < result.Steps.Length; i++)
+                {
+                    var step = result.Steps[i];
+                    if (step.Kind != BoardPresentationStepKind.Deal || step.Deals == null)
+                    {
+                        continue;
+                    }
+
+                    for (var d = 0; d < step.Deals.Length; d++)
+                    {
+                        AddPendingDealUid(step.Deals[d].Uid);
+                    }
+                }
+
+                return;
+            }
+
+            if (result.Deals == null)
+            {
+                return;
+            }
+
+            for (var i = 0; i < result.Deals.Length; i++)
+            {
+                AddPendingDealUid(result.Deals[i].Uid);
+            }
+        }
+
+        private void AddPendingDealUid(int uid)
+        {
+            if (uid > 0 && !_pendingDealUids.Contains(uid))
+            {
+                _pendingDealUids.Add(uid);
             }
         }
 
@@ -449,6 +503,15 @@ namespace NineGrid.Flow
             var deckManager = Deck;
             var fieldManager = Field;
             var cardManager = Cards;
+
+            // 起飞前最后一次卡组序对账：Core 批内可能既洗了牌又没产生洗入表演条目
+            // （融合结果 / 快递交换 / 上一批漏账），此处不对账就会「顶牌不是飞出的那张」。
+            // 序已对时 TryReorderToUids 返回 false，不 snap、无开销。
+            await SyncDeckVisualOrderFromCoreAsync(
+                deckManager,
+                ct,
+                timeoutSeconds: 0.5f,
+                pendingDealUids: _pendingDealUids);
             var dealInterval = deckManager != null && deckManager.LayoutSettings != null
                 ? deckManager.LayoutSettings.dealInterval
                 : 0.05f;
@@ -966,7 +1029,7 @@ namespace NineGrid.Flow
                     }
                 }
 
-                await SyncDeckVisualOrderFromCoreAsync(deckManager, ct);
+                await SyncDeckVisualOrderFromCoreAsync(deckManager, ct, pendingDealUids: _pendingDealUids);
             }
             finally
             {
@@ -976,13 +1039,14 @@ namespace NineGrid.Flow
 
         /// <summary>
         /// 视觉卡组槽序对齐 Core DrawPileUids（slot 0 = 下一张要发）。
-        /// 调用点：洗入 Present 结算后、盘面批收束、开局 Present 收束。
+        /// 调用点：洗入 Present 结算后、发牌起飞前、盘面批收束、开局 Present 收束。
         /// busy / 回库在途时限时等待（默认 2s），超时放弃本次（由后续调用点重试），不挂死。
         /// </summary>
         internal static async UniTask SyncDeckVisualOrderFromCoreAsync(
             CardDeckManagerSingleton deckManager,
             CancellationToken ct,
-            float timeoutSeconds = 2f)
+            float timeoutSeconds = 2f,
+            IReadOnlyList<int> pendingDealUids = null)
         {
             if (deckManager == null || deckManager.CurrentMode != CardDeckMode.InGame)
             {
@@ -1004,7 +1068,7 @@ namespace NineGrid.Flow
                 return;
             }
 
-            deckManager.SyncVisualOrderFromDrawPile(deck.DrawPileUids);
+            deckManager.SyncVisualOrderFromDrawPile(deck.DrawPileUids, pendingDealUids);
         }
 
         private async UniTask PresentBurstScatterShuffleGroupAsync(

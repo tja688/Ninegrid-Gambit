@@ -1,11 +1,11 @@
 # Ui 面板与 Cheat 作弊工具
 
-> 覆盖范围：`Ui/` 13 个文件 + `Cheat/` 6 个文件，共 19 个。
+> 覆盖范围：`Ui/` 14 个文件 + `Cheat/` 6 个文件，共 20 个。
 > `Ui/` 是世界空间（SpriteRenderer + Collider）面板的场景接线层；`Cheat/` 是 F12 作弊面板（仅 `UNITY_EDITOR || DEVELOPMENT_BUILD`，正式包不含）。
 
 ## Ui/ 职责综述
 
-五块面板（局内功能菜单、选人界面、完结结算、存档读档、主菜单继续游戏加载弹窗）共享同一套范式：
+五块**正式面板**（局内功能菜单、选人界面、完结结算、存档读档、主菜单继续游戏加载弹窗）共享同一套范式：
 
 - 场景预置 GameObject（默认失活）+ 静态 `sInstance` + `RequestOpen/CloseIfOpen`；
 - 命中走 `PointerHitRegistry` / `PointerHitRouter`（世界 UI，非 uGUI 射线）；
@@ -13,6 +13,8 @@
 - 危险操作（覆盖存档 / 退出游戏 / 回到主菜单）经 `UiConfirmPrompt` 提示框二次确认（模态阻塞 + 同意/返回）；
 - 声音一律经 `InteractionAudioCues.Pulse`（稳定 cue + contentId）；
 - 玩家可见字面量一律 `L10n.Tr(key, 中文默认值)`（ADR-0046：zh 走默认值、en 查 ui 表缺键回中文）；场景静态 TMP 标签由 `SceneTextLocalizer` 统一覆盖。
+
+第六块 `BattleLogPanel`（战斗日志）是**例外的一档**——它不是正式面板而是**场地层中间态**：不取任何底幕、不模态、排序层沉到 `UI/-12`（低于半黑屏 `UI/-1` 与功能菜单 `UI/0`），任何正式 UI 打开都盖住它，覆层激活时它的命中面自动让位。它既不阻塞别的 UI，别的 UI 也不必先关它。
 
 ## Ui/ 关键类型表
 
@@ -23,6 +25,7 @@
 | `CharacterSelectPanel` | `Ui/CharacterSelectPanel.cs` | 选人界面（`UI面板/选人界面BG`，**纯黑屏底幕**）：主菜单「开始游戏」→ `RequestOpen()`（缺预置返回 false，调用方回退直接开局）；角色1=战士——`立绘/__Art` 挂 `ResourcesSpriteLoop` 会动 idle（帧高 5.6 世界单位、按包围盒回中，Play 实测校准）+「角色专属道具卡」显示初始遗物图标，**点击立绘即选定并出发**（`BeginFormalRun`）；角色2/3=未解锁席（Layla/Icey 序列帧黑剪影，点击拒绝音 + 描述文字闪橙提示）；难度三档可点选（普通默认，全部路由默认数据，仅记录进 `RunSetupSelection` 供结算展示——后续实装难度路由再扩展）；`回到主菜单 (1)` 直接返回**不提示**，小字说明**悬停才出现**；Esc 关闭；Shell 相位离开 MainMenu 自动收起 |
 | `RunSummaryPanel` | `Ui/RunSummaryPanel.cs` | 完结结算（`UI面板/完结结算BG`，**纯黑屏底幕**）：`TryShowAndWaitAsync(victory, ct)` 展示——胜负大字（胜利金字/失败灰红字，文案不同）、会动战士立绘、本局所选难度图标（读 `RunSetupSelection`）、本局遗物墙（12 占位槽按视觉序填充）、右侧文字统计（所用时长/击败怪物数/损失血量/使用道具卡数，数据源 `RunRecapTracker`）；`回到主菜单`/`退出游戏` 先经 `提示框` 确认，`再来一局` 直接收面板放行回主菜单收口后自动重开选人界面；**阻塞到玩家选择去向**（UniTaskCompletionSource + 外部取消自动收起）；只读展示不发 Core 指令（终端相位纪律）；缺预置返回 false 回退旧 Notice |
 | `MainMenuLoadPanel` | `Ui/MainMenuLoadPanel.cs` | 主菜单「继续游戏」加载弹窗（`MainPanel/ContinueGame/加载的UI槽位`，默认失活）：列出已有存档（自动档优先 + 手动槽 ≤4，复用场景预置 4 行模板、多余行隐藏），点击条目即 `RunSaveService.RequestLoadSlot`；`关闭面板 (1)`/Esc 关闭；无任何存档 `RequestOpen` 返回 false（`GameFlowController` 播拒绝音 + 短暂 Notice）；弹窗底板吞点击防误触其下主菜单按钮 |
+| `BattleLogPanel` | `Ui/BattleLogPanel.cs` | 战斗日志面板（`UI面板/战斗日志BG`，默认失活，2026-08-13）：`AfterSceneLoad` Install 强制 EnsureBound（同功能菜单，失活面板不 Awake）；根级「战斗日志按钮」开、面板内 `关闭面板 (1)`/Esc 关；Scroll View 的 `Viewport/Content` 下运行时建单个 `__BattleLogText`（`TextMeshProUGUI`，字体取场景已有 SmileySans，32pt）整段渲染 `BattleLogStore` 富文本（房间段标题 + 效果组头 + `<indent=1.6em>` 明细，上限 400 行/20000 字），打开即滚到底（默认看当前房间，上翻是全局历史）；命中占覆层 sort 6（按钮）/7（面板吞点面，防点穿棋盘）/8（关闭钮），`BattleUiDimmerOverlay.IsActive` 时后两者每帧自动禁用；按钮可点性由挂在按钮上的常驻 `ToggleButtonGate` 判定（主菜单相位 / 覆层激活 / 面板已开一律禁 collider）；`PlayerAudioSettingsPanel.CanOpenFromEscape` 已加入 `BattleLogPanel.IsOpen` 判断，Esc 不会一下既关日志又开功能菜单。日志数据侧见 [Flow/11-人读战斗日志](../Flow/11-人读战斗日志（BattleLog）.md) |
 | `UiConfirmPrompt` | `Ui/UiConfirmPrompt.cs` | 通用确认提示框：绑定场景预置「提示框」节点（多条提示文案 TMP 子节点 + 确认 `F_UI_MenuIcons_A4`/取消 `F_UI_MenuIcons_A3` 图标钮）；`Show(文案名, onConfirm, onCancel)` 只显示对应文案；打开时全屏模态阻塞（BlockerHitSort=20000 压过作弊面板/手牌/场地）；Esc=取消（`EscapeHandledThisFrame` 供宿主面板让位判定）；随宿主面板整体关闭时 OnDisable 自动出栈清回调；两处实例——`局内功能菜单BG/功能模块/提示框`（覆盖存档/退出/回主菜单三文案）与 `完结结算BG/提示框`（退出/回主菜单两文案） |
 | `PureBlackScreenOverlay` | `Ui/PureBlackScreenOverlay.cs` | 纯黑屏底幕静态门面：绑定 `UI面板/纯黑屏BG`（引用计数 Acquire/Release + Swallow 吞点击）；绑定时若发现该节点误挂 `BattleUiDimmerOverlay` 组件会**先摘除**（该组件是单例，随激活 Awake 会劫持半黑屏静态实例） |
 | `RunSetupSelection` | `Ui/RunSetupSelection.cs` | 开局选择状态静态存根（选人界面写、结算面板读）：难度 id/显示名/图标精灵；当前难度全部路由默认（普通）数据，仅作展示记录 |

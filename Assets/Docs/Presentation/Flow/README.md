@@ -1,6 +1,6 @@
 # Presentation/Flow 代码文档库 —— 总览
 
-> 对应代码：`Assets/Scripts/NineGrid.Presentation/Flow/`（2026-08 快照 211 个 .cs；2026-08-13 新增 `Presentation/ScreenImpact.cs`、`Presentation/BoardImpactSignatures.cs` 后 213）。
+> 对应代码：`Assets/Scripts/NineGrid.Presentation/Flow/`（2026-08 快照 211 个 .cs；2026-08-13 新增 `Presentation/ScreenImpact.cs`、`Presentation/BoardImpactSignatures.cs` 后 213，同日新增 `BattleLog/` 五件后 218 —— 下方清单已含 BattleLog，合计 216）。
 > 本文档库是预发布一次性权威镜像（用户明确豁免），以当下代码实际实现为准；日常维护仍以 [`docs/code-map/`](../../../../docs/code-map/) 与 [`docs/adr/`](../../../../docs/adr/) 为准。
 > 兄弟文档库：[`Assets/Docs/Presentation/Cards/`](../Cards/)、[`Assets/Docs/Presentation/Systems与通信/`](../Systems与通信/)。
 
@@ -28,7 +28,8 @@ Flow/
 ├── Transitions/              局内过场（方向袋 / 过场服务 / 参数 SO）
 ├── BattleSession/            战斗会话（Executor 六件 + 投影协调 + 盘面播放器 + 作弊）
 ├── Presentation/             导演时间线 / 意图剧本 / 锚点排期 / 脉冲与 Cue / 抖屏（82 个文件，全区最大）
-├── Diagnostics/              四轨诊断日志（Battle / Flow / Perf / Registry + 手动快照）
+├── Diagnostics/              五轨诊断日志（Battle / Flow / Perf / Registry / Console + 手动快照）
+├── BattleLog/                人读战斗日志（EventLog 提炼 → 面板可看，与 Diagnostics 无关）
 ├── RoomIcons/                选房图标（Presenter / 落格 / 驻留 / 软占）
 ├── ShopBoard/                商店房场地板
 ├── TavernBoard/              卡店场地板（含二级候选面）
@@ -54,7 +55,8 @@ Flow/
 | [08-房间流程与场地板](08-房间流程与场地板.md) | RoomIcons/、四套房内板、InRoomBoard/、BoardBriefTip/、Bounce 选择、两 CoreHook | 33 |
 | [09-指针命中、HUD与检视](09-指针命中、HUD与检视.md) | 指针仲裁体系、玩家 HUD、遗物栏、卡牌详述、BattleInfoPreview/ | 33 |
 | [10-诊断与日志（Diagnostics）](10-诊断与日志（Diagnostics）.md) | Diagnostics/ 四轨 Trace 全家 | 23 |
-| 合计 | | **211** |
+| [11-人读战斗日志（BattleLog）](11-人读战斗日志（BattleLog）.md) | BattleLog/ 采集与聚合、命名与配色、面板层级 | 5 |
+| 合计 | | **216** |
 
 ## 主流程状态机全景
 
@@ -315,6 +317,16 @@ flowchart TD
 | `Diagnostics/BoardIntentGateDiagnostics.cs` | 门禁拒绝快照采集 | 10 |
 | `Diagnostics/CombatHitTraceContext.cs` | 交战命中 reason 跨层单向传递 | 10 |
 
+### BattleLog/（5）
+
+| 文件 | 一句话职责 | 篇 |
+|------|-----------|----|
+| `BattleLog/BattleLogRecorder.cs` | 采集端：EventLog 游标增量扫描 → 同因去重 + 按 SourceDefId 语义聚合 | 11 |
+| `BattleLog/BattleLogStore.cs` | 成品行唯一存放处（按房间分段 + Changed 通知面板） | 11 |
+| `BattleLog/BattleLogEntry.cs` | 行与房间段模型（序号 / 类别 / 缩进深度 / 富文本） | 11 |
+| `BattleLog/BattleLogNaming.cs` | 唯一取名口：表现层 displayName → Catalog 定义名 → defId | 11 |
+| `BattleLog/BattleLogPalette.cs` | 富文本配色真源（色相跟飘字，明度按浅底压暗） | 11 |
+
 ### RoomIcons/（5）
 
 | 文件 | 一句话职责 | 篇 |
@@ -389,4 +401,4 @@ flowchart TD
 | `BattleInfoPreview/BattleInfoSlotArtFit.cs` | 槽图标摆放数学（复用卡面 mainVisual 参数） | 09 |
 | `BattleInfoPreview/BattleInfoPreviewCopySO.cs` | 房间信息文案模板 SO（四级通配回退） | 09 |
 
-> 分节小计：根 43 + GameFlow 6 + Tutorial 5 + Platform 3 + Transitions 3 + BattleSession 14 + Presentation 80 + Diagnostics 23 + RoomIcons 5 + ShopBoard 3 + TavernBoard 3 + RewardBoard 3 + AttributeBoard 4 + InRoomBoard 5 + BoardBriefTip 5 + BattleInfoPreview 6 = **211**。
+> 分节小计：根 43 + GameFlow 6 + Tutorial 5 + Platform 3 + Transitions 3 + BattleSession 14 + Presentation 80 + Diagnostics 23 + BattleLog 5 + RoomIcons 5 + ShopBoard 3 + TavernBoard 3 + RewardBoard 3 + AttributeBoard 4 + InRoomBoard 5 + BoardBriefTip 5 + BattleInfoPreview 6 = **216**。

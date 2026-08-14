@@ -200,7 +200,8 @@ namespace NineGrid.Presentation.Ui
 
         private static bool CanOpenFromEscape()
         {
-            if (IsOpen || BattleUiDimmerOverlay.IsActive)
+            // 战斗日志是场地层中间态：它开着时 Esc 先让它收回，不越级开功能菜单。
+            if (IsOpen || BattleUiDimmerOverlay.IsActive || BattleLogPanel.IsOpen)
             {
                 return false;
             }
