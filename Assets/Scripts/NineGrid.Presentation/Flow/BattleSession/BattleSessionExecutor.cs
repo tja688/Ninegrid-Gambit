@@ -852,12 +852,40 @@ namespace NineGrid.Flow
             // ADR-0026：清关进选房前卸掉抽牌堆残留视图（场上清残留已由 Core/Present 处理；
             // 卡组视图若等到下一关 StartBattle 才 Reset，选房阶段会看见上局牌）。
             ClearResidualBattleDeckViews();
+            PulseRoomClearAudio();
             RunUnusedHelpCardSettlementPresentationAsync(
                 _nodeEventLogStart,
                 EnsurePresentationToken()).Forget();
             OnNodeSettlementReady?.Invoke();
             var arch = NineGridArchitecture.Interface ?? NineGridArchitecture.Current;
             arch?.SendEvent(new BattleSessionSettlementReadyEvent());
+        }
+
+        /// <summary>
+        /// 清关声音：普通战斗房播小胜利，层主房播中等胜利。
+        /// 最终层（第 3 层）层主清关会接整局胜利面板，中等胜利让位给整局胜利提示，避免双响。
+        /// </summary>
+        private void PulseRoomClearAudio()
+        {
+            var arch = NineGridArchitecture.Interface ?? NineGridArchitecture.Current;
+            var run = arch?.GetModel<RunModel>();
+            if (run == null)
+            {
+                return;
+            }
+
+            var isBossRoom = run.Room.Value == RoomKind.Boss;
+            var isFinalFloorBoss = isBossRoom
+                && run.Floor.Value >= RunModel.FinalFloor
+                && run.NodeIndex.Value >= RunModel.NodesPerFloor - 1;
+            if (isFinalFloorBoss)
+            {
+                return;
+            }
+
+            FlowRoomEconomyAudioCues.Pulse(
+                isBossRoom ? FlowRoomEconomyAudioCues.FloorClear : FlowRoomEconomyAudioCues.RoomClear,
+                "BattleSessionExecutor.RaiseSettlementReady");
         }
 
         /// <summary>

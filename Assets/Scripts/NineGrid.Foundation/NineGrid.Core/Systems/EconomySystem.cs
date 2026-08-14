@@ -91,7 +91,8 @@ namespace NineGrid.Core.Systems
         public int SettleUnusedHelpCards()
         {
             var battle = this.GetModel<BattleContextModel>();
-            return RemoveLingeringHelpCards(battle.AreAllOpeningMonstersDefeated());
+            return RemoveLingeringHelpCards(
+                battle.AreAllOpeningMonstersDefeated(this.GetModel<CardRegistry>()));
         }
 
         public int ClearResidualTraps()

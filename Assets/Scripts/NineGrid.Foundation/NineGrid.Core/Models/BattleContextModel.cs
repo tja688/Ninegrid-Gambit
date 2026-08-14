@@ -183,13 +183,53 @@ namespace NineGrid.Core
         }
 
         /// <summary>
-        /// 本节点开局编入的真怪是否已全部击破（N=0 视为已清完）。
+        /// 本节点开局编入的真怪是否已全部清完（N=0 视为已清完）。
         /// 清关时据此决定是否自动兑金场上残留道具卡（ADR-0026）。
+        /// 状态判据：开局真怪只要仍在册且存活（HP&gt;0 且不在 Graveyard/Removed）即视为未清完。
+        /// 覆盖被机关效果（如滚石）移除而非击杀的情形——怪已离场但击杀计数缺失，
+        /// 会导致「场上无怪、残留道具却不兑金」的偶发失效。
+        /// <paramref name="registry"/> 为空时回退旧击杀计数口径。
         /// </summary>
-        public bool AreAllOpeningMonstersDefeated()
+        public bool AreAllOpeningMonstersDefeated(CardRegistry registry)
         {
-            return OpeningTrueMonsterCount <= 0
-                || DefeatedTrueMonsterCount >= OpeningTrueMonsterCount;
+            if (OpeningTrueMonsterCount <= 0)
+            {
+                return true;
+            }
+
+            if (registry == null)
+            {
+                return DefeatedTrueMonsterCount >= OpeningTrueMonsterCount;
+            }
+
+            foreach (var uid in mOpeningTrueMonsterUids)
+            {
+                CardInstance card;
+                if (!registry.TryGet(uid, out card))
+                {
+                    // 已不在注册表（被移除/销毁）→ 视为离场。
+                    continue;
+                }
+
+                if (!IsCardGoneFromPlay(card))
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        private static bool IsCardGoneFromPlay(CardInstance card)
+        {
+            if (card == null
+                || card.Zone.Value == ZoneId.Graveyard
+                || card.Zone.Value == ZoneId.Removed)
+            {
+                return true;
+            }
+
+            return card.Stats.GetBase(StatId.Hp) <= 0f;
         }
     }
 }

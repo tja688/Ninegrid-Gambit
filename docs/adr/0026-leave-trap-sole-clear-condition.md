@@ -14,7 +14,7 @@ status: accepted
 - **门**：只承受**交战**中玩家出手造成的伤害；其它伤害与直接移除/放逐无效。不阻挡洗回卡组、翻面；被翻面后玩家可交互翻回。总原则：不得制造死局。
 - **魔免**：不受任何外来「效果」影响（机关卡 / 怪物技能 / 道具效果等）。可被选作目标（不改 targeting 合法性），效果管线在解析目标后剔除本卡，使效果直接失效。不挡玩家交战伤害；不挡持有者自身效果（门 / 离开 / 魔免挂载）。
 - **离开**：持有者被击破时触发清关。
-- **清关收场**：那一拍清掉场上残留怪 / 其它机关且不兑金；场上未拾取道具卡：若本节点开局编入的真怪已全部击破（`DefeatedTrueMonsterCount >= OpeningTrueMonsterCount`，道具卡不计）则按 `RecycleItemSlotGold` 自动兑金移除，否则仅移除不兑金；发牌侧未使用道具仍只移除不兑金；道具卡格内容按 [ADR-0025](0025-item-slots-run-persistent-hold.md) 保留。击破前玩家可一直留在场地交互（拣选、回收、击杀赚钱）——不是另开拣选相位。击破当拍**禁止**再 `FillEmptySlots` / 敌方行动；补牌会把牌堆卡 Deal 进刚腾出的格，表现层发牌飞行可卡死主线。
+- **清关收场**：那一拍清掉场上残留怪 / 其它机关且不兑金；场上未拾取道具卡：若本节点开局编入的真怪已全部**清完**（判据：不存在仍在册且存活的开局真怪——HP>0 且不在 Graveyard/Removed；被机关效果如滚石移除而非击杀的也算离场，见 2026-08 修正）则按 `RecycleItemSlotGold` 自动兑金移除，否则仅移除不兑金；发牌侧未使用道具仍只移除不兑金；道具卡格内容按 [ADR-0025](0025-item-slots-run-persistent-hold.md) 保留。击破前玩家可一直留在场地交互（拣选、回收、击杀赚钱）——不是另开拣选相位。击破当拍**禁止**再 `FillEmptySlots` / 敌方行动；补牌会把牌堆卡 Deal 进刚腾出的格，表现层发牌飞行可卡死主线。
 - **清场扫描不派发死亡 Post 触发**（2026 修正）：`clearResidualBoard` / `clearResidualTrap` 的 `RemoveCardAction` 仅派发 `TriggerPoint.AfterAction` Post；**不**派发 `OnRemove` / `OnCumulative`。清场是收场扫描，不是战斗击杀。复活石 / special_omni 等死亡召唤（`OnSelfRemoved`）与死亡之主（`OnAnyCardRemoved`）等不得在清场拍留下实体；否则会占据场地、不可交互、跨节点继续滞留。`EconomySystem.ReactToRemovedCards` 等系统反应对此原因已有自身过滤；扫描仍清干净。
 - **与双桶关系**：普通机关仍不计真怪物、无击杀赏金（[ADR-0017](0017-trap-card-kind-and-dual-bucket.md)）。`IsNodeCleared` 的旧「无真怪即清关」语义废止，改为「离开机关已被击破 / 等价清关标志」。
 

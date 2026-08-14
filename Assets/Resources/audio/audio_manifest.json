@@ -159,6 +159,15 @@
             "loadPolicy": "first_use_cached"
         },
         {
+            "guid": "a55e60eccc3e56444bf80737f45f2133",
+            "assetPath": "Assets/Resources/audio/SFX/boss房胜利2.mp3",
+            "resourcesKey": "audio/SFX/boss房胜利2",
+            "sha256": "6c938cb6b4ee0f109bd2c8587def24c1caa9fa941a196dec135f9bf76e5f87ad",
+            "sizeBytes": 67709,
+            "kind": "SFX",
+            "loadPolicy": "first_use_cached"
+        },
+        {
             "guid": "c2abc2dca906c154a841497cb6e3de7a",
             "assetPath": "Assets/Resources/audio/SFX/Break_Explosions.wav",
             "resourcesKey": "audio/SFX/Break_Explosions",
@@ -555,6 +564,15 @@
             "loadPolicy": "first_use_cached"
         },
         {
+            "guid": "67b9cb806d6ef9c4abf69ed9b0097aa8",
+            "assetPath": "Assets/Resources/audio/SFX/完整流程胜利.mp3",
+            "resourcesKey": "audio/SFX/完整流程胜利",
+            "sha256": "3d0a1356ae918d9650b5be3c3085562e7f42f99c1331a4a428f2d2d9ebcc83d1",
+            "sizeBytes": 78240,
+            "kind": "SFX",
+            "loadPolicy": "first_use_cached"
+        },
+        {
             "guid": "666c9d9af71acd349a08b8f4e453d268",
             "assetPath": "Assets/Resources/audio/SFX/岩石破坏增强.FG.mp3",
             "resourcesKey": "audio/SFX/岩石破坏增强.FG",
@@ -578,6 +596,15 @@
             "resourcesKey": "audio/SFX/开箱",
             "sha256": "3e81600027002d0283deee7dc5ab92630dc9379e51bd137402c7f5567bb4f8f2",
             "sizeBytes": 377130,
+            "kind": "SFX",
+            "loadPolicy": "first_use_cached"
+        },
+        {
+            "guid": "388dd19c9ea954743bef0d4fe88bfa8a",
+            "assetPath": "Assets/Resources/audio/SFX/战斗对局胜利.mp3",
+            "resourcesKey": "audio/SFX/战斗对局胜利",
+            "sha256": "dbf610e8e701f5ecd4445622f0c7ddd48daf462f84cb470f2c213bd01024721a",
+            "sizeBytes": 143778,
             "kind": "SFX",
             "loadPolicy": "first_use_cached"
         },
@@ -848,6 +875,15 @@
             "resourcesKey": "audio/SFX/添加卡牌",
             "sha256": "2409a7afc7dadf4571f605cd620406e5098bfa687cb55a006d7902c5c8c81883",
             "sizeBytes": 49002,
+            "kind": "SFX",
+            "loadPolicy": "first_use_cached"
+        },
+        {
+            "guid": "4cab91731c401704ab98ed7904075b76",
+            "assetPath": "Assets/Resources/audio/SFX/游戏失败.mp3",
+            "resourcesKey": "audio/SFX/游戏失败",
+            "sha256": "1be90c677be7005b32b60c452d87ff4eae79d301089946dc156c3f7e2b40926a",
+            "sizeBytes": 59904,
             "kind": "SFX",
             "loadPolicy": "first_use_cached"
         },

@@ -567,6 +567,12 @@ namespace NineGrid.Flow.Presentation
         [AudioCue("flow.room.leave", "离开房间", "Flow", "ShopBoardPresenter.TryLeave", AudioCueContexts.None)]
         public const string RoomLeave = "flow.room.leave";
 
+        [AudioCue("flow.room.clear", "普通战斗房清关小胜利", "Flow", "BattleSessionExecutor.RaiseSettlementReady", AudioCueContexts.RoomId)]
+        public const string RoomClear = "flow.room.clear";
+
+        [AudioCue("flow.run.floor_clear", "层主房清关中等胜利（非最终层）", "Flow", "BattleSessionExecutor.RaiseSettlementReady", AudioCueContexts.RoomId)]
+        public const string FloorClear = "flow.run.floor_clear";
+
         [AudioCue("flow.run.floor_cross", "上下楼过场", "Flow", "RunSceneTransitionService.BeginCoverAsync", AudioCueContexts.None)]
         public const string FloorCross = "flow.run.floor_cross";
 
@@ -612,10 +618,10 @@ namespace NineGrid.Flow.Presentation
         [AudioCue("economy.gold_spend", "消耗金币", "Economy", "GoldGainPresentationBinder.OnGoldGainPresentationRequested", AudioCueContexts.None)]
         public const string GoldSpend = "economy.gold_spend";
 
-        [AudioCue("flow.victory", "整局胜利提示", "Flow", "GameFlowOrchestrator.ShowBattleEndAndReturnAsync", AudioCueContexts.None)]
+        [AudioCue("flow.victory", "整局胜利提示（随胜利面板）", "Flow", "GameFlowOrchestrator.ShowBattleEndAndReturnAsync", AudioCueContexts.None)]
         public const string Victory = "flow.victory";
 
-        [AudioCue("flow.defeat", "战斗失败提示", "Flow", "GameFlowOrchestrator.ShowBattleEndAndReturnAsync", AudioCueContexts.None)]
+        [AudioCue("flow.defeat", "战斗失败提示（随失败面板）", "Flow", "GameFlowOrchestrator.ShowBattleEndAndReturnAsync", AudioCueContexts.None)]
         public const string Defeat = "flow.defeat";
 
         [AudioCue("flow.return_main_menu", "返回主菜单", "Flow", "GameFlowOrchestrator.EnterMainMenuImmediate", AudioCueContexts.None)]
