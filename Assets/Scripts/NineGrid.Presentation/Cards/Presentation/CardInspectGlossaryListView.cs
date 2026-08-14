@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -7,10 +8,14 @@ namespace NineGrid.Cards.Presentation
     /// <summary>
     /// 右键详情 ScrollView Content：按词条动态装行 + 一条可复用 hover 槽（ADR-0037）。
     /// hover 槽恒在首行——列表可滚动，落在末尾时词条多了就会滚出视野。
+    /// 词条行使用 mesh TMP（MeshRenderer），须配 Viewport SpriteMask + 动态 margin 裁切才能裁进装饰框。
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class CardInspectGlossaryListView : MonoBehaviour
     {
+        private const string ViewportClipMaskName = "__GlossaryViewportClipMask";
+        private const float ViewportInsetCanvasUnits = 10f;
+
         public static string HoverHintText => NineGrid.Core.Localization.L10n.Tr(
             "inspect.hover_hint",
             "将鼠标移到卡面预览中的图标上，可查看其含义。");
@@ -20,18 +25,21 @@ namespace NineGrid.Cards.Presentation
         [SerializeField] private CardInspectGlossaryRowView hoverRow;
 
         private readonly List<CardInspectGlossaryRowView> _spawned = new List<CardInspectGlossaryRowView>();
+        private static Sprite s_viewportClipSprite;
 
         public void Configure(RectTransform contentRoot, CardInspectGlossaryRowView prefab)
         {
             content = contentRoot;
             rowPrefab = prefab;
             EnsureLayout();
+            EnsureViewportClipMask();
             EnsureHoverRow();
         }
 
         public void BindExplicitTerms(IReadOnlyList<CardGlossaryTerms.ResolvedTerm> terms)
         {
             EnsureLayout();
+            EnsureViewportClipMask();
             ClearSpawned();
             EnsureHoverRow();
 
@@ -46,6 +54,7 @@ namespace NineGrid.Cards.Presentation
                     row.EnsureLayoutElement();
                     row.Bind(term.DisplayName, term.Explanation, term.HasColor, term.Color);
                     row.transform.SetAsLastSibling();
+                    ApplyGlossaryRowMaskInteraction(row.gameObject, GetScrollViewport());
                     _spawned.Add(row);
                 }
             }
@@ -56,6 +65,7 @@ namespace NineGrid.Cards.Presentation
                 hoverRow.gameObject.SetActive(true);
                 hoverRow.BindHint(HoverHintText);
                 hoverRow.transform.SetAsFirstSibling();
+                ApplyGlossaryRowMaskInteraction(hoverRow.gameObject, GetScrollViewport());
             }
         }
 
@@ -70,6 +80,7 @@ namespace NineGrid.Cards.Presentation
             hoverRow.gameObject.SetActive(true);
             hoverRow.Bind(displayName, explanation, hasColor, color);
             hoverRow.transform.SetAsFirstSibling();
+            ApplyGlossaryRowMaskInteraction(hoverRow.gameObject, GetScrollViewport());
         }
 
         public void ClearHover()
@@ -115,6 +126,7 @@ namespace NineGrid.Cards.Presentation
             hoverRow.EnsureLayoutElement();
             hoverRow.BindHint(HoverHintText);
             hoverRow.transform.SetAsFirstSibling();
+            ApplyGlossaryRowMaskInteraction(hoverRow.gameObject, GetScrollViewport());
         }
 
         private void EnsureLayout()
@@ -150,6 +162,226 @@ namespace NineGrid.Cards.Presentation
 
             fitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
             fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+        }
+
+        private void EnsureViewportClipMask()
+        {
+            if (content == null)
+            {
+                return;
+            }
+
+            var scroll = content.GetComponentInParent<ScrollRect>();
+            if (scroll == null || scroll.viewport == null)
+            {
+                return;
+            }
+
+            ApplyViewportInsetIfNeeded(scroll.viewport);
+            EnsureViewportSpriteMask(scroll.viewport);
+            EnsureViewportClipDriver(scroll);
+        }
+
+        private static void EnsureViewportClipDriver(ScrollRect scroll)
+        {
+            if (scroll?.viewport == null)
+            {
+                return;
+            }
+
+            var clip = scroll.viewport.GetComponent<CardInspectGlossaryViewportClip>();
+            if (clip == null)
+            {
+                clip = scroll.viewport.gameObject.AddComponent<CardInspectGlossaryViewportClip>();
+            }
+
+            clip.Configure(scroll);
+        }
+
+        private RectTransform GetScrollViewport()
+        {
+            if (content == null)
+            {
+                return null;
+            }
+
+            var scroll = content.GetComponentInParent<ScrollRect>();
+            return scroll != null ? scroll.viewport : null;
+        }
+
+        private static void ApplyViewportInsetIfNeeded(RectTransform viewport)
+        {
+            if (viewport == null)
+            {
+                return;
+            }
+
+            if (viewport.GetComponent<CardInspectGlossaryViewportInset>() != null)
+            {
+                return;
+            }
+
+            viewport.gameObject.AddComponent<CardInspectGlossaryViewportInset>();
+            viewport.offsetMin += new Vector2(ViewportInsetCanvasUnits, ViewportInsetCanvasUnits);
+            viewport.offsetMax -= new Vector2(ViewportInsetCanvasUnits, ViewportInsetCanvasUnits);
+        }
+
+        private static void EnsureViewportSpriteMask(RectTransform viewport)
+        {
+            if (viewport == null)
+            {
+                return;
+            }
+
+            var maskTransform = viewport.Find(ViewportClipMaskName) as RectTransform;
+            if (maskTransform == null)
+            {
+                var go = new GameObject(ViewportClipMaskName);
+                maskTransform = go.AddComponent<RectTransform>();
+                maskTransform.SetParent(viewport, false);
+                maskTransform.anchorMin = Vector2.zero;
+                maskTransform.anchorMax = Vector2.one;
+                maskTransform.pivot = new Vector2(0.5f, 0.5f);
+                maskTransform.offsetMin = Vector2.zero;
+                maskTransform.offsetMax = Vector2.zero;
+                maskTransform.localRotation = Quaternion.identity;
+                maskTransform.localScale = Vector3.one;
+
+                var mask = go.AddComponent<SpriteMask>();
+                mask.sprite = GetViewportClipSprite();
+                mask.alphaCutoff = 0.01f;
+                mask.enabled = true;
+            }
+
+            SyncViewportMaskSorting(maskTransform, viewport);
+        }
+
+        private static void SyncViewportMaskSorting(RectTransform maskTransform, RectTransform viewport)
+        {
+            var mask = maskTransform.GetComponent<SpriteMask>();
+            if (mask == null)
+            {
+                return;
+            }
+
+            var canvas = viewport.GetComponentInParent<Canvas>();
+            if (canvas == null)
+            {
+                return;
+            }
+
+            var layerId = canvas.sortingLayerID;
+            var order = canvas.sortingOrder;
+            mask.sortingLayerID = layerId;
+            mask.isCustomRangeActive = true;
+            mask.frontSortingLayerID = layerId;
+            mask.backSortingLayerID = layerId;
+            mask.frontSortingOrder = order + 30;
+            mask.backSortingOrder = order - 1;
+            mask.enabled = true;
+        }
+
+        private static Sprite GetViewportClipSprite()
+        {
+            if (s_viewportClipSprite != null)
+            {
+                return s_viewportClipSprite;
+            }
+
+            s_viewportClipSprite = Sprite.Create(
+                Texture2D.whiteTexture,
+                new Rect(0, 0, 4, 4),
+                new Vector2(0.5f, 0.5f),
+                4f);
+            return s_viewportClipSprite;
+        }
+
+        private static void ApplyGlossaryRowMaskInteraction(GameObject rowRoot, RectTransform viewport)
+        {
+            if (rowRoot == null)
+            {
+                return;
+            }
+
+            var canvas = viewport != null ? viewport.GetComponentInParent<Canvas>() : null;
+
+            var renderers = rowRoot.GetComponentsInChildren<Renderer>(true);
+            for (var i = 0; i < renderers.Length; i++)
+            {
+                var renderer = renderers[i];
+                if (renderer is SpriteRenderer spriteRenderer)
+                {
+                    spriteRenderer.maskInteraction = SpriteMaskInteraction.VisibleInsideMask;
+                }
+            }
+
+            var tmp = rowRoot.GetComponentInChildren<TMP_Text>(true);
+            if (tmp != null)
+            {
+                tmp.overflowMode = TextOverflowModes.Masking;
+                var meshRenderer = tmp.GetComponent<MeshRenderer>();
+                if (meshRenderer != null && canvas != null)
+                {
+                    meshRenderer.sortingLayerID = canvas.sortingLayerID;
+                    meshRenderer.sortingOrder = canvas.sortingOrder + 2;
+                }
+            }
+        }
+    }
+
+    /// <summary>标记 ScrollView Viewport 已应用详述词条区内缩，避免重复叠加。</summary>
+    [DisallowMultipleComponent]
+    internal sealed class CardInspectGlossaryViewportInset : MonoBehaviour
+    {
+    }
+
+    /// <summary>ScrollRect 滚动时按 Viewport 重算 mesh TMP margin 裁切。</summary>
+    [DisallowMultipleComponent]
+    internal sealed class CardInspectGlossaryViewportClip : MonoBehaviour
+    {
+        private ScrollRect _scroll;
+        private bool _configured;
+
+        public void Configure(ScrollRect scroll)
+        {
+            _scroll = scroll;
+            _configured = scroll != null && scroll.content != null && scroll.viewport != null;
+            ApplyClip();
+        }
+
+        private void LateUpdate()
+        {
+            if (!_configured)
+            {
+                return;
+            }
+
+            ApplyClip();
+        }
+
+        public void ApplyClip()
+        {
+            var viewport = _scroll?.viewport;
+            var content = _scroll?.content;
+            if (viewport == null || content == null)
+            {
+                return;
+            }
+
+            for (var i = 0; i < content.childCount; i++)
+            {
+                var child = content.GetChild(i) as RectTransform;
+                if (child == null)
+                {
+                    continue;
+                }
+
+                var row = child.GetComponent<CardInspectGlossaryRowView>();
+                if (row != null)
+                {
+                    row.ApplyViewportClip(viewport);
+                }
+            }
         }
     }
 }

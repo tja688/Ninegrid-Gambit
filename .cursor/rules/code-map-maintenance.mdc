@@ -12,11 +12,8 @@ alwaysApply: true
 | 层级 | 路径 | 角色 |
 |------|------|------|
 | 代码现状 | `docs/code-map/` | 程序集、目录、装配、验证约定——**只写当下事实** |
-| 代码事实文档库 | `Assets/Docs/` | 全量代码事实（分层区域文档 + ADR 对照 + 领域词汇表）——**改代码时同步维护** |
 | 长期决策 | `docs/adr/`、`CONTEXT.md` | 行为不变量、领域词汇 |
 | 过程笔记 | `Assets/Notes/` | 复盘与 Spec 草稿，**非权威** |
-
-旧源码镜像库 `Assets/Docs/九宫牌局-代码文档/` 已删除，禁止恢复。现行 `Assets/Docs/` 权威代码事实文档库（2026-08-12 起）**属权威文档，改代码时须同步更新对应区域文档**。**禁止**在 Notes 里维护重复的「代码现状镜像」。
 
 ## 必须同步 Code Map 的改动
 
@@ -49,8 +46,6 @@ alwaysApply: true
 1. 硬要求：`unity command recompile` 后 Console 无**由本票改动导致**的新增 Error / Exception / Assert
 2. 其余按任务需要手动 Play / QuickTest 验证
 
-**测试套件（冲刺期）**：仓库内原有自动化测试已整体清空。**不要**从 git 历史或旧文档恢复旧测试地图。若当前任务需要写测试，可自行新增，不受本条限制。详见 [`docs/code-map/tests.md`](../../docs/code-map/tests.md)。
-
 **两击放弃**：同一验证动作（recompile / 查 Console）2 次尝试仍无果（超时 / 卡死 / 状态不明）即停，不换命令绕路、不再重试；直接汇报改动结果，并建议人手动验证。
 
 ## 禁止
@@ -58,4 +53,3 @@ alwaysApply: true
 - 把未落地的 Spec 目标树（如平铺 `Architecture/`、`Views/`、`Events/` 顶层目录）写入 code-map 当作既成事实
 - 新增业务静态 Sink，或在 View 上直接改 Core 规则状态（见 `presentation.md`）
 - 仅改 `Assets/Notes/` 而不更新 code-map/ADR，却声称架构或目录已变更
-- 从 git 历史或归档文档「恢复」已清空的旧 EditMode / PlayMode 测试套件（除非用户明确要求）

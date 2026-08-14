@@ -1143,6 +1143,26 @@ namespace NineGrid.Cards
             return true;
         }
 
+        /// <summary>
+        /// 枚举手牌槽内卡（供装饰运动层成员同步，ADR-0051 补记）。不改布局、不参与 hover。
+        /// 拖拽中的卡已被移出槽容器，不在枚举范围内——其 L1 由拖拽惯性倾斜独占。
+        /// </summary>
+        internal void ForEachHandSlotCard(Action<int, ManagedCard> visitor)
+        {
+            if (visitor == null || _slotContainer == null)
+            {
+                return;
+            }
+
+            for (var i = 0; i < layoutSettings.maxSlots; i++)
+            {
+                if (_slotContainer.TryGetCardAt(i, out var card) && card != null)
+                {
+                    visitor(i, card);
+                }
+            }
+        }
+
         internal void ResetHandCardHoverVisual(ManagedCard card)
         {
             if (!IsLiveHandCard(card))

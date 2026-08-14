@@ -1,11 +1,11 @@
 ---
-description: Unity 协作（MCP 首选、CLI 回退）与 Safe Mode 禁令
+description: Unity 协作（MCP 首选、CLI 回退）
 alwaysApply: true
 ---
 
 # Unity 协作规范
 
-与 Editor 协作**优先 Unity MCP**（`mcpforunity://` 资源 + `manage_*` 等 MCP 工具）。**仅在** MCP 不可用、缺能力或调用卡死时，回退 `unity` CLI + `com.unity.pipeline`（`unity command …`）。CLI 细则见 [`docs/agents/unity-cli.md`](../../docs/agents/unity-cli.md)。
+与 Editor 协作**优先 Unity MCP**（`mcpforunity://` 资源 + `manage_*` 等 MCP 工具）。**仅在** MCP 不可用、缺能力或调用卡死时，回退 `unity` CLI + `com.unity.pipeline`（`unity command …`）。
 
 ## MCP 首选
 
@@ -25,29 +25,3 @@ alwaysApply: true
 ## 场景中文名检索
 
 `.unity` / `.prefab` YAML 里中文 `m_Name` 常写成 `\uXXXX` 转义（如 `作弊工具BG` → `"\u4F5C\u5F0A\u5DE5\u5177BG"`）。明文中文 `grep` 会误报「不存在」——应搜 Unicode 转义、用 MCP / Editor `FindObjectsOfTypeAll` / Pipeline `find_gameobjects`，或先解码再比。
-
-## 严禁 Safe Mode
-
-**不准以 Safe Mode 启动 Editor，也不准在 Safe Mode 下继续做任何 Agent 操作。**
-
-### 禁止
-
-- 在「Enter Safe Mode」对话框选择进入 Safe Mode
-- 依赖 Safe Mode 修编译错误、跑测、改场景、调 MCP / Pipeline
-- 把「已进 Safe Mode」当成可接受的工作状态继续干活
-
-### 必须
-
-- 启动后确认**不在** Safe Mode（CLI 回退时）：
-
-```bash
-unity command eval "return UnityEditor.EditorUtility.isInSafeMode;" --project-path "<本仓库绝对路径>" --format json
-```
-
-  期望为 `false`。若为 `true`：**立刻停手**。
-- 编译错误 / Safe Mode 提示：选 **Ignore** 或 **Quit**，在正常 Editor 修脚本；必要时 `-automated` 重开。
-- 已处于 Safe Mode：保存必要工作后**退出 Editor**，修好编译错误再正常重开。
-
-### 例外
-
-无。即使用户或其它 skill 建议进 Safe Mode，也一律拒绝并说明本规则。

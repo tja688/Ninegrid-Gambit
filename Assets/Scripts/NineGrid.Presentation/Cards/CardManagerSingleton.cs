@@ -802,6 +802,10 @@ namespace NineGrid.Cards
 #if UNITY_EDITOR
                 standardCardPrefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>(CardChassisPrefabAssetPath);
 #endif
+                if (standardCardPrefab == null)
+                {
+                    standardCardPrefab = CardChassisPaths.LoadGameObject(CardChassisPrefabAssetPath);
+                }
             }
 
             if (standardCardPrefab == null)
@@ -810,14 +814,29 @@ namespace NineGrid.Cards
                     $"[CardManagerSingleton] 未配置卡牌底盘，请赋值或通过路径 {CardChassisPrefabAssetPath} 提供。");
             }
 
-#if UNITY_EDITOR
-            if (trapFacePrefab == null)
-            {
-                trapFacePrefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>(CardChassisPaths.TrapFacePrefab);
-            }
-#endif
+            BootstrapFacePrefab(ref avatarFacePrefab, CardChassisPaths.AvatarFacePrefab);
+            BootstrapFacePrefab(ref monsterFacePrefab, CardChassisPaths.MonsterFacePrefab);
+            BootstrapFacePrefab(ref itemFacePrefab, CardChassisPaths.ItemFacePrefab);
+            BootstrapFacePrefab(ref relicFacePrefab, CardChassisPaths.RelicFacePrefab);
+            BootstrapFacePrefab(ref trapFacePrefab, CardChassisPaths.TrapFacePrefab);
 
             // RegisterPrefab(defId) 仅作特例覆盖；底盘不再注册为 StandardDefId 主回退。
+        }
+
+        private static void BootstrapFacePrefab(ref GameObject field, string assetPath)
+        {
+            if (field != null || string.IsNullOrWhiteSpace(assetPath))
+            {
+                return;
+            }
+
+#if UNITY_EDITOR
+            field = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>(assetPath);
+#endif
+            if (field == null)
+            {
+                field = CardChassisPaths.LoadGameObject(assetPath);
+            }
         }
 
         /// <summary>

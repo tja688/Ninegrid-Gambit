@@ -1,0 +1,1 @@
+﻿{"schemaVersion":1,"seed":"5224624963338179973","sessionId":"20260814-114340","runTag":"QuickTest","droppedOldest":0,"entries":[{"time":"11:45:13.685","type":"Warning","message":"[ApplyPickupItemCommand] PickupItem 被拒: 道具卡格已满","stackTrace":""},{"time":"11:46:29.060","type":"Warning","message":"[ApplyPickupItemCommand] PickupItem 被拒: 道具卡格已满","stackTrace":""}]}

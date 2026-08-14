@@ -171,10 +171,10 @@ namespace NineGrid.Cards.Anim
         }
 
         /// <summary>
-        /// 编辑器 PreviewRenderUtility 往往不跑 URP 2D Mask 模板，导致 VisibleInsideMask 全灭。
-        /// 预览实例上关掉 Mask 交互，仅保留定位；Play/运行时仍走真实裁剪。
+        /// 关掉卡面子树全部 SpriteMask 与 VisibleInsideMask 交互。
+        /// 检视面板 / 编辑器预览在 UI SortingGroup 下若保留场地 Mask 会把整卡裁没。
         /// </summary>
-        public static void DisableMaskingForEditorPreview(Transform faceRoot)
+        public static void DisableMasking(Transform faceRoot)
         {
             if (faceRoot == null)
             {
@@ -199,6 +199,15 @@ namespace NineGrid.Cards.Anim
                     sr.maskInteraction = SpriteMaskInteraction.None;
                 }
             }
+        }
+
+        /// <summary>
+        /// 编辑器 PreviewRenderUtility 往往不跑 URP 2D Mask 模板，导致 VisibleInsideMask 全灭。
+        /// 预览实例上关掉 Mask 交互，仅保留定位；Play/运行时仍走真实裁剪。
+        /// </summary>
+        public static void DisableMaskingForEditorPreview(Transform faceRoot)
+        {
+            DisableMasking(faceRoot);
         }
 
         public void SyncMaskSortingTo(SpriteRenderer visual)

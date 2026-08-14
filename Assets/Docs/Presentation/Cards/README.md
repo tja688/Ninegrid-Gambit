@@ -61,7 +61,7 @@ Cards/
 4. **`SkeletonDeckPresentationManager.PresentFusionAsync` XML 注释格式错误**：summary 段出现两个 `</summary>`。
 5. **`HandCardHitProxy` 仍写自带 collider 尺寸**：`ApplyColliderSize` 写 `collider.size = handHitBoxSize`——手牌带主路径已是槽位带 AABB 数学，此 collider 仅作回退；与 ADR-0023「落格对象无自带命中区」并不冲突（手牌不是落格对象），但属于可收敛的双轨。
 6. **`GroundFieldView`/`CardHandManagerSingleton`/`CardDeckManagerSingleton` 的 `GameObject.Find("Anchors")` 兜底**：生产装配应依赖场景序列化字段；Find 路径仅为未绑定兜底，注意 MainScene 装配卫生（#141）语境下勿新增依赖。
-7. **`CardManagerSingleton.BootstrapPrefabs` 仅 Editor 兜底**：Player 下底盘/机关卡面完全依赖场景序列化；若场景配置丢失将 Spawn 失败（有 Error 日志，无自动恢复）。
+7. **`CardManagerSingleton.BootstrapPrefabs` Player 回退**：场景序列化字段为空时，Player 经 `CardChassisPaths.LoadGameObject` 补底盘与五套卡面（ADR-0008）；仍空则 Spawn 失败（Error/Warning 日志）。
 
 ---
 

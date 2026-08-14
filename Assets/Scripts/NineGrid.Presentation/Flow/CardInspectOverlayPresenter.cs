@@ -372,6 +372,11 @@ namespace NineGrid.Flow
                 {
                     _rowPrefab = go.GetComponent<CardInspectGlossaryRowView>();
                 }
+                else
+                {
+                    Debug.LogError(
+                        $"[CardInspectOverlayPresenter] 词条行预制体加载失败：{CardChassisPaths.GlossaryRowPrefab}");
+                }
             }
 
             ConfigureGlossaryList(ref enemyGlossaryList, enemyPanel);
@@ -573,7 +578,7 @@ namespace NineGrid.Flow
             var existing = anchor.Find(InspectLiveFaceName);
             if (existing != null && liveKind == kind)
             {
-                var reuse = existing.GetComponent<CardFacePresentationBinder>();
+                var reuse = existing.GetComponentInChildren<CardFacePresentationBinder>(true);
                 if (reuse != null)
                 {
                     existing.gameObject.SetActive(true);
@@ -581,16 +586,16 @@ namespace NineGrid.Flow
                 }
             }
 
-            if (existing != null)
-            {
-                Destroy(existing.gameObject);
-            }
-
             var faceGo = CreateLiveFaceObject(anchor, card, kind);
             if (faceGo == null)
             {
                 liveKind = CardPresentationKind.Unknown;
                 return null;
+            }
+
+            if (existing != null)
+            {
+                Destroy(existing.gameObject);
             }
 
             liveKind = kind;
@@ -608,21 +613,18 @@ namespace NineGrid.Flow
             ManagedCard card,
             CardPresentationKind kind)
         {
-            GameObject source = null;
+            GameObject source = LoadFacePrefab(kind);
 
-            // 优先克隆场上该卡已挂好的真卡面（与局内一致）。
-            if (card != null && card.MountedFaceRoot != null)
+            // 预制体加载失败时回退克隆场上卡面（仍须消毒 Mask，避免 UI 层整卡被裁没）。
+            if (source == null && card != null && card.MountedFaceRoot != null)
             {
                 source = card.MountedFaceRoot.gameObject;
             }
 
             if (source == null)
             {
-                source = LoadFacePrefab(kind);
-            }
-
-            if (source == null)
-            {
+                Debug.LogError(
+                    $"[CardInspectOverlayPresenter] 检视卡面实例化失败 kind={kind} uid={card?.Uid} defId={card?.DefId}");
                 return null;
             }
 
@@ -632,6 +634,8 @@ namespace NineGrid.Flow
             face.transform.localRotation = Quaternion.identity;
             face.transform.localScale = Vector3.one;
             face.SetActive(true);
+
+            CardMainVisualMaskAnchor.DisableMasking(face.transform);
 
             // 常规面板占位按道具卡（卡框在本地原点）布局；遗物卡面内容整体偏在 x≈-1.22。
             AlignLiveFaceToPlaceholderOrigin(face.transform);
@@ -727,7 +731,7 @@ namespace NineGrid.Flow
 
         private static GameObject LoadFacePrefab(CardPresentationKind kind)
         {
-            string path;
+            string path = null;
             switch (kind)
             {
                 case CardPresentationKind.Avatar:
@@ -748,10 +752,18 @@ namespace NineGrid.Flow
                     path = CardChassisPaths.RelicFacePrefab;
                     break;
                 default:
+                    Debug.LogError($"[CardInspectOverlayPresenter] 检视卡面无模板 kind={kind}");
                     return null;
             }
 
-            return CardChassisPaths.LoadGameObject(path);
+            var prefab = CardChassisPaths.LoadGameObject(path);
+            if (prefab == null)
+            {
+                Debug.LogError(
+                    $"[CardInspectOverlayPresenter] 检视卡面预制体加载失败 kind={kind} path={path}");
+            }
+
+            return prefab;
         }
 
         /// <summary>

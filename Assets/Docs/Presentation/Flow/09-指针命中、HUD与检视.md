@@ -141,6 +141,8 @@ ADR-0023（轮询命中替代 OnMouse* / 表面身份仲裁 / 任意距离点击
 - 金币增益独占时间窗：窗口内其他增益合并进当前窗，不并行开窗。
 - 遗物图标只显示**首个** period>1 投影键；卸下遗物 `PruneCommittedToDisplayed` 清脏值。
 - hover 解释槽必须留在词条栏**首行**：列表可滚动，落末尾时词条一多就滚出视野，等于功能不存在。
+- 详述中间卡面勿克隆场上实体：须走 Resources 卡面模板 + `DisableMasking`；克隆 `MountedFaceRoot` 仅作加载失败回退。
+- 词条 ScrollView：mesh TMP 不受 uGUI `Mask` 裁切；`CardInspectGlossaryViewportClip` 按 Viewport 动态扩 margin + 视口外整行关 Renderer（勿依赖 `MeshRenderer.maskInteraction`）。
 - 词条行跨词条复用同一个 TMP：未着色的词条须退回模板默认色（`CardInspectGlossaryRowView` 记住首次的 `body.color`），否则 hover 槽会留着上一条的颜色。
 - 预览槽右键详述已断开（待动态框选系统）；`BattleInfoPreviewSlotView` 暂不接入 `PointerHitRegistry`。
 - 玩家立绘 offset/scale 须先 Capture 基准再套用，防反复打开双重叠加。
