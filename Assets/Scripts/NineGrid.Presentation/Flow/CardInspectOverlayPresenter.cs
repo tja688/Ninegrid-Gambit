@@ -9,6 +9,7 @@ using NineGrid.Presentation;
 using QFramework;
 using System;
 using System.Collections.Generic;
+using System.Text;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -33,6 +34,11 @@ namespace NineGrid.Flow
         /// <summary>嵌套于面板根 SG 内：高于面板底图 / 文案，低于关闭钮等若另挂更高序。</summary>
         private const int InspectFaceSortingOrder = 5;
 
+        /// <summary>无衍生卡时的按钮文案。</summary>
+        private const string NoDerivedCardText = "衍生卡：无";
+        /// <summary>有衍生卡时的文案前缀（后接卡名，多张以顿号分隔）。</summary>
+        private const string DerivedCardTextPrefix = "衍生卡：";
+
         private static CardInspectOverlayPresenter s_instance;
 
         [SerializeField] private GameObject root;
@@ -46,6 +52,10 @@ namespace NineGrid.Flow
         [SerializeField] private TMP_Text regularDeckIntro;
         [SerializeField] private CardInspectGlossaryListView enemyGlossaryList;
         [SerializeField] private CardInspectGlossaryListView regularGlossaryList;
+        [SerializeField] private Transform enemyDerivedCardButton;
+        [SerializeField] private Transform regularDerivedCardButton;
+        [SerializeField] private TMP_Text enemyDerivedCardText;
+        [SerializeField] private TMP_Text regularDerivedCardText;
 
         private bool _open;
         private bool _dimmerHeld;
@@ -54,6 +64,20 @@ namespace NineGrid.Flow
         private CardPresentationKind _enemyLiveKind = CardPresentationKind.Unknown;
         private CardPresentationKind _regularLiveKind = CardPresentationKind.Unknown;
         private CardInspectGlossaryRowView _rowPrefab;
+
+        /// <summary>
+        /// 检查面板导航栈：栈顶 = 当前展示卡。外部打开（右键菜单）清栈重置；
+        /// 衍生卡按钮入栈切入衍生卡详情；Close 时栈深 > 1 弹栈回到母卡详情（ADR-XXXX）。
+        /// </summary>
+        private readonly List<InspectNavEntry> _navStack = new List<InspectNavEntry>(4);
+
+        /// <summary>检查面板导航条目：live 卡路径存 Card 引用（优先重放），静态路径走 defId + 推断 kind。</summary>
+        private sealed class InspectNavEntry
+        {
+            public string DefId;
+            public CardPresentationKind Kind;
+            public ManagedCard Card;
+        }
 
         public static bool IsOpen
         {
@@ -106,6 +130,8 @@ namespace NineGrid.Flow
                 presenter = inspectRoot.gameObject.AddComponent<CardInspectOverlayPresenter>();
             }
 
+            // 场景物体可能从未激活（Awake 未跑）：必须直接持有实例，否则所有 TryOpen 会静默失败。
+            s_instance = presenter;
             presenter.BindScene(uiRoot, inspectRoot.gameObject);
             presenter.HideAllImmediate();
         }
@@ -127,16 +153,22 @@ namespace NineGrid.Flow
                 out enemyFaceIntro,
                 out enemyDeckIntro,
                 out var enemyClose,
-                out enemyGlossaryList);
+                out enemyGlossaryList,
+                out enemyDerivedCardButton,
+                out enemyDerivedCardText);
             WirePanelSlots(
                 regularPanel,
                 out regularFaceIntro,
                 out regularDeckIntro,
                 out var regularClose,
-                out regularGlossaryList);
+                out regularGlossaryList,
+                out regularDerivedCardButton,
+                out regularDerivedCardText);
 
             WireCloseButton(enemyClose);
             WireCloseButton(regularClose);
+            WireDerivedCardButton(enemyDerivedCardButton, enemyDerivedCardText);
+            WireDerivedCardButton(regularDerivedCardButton, regularDerivedCardText);
             WirePanelDismiss(enemyPanel);
             WirePanelDismiss(regularPanel);
 
@@ -197,14 +229,12 @@ namespace NineGrid.Flow
                 EnsureExists();
             }
 
-            var isMonster = card.CoreKind == CardPresentationKind.Monster;
-            var snapshot = CloneForInspect(card.CommittedPresentation, card);
-            // ADR-0035：检查永远静态检查描述（初始装配实参），不展示局内模板/已提交剩余。
-            snapshot.BasicDescription = ResolveInspectBasicDescription(card.DefId, snapshot.BasicDescription);
-            var arch = NineGridArchitecture.Interface;
-            var catalog = arch?.GetSystem<IContentSystem>()?.Catalog;
-            var texts = CardInspectDetailComposer.Compose(card.DefId, snapshot, catalog);
-            return PresentInspect(isMonster, card, snapshot, texts);
+            return PushAndPresent(new InspectNavEntry
+            {
+                DefId = card.DefId,
+                Kind = card.CoreKind,
+                Card = card,
+            });
         }
 
         public bool OpenByDefId(string defId, CardPresentationKind kindHint = CardPresentationKind.Unknown)
@@ -222,13 +252,185 @@ namespace NineGrid.Flow
             var kind = kindHint != CardPresentationKind.Unknown
                 ? kindHint
                 : CoreCardPresentationMapper.ResolvePresentationKindFromDefId(defId);
-            var snapshot = CoreCardPresentationMapper.BuildVisualSnapshotFromDefId(defId, kind);
-            // ADR-0035：检查面板永不展示局内模板/已提交剩余，重新按检查模式投影。
-            snapshot.BasicDescription = ResolveInspectBasicDescription(defId, snapshot.BasicDescription);
+            return PushAndPresent(new InspectNavEntry
+            {
+                DefId = defId,
+                Kind = kind,
+                Card = null,
+            });
+        }
+
+        /// <summary>
+        /// 外部入口（右键菜单）打开：清空导航栈并展示新条目。
+        /// 衍生卡内部跳转不走此入口（见 <see cref="OpenDerivedCard"/>），以免丢失返回链。
+        /// </summary>
+        private bool PushAndPresent(InspectNavEntry entry)
+        {
+            _navStack.Clear();
+            _navStack.Add(entry);
+            if (PresentEntry(entry))
+            {
+                return true;
+            }
+
+            _navStack.Clear();
+            return false;
+        }
+
+        /// <summary>
+        /// 展示导航条目：live 卡存活优先重放其已提交投影（保留局内数值），
+        /// 否则走 defId 静态投影（ADR-0035：检查描述恒为静态检查描述）。
+        /// </summary>
+        private bool PresentEntry(InspectNavEntry entry)
+        {
+            if (entry == null)
+            {
+                return false;
+            }
+
             var arch = NineGridArchitecture.Interface;
             var catalog = arch?.GetSystem<IContentSystem>()?.Catalog;
-            var texts = CardInspectDetailComposer.Compose(defId, snapshot, catalog);
-            return PresentInspect(isMonster: false, card: null, snapshot, texts, kindOverride: kind);
+
+            if (entry.Card != null && entry.Card.View != null)
+            {
+                var isMonster = entry.Kind == CardPresentationKind.Monster;
+                var snapshot = CloneForInspect(entry.Card.CommittedPresentation, entry.Card);
+                snapshot.BasicDescription = ResolveInspectBasicDescription(entry.Card.DefId, snapshot.BasicDescription);
+                var texts = CardInspectDetailComposer.Compose(entry.Card.DefId, snapshot, catalog);
+                return PresentInspect(isMonster, entry.Card, snapshot, texts);
+            }
+
+            var kind = entry.Kind != CardPresentationKind.Unknown
+                ? entry.Kind
+                : CoreCardPresentationMapper.ResolvePresentationKindFromDefId(entry.DefId);
+            var snapshotByDefId = CoreCardPresentationMapper.BuildVisualSnapshotFromDefId(entry.DefId, kind);
+            snapshotByDefId.BasicDescription = ResolveInspectBasicDescription(entry.DefId, snapshotByDefId.BasicDescription);
+            var composed = CardInspectDetailComposer.Compose(entry.DefId, snapshotByDefId, catalog);
+            return PresentInspect(
+                isMonster: kind == CardPresentationKind.Monster,
+                card: null,
+                snapshotByDefId,
+                composed,
+                kindOverride: kind);
+        }
+
+        /// <summary>
+        /// 衍生卡查看按钮（UiOverlayHitProxy 回调）：当前详情卡有衍生卡且目标不在导航栈中时，
+        /// 入栈切入衍生卡详情；无衍生卡或处于衍生卡环（如 复活石 ↔ 巨斧骷髅 互相衍生）时 no-op。
+        /// </summary>
+        public static void OpenDerivedCardIfAny()
+        {
+            if (!TryGetLiveInstance(out var live))
+            {
+                return;
+            }
+
+            live.OpenDerivedCard();
+        }
+
+        private void OpenDerivedCard()
+        {
+            if (!_open || _navStack.Count == 0)
+            {
+                return;
+            }
+
+            var current = _navStack[_navStack.Count - 1];
+            var derived = DerivedCardResolver.ResolveDerivedCardDefIds(current.DefId);
+            if (derived == null || derived.Count == 0)
+            {
+                return;
+            }
+
+            var target = derived[0];
+            for (var i = 0; i < _navStack.Count; i++)
+            {
+                if (string.Equals(_navStack[i].DefId, target, StringComparison.Ordinal))
+                {
+                    return;
+                }
+            }
+
+            _navStack.Add(new InspectNavEntry
+            {
+                DefId = target,
+                Kind = CardPresentationKind.Unknown,
+                Card = null,
+            });
+            if (!PresentEntry(_navStack[_navStack.Count - 1]))
+            {
+                _navStack.RemoveAt(_navStack.Count - 1);
+            }
+        }
+
+        /// <summary>
+        /// 刷新衍生卡按钮文案：无衍生卡 → 「衍生卡：无」；有 → 列出衍生卡显示名（多张顿号分隔）。
+        /// </summary>
+        private void RefreshDerivedCardText(bool isMonster, string defId)
+        {
+            var text = isMonster ? enemyDerivedCardText : regularDerivedCardText;
+            if (text == null || string.IsNullOrWhiteSpace(defId))
+            {
+                return;
+            }
+
+            var derived = DerivedCardResolver.ResolveDerivedCardDefIds(defId);
+            if (derived == null || derived.Count == 0)
+            {
+                text.text = NoDerivedCardText;
+                return;
+            }
+
+            var builder = new StringBuilder(DerivedCardTextPrefix);
+            for (var i = 0; i < derived.Count; i++)
+            {
+                if (i > 0)
+                {
+                    builder.Append('、');
+                }
+
+                builder.Append(ResolveDerivedDisplayName(derived[i]));
+            }
+
+            text.text = builder.ToString();
+        }
+
+        private static string ResolveDerivedDisplayName(string defId)
+        {
+            if (CardPresentationConfigCatalog.TryGet(defId, out var dto)
+                && dto != null
+                && !string.IsNullOrWhiteSpace(dto.displayName))
+            {
+                return dto.displayName.Trim();
+            }
+
+            return defId;
+        }
+
+        public void Close()
+        {
+            if (!_open)
+            {
+                HideAllImmediate();
+                return;
+            }
+
+            // 衍生卡导航：退出衍生卡详情 → 弹栈回到母卡详情（dimmer 保持持有，半黑屏不闪）。
+            if (_navStack.Count > 1)
+            {
+                _navStack.RemoveAt(_navStack.Count - 1);
+                PresentEntry(_navStack[_navStack.Count - 1]);
+                return;
+            }
+
+            _open = false;
+            _navStack.Clear();
+            HideAllImmediate();
+            if (_dimmerHeld)
+            {
+                BattleUiDimmerOverlay.Release("card-inspect");
+                _dimmerHeld = false;
+            }
         }
 
         private bool PresentInspect(
@@ -269,7 +471,13 @@ namespace NineGrid.Flow
 
             if (isMonster)
             {
-                _enemyBinder = EnsureLiveFace(enemyCardFace, card, ref _enemyLiveKind);
+                // 衍生卡等静态路径也可在敌方面板挂静态卡面（kindOverride 已推断为 Monster）。
+                _enemyBinder = card != null
+                    ? EnsureLiveFace(enemyCardFace, card, ref _enemyLiveKind)
+                    : EnsureLiveFaceByKind(
+                        enemyCardFace,
+                        kindOverride != CardPresentationKind.Unknown ? kindOverride : CardPresentationKind.Monster,
+                        ref _enemyLiveKind);
                 ApplyFace(_enemyBinder, snapshot);
                 if (_enemyBinder != null)
                 {
@@ -298,24 +506,8 @@ namespace NineGrid.Flow
                 BindGlossaryPanel(regularGlossaryList, terms, _regularBinder, glossaryCatalog, snapshot);
             }
 
+            RefreshDerivedCardText(isMonster, snapshot != null ? snapshot.DefId : string.Empty);
             return true;
-        }
-
-        public void Close()
-        {
-            if (!_open)
-            {
-                HideAllImmediate();
-                return;
-            }
-
-            _open = false;
-            HideAllImmediate();
-            if (_dimmerHeld)
-            {
-                BattleUiDimmerOverlay.Release("card-inspect");
-                _dimmerHeld = false;
-            }
         }
 
         private void Awake()
@@ -329,10 +521,9 @@ namespace NineGrid.Flow
             var uiRoot = transform.root != null && transform.root.name == "UI面板"
                 ? transform.root.gameObject
                 : FindSceneObject("UI面板");
-            if (enemyPanel == null || regularPanel == null)
-            {
-                BindScene(uiRoot, root);
-            }
+            // 无条件重接场景槽位：场景序列化的 presenter 可能保存自旧代码版本（缺新字段），
+            // 仅在 enemyPanel/regularPanel 为空时 BindScene 会让新字段永远为 null。BindScene 幂等。
+            BindScene(uiRoot, root);
 
             HideAllImmediate();
         }
@@ -882,12 +1073,16 @@ namespace NineGrid.Flow
             out TMP_Text faceIntro,
             out TMP_Text deckIntro,
             out Transform closeButton,
-            out CardInspectGlossaryListView glossaryList)
+            out CardInspectGlossaryListView glossaryList,
+            out Transform derivedButton,
+            out TMP_Text derivedText)
         {
             faceIntro = null;
             deckIntro = null;
             closeButton = null;
             glossaryList = null;
+            derivedButton = null;
+            derivedText = null;
             if (panel == null)
             {
                 return;
@@ -895,6 +1090,9 @@ namespace NineGrid.Flow
 
             var t = panel.transform;
             closeButton = FindChild(t, "关闭面板 (1)") ?? FindChild(t, "关闭面板");
+            // 常规面板按钮名为「衍生卡查看按钮 (1)」；两面板各自精确查找并回退基础名。
+            derivedButton = FindChild(t, "衍生卡查看按钮 (1)") ?? FindChild(t, "衍生卡查看按钮");
+            derivedText = derivedButton != null ? FindTmp(derivedButton, "文字") : null;
             faceIntro = FindTmp(t, "背景介绍");
             deckIntro = FindTmp(t, "牌组介绍");
 
@@ -946,6 +1144,57 @@ namespace NineGrid.Flow
                 UiOverlayHitAction.CloseCardInspect,
                 BattleUiDimmerOverlay.CloseHitSort,
                 PointerHitSurfacePriorities.Overlay);
+        }
+
+        /// <summary>
+        /// 衍生卡查看按钮接线：碰撞体覆盖按钮底图（SpriteRenderer 世界尺寸），
+        /// 命中代理动作 <see cref="UiOverlayHitAction.OpenDerivedCardInspect"/>；
+        /// 初始文案「衍生卡：无」，开面板时由 <see cref="RefreshDerivedCardText"/> 动态刷新。
+        /// </summary>
+        private static void WireDerivedCardButton(Transform button, TMP_Text text)
+        {
+            if (button == null)
+            {
+                return;
+            }
+
+            var col = button.GetComponent<BoxCollider2D>();
+            if (col == null)
+            {
+                col = button.gameObject.AddComponent<BoxCollider2D>();
+            }
+
+            var renderer = button.GetComponent<SpriteRenderer>();
+            if (renderer != null && renderer.sprite != null)
+            {
+                var size = renderer.bounds.size;
+                col.size = new Vector2(size.x, size.y);
+                col.offset = button.InverseTransformPoint(renderer.bounds.center);
+            }
+            else
+            {
+                col.size = new Vector2(0.5f, 0.5f);
+                col.offset = Vector2.zero;
+            }
+
+            col.isTrigger = false;
+            col.enabled = true;
+
+            var proxy = button.GetComponent<UiOverlayHitProxy>();
+            if (proxy == null)
+            {
+                proxy = button.gameObject.AddComponent<UiOverlayHitProxy>();
+            }
+
+            proxy.Configure(
+                UiOverlayHitAction.OpenDerivedCardInspect,
+                BattleUiDimmerOverlay.CloseHitSort,
+                PointerHitSurfacePriorities.Overlay);
+
+            if (text != null)
+            {
+                text.text = NoDerivedCardText;
+            }
         }
 
         /// <summary>

@@ -13,6 +13,8 @@ namespace NineGrid.Flow
         DimmerBackground = 2,
         /// <summary>关闭局内功能菜单（音量等）。</summary>
         CloseInRunFunctionMenu = 3,
+        /// <summary>右键详述面板：衍生卡查看按钮（有衍生卡时切入衍生卡详情，栈式返回）。</summary>
+        OpenDerivedCardInspect = 4,
     }
 
     /// <summary>
@@ -74,6 +76,9 @@ namespace NineGrid.Flow
             {
                 case UiOverlayHitAction.CloseCardInspect:
                     CardInspectOverlayPresenter.CloseIfOpen();
+                    break;
+                case UiOverlayHitAction.OpenDerivedCardInspect:
+                    CardInspectOverlayPresenter.OpenDerivedCardIfAny();
                     break;
                 case UiOverlayHitAction.CloseInRunFunctionMenu:
                     PlayerAudioSettingsPanel.CloseIfOpen();
