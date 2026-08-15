@@ -180,7 +180,8 @@ namespace NineGrid.Core.Systems
             {
                 var run = this.GetModel<RunModel>();
                 var floor = run != null && run.Floor != null ? run.Floor.Value : 1;
-                MonsterFloorStatScaling.ApplyToDraft(draft, floor);
+                var nodeIndex = run != null && run.NodeIndex != null ? run.NodeIndex.Value : 0;
+                MonsterFloorStatScaling.ApplyToDraft(draft, floor, nodeIndex);
             }
 
             return draft;
