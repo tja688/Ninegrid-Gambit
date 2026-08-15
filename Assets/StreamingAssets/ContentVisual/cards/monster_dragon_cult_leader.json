@@ -6,7 +6,7 @@
     "role": "",
     "displayName": "蓝焰",
     "designSlotName": "",
-    "description": "[[普通近战]]，[[献火]]",
+    "description": "[[献火]]",
     "faceIntro": "烈焰一族的中坚力量",    "attackPattern": "普通近战",
     "rhythmSource": "行动计数",
     "rhythmPeriod": 5,

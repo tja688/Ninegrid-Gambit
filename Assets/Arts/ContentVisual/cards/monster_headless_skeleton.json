@@ -6,7 +6,7 @@
     "role": "",
     "displayName": "钢铁莱姆",
     "designSlotName": "",
-    "description": "[[普通近战]][[叠甲]]",
+    "description": "[[叠甲]]",
     "faceIntro": "很耐揍",    "attackPattern": "普通近战",
     "rhythmSource": "行动计数",
     "rhythmPeriod": 6,

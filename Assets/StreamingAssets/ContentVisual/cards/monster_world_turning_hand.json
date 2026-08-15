@@ -6,7 +6,7 @@
     "role": "",
     "displayName": "短剑骷髅",
     "designSlotName": "",
-    "description": "[[普通近战]]，[[吟唱]]",
+    "description": "[[吟唱]]",
     "faceIntro": "剑是捡的",    "attackPattern": "普通近战",
     "rhythmSource": "行动计数",
     "rhythmPeriod": 5,
