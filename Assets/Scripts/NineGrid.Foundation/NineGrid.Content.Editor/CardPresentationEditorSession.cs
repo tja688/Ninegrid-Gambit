@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using NineGrid.Cards.Presentation;
 using NineGrid.Content;
 using NineGrid.Content.CardPresentation;
 using NineGrid.Core.Content;
@@ -1410,6 +1411,40 @@ namespace NineGrid.Content.Editor
             if (dto.skillIds == null)
             {
                 dto.skillIds = Array.Empty<string>();
+            }
+
+            if (dto.extraGlossaryTerms == null)
+            {
+                dto.extraGlossaryTerms = Array.Empty<string>();
+            }
+            else if (dto.extraGlossaryTerms.Length > 0)
+            {
+                // 与检查描述词条重名、或自身重名的追加词条不落盘（详情装配时同样去重）。
+                var derivedNames = new HashSet<string>(StringComparer.Ordinal);
+                var derived = CardGlossaryTerms.ExtractExplicitTerms(dto.description, null);
+                for (var i = 0; i < derived.Count; i++)
+                {
+                    var lookup = derived[i].LookupName?.Trim() ?? string.Empty;
+                    if (lookup.Length > 0)
+                    {
+                        derivedNames.Add(lookup);
+                    }
+                }
+
+                var seen = new HashSet<string>(StringComparer.Ordinal);
+                var normalized = new List<string>(dto.extraGlossaryTerms.Length);
+                for (var i = 0; i < dto.extraGlossaryTerms.Length; i++)
+                {
+                    var name = (dto.extraGlossaryTerms[i] ?? string.Empty).Trim();
+                    if (name.Length == 0 || !seen.Add(name) || derivedNames.Contains(name))
+                    {
+                        continue;
+                    }
+
+                    normalized.Add(name);
+                }
+
+                dto.extraGlossaryTerms = normalized.ToArray();
             }
         }
 

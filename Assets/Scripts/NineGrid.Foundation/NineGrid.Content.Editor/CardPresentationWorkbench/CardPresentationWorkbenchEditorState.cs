@@ -375,6 +375,7 @@ namespace NineGrid.Content.Editor
                 description = dto.description ?? string.Empty,
                 descriptionLocked = session.InferDescriptionCustomLocked(dto),
                 faceIntro = dto.faceIntro ?? string.Empty,
+                extraGlossaryTerms = dto.extraGlossaryTerms ?? Array.Empty<string>(),
                 attackPattern = dto.attackPattern ?? string.Empty,
                 rhythmSource = dto.rhythmSource ?? string.Empty,
                 rhythmPeriod = dto.rhythmPeriod,
@@ -855,6 +856,16 @@ namespace NineGrid.Content.Editor
                 {
                     session.TrySyncAutoDescription(dto, customLocked: false);
                 }
+            }
+
+            if (request["extraGlossaryTerms"] is JArray termArray)
+            {
+                dto.extraGlossaryTerms = termArray
+                    .OfType<JValue>()
+                    .Select(v => (v.Value as string ?? string.Empty).Trim())
+                    .Where(s => s.Length > 0)
+                    .Distinct(StringComparer.Ordinal)
+                    .ToArray();
             }
 
             BumpRevision();

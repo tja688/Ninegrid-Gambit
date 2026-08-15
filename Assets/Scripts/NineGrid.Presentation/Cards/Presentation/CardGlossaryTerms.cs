@@ -14,13 +14,22 @@ namespace NineGrid.Cards.Presentation
 
         public readonly struct ResolvedTerm
         {
-            public ResolvedTerm(string displayName, string explanation, bool matched, bool hasColor, UnityEngine.Color color)
+            public ResolvedTerm(
+                string displayName,
+                string explanation,
+                bool matched,
+                bool hasColor,
+                UnityEngine.Color color,
+                string lookupName = null)
             {
                 DisplayName = displayName ?? string.Empty;
                 Explanation = explanation ?? string.Empty;
                 Matched = matched;
                 HasColor = hasColor;
                 Color = color;
+                LookupName = string.IsNullOrWhiteSpace(lookupName)
+                    ? (displayName ?? string.Empty).Trim()
+                    : lookupName.Trim();
             }
 
             public string DisplayName { get; }
@@ -28,6 +37,8 @@ namespace NineGrid.Cards.Presentation
             public bool Matched { get; }
             public bool HasColor { get; }
             public UnityEngine.Color Color { get; }
+            /// <summary>词条库 zh 名（localization 表键）；未命中时等于名字明文。用于跨源去重。</summary>
+            public string LookupName { get; }
         }
 
         /// <summary>
@@ -58,30 +69,107 @@ namespace NineGrid.Cards.Presentation
                     continue;
                 }
 
-                if (catalog != null && catalog.TryGetByDisplayName(name, out var entry) && entry != null)
-                {
-                    // 行标题与解释按当前语言取 glossary 表（键 = zh 名），缺翻译回中文（ADR-0046）。
-                    var zhName = string.IsNullOrWhiteSpace(entry.displayNameZh)
-                        ? name
-                        : entry.displayNameZh.Trim();
-                    var title = NineGrid.Core.Localization.LocalizationCatalog
-                        .ResolveGlossaryDisplayName(zhName);
-                    var explanation = NineGrid.Core.Localization.LocalizationCatalog
-                        .ResolveGlossaryIntro(zhName, entry.explanation ?? string.Empty);
-                    result.Add(new ResolvedTerm(
-                        title,
-                        explanation,
-                        matched: true,
-                        hasColor: entry.HasColorOverride,
-                        color: entry.color));
-                }
-                else
-                {
-                    result.Add(new ResolvedTerm(name, string.Empty, matched: false, hasColor: false, color: default));
-                }
+                ResolveTerm(name, catalog, out var resolved);
+                result.Add(resolved);
             }
 
             return result;
+        }
+
+        /// <summary>
+        /// 右键详情词条装配：检查描述自动抽取（基础填充）+ 配置的额外词条（去重保序）。
+        /// 额外词条按词条库解析（缺库/未命中仍返回名字行）；与描述词条重名、或自身重名时丢弃。
+        /// </summary>
+        public static List<ResolvedTerm> BuildInspectTerms(
+            string description,
+            IReadOnlyList<string> extraNames,
+            CardFaceDescriptionIconCatalogSO catalog)
+        {
+            var result = ExtractExplicitTerms(description, catalog);
+
+            if (extraNames == null || extraNames.Count == 0)
+            {
+                return result;
+            }
+
+            // 描述词条名（去括号明文）与词条库 zh 名（localization 表键）都作为占用键。
+            var occupied = new HashSet<string>(StringComparer.Ordinal);
+            if (!string.IsNullOrEmpty(description))
+            {
+                foreach (Match match in DoubleBracketToken.Matches(description))
+                {
+                    var name = match.Groups[1].Value.Trim();
+                    if (name.Length > 0)
+                    {
+                        occupied.Add(name);
+                    }
+                }
+            }
+
+            for (var i = 0; i < result.Count; i++)
+            {
+                var title = result[i].DisplayName?.Trim() ?? string.Empty;
+                if (title.Length > 0)
+                {
+                    occupied.Add(title);
+                }
+            }
+
+            for (var i = 0; i < extraNames.Count; i++)
+            {
+                var name = (extraNames[i] ?? string.Empty).Trim();
+                if (name.Length == 0)
+                {
+                    continue;
+                }
+
+                ResolveTerm(name, catalog, out var resolved);
+                var key = resolved.LookupName.Length > 0
+                    ? resolved.LookupName
+                    : name;
+                if (!occupied.Add(key))
+                {
+                    continue;
+                }
+
+                result.Add(resolved);
+            }
+
+            return result;
+        }
+
+        private static void ResolveTerm(
+            string name,
+            CardFaceDescriptionIconCatalogSO catalog,
+            out ResolvedTerm resolved)
+        {
+            if (catalog != null && catalog.TryGetByDisplayName(name, out var entry) && entry != null)
+            {
+                // 行标题与解释按当前语言取 glossary 表（键 = zh 名），缺翻译回中文（ADR-0046）。
+                var zhName = string.IsNullOrWhiteSpace(entry.displayNameZh)
+                    ? name
+                    : entry.displayNameZh.Trim();
+                var title = NineGrid.Core.Localization.LocalizationCatalog
+                    .ResolveGlossaryDisplayName(zhName);
+                var explanation = NineGrid.Core.Localization.LocalizationCatalog
+                    .ResolveGlossaryIntro(zhName, entry.explanation ?? string.Empty);
+                resolved = new ResolvedTerm(
+                    title,
+                    explanation,
+                    matched: true,
+                    hasColor: entry.HasColorOverride,
+                    color: entry.color,
+                    lookupName: zhName);
+                return;
+            }
+
+            resolved = new ResolvedTerm(
+                name,
+                string.Empty,
+                matched: false,
+                hasColor: false,
+                color: default,
+                lookupName: name);
         }
     }
 }

@@ -37,6 +37,8 @@ namespace NineGrid.Content.Editor
         private TextField descriptionField;
         private Label descriptionModeLabel;
         private bool suppressDescriptionCallback;
+        /// <summary>检查描述变更后重建「词条配置（右键详情）」区（自动抽取词条跟随描述）。</summary>
+        private Action refreshGlossaryTermsUi;
         private string previewFingerprint = string.Empty;
         private string vfxPreviewFingerprint = string.Empty;
         private bool faceUp = true;
@@ -1324,6 +1326,7 @@ namespace NineGrid.Content.Editor
                         }
 
                         RefreshDescriptionModeLabel(entry);
+                        refreshGlossaryTermsUi?.Invoke();
                         session.MarkDirty(dto.contentId);
                         InvalidateAndRefreshPreview(entry);
                         UpdateStatus();
@@ -1342,6 +1345,14 @@ namespace NineGrid.Content.Editor
             animationCard.style.flexGrow = 2;
             animationCard.style.flexBasis = 0;
             bottomRow.Add(animationCard);
+
+            var glossaryTermsCard = ContentVisualWarmConsoleUi.CreateSectionCard(
+                "词条配置（右键详情）",
+                "基础填充 = 检查描述中的 [[词条]]（自动抽取，删描述词条后保存刷新本区同步消失）；" +
+                "可再搜索词条表追加隐藏词条，仅右键详情多展，不占卡面描述。",
+                column => BuildGlossaryTermsSection(column, entry));
+            glossaryTermsCard.style.marginBottom = 6;
+            contentRoot.Add(glossaryTermsCard);
 
             var effectAssemblyCard = ContentVisualWarmConsoleUi.CreateSectionCard(
                 "效果装配",
@@ -1728,6 +1739,7 @@ namespace NineGrid.Content.Editor
                 {
                     SetDescriptionFieldValue(dto.description);
                     RefreshDescriptionModeLabel(entry);
+                    refreshGlossaryTermsUi?.Invoke();
                 }
 
                 OnDtoEdited(entry);
@@ -1872,6 +1884,279 @@ namespace NineGrid.Content.Editor
                     dto.effectIds = Array.Empty<string>();
                     CommitAssemblies(rebuildUi: true);
                 }) { text = "清空全部效果" }));
+        }
+
+        /// <summary>
+        /// 词条配置（右键详情）：基础填充 = 检查描述自动抽取的 [[词条]]（只读展示，不落盘），
+        /// 追加 = 搜索词条表挑选的隐藏词条（落 <c>extraGlossaryTerms</c>，仅右键详情多展）。
+        /// 改检查描述后 <see cref="refreshGlossaryTermsUi"/> 重建本区，删除描述词条即同步消失。
+        /// </summary>
+        private void BuildGlossaryTermsSection(VisualElement column, CardPresentationEditorEntry entry)
+        {
+            EnsureIconCatalogLoaded();
+            var dto = entry.Dto;
+
+            var glossaryChoices = new List<SearchableChoiceField.Choice>();
+            if (iconCatalog != null)
+            {
+                for (var i = 0; i < iconCatalog.Entries.Count; i++)
+                {
+                    var glossaryEntry = iconCatalog.Entries[i];
+                    if (glossaryEntry == null || string.IsNullOrWhiteSpace(glossaryEntry.displayNameZh))
+                    {
+                        continue;
+                    }
+
+                    var name = glossaryEntry.displayNameZh.Trim();
+                    glossaryChoices.Add(new SearchableChoiceField.Choice
+                    {
+                        Label = name,
+                        Value = name,
+                        SearchHaystack = name + " " + (glossaryEntry.explanation ?? string.Empty),
+                    });
+                }
+            }
+
+            if (glossaryChoices.Count == 0)
+            {
+                glossaryChoices.Add(new SearchableChoiceField.Choice
+                {
+                    Label = "（词条表为空，请先到左侧「词条」新增）",
+                    Value = "__none__",
+                    SearchHaystack = "词条表为空",
+                });
+            }
+
+            var derivedHost = new VisualElement();
+            derivedHost.style.flexDirection = FlexDirection.Row;
+            derivedHost.style.flexWrap = Wrap.Wrap;
+            derivedHost.style.marginTop = 4;
+            column.Add(ContentVisualWarmConsoleUi.CreateTitleLabel(
+                "基础填充（检查描述自动抽取）", 11, true, ContentVisualWarmConsoleUi.Theme.TextSecondary));
+            column.Add(derivedHost);
+
+            var extraHost = new VisualElement();
+            extraHost.style.flexDirection = FlexDirection.Row;
+            extraHost.style.flexWrap = Wrap.Wrap;
+            extraHost.style.marginTop = 10;
+            column.Add(ContentVisualWarmConsoleUi.CreateTitleLabel(
+                "追加词条（右键详情多展，不占卡面描述）", 11, true, ContentVisualWarmConsoleUi.Theme.TextSecondary));
+            column.Add(extraHost);
+
+            var addField = new SearchableChoiceField();
+            addField.SetChoices(glossaryChoices, selectedValue: string.Empty);
+            addField.ValueChanged += picked =>
+            {
+                if (session.GetFocusedFace() != entry
+                    || string.IsNullOrEmpty(picked)
+                    || string.Equals(picked, "__none__", StringComparison.Ordinal))
+                {
+                    return;
+                }
+
+                AddExtraGlossaryTerm(dto, picked);
+                Rebuild();
+                OnDtoEdited(entry);
+            };
+            var addRow = ContentVisualWarmConsoleUi.WrapControlRow("添加词条", addField, 88f);
+            addRow.style.marginTop = 8;
+            column.Add(addRow);
+
+            void Rebuild()
+            {
+                if (session.GetFocusedFace() != entry)
+                {
+                    return;
+                }
+
+                derivedHost.Clear();
+                var derived = CardGlossaryTerms.ExtractExplicitTerms(dto.description, iconCatalog);
+                if (derived.Count == 0)
+                {
+                    derivedHost.Add(ContentVisualWarmConsoleUi.CreateDescriptionLabel(
+                        "（无；在检查描述里写 [[名字]] 即自动成为基础填充）"));
+                }
+                else
+                {
+                    for (var i = 0; i < derived.Count; i++)
+                    {
+                        derivedHost.Add(BuildGlossaryTermChip(
+                            derived[i].DisplayName,
+                            derived[i].Matched,
+                            readOnly: true,
+                            onRemove: null));
+                    }
+                }
+
+                extraHost.Clear();
+                var extras = dto.extraGlossaryTerms ?? Array.Empty<string>();
+                var kept = new List<string>(extras.Length);
+                for (var i = 0; i < extras.Length; i++)
+                {
+                    var name = (extras[i] ?? string.Empty).Trim();
+                    if (name.Length == 0)
+                    {
+                        continue;
+                    }
+
+                    // 描述里已有的词条不再重复展示/落盘（删描述词条后本项自动消失，与装配规则一致）。
+                    if (ContainsDerivedTerm(derived, name))
+                    {
+                        continue;
+                    }
+
+                    var captured = name;
+                    extraHost.Add(BuildGlossaryTermChip(
+                        name,
+                        IsTermRegistered(name),
+                        readOnly: false,
+                        onRemove: () =>
+                        {
+                            var next = new List<string>();
+                            for (var j = 0; j < (dto.extraGlossaryTerms ?? Array.Empty<string>()).Length; j++)
+                            {
+                                if (!string.Equals(
+                                        (dto.extraGlossaryTerms[j] ?? string.Empty).Trim(),
+                                        captured,
+                                        StringComparison.Ordinal))
+                                {
+                                    next.Add(dto.extraGlossaryTerms[j]);
+                                }
+                            }
+
+                            dto.extraGlossaryTerms = next.ToArray();
+                            Rebuild();
+                            OnDtoEdited(entry);
+                        }));
+                    kept.Add(name);
+                }
+
+                dto.extraGlossaryTerms = kept.ToArray();
+                if (kept.Count == 0)
+                {
+                    extraHost.Add(ContentVisualWarmConsoleUi.CreateDescriptionLabel("（暂无追加词条）"));
+                }
+            }
+
+            Rebuild();
+            refreshGlossaryTermsUi = Rebuild;
+        }
+
+        private static bool ContainsDerivedTerm(
+            IReadOnlyList<CardGlossaryTerms.ResolvedTerm> derived,
+            string name)
+        {
+            if (derived == null || string.IsNullOrEmpty(name))
+            {
+                return false;
+            }
+
+            for (var i = 0; i < derived.Count; i++)
+            {
+                if (string.Equals(derived[i].LookupName, name, StringComparison.Ordinal))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private bool IsTermRegistered(string name)
+        {
+            EnsureIconCatalogLoaded();
+            return iconCatalog != null
+                   && iconCatalog.TryGetByDisplayName(name, out var entry)
+                   && entry != null;
+        }
+
+        private void AddExtraGlossaryTerm(CardPresentationConfigDto dto, string name)
+        {
+            var trimmed = (name ?? string.Empty).Trim();
+            if (trimmed.Length == 0)
+            {
+                return;
+            }
+
+            var extras = dto.extraGlossaryTerms ?? Array.Empty<string>();
+            var list = new List<string>(extras.Length + 1);
+            var seen = new HashSet<string>(StringComparer.Ordinal);
+            for (var i = 0; i < extras.Length; i++)
+            {
+                var existing = (extras[i] ?? string.Empty).Trim();
+                if (existing.Length == 0 || !seen.Add(existing))
+                {
+                    continue;
+                }
+
+                list.Add(existing);
+            }
+
+            if (seen.Contains(trimmed))
+            {
+                return;
+            }
+
+            // 描述里已有的词条不重复追加（运行时装配同样去重）。
+            var derived = CardGlossaryTerms.ExtractExplicitTerms(dto.description, null);
+            for (var i = 0; i < derived.Count; i++)
+            {
+                if (string.Equals(derived[i].LookupName, trimmed, StringComparison.Ordinal))
+                {
+                    return;
+                }
+            }
+
+            list.Add(trimmed);
+            dto.extraGlossaryTerms = list.ToArray();
+        }
+
+        private VisualElement BuildGlossaryTermChip(
+            string name,
+            bool registered,
+            bool readOnly,
+            Action onRemove)
+        {
+            var chip = new VisualElement();
+            chip.style.flexDirection = FlexDirection.Row;
+            chip.style.alignItems = Align.Center;
+            chip.style.marginRight = 6;
+            chip.style.marginBottom = 4;
+            chip.style.paddingLeft = 8;
+            chip.style.paddingRight = 8;
+            chip.style.paddingTop = 3;
+            chip.style.paddingBottom = 3;
+            chip.style.backgroundColor = registered
+                ? ContentVisualWarmConsoleUi.Theme.NavNormalBg
+                : new Color(0.30f, 0.16f, 0.10f);
+            chip.style.borderTopLeftRadius = chip.style.borderTopRightRadius = 10;
+            chip.style.borderBottomLeftRadius = chip.style.borderBottomRightRadius = 10;
+
+            var label = ContentVisualWarmConsoleUi.CreateTitleLabel(
+                name,
+                11,
+                true,
+                registered
+                    ? ContentVisualWarmConsoleUi.Theme.TextPrimary
+                    : ContentVisualWarmConsoleUi.Theme.AccentGoldValue);
+            if (!registered)
+            {
+                label.tooltip = "未命中词条表：详情行仅显示名字，无介绍";
+            }
+
+            chip.Add(label);
+
+            if (!readOnly && onRemove != null)
+            {
+                var removeBtn = new Button(onRemove) { text = "×" };
+                removeBtn.style.marginLeft = 6;
+                removeBtn.style.paddingLeft = 2;
+                removeBtn.style.paddingRight = 2;
+                removeBtn.tooltip = "移除该追加词条";
+                chip.Add(removeBtn);
+            }
+
+            return chip;
         }
 
         private void SetDescriptionFieldValue(string value)

@@ -36,6 +36,11 @@ namespace NineGrid.Content.CardPresentation
         /// </summary>
         public string faceIntro;
         /// <summary>
+        /// 手动追加词条（[[名字]]）：右键详情词条行除检查描述自动抽取外，额外展示本列表。
+        /// 检查描述中的词条恒为基础填充，不落本字段；与描述词条重名在装配/展示时去重。
+        /// </summary>
+        public string[] extraGlossaryTerms;
+        /// <summary>
         /// 怪物攻击模式（ADR-0011）：普通近战 / 斜角近战 / 全向近战 / 无。远程射击走 [[远程武器]] 技能，不占独立几何模式。
         /// 必填；缺省为装配错误，不得静默当「无」。非 Monster 可空。
         /// </summary>

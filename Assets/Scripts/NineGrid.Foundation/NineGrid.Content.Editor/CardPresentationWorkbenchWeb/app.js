@@ -1263,6 +1263,7 @@
       descArea = textArea(face.description, (v) => {
         face.description = v;
         patch({ description: v });
+        inputs.renderGlossaryTerms && inputs.renderGlossaryTerms();
       }, { minHeight: "72px" });
       descArea.classList.add("desc-textarea");
       body.appendChild(descArea);
@@ -1275,6 +1276,154 @@
       descModeChip.className = "chip " + (local.descriptionLocked ? "accent" : "ok");
       syncValue(descArea, local.description);
     }
+
+    /* 词条配置（右键详情） */
+    rightCol.appendChild(sectionCard("词条配置（右键详情）", "检查描述中的 [[词条]] 自动作为基础填充；可搜索词条表追加隐藏词条（仅右键详情多展）", (body) => {
+      face.extraGlossaryTerms = face.extraGlossaryTerms || [];
+      const derivedHost = el("div", "term-chips");
+      const extraHost = el("div", "term-chips");
+      body.appendChild(el("div", "term-group-label", "基础填充（检查描述自动抽取，删描述词条后保存刷新本区同步消失）"));
+      body.appendChild(derivedHost);
+      body.appendChild(el("div", "term-group-label", "追加词条（右键详情多展，不占卡面描述）"));
+      body.appendChild(extraHost);
+      const addRow = el("div", "term-add-row");
+      const addBtn = el("button", "small", "＋ 添加词条");
+      addRow.appendChild(addBtn);
+      body.appendChild(addRow);
+
+      function extractDerived() {
+        const out = [];
+        const seen = new Set();
+        const re = /\[\[([^\]]+)\]\]/g;
+        let m;
+        while ((m = re.exec(face.description || ""))) {
+          const name = m[1].trim();
+          if (name && !seen.has(name)) { seen.add(name); out.push(name); }
+        }
+        return out;
+      }
+
+      function glossaryChoices() {
+        return (snap.glossary?.entries || [])
+          .filter((e) => (e.displayNameZh || "").trim())
+          .map((e) => ({ value: e.displayNameZh.trim(), label: e.displayNameZh.trim(), sub: e.explanation || "" }));
+      }
+
+      function isTermRegistered(name) {
+        const needle = name.trim();
+        return (snap.glossary?.entries || []).some((e) => (e.displayNameZh || "").trim() === needle);
+      }
+
+      function sendExtras() {
+        markEdited(key);
+        queuePatch("updateFace", key, { contentId }, { extraGlossaryTerms: face.extraGlossaryTerms.slice() }, () => {
+          if (preview) preview._reload();
+        });
+      }
+
+      function chip(name, registered, onRemove) {
+        const c = el("span", "term-chip" + (registered ? "" : " unregistered"), name);
+        if (!registered) c.title = "未命中词条表：详情行仅显示名字";
+        if (onRemove) {
+          const x = el("button", "term-remove", "×");
+          x.title = "移除该追加词条";
+          x.addEventListener("click", onRemove);
+          c.appendChild(x);
+        }
+        return c;
+      }
+
+      function renderTerms() {
+        derivedHost.innerHTML = "";
+        const derived = extractDerived();
+        if (derived.length === 0) {
+          derivedHost.appendChild(el("span", "preview-note", "（无；在检查描述里写 [[名字]] 即自动作为基础填充）"));
+        }
+        for (const name of derived) {
+          derivedHost.appendChild(chip(name, isTermRegistered(name), null));
+        }
+
+        extraHost.innerHTML = "";
+        const extras = face.extraGlossaryTerms;
+        const kept = [];
+        for (let i = 0; i < extras.length; i++) {
+          const name = (extras[i] || "").trim();
+          if (!name || derived.includes(name)) continue;
+          kept.push(name);
+          const target = name;
+          extraHost.appendChild(chip(name, isTermRegistered(name), () => {
+            face.extraGlossaryTerms = face.extraGlossaryTerms.filter((n) => (n || "").trim() !== target);
+            sendExtras();
+            renderTerms();
+          }));
+        }
+        face.extraGlossaryTerms.length = 0;
+        for (const k of kept) face.extraGlossaryTerms.push(k);
+        if (kept.length === 0) {
+          extraHost.appendChild(el("span", "preview-note", "（暂无追加词条）"));
+        }
+      }
+
+      function addTerm(name) {
+        const trimmed = name.trim();
+        if (!trimmed) return;
+        if (extractDerived().includes(trimmed)) {
+          toast("该词条已由检查描述自动填充", "err");
+          return;
+        }
+        const extras = face.extraGlossaryTerms;
+        if (extras.includes(trimmed)) return;
+        extras.push(trimmed);
+        sendExtras();
+        renderTerms();
+      }
+
+      addBtn.addEventListener("click", () => {
+        const existing = addRow.querySelector(".combo-pop");
+        if (existing) { existing.remove(); return; }
+        const pop = el("div", "combo-pop");
+        const search = el("input");
+        search.type = "text";
+        search.placeholder = "搜索词条…";
+        pop.appendChild(search);
+        const optionsHost = el("div", "options");
+        pop.appendChild(optionsHost);
+        addRow.appendChild(pop);
+
+        function renderOptions() {
+          optionsHost.innerHTML = "";
+          const needle = search.value.trim().toLowerCase();
+          let shown = 0;
+          for (const choice of glossaryChoices()) {
+            if (needle && !(choice.label + " " + (choice.sub || "")).toLowerCase().includes(needle)) continue;
+            if (++shown > 120) break;
+            const option = el("div", "combo-option");
+            option.appendChild(el("div", null, choice.label));
+            if (choice.sub) option.appendChild(el("div", "sub", choice.sub));
+            option.addEventListener("click", () => {
+              pop.remove();
+              document.removeEventListener("mousedown", dismiss);
+              addTerm(choice.value);
+            });
+            optionsHost.appendChild(option);
+          }
+          if (shown === 0) optionsHost.appendChild(el("div", "combo-option", "（无匹配）"));
+        }
+        search.addEventListener("input", renderOptions);
+        renderOptions();
+        search.focus();
+        const dismiss = (ev) => {
+          if (!addRow.contains(ev.target)) {
+            pop.remove();
+            document.removeEventListener("mousedown", dismiss);
+          }
+        };
+        document.addEventListener("mousedown", dismiss);
+      });
+
+      inputs.renderGlossaryTerms = renderTerms;
+      renderTerms();
+    }));
 
     /* 其他配置 */
     rightCol.appendChild(sectionCard("其他配置", "extraSlots", (body) => {
@@ -1331,6 +1480,11 @@
         for (const slot of local.extraSlots) face.extraSlots.push({ code: slot.code, path: slot.path });
         inputs.renderExtraRows && inputs.renderExtraRows();
       }
+      if (JSON.stringify(local.extraGlossaryTerms || []) !== JSON.stringify(face.extraGlossaryTerms || [])) {
+        face.extraGlossaryTerms.length = 0;
+        for (const name of local.extraGlossaryTerms || []) face.extraGlossaryTerms.push(name);
+        inputs.renderGlossaryTerms && inputs.renderGlossaryTerms();
+      }
     }
 
     function sync() {
@@ -1377,6 +1531,7 @@
         for (const tile of Object.values(inputs.spriteTiles)) tile._refresh();
       }
       syncDescription(face);
+      if (inputs.renderGlossaryTerms) inputs.renderGlossaryTerms();
       updateBackFollowNote();
     }
 

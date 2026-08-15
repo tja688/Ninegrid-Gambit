@@ -267,6 +267,11 @@ namespace NineGrid.Content.CardPresentation
                 dto.tags = Array.Empty<string>();
             }
 
+            if (dto.extraGlossaryTerms == null)
+            {
+                dto.extraGlossaryTerms = Array.Empty<string>();
+            }
+
             if (dto.effectAssemblies == null)
             {
                 dto.effectAssemblies = Array.Empty<EffectAssemblyDto>();

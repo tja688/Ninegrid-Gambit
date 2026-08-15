@@ -7,6 +7,7 @@ using NineGrid.Core;
 using NineGrid.Core.Systems;
 using NineGrid.Presentation;
 using QFramework;
+using System;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
@@ -261,8 +262,9 @@ namespace NineGrid.Flow
             SetActiveSafe(regularPanel, !isMonster);
 
             var glossaryCatalog = CardFacePresentationBinder.PeekDescriptionIconCatalog();
-            var terms = CardGlossaryTerms.ExtractExplicitTerms(
+            var terms = CardGlossaryTerms.BuildInspectTerms(
                 snapshot != null ? snapshot.BasicDescription : null,
+                ResolveExtraGlossaryTerms(snapshot != null ? snapshot.DefId : null),
                 glossaryCatalog);
 
             if (isMonster)
@@ -799,6 +801,28 @@ namespace NineGrid.Flow
             }
 
             return fallback ?? string.Empty;
+        }
+
+        /// <summary>
+        /// 右键详情额外词条（JSON <c>extraGlossaryTerms</c>）：卡面级词条配置栏位追加的隐藏词条，
+        /// 与检查描述自动抽取词条去重后一起装行。无 JSON / 未配置时返回空。
+        /// </summary>
+        private static string[] ResolveExtraGlossaryTerms(string defId)
+        {
+            if (string.IsNullOrWhiteSpace(defId))
+            {
+                return Array.Empty<string>();
+            }
+
+            if (CardPresentationConfigCatalog.TryGet(defId.Trim(), out var dto)
+                && dto != null
+                && dto.extraGlossaryTerms != null
+                && dto.extraGlossaryTerms.Length > 0)
+            {
+                return dto.extraGlossaryTerms;
+            }
+
+            return Array.Empty<string>();
         }
 
         private static CardPresentationSnapshot CloneForInspect(
