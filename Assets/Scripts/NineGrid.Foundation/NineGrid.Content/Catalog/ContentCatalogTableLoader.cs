@@ -33,8 +33,10 @@ namespace NineGrid.Content
             }
 
             EffectTemplateCatalog.Invalidate();
+            DungeonEnvironmentCatalog.Invalidate();
             var applied = 0;
             applied += EffectTemplateCatalog.Count; // ensure templates load; mounts resolved in projector
+            applied += ApplyDungeonEnvironments(Path.Combine(folder, DungeonEnvironmentCatalog.FileName));
             applied += ApplyRewardPools(catalog, Path.Combine(folder, "reward_pools.json"));
             // legacy whitelist（若仍存在则合并）；生产以查询规则为主（#71）。
             var entriesPath = Path.Combine(folder, "reward_entries.json");
@@ -68,6 +70,26 @@ namespace NineGrid.Content
             }
 
             return string.Empty;
+        }
+
+        private static int ApplyDungeonEnvironments(string path)
+        {
+            if (string.IsNullOrEmpty(path) || !File.Exists(path))
+            {
+                return 0;
+            }
+
+            try
+            {
+                var table = JsonUtility.FromJson<DungeonEnvironmentTableDto>(File.ReadAllText(path));
+                DungeonEnvironmentCatalog.SetTable(table);
+                return table?.variants != null ? 1 : 0;
+            }
+            catch (Exception ex)
+            {
+                Debug.LogWarning("[ContentCatalogTableLoader] Failed reading " + path + ": " + ex.Message);
+                return 0;
+            }
         }
 
         private static int ApplyRewardPools(GameContentCatalog catalog, string path)

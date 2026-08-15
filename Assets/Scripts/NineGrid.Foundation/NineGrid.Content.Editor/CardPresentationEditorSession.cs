@@ -21,6 +21,7 @@ namespace NineGrid.Content.Editor
         EffectPool = 1,
         Decks = 2,
         VfxLibrary = 3,
+        DungeonFiction = 4,
     }
 
     /// <summary>内容区焦点种类。</summary>
@@ -32,6 +33,7 @@ namespace NineGrid.Content.Editor
         Deck = 3,
         DescriptionGlossary = 4,
         VisualEffect = 5,
+        DungeonFiction = 6,
     }
 
     /// <summary>
@@ -187,12 +189,16 @@ namespace NineGrid.Content.Editor
         private string focusedContentId = string.Empty;
         private string focusedTemplateId = string.Empty;
         private string focusedVisualEffectId = string.Empty;
+        private string focusedDungeonVariantId = string.Empty;
+        private DungeonEnvironmentEditorDocument dungeonEnvironments;
 
         public IReadOnlyList<CardPresentationEditorEntry> FaceEntries => faceEntries;
         public IReadOnlyList<CardPresentationEditorEntry> DeckEntries => deckEntries;
         public IReadOnlyList<EffectTemplateEditorIO.TemplateRow> EffectTemplates => effectTemplates;
         public IReadOnlyList<VisualEffectCatalogEditorIO.EditorRow> VisualEffects => visualEffects;
         public IReadOnlyList<string> KnownSkillIds => knownSkillIds;
+        public DungeonEnvironmentEditorDocument DungeonEnvironments => dungeonEnvironments;
+        public const string DungeonFictionRulesId = "__rules__";
         public GameContentCatalog CoreCatalog { get; private set; }
         public ContentVisualCatalog VisualCatalog { get; private set; }
         public ContentVisualSpriteCatalogSet SpriteCatalogs { get; private set; }
@@ -244,6 +250,11 @@ namespace NineGrid.Content.Editor
                     {
                         n++;
                     }
+                }
+
+                if (dungeonEnvironments != null && dungeonEnvironments.IsDirty)
+                {
+                    n++;
                 }
 
                 return n;
@@ -311,6 +322,8 @@ namespace NineGrid.Content.Editor
 
             visualEffects.AddRange(vfxRows);
 
+            dungeonEnvironments = DungeonEnvironmentEditorIO.Load(out _);
+
             if (!string.IsNullOrEmpty(focusedContentId)
                 && !faceById.ContainsKey(focusedContentId)
                 && !deckById.ContainsKey(focusedContentId))
@@ -330,6 +343,13 @@ namespace NineGrid.Content.Editor
                     || !string.Equals(v.Id, focusedVisualEffectId, StringComparison.Ordinal)))
             {
                 focusedVisualEffectId = string.Empty;
+            }
+
+            if (!string.IsNullOrEmpty(focusedDungeonVariantId)
+                && !string.Equals(focusedDungeonVariantId, DungeonFictionRulesId, StringComparison.Ordinal)
+                && dungeonEnvironments?.FindVariant(focusedDungeonVariantId) == null)
+            {
+                focusedDungeonVariantId = string.Empty;
             }
         }
 
@@ -400,6 +420,7 @@ namespace NineGrid.Content.Editor
             focusedContentId = contentId ?? string.Empty;
             focusedTemplateId = string.Empty;
             focusedVisualEffectId = string.Empty;
+            focusedDungeonVariantId = string.Empty;
         }
 
         public void FocusDeck(string contentId)
@@ -408,6 +429,7 @@ namespace NineGrid.Content.Editor
             focusedContentId = contentId ?? string.Empty;
             focusedTemplateId = string.Empty;
             focusedVisualEffectId = string.Empty;
+            focusedDungeonVariantId = string.Empty;
         }
 
         public void FocusEffectTemplate(string templateId)
@@ -416,6 +438,7 @@ namespace NineGrid.Content.Editor
             focusedTemplateId = templateId ?? string.Empty;
             focusedContentId = string.Empty;
             focusedVisualEffectId = string.Empty;
+            focusedDungeonVariantId = string.Empty;
         }
 
         public void FocusDescriptionGlossary()
@@ -424,6 +447,7 @@ namespace NineGrid.Content.Editor
             focusedContentId = string.Empty;
             focusedTemplateId = string.Empty;
             focusedVisualEffectId = string.Empty;
+            focusedDungeonVariantId = string.Empty;
         }
 
         public void FocusVisualEffect(string visualEffectId)
@@ -432,7 +456,37 @@ namespace NineGrid.Content.Editor
             focusedVisualEffectId = visualEffectId ?? string.Empty;
             focusedContentId = string.Empty;
             focusedTemplateId = string.Empty;
+            focusedDungeonVariantId = string.Empty;
         }
+
+        public void FocusDungeonFiction(string variantId)
+        {
+            focusKind = CardPresentationEditorFocusKind.DungeonFiction;
+            focusedDungeonVariantId = string.IsNullOrWhiteSpace(variantId)
+                ? DungeonFictionRulesId
+                : variantId;
+            focusedContentId = string.Empty;
+            focusedTemplateId = string.Empty;
+            focusedVisualEffectId = string.Empty;
+        }
+
+        public bool IsDungeonFictionRulesFocused =>
+            focusKind == CardPresentationEditorFocusKind.DungeonFiction
+            && string.Equals(focusedDungeonVariantId, DungeonFictionRulesId, StringComparison.Ordinal);
+
+        public DungeonEnvironmentVariantDto GetFocusedDungeonVariant()
+        {
+            if (focusKind != CardPresentationEditorFocusKind.DungeonFiction
+                || string.IsNullOrEmpty(focusedDungeonVariantId)
+                || string.Equals(focusedDungeonVariantId, DungeonFictionRulesId, StringComparison.Ordinal))
+            {
+                return null;
+            }
+
+            return dungeonEnvironments?.FindVariant(focusedDungeonVariantId);
+        }
+
+        public string FocusedDungeonVariantId => focusedDungeonVariantId;
 
         public VisualEffectCatalogEditorIO.EditorRow GetFocusedVisualEffect()
         {
@@ -1498,6 +1552,14 @@ namespace NineGrid.Content.Editor
                     }
                 }
 
+                if (dungeonEnvironments != null && dungeonEnvironments.IsDirty)
+                {
+                    if (!DungeonEnvironmentEditorIO.TrySave(dungeonEnvironments, out error))
+                    {
+                        return false;
+                    }
+                }
+
                 CardPresentationConfigCatalog.Invalidate();
                 return true;
             }
@@ -1545,6 +1607,16 @@ namespace NineGrid.Content.Editor
                     }
 
                     return VisualEffectCatalogEditorIO.TrySaveAll(visualEffects, out error);
+                }
+
+                if (focusKind == CardPresentationEditorFocusKind.DungeonFiction)
+                {
+                    if (dungeonEnvironments == null || !dungeonEnvironments.IsDirty)
+                    {
+                        return true;
+                    }
+
+                    return DungeonEnvironmentEditorIO.TrySave(dungeonEnvironments, out error);
                 }
 
                 CardPresentationEditorEntry entry = null;

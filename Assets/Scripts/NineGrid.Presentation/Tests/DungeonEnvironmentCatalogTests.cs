@@ -6,6 +6,18 @@ namespace NineGrid.Presentation.Tests
 {
     public sealed class DungeonEnvironmentCatalogTests
     {
+        [SetUp]
+        public void SetUp()
+        {
+            DungeonEnvironmentCatalog.Invalidate();
+        }
+
+        [TearDown]
+        public void TearDown()
+        {
+            DungeonEnvironmentCatalog.Invalidate();
+        }
+
         [Test]
         public void Resolve_Floor1_FirstHalf_IsEmeraldMist()
         {
@@ -58,6 +70,22 @@ namespace NineGrid.Presentation.Tests
         {
             var env = DungeonEnvironmentCatalog.Resolve(2, 1, false);
             Assert.AreEqual("岩层_藏骨堂", env.DisplayName);
+            Assert.AreEqual("#090a14", env.MainBackgroundColorHex);
+        }
+
+        [Test]
+        public void Resolve_TableOverride_UsesLoadedFaceAndHex()
+        {
+            var table = DungeonEnvironmentCatalog.CreateDefaultTable();
+            table.variants[0].faceBackground = "Assets/Resources/ContentArt/Png/Other/密林_阴森沼泽.png";
+            table.variants[0].mainBackgroundHex = "#090a14";
+            DungeonEnvironmentCatalog.SetTable(table);
+
+            var env = DungeonEnvironmentCatalog.Resolve(1, 1, false);
+            Assert.AreEqual("密林_翡翠迷雾", env.DisplayName);
+            Assert.AreEqual(
+                "Assets/Resources/ContentArt/Png/Other/密林_阴森沼泽.png",
+                env.FaceBackgroundResourcePath);
             Assert.AreEqual("#090a14", env.MainBackgroundColorHex);
         }
     }

@@ -318,7 +318,7 @@ _Avoid_: 把 `Unknown` 卡组放进正式层池、同一套卡组在多层复用
 _Avoid_: 在卡面 JSON 里手填层数加成、仅部分卡组享受叠加、把主题 deck 静态 `faceBackground` 当环境权威
 
 **地下城环境变体**：
-跑图内怪物卡面背景与大楼层文案由 **层号 + 层内房间 1–8 + 困难档** 权威（[ADR-0053](docs/adr/0053-dungeon-environment-from-run-progress.md)）：前四/后四节点切前段/后段环境名；困难整层血色。显示名即 `密林_翡翠迷雾` 等字符串；Resources 路径 `ContentArt/Png/Other/{显示名}.png`。`GetCurrentDungeonEnvironmentQuery` / `DungeonEnvironmentCatalog.Resolve` 为读侧；怪物 JSON `faceBackground` 运行时由 `CoreCardPresentationMapper` 覆盖，非内容权威。
+跑图内怪物卡面背景、场地框、MainBG 与大楼层文案由 **层号 + 层内房间 1–8 + 困难档** 权威（[ADR-0053](docs/adr/0053-dungeon-environment-from-run-progress.md)）：前四/后四节点切前段/后段环境名；困难整层血色。作者真源 `tables/dungeon_environments.json`（表现层配置器侧栏「地下城虚构」）；`GetCurrentDungeonEnvironmentQuery` / `DungeonEnvironmentCatalog.Resolve` 为读侧。怪物 JSON `faceBackground` 运行时由 `CoreCardPresentationMapper` 覆盖，非内容权威。
 _Avoid_: 用全局节点号或主题 deckId 切环境、用 deck 批量脚本写怪物 `faceBackground`、把未入切换表的 PNG 变体硬接进表
 
 **序列**：

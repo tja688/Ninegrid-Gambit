@@ -21,7 +21,7 @@ using UnityEngine.UIElements;
 
 namespace NineGrid.Content.Editor
 {
-    public sealed class CardPresentationEditorWindow : EditorWindow
+    public sealed partial class CardPresentationEditorWindow : EditorWindow
     {
         private readonly CardPresentationEditorSession session = new CardPresentationEditorSession();
         private readonly CardFacePreviewHost previewHost = new CardFacePreviewHost();
@@ -169,7 +169,7 @@ namespace NineGrid.Content.Editor
 
             rootElement.Add(ContentVisualWarmConsoleUi.BuildHeader(
                 "表现层配置",
-                "卡面 / 效果池 / 特效库 / 卡组·卡背；特效库本阶段纯预览，时机装配后续接线。"));
+                "卡面 / 词条 / 效果池 / 特效库 / 卡组·卡背 / 地下城虚构。"));
 
             rootElement.Add(ContentVisualWarmConsoleUi.BuildToolbar(
                 ("保存", SaveAll, "保存全部脏 JSON（Authoring + StreamingAssets）"),
@@ -244,6 +244,7 @@ namespace NineGrid.Content.Editor
             listContainer.Add(BuildEffectPoolSectionFoldout());
             listContainer.Add(BuildVfxLibrarySectionFoldout());
             listContainer.Add(BuildDecksSectionFoldout());
+            listContainer.Add(BuildDungeonFictionSectionFoldout());
             listContainer.Add(BuildTransitionSectionFoldout());
         }
 
@@ -982,10 +983,13 @@ namespace NineGrid.Content.Editor
                 case CardPresentationEditorFocusKind.VisualEffect:
                     BuildVisualEffectContent();
                     return;
+                case CardPresentationEditorFocusKind.DungeonFiction:
+                    BuildDungeonFictionContent();
+                    return;
                 default:
                     contentRoot.Add(ContentVisualWarmConsoleUi.CreatePageHeader(
                         "未选择",
-                        "从左侧选择卡面、效果模板、特效、卡组，或打开「词条」。"));
+                        "从左侧选择卡面、效果模板、特效、卡组、地下城虚构，或打开「词条」。"));
                     previewFingerprint = string.Empty;
                     vfxPreviewFingerprint = string.Empty;
                     return;
@@ -4425,6 +4429,12 @@ namespace NineGrid.Content.Editor
                 case CardPresentationEditorFocusKind.VisualEffect:
                     var vfx = session.GetFocusedVisualEffect();
                     focusText = "特效 · " + (vfx != null ? vfx.Id : "（未选）");
+                    break;
+                case CardPresentationEditorFocusKind.DungeonFiction:
+                    var dungeon = session.GetFocusedDungeonVariant();
+                    focusText = session.IsDungeonFictionRulesFocused
+                        ? "地下城虚构 · 规则"
+                        : "地下城虚构 · " + (dungeon != null ? dungeon.displayName : "（未选）");
                     break;
                 default:
                     focusText = "（未选）";

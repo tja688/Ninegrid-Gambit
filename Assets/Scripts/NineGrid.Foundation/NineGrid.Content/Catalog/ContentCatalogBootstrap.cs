@@ -14,6 +14,7 @@ namespace NineGrid.Content
             // Disable Domain Reload 下静态缓存会跨 Play 残留；每次 Load 必须重读盘。
             CardPresentationConfigCatalog.Invalidate();
             EffectTemplateCatalog.Invalidate();
+            DungeonEnvironmentCatalog.Invalidate();
             DerivedCardResolver.Invalidate();
             MonsterDeckTableCatalog.Invalidate();
             var catalog = new GameContentCatalog();
