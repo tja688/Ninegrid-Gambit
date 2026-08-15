@@ -29,6 +29,8 @@ namespace NineGrid.Core
         public int AvatarAttack { get; set; }
         public int AvatarArmor { get; set; }
         public int AvatarRecovery { get; set; }
+        /// <summary>选人界面难度档 id；默认普通。</summary>
+        public string DifficultyId { get; set; } = RunDifficultyIds.Normal;
 
         /// <summary>
         /// 新一局入口：生成非 0 随机种子，使层难度池卡组 / 房间 / 抽卡随局变化
@@ -111,6 +113,7 @@ namespace NineGrid.Core
             player.Reset();
             relicContributions.ClearAll();
             run.Reset(options.Seed);
+            run.SetDifficultyId(options.DifficultyId);
             pendingChoice.Clear();
             architecture.GetModel<BattleContextModel>().Reset();
 

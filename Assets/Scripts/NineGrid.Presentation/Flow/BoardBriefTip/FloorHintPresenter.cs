@@ -6,7 +6,7 @@ using UnityEngine.SceneManagement;
 namespace NineGrid.Flow.BoardBriefTip
 {
     /// <summary>
-    /// 场景 <c>楼层提示</c>：<c>大楼层提示</c> 显示「楼层·Ⅱ」；<c>小房间提示</c> 显示房间类型名。
+    /// 场景 <c>楼层提示</c>：<c>大楼层提示</c> 显示当前地下城环境名；<c>小房间提示</c> 显示房间类型名。
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class FloorHintPresenter : MonoBehaviour
@@ -22,6 +22,8 @@ namespace NineGrid.Flow.BoardBriefTip
         [SerializeField] private TMP_Text roomText;
 
         private int mLastFloor = int.MinValue;
+        private int mLastNodeIndex = int.MinValue;
+        private string mLastDifficultyId = null;
         private RoomKind mLastRoom = (RoomKind)(-1);
 
         public static FloorHintPresenter EnsureExists()
@@ -99,31 +101,40 @@ namespace NineGrid.Flow.BoardBriefTip
             }
 
             var floor = run.Floor.Value;
+            var nodeIndex = run.NodeIndex.Value;
+            var difficultyId = run.DifficultyId != null
+                ? run.DifficultyId.Value
+                : NineGrid.Core.Content.RunDifficultyIds.Normal;
             var room = run.Room.Value;
-            if (floor == mLastFloor && room == mLastRoom)
+            if (floor == mLastFloor
+                && nodeIndex == mLastNodeIndex
+                && room == mLastRoom
+                && string.Equals(mLastDifficultyId, difficultyId, System.StringComparison.Ordinal))
             {
                 return;
             }
 
-            Apply(floor, room);
+            Apply(floor, room, nodeIndex, difficultyId);
         }
 
-        public void Apply(int floor, RoomKind room)
+        public void Apply(int floor, RoomKind room, int nodeIndex, string difficultyId)
         {
             var self = EnsureExists();
             if (!ReferenceEquals(self, this))
             {
-                self.Apply(floor, room);
+                self.Apply(floor, room, nodeIndex, difficultyId);
                 return;
             }
 
             EnsureBindings();
             mLastFloor = floor;
+            mLastNodeIndex = nodeIndex;
+            mLastDifficultyId = difficultyId;
             mLastRoom = room;
 
             if (floorLevelText != null)
             {
-                floorLevelText.text = BoardBriefTipCopy.FormatFloorLevelHint(floor);
+                floorLevelText.text = BoardBriefTipCopy.FormatFloorLevelHint(floor, nodeIndex, difficultyId);
             }
 
             if (roomText != null)

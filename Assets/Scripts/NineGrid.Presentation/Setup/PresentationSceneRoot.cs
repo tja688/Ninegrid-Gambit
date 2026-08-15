@@ -166,6 +166,7 @@ namespace NineGrid.Presentation.Setup
             GoldGainPresentationBinder.EnsureInstalled();
             RhythmFaceFlowTraceBinder.EnsureInstalled();
             BattleLogRecorder.EnsureInstalled();
+            NineGrid.Flow.BoardBriefTip.VenueEnvironmentPresenter.EnsureExists();
 
             if (damageNumberManager == null)
             {

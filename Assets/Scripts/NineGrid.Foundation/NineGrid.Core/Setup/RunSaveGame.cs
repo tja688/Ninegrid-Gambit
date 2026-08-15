@@ -4,6 +4,7 @@ using System.Globalization;
 using NineGrid.Core.Stats;
 using NineGrid.Core.Systems;
 using NineGrid.Core.Utilities;
+using NineGrid.Core.Content;
 using QFramework;
 
 namespace NineGrid.Core
@@ -61,6 +62,8 @@ namespace NineGrid.Core
         public string floorMonsterDeckId = string.Empty;
         public string[] usedMonsterDeckIds = Array.Empty<string>();
         public string[] attributePickDefIds = Array.Empty<string>();
+        /// <summary>选人难度档 id（normal / advanced / hard）。</summary>
+        public string difficultyId = RunDifficultyIds.Normal;
         /// <summary>壳层全局节点序号（GameFlowShellSystem.NodeIndex，捕获时即将开打的节点）。</summary>
         public int shellGlobalNodeIndex = 1;
 
@@ -176,6 +179,7 @@ namespace NineGrid.Core
                 floorMonsterDeckId = run.FloorMonsterDeckId.Value ?? string.Empty,
                 usedMonsterDeckIds = CopyList(run.UsedMonsterDeckIds),
                 attributePickDefIds = CopyList(run.AttributePickDefIds),
+                difficultyId = run.DifficultyId?.Value ?? RunDifficultyIds.Normal,
                 shellGlobalNodeIndex = shellGlobalNodeIndex,
                 professionId = player.ProfessionId.Value ?? string.Empty,
                 coins = player.Coins.Value,
@@ -465,7 +469,8 @@ namespace NineGrid.Core
                 snapshot.SeedValue,
                 (RoomKind)snapshot.room,
                 snapshot.floorMonsterDeckId,
-                snapshot.usedMonsterDeckIds);
+                snapshot.usedMonsterDeckIds,
+                snapshot.difficultyId);
             run.SetPhase(GamePhase.NodeCompleted);
 
             // 8. RNG 状态最后恢复：覆盖以上步骤可能造成的消耗，保证发牌复现。

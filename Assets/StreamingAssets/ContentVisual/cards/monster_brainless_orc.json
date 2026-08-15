@@ -22,7 +22,7 @@
     },
     "sprites": {
         "mainIcon": "Assets/Resources/ContentArt/Multiple/pixel_art_card_pack 1.png",
-        "faceBackground": "Assets/Resources/ContentArt/Png/Other/3_地下丛林.png",
+        "faceBackground": "",
         "cardFrame": "",
         "banner": "",
         "backBorder": "",

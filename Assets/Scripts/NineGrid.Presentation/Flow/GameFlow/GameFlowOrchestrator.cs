@@ -306,7 +306,11 @@ namespace NineGrid.Flow
 
             try
             {
-                session.BootstrapRun(new InitialGameOptions { Seed = snapshot.SeedValue });
+                session.BootstrapRun(new InitialGameOptions
+                {
+                    Seed = snapshot.SeedValue,
+                    DifficultyId = snapshot.difficultyId,
+                });
                 RunSaveGame.RestoreAfterCreate(NineGridArchitecture.Current, snapshot);
                 mShell.SetNodeProgressBeforeRestoredNode(snapshot.shellGlobalNodeIndex);
                 mRestoredBootstrapPending = true;

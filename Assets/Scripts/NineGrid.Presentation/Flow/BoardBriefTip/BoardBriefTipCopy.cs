@@ -115,17 +115,19 @@ namespace NineGrid.Flow.BoardBriefTip
             return brief;
         }
 
-        /// <summary>大楼层提示：仅楼层，拉丁数字，如「楼层·Ⅱ」/「Floor II」。</summary>
-        public static string FormatFloorLevelHint(int floor)
+        /// <summary>大楼层提示：当前地下城环境显示名（ADR-0053）。</summary>
+        public static string FormatFloorLevelHint(int floor, int nodeIndex, string difficultyId)
         {
             if (floor <= 0)
             {
                 return string.Empty;
             }
 
-            return string.Format(
-                L10n.Tr("floor.level", "楼层·{0}"),
-                ToLatinNumeral(floor));
+            var environment = DungeonEnvironmentCatalog.ResolveFromRun(
+                floor,
+                nodeIndex,
+                difficultyId ?? RunDifficultyIds.Normal);
+            return environment.DisplayName;
         }
 
         /// <summary>小房间提示：仅房间类型名，不含节点序号。</summary>
@@ -152,24 +154,6 @@ namespace NineGrid.Flow.BoardBriefTip
                     return L10n.Tr("floor.room_item_reward", "道具奖励房间");
                 default:
                     return string.Empty;
-            }
-        }
-
-        private static string ToLatinNumeral(int value)
-        {
-            switch (value)
-            {
-                case 1: return "Ⅰ";
-                case 2: return "Ⅱ";
-                case 3: return "Ⅲ";
-                case 4: return "Ⅳ";
-                case 5: return "Ⅴ";
-                case 6: return "Ⅵ";
-                case 7: return "Ⅶ";
-                case 8: return "Ⅷ";
-                case 9: return "Ⅸ";
-                case 10: return "Ⅹ";
-                default: return value.ToString();
             }
         }
     }

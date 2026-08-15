@@ -314,8 +314,12 @@ _Avoid_: 恢复「描述区与道具卡格互斥」、战斗内隐藏简要解�
 _Avoid_: 把 `Unknown` 卡组放进正式层池、同一套卡组在多层复用（用尽后同层档内才允许回退复用）
 
 **怪物层数数值叠加**：
-相对第 1 层 JSON 基准，每提升一层所有怪物卡攻击 +1、血量 +2；在 `ContentSystem.CreateDraft` 按 `RunModel.Floor` 注入，对任意主题卡组生效。
-_Avoid_: 在卡面 JSON 里手填层数加成、仅部分卡组享受叠加
+相对第 1 层 JSON 基准：**每进新层**攻击 +1、血量 +2；**每满 4 个全局节点**（跨层累计）再叠攻击 +1、血量 +2（`MonsterFloorStatScaling` 双轨相加）。困难选人档（`RunModel.DifficultyId=hard`）将上述两轨档位翻倍为 +2/+4；普通/进阶不变。在 `ContentSystem.CreateDraft` 按 `RunModel.Floor` / `NodeIndex` / 难度注入，对任意主题卡组生效。
+_Avoid_: 在卡面 JSON 里手填层数加成、仅部分卡组享受叠加、把主题 deck 静态 `faceBackground` 当环境权威
+
+**地下城环境变体**：
+跑图内怪物卡面背景与大楼层文案由 **层号 + 层内房间 1–8 + 困难档** 权威（[ADR-0053](docs/adr/0053-dungeon-environment-from-run-progress.md)）：前四/后四节点切前段/后段环境名；困难整层血色。显示名即 `密林_翡翠迷雾` 等字符串；Resources 路径 `ContentArt/Png/Other/{显示名}.png`。`GetCurrentDungeonEnvironmentQuery` / `DungeonEnvironmentCatalog.Resolve` 为读侧；怪物 JSON `faceBackground` 运行时由 `CoreCardPresentationMapper` 覆盖，非内容权威。
+_Avoid_: 用全局节点号或主题 deckId 切环境、用 deck 批量脚本写怪物 `faceBackground`、把未入切换表的 PNG 变体硬接进表
 
 **序列**：
 怪物卡在其主题卡组内的梯队位次（1–5），序列 5 即该套的层主。节点规则表按序列规定各抽几张。七套每套五个序列槽位的稳定 contentId 契约见 `ThemeDeckStableMapping`（#127 / ADR-0029）。

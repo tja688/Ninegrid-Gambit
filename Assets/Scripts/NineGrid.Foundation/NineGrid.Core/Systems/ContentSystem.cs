@@ -181,7 +181,11 @@ namespace NineGrid.Core.Systems
                 var run = this.GetModel<RunModel>();
                 var floor = run != null && run.Floor != null ? run.Floor.Value : 1;
                 var nodeIndex = run != null && run.NodeIndex != null ? run.NodeIndex.Value : 0;
-                MonsterFloorStatScaling.ApplyToDraft(draft, floor, nodeIndex);
+                var difficultyId = run != null && run.DifficultyId != null
+                    ? run.DifficultyId.Value
+                    : RunDifficultyIds.Normal;
+                var isHard = DungeonEnvironmentCatalog.IsHardDifficulty(difficultyId);
+                MonsterFloorStatScaling.ApplyToDraft(draft, floor, nodeIndex, isHard);
             }
 
             return draft;

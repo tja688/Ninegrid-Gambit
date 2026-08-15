@@ -536,6 +536,11 @@ namespace NineGrid.Flow
             // #69：表现只读一卡一文件 JSON；不再咨询 Luban ContentVisual / VisualCatalog SO。
             if (TryApplyJsonPresentation(snapshot, defId))
             {
+                if (kind == CardPresentationKind.Monster)
+                {
+                    TryApplyMonsterDungeonFaceBackground(snapshot);
+                }
+
                 // 部分遗物 JSON 仍缺 mainIcon：用 RelicVisualCatalog bootstrap 补洞，避免选择卡/栏位空图标。
                 if (snapshot.MainIcon == null && kind == CardPresentationKind.Relic)
                 {
@@ -651,6 +656,31 @@ namespace NineGrid.Flow
 
             // stats 是内容作者定义的出生值，经 Catalog 造卡用；表现层投影提交不读 JSON stats。
             return true;
+        }
+
+        /// <summary>
+        /// 怪物卡面背景：运行时按当前地下城环境覆盖 JSON <c>faceBackground</c>（ADR-0053）。
+        /// </summary>
+        private static void TryApplyMonsterDungeonFaceBackground(CardPresentationSnapshot snapshot)
+        {
+            if (snapshot == null)
+            {
+                return;
+            }
+
+            var arch = NineGridArchitecture.Current;
+            if (arch == null)
+            {
+                return;
+            }
+
+            var environment = arch.SendQuery(new GetCurrentDungeonEnvironmentQuery());
+            if (string.IsNullOrWhiteSpace(environment.FaceBackgroundResourcePath))
+            {
+                return;
+            }
+
+            ApplyJsonSprite(ref snapshot.FaceBackground, environment.FaceBackgroundResourcePath);
         }
 
         private static void ApplyTrapEffectCountdown(CardPresentationSnapshot snapshot)

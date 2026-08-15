@@ -22,7 +22,7 @@
     },
     "sprites": {
         "mainIcon": "Assets/Resources/ContentArt/Multiple/pixel_art_card_pack 1.png",
-        "faceBackground": "Assets/Resources/ContentArt/Png/Other/3_地下丛林.png",
+        "faceBackground": "",
         "cardFrame": "Assets/Resources/ContentArt/Multiple/1786242411378_d.png#1786242411378_d_2",
         "banner": "",
         "backBorder": "",
@@ -32,7 +32,7 @@
     "mainVisual": {
         "offsetX": 0.0,
         "offsetY": 0.0,
-        "uniformScale": 1.2000000476837159
+        "uniformScale": 1.2000000476837158
     },
     "animations": {
         "defaultFps": 8.0,

@@ -356,11 +356,18 @@ namespace NineGrid.Flow.BattleInfoPreview
                 roomName = room != RoomKind.None ? room.ToString() : "—";
             }
 
+            var environment = arch != null
+                ? arch.SendQuery(new GetCurrentDungeonEnvironmentQuery())
+                : default;
+            var floorLabel = !string.IsNullOrEmpty(environment.DisplayName)
+                ? environment.DisplayName
+                : floor.ToString();
+
             var progress = displayNode + "/" + RunModel.NodesPerFloor;
             var template = ResolveRoomInfoTemplate(floor, displayNode);
             roomInfoText.text = template
                 .Replace("{room}", roomName)
-                .Replace("{floor}", floor.ToString())
+                .Replace("{floor}", floorLabel)
                 .Replace("{progress}", progress)
                 .Replace("{displayNode}", displayNode.ToString())
                 .Replace("{nodesPerFloor}", RunModel.NodesPerFloor.ToString());

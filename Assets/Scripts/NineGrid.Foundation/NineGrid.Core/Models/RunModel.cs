@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using NineGrid.Core.Content;
 using QFramework;
 
 namespace NineGrid.Core
@@ -19,6 +20,8 @@ namespace NineGrid.Core
         public BindableProperty<int> Version { get; private set; }
         /// <summary>本层绑定的主题怪物卡组 Id（ADR-0022）；空表示尚未抽取。</summary>
         public BindableProperty<string> FloorMonsterDeckId { get; private set; }
+        /// <summary>选人界面难度档 id（normal / advanced / hard）；影响怪物数值与环境。</summary>
+        public BindableProperty<string> DifficultyId { get; private set; }
 
         public IReadOnlyList<string> UsedMonsterDeckIds
         {
@@ -73,7 +76,22 @@ namespace NineGrid.Core
                 Phase = new BindableProperty<GamePhase>(GamePhase.None);
                 Version = new BindableProperty<int>(0);
                 FloorMonsterDeckId = new BindableProperty<string>(string.Empty);
+                DifficultyId = new BindableProperty<string>(RunDifficultyIds.Normal);
             }
+        }
+
+        public void SetDifficultyId(string difficultyId)
+        {
+            var normalized = string.IsNullOrEmpty(difficultyId)
+                ? RunDifficultyIds.Normal
+                : difficultyId;
+            if (string.Equals(DifficultyId.Value, normalized, System.StringComparison.Ordinal))
+            {
+                return;
+            }
+
+            DifficultyId.Value = normalized;
+            Touch();
         }
 
         public void Reset(ulong seed)
@@ -84,6 +102,7 @@ namespace NineGrid.Core
             Room.Value = RoomKind.None;
             Phase.Value = GamePhase.BuildEnemyPool;
             FloorMonsterDeckId.Value = string.Empty;
+            DifficultyId.Value = RunDifficultyIds.Normal;
             mUsedMonsterDeckIds.Clear();
             mAttributePickDefIds.Clear();
             Touch();
@@ -146,13 +165,15 @@ namespace NineGrid.Core
             ulong seed,
             RoomKind room,
             string floorMonsterDeckId,
-            IReadOnlyList<string> usedMonsterDeckIds)
+            IReadOnlyList<string> usedMonsterDeckIds,
+            string difficultyId = null)
         {
             Floor.Value = floor < 1 ? 1 : floor;
             NodeIndex.Value = nodeIndex < 0 ? 0 : nodeIndex;
             Seed.Value = seed;
             Room.Value = room;
             FloorMonsterDeckId.Value = floorMonsterDeckId ?? string.Empty;
+            SetDifficultyId(difficultyId);
             mUsedMonsterDeckIds.Clear();
             if (usedMonsterDeckIds != null)
             {

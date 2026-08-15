@@ -6,7 +6,8 @@ namespace NineGrid.Core
     /// 怪物成长数值叠加（策划 2026-08：去除纯层数提升，改为节点+层双轨叠加）：
     /// ① 每满 4 个全局节点（跨层累计，1 起）一档：攻击 +1、血量 +2；
     /// ② 每进入一个新层一档（第 1 层为基准 0）：攻击 +1、血量 +2。
-    /// 两轨相加；任意主题卡组均适用。
+    /// 两轨相加；困难档（<see cref="RunDifficultyIds.Hard"/>）将上述档位翻倍为 +2/+4；普通/进阶公式不变。
+    /// 任意主题卡组均适用。
     /// </summary>
     public static class MonsterFloorStatScaling
     {
@@ -33,27 +34,29 @@ namespace NineGrid.Core
             return (Math.Max(1, floor) - 1) * RunModel.NodesPerFloor + Math.Max(0, nodeIndex) + 1;
         }
 
-        public static int AttackBonus(int floor, int nodeIndex)
+        public static int AttackBonus(int floor, int nodeIndex, bool isHardDifficulty = false)
         {
-            return FloorTiers(floor) * AttackPerFloorAboveBase
+            var bonus = FloorTiers(floor) * AttackPerFloorAboveBase
                 + NodeTiers(GlobalNodeIndex(floor, nodeIndex)) * AttackPerFourNodes;
+            return isHardDifficulty ? bonus * 2 : bonus;
         }
 
-        public static int HpBonus(int floor, int nodeIndex)
+        public static int HpBonus(int floor, int nodeIndex, bool isHardDifficulty = false)
         {
-            return FloorTiers(floor) * HpPerFloorAboveBase
+            var bonus = FloorTiers(floor) * HpPerFloorAboveBase
                 + NodeTiers(GlobalNodeIndex(floor, nodeIndex)) * HpPerFourNodes;
+            return isHardDifficulty ? bonus * 2 : bonus;
         }
 
-        public static void ApplyToDraft(CardDraft draft, int floor, int nodeIndex)
+        public static void ApplyToDraft(CardDraft draft, int floor, int nodeIndex, bool isHardDifficulty = false)
         {
             if (draft == null || draft.Kind != CardKind.Monster)
             {
                 return;
             }
 
-            var attackBonus = AttackBonus(floor, nodeIndex);
-            var hpBonus = HpBonus(floor, nodeIndex);
+            var attackBonus = AttackBonus(floor, nodeIndex, isHardDifficulty);
+            var hpBonus = HpBonus(floor, nodeIndex, isHardDifficulty);
             if (attackBonus == 0 && hpBonus == 0)
             {
                 return;

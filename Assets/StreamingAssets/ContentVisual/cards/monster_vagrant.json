@@ -22,7 +22,7 @@
     },
     "sprites": {
         "mainIcon": "Assets/Resources/ContentArt/Multiple/pixel_art_card_pack 1.png",
-        "faceBackground": "Assets/Resources/ContentArt/Png/Other/密林_岩洞区.png",
+        "faceBackground": "",
         "cardFrame": "Assets/Resources/ContentArt/Multiple/1786242411378_d.png#1786242411378_d_2",
         "banner": "",
         "backBorder": "",
@@ -30,9 +30,9 @@
         "backLogo": ""
     },
     "mainVisual": {
-        "offsetX": 0.30000001192092898,
+        "offsetX": 0.30000001192092896,
         "offsetY": -0.4000000059604645,
-        "uniformScale": 1.2000000476837159
+        "uniformScale": 1.2000000476837158
     },
     "animations": {
         "defaultFps": 8.0,

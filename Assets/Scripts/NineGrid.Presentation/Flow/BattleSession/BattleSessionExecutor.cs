@@ -10,6 +10,7 @@ using NineGrid.Flow.Diagnostics;
 using NineGrid.Flow.Presentation;
 using NineGrid.Presentation;
 using NineGrid.Presentation.Systems;
+using NineGrid.Presentation.Ui;
 using QFramework;
 using UnityEngine;
 
@@ -304,13 +305,18 @@ namespace NineGrid.Flow
                 // 跨关硬清会 Reset RNG；必须沿用本局种子，避免被默认 Seed=1 锁死遭遇池。
                 if (options == null && inventory != null)
                 {
-                    options = new InitialGameOptions { Seed = inventory.Seed };
+                    options = new InitialGameOptions
+                    {
+                        Seed = inventory.Seed,
+                        DifficultyId = inventory.DifficultyId,
+                    };
                 }
             }
             else if (options == null)
             {
                 // 新开局（正式 / 编辑器 Play / QuickTest）：每局新种子，层难度池才真正随机。
                 options = InitialGameOptions.CreateForNewRun();
+                options.DifficultyId = RunSetupSelection.DifficultyId;
             }
 
             TeardownPresentationRuntime(IntentClearReason.LayerChange);
@@ -364,6 +370,7 @@ namespace NineGrid.Flow
             public int Floor;
             public int NodeIndex;
             public ulong Seed;
+            public string DifficultyId;
         }
 
         private static RunInventorySnapshot CaptureRunInventory(IArchitecture arch)
@@ -407,6 +414,7 @@ namespace NineGrid.Flow
                 Floor = run.Floor.Value,
                 NodeIndex = run.NodeIndex.Value,
                 Seed = run.Seed.Value,
+                DifficultyId = run.DifficultyId?.Value ?? NineGrid.Core.Content.RunDifficultyIds.Normal,
             };
             for (var i = 0; i < relics.Count; i++)
             {
@@ -518,6 +526,7 @@ namespace NineGrid.Flow
             run.Floor.Value = inventory.Floor;
             run.NodeIndex.Value = inventory.NodeIndex;
             run.Seed.Value = inventory.Seed;
+            run.SetDifficultyId(inventory.DifficultyId);
         }
 
         public void ClearPresentationSurface()
