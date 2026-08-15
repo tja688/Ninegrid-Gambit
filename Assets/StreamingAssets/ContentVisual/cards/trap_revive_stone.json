@@ -6,7 +6,7 @@
     "role": "",
     "displayName": "复活石",
     "designSlotName": "",
-    "description": "[action]{trap.revive_stone.interact.every}次后[death]，将{trap.revive_stone.remove.count}张重生骷髅打出到同格",
+    "description": "[action]{trap.revive_stone.interact.every}次后[death]，将{trap.revive_stone.remove.count}张巨斧骷髅打出到同格",
     "faceIntro": "花费75阳光铲除它",    "attackPattern": "无",
     "rhythmSource": "",
     "rhythmPeriod": 0,

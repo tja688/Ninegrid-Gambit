@@ -4,7 +4,7 @@
     "kind": "Skill",
     "deckId": "",
     "displayName": "吟唱",
-    "description": "每互动6次将近战3加入战斗卡组",
+    "description": "每互动6次将一张巨斧骷髅加入战斗卡组",
     "gold": 0,
     "stats": {
         "hp": 0,

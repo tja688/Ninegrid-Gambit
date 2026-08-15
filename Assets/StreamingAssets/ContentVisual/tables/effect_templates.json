@@ -586,10 +586,10 @@
  {
   "id": "tpl.skill.chant.interact",
   "state": "Implemented",
-  "design_text": "[场上]玩家卡每互动6次，将一张近战3加入战斗卡组",
+  "design_text": "[场上]玩家卡每互动6次，将一张巨斧骷髅加入战斗卡组",
   "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
   "conditions_json": "[]",
-  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnInteract\",\"every\":6},\"target\":{\"atom\":\"Self\"},\"action\":{\"atom\":\"ShuffleInto\",\"defId\":\"monster.melee_3\",\"kind\":\"Monster\",\"count\":\"{{count}}\",\"top\":false}}"
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnInteract\",\"every\":6},\"target\":{\"atom\":\"Self\"},\"action\":{\"atom\":\"ShuffleInto\",\"defId\":\"monster.wandering_child\",\"kind\":\"Monster\",\"count\":\"{{count}}\",\"top\":false}}"
  },
  {
   "id": "tpl.skill.cloud_breath.interact",
@@ -1258,10 +1258,10 @@
  {
   "id": "tpl.trap.revive_stone.remove",
   "state": "Implemented",
-  "design_text": "[场上] 互动倒计时移除本卡时，将一张特5打出到同格（被打死不触发）",
+  "design_text": "[场上] 互动倒计时移除本卡时，将一张巨斧骷髅打出到同格（被打死不触发）",
   "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
   "conditions_json": "[\"EventFilter:eventType=CardRemoved:cause=trap.revive_stone\"]",
-  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnSelfRemoved\"},\"conditions\":[{\"atom\":\"EventFilter\",\"eventType\":\"CardRemoved\",\"cause\":\"trap.revive_stone\"}],\"target\":{\"atom\":\"Self\"},\"action\":{\"atom\":\"Spawn\",\"defId\":\"monster.summon.special_omni\",\"kind\":\"Monster\",\"zone\":\"Board\",\"slot\":\"EventFromSlot\",\"count\":\"{{count}}\"}}"
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnSelfRemoved\"},\"conditions\":[{\"atom\":\"EventFilter\",\"eventType\":\"CardRemoved\",\"cause\":\"trap.revive_stone\"}],\"target\":{\"atom\":\"Self\"},\"action\":{\"atom\":\"Spawn\",\"defId\":\"monster.wandering_child\",\"kind\":\"Monster\",\"zone\":\"Board\",\"slot\":\"EventFromSlot\",\"count\":\"{{count}}\"}}"
  },
  {
   "id": "tpl.trap.rolling_stone.slot3",
