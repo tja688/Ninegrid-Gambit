@@ -440,6 +440,12 @@ namespace NineGrid.Core
 
     public sealed class MoveCardAction : GameAction
     {
+        private static readonly TriggerPoint[] sPreTriggers =
+        {
+            TriggerPoint.BeforeAction,
+            TriggerPoint.BeforeBoardMotion
+        };
+
         private static readonly TriggerPoint[] sPostTriggers =
         {
             TriggerPoint.AfterAction,
@@ -513,6 +519,12 @@ namespace NineGrid.Core
             CardRhythmMoveTicks.AppendFromMovedEvents(result, context, result.Events);
             return result;
         }
+
+        public override IEnumerable<TriggerPoint> GetPreTriggerPoints(GameActionContext context)
+        {
+            return sPreTriggers;
+        }
+
         public override IEnumerable<TriggerPoint> GetPostTriggerPoints(GameActionContext context, IReadOnlyList<CoreGameEvent> events)
         {
             if (events != null)
@@ -1646,10 +1658,8 @@ namespace NineGrid.Core
     }
 
     /// <summary>
-    /// 邻接图腾借甲光环：邻接期间维持「基线 + 借出值」——首次邻接记基线并借出，
-    /// 借出的甲被消耗后在下次刷新补回（不替目标恢复自有甲，基线随自有甲消耗下修）；
-    /// 离开邻接时未消耗的借甲自然流失（cause=<see cref="BorrowedArmorAuraKeys.DecayCause"/>，
-    /// 不作打击表演），永不扣目标自有护甲。
+    /// 邻接图腾借甲：每转盘一笔贷款——位移开始前 <see cref="BorrowedArmorSyncPhase.Settle"/> 收回未耗借甲，
+    /// 落地后 <see cref="BorrowedArmorSyncPhase.Grant"/> 对邻接目标无条件再借；交战中打掉不补，下次位移再借。
     /// </summary>
     public sealed class SyncAdjacentBorrowedArmorAction : GameAction
     {
@@ -1664,13 +1674,15 @@ namespace NineGrid.Core
             int sourceUid,
             int value,
             string source,
-            string sourceDefId = null)
+            string sourceDefId = null,
+            BorrowedArmorSyncPhase phase = BorrowedArmorSyncPhase.Grant)
         {
             TargetUid = targetUid;
             SourceUid = sourceUid;
             Value = Math.Max(0, value);
             Source = source ?? string.Empty;
             SourceDefId = sourceDefId ?? string.Empty;
+            Phase = phase;
         }
 
         public int TargetUid { get; private set; }
@@ -1678,6 +1690,7 @@ namespace NineGrid.Core
         public int Value { get; private set; }
         public string Source { get; private set; }
         public string SourceDefId { get; private set; }
+        public BorrowedArmorSyncPhase Phase { get; private set; }
         public override string ActionName { get { return "SyncAdjacentBorrowedArmor"; } }
 
         public override GameActionResult Apply(GameActionContext context)
@@ -1698,59 +1711,62 @@ namespace NineGrid.Core
                 return GameActionResult.Empty;
             }
 
-            var boardSystem = context.GetSystem<IBoardSystem>();
-            var isAdjacent = boardSystem.AreAdjacent(source, target);
+            return Phase == BorrowedArmorSyncPhase.Settle
+                ? ApplySettle(context, target)
+                : ApplyGrant(context, target, source);
+        }
+
+        private GameActionResult ApplySettle(GameActionContext context, CardInstance target)
+        {
             var counterKey = BorrowedArmorAuraKeys.BaselineKey(SourceUid);
-            var isTracking = BorrowedArmorAuraKeys.IsTracking(target, SourceUid);
-
-            if (isAdjacent)
-            {
-                var current = StatArmorUtility.GetCurrentArmor(target);
-                int baseline;
-                if (isTracking)
-                {
-                    baseline = target.Counters.Get(counterKey);
-                    if (current < baseline)
-                    {
-                        // 自有甲在邻接期间被消耗：基线随之下修，图腾只补自己借出的部分。
-                        baseline = current;
-                        target.Counters.Set(counterKey, baseline);
-                    }
-                }
-                else
-                {
-                    baseline = current;
-                    target.Counters.Set(counterKey, baseline);
-                }
-
-                var topUp = baseline + Value - current;
-                if (topUp <= 0)
-                {
-                    return GameActionResult.Empty;
-                }
-
-                var newArmor = current + topUp;
-                StatArmorUtility.SetCurrentArmor(target, newArmor);
-                return EmitArmorChanged(context, target, topUp, newArmor, Source);
-            }
-
-            if (!isTracking)
+            if (!BorrowedArmorAuraKeys.IsTracking(target, SourceUid))
             {
                 return GameActionResult.Empty;
             }
 
             var baselineStored = target.Counters.Get(counterKey);
             target.Counters.Remove(counterKey);
-            var currentOnLeave = StatArmorUtility.GetCurrentArmor(target);
-            var remove = Math.Min(Value, Math.Max(0, currentOnLeave - baselineStored));
+            var current = StatArmorUtility.GetCurrentArmor(target);
+            var remove = Math.Min(Value, Math.Max(0, current - baselineStored));
             if (remove <= 0)
             {
                 return GameActionResult.Empty;
             }
 
-            var reclaimedArmor = currentOnLeave - remove;
+            var reclaimedArmor = current - remove;
             StatArmorUtility.SetCurrentArmor(target, reclaimedArmor);
             return EmitArmorChanged(context, target, -remove, reclaimedArmor, BorrowedArmorAuraKeys.DecayCause);
+        }
+
+        private GameActionResult ApplyGrant(GameActionContext context, CardInstance target, CardInstance source)
+        {
+            var boardSystem = context.GetSystem<IBoardSystem>();
+            if (!boardSystem.AreAdjacent(source, target))
+            {
+                return GameActionResult.Empty;
+            }
+
+            var counterKey = BorrowedArmorAuraKeys.BaselineKey(SourceUid);
+            var current = StatArmorUtility.GetCurrentArmor(target);
+            var isTracking = BorrowedArmorAuraKeys.IsTracking(target, SourceUid);
+
+            // 双重检查：邻接但 token/甲量不一致时强制对齐（兜 settle 漏跑）。
+            if (isTracking)
+            {
+                var baselineStored = target.Counters.Get(counterKey);
+                if (current >= baselineStored + Value)
+                {
+                    return GameActionResult.Empty;
+                }
+
+                target.Counters.Remove(counterKey);
+            }
+
+            var baseline = current;
+            target.Counters.Set(counterKey, baseline);
+            var newArmor = current + Value;
+            StatArmorUtility.SetCurrentArmor(target, newArmor);
+            return EmitArmorChanged(context, target, Value, newArmor, Source);
         }
 
         public override IEnumerable<TriggerPoint> GetPostTriggerPoints(GameActionContext context, IReadOnlyList<CoreGameEvent> events)

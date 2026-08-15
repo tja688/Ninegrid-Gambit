@@ -601,6 +601,12 @@ namespace NineGrid.Core
             SlotId.Board(4)
         };
 
+        private static readonly TriggerPoint[] sPreTriggers =
+        {
+            TriggerPoint.BeforeAction,
+            TriggerPoint.BeforeBoardMotion
+        };
+
         private static readonly TriggerPoint[] sPostTriggers =
         {
             TriggerPoint.AfterAction,
@@ -679,6 +685,11 @@ namespace NineGrid.Core
             return result;
         }
 
+        public override IEnumerable<TriggerPoint> GetPreTriggerPoints(GameActionContext context)
+        {
+            return sPreTriggers;
+        }
+
         public override IEnumerable<TriggerPoint> GetPostTriggerPoints(GameActionContext context, IReadOnlyList<CoreGameEvent> events)
         {
             return sPostTriggers;
@@ -687,6 +698,12 @@ namespace NineGrid.Core
 
     public sealed class SwapBoardSlotsAction : GameAction
     {
+        private static readonly TriggerPoint[] sPreTriggers =
+        {
+            TriggerPoint.BeforeAction,
+            TriggerPoint.BeforeBoardMotion
+        };
+
         private static readonly TriggerPoint[] sPostTriggers =
         {
             TriggerPoint.AfterAction,
@@ -748,6 +765,11 @@ namespace NineGrid.Core
             CardRhythmMoveTicks.AppendFromMovedEvents(result, context, result.Events);
             // 换位后的邻接光环卡面刷新由统一对账缝自动提交（ADR-0045）。
             return result;
+        }
+
+        public override IEnumerable<TriggerPoint> GetPreTriggerPoints(GameActionContext context)
+        {
+            return sPreTriggers;
         }
 
         public override IEnumerable<TriggerPoint> GetPostTriggerPoints(GameActionContext context, IReadOnlyList<CoreGameEvent> events)

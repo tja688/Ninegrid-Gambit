@@ -34,6 +34,62 @@ namespace NineGrid.Presentation.Tests
         }
 
         [Test]
+        public void DealDamage_WithoutRotate_DoesNotRegrantBorrowedArmor()
+        {
+            var avatar = CreateAvatarOnBoard(SlotId.Board(5));
+            var totem = CreateTrapOnBoard("trap.armor_totem", SlotId.Board(8));
+            var near = CreateMonsterOnBoard("monster.test.near", SlotId.Board(7));
+            var far = CreateMonsterOnBoard("monster.test.far", SlotId.Board(1));
+            ActivateTotemEffects(totem);
+
+            Run(new SwapBoardSlotsAction(SlotId.Board(1), SlotId.Board(2)));
+            Assert.AreEqual(1, StatArmorUtility.GetCurrentArmor(near), "邻接怪应先借到 1 甲");
+
+            Run(new DealDamageAction(avatar.Uid, near.Uid, 1));
+            Assert.AreEqual(0, StatArmorUtility.GetCurrentArmor(near), "借甲应被交战打掉");
+            Assert.AreEqual(10, (int)near.Stats.GetBase(StatId.Hp), "本拍不转盘不应再补甲");
+
+            Run(new DealDamageAction(avatar.Uid, near.Uid, 1));
+            Assert.AreEqual(0, StatArmorUtility.GetCurrentArmor(near), "无转盘时不应再获得借甲");
+            Assert.AreEqual(9, (int)near.Stats.GetBase(StatId.Hp), "后续伤害应打真实血量");
+        }
+
+        [Test]
+        public void DealDamage_ThenRotateWhileStillAdjacent_RegrantsBorrowedArmor()
+        {
+            var avatar = CreateAvatarOnBoard(SlotId.Board(5));
+            var totem = CreateTrapOnBoard("trap.armor_totem", SlotId.Board(8));
+            var near = CreateMonsterOnBoard("monster.test.near", SlotId.Board(7));
+            var far = CreateMonsterOnBoard("monster.test.far", SlotId.Board(1));
+            ActivateTotemEffects(totem);
+
+            Run(new SwapBoardSlotsAction(SlotId.Board(1), SlotId.Board(2)));
+            Assert.AreEqual(1, StatArmorUtility.GetCurrentArmor(near));
+
+            Run(new DealDamageAction(avatar.Uid, near.Uid, 1));
+            Assert.AreEqual(0, StatArmorUtility.GetCurrentArmor(near), "借甲被打掉");
+
+            Run(new RotateBoardClockwiseAction());
+            Assert.AreEqual(1, StatArmorUtility.GetCurrentArmor(near), "转盘落地后仍邻接的怪应再借 1 甲");
+        }
+
+        [Test]
+        public void Rotate_UnconsumedBorrowedArmor_SettlesThenRegrants()
+        {
+            var avatar = CreateAvatarOnBoard(SlotId.Board(5));
+            var totem = CreateTrapOnBoard("trap.armor_totem", SlotId.Board(8));
+            var near = CreateMonsterOnBoard("monster.test.near", SlotId.Board(7));
+            var far = CreateMonsterOnBoard("monster.test.far", SlotId.Board(1));
+            ActivateTotemEffects(totem);
+
+            Run(new SwapBoardSlotsAction(SlotId.Board(1), SlotId.Board(2)));
+            Assert.AreEqual(1, StatArmorUtility.GetCurrentArmor(near));
+
+            Run(new RotateBoardClockwiseAction());
+            Assert.AreEqual(1, StatArmorUtility.GetCurrentArmor(near), "未耗借甲：先收回再借，净效果仍为 1");
+        }
+
+        [Test]
         public void Refresh_AdjacentGainsOnce_FarNeverGains()
         {
             var avatar = CreateAvatarOnBoard(SlotId.Board(5));
@@ -252,13 +308,20 @@ namespace NineGrid.Presentation.Tests
             "{\"id\":\"trap.armor_totem.refresh\"," + RequiresJson + ",\"kind\":\"Triggered\","
             + "\"trigger\":{\"atom\":\"OnEvent\",\"eventTypes\":[\"CardMoved\",\"CardDealt\"]},"
             + "\"target\":{\"atom\":\"FilteredCards\",\"kind\":\"Monster\",\"zone\":\"Board\",\"exclude\":[\"Self\"]},"
-            + "\"action\":{\"atom\":\"SyncAdjacentBorrowedArmor\",\"value\":1,\"source\":\"trap.armor_totem\",\"adjacentTo\":\"Self\"}}";
+            + "\"action\":{\"atom\":\"SyncAdjacentBorrowedArmor\",\"phase\":\"grant\",\"value\":1,\"source\":\"trap.armor_totem\",\"adjacentTo\":\"Self\"}}";
+
+        private static readonly string SettleJson =
+            "{\"id\":\"trap.armor_totem.settle\"," + RequiresJson + ",\"kind\":\"Triggered\","
+            + "\"trigger\":{\"atom\":\"OnBeforeBoardMotion\",\"timing\":\"Pre\"},"
+            + "\"target\":{\"atom\":\"FilteredCards\",\"kind\":\"Monster\",\"zone\":\"Board\",\"exclude\":[\"Self\"]},"
+            + "\"action\":{\"atom\":\"SyncAdjacentBorrowedArmor\",\"phase\":\"settle\",\"value\":1,\"source\":\"trap.armor_totem\",\"adjacentTo\":\"Self\"}}";
 
         private void ActivateTotemEffects(CardInstance totem)
         {
             var effects = mArch.GetSystem<IEffectSystem>();
             var owner = new EffectOwner(EffectContainerType.Trap, "trap.armor_totem", totem.Uid);
             effects.Activate(effects.ParseJson(AuraJson), owner);
+            effects.Activate(effects.ParseJson(SettleJson), owner);
             effects.Activate(effects.ParseJson(RefreshJson), owner);
         }
 

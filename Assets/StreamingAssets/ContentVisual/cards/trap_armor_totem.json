@@ -89,6 +89,12 @@
             "argsJson": "{\"value\":1,\"source\":\"trap.armor_totem\"}"
         },
         {
+            "id": "trap.armor_totem.settle",
+            "templateId": "tpl.trap.armor_totem.settle",
+            "containerType": "Trap",
+            "argsJson": "{\"value\":1,\"source\":\"trap.armor_totem\"}"
+        },
+        {
             "id": "trap.armor_totem.aura_player",
             "templateId": "tpl.trap.armor_totem.aura_player",
             "containerType": "Trap",
@@ -99,13 +105,21 @@
             "templateId": "tpl.trap.armor_totem.refresh_player",
             "containerType": "Trap",
             "argsJson": "{\"value\":1,\"source\":\"trap.armor_totem\"}"
+        },
+        {
+            "id": "trap.armor_totem.settle_player",
+            "templateId": "tpl.trap.armor_totem.settle_player",
+            "containerType": "Trap",
+            "argsJson": "{\"value\":1,\"source\":\"trap.armor_totem\"}"
         }
     ],
     "effectIds": [
         "trap.armor_totem.aura",
         "trap.armor_totem.refresh",
+        "trap.armor_totem.settle",
         "trap.armor_totem.aura_player",
-        "trap.armor_totem.refresh_player"
+        "trap.armor_totem.refresh_player",
+        "trap.armor_totem.settle_player"
     ],
     "skillIds": [],
     "level": "1",
