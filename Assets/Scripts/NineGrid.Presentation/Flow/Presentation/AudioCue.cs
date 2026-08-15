@@ -94,6 +94,9 @@ namespace NineGrid.Flow.Presentation
         [AudioCue("card.drag.return", "卡牌无效落点退回手牌", "Cards", "CardHandManagerSingleton.FinishDragWithReturnAsync", AudioCueContexts.CardDefId)]
         public const string CardDragReturn = "card.drag.return";
 
+        [AudioCue("card.use.chest_reject", "宝箱卡因遗物格子已满被拒绝开启", "Cards", "RejectedUseItemRecovery.SurfaceRejection", AudioCueContexts.CardDefId)]
+        public const string ChestOpenReject = "card.use.chest_reject";
+
         [AudioCue("ui.action.hover", "通用界面控件悬停", "UI", "UiAudioFeedback.OnPointerEnter", AudioCueContexts.ContentId)]
         public const string UiHover = "ui.action.hover";
 

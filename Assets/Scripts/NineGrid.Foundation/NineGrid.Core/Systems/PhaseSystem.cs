@@ -878,9 +878,10 @@ namespace NineGrid.Core.Systems
         {
             // ADR-0027 addendum / #143：遗物栏满时拒绝开启宝箱（OnSelfUsed → OfferRewardChoice(relic.*)）。
             // 不开 Bounce / PendingChoice，避免表现层 while(true) 重弹死循环；卡片回手由 Presentation 处理。
+            // 识别规则与表现层合法性镜像共用 ChestUseRelicPoolRule，杜绝双处嗅探漂移。
             if (card != null
                 && this.GetModel<PlayerModel>().IsRelicInventoryFull
-                && IsChestUseOfferingRelicPool(card))
+                && ChestUseRelicPoolRule.IsChestUseOfferingRelicPool(this.GetSystem<IContentSystem>(), card.DefId))
             {
                 return Reject(
                     GameCommandKind.UseItem,
@@ -1559,95 +1560,6 @@ namespace NineGrid.Core.Systems
         private static bool IsUsableItemKind(CardKind kind)
         {
             return kind == CardKind.Item || kind == CardKind.HelpCard;
-        }
-
-        /// <summary>
-        /// 是否为「开宝箱选遗物」类卡：`.use` 效果装配 OfferRewardChoice 且 poolId 以 relic. 开头。
-        /// 模板实参已 Substitute 进 effect.Json，故在 effect.Json 上做 OfferRewardChoice 子串识别即可。
-        /// </summary>
-        private bool IsChestUseOfferingRelicPool(CardInstance card)
-        {
-            if (card == null || string.IsNullOrEmpty(card.DefId))
-            {
-                return false;
-            }
-
-            var content = this.GetSystem<IContentSystem>();
-            content.TryReloadFromConfig();
-            if (!content.HasCatalog)
-            {
-                return false;
-            }
-
-            var catalog = content.Catalog;
-            if (catalog == null || catalog.Cards == null || catalog.Effects == null)
-            {
-                return false;
-            }
-
-            CardContentDefinition cardDef;
-            if (!catalog.Cards.TryGetValue(card.DefId, out cardDef) || cardDef == null || cardDef.EffectIds == null)
-            {
-                return false;
-            }
-
-            for (var i = 0; i < cardDef.EffectIds.Count; i++)
-            {
-                var effectId = cardDef.EffectIds[i];
-                if (string.IsNullOrEmpty(effectId)
-                    || !effectId.EndsWith(".use", System.StringComparison.OrdinalIgnoreCase))
-                {
-                    continue;
-                }
-
-                ContentEffectDefinition effect;
-                if (!catalog.Effects.TryGetValue(effectId, out effect)
-                    || effect == null
-                    || string.IsNullOrEmpty(effect.Json))
-                {
-                    continue;
-                }
-
-                var poolId = ExtractRelicPoolIdFromEffectJson(effect.Json);
-                if (!string.IsNullOrEmpty(poolId) && IsRelicRewardPool(poolId))
-                {
-                    return true;
-                }
-            }
-
-            return false;
-        }
-
-        private static string ExtractRelicPoolIdFromEffectJson(string json)
-        {
-            if (string.IsNullOrEmpty(json))
-            {
-                return null;
-            }
-
-            // 模板实参已 Substitute 进 effect.Json：action 含 OfferRewardChoice 且 poolId:"relic.*"。
-            // 与键顺序无关，独立查找两段；只要本 JSON 同时含 OfferRewardChoice 原子与 poolId 即可。
-            const string OfferAtom = "\"atom\":\"OfferRewardChoice\"";
-            if (json.IndexOf(OfferAtom, System.StringComparison.OrdinalIgnoreCase) < 0)
-            {
-                return null;
-            }
-
-            const string poolKey = "\"poolId\":\"";
-            var poolIdx = json.IndexOf(poolKey, System.StringComparison.OrdinalIgnoreCase);
-            if (poolIdx < 0)
-            {
-                return null;
-            }
-
-            var start = poolIdx + poolKey.Length;
-            var end = json.IndexOf('"', start);
-            if (end < 0)
-            {
-                return null;
-            }
-
-            return json.Substring(start, end - start);
         }
 
         private int ResolveInteractiveRotation()

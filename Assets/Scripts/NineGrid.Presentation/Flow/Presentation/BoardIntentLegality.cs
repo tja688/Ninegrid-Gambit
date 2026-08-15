@@ -313,6 +313,17 @@ namespace NineGrid.Flow.Presentation
                 return false;
             }
 
+            // ADR-0027 addendum / #143 镜像：遗物栏满时拒开宝箱类卡（与 PhaseSystem.ExecuteUseItem 同源裁决，
+            // 共用 ChestUseRelicPoolRule）。在 idle 门禁层拒绝，让拖放路径直接回手，不必等时间线解算后自愈。
+            if (arch.GetModel<PlayerModel>().IsRelicInventoryFull
+                && ChestUseRelicPoolRule.IsChestUseOfferingRelicPool(
+                    arch.GetSystem<IContentSystem>(),
+                    card.DefId))
+            {
+                rejectReason = NineGrid.Core.Localization.L10n.Tr("notice.relic_slots_full", "遗物格子已满");
+                return false;
+            }
+
             // ADR-0032：非战斗相位（RoomChoice / RewardItemChoice）仅 usableOutsideBattle=true 的卡放行；
             // InteractionLoop 恒放行（helper 内裁决）。
             if (!ItemUseEligibility.IsUsableInCurrentPhase(arch, card.DefId))

@@ -1569,6 +1569,24 @@
             "authoringStatus": "aiDraft"
         },
         {
+            "cueId": "card.use.chest_reject",
+            "note": "宝箱卡因遗物格子已满被拒绝开启",
+            "module": "Cards",
+            "enabled": true,
+            "clipKey": "audio/SFX/失败铃声 00增强",
+            "volumeDb": -10,
+            "startOffsetSeconds": 0,
+            "bindingDelaySeconds": 0,
+            "minimumIntervalSeconds": 0.15,
+            "variants": [],
+            "selectorCardDefId": "",
+            "selectorSkillId": "",
+            "selectorRoomId": "",
+            "selectorItemDefId": "",
+            "selectorContentId": "",
+            "authoringStatus": "aiDraft"
+        },
+        {
             "cueId": "ui.player_audio.escape",
             "note": "声音设置按 Escape 关闭（软气泡声，与通用取消一致）",
             "module": "UI",

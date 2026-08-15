@@ -1,4 +1,5 @@
 using System;
+using Cysharp.Threading.Tasks;
 using NineGrid.Cards;
 using NineGrid.Core;
 using NineGrid.Core.Commands;
@@ -11,6 +12,8 @@ namespace NineGrid.Flow.Presentation
     /// 用牌/帮助卡垂直切片：ApplyUseItem → Present → 盘面稳定化；
     /// 有击杀时在首次稳定后 Rotate，再稳定一次。
     /// 未识别 kind 不入队。
+    /// 权威门禁拒收（如遗物栏满拒开宝箱，ADR-0027 addendum / #143）不再让整条主线静默 Abort：
+    /// 分支进 <see cref="RejectedUseItemRecovery"/> 提示 + 拒绝音 + 把卡视图归还手牌。
     /// </summary>
     public sealed class UseItemIntentScriptFactory : IIntentScriptFactory
     {
@@ -94,16 +97,54 @@ namespace NineGrid.Flow.Presentation
             var boardSlot = ResolvePrimaryBoardSlot(selected);
             var sync = mArchitecture.GetSystem<IPresentationSyncSystem>();
             mLastUseKilledTarget = false;
+
+            string rejectReason = null;
+            var itemDefId = ResolveItemDefId(itemUid);
             var useGate = PresentationSyncBatchGate.FromSync(
                 sync,
-                () => ResolveUseAndProject(boardSlot, itemUid, selected, option));
-            timeline.Enqueue(new ResolveBatchStep(useGate));
-            timeline.Enqueue(new PresentStep(useGate, mUsePresentChannel));
-            timeline.Enqueue(new AttackPostHitBranchStep(
+                () =>
+                {
+                    var dispatch = ResolveUseAndProject(boardSlot, itemUid, selected, option);
+                    if (dispatch == null || !dispatch.Accepted)
+                    {
+                        rejectReason = dispatch != null && dispatch.CommandResult != null
+                            ? dispatch.CommandResult.Reason
+                            : null;
+                    }
+
+                    return dispatch;
+                });
+
+            var resolveStep = new BranchableResolveStep(useGate);
+            timeline.Enqueue(resolveStep);
+
+            // 拒收分支：提示 + 音效 + 回手；通过分支不再静默 Abort 主线。
+            timeline.Enqueue(new TimelineBranchStep(
                 timeline,
-                () => mLastUseKilledTarget,
-                t => EnqueueKillAftermath(t, boardSlot),
-                t => EnqueueNonKillAftermath(t, boardSlot)));
+                () => resolveStep.Rejected,
+                t => t.Enqueue(new RejectedUseItemAftermathStep(
+                    mArchitecture,
+                    itemUid,
+                    itemDefId,
+                    () => rejectReason)),
+                t =>
+                {
+                    t.Enqueue(new PresentStep(useGate, mUsePresentChannel));
+                    t.Enqueue(new AttackPostHitBranchStep(
+                        timeline,
+                        () => mLastUseKilledTarget,
+                        killed => EnqueueKillAftermath(killed, boardSlot),
+                        notKilled => EnqueueNonKillAftermath(notKilled, boardSlot)));
+                }));
+        }
+
+        private string ResolveItemDefId(int itemUid)
+        {
+            var registry = mArchitecture.GetModel<CardRegistry>();
+            CardInstance card;
+            return registry.TryGet(itemUid, out card) && card != null
+                ? card.DefId
+                : string.Empty;
         }
 
         private void EnqueueNonKillAftermath(BattleTimeline timeline, int boardSlot)
@@ -246,6 +287,105 @@ namespace NineGrid.Flow.Presentation
 
             var slot = card.Slot.Value;
             return slot.IsBoardSlot ? slot.Index : 0;
+        }
+
+        /// <summary>
+        /// 与 <see cref="ResolveBatchStep"/> 同构的解算步，但命令被权威门禁拒收时不 Abort 主线，
+        /// 只标记 Rejected 供后续分支步骤承接（提示/音效/回手）。
+        /// </summary>
+        private sealed class BranchableResolveStep : ITimelineStep
+        {
+            private readonly IPresentationBatchGate mGate;
+            private int mOpenedBatchId;
+            private bool mRejected;
+
+            public BranchableResolveStep(IPresentationBatchGate gate)
+            {
+                if (gate == null)
+                {
+                    throw new ArgumentNullException("gate");
+                }
+
+                mGate = gate;
+            }
+
+            public bool Rejected
+            {
+                get { return mRejected; }
+            }
+
+            public TimelineStepStatus Tick(float deltaTime)
+            {
+                if (mRejected || mOpenedBatchId > 0)
+                {
+                    return TimelineStepStatus.Finished;
+                }
+
+                int batchId;
+                var open = mGate.TryOpenNextBatch(out batchId);
+                if (open == BatchOpenResult.WaitHasOpen)
+                {
+                    return TimelineStepStatus.Continue;
+                }
+
+                if (open == BatchOpenResult.Failed)
+                {
+                    mRejected = true;
+                    return TimelineStepStatus.Finished;
+                }
+
+                mOpenedBatchId = batchId;
+                return TimelineStepStatus.Finished;
+            }
+        }
+
+        /// <summary>
+        /// 拒收善后：同步发出提示与拒绝音，随后异步把卡视图归还手牌（等拖放路径的退场释放完成）。
+        /// </summary>
+        private sealed class RejectedUseItemAftermathStep : ITimelineStep
+        {
+            private readonly IArchitecture mArchitecture;
+            private readonly int mItemUid;
+            private readonly string mItemDefId;
+            private readonly Func<string> mRejectReason;
+            private UniTask mRestore;
+            private bool mStarted;
+
+            public RejectedUseItemAftermathStep(
+                IArchitecture architecture,
+                int itemUid,
+                string itemDefId,
+                Func<string> rejectReason)
+            {
+                mArchitecture = architecture;
+                mItemUid = itemUid;
+                mItemDefId = itemDefId ?? string.Empty;
+                mRejectReason = rejectReason;
+            }
+
+            public TimelineStepStatus Tick(float deltaTime)
+            {
+                if (!mStarted)
+                {
+                    mStarted = true;
+                    var reason = mRejectReason != null ? mRejectReason() : null;
+                    var chestRelicFull = RejectedUseItemRecovery.IsChestRelicFullRejection(
+                        mArchitecture,
+                        mItemDefId);
+                    RejectedUseItemRecovery.SurfaceRejection(
+                        reason,
+                        mItemDefId,
+                        chestRelicFull);
+                    mRestore = RejectedUseItemRecovery.RestoreItemViewToHandAsync(
+                        mArchitecture,
+                        mItemUid,
+                        mItemDefId);
+                }
+
+                return mRestore.Status == UniTaskStatus.Succeeded
+                    ? TimelineStepStatus.Finished
+                    : TimelineStepStatus.Continue;
+            }
         }
     }
 }
