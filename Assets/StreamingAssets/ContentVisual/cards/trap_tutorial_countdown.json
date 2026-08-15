@@ -6,7 +6,7 @@
     "role": "",
     "displayName": "教学·计数",
     "designSlotName": "",
-    "description": "怪物卡角有行动计数",
+    "description": "怪物卡角有[action]",
     "faceIntro": "那个数字会倒数",
     "attackPattern": "无",
     "rhythmSource": "",

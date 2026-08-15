@@ -1,0 +1,1533 @@
+{
+  "schema": "table-nine.card-descriptions.v1",
+  "exportedAt": "2026-08-15T20:21:24.600763+08:00",
+  "fields": [
+    "displayName",
+    "kind",
+    "faceIntro",
+    "description"
+  ],
+  "entries": [
+    {
+      "contentId": "help.armor_card",
+      "deckId": "deck.help",
+      "deckDisplayName": "道具卡组",
+      "displayName": "头甲",
+      "kind": "HelpCard",
+      "faceIntro": "说明书第一页：别戴反",
+      "description": "基础[armor]+{help.armor_card.use.delta}"
+    },
+    {
+      "contentId": "help.attack_card",
+      "deckId": "deck.help",
+      "deckDisplayName": "道具卡组",
+      "displayName": "皮质手套",
+      "kind": "HelpCard",
+      "faceIntro": "戴上后总想试试桌子结不结实",
+      "description": "基础[attack]+{help.attack_card.use.delta}"
+    },
+    {
+      "contentId": "help.blue_chest_card",
+      "deckId": "deck.help",
+      "deckDisplayName": "道具卡组",
+      "displayName": "进阶宝箱",
+      "kind": "HelpCard",
+      "faceIntro": "普通宝箱进修归来",
+      "description": "挑选并获取一个进阶的遗物"
+    },
+    {
+      "contentId": "help.bomb",
+      "deckId": "deck.help",
+      "deckDisplayName": "道具卡组",
+      "displayName": "爆弹",
+      "kind": "HelpCard",
+      "faceIntro": "点着以后再看说明书就晚了",
+      "description": "对所有怪物造成{help.bomb.use.amount}点伤害"
+    },
+    {
+      "contentId": "help.brutality_card",
+      "deckId": "deck.help",
+      "deckDisplayName": "道具卡组",
+      "displayName": "暴力",
+      "kind": "HelpCard",
+      "faceIntro": "一天不吃，浑身难受",
+      "description": "[attack]翻倍，战斗后复原"
+    },
+    {
+      "contentId": "help.charge_horn",
+      "deckId": "deck.ai_expansion",
+      "deckDisplayName": "AI 拓展设计卡组",
+      "displayName": "冲锋号角",
+      "kind": "HelpCard",
+      "faceIntro": "号声一响，胆气自壮",
+      "description": "本场战斗[attack]+{help.charge_horn.use.value}"
+    },
+    {
+      "contentId": "help.common_chest_card",
+      "deckId": "deck.help",
+      "deckDisplayName": "道具卡组",
+      "displayName": "普通宝箱",
+      "kind": "HelpCard",
+      "faceIntro": "箱子外壳更加值钱",
+      "description": "挑选并获取一个普通的遗物"
+    },
+    {
+      "contentId": "help.dismantle_kit",
+      "deckId": "deck.ai_expansion",
+      "deckDisplayName": "AI 拓展设计卡组",
+      "displayName": "拆解工具箱",
+      "kind": "HelpCard",
+      "faceIntro": "拆了卖废铁也是钱",
+      "description": "移除一张机关卡，获得{help.dismantle_kit.use.gold}[money]"
+    },
+    {
+      "contentId": "help.fireball",
+      "deckId": "deck.help",
+      "deckDisplayName": "道具卡组",
+      "displayName": "火球术",
+      "kind": "HelpCard",
+      "faceIntro": "法师把他开源了所以人人都会用",
+      "description": "对选中怪物造成等同于玩家[attack]的伤害"
+    },
+    {
+      "contentId": "help.flash_bomb",
+      "deckId": "deck.ai_expansion",
+      "deckDisplayName": "AI 拓展设计卡组",
+      "displayName": "闪光弹",
+      "kind": "HelpCard",
+      "faceIntro": "亮一下，全场愣神",
+      "description": "全场怪物行动倒计时+{help.flash_bomb.use.delta}"
+    },
+    {
+      "contentId": "help.food_card",
+      "deckId": "deck.help",
+      "deckDisplayName": "道具卡组",
+      "displayName": "生日蛋糕",
+      "kind": "HelpCard",
+      "faceIntro": "蜡烛数量已做隐私处理",
+      "description": "将[HP]完整恢复"
+    },
+    {
+      "contentId": "help.gold_card",
+      "deckId": "deck.help",
+      "deckDisplayName": "道具卡组",
+      "displayName": "钱袋子",
+      "kind": "HelpCard",
+      "faceIntro": "听声音就让人安心",
+      "description": "获取{help.gold_card.use.delta}[money]"
+    },
+    {
+      "contentId": "help.golden_chest_card",
+      "deckId": "deck.help",
+      "deckDisplayName": "道具卡组",
+      "displayName": "高级宝箱",
+      "kind": "HelpCard",
+      "faceIntro": "昂贵的礼品",
+      "description": "挑选并获取一个高级的遗物"
+    },
+    {
+      "contentId": "help.healing_potion",
+      "deckId": "deck.help",
+      "deckDisplayName": "道具卡组",
+      "displayName": "恢复药水",
+      "kind": "HelpCard",
+      "faceIntro": "味道像药，至少这点很专业",
+      "description": "恢复{help.healing_potion.use.amount}点[HP]"
+    },
+    {
+      "contentId": "help.hp_card",
+      "deckId": "deck.help",
+      "deckDisplayName": "道具卡组",
+      "displayName": "金色三叶草",
+      "kind": "HelpCard",
+      "faceIntro": "长生不老",
+      "description": "[MHP]+{help.hp_card.use.delta}"
+    },
+    {
+      "contentId": "help.impact_tutorial",
+      "deckId": "deck.player",
+      "deckDisplayName": "玩家卡组",
+      "displayName": "撞击",
+      "kind": "HelpCard",
+      "faceIntro": "头铁也是一种装备",
+      "description": "对目标怪物造成等同于玩家当前[HP]的伤害"
+    },
+    {
+      "contentId": "help.kidnapping",
+      "deckId": "deck.help",
+      "deckDisplayName": "道具卡组",
+      "displayName": "绑票",
+      "kind": "HelpCard",
+      "faceIntro": "绳子是赠品",
+      "description": "破坏{help.kidnapping.use.count}张常规怪物，并偷取其[armor]"
+    },
+    {
+      "contentId": "help.magnet_anchor",
+      "deckId": "deck.ai_expansion",
+      "deckDisplayName": "AI 拓展设计卡组",
+      "displayName": "磁力锚",
+      "kind": "HelpCard",
+      "faceIntro": "指哪吸哪",
+      "description": "将一张怪物卡移动到中心格"
+    },
+    {
+      "contentId": "help.rotation_wheel",
+      "deckId": "deck.help",
+      "deckDisplayName": "道具卡组",
+      "displayName": "旋转轮",
+      "kind": "HelpCard",
+      "faceIntro": "给我回来！",
+      "description": "逆时针旋转一次"
+    },
+    {
+      "contentId": "help.sturdy_shield",
+      "deckId": "deck.help",
+      "deckDisplayName": "道具卡组",
+      "displayName": "耐用盾牌",
+      "kind": "HelpCard",
+      "faceIntro": "经得起大多数推销员的演示",
+      "description": "玩家获得{help.sturdy_shield.use.amount}点[armor]"
+    },
+    {
+      "contentId": "help.sunder_grenade",
+      "deckId": "deck.ai_expansion",
+      "deckDisplayName": "AI 拓展设计卡组",
+      "displayName": "破甲榴弹",
+      "kind": "HelpCard",
+      "faceIntro": "专治各种硬壳",
+      "description": "移除目标怪物全部[armor]并造成{help.sunder_grenade.use.amount}点伤害"
+    },
+    {
+      "contentId": "help.swap_card",
+      "deckId": "deck.help",
+      "deckDisplayName": "道具卡组",
+      "displayName": "交换",
+      "kind": "HelpCard",
+      "faceIntro": "妙用无穷~",
+      "description": "选择除玩家外的{help.swap_card.use.count}张卡牌互换位置"
+    },
+    {
+      "contentId": "help.teleport_card",
+      "deckId": "deck.help",
+      "deckDisplayName": "道具卡组",
+      "displayName": "传送",
+      "kind": "HelpCard",
+      "faceIntro": "起飞...",
+      "description": "选择除玩家外的{help.teleport_card.use.count}张卡牌洗回卡组"
+    },
+    {
+      "contentId": "help.throwing_knife",
+      "deckId": "deck.help",
+      "deckDisplayName": "道具卡组",
+      "displayName": "飞刀",
+      "kind": "HelpCard",
+      "faceIntro": "不包回收",
+      "description": "对目标怪物造成{help.throwing_knife.use.amount}点伤害"
+    },
+    {
+      "contentId": "monster.beggar",
+      "deckId": "deck.dragon",
+      "deckDisplayName": "基础怪物卡组",
+      "displayName": "人面莱姆",
+      "kind": "Monster",
+      "faceIntro": "其实是由六只莱姆组合成的",
+      "description": "[[吸收]]"
+    },
+    {
+      "contentId": "monster.big_skeleton",
+      "deckId": "deck.insect",
+      "deckDisplayName": "召唤怪物卡组",
+      "displayName": "巨剑骷髅",
+      "kind": "Monster",
+      "faceIntro": "蝉联三年最帅骷髅的称号",
+      "description": ""
+    },
+    {
+      "contentId": "monster.big_skeleton_reborn",
+      "deckId": "deck.dragon",
+      "deckDisplayName": "基础怪物卡组",
+      "displayName": "双球莱姆",
+      "kind": "Monster",
+      "faceIntro": "偶像是豌豆射手",
+      "description": "[[远程武器]]"
+    },
+    {
+      "contentId": "monster.big_stone",
+      "deckId": "deck.orc_legion",
+      "deckDisplayName": "旋转怪物卡组",
+      "displayName": "小蜜蜂",
+      "kind": "Monster",
+      "faceIntro": "是CS高手",
+      "description": ""
+    },
+    {
+      "contentId": "monster.bone_club_skeleton",
+      "deckId": "deck.void",
+      "deckDisplayName": "决斗怪物卡组",
+      "displayName": "拳击决斗者",
+      "kind": "Monster",
+      "faceIntro": "绝不打假赛",
+      "description": "[[神圣决斗]]"
+    },
+    {
+      "contentId": "monster.bone_courier",
+      "deckId": "deck.void",
+      "deckDisplayName": "决斗怪物卡组",
+      "displayName": "灵巧决斗者",
+      "kind": "Monster",
+      "faceIntro": "静待时机...",
+      "description": "[[神圣决斗]]，[[逃避]]"
+    },
+    {
+      "contentId": "monster.brainless_orc",
+      "deckId": "deck.skeleton_legion",
+      "deckDisplayName": "翻面怪物卡组",
+      "displayName": "黑寡妇",
+      "kind": "Monster",
+      "faceIntro": "躲在密林间阴险地喷射蛛网",
+      "description": "[[远程武器]]，[[起来]]"
+    },
+    {
+      "contentId": "monster.dragon_cult_leader",
+      "deckId": "deck.stone_legion",
+      "deckDisplayName": "烈焰怪物卡组",
+      "displayName": "蓝焰",
+      "kind": "Monster",
+      "faceIntro": "烈焰一族的中坚力量",
+      "description": "[[献火]]"
+    },
+    {
+      "contentId": "monster.dragon_follower",
+      "deckId": "deck.stone_legion",
+      "deckDisplayName": "烈焰怪物卡组",
+      "displayName": "幽灵炎",
+      "kind": "Monster",
+      "faceIntro": "会灼烧灵魂",
+      "description": "[[剧烈燃烧]]"
+    },
+    {
+      "contentId": "monster.fire_bather",
+      "deckId": "deck.void",
+      "deckDisplayName": "决斗怪物卡组",
+      "displayName": "爆裂决斗者",
+      "kind": "Monster",
+      "faceIntro": "第40k届决斗者争霸赛冠军",
+      "description": "[[神圣决斗]]，[[损耗]]"
+    },
+    {
+      "contentId": "monster.fire_dragon",
+      "deckId": "deck.orc_legion",
+      "deckDisplayName": "旋转怪物卡组",
+      "displayName": "莫西干鸟",
+      "kind": "Monster",
+      "faceIntro": "他的发型是他的生命",
+      "description": "[[快递]]"
+    },
+    {
+      "contentId": "monster.fire_priest",
+      "deckId": "deck.void",
+      "deckDisplayName": "决斗怪物卡组",
+      "displayName": "挥砍决斗者",
+      "kind": "Monster",
+      "faceIntro": "以前是个经验丰富的伐木工",
+      "description": "[[神圣决斗]]，[[历战]]"
+    },
+    {
+      "contentId": "monster.fire_swallower",
+      "deckId": "deck.void",
+      "deckDisplayName": "决斗怪物卡组",
+      "displayName": "敲击决斗者",
+      "kind": "Monster",
+      "faceIntro": "会讲笑话，虽然决斗者们的笑话从来不好笑",
+      "description": "[[神圣决斗]]，[[嘲讽]]"
+    },
+    {
+      "contentId": "monster.forge_apprentice",
+      "deckId": "deck.ai_expansion",
+      "deckDisplayName": "AI 拓展设计卡组",
+      "displayName": "熔炉学徒",
+      "kind": "Monster",
+      "faceIntro": "学徒的手艺全在别人身上",
+      "description": "[[全向近战]]，行动时为随机友军+{skill.forge_plating.fire.amount}[armor]"
+    },
+    {
+      "contentId": "monster.forge_master",
+      "deckId": "deck.ai_expansion",
+      "deckDisplayName": "AI 拓展设计卡组",
+      "displayName": "熔炉之主",
+      "kind": "Monster",
+      "faceIntro": "炉火不熄，铁军不倒",
+      "description": "[[普通近战]]，行动时全军+{skill.forge_all.fire.amount}[armor]，甲碎溅击{skill.forge_spatter.break.amount}点"
+    },
+    {
+      "contentId": "monster.forge_scrap_beetle",
+      "deckId": "deck.ai_expansion",
+      "deckDisplayName": "AI 拓展设计卡组",
+      "displayName": "铁屑虫",
+      "kind": "Monster",
+      "faceIntro": "一身碎铁，越攒越硬",
+      "description": "[[普通近战]]，行动时获得{skill.forge_quench.fire.amount}点[armor]"
+    },
+    {
+      "contentId": "monster.forge_shell_turtle",
+      "deckId": "deck.ai_expansion",
+      "deckDisplayName": "AI 拓展设计卡组",
+      "displayName": "铁壳龟",
+      "kind": "Monster",
+      "faceIntro": "壳碎的那天，它不再忍了",
+      "description": "[[普通近战]]，[armor]破碎时[attack]+{skill.forge_harden.break.delta}"
+    },
+    {
+      "contentId": "monster.forge_sunder_warrior",
+      "deckId": "deck.ai_expansion",
+      "deckDisplayName": "AI 拓展设计卡组",
+      "displayName": "碎甲武士",
+      "kind": "Monster",
+      "faceIntro": "他的锤子专挑缝隙下手",
+      "description": "[[普通近战]]，行动时对[adjacent]玩家附加{skill.forge_sunder.fire.amount}点[[无视护甲]]伤害"
+    },
+    {
+      "contentId": "monster.headless_skeleton",
+      "deckId": "deck.dragon",
+      "deckDisplayName": "基础怪物卡组",
+      "displayName": "钢铁莱姆",
+      "kind": "Monster",
+      "faceIntro": "很耐揍",
+      "description": "[[叠甲]]"
+    },
+    {
+      "contentId": "monster.hoodlum",
+      "deckId": "deck.smallanimal",
+      "deckDisplayName": "链接怪物卡组",
+      "displayName": "火把哥布",
+      "kind": "Monster",
+      "faceIntro": "主要起到照明作用",
+      "description": "[[天涯若比邻]]"
+    },
+    {
+      "contentId": "monster.melee_3",
+      "deckId": "deck.dragon",
+      "deckDisplayName": "基础怪物卡组",
+      "displayName": "小小莱姆",
+      "kind": "Monster",
+      "faceIntro": "人畜无害",
+      "description": ""
+    },
+    {
+      "contentId": "monster.orc_commander",
+      "deckId": "deck.skeleton_legion",
+      "deckDisplayName": "翻面怪物卡组",
+      "displayName": "沙虫",
+      "kind": "Monster",
+      "faceIntro": "嘘，都给我悄悄的",
+      "description": "[[刺客领袖]]，[[起来]]"
+    },
+    {
+      "contentId": "monster.pickpocket",
+      "deckId": "deck.smallanimal",
+      "deckDisplayName": "链接怪物卡组",
+      "displayName": "狼骑哥布",
+      "kind": "Monster",
+      "faceIntro": "在第三次射箭大赛中完胜轻弓骷髅",
+      "description": "[[远程武器]]，[[链接]]"
+    },
+    {
+      "contentId": "monster.ringleader",
+      "deckId": "deck.smallanimal",
+      "deckDisplayName": "链接怪物卡组",
+      "displayName": "巨棒哥布",
+      "kind": "Monster",
+      "faceIntro": "会狠狠的给对面来上一棍子",
+      "description": "[[链接]]"
+    },
+    {
+      "contentId": "monster.rogue",
+      "deckId": "deck.insect",
+      "deckDisplayName": "召唤怪物卡组",
+      "displayName": "亡灵法师",
+      "kind": "Monster",
+      "faceIntro": "亡灵法师不总是一个眼冒鬼火的骷髅架子",
+      "description": "[[死亡之主]]"
+    },
+    {
+      "contentId": "monster.salamander",
+      "deckId": "deck.stone_legion",
+      "deckDisplayName": "烈焰怪物卡组",
+      "displayName": "小蓝焰",
+      "kind": "Monster",
+      "faceIntro": "会把自己发射出去灼伤敌人",
+      "description": "[[远程武器]]，[[烈焰沸腾]]"
+    },
+    {
+      "contentId": "monster.shelter_stone",
+      "deckId": "deck.stone_legion",
+      "deckDisplayName": "烈焰怪物卡组",
+      "displayName": "烈焰",
+      "kind": "Monster",
+      "faceIntro": "烈焰一族的王者",
+      "description": "[[吞云吐雾]]，[[生生不息]]"
+    },
+    {
+      "contentId": "monster.skeleton_king",
+      "deckId": "deck.orc_legion",
+      "deckDisplayName": "旋转怪物卡组",
+      "displayName": "紫袍鹰王",
+      "kind": "Monster",
+      "faceIntro": "不会飞是因为吃太胖了",
+      "description": "[[空间掌握]]"
+    },
+    {
+      "contentId": "monster.skeleton_taunter",
+      "deckId": "deck.orc_legion",
+      "deckDisplayName": "旋转怪物卡组",
+      "displayName": "独眼蝙蝠",
+      "kind": "Monster",
+      "faceIntro": "反复纠正他没有在读研究生",
+      "description": "[[转动]]"
+    },
+    {
+      "contentId": "monster.skull_head",
+      "deckId": "deck.dragon",
+      "deckDisplayName": "基础怪物卡组",
+      "displayName": "负伤莱姆",
+      "kind": "Monster",
+      "faceIntro": "随时做好奉献自己的准备",
+      "description": "[[献身]]"
+    },
+    {
+      "contentId": "monster.sky_eye",
+      "deckId": "deck.orc_legion",
+      "deckDisplayName": "旋转怪物卡组",
+      "displayName": "大黄蜂",
+      "kind": "Monster",
+      "faceIntro": "不会变形",
+      "description": "[[远程武器]]，[[逃避]]"
+    },
+    {
+      "contentId": "monster.smart_orc",
+      "deckId": "deck.skeleton_legion",
+      "deckDisplayName": "翻面怪物卡组",
+      "displayName": "紫蝎",
+      "kind": "Monster",
+      "faceIntro": "哎，扎死你呀哈哈哈哈",
+      "description": "[[跳杀]]，[[潜伏]]"
+    },
+    {
+      "contentId": "monster.smuggler",
+      "deckId": "deck.insect",
+      "deckDisplayName": "召唤怪物卡组",
+      "displayName": "轻弓骷髅",
+      "kind": "Monster",
+      "faceIntro": "准头不是很高",
+      "description": "[[远程武器]]，[[提速]]"
+    },
+    {
+      "contentId": "monster.thug",
+      "deckId": "deck.smallanimal",
+      "deckDisplayName": "链接怪物卡组",
+      "displayName": "小刀哥布",
+      "kind": "Monster",
+      "faceIntro": "跑得快，通常兼任传信官",
+      "description": "[[链接战术]]，[[链接]]"
+    },
+    {
+      "contentId": "monster.tide_heart",
+      "deckId": "deck.ai_expansion",
+      "deckDisplayName": "AI 拓展设计卡组",
+      "displayName": "潮汐之心",
+      "kind": "Monster",
+      "faceIntro": "潮起潮落，都听它的",
+      "description": "[[全向近战]]，行动时旋转{skill.tide_surge_fire.fire.count}格并为友军回{skill.tide_bloom.fire.amount}血"
+    },
+    {
+      "contentId": "monster.tide_jelly",
+      "deckId": "deck.ai_expansion",
+      "deckDisplayName": "AI 拓展设计卡组",
+      "displayName": "涟漪水母",
+      "kind": "Monster",
+      "faceIntro": "随波逐流，也随波出手",
+      "description": "[[普通近战]]，随[[移动计数]]行动"
+    },
+    {
+      "contentId": "monster.tide_ray",
+      "deckId": "deck.ai_expansion",
+      "deckDisplayName": "AI 拓展设计卡组",
+      "displayName": "磁暴鳐",
+      "kind": "Monster",
+      "faceIntro": "别想把它钉在原地",
+      "description": "[[斜角近战]]，被移入中心格时与随机怪物换位"
+    },
+    {
+      "contentId": "monster.tide_surf_crab",
+      "deckId": "deck.ai_expansion",
+      "deckDisplayName": "AI 拓展设计卡组",
+      "displayName": "逐浪蟹",
+      "kind": "Monster",
+      "faceIntro": "它来的时候，浪也跟着来",
+      "description": "[[全向近战]]，进场时盘面旋转{skill.tide_surge.enter.count}格"
+    },
+    {
+      "contentId": "monster.tide_tentacle",
+      "deckId": "deck.ai_expansion",
+      "deckDisplayName": "AI 拓展设计卡组",
+      "displayName": "深流触手",
+      "kind": "Monster",
+      "faceIntro": "深处伸来的问候",
+      "description": "[[普通近战]]，行动时隔空鞭击玩家{skill.tide_reel.fire.amount}点"
+    },
+    {
+      "contentId": "monster.vagrant",
+      "deckId": "deck.smallanimal",
+      "deckDisplayName": "链接怪物卡组",
+      "displayName": "哥布将军",
+      "kind": "Monster",
+      "faceIntro": "猪是借来的",
+      "description": "[[链接准备]]，[[链接护甲]]，[[链接]]"
+    },
+    {
+      "contentId": "monster.veteran_orc",
+      "deckId": "deck.skeleton_legion",
+      "deckDisplayName": "翻面怪物卡组",
+      "displayName": "寄居蟹",
+      "kind": "Monster",
+      "faceIntro": "悄悄摸摸的靠近",
+      "description": "[[盗取]]，[[潜伏]]"
+    },
+    {
+      "contentId": "monster.void_lost",
+      "deckId": "deck.stone_legion",
+      "deckDisplayName": "烈焰怪物卡组",
+      "displayName": "小火焰",
+      "kind": "Monster",
+      "faceIntro": "烈焰一族的小宝贝",
+      "description": "[[呼唤]]"
+    },
+    {
+      "contentId": "monster.wandering_child",
+      "deckId": "deck.insect",
+      "deckDisplayName": "召唤怪物卡组",
+      "displayName": "巨斧骷髅",
+      "kind": "Monster",
+      "faceIntro": "骷髅没肌肉怎么举起武器是困扰骷髅届百年的问题",
+      "description": "[[死亡召唤]]"
+    },
+    {
+      "contentId": "monster.world_turning_hand",
+      "deckId": "deck.insect",
+      "deckDisplayName": "召唤怪物卡组",
+      "displayName": "短剑骷髅",
+      "kind": "Monster",
+      "faceIntro": "剑是捡的",
+      "description": "[[吟唱]]"
+    },
+    {
+      "contentId": "monster.young_orc",
+      "deckId": "deck.skeleton_legion",
+      "deckDisplayName": "翻面怪物卡组",
+      "displayName": "红甲虫",
+      "kind": "Monster",
+      "faceIntro": "别碰我",
+      "description": "[[休养]]，[[潜伏]]"
+    },
+    {
+      "contentId": "relic.armor_strip_knife",
+      "deckId": "deck.relic",
+      "deckDisplayName": "遗物卡组",
+      "displayName": "破甲",
+      "kind": "Relic",
+      "faceIntro": "专挑穿得厚的下手",
+      "description": "[attack]时若目标当前[armor]大于{relic.armor_strip_knife.battle.value}，[attack]伤害+{relic.armor_strip_knife.armor_hit.value}"
+    },
+    {
+      "contentId": "relic.berserker_axe",
+      "deckId": "deck.relic",
+      "deckDisplayName": "遗物卡组",
+      "displayName": "狂战",
+      "kind": "Relic",
+      "faceIntro": "半条命之后才进入工作状态",
+      "description": "[attack]+{relic.berserker_axe.base.value}，[HP]低于一半时玩家[attack]翻倍"
+    },
+    {
+      "contentId": "relic.beyond_dimension",
+      "deckId": "deck.relic",
+      "deckDisplayName": "遗物卡组",
+      "displayName": "超越维度",
+      "kind": "Relic",
+      "faceIntro": "打完一拳顺便换个角度理解世界",
+      "description": "[attack]+{relic.beyond_dimension.base.value}，攻击后旋转{relic.beyond_dimension.battle.count}次"
+    },
+    {
+      "contentId": "relic.blood_burst",
+      "deckId": "deck.relic",
+      "deckDisplayName": "遗物卡组",
+      "displayName": "血盾",
+      "kind": "Relic",
+      "faceIntro": "你掉血，它替你记仇",
+      "description": "[MHP]+{relic.blood_burst.max_hp.value}，受伤时对随机怪物：反伤"
+    },
+    {
+      "contentId": "relic.blood_cycle",
+      "deckId": "deck.relic",
+      "deckDisplayName": "遗物卡组",
+      "displayName": "血圣杯",
+      "kind": "Relic",
+      "faceIntro": "漏出去一点，它又给你倒回来一点",
+      "description": "[MHP]+{relic.blood_cycle.max_hp.value}，受到伤害时恢复{relic.blood_cycle.taken.amount}点[HP]"
+    },
+    {
+      "contentId": "relic.blood_demon",
+      "deckId": "deck.relic",
+      "deckDisplayName": "遗物卡组",
+      "displayName": "血魔徽章",
+      "kind": "Relic",
+      "faceIntro": "挨打也是一种长期投资",
+      "description": "每受到{relic.blood_demon.damage.threshold}点伤害，获得{relic.blood_demon.damage.delta}点[MHP]"
+    },
+    {
+      "contentId": "relic.blood_regen",
+      "deckId": "deck.relic",
+      "deckDisplayName": "遗物卡组",
+      "displayName": "血色项链",
+      "kind": "Relic",
+      "faceIntro": "只在你脸色不太好时开始工作",
+      "description": "[MHP]+{relic.blood_regen.max_hp.value}；低于半血时，恢复{relic.blood_regen.battle.amount}[HP]"
+    },
+    {
+      "contentId": "relic.blood_violence",
+      "deckId": "deck.relic",
+      "deckDisplayName": "遗物卡组",
+      "displayName": "血之暴力",
+      "kind": "Relic",
+      "faceIntro": "血越少，脾气越大",
+      "description": "[MHP]+{relic.blood_violence.max_hp.value}；当[HP]低于[MHP]的{relic.blood_violence.atk.pct}%时，玩家[attack]+{relic.blood_violence.atk.value}"
+    },
+    {
+      "contentId": "relic.body_potential",
+      "deckId": "deck.relic",
+      "deckDisplayName": "遗物卡组",
+      "displayName": "大力腰带",
+      "kind": "Relic",
+      "faceIntro": "系紧一点，力气就有地方放了",
+      "description": "[MHP]+{relic.body_potential.max_hp.value}；[HP]每累计减少{relic.body_potential.hp_lost.threshold}点，添加{relic.body_potential.hp_lost.count}张道具到卡组"
+    },
+    {
+      "contentId": "relic.caravan_ledger",
+      "deckId": "deck.ai_expansion",
+      "deckDisplayName": "AI 拓展设计卡组",
+      "displayName": "商队账本",
+      "kind": "Relic",
+      "faceIntro": "每一站都有分红",
+      "description": "每个战斗节点结束时，获得{relic.caravan_ledger.node_end.delta}[money]"
+    },
+    {
+      "contentId": "relic.composite_armor",
+      "deckId": "deck.relic",
+      "deckDisplayName": "遗物卡组",
+      "displayName": "复合盔甲",
+      "kind": "Relic",
+      "faceIntro": "肌肉负责吓人，盔甲负责当真",
+      "description": "每关卡开始时，每有{relic.composite_armor.node_start.every}点[attack]，获得{relic.composite_armor.node_start.gain}点[armor]"
+    },
+    {
+      "contentId": "relic.craving",
+      "deckId": "deck.relic",
+      "deckDisplayName": "遗物卡组",
+      "displayName": "渴望",
+      "kind": "Relic",
+      "faceIntro": "喝多少都觉得还差一口",
+      "description": "[MHP]+{relic.craving.max_hp.delta}，所有恢复血量的效果翻倍"
+    },
+    {
+      "contentId": "relic.dragon_scale_armor",
+      "deckId": "deck.relic",
+      "deckDisplayName": "遗物卡组",
+      "displayName": "龙鳞甲",
+      "kind": "Relic",
+      "faceIntro": "龙本人对此没有发表意见",
+      "description": "基础[armor]+{relic.dragon_scale_armor.base.value}，[MHP]+{relic.dragon_scale_armor.max_hp.delta}，所有怪物的[attack]{relic.dragon_scale_armor.rule.value}"
+    },
+    {
+      "contentId": "relic.foam_armor",
+      "deckId": "deck.relic",
+      "deckDisplayName": "遗物卡组",
+      "displayName": "泡沫盔甲",
+      "kind": "Relic",
+      "faceIntro": "第一眼像玩具，第二下再说",
+      "description": "[B_armor]+{relic.foam_armor.base.value}，每场战斗第一次破甲后获得伤害护盾"
+    },
+    {
+      "contentId": "relic.forge_bracer",
+      "deckId": "deck.ai_expansion",
+      "deckDisplayName": "AI 拓展设计卡组",
+      "displayName": "锻匠护腕",
+      "kind": "Relic",
+      "faceIntro": "碎甲之痛，化为挥锤之力",
+      "description": "[armor]破碎时，本场战斗[attack]+{relic.forge_bracer.break.value}"
+    },
+    {
+      "contentId": "relic.forge_tool",
+      "deckId": "deck.relic",
+      "deckDisplayName": "遗物卡组",
+      "displayName": "锻造器具",
+      "kind": "Relic",
+      "faceIntro": "先拆一点，再说这是升级",
+      "description": "基础[armor]+{relic.forge_tool.init.value}，进入战斗时吞噬{relic.forge_tool.node_start.threshold}点[armor]使基础[armor]永久+{relic.forge_tool.node_start.delta}"
+    },
+    {
+      "contentId": "relic.gold_armor",
+      "deckId": "deck.relic",
+      "deckDisplayName": "遗物卡组",
+      "displayName": "金币盔甲",
+      "kind": "Relic",
+      "faceIntro": "钱包也是身体的一部分",
+      "description": "基础[armor]+{relic.gold_armor.base.value}，每{relic.gold_armor.rule.every}点[money]视作{relic.gold_armor.rule.value}点[armor]"
+    },
+    {
+      "contentId": "relic.gold_blood",
+      "deckId": "deck.relic",
+      "deckDisplayName": "遗物卡组",
+      "displayName": "金血圣杯",
+      "kind": "Relic",
+      "faceIntro": "一边流血，一边结算工资",
+      "description": "[MHP]+{relic.gold_blood.max_hp.value}，每损失{relic.gold_blood.taken.every}点[HP]，获得等量[money]"
+    },
+    {
+      "contentId": "relic.gold_knife",
+      "deckId": "deck.relic",
+      "deckDisplayName": "遗物卡组",
+      "displayName": "打金刀",
+      "kind": "Relic",
+      "faceIntro": "刀刃上沾着一点职业规划",
+      "description": "击杀怪物时，获得{relic.gold_knife.kill.delta}[money]"
+    },
+    {
+      "contentId": "relic.golden_coffer",
+      "deckId": "deck.relic",
+      "deckDisplayName": "遗物卡组",
+      "displayName": "黄金鱼竿",
+      "kind": "Relic",
+      "faceIntro": "唯独钓不到鱼",
+      "description": "获得本遗物时，将{relic.golden_coffer.grant.count}张金色宝箱卡加入卡组"
+    },
+    {
+      "contentId": "relic.golden_sword",
+      "deckId": "deck.relic",
+      "deckDisplayName": "遗物卡组",
+      "displayName": "机械巨弩",
+      "kind": "Relic",
+      "faceIntro": "需要战果给齿轮上油",
+      "description": "[attack]+{relic.golden_sword.init.value}，[[普通攻击]]时[attack]-1，击杀时[attack]+1"
+    },
+    {
+      "contentId": "relic.heavy_armor",
+      "deckId": "deck.relic",
+      "deckDisplayName": "遗物卡组",
+      "displayName": "重盔甲",
+      "kind": "Relic",
+      "faceIntro": "穿上以后楼梯突然变长了",
+      "description": "基础[armor]+{relic.heavy_armor.base.value}，进入战斗时每有{relic.heavy_armor.node_start.every}点基础[armor]就获得{relic.heavy_armor.node_start.gain}点[armor]"
+    },
+    {
+      "contentId": "relic.iron_shield",
+      "deckId": "deck.relic",
+      "deckDisplayName": "遗物卡组",
+      "displayName": "铁盾",
+      "kind": "Relic",
+      "faceIntro": "没有花纹，因为花纹不挡刀",
+      "description": "基础[armor]+{relic.iron_shield.base.value}；获得{relic.iron_shield.reduction.value}层：伤害减免"
+    },
+    {
+      "contentId": "relic.junk_amplifier",
+      "deckId": "deck.relic",
+      "deckDisplayName": "遗物卡组",
+      "displayName": "回收腰带",
+      "kind": "Relic",
+      "faceIntro": "垃圾堆里捡到的",
+      "description": "每使用{relic.junk_amplifier.use.every}张道具卡，本场战斗[attack]+{relic.junk_amplifier.use.value}"
+    },
+    {
+      "contentId": "relic.junk_body",
+      "deckId": "deck.relic",
+      "deckDisplayName": "遗物卡组",
+      "displayName": "回收衣物",
+      "kind": "Relic",
+      "faceIntro": "缝缝补补，居然还能长身体",
+      "description": "每使用{relic.junk_body.use.threshold}张道具卡，获得{relic.junk_body.use.delta}点[MHP]"
+    },
+    {
+      "contentId": "relic.junk_coating",
+      "deckId": "deck.relic",
+      "deckDisplayName": "遗物卡组",
+      "displayName": "回收铁背心",
+      "kind": "Relic",
+      "faceIntro": "上辈子是 Mac Pro",
+      "description": "每使用{relic.junk_coating.use.every}张道具卡，获得{relic.junk_coating.use.amount}点[armor]"
+    },
+    {
+      "contentId": "relic.junk_cycler",
+      "deckId": "deck.relic",
+      "deckDisplayName": "遗物卡组",
+      "displayName": "回收手链",
+      "kind": "Relic",
+      "faceIntro": "环保！",
+      "description": "每使用{relic.junk_cycler.use.threshold}张道具卡，添加{relic.junk_cycler.use.count}张道具卡到卡组"
+    },
+    {
+      "contentId": "relic.junk_launcher",
+      "deckId": "deck.relic",
+      "deckDisplayName": "遗物卡组",
+      "displayName": "回收弹弓",
+      "kind": "Relic",
+      "faceIntro": "橡皮筋是新的，其他不保证",
+      "description": "每使用{relic.junk_launcher.use.every}张道具卡，对随机{relic.junk_launcher.use.random}张怪物造成{relic.junk_launcher.use.amount}点伤害"
+    },
+    {
+      "contentId": "relic.junk_recycler",
+      "deckId": "deck.relic",
+      "deckDisplayName": "遗物卡组",
+      "displayName": "回收食物",
+      "kind": "Relic",
+      "faceIntro": "并非食物",
+      "description": "每使用{relic.junk_recycler.use.every}张道具卡，恢复{relic.junk_recycler.use.amount}点[HP]"
+    },
+    {
+      "contentId": "relic.junk_sword",
+      "deckId": "deck.relic",
+      "deckDisplayName": "遗物卡组",
+      "displayName": "回收棒槌",
+      "kind": "Relic",
+      "faceIntro": "二手，但上一任主人已经联系不上了",
+      "description": "[attack]+{relic.junk_sword.base.value},击杀时恢复{relic.junk_sword.kill.amount}点[HP]"
+    },
+    {
+      "contentId": "relic.lucky_coin",
+      "deckId": "deck.relic",
+      "deckDisplayName": "遗物卡组",
+      "displayName": "悬赏令",
+      "kind": "Relic",
+      "faceIntro": "上面的画像画得不太像",
+      "description": "击杀层主时将{relic.lucky_coin.boss_kill.count}张金币卡添加到卡组"
+    },
+    {
+      "contentId": "relic.metal_blood",
+      "deckId": "deck.relic",
+      "deckDisplayName": "遗物卡组",
+      "displayName": "凝血护甲",
+      "kind": "Relic",
+      "faceIntro": "流出来的不能浪费",
+      "description": "受到伤害时，将损失的[HP]转换为等量的[armor]"
+    },
+    {
+      "contentId": "relic.muscle_counter",
+      "deckId": "deck.relic",
+      "deckDisplayName": "遗物卡组",
+      "displayName": "狼牙棒",
+      "kind": "Relic",
+      "faceIntro": "狼牙是装饰，棒才是重点",
+      "description": "[MHP]+{relic.muscle_counter.max_hp.value}；每拥有{relic.muscle_counter.battle.every}点[MHP]，对怪物多造成{relic.muscle_counter.battle.gain}点伤害"
+    },
+    {
+      "contentId": "relic.phoenix_feather",
+      "deckId": "deck.relic",
+      "deckDisplayName": "遗物卡组",
+      "displayName": "凤凰羽毛",
+      "kind": "Relic",
+      "faceIntro": "凤凰会秃头吗？",
+      "description": "[MHP]+{relic.phoenix_feather.max_hp.delta}，[HP]小于等于{relic.phoenix_feather.fatal.hp}时，恢复{relic.phoenix_feather.fatal.pct}%[HP]并[death]"
+    },
+    {
+      "contentId": "relic.potion_bag",
+      "deckId": "deck.relic",
+      "deckDisplayName": "遗物卡组",
+      "displayName": "药水袋",
+      "kind": "Relic",
+      "faceIntro": "总有一瓶不知道什么时候塞进去的",
+      "description": "进入战斗时将{relic.potion_bag.node_start.count}张恢复药水加入到卡组"
+    },
+    {
+      "contentId": "relic.punch_card_knife",
+      "deckId": "deck.relic",
+      "deckDisplayName": "遗物卡组",
+      "displayName": "造物之镰",
+      "kind": "Relic",
+      "faceIntro": "收割之后总会掉点别的东西出来",
+      "description": "[attack]+{relic.punch_card_knife.attack.value}，每击杀{relic.punch_card_knife.remove.threshold}只怪物，添加{relic.punch_card_knife.remove.count}张常规道具卡到卡组"
+    },
+    {
+      "contentId": "relic.rotation_button",
+      "deckId": "deck.relic",
+      "deckDisplayName": "遗物卡组",
+      "displayName": "旋转符文",
+      "kind": "Relic",
+      "faceIntro": "看久了会怀疑地板在动",
+      "description": "进入战斗时将{relic.rotation_button.node_start.count}张旋转轮置入到手牌"
+    },
+    {
+      "contentId": "relic.rotation_trick",
+      "deckId": "deck.relic",
+      "deckDisplayName": "遗物卡组",
+      "displayName": "旋转之源",
+      "kind": "Relic",
+      "faceIntro": "转久了会觉得世界本来就是歪的",
+      "description": "每击杀{relic.rotation_trick.remove.threshold}张怪物卡，添加{relic.rotation_trick.remove.count}张旋转轮到卡组"
+    },
+    {
+      "contentId": "relic.rotten_cleave_axe",
+      "deckId": "deck.relic",
+      "deckDisplayName": "遗物卡组",
+      "displayName": "顺劈斧",
+      "kind": "Relic",
+      "faceIntro": "转起来！",
+      "description": "[attack]+{relic.rotten_cleave_axe.base.value}，[[普通攻击]]改为对目标[adjacent]范围造成{relic.rotten_cleave_axe.cleave.amount}点伤害"
+    },
+    {
+      "contentId": "relic.rpm_engine",
+      "deckId": "deck.relic",
+      "deckDisplayName": "遗物卡组",
+      "displayName": "转速甲",
+      "kind": "Relic",
+      "faceIntro": "轻盈加护！",
+      "description": "基础[armor]+{relic.rpm_engine.base.value}，旋转时多旋转{relic.rpm_engine.rotate.count}次"
+    },
+    {
+      "contentId": "relic.sharp_longsword",
+      "deckId": "deck.relic",
+      "deckDisplayName": "遗物卡组",
+      "displayName": "黑暗长戟",
+      "kind": "Relic",
+      "faceIntro": "越打越来劲",
+      "description": "[attack]+{relic.sharp_longsword.base.value}；每次击杀玩家[attack]+{relic.sharp_longsword.kill.value}，维持到战斗结束"
+    },
+    {
+      "contentId": "relic.shield_knife",
+      "deckId": "deck.relic",
+      "deckDisplayName": "遗物卡组",
+      "displayName": "双截棍",
+      "kind": "Relic",
+      "faceIntro": "可攻可守",
+      "description": "击杀时获得{relic.shield_knife.kill.amount}点[armor]"
+    },
+    {
+      "contentId": "relic.slag_recycler",
+      "deckId": "deck.ai_expansion",
+      "deckDisplayName": "AI 拓展设计卡组",
+      "displayName": "熔渣回收器",
+      "kind": "Relic",
+      "faceIntro": "掉下来的甲片都能再利用",
+      "description": "每累计损失{relic.slag_recycler.cumulative.threshold}点[armor]，随机怪物受{relic.slag_recycler.cumulative.amount}点伤害"
+    },
+    {
+      "contentId": "relic.sling",
+      "deckId": "deck.relic",
+      "deckDisplayName": "遗物卡组",
+      "displayName": "轻弓",
+      "kind": "Relic",
+      "faceIntro": "声音很轻，后果不一定",
+      "description": "击杀时对随机{relic.sling.kill.random}只怪物造成{relic.sling.kill.amount}点伤害"
+    },
+    {
+      "contentId": "relic.spinning_barb",
+      "deckId": "deck.relic",
+      "deckDisplayName": "遗物卡组",
+      "displayName": "毒鞭",
+      "kind": "Relic",
+      "faceIntro": "SM最爱",
+      "description": "怪物每移动{relic.spinning_barb.move.every}次，受到{relic.spinning_barb.move.amount}点伤害"
+    },
+    {
+      "contentId": "relic.still_watch",
+      "deckId": "deck.ai_expansion",
+      "deckDisplayName": "AI 拓展设计卡组",
+      "displayName": "静滞怀表",
+      "kind": "Relic",
+      "faceIntro": "表针一压，万物迟缓",
+      "description": "每{relic.still_watch.tick.every}次互动，全场怪物行动倒计时+{relic.still_watch.tick.delta}"
+    },
+    {
+      "contentId": "relic.swap_button",
+      "deckId": "deck.relic",
+      "deckDisplayName": "遗物卡组",
+      "displayName": "交换之书",
+      "kind": "Relic",
+      "faceIntro": "为他人着想！",
+      "description": "进入战斗时将{relic.swap_button.node_start.count}张交换置入手牌"
+    },
+    {
+      "contentId": "relic.terror_mask",
+      "deckId": "deck.relic",
+      "deckDisplayName": "遗物卡组",
+      "displayName": "死亡面罩",
+      "kind": "Relic",
+      "faceIntro": "戴上后看谁都像已经死了",
+      "description": "[attack]+{relic.terror_mask.attack.value}，本场战斗每击杀{relic.terror_mask.remove.threshold}，随机破坏{relic.terror_mask.remove.count}只常规怪物"
+    },
+    {
+      "contentId": "relic.thorn_mail",
+      "deckId": "deck.relic",
+      "deckDisplayName": "遗物卡组",
+      "displayName": "尖刺",
+      "kind": "Relic",
+      "faceIntro": "最好的防守是让别人也疼",
+      "description": "基础[armor]+{relic.thorn_mail.base.value}，玩家损失[armor]时，对攻击者造成等量伤害"
+    },
+    {
+      "contentId": "relic.throwing_knife_bag",
+      "deckId": "deck.relic",
+      "deckDisplayName": "遗物卡组",
+      "displayName": "飞刀袋",
+      "kind": "Relic",
+      "faceIntro": "里面的数量总比你记得的多",
+      "description": "进入战斗时将{relic.throwing_knife_bag.node_start.count}张飞刀加入到卡组"
+    },
+    {
+      "contentId": "relic.tide_compass",
+      "deckId": "deck.ai_expansion",
+      "deckDisplayName": "AI 拓展设计卡组",
+      "displayName": "潮汐罗盘",
+      "kind": "Relic",
+      "faceIntro": "指针转满一圈，伤口就合上一点",
+      "description": "每{relic.tide_compass.tick.every}次互动，恢复{relic.tide_compass.tick.amount}点[HP]"
+    },
+    {
+      "contentId": "relic.trap_cell",
+      "deckId": "deck.relic",
+      "deckDisplayName": "遗物卡组",
+      "displayName": "暗器",
+      "kind": "Relic",
+      "faceIntro": "看招！",
+      "description": "当怪物移动到格{relic.trap_cell.move.slot}时，对该怪物造成{relic.trap_cell.move.amount}点伤害"
+    },
+    {
+      "contentId": "relic.vitality_amulet",
+      "deckId": "deck.relic",
+      "deckDisplayName": "遗物卡组",
+      "displayName": "活力探险帽",
+      "kind": "Relic",
+      "faceIntro": "伟大的冒险即将启程！",
+      "description": "[MHP]+{relic.vitality_amulet.max_hp.delta}；每场战斗结束时恢复{relic.vitality_amulet.node_end.amount}点[HP]"
+    },
+    {
+      "contentId": "relic.wood_armor",
+      "deckId": "deck.relic",
+      "deckDisplayName": "遗物卡组",
+      "displayName": "木甲",
+      "kind": "Relic",
+      "faceIntro": "木匠坚持认为这不是他的作品",
+      "description": "[MHP]+{relic.wood_armor.base.value}，木质套装：[MHP]额外+{relic.wood_armor.set.value}"
+    },
+    {
+      "contentId": "relic.wood_shield",
+      "deckId": "deck.relic",
+      "deckDisplayName": "遗物卡组",
+      "displayName": "木盾",
+      "kind": "Relic",
+      "faceIntro": "曾经是一张门板",
+      "description": "基础[armor]+{relic.wood_shield.base.value}，木质套装：基础[armor]额外+{relic.wood_shield.set.value}"
+    },
+    {
+      "contentId": "relic.wood_sword",
+      "deckId": "deck.relic",
+      "deckDisplayName": "遗物卡组",
+      "displayName": "木剑",
+      "kind": "Relic",
+      "faceIntro": "认真削过，所以算武器",
+      "description": "[attack]+{relic.wood_sword.base.value}，木质套装：[attack]额外+{relic.wood_sword.set.value}"
+    },
+    {
+      "contentId": "trap.armor_totem",
+      "deckId": "deck.trap",
+      "deckDisplayName": "机关卡组",
+      "displayName": "护甲图腾",
+      "kind": "Trap",
+      "faceIntro": "借给你的护甲是要还的",
+      "description": "[adjacent]的怪物和玩家[armor]+{trap.armor_totem.aura.value}"
+    },
+    {
+      "contentId": "trap.attack_totem",
+      "deckId": "deck.trap",
+      "deckDisplayName": "机关卡组",
+      "displayName": "攻击图腾",
+      "kind": "Trap",
+      "faceIntro": "40米长刀",
+      "description": "[adjacent]的怪物和玩家[attack]+{trap.attack_totem.aura.value}"
+    },
+    {
+      "contentId": "trap.bear_trap",
+      "deckId": "deck.trap",
+      "deckDisplayName": "机关卡组",
+      "displayName": "捕熊陷阱",
+      "kind": "Trap",
+      "faceIntro": "唯独捕不到熊",
+      "description": "对下张[adjacent]的怪物/道具造成{trap.bear_trap.fill.amount}点伤害/移除，触发后[death]"
+    },
+    {
+      "contentId": "trap.echo_bell",
+      "deckId": "deck.ai_expansion",
+      "deckDisplayName": "AI 拓展设计卡组",
+      "displayName": "回音钟",
+      "kind": "Trap",
+      "faceIntro": "敲一下，世界就转一圈",
+      "description": "与本卡交战后，盘面旋转{trap.echo_bell.battle.count}格"
+    },
+    {
+      "contentId": "trap.flame",
+      "deckId": "deck.trap",
+      "deckDisplayName": "机关卡组",
+      "displayName": "烈焰",
+      "kind": "Trap",
+      "faceIntro": "除草一流",
+      "description": "每移动{trap.flame.move.every}次，对[adjacent]的玩家造成{trap.flame.move.amount}点伤害，{trap.flame.remove.every}次后[death]"
+    },
+    {
+      "contentId": "trap.gold_magnet",
+      "deckId": "deck.ai_expansion",
+      "deckDisplayName": "AI 拓展设计卡组",
+      "displayName": "聚宝磁盘",
+      "kind": "Trap",
+      "faceIntro": "吸走的钱总会吐出来的",
+      "description": "每{trap.gold_magnet.drain.every}次互动吸走{trap.gold_magnet.drain.amount}[money]，移除时返还{trap.gold_magnet.refund.delta}[money]"
+    },
+    {
+      "contentId": "trap.healing_spring",
+      "deckId": "deck.trap",
+      "deckDisplayName": "机关卡组",
+      "displayName": "疗愈之光",
+      "kind": "Trap",
+      "faceIntro": "遮阳伞有害",
+      "description": "每移动{trap.healing_spring.heal_on_move.every}次，若玩家在[adjacent]则恢复{trap.healing_spring.heal_on_move.amount}点[HP]"
+    },
+    {
+      "contentId": "trap.hourglass",
+      "deckId": "deck.ai_expansion",
+      "deckDisplayName": "AI 拓展设计卡组",
+      "displayName": "岁月沙漏",
+      "kind": "Trap",
+      "faceIntro": "沙漏不空，怪物不停变强",
+      "description": "每{trap.hourglass.tick.every}次互动，全场怪物[attack]+{trap.hourglass.tick.delta}"
+    },
+    {
+      "contentId": "trap.leave",
+      "deckId": "deck.trap",
+      "deckDisplayName": "机关卡组",
+      "displayName": "离开机关",
+      "kind": "Trap",
+      "faceIntro": "放我出去！！！！！",
+      "description": "魔免；只可被交战击破，[death]后离开房间"
+    },
+    {
+      "contentId": "trap.offering_altar",
+      "deckId": "deck.ai_expansion",
+      "deckDisplayName": "AI 拓展设计卡组",
+      "displayName": "供奉祭坛",
+      "kind": "Trap",
+      "faceIntro": "供品由祭坛自己挑",
+      "description": "与本卡交战后，随机怪物受到{trap.offering_altar.battle.amount}点伤害"
+    },
+    {
+      "contentId": "trap.recovery_totem",
+      "deckId": "deck.trap",
+      "deckDisplayName": "机关卡组",
+      "displayName": "恢复图腾",
+      "kind": "Trap",
+      "faceIntro": "医者仁心",
+      "description": "每移动{trap.recovery_totem.heal_on_move.every}次，[adjacent]的怪物和玩家各恢复{trap.recovery_totem.heal_on_move.amount}点[HP]"
+    },
+    {
+      "contentId": "trap.revive_stone",
+      "deckId": "deck.trap",
+      "deckDisplayName": "机关卡组",
+      "displayName": "复活石",
+      "kind": "Trap",
+      "faceIntro": "花费75阳光铲除它",
+      "description": "[action]{trap.revive_stone.interact.every}次后[death]，将{trap.revive_stone.remove.count}张重生骷髅打出到同格"
+    },
+    {
+      "contentId": "trap.rolling_stone",
+      "deckId": "deck.trap",
+      "deckDisplayName": "机关卡组",
+      "displayName": "滚石",
+      "kind": "Trap",
+      "faceIntro": "泡沫做的",
+      "description": "移动到格{trap.rolling_stone.slot3.slot}时，移除格{trap.rolling_stone.slot3.targetSlot}上的常规怪物/道具/机关"
+    },
+    {
+      "contentId": "trap.spike",
+      "deckId": "deck.trap",
+      "deckDisplayName": "机关卡组",
+      "displayName": "刺藤",
+      "kind": "Trap",
+      "faceIntro": "园艺失败的最终形态",
+      "description": "每移动{trap.spike.move.every}次，[adjacent]的怪物和玩家各受到{trap.spike.move.amount}点伤害"
+    },
+    {
+      "contentId": "trap.storm_totem",
+      "deckId": "deck.ai_expansion",
+      "deckDisplayName": "AI 拓展设计卡组",
+      "displayName": "雷暴图腾",
+      "kind": "Trap",
+      "faceIntro": "靠近它的都得挨一下",
+      "description": "每{trap.storm_totem.pulse.every}次互动，电击[adjacent]所有卡牌{trap.storm_totem.pulse.amount}点"
+    },
+    {
+      "contentId": "trap.tutorial.advance",
+      "deckId": "deck.tutorial",
+      "deckDisplayName": "教学卡组",
+      "displayName": "教学·进阶",
+      "kind": "Trap",
+      "faceIntro": "出口在这里",
+      "description": "击破两张进入下一课"
+    },
+    {
+      "contentId": "trap.tutorial.aim",
+      "deckId": "deck.tutorial",
+      "deckDisplayName": "教学卡组",
+      "displayName": "教学·选定",
+      "kind": "Trap",
+      "faceIntro": "瞄准那只怪",
+      "description": "飞刀需要选目标使用"
+    },
+    {
+      "contentId": "trap.tutorial.attack",
+      "deckId": "deck.tutorial",
+      "deckDisplayName": "教学卡组",
+      "displayName": "教学·攻击",
+      "kind": "Trap",
+      "faceIntro": "别客气，动手吧",
+      "description": "点击相邻的卡发起攻击"
+    },
+    {
+      "contentId": "trap.tutorial.boss_door",
+      "deckId": "deck.tutorial",
+      "deckDisplayName": "教学卡组",
+      "displayName": "教学·层主",
+      "kind": "Trap",
+      "faceIntro": "没有捷径",
+      "description": "层主房杀层主才开门"
+    },
+    {
+      "contentId": "trap.tutorial.countdown",
+      "deckId": "deck.tutorial",
+      "deckDisplayName": "教学卡组",
+      "displayName": "教学·计数",
+      "kind": "Trap",
+      "faceIntro": "那个数字会倒数",
+      "description": "怪物卡角有[action]"
+    },
+    {
+      "contentId": "trap.tutorial.deal",
+      "deckId": "deck.tutorial",
+      "deckDisplayName": "教学卡组",
+      "displayName": "教学·发牌",
+      "kind": "Trap",
+      "faceIntro": "牌都从卡组里来",
+      "description": "开局发八张牌铺满场地"
+    },
+    {
+      "contentId": "trap.tutorial.door",
+      "deckId": "deck.tutorial",
+      "deckDisplayName": "教学卡组",
+      "displayName": "教学·大门",
+      "kind": "Trap",
+      "faceIntro": "毕业出口",
+      "description": "击破那扇门离开房间"
+    },
+    {
+      "contentId": "trap.tutorial.early_leave",
+      "deckId": "deck.tutorial",
+      "deckDisplayName": "教学卡组",
+      "displayName": "教学·跑路",
+      "kind": "Trap",
+      "faceIntro": "走得急就没钱拿",
+      "description": "提前离开不结算道具"
+    },
+    {
+      "contentId": "trap.tutorial.filler",
+      "deckId": "deck.tutorial",
+      "deckDisplayName": "教学卡组",
+      "displayName": "教学·机关",
+      "kind": "Trap",
+      "faceIntro": "我是来凑数的",
+      "description": "补位机关，随便击破"
+    },
+    {
+      "contentId": "trap.tutorial.fire",
+      "deckId": "deck.tutorial",
+      "deckDisplayName": "教学卡组",
+      "displayName": "教学·开火",
+      "kind": "Trap",
+      "faceIntro": "站远点就打不到",
+      "description": "归零时攻击范围内的你"
+    },
+    {
+      "contentId": "trap.tutorial.greed",
+      "deckId": "deck.tutorial",
+      "deckDisplayName": "教学卡组",
+      "displayName": "教学·贪心",
+      "kind": "Trap",
+      "faceIntro": "富贵险中求",
+      "description": "想赚钱就多周旋搜刮"
+    },
+    {
+      "contentId": "trap.tutorial.hp",
+      "deckId": "deck.tutorial",
+      "deckDisplayName": "教学卡组",
+      "displayName": "教学·血量",
+      "kind": "Trap",
+      "faceIntro": "血量就写在卡角",
+      "description": "教学机关都是六点血"
+    },
+    {
+      "contentId": "trap.tutorial.hunt",
+      "deckId": "deck.tutorial",
+      "deckDisplayName": "教学卡组",
+      "displayName": "教学·猎杀",
+      "kind": "Trap",
+      "faceIntro": "上吧",
+      "description": "击破怪物进入下一课"
+    },
+    {
+      "contentId": "trap.tutorial.inspect",
+      "deckId": "deck.tutorial",
+      "deckDisplayName": "教学卡组",
+      "displayName": "教学·详情",
+      "kind": "Trap",
+      "faceIntro": "知己知彼",
+      "description": "右键点卡可查看详情"
+    },
+    {
+      "contentId": "trap.tutorial.item_intro",
+      "deckId": "deck.tutorial",
+      "deckDisplayName": "教学卡组",
+      "displayName": "教学·道具",
+      "kind": "Trap",
+      "faceIntro": "好东西啊",
+      "description": "场上出现了道具卡"
+    },
+    {
+      "contentId": "trap.tutorial.monster_intro",
+      "deckId": "deck.tutorial",
+      "deckDisplayName": "教学卡组",
+      "displayName": "教学·怪物",
+      "kind": "Trap",
+      "faceIntro": "别怕，它很弱",
+      "description": "场上出现了一只怪物"
+    },
+    {
+      "contentId": "trap.tutorial.no_counter",
+      "deckId": "deck.tutorial",
+      "deckDisplayName": "教学卡组",
+      "displayName": "教学·安全",
+      "kind": "Trap",
+      "faceIntro": "我们不还手的",
+      "description": "机关不会反击放心打"
+    },
+    {
+      "contentId": "trap.tutorial.pickup",
+      "deckId": "deck.tutorial",
+      "deckDisplayName": "教学卡组",
+      "displayName": "教学·拾取",
+      "kind": "Trap",
+      "faceIntro": "伸手就拿",
+      "description": "点相邻道具收入手牌"
+    },
+    {
+      "contentId": "trap.tutorial.practice",
+      "deckId": "deck.tutorial",
+      "deckDisplayName": "教学卡组",
+      "displayName": "教学·练习",
+      "kind": "Trap",
+      "faceIntro": "药水直接喝",
+      "description": "用完两件进入下一课"
+    },
+    {
+      "contentId": "trap.tutorial.refill",
+      "deckId": "deck.tutorial",
+      "deckDisplayName": "教学卡组",
+      "displayName": "教学·补牌",
+      "kind": "Trap",
+      "faceIntro": "卡组会自动补位",
+      "description": "击破一张会补一张牌"
+    },
+    {
+      "contentId": "trap.tutorial.reposition",
+      "deckId": "deck.tutorial",
+      "deckDisplayName": "教学卡组",
+      "displayName": "教学·走位",
+      "kind": "Trap",
+      "faceIntro": "补牌是无限的",
+      "description": "击破机关调整怪位置"
+    },
+    {
+      "contentId": "trap.tutorial.retreat",
+      "deckId": "deck.tutorial",
+      "deckDisplayName": "教学卡组",
+      "displayName": "教学·撤退",
+      "kind": "Trap",
+      "faceIntro": "活着才有下一局",
+      "description": "[HP]吃紧就早点破门"
+    },
+    {
+      "contentId": "trap.tutorial.rotate",
+      "deckId": "deck.tutorial",
+      "deckDisplayName": "教学卡组",
+      "displayName": "教学·旋转",
+      "kind": "Trap",
+      "faceIntro": "转圈圈～",
+      "description": "每次互动全场转一圈"
+    },
+    {
+      "contentId": "trap.tutorial.sell_gain",
+      "deckId": "deck.tutorial",
+      "deckDisplayName": "教学卡组",
+      "displayName": "教学·结算",
+      "kind": "Trap",
+      "faceIntro": "白捡的金币",
+      "description": "残留道具会自动卖钱"
+    },
+    {
+      "contentId": "trap.tutorial.sell_rule",
+      "deckId": "deck.tutorial",
+      "deckDisplayName": "教学卡组",
+      "displayName": "教学·变卖",
+      "kind": "Trap",
+      "faceIntro": "先打扫再走",
+      "description": "杀光怪物后再离开"
+    },
+    {
+      "contentId": "trap.tutorial.spare",
+      "deckId": "deck.tutorial",
+      "deckDisplayName": "教学卡组",
+      "displayName": "教学·补位",
+      "kind": "Trap",
+      "faceIntro": "我就是补上来的那张",
+      "description": "看，补牌来了再破一张"
+    },
+    {
+      "contentId": "trap.tutorial.tick",
+      "deckId": "deck.tutorial",
+      "deckDisplayName": "教学卡组",
+      "displayName": "教学·倒数",
+      "kind": "Trap",
+      "faceIntro": "滴答滴答",
+      "description": "每次互动计数减一"
+    },
+    {
+      "contentId": "trap.tutorial.use_item",
+      "deckId": "deck.tutorial",
+      "deckDisplayName": "教学卡组",
+      "displayName": "教学·使用",
+      "kind": "Trap",
+      "faceIntro": "拖过去就行",
+      "description": "手牌拖到场地中央用"
+    },
+    {
+      "contentId": "trap.tutorial.welcome",
+      "deckId": "deck.tutorial",
+      "deckDisplayName": "教学卡组",
+      "displayName": "教学·欢迎",
+      "kind": "Trap",
+      "faceIntro": "第一课：认识棋盘",
+      "description": "欢迎来到九宫牌局"
+    }
+  ]
+}

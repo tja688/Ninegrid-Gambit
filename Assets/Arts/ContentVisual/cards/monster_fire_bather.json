@@ -8,6 +8,7 @@
     "designSlotName": "",
     "description": "[[神圣决斗]]，[[损耗]]",
     "faceIntro": "第40k届决斗者争霸赛冠军",
+    "extraGlossaryTerms": [],
     "attackPattern": "无",
     "rhythmSource": "行动计数",
     "rhythmPeriod": 5,
@@ -22,7 +23,7 @@
     "sprites": {
         "mainIcon": "Assets/Resources/ContentArt/Multiple/pixel_art_card_pack 1.png",
         "faceBackground": "Assets/Resources/ContentArt/Png/Other/密林_失落遗迹.png",
-        "cardFrame": "",
+        "cardFrame": "Assets/Resources/ContentArt/Multiple/1786242411378_d.png#1786242411378_d_2",
         "banner": "",
         "backBorder": "",
         "backShirt": "",

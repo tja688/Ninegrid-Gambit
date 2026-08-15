@@ -1,0 +1,11 @@
+{
+  "schema": "table-nine.card-descriptions.v1",
+  "exportedAt": "2026-08-15T20:21:16.481161+08:00",
+  "fields": [
+    "displayName",
+    "kind",
+    "faceIntro",
+    "description"
+  ],
+  "entries": []
+}
