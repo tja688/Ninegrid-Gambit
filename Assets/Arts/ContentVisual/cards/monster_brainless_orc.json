@@ -4,10 +4,11 @@
     "kind": "Monster",
     "deckId": "deck.skeleton_legion",
     "role": "",
-    "displayName": "食人花",
+    "displayName": "黑寡妇",
     "designSlotName": "",
     "description": "[[全向近战]]，[[远程武器]]，[[起来]]",
-    "faceIntro": "躲在密林间阴险地发射火球",
+    "faceIntro": "躲在密林间阴险地喷射蛛网",
+    "extraGlossaryTerms": [],
     "attackPattern": "全向近战",
     "rhythmSource": "行动计数",
     "rhythmPeriod": 5,
@@ -31,7 +32,7 @@
     "mainVisual": {
         "offsetX": 0.10000000149011612,
         "offsetY": 0.0,
-        "uniformScale": 0.800000011920929
+        "uniformScale": 1.0
     },
     "animations": {
         "defaultFps": 6.0,
@@ -39,7 +40,7 @@
             {
                 "id": "idle",
                 "sourceType": "folder",
-                "path": "Assets/Resources/ContentArt/Png/像素怪物合集2/sprites/16walkflower_attack_01_M",
+                "path": "Assets/Resources/ContentArt/Png/像素怪物合集2/sprites/06spider_attack_01_M",
                 "offsetX": 0.0,
                 "offsetY": 0.0
             },

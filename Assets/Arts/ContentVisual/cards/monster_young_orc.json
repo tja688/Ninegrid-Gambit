@@ -4,10 +4,11 @@
     "kind": "Monster",
     "deckId": "deck.skeleton_legion",
     "role": "",
-    "displayName": "仙人掌",
+    "displayName": "红甲虫",
     "designSlotName": "",
     "description": "[[普通近战]]，[[休养]]，[[潜伏]]",
     "faceIntro": "别碰我",
+    "extraGlossaryTerms": [],
     "attackPattern": "普通近战",
     "rhythmSource": "行动计数",
     "rhythmPeriod": 5,
@@ -30,7 +31,7 @@
     },
     "mainVisual": {
         "offsetX": 0.05000000074505806,
-        "offsetY": -0.699999988079071,
+        "offsetY": 0.0,
         "uniformScale": 1.0
     },
     "animations": {
@@ -39,7 +40,7 @@
             {
                 "id": "idle",
                 "sourceType": "folder",
-                "path": "Assets/Resources/ContentArt/Png/像素怪物合集/sprites/50ballcactus_idle_01",
+                "path": "Assets/Resources/ContentArt/Png/像素怪物合集/sprites/001insect_idle_01",
                 "offsetX": 0.0,
                 "offsetY": 0.0
             },

@@ -8,6 +8,7 @@
     "designSlotName": "",
     "description": "[[普通近战]]，[[跳杀]]，[[潜伏]]",
     "faceIntro": "哎，扎死你呀哈哈哈哈",
+    "extraGlossaryTerms": [],
     "attackPattern": "普通近战",
     "rhythmSource": "行动计数",
     "rhythmPeriod": 5,
@@ -30,7 +31,7 @@
     },
     "mainVisual": {
         "offsetX": -0.10000000149011612,
-        "offsetY": -0.10000000149011612,
+        "offsetY": 0.0,
         "uniformScale": 1.0
     },
     "animations": {

@@ -4,10 +4,11 @@
     "kind": "Monster",
     "deckId": "deck.skeleton_legion",
     "role": "",
-    "displayName": "沙虫",
+    "displayName": "寄居蟹",
     "designSlotName": "",
     "description": "[[普通近战]]，[[盗取]]，[[潜伏]]",
-    "faceIntro": "悄悄摸摸的咬掉一块肉",
+    "faceIntro": "悄悄摸摸的靠近",
+    "extraGlossaryTerms": [],
     "attackPattern": "普通近战",
     "rhythmSource": "行动计数",
     "rhythmPeriod": 5,
@@ -29,9 +30,9 @@
         "backLogo": ""
     },
     "mainVisual": {
-        "offsetX": -0.20000000298023225,
-        "offsetY": -0.07999999821186066,
-        "uniformScale": 0.8999999761581421
+        "offsetX": 0.0,
+        "offsetY": -0.10000000149011612,
+        "uniformScale": 1.0
     },
     "animations": {
         "defaultFps": 8.0,
@@ -39,7 +40,7 @@
             {
                 "id": "idle",
                 "sourceType": "folder",
-                "path": "Assets/Resources/ContentArt/Png/像素怪物合集2/sprites/18sandworm_attack_01_M",
+                "path": "Assets/Resources/ContentArt/Png/像素怪物合集2/sprites/32crab_run",
                 "offsetX": 0.0,
                 "offsetY": 0.0
             },
