@@ -794,6 +794,14 @@ namespace NineGrid.Flow
                 && CardPresentationConfigCatalog.TryGet(defId.Trim(), out var dto)
                 && dto != null)
             {
+                var kind = CoreCardPresentationMapper.ResolvePresentationKindFromDefId(defId);
+                if (kind == CardPresentationKind.HelpCard)
+                {
+                    return HelpCardMagnitudeOverlay.ProjectHelpCardDescription(
+                        dto.description,
+                        dto.effectAssemblies);
+                }
+
                 return CardFaceDescriptionProjector.Project(
                     CardDescriptionProjectionMode.Inspect,
                     dto.description,

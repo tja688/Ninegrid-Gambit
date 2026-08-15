@@ -373,6 +373,19 @@ namespace NineGrid.Cards.Presentation
             var source = string.IsNullOrEmpty(snapshot.BasicDescription)
                 ? (_hasTemplateBasicDescription ? _templateBasicDescription : string.Empty)
                 : snapshot.BasicDescription;
+            if (snapshot.Kind == CardPresentationKind.HelpCard
+                && !string.IsNullOrWhiteSpace(snapshot.DefId)
+                && CardPresentationConfigCatalog.TryGet(snapshot.DefId, out var dto)
+                && dto != null)
+            {
+                var liveDescription = HelpCardMagnitudeOverlay.ProjectHelpCardDescription(
+                    dto.description,
+                    dto.effectAssemblies);
+                if (!string.IsNullOrWhiteSpace(liveDescription))
+                {
+                    source = liveDescription;
+                }
+            }
             var fingerprint = BuildIconFingerprint(assembled, catalog, source);
             if (source == _lastBasicDescriptionSource
                 && fingerprint == _lastIconFingerprint)

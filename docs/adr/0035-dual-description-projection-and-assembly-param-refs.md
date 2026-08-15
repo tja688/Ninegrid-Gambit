@@ -34,6 +34,7 @@ status: accepted
 - [ADR-0009](0009-parameterized-effect-templates.md) 第 4 点「卡面 `{参数}`」收紧为本 ADR 的限定式契约；初始插值仍成立，战中剩余改由机关 ActionCount / 遗物栏计数承担。
 - 编辑器校验、内容审计、Settled 倒计时提交需落地；悬停简要（局内不触发）不在本 ADR 范围。
 - 遗物栏计数与机关 ActionCount 共享同一 `EffectCountdownChanged` 缝；试点内容（如 `relic.terror_mask`）须在模板 body 暴露 `{{projectKey}}` 并由装配实参填写。
+- **HelpCard run 级 magnitude（addendum）**：倒计时仍不准进描述；道具卡 `{装配id.amount}` 允许在投影时直读 `PlayerModel.ItemStatBonus`（与结算 `HelpCardStatBonusUtility` 同口径，仅简单 `amount`），Inspect 与 Instance 同文；变更后 `ItemStatBonusChangedSink` 刷新已生成道具卡描述，不进 Settled。
 
 ## 相关
 

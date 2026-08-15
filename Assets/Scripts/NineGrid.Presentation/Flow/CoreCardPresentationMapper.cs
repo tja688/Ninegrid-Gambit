@@ -375,6 +375,83 @@ namespace NineGrid.Flow
         }
 
         /// <summary>
+        /// ItemStatBonus 变更后刷新已生成道具卡描述（保留已提交三围；无演出锚点）。
+        /// </summary>
+        public static void RefreshHelpCardDescriptionsOnItemStatBonusChanged()
+        {
+            var cardManager = CardEntityLifecycleHook.CardsOrNull();
+            if (cardManager == null)
+            {
+                return;
+            }
+
+            foreach (var pair in cardManager.CardsByUid)
+            {
+                var card = pair.Value;
+                if (card?.View == null
+                    || card.CoreKind != CardPresentationKind.HelpCard
+                    || string.IsNullOrEmpty(card.DefId))
+                {
+                    continue;
+                }
+
+                if (!CardPresentationConfigCatalog.TryGet(card.DefId, out var dto) || dto == null)
+                {
+                    continue;
+                }
+
+                var previous = card.CommittedPresentation;
+                if (previous == null)
+                {
+                    continue;
+                }
+
+                var basicDescription = HelpCardMagnitudeOverlay.ProjectHelpCardDescription(
+                    dto.description,
+                    dto.effectAssemblies);
+                if (string.IsNullOrWhiteSpace(basicDescription)
+                    || string.Equals(previous.BasicDescription, basicDescription, StringComparison.Ordinal))
+                {
+                    continue;
+                }
+
+                var snapshot = new CardPresentationSnapshot
+                {
+                    Kind = previous.Kind != CardPresentationKind.Unknown
+                        ? previous.Kind
+                        : card.CoreKind,
+                    DefId = !string.IsNullOrEmpty(previous.DefId) ? previous.DefId : card.DefId,
+                    DisplayName = previous.DisplayName,
+                    MainIcon = previous.MainIcon,
+                    FaceBackground = previous.FaceBackground,
+                    BackBorder = previous.BackBorder,
+                    BackShirt = previous.BackShirt,
+                    BackLogo = previous.BackLogo,
+                    CardFrame = previous.CardFrame,
+                    Banner = previous.Banner,
+                    Attack = previous.Attack,
+                    Armor = previous.Armor,
+                    Hp = previous.Hp,
+                    ActionCount = previous.ActionCount,
+                    AttackPattern = previous.AttackPattern,
+                    HasSyncRhythmSkills = previous.HasSyncRhythmSkills,
+                    HasActiveRhythm = previous.HasActiveRhythm,
+                    ShowActionCount = previous.ShowActionCount,
+                    FaceUp = previous.FaceUp,
+                    BasicDescription = basicDescription,
+                    FaceIntro = previous.FaceIntro,
+                    FrameColor = previous.FrameColor,
+                    Rarity = previous.Rarity,
+                    CommittedCountdownRemaining = previous.CommittedCountdownRemaining,
+                };
+                snapshot.DetailDescription = CardDetailDescriptionComposer.Compose(
+                    snapshot.BasicDescription,
+                    CardFacePresentationBinder.PeekDescriptionIconCatalog());
+                card.CommitPresentation(snapshot);
+            }
+        }
+
+        /// <summary>
         /// 全场对账：重放各卡已提交投影；无已提交快照时跳过（不直刷最新 Core）。
         /// </summary>
         public static void SyncAllSpawnedCards()
@@ -527,11 +604,14 @@ namespace NineGrid.Flow
                 ApplyJsonSprite(ref snapshot.Banner, dto.sprites.banner);
             }
 
-            // ADR-0035：实例/预览表面与检查描述同文（静态装配实参插值）。
-            var filledDescription = CardFaceDescriptionProjector.Project(
-                CardDescriptionProjectionMode.Instance,
+            // ADR-0035：实例/预览表面与检查描述同文；HelpCard 印刷 amount 直读 ItemStatBonus。
+            var itemStatBonus = snapshot.Kind == CardPresentationKind.HelpCard
+                ? HelpCardMagnitudeOverlay.ResolveLiveBonus()
+                : 0;
+            var filledDescription = HelpCardMagnitudeOverlay.ProjectDescription(
                 dto.description,
-                dto.effectAssemblies);
+                dto.effectAssemblies,
+                itemStatBonus);
             if (!string.IsNullOrWhiteSpace(filledDescription))
             {
                 snapshot.BasicDescription = filledDescription;
