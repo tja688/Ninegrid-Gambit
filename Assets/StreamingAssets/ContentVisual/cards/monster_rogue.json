@@ -6,7 +6,7 @@
     "role": "",
     "displayName": "亡灵法师",
     "designSlotName": "",
-    "description": "[[普通近战]]，[[死亡之主]]",
+    "description": "[[死亡之主]]",
     "faceIntro": "亡灵法师不总是一个眼冒鬼火的骷髅架子",    "attackPattern": "普通近战",
     "rhythmSource": "行动计数",
     "rhythmPeriod": 5,

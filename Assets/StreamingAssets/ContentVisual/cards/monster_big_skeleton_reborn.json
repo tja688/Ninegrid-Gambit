@@ -6,7 +6,7 @@
     "role": "",
     "displayName": "双球莱姆",
     "designSlotName": "",
-    "description": "[[全向近战]]，[[远程武器]]",
+    "description": "[[远程武器]]",
     "faceIntro": "偶像是豌豆射手",    "attackPattern": "全向近战",
     "rhythmSource": "行动计数",
     "rhythmPeriod": 5,

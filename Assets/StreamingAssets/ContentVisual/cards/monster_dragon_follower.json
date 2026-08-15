@@ -6,7 +6,7 @@
     "role": "",
     "displayName": "幽灵炎",
     "designSlotName": "",
-    "description": "[[普通近战]]，[[剧烈燃烧]]",
+    "description": "[[剧烈燃烧]]",
     "faceIntro": "会灼烧灵魂",    "attackPattern": "普通近战",
     "rhythmSource": "行动计数",
     "rhythmPeriod": 5,

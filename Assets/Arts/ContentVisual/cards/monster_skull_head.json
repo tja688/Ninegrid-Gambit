@@ -6,7 +6,7 @@
     "role": "",
     "displayName": "负伤莱姆",
     "designSlotName": "",
-    "description": "[[普通近战]]，[[献身]]",
+    "description": "[[献身]]",
     "faceIntro": "随时做好奉献自己的准备",    "attackPattern": "普通近战",
     "rhythmSource": "行动计数",
     "rhythmPeriod": 5,

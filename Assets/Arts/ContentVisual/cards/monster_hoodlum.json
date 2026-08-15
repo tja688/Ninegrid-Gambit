@@ -6,7 +6,7 @@
     "role": "",
     "displayName": "火把哥布",
     "designSlotName": "",
-    "description": "[[普通近战]]，[[天涯若比邻]]",
+    "description": "[[天涯若比邻]]",
     "faceIntro": "主要起到照明作用",    "attackPattern": "普通近战",
     "rhythmSource": "行动计数",
     "rhythmPeriod": 5,

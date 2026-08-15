@@ -6,7 +6,7 @@
     "role": "",
     "displayName": "巨斧骷髅",
     "designSlotName": "",
-    "description": "[[普通近战]]，[[死亡召唤]]",
+    "description": "[[死亡召唤]]",
     "faceIntro": "骷髅没肌肉怎么举起武器是困扰骷髅届百年的问题",    "attackPattern": "普通近战",
     "rhythmSource": "行动计数",
     "rhythmPeriod": 5,

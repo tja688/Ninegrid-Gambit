@@ -6,7 +6,7 @@
     "role": "",
     "displayName": "大黄蜂",
     "designSlotName": "",
-    "description": "[[普通近战]]，[[远程武器]]，[[逃避]]",
+    "description": "[[远程武器]]，[[逃避]]",
     "faceIntro": "不会变形",    "attackPattern": "普通近战",
     "rhythmSource": "行动计数",
     "rhythmPeriod": 3,
