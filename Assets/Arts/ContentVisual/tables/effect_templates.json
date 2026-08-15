@@ -810,10 +810,10 @@
  {
   "id": "tpl.skill.call_melee6.interact",
   "state": "Implemented",
-  "design_text": "[场上]玩家卡每互动5次，将一张近战6加入战斗卡组",
+  "design_text": "[场上]玩家卡每互动5次，将一张蓝焰加入战斗卡组",
   "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
   "conditions_json": "[]",
-  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnInteract\",\"every\":5},\"target\":{\"atom\":\"Self\"},\"action\":{\"atom\":\"ShuffleInto\",\"defId\":\"monster.melee_6\",\"kind\":\"Monster\",\"count\":\"{{count}}\",\"top\":false}}"
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnInteract\",\"every\":5},\"target\":{\"atom\":\"Self\"},\"action\":{\"atom\":\"ShuffleInto\",\"defId\":\"monster.dragon_cult_leader\",\"kind\":\"Monster\",\"count\":\"{{count}}\",\"top\":false}}"
  },
  {
   "id": "tpl.skill.learning_growth.gain",

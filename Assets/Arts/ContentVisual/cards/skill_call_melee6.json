@@ -4,7 +4,7 @@
   "kind": "Skill",
   "deckId": "",
   "displayName": "呼唤",
-  "description": "每互动5次将近战6加入战斗卡组",
+  "description": "每互动5次将一张蓝焰加入战斗卡组",
   "gold": 0,
   "stats": {
     "hp": 0,
