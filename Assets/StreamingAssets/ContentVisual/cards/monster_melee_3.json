@@ -8,9 +8,7 @@
     "designSlotName": "",
     "description": "",
     "faceIntro": "人畜无害",
-    "extraGlossaryTerms": [
-        "常规怪物"
-    ],
+    "extraGlossaryTerms": [],
     "attackPattern": "普通近战",
     "rhythmSource": "行动计数",
     "rhythmPeriod": 5,
