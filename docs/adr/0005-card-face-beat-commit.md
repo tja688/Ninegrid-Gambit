@@ -50,6 +50,7 @@ v1 锚点：
 - **#198 修正**：金币装饰由 `Settled` 改至 `Impact`（尸体 Vacate 前保出生点，与飘字同缝）；`ModifyGoldAction` 可选来源卡并在 `GoldModified` 写 `CardUid`，击杀/移除赏金与拾取加金传正确来源 uid。
 - **Permanent 有效攻旁路（攻的绝对值语义）** *（已由 ADR-0045 废除补扫、统一为自动对账缝；口径结论保留）*：卡面攻口径＝有效攻（`CardFaceEventValues.GetFaceAttack`），**怪物另加 `EnemyAttackDelta` 规则修正**（龙鳞甲全场怪物-1、邻接光环+1 等），与伤害结算 `GetAttackDamage` 同口径；带常驻/条件修饰器时有效攻≠基础值，禁止 `ModifyBaseStat` 提交基础值（历史缺陷：加攻卡显示落后于真实攻击力）。`Delta`/`Amount=StatId` 语义不变。历史上的 `Append*FaceCommit` 手工补扫家族及其 call site 清单见 [ADR-0045](0045-unified-card-face-stat-projection.md)「被废除的旧机制」。
 - **#62**：`RewardEntry` 携带展示用攻/甲/血；`RewardOffered` Beat=`Settled`；`CardFaceStatHandler` 消费 `OfferReward`；Bounce 删 `clearCombatStats` 数值旁路，spawn 后 `PresentStandalone` 二次提交。
+- **HelpCard 印刷 magnitude 例外（addendum）**：道具卡伤害/治疗等印刷数字写在 `Basic_Description` 描述槽（非三围），无数值演出诉求；允许 `HelpCardMagnitudeOverlay` 直读 `PlayerModel.ItemStatBonus` 叠装配 `amount` 令牌，不经 Settled 锚点。`ItemStatBonus` 写入经 `ItemStatBonusChangedSink` 通知表现层刷新已生成道具卡描述；怪物/Avatar 三围纪律不变。
 
 ## 相关
 

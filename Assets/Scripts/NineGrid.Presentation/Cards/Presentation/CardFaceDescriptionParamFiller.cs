@@ -36,18 +36,20 @@ namespace NineGrid.Cards.Presentation
 
         public static string FillFromAssemblies(string description, EffectAssemblyDto[] assemblies)
         {
-            return FillFromAssemblies(description, assemblies, remainingOverrides: null);
+            return FillFromAssemblies(description, assemblies, remainingOverrides: null, amountBonus: 0);
         }
 
         /// <summary>
         /// 投影缝填充（ADR-0035 / #155）：装配实参填初始配置值；<paramref name="remainingOverrides"/>
         /// 是已提交的卡面投影值（Settled 倒计时剩余，键为完整 <c>装配id.键</c>），命中时优先于初始实参。
         /// 键不命中的令牌仍回退装配初始实参。
+        /// <paramref name="amountBonus"/>：HelpCard 直读 run 级 <c>ItemStatBonus</c>，仅叠加 <c>amount</c> 键。
         /// </summary>
         public static string FillFromAssemblies(
             string description,
             EffectAssemblyDto[] assemblies,
-            IReadOnlyDictionary<string, string> remainingOverrides)
+            IReadOnlyDictionary<string, string> remainingOverrides,
+            int amountBonus = 0)
         {
             if (string.IsNullOrEmpty(description))
             {
@@ -74,7 +76,7 @@ namespace NineGrid.Cards.Presentation
                     EffectAssemblyResolver.ParseArgsJson(assembly.argsJson)));
             }
 
-            return FillFromAssemblyItems(description, items, remainingOverrides);
+            return FillFromAssemblyItems(description, items, remainingOverrides, amountBonus);
         }
 
         public static string Fill(string description, IReadOnlyDictionary<string, object> args)
@@ -105,7 +107,8 @@ namespace NineGrid.Cards.Presentation
         private static string FillFromAssemblyItems(
             string description,
             IReadOnlyList<AssemblyArgs> items,
-            IReadOnlyDictionary<string, string> remainingOverrides)
+            IReadOnlyDictionary<string, string> remainingOverrides,
+            int amountBonus)
         {
             return ParamToken.Replace(description, match =>
             {
@@ -119,7 +122,7 @@ namespace NineGrid.Cards.Presentation
                         var args = items[i].Args;
                         if (args != null && TryGetArg(args, token, out var value) && value != null)
                         {
-                            return Convert.ToString(value, CultureInfo.InvariantCulture) ?? match.Value;
+                            return FormatArgValue(value, token, amountBonus) ?? match.Value;
                         }
                     }
 
@@ -139,8 +142,45 @@ namespace NineGrid.Cards.Presentation
                     return remaining;
                 }
 
-                return ResolveQualified(items, qualifier, key, match.Value);
+                return ResolveQualified(items, qualifier, key, match.Value, amountBonus);
             });
+        }
+
+        private static string FormatArgValue(object value, string key, int amountBonus)
+        {
+            if (amountBonus > 0
+                && string.Equals(key, "amount", StringComparison.OrdinalIgnoreCase)
+                && TryParseInt(value, out var amount))
+            {
+                return Convert.ToString(Math.Max(0, amount + amountBonus), CultureInfo.InvariantCulture);
+            }
+
+            return Convert.ToString(value, CultureInfo.InvariantCulture);
+        }
+
+        private static bool TryParseInt(object value, out int result)
+        {
+            switch (value)
+            {
+                case int i:
+                    result = i;
+                    return true;
+                case long l when l >= int.MinValue && l <= int.MaxValue:
+                    result = (int)l;
+                    return true;
+                case float f:
+                    result = (int)Math.Round(f);
+                    return true;
+                case double d:
+                    result = (int)Math.Round(d);
+                    return true;
+                default:
+                    return int.TryParse(
+                        Convert.ToString(value, CultureInfo.InvariantCulture),
+                        NumberStyles.Integer,
+                        CultureInfo.InvariantCulture,
+                        out result);
+            }
         }
 
         private static bool TryGetRemaining(
@@ -177,7 +217,8 @@ namespace NineGrid.Cards.Presentation
             IReadOnlyList<AssemblyArgs> items,
             string qualifier,
             string key,
-            string fallback)
+            string fallback,
+            int amountBonus)
         {
             var prefix = qualifier + ".";
             string resolved = null;
@@ -202,7 +243,7 @@ namespace NineGrid.Cards.Presentation
                     continue;
                 }
 
-                var text = Convert.ToString(value, CultureInfo.InvariantCulture) ?? string.Empty;
+                var text = FormatArgValue(value, key, amountBonus) ?? string.Empty;
                 if (!found)
                 {
                     resolved = text;

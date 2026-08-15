@@ -2,6 +2,7 @@ using System;
 using Cysharp.Threading.Tasks;
 using NineGrid.Cards;
 using NineGrid.Core;
+using NineGrid.Core.Effects;
 using NineGrid.Flow;
 using NineGrid.Flow.Diagnostics;
 using NineGrid.Flow.Presentation;
@@ -250,6 +251,8 @@ namespace NineGrid.Presentation.Setup
             EffectStrikeHook.OnBatchOpened = EffectStrikeChoreographer.OnBatchOpened;
             EffectStrikeHook.PlayAllPendingStrikes = EffectStrikeChoreographer.PlayAllPendingStrikesAsync;
             EffectStrikeHook.PlayStrikesInvolving = EffectStrikeChoreographer.PlayStrikesInvolvingAsync;
+            ItemStatBonusChangedSink.NotifyChanged =
+                CoreCardPresentationMapper.RefreshHelpCardDescriptionsOnItemStatBonusChanged;
             if (architecture != null)
             {
                 mBatchOpenedUnRegister = architecture.RegisterEvent<Evt_PresentationBatchOpened>(e =>
@@ -269,6 +272,7 @@ namespace NineGrid.Presentation.Setup
             mBatchOpenedUnRegister = null;
             BattleBeatHook.Reset();
             EffectStrikeHook.Reset();
+            ItemStatBonusChangedSink.NotifyChanged = null;
             EffectStrikeChoreographer.Reset();
             FlipPlaybackCoordinator.Reset();
             mBeatScheduler = null;

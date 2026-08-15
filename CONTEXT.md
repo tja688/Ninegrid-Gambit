@@ -586,7 +586,7 @@ _Avoid_: 简单式 `{value}`/`{amount}`、`{卡defId.键}` 前缀式、把基础
 _Avoid_: 把规则数值句塞进介绍、用介绍顶替检查描述或局内投影、按效果模板另写一份与装配脱节的长文
 
 **局内描述投影**：
-已接线卡在实例可见表面及店/奖/鉴预览上的描述层；自阶段一改造起与**检查描述恒同文**（`CardFaceDescriptionProjector` 只填 `description` + 装配初始实参，永不消费已提交倒计时剩余）。效果倒计时剩余改走专用 UI：**机关** → 卡面 `ActionCount` 槽（`ShowActionCount`）；**遗物** → 遗物栏图标左下角「计数」TMP（`RelicHudHook`）。`projectKey` + Settled 提交纪律不变（键为完整 `装配id.键`），禁止 View 直读内核计数器。JSON 字段 `liveTemplate` 已退役。
+已接线卡在实例可见表面及店/奖/鉴预览上的描述层；自阶段一改造起与**检查描述恒同文**（`CardFaceDescriptionProjector` 只填 `description` + 装配初始实参，永不消费已提交倒计时剩余）。**例外**：HelpCard 的 `{装配id.amount}` 印刷数值允许直读 run 级 `PlayerModel.ItemStatBonus`（`HelpCardMagnitudeOverlay`，与结算同口径）。效果倒计时剩余改走专用 UI：**机关** → 卡面 `ActionCount` 槽（`ShowActionCount`）；**遗物** → 遗物栏图标左下角「计数」TMP（`RelicHudHook`）。`projectKey` + Settled 提交纪律不变（键为完整 `装配id.键`），禁止 View 直读内核计数器。JSON 字段 `liveTemplate` 已退役。
 _Avoid_: 在检查描述上加「（还剩 X）」括号、描述随剩余跳变、直读 Core 计数器、恢复 `liveTemplate` 契约
 
 **装配参数引用**：

@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using NineGrid.Core.Effects;
 using NineGrid.Core.Stats;
 using QFramework;
 
@@ -308,6 +309,7 @@ namespace NineGrid.Core
             }
 
             Touch();
+            ItemStatBonusChangedSink.RaiseChanged();
         }
 
         public void SetItemStatBonus(int bonus)
@@ -320,6 +322,7 @@ namespace NineGrid.Core
 
             mItemStatBonus = next;
             Touch();
+            ItemStatBonusChangedSink.RaiseChanged();
         }
 
         public void ReplaceFixedItemCards(IEnumerable<string> defIds)
