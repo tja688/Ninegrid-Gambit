@@ -1,13 +1,10 @@
 fileFormatVersion: 2
-guid: 52c2939a51501c2428a1ec8babc38f00
+guid: 899841a41155b05498cd610dc8e4dcaa
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: -5057880260042142970
-    second: F_UI_ButtonSelector_1_0
-  - first:
-      213: 2604451702521835298
-    second: F_UI_ButtonSelector_1_1
+      213: -7106848648114168004
+    second: "\u5C01\u97622 1_0"
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -40,7 +37,7 @@ TextureImporter:
   maxTextureSize: 2048
   textureSettings:
     serializedVersion: 2
-    filterMode: 0
+    filterMode: 1
     aniso: 1
     mipBias: 0
     wrapU: 1
@@ -49,13 +46,13 @@ TextureImporter:
   nPOTScale: 0
   lightmap: 0
   compressionQuality: 50
-  spriteMode: 1
+  spriteMode: 2
   spriteExtrude: 1
   spriteMeshType: 1
   alignment: 0
   spritePivot: {x: 0.5, y: 0.5}
-  spritePixelsToUnits: 32
-  spriteBorder: {x: 29, y: 0, z: 29, w: 0}
+  spritePixelsToUnits: 100
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
   spriteGenerateFallbackPhysicsShape: 1
   alphaUsage: 1
   alphaIsTransparency: 1
@@ -75,10 +72,10 @@ TextureImporter:
   platformSettings:
   - serializedVersion: 4
     buildTarget: DefaultTexturePlatform
-    maxTextureSize: 4096
+    maxTextureSize: 2048
     resizeAlgorithm: 0
-    textureFormat: 4
-    textureCompression: 0
+    textureFormat: -1
+    textureCompression: 1
     compressionQuality: 50
     crunchedCompression: 0
     allowsAlphaSplitting: 0
@@ -116,45 +113,23 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: F_UI_ButtonSelector_1_0
+      name: "\u5C01\u97622 1_0"
       rect:
         serializedVersion: 2
         x: 0
         y: 0
-        width: 30
-        height: 28
+        width: 320
+        height: 179
       alignment: 0
-      pivot: {x: 0.5, y: 0.5}
+      pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 60b4ab783bccec9b0800000000000000
-      internalID: -5057880260042142970
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: F_UI_ButtonSelector_1_1
-      rect:
-        serializedVersion: 2
-        x: 94
-        y: 0
-        width: 30
-        height: 28
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 22fa973460fd42420800000000000000
-      internalID: 2604451702521835298
+      spriteID: c3f90b8eec66f5d90800000000000000
+      internalID: -7106848648114168004
       vertices: []
       indices: 
       edges: []
@@ -163,8 +138,8 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 5e97eb03825dee720800000000000000
-    internalID: 1537655665
+    spriteID: 
+    internalID: 0
     vertices: []
     indices: 
     edges: []
@@ -173,10 +148,9 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      F_UI_ButtonSelector_1_0: -5057880260042142970
-      F_UI_ButtonSelector_1_1: 2604451702521835298
+      "\u5C01\u97622 1_0": -7106848648114168004
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
-  userData: PIXEL_ART_V2|ppu=32|max=4096|filter=0|comp=0|fmt=4|mip=0|alpha=1|wrap=1|mesh=0|extrude=0|pad=0|mosaic=0|phys=0
+  userData: 
   assetBundleName: 
   assetBundleVariant: 
