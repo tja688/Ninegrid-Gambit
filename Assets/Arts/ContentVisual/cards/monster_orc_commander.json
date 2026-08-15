@@ -7,7 +7,8 @@
     "displayName": "潜水鳄",
     "designSlotName": "",
     "description": "[[普通近战]]，[[刺客领袖]]，[[起来]]",
-    "faceIntro": "嘘，都给我悄悄的",    "attackPattern": "普通近战",
+    "faceIntro": "嘘，都给我悄悄的",
+    "attackPattern": "普通近战",
     "rhythmSource": "行动计数",
     "rhythmPeriod": 5,
     "gold": 5,
@@ -20,7 +21,7 @@
     },
     "sprites": {
         "mainIcon": "Assets/Resources/ContentArt/Multiple/pixel_art_card_pack 1.png",
-        "faceBackground": "Assets/Resources/ContentArt/Png/Other/\u5bc6\u6797_\u8840\u8272.png",
+        "faceBackground": "Assets/Resources/ContentArt/Png/Other/3_地下丛林.png",
         "cardFrame": "",
         "banner": "",
         "backBorder": "",

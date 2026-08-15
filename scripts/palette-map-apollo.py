@@ -91,6 +91,15 @@ DEFAULT_REGION_RULES = [
     ("*/other/密林_失落遗迹.png", "yiji"),
     ("*/other/密林_岩洞区.png",   "yandong"),
     ("*/other/密林_血色.png",     "zhaoze"),
+    # 溶洞卡背变体（与岩层/密林同主题后缀；裸 溶洞.png 为紫系默认）
+    ("*/other/溶洞_浅岩层.png",   "qianyanceng"),
+    ("*/other/溶洞_熔岩之地.png", "rongyan"),
+    ("*/other/溶洞_藏骨堂.png",   "canggutang"),
+    ("*/other/溶洞_血色.png",     "rongyan"),
+    ("*/other/溶洞_地下丛林.png", "conglin"),
+    ("*/other/溶洞_失落遗迹.png", "yiji"),
+    ("*/other/溶洞_岩洞区.png",   "yandong"),
+    ("*/other/溶洞.png",          "yandong"),
 ]
 
 # ---------------------------------------------------------------- oklab

@@ -7,7 +7,8 @@
     "displayName": "仙人掌",
     "designSlotName": "",
     "description": "[[普通近战]]，[[休养]]，[[潜伏]]",
-    "faceIntro": "别碰我",    "attackPattern": "普通近战",
+    "faceIntro": "别碰我",
+    "attackPattern": "普通近战",
     "rhythmSource": "行动计数",
     "rhythmPeriod": 5,
     "gold": 5,
@@ -20,7 +21,7 @@
     },
     "sprites": {
         "mainIcon": "Assets/Resources/ContentArt/Png/像素怪物合集2/sprites/Icey_die/Icey_die_10.png",
-        "faceBackground": "Assets/Resources/ContentArt/Png/Other/\u5bc6\u6797_\u8840\u8272.png",
+        "faceBackground": "Assets/Resources/ContentArt/Png/Other/3_地下丛林.png",
         "cardFrame": "",
         "banner": "",
         "backBorder": "",
