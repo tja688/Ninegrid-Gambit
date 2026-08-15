@@ -322,6 +322,12 @@ namespace NineGrid.Core.Effects
         public override TriggerPoint Point { get { return TriggerPoint.OnRotate; } }
     }
 
+    [EffectAtom("OnBeforeBoardMotion", EffectAtomKind.Trigger)]
+    public sealed class OnBeforeBoardMotionTrigger : TriggerAtomBase
+    {
+        public override TriggerPoint Point { get { return TriggerPoint.BeforeBoardMotion; } }
+    }
+
     [EffectAtom("OnInteract", EffectAtomKind.Trigger)]
     public sealed class OnInteractTrigger : TriggerAtomBase, ICountdownProjectionTrigger
     {
@@ -3158,12 +3164,14 @@ namespace NineGrid.Core.Effects
         private EffectValueExpression mAmount;
         private string mSource = string.Empty;
         private string mAdjacentToRef = "Self";
+        private BorrowedArmorSyncPhase mPhase = BorrowedArmorSyncPhase.Grant;
 
         public void Configure(EffectDslNode config)
         {
             mAmount = EffectValueExpression.FromActionAmount(config);
             mSource = config.Get("source").AsString(string.Empty);
             mAdjacentToRef = config.Get("adjacentTo").AsString("Self");
+            mPhase = ParsePhase(config.Get("phase").AsString(string.Empty));
         }
 
         public IReadOnlyList<GameAction> BuildActions(EffectRuntimeContext context, IReadOnlyList<int> targets)
@@ -3184,11 +3192,22 @@ namespace NineGrid.Core.Effects
                         sourceUid,
                         mAmount.Evaluate(context, targets[i]),
                         mSource,
-                        context.SourceDefId));
+                        context.SourceDefId,
+                        mPhase));
                 }
             }
 
             return result;
+        }
+
+        private static BorrowedArmorSyncPhase ParsePhase(string phase)
+        {
+            if (string.Equals(phase, "settle", StringComparison.OrdinalIgnoreCase))
+            {
+                return BorrowedArmorSyncPhase.Settle;
+            }
+
+            return BorrowedArmorSyncPhase.Grant;
         }
     }
 

@@ -267,7 +267,7 @@ namespace NineGrid.Flow
                 { "skill.sacrifice", "移除时友攻+1" },
                 { "skill.absorb", "邻死随机强化" },
                 { "skill.offer_fire", "死时加烈焰" },
-                { "skill.call_melee6", "互动5召近战6" },
+                { "skill.call_melee6", "互动5召蓝焰" },
                 { "skill.link_prep", "互动5去邻道具" },
                 { "skill.leap_kill", "翻面邻攻伤人" },
                 { "skill.steal", "翻面盗邻帮助" },

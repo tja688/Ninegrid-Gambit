@@ -488,6 +488,8 @@ namespace NineGrid.Flow
 
             ApplyQuickTestTrapCardsIfNeeded(options);
 
+            LogMonsterDeckWiringGuard(catalog, options, monsterDeckId);
+
             Debug.Log(mShell.IsQuickTestMode
                 ? $"[GameFlow] 循环节点 {mShell.NodeIndex} 快速测试内容节点 {contentNodeIndex}"
                   + (string.IsNullOrEmpty(monsterDeckId) ? string.Empty : $" 固定牌组 {monsterDeckId}")
@@ -1280,6 +1282,70 @@ namespace NineGrid.Flow
         private static void ResetQuickTestTimeScale()
         {
             Time.timeScale = 1f;
+        }
+
+        /// <summary>
+        /// 主题卡组接线守卫（AI 拓展卡组泄露追查）：每场战斗记录本场绑定的主题卡组
+        /// （id / kind / 显示名 / 来源）。正式局绑定到非正式档位（Reserve / Unknown），或
+        /// 敌侧开局卡池出现 deck.ai_expansion 内容时打 Error，复现时可直接从 ConsoleLog 归因。
+        /// </summary>
+        private void LogMonsterDeckWiringGuard(GameContentCatalog catalog, NodeDeckOptions options, string pinnedDeckId)
+        {
+            if (catalog == null || options == null)
+            {
+                return;
+            }
+
+            var run = NineGridArchitecture.Current.GetModel<RunModel>();
+            var deckId = !string.IsNullOrEmpty(pinnedDeckId)
+                ? pinnedDeckId
+                : (run != null ? run.FloorMonsterDeckId.Value : string.Empty);
+            if (!string.IsNullOrEmpty(deckId) && catalog.MonsterDecks.TryGetValue(deckId, out var deck) && deck != null)
+            {
+                var playable = MonsterDeckFloorPool.IsPlayableDifficulty(deck.Kind);
+                Debug.Log(
+                    $"[GameFlow] 主题卡组绑定 deck={deck.Id} kind={deck.Kind} display={deck.DisplayName}"
+                    + $" pinned={!string.IsNullOrEmpty(pinnedDeckId)} playable={playable} node={mShell.NodeIndex}");
+                if (!playable)
+                {
+                    Debug.LogError(
+                        $"[GameFlow] 绑定到非正式档位主题卡组 deck={deck.Id} kind={deck.Kind}——"
+                        + "疑似内容接线泄露，请核对 monster_decks.json 与跑图存档。");
+                }
+            }
+            else if (!string.IsNullOrEmpty(deckId))
+            {
+                Debug.LogWarning($"[GameFlow] 主题卡组绑定未命中 catalog：deck={deckId} node={mShell.NodeIndex}");
+            }
+
+            var leaked = new List<string>();
+            for (var i = 0; i < options.EnemyCards.Count; i++)
+            {
+                var draft = options.EnemyCards[i];
+                if (draft == null || string.IsNullOrEmpty(draft.DefId))
+                {
+                    continue;
+                }
+
+                if (catalog.TryGetCard(draft.DefId, out var card)
+                    && card != null
+                    && string.Equals(card.DeckId, "deck.ai_expansion", StringComparison.OrdinalIgnoreCase))
+                {
+                    if (!leaked.Contains(draft.DefId))
+                    {
+                        leaked.Add(draft.DefId);
+                    }
+                }
+            }
+
+            if (leaked.Count > 0)
+            {
+                Debug.LogError(
+                    "[GameFlow] 敌侧开局卡池出现 AI 拓展设计卡组（deck.ai_expansion）内容："
+                    + string.Join(",", leaked)
+                    + " node=" + mShell.NodeIndex
+                    + "——内容泄露，请保留本次 BattleLog/CoreLog 用于归因。");
+            }
         }
 
         private void ApplyQuickTestTrapCardsIfNeeded(NodeDeckOptions options)

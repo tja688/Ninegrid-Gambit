@@ -127,6 +127,8 @@ namespace NineGrid.Core
     public enum TriggerPoint
     {
         BeforeAction,
+        /// <summary>盘面位移动作（旋转/换位/移牌）Apply 之前；借甲图腾等在此结算贷款，不订 OnMove 以免倒刺位移前开火。</summary>
+        BeforeBoardMotion,
         AfterAction,
         OnBattle,
         OnDamage,

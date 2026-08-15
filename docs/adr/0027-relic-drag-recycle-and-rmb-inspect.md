@@ -10,6 +10,12 @@ status: accepted
 - **右键** ⇒ 打开既有卡牌详述（`CardInspectOverlayPresenter`），按 `relic.*` defId 挂遗物卡面；**不再**右键直接丢弃。
 - **宝箱 UseItem 满栏前置拒收**（2026 修正）：`PhaseSystem.UseItem` / `ApplyUseItem` 进入须用效果前，若识别为「开宝箱选遗物」（`OnSelfUsed` → `OfferRewardChoice(relic.*)`）且 `PlayerModel.IsRelicInventoryFull == true`，**直接拒收**「遗物格子已满」；**不**开 `PendingChoice.Reward`，**不**消耗宝箱卡。表现层 `UseItemIntentScriptFactory` 把卡片归还原位（回手）；玩家须先 `DiscardRelic` 腾出再开宝箱。避免表现层 `BounceFan` `while(true)` 反弹死循环。仅对宝箱生效——其它 OnSelfUsed 输入卡片（属性提升、爆弹等）不受满遗物栏约束。
 
+**满栏拒收三防线（2026-08-15 修正）**：宝箱识别规则收敛为共享 `ChestUseRelicPoolRule`（Core），三层同源执行，杜绝识别漂移与拒收后「卡视图消失、内核仍持有、主线静默 Abort」的幽灵：
+
+1. **Core 权威门禁**：`PhaseSystem.ExecuteUseItem` 拒收（同上，不变）。
+2. **表现层 idle 合法性镜像**：`BoardIntentLegality.TryExplainUseItem` 同规则提前拒绝——拖放校验（`ValidateHandDragApplyAsync`）返回 false，卡经 `FinishDragWithReturnAsync` 直接回手（视图不消失），并播 `card.use.chest_reject` 拒绝音效 + 简要解释提示。
+3. **时间线拒收善后**：`UseItemIntentScriptFactory` 的解算步（`BranchableResolveStep`）对权威拒收标记分支而非 Abort 整条主线；拒收分支经 `RejectedUseItemRecovery` 提示 + 拒绝音 + 把仍在道具卡格的卡视图重生回手。非战斗路径（`NonCombatUseItemIntentScriptFactory`）同款善后。
+
 Core 经济命令仍分岔：道具回收走 `RecycleItemSlot`（+10），遗物丢弃走 `DiscardRelic`（+20）；共享的是表现层回收区与拖放手感，不是同一条 Core 命令。
 
 ## 为什么

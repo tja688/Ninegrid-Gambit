@@ -23,6 +23,15 @@ namespace NineGrid.Core
         public const string PlayerSideDeck = "playerSideDeck";
     }
 
+    /// <summary>护甲图腾借甲同步阶段：每转盘一笔贷款，先结算再赋予。</summary>
+    public enum BorrowedArmorSyncPhase
+    {
+        /// <summary>盘面位移开始前：收回未耗借甲并清 token。</summary>
+        Settle,
+        /// <summary>盘面位移落地后：邻接则无条件再借。</summary>
+        Grant
+    }
+
     /// <summary>邻接图腾借甲光环：在目标卡上按来源 uid 记录借出前的 CurrentArmor 基线。</summary>
     public static class BorrowedArmorAuraKeys
     {

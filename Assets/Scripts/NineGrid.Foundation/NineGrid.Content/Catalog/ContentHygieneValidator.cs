@@ -67,6 +67,7 @@ namespace NineGrid.Content
             findings.AddRange(ValidateTemplateBodyDefIds());
             findings.AddRange(ValidateEmptyShellSkills());
             findings.AddRange(ValidateArchiveReachability());
+            findings.AddRange(ValidateAiExpansionReachability());
             findings.AddRange(ValidateNonCombatUsableTargets());
             findings.AddRange(ValidateDescriptionTokenContract());
             return findings;
@@ -373,6 +374,138 @@ namespace NineGrid.Content
                             ContentId = row.id,
                             Detail = "template body defId references archived " + id,
                         });
+                    }
+                }
+            }
+
+            return findings;
+        }
+
+        /// <summary>
+        /// AI 拓展设计卡组（deck.ai_expansion，评审隔离内容）不得进入正式 grant 路径：
+        /// ① monster_decks.json 登记必须保留 Reserve / Unknown，不得进任何层档随机池；
+        /// ② 正式挂载模板的 body defId 不得引用其成员（其自有模板自引用豁免）；
+        /// ③ 房间开局注入（cardDefId / pool 选项）不得引用其成员。
+        /// 卡组成员判定按 deckId（成员 isReserve=false，稀有度 Red，不依赖 Reserve 标志隔离）。
+        /// </summary>
+        public static List<Finding> ValidateAiExpansionReachability()
+        {
+            const string aiDeckId = "deck.ai_expansion";
+            var findings = new List<Finding>();
+            var dtos = LoadAllDtos();
+            var members = new HashSet<string>(StringComparer.Ordinal);
+            foreach (var pair in dtos)
+            {
+                if (!string.IsNullOrWhiteSpace(pair.Value.deckId)
+                    && string.Equals(pair.Value.deckId.Trim(), aiDeckId, StringComparison.OrdinalIgnoreCase))
+                {
+                    members.Add(pair.Key);
+                }
+            }
+
+            if (members.Count == 0)
+            {
+                return findings;
+            }
+
+            MonsterDeckTableCatalog.Invalidate();
+            var rows = MonsterDeckTableCatalog.Rows;
+            for (var i = 0; i < rows.Count; i++)
+            {
+                var row = rows[i];
+                if (row == null
+                    || !string.Equals(
+                        row.deck_id == null ? string.Empty : row.deck_id.Trim(),
+                        aiDeckId,
+                        StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
+
+                var kind = row.deck_kind == null ? string.Empty : row.deck_kind.Trim();
+                if (!string.Equals(kind, "Reserve", StringComparison.OrdinalIgnoreCase)
+                    && !string.Equals(kind, "Unknown", StringComparison.OrdinalIgnoreCase))
+                {
+                    findings.Add(new Finding
+                    {
+                        Category = "ai-expansion-grant",
+                        ContentId = aiDeckId,
+                        Detail = "monster_decks.json 登记为可玩档位 " + kind + "，会进入正式层池",
+                    });
+                }
+            }
+
+            var formalOwnedTemplates = ComputeFormalOwnedTemplates(dtos, members);
+            var templates = LoadTemplates();
+            for (var i = 0; i < templates.Count; i++)
+            {
+                var row = templates[i];
+                if (string.IsNullOrWhiteSpace(row.body) || !formalOwnedTemplates.Contains(row.id))
+                {
+                    continue;
+                }
+
+                foreach (Match match in DefIdInBody.Matches(row.body))
+                {
+                    var id = match.Groups[1].Value;
+                    if (!string.IsNullOrWhiteSpace(id) && members.Contains(id))
+                    {
+                        findings.Add(new Finding
+                        {
+                            Category = "ai-expansion-grant",
+                            ContentId = row.id,
+                            Detail = "template body defId references " + id,
+                        });
+                    }
+                }
+            }
+
+            foreach (var pair in dtos)
+            {
+                var dto = pair.Value;
+                if (dto.openingInjects == null)
+                {
+                    continue;
+                }
+
+                for (var i = 0; i < dto.openingInjects.Length; i++)
+                {
+                    var inject = dto.openingInjects[i];
+                    if (inject == null)
+                    {
+                        continue;
+                    }
+
+                    if (!string.IsNullOrWhiteSpace(inject.cardDefId)
+                        && members.Contains(inject.cardDefId.Trim()))
+                    {
+                        findings.Add(new Finding
+                        {
+                            Category = "ai-expansion-grant",
+                            ContentId = dto.contentId,
+                            Detail = "openingInject[" + i + "] references " + inject.cardDefId,
+                        });
+                    }
+
+                    if (inject.pool == null)
+                    {
+                        continue;
+                    }
+
+                    for (var p = 0; p < inject.pool.Length; p++)
+                    {
+                        var option = inject.pool[p];
+                        if (option != null
+                            && !string.IsNullOrWhiteSpace(option.cardDefId)
+                            && members.Contains(option.cardDefId.Trim()))
+                        {
+                            findings.Add(new Finding
+                            {
+                                Category = "ai-expansion-grant",
+                                ContentId = dto.contentId,
+                                Detail = "openingInject[" + i + "].pool[" + p + "] references " + option.cardDefId,
+                            });
+                        }
                     }
                 }
             }

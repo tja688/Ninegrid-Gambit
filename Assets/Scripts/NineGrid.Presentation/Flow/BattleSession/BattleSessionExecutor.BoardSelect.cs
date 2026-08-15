@@ -91,6 +91,25 @@ namespace NineGrid.Flow
 
             if (!UseItemInputHook.TrySubmitUseItem(card.Uid, selectedUids, null))
             {
+                // 权威门禁镜像已判「遗物栏满拒开宝箱」时，在卡视图消失前提示 + 拒绝音；
+                // 返回 false 让拖放路径直接回手（FinishDragWithReturnAsync）。
+                string legalityReason;
+                if (!BoardIntentLegality.TryExplainUseItem(
+                        NineGridArchitecture.Current,
+                        card.Uid,
+                        selectedUids,
+                        null,
+                        out legalityReason)
+                    && RejectedUseItemRecovery.IsChestRelicFullRejection(
+                        NineGridArchitecture.Current,
+                        card.DefId))
+                {
+                    RejectedUseItemRecovery.SurfaceRejection(
+                        legalityReason,
+                        card.DefId,
+                        chestRelicFull: true);
+                }
+
                 LogHandDragApplyReject(card, "use-item-submit-false");
                 return false;
             }

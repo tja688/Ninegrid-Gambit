@@ -100,8 +100,32 @@ namespace NineGrid.Flow.Presentation
                     BattleBeatFlush.PresentEventLogSlice(mArch, logStart);
                     TryPresentRelicRewardChoiceFromCore(mArch);
                 }
+                else
+                {
+                    // 权威门禁拒收（如遗物栏满拒开宝箱）：提示 + 拒绝音 + 视图归还手牌（自愈）。
+                    var defId = ResolveItemDefId(mArch, mItemUid);
+                    RejectedUseItemRecovery.SurfaceRejection(
+                        summary != null ? summary.Reason : null,
+                        defId,
+                        RejectedUseItemRecovery.IsChestRelicFullRejection(mArch, defId));
+                    RejectedUseItemRecovery.RestoreItemViewToHandAsync(mArch, mItemUid, defId).Forget();
+                }
 
                 return TimelineStepStatus.Finished;
+            }
+
+            private static string ResolveItemDefId(IArchitecture arch, int itemUid)
+            {
+                if (arch == null || itemUid <= 0)
+                {
+                    return string.Empty;
+                }
+
+                var registry = arch.GetModel<CardRegistry>();
+                CardInstance card;
+                return registry.TryGet(itemUid, out card) && card != null
+                    ? card.DefId
+                    : string.Empty;
             }
         }
 

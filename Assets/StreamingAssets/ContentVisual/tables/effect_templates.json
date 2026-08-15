@@ -810,10 +810,10 @@
  {
   "id": "tpl.skill.call_melee6.interact",
   "state": "Implemented",
-  "design_text": "[场上]玩家卡每互动5次，将一张近战6加入战斗卡组",
+  "design_text": "[场上]玩家卡每互动5次，将一张蓝焰加入战斗卡组",
   "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
   "conditions_json": "[]",
-  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnInteract\",\"every\":5},\"target\":{\"atom\":\"Self\"},\"action\":{\"atom\":\"ShuffleInto\",\"defId\":\"monster.melee_6\",\"kind\":\"Monster\",\"count\":\"{{count}}\",\"top\":false}}"
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnInteract\",\"every\":5},\"target\":{\"atom\":\"Self\"},\"action\":{\"atom\":\"ShuffleInto\",\"defId\":\"monster.dragon_cult_leader\",\"kind\":\"Monster\",\"count\":\"{{count}}\",\"top\":false}}"
  },
  {
   "id": "tpl.skill.learning_growth.gain",
@@ -1322,10 +1322,18 @@
  {
   "id": "tpl.trap.armor_totem.refresh_player",
   "state": "Implemented",
-  "design_text": "[场上]邻接玩家护甲+1；任意卡移动或发牌时刷新",
+  "design_text": "[场上]邻接玩家护甲+1；任意卡移动或发牌落地后再借",
   "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
   "conditions_json": "[]",
-  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnEvent\",\"eventTypes\":[\"CardMoved\",\"CardDealt\"]},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"SyncAdjacentBorrowedArmor\",\"value\":\"{{value}}\",\"source\":\"{{source}}\",\"adjacentTo\":\"Self\"}}"
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnEvent\",\"eventTypes\":[\"CardMoved\",\"CardDealt\"]},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"SyncAdjacentBorrowedArmor\",\"phase\":\"grant\",\"value\":\"{{value}}\",\"source\":\"{{source}}\",\"adjacentTo\":\"Self\"}}"
+ },
+ {
+  "id": "tpl.trap.armor_totem.settle_player",
+  "state": "Implemented",
+  "design_text": "[场上]盘面位移开始前收回玩家未耗借甲",
+  "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnBeforeBoardMotion\",\"timing\":\"Pre\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"SyncAdjacentBorrowedArmor\",\"phase\":\"settle\",\"value\":\"{{value}}\",\"source\":\"{{source}}\",\"adjacentTo\":\"Self\"}}"
  },
  {
   "id": "tpl.trap.recovery_totem.heal_player_on_move",
@@ -1370,10 +1378,18 @@
  {
   "id": "tpl.trap.armor_totem.refresh",
   "state": "Implemented",
-  "design_text": "[场上]邻接真怪护甲+1；任意卡移动或发牌时刷新",
+  "design_text": "[场上]邻接真怪护甲+1；任意卡移动或发牌落地后再借",
   "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
   "conditions_json": "[]",
-  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnEvent\",\"eventTypes\":[\"CardMoved\",\"CardDealt\"]},\"target\":{\"atom\":\"FilteredCards\",\"kind\":\"Monster\",\"zone\":\"Board\",\"exclude\":[\"Self\"]},\"action\":{\"atom\":\"SyncAdjacentBorrowedArmor\",\"value\":\"{{value}}\",\"source\":\"{{source}}\",\"adjacentTo\":\"Self\"}}"
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnEvent\",\"eventTypes\":[\"CardMoved\",\"CardDealt\"]},\"target\":{\"atom\":\"FilteredCards\",\"kind\":\"Monster\",\"zone\":\"Board\",\"exclude\":[\"Self\"]},\"action\":{\"atom\":\"SyncAdjacentBorrowedArmor\",\"phase\":\"grant\",\"value\":\"{{value}}\",\"source\":\"{{source}}\",\"adjacentTo\":\"Self\"}}"
+ },
+ {
+  "id": "tpl.trap.armor_totem.settle",
+  "state": "Implemented",
+  "design_text": "[场上]盘面位移开始前收回邻接怪未耗借甲",
+  "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnBeforeBoardMotion\",\"timing\":\"Pre\"},\"target\":{\"atom\":\"FilteredCards\",\"kind\":\"Monster\",\"zone\":\"Board\",\"exclude\":[\"Self\"]},\"action\":{\"atom\":\"SyncAdjacentBorrowedArmor\",\"phase\":\"settle\",\"value\":\"{{value}}\",\"source\":\"{{source}}\",\"adjacentTo\":\"Self\"}}"
  },
  {
   "id": "tpl.trap.recovery_totem.heal_on_move",
