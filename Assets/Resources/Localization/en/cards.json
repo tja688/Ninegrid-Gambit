@@ -831,7 +831,7 @@
     },
     "skill.chant": {
       "displayName": "Chant",
-      "description": "Every 6 Interactions: add a Melee 3 to the combat deck"
+      "description": "Every 6 Interactions: add a Greatsword Skeleton to the combat deck"
     },
     "skill.cloud_breath": {
       "displayName": "Fire Breather",
@@ -1174,7 +1174,7 @@
     },
     "trap.revive_stone": {
       "displayName": "Revive Stone",
-      "description": "[death] after {trap.revive_stone.interact.every}[action]; plays {trap.revive_stone.remove.count} Reborn Skeletons to this cell",
+      "description": "[death] after {trap.revive_stone.interact.every}[action]; plays {trap.revive_stone.remove.count} Greatsword Skeletons to this cell",
       "faceIntro": "Costs 75 sun to shovel."
     },
     "trap.rolling_stone": {

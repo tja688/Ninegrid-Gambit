@@ -6,7 +6,7 @@ namespace NineGrid.Content.CardPresentation
 {
     /// <summary>
     /// 衍生卡解析：卡 effect 装配中存在 <c>Spawn</c> 动作时，其 <c>defId</c> 即该卡的衍生卡
-    /// （「这张卡会涉及到的另一张卡」，如 死亡召唤 → 复活石、复活石 → 巨斧骷髅、遗物 → 教学卡）。
+    /// （「这张卡会涉及到的另一张卡」，如 死亡召唤 → 复活石、复活石 → 巨剑骷髅、遗物 → 教学卡）。
     /// 数据源 = 卡 JSON <c>effectAssemblies[].templateId</c> → effect_templates.json 模板
     /// <c>body</c> → <c>action.atom == "Spawn"</c> 的 <c>defId</c>（递归收集，去重、排除自身）。
     /// 纯静态投影，不依赖运行时 GameContentCatalog 解析状态。

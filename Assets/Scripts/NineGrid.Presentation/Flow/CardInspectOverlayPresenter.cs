@@ -316,7 +316,7 @@ namespace NineGrid.Flow
 
         /// <summary>
         /// 衍生卡查看按钮（UiOverlayHitProxy 回调）：当前详情卡有衍生卡且目标不在导航栈中时，
-        /// 入栈切入衍生卡详情；无衍生卡或处于衍生卡环（如 复活石 ↔ 巨斧骷髅 互相衍生）时 no-op。
+        /// 入栈切入衍生卡详情；无衍生卡或目标已在导航栈中（衍生链成环）时 no-op。
         /// </summary>
         public static void OpenDerivedCardIfAny()
         {
