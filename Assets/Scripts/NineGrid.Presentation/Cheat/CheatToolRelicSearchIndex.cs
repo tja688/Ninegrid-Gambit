@@ -22,7 +22,7 @@ namespace NineGrid.Presentation.Cheat
         }
 
         /// <summary>
-        /// 构建候选池。过滤：排除归档遗物（deck.relic_archive）。
+        /// 构建候选池。过滤：排除非正式遗物（归档 / AI 拓展，ADR-0054）。
         /// <paramref name="descriptionProvider"/> 可选注入表现层描述（运行时走 DTO）。
         /// </summary>
         public static List<RelicEntry> Build(
@@ -38,7 +38,7 @@ namespace NineGrid.Presentation.Cheat
             foreach (var pair in catalog.Relics)
             {
                 var relic = pair.Value;
-                if (relic == null || RelicDecks.IsArchive(relic.DeckId))
+                if (relic == null || FormalContentWiring.IsUnofficialRelic(relic))
                 {
                     continue;
                 }

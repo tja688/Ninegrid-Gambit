@@ -618,6 +618,12 @@ namespace NineGrid.Core
 
         public override GameActionResult Apply(GameActionContext context)
         {
+            var content = context.GetSystem<IContentSystem>();
+            if (FormalContentWiring.IsUnofficialDefId(content != null ? content.Catalog : null, DefId))
+            {
+                return GameActionResult.Empty;
+            }
+
             var registry = context.GetModel<CardRegistry>();
             var deck = context.GetModel<DeckModel>();
             var result = new GameActionResult();
@@ -760,6 +766,12 @@ namespace NineGrid.Core
 
         public override GameActionResult Apply(GameActionContext context)
         {
+            var content = context.GetSystem<IContentSystem>();
+            if (FormalContentWiring.IsUnofficialDefId(content != null ? content.Catalog : null, DefId))
+            {
+                return GameActionResult.Empty;
+            }
+
             var registry = context.GetModel<CardRegistry>();
             var board = context.GetModel<BoardModel>();
             var deck = context.GetModel<DeckModel>();
@@ -978,7 +990,7 @@ namespace NineGrid.Core
             return sPostTriggers;
         }
 
-        internal static List<CardContentDefinition> FindCatalogCandidates(
+        public static List<CardContentDefinition> FindCatalogCandidates(
             GameContentCatalog catalog,
             CardKind kind,
             int minLevel,
@@ -1022,6 +1034,11 @@ namespace NineGrid.Core
                 }
 
                 if (card.IsReserve)
+                {
+                    continue;
+                }
+
+                if (FormalContentWiring.IsUnofficialDeck(card.DeckId))
                 {
                     continue;
                 }

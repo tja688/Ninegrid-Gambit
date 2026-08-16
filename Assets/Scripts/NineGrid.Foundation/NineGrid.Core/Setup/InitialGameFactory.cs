@@ -197,11 +197,9 @@ namespace NineGrid.Core
                 return;
             }
 
-            // #115：归档卡组遗物不经 Profession 授予（ActivateRelic 仍可供测试/参考显式调用）。
+            // #115 / ADR-0054：归档卡组遗物不经 Profession 授予（ActivateRelic 仍可供测试/参考显式调用）。
             if (content != null
-                && content.Catalog != null
-                && content.Catalog.Relics.TryGetValue(profession.InitialRelicDefId, out var relic)
-                && RelicDecks.IsArchive(relic.DeckId))
+                && FormalContentWiring.IsUnofficialDefId(content.Catalog, profession.InitialRelicDefId))
             {
                 return;
             }

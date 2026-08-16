@@ -52,12 +52,7 @@ namespace NineGrid.Content.CardPresentation
             }
 
             var deckId = dto.deckId?.Trim() ?? string.Empty;
-            if (HelpCardDecks.IsArchive(deckId) || RelicDecks.IsArchive(deckId))
-            {
-                return true;
-            }
-
-            if (string.Equals(deckId, TransitionDeckId, StringComparison.OrdinalIgnoreCase))
+            if (FormalContentWiring.IsUnofficialDeck(deckId))
             {
                 return true;
             }

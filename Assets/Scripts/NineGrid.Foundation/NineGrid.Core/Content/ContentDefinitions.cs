@@ -445,7 +445,7 @@ namespace NineGrid.Core.Content
                     if (!catalog.Cards.TryGetValue(defId, out card)
                         || card == null
                         || card.Kind != CardKind.HelpCard
-                        || IsArchive(card.DeckId)
+                        || FormalContentWiring.IsUnofficialDeck(card.DeckId)
                         || !IsRegularRarity(card.Rarity))
                     {
                         continue;
@@ -485,7 +485,7 @@ namespace NineGrid.Core.Content
                     if (!catalog.Cards.TryGetValue(defId, out card)
                         || card == null
                         || card.Kind != CardKind.HelpCard
-                        || IsArchive(card.DeckId))
+                        || FormalContentWiring.IsUnofficialDeck(card.DeckId))
                     {
                         continue;
                     }
@@ -495,6 +495,70 @@ namespace NineGrid.Core.Content
             }
 
             return result;
+        }
+    }
+
+    /// <summary>
+    /// 正式接线门禁（ADR-0054）：归档卡组、AI 拓展卡组、过渡卡组只保留 JSON / 效果实现，
+    /// 不得进入正式局随机池、奖池、开局装填或运行时授予。召唤用 Reserve 怪物仍可被
+    /// 具名 Spawn（不走本门禁的随机池侧）。
+    /// </summary>
+    public static class FormalContentWiring
+    {
+        public const string AiExpansionDeckId = "deck.ai_expansion";
+        public const string TransitionDeckId = "deck.transition";
+
+        public static bool IsUnofficialDeck(string deckId)
+        {
+            if (string.IsNullOrEmpty(deckId))
+            {
+                return false;
+            }
+
+            return HelpCardDecks.IsArchive(deckId)
+                || RelicDecks.IsArchive(deckId)
+                || string.Equals(deckId, AiExpansionDeckId, System.StringComparison.OrdinalIgnoreCase)
+                || string.Equals(deckId, TransitionDeckId, System.StringComparison.OrdinalIgnoreCase);
+        }
+
+        /// <summary>
+        /// 随机池 / 奖池 / 开局序列抽选：非正式卡组与 Reserve 怪物均排除。
+        /// Reserve 召唤物仍可通过具名 Spawn 出场。
+        /// </summary>
+        public static bool IsExcludedFromRandomPools(CardContentDefinition card)
+        {
+            return card == null || card.IsReserve || IsUnofficialDeck(card.DeckId);
+        }
+
+        public static bool IsUnofficialRelic(RelicContentDefinition relic)
+        {
+            return relic == null || IsUnofficialDeck(relic.DeckId);
+        }
+
+        /// <summary>
+        /// 具名授予 / Spawn / 洗入：Catalog 中已登记且属于非正式卡组则拦截。
+        /// Catalog 未登记的 defId（测试夹具）放行。
+        /// </summary>
+        public static bool IsUnofficialDefId(GameContentCatalog catalog, string defId)
+        {
+            if (catalog == null || string.IsNullOrEmpty(defId))
+            {
+                return false;
+            }
+
+            CardContentDefinition card;
+            if (catalog.TryGetCard(defId, out card) && card != null)
+            {
+                return IsUnofficialDeck(card.DeckId);
+            }
+
+            RelicContentDefinition relic;
+            if (catalog.TryGetRelic(defId, out relic) && relic != null)
+            {
+                return IsUnofficialDeck(relic.DeckId);
+            }
+
+            return false;
         }
     }
 
@@ -783,7 +847,7 @@ namespace NineGrid.Core.Content
                 return false;
             }
 
-            if (card.Kind == CardKind.HelpCard && HelpCardDecks.IsArchive(card.DeckId))
+            if (FormalContentWiring.IsExcludedFromRandomPools(card))
             {
                 return false;
             }
@@ -803,7 +867,7 @@ namespace NineGrid.Core.Content
 
         private static bool MatchesRelic(RelicContentDefinition relic, RewardPoolQueryRule query)
         {
-            if (RelicDecks.IsArchive(relic.DeckId))
+            if (FormalContentWiring.IsUnofficialRelic(relic))
             {
                 return false;
             }

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using NineGrid.Content;
+using NineGrid.Core.Content;
 
 namespace NineGrid.Content.CardPresentation
 {
@@ -38,8 +39,7 @@ namespace NineGrid.Content.CardPresentation
             }
 
             var deck = deckId.Trim();
-            return string.Equals(deck, "deck.relic_archive", StringComparison.OrdinalIgnoreCase)
-                || string.Equals(deck, "deck.help_archive", StringComparison.OrdinalIgnoreCase);
+            return FormalContentWiring.IsUnofficialDeck(deck);
         }
 
         /// <summary>

@@ -655,9 +655,9 @@ _Avoid_: 一模板一词条导致共享机制解释重复、把 75 个 DSL 原�
 卡的视觉归属单位，决定卡背；怪物的卡组兼任遭遇编排单位，回答「什么时候会遇到你」。玩家一组、帮助卡一组、遗物一组（live `deck.relic`；错位旧卡归档 `deck.relic_archive`，不进奖池/授予接线，#115）、**机关一组（`deck.trap`）**，怪物按所属阵营分组；不存在统称的「怪物卡组」。`deckId` 主题英文（如 `deck.dragon`）是内部渠道代号与历史残留命名，不是玩家叙事阵营；玩家可见称呼用 `displayName` / 另行映射（[ADR-0014](docs/adr/0014-theme-ids-are-legacy-opaque.md)）。
 _Avoid_: 把功能角色塞进卡组、为帮助卡编造阵营归属、逐卡各配卡背、把 `deck.*` 主题英文当成玩家叙事阵营或现行世界观
 
-**归档卡组（表现层编辑器）**：
-表现层卡牌配置器侧栏按所属卡组分组时，**卡组显示名含「归档」二字**的组（如「遗物归档卡组」「道具卡归档卡组」「怪物归档卡组」）及其成员**不属于正式接线**——保留 JSON 供参考或效果直生，不进奖池/授予/正式遭遇抽选。代码侧对应 `deck.relic_archive` / `deck.help_archive` / `deck.transition` 与怪物 `isReserve`；批量导出/卫生校验与编辑器过滤与此对齐（`CardPresentationPrimaryCardRules`）。
-_Avoid_: 把归档组成员当 live 内容批量改写、按归档卡组做正式投放或奖池展开
+**归档卡组 / 非正式接线（表现层编辑器 + 运行时门禁）**：
+表现层卡牌配置器侧栏按所属卡组分组时，**卡组显示名含「归档」二字**的组（如「遗物归档卡组」「道具卡归档卡组」「怪物归档卡组」）及其成员**不属于正式接线**——保留 JSON 供参考或效果直生，不进奖池/授予/正式遭遇抽选。代码侧对应 `deck.relic_archive` / `deck.help_archive` / `deck.transition`、**`deck.ai_expansion`（AI 拓展设计卡组）**与怪物 `isReserve`。运行时统一门禁 `FormalContentWiring`（[ADR-0054](docs/adr/0054-unofficial-content-never-enters-live-pools.md)）：随机池排除非正式+Reserve，具名 Spawn/授予排除非正式。批量导出/卫生校验与编辑器过滤与此对齐（`CardPresentationPrimaryCardRules`）。
+_Avoid_: 把归档组成员当 live 内容批量改写、按归档卡组做正式投放或奖池展开、只在单个装填入口补排除而让 `ShuffleRandomContent` 继续扫全 Catalog
 
 **主要内容卡牌**：
 表现层一卡一文件 JSON 中承担玩法与卡面主体、适合批量填充描述的四类：`Monster`（怪物卡）、`Relic`（遗物卡）、`HelpCard`（道具卡）、`Trap`（机关卡）。与之相对：Skill / Deck / Room / ChoiceOption / Avatar 等为技能容器、卡组元数据、房间选项等，**不算**主要内容卡牌。批量描述导出默认只收上述四类且排除归档成员。

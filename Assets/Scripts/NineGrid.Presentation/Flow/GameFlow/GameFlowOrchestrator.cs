@@ -1289,9 +1289,9 @@ namespace NineGrid.Flow
         }
 
         /// <summary>
-        /// 主题卡组接线守卫（AI 拓展卡组泄露追查）：每场战斗记录本场绑定的主题卡组
+        /// 主题卡组接线守卫（非正式卡组泄露追查）：每场战斗记录本场绑定的主题卡组
         /// （id / kind / 显示名 / 来源）。正式局绑定到非正式档位（Reserve / Unknown），或
-        /// 敌侧开局卡池出现 deck.ai_expansion 内容时打 Error，复现时可直接从 ConsoleLog 归因。
+        /// 开局卡池出现归档 / AI 拓展 / 过渡内容时打 Error，复现时可直接从 ConsoleLog 归因。
         /// </summary>
         private void LogMonsterDeckWiringGuard(GameContentCatalog catalog, NodeDeckOptions options, string pinnedDeckId)
         {
@@ -1323,9 +1323,32 @@ namespace NineGrid.Flow
             }
 
             var leaked = new List<string>();
-            for (var i = 0; i < options.EnemyCards.Count; i++)
+            CollectUnofficialOpeningLeaks(catalog, options.EnemyCards, leaked);
+            CollectUnofficialOpeningLeaks(catalog, options.PlayerCards, leaked);
+
+            if (leaked.Count > 0)
             {
-                var draft = options.EnemyCards[i];
+                Debug.LogError(
+                    "[GameFlow] 开局卡池出现非正式接线内容（归档/AI拓展/过渡）："
+                    + string.Join(",", leaked)
+                    + " node=" + mShell.NodeIndex
+                    + "——内容泄露，请保留本次 BattleLog/CoreLog 用于归因。");
+            }
+        }
+
+        private static void CollectUnofficialOpeningLeaks(
+            GameContentCatalog catalog,
+            IReadOnlyList<CardDraft> drafts,
+            List<string> leaked)
+        {
+            if (drafts == null)
+            {
+                return;
+            }
+
+            for (var i = 0; i < drafts.Count; i++)
+            {
+                var draft = drafts[i];
                 if (draft == null || string.IsNullOrEmpty(draft.DefId))
                 {
                     continue;
@@ -1333,22 +1356,11 @@ namespace NineGrid.Flow
 
                 if (catalog.TryGetCard(draft.DefId, out var card)
                     && card != null
-                    && string.Equals(card.DeckId, "deck.ai_expansion", StringComparison.OrdinalIgnoreCase))
+                    && FormalContentWiring.IsUnofficialDeck(card.DeckId)
+                    && !leaked.Contains(draft.DefId))
                 {
-                    if (!leaked.Contains(draft.DefId))
-                    {
-                        leaked.Add(draft.DefId);
-                    }
+                    leaked.Add(draft.DefId);
                 }
-            }
-
-            if (leaked.Count > 0)
-            {
-                Debug.LogError(
-                    "[GameFlow] 敌侧开局卡池出现 AI 拓展设计卡组（deck.ai_expansion）内容："
-                    + string.Join(",", leaked)
-                    + " node=" + mShell.NodeIndex
-                    + "——内容泄露，请保留本次 BattleLog/CoreLog 用于归因。");
             }
         }
 

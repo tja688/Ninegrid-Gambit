@@ -153,11 +153,9 @@ namespace NineGrid.Core
         public override GameActionResult Apply(GameActionContext context)
         {
             var content = context.GetSystem<IContentSystem>();
-            // #115：奖池已排除归档遗物；授予路径同样跳过，避免误接线。
+            // #115 / ADR-0054：非正式卡组（归档 / AI 拓展 / 过渡）不经授予路径进入正式局。
             if (content != null
-                && content.Catalog != null
-                && content.Catalog.Relics.TryGetValue(RelicDefId, out var relic)
-                && RelicDecks.IsArchive(relic.DeckId))
+                && FormalContentWiring.IsUnofficialDefId(content.Catalog, RelicDefId))
             {
                 return GameActionResult.Empty;
             }
@@ -663,6 +661,11 @@ namespace NineGrid.Core
             }
 
             var content = context.GetSystem<IContentSystem>();
+            if (FormalContentWiring.IsUnofficialDefId(content != null ? content.Catalog : null, DefId))
+            {
+                return GameActionResult.Empty;
+            }
+
             var registry = context.GetModel<CardRegistry>();
             var deck = context.GetModel<DeckModel>();
             var player = context.GetModel<PlayerModel>();

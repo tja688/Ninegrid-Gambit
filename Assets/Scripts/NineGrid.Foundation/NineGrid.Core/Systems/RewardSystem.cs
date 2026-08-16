@@ -618,7 +618,10 @@ namespace NineGrid.Core.Systems
                 {
                     var defId = pool[i];
                     CardContentDefinition card;
-                    if (string.IsNullOrEmpty(defId) || !catalog.TryGetCard(defId, out card) || card == null)
+                    if (string.IsNullOrEmpty(defId)
+                        || !catalog.TryGetCard(defId, out card)
+                        || card == null
+                        || FormalContentWiring.IsUnofficialDeck(card.DeckId))
                     {
                         continue;
                     }
@@ -862,7 +865,9 @@ namespace NineGrid.Core.Systems
                 var content = this.GetSystem<IContentSystem>();
                 for (var j = 0; j < defIds.Count; j++)
                 {
-                    if (string.IsNullOrEmpty(defIds[j]) || !catalog.Cards.ContainsKey(defIds[j]))
+                    if (string.IsNullOrEmpty(defIds[j])
+                        || !catalog.Cards.ContainsKey(defIds[j])
+                        || FormalContentWiring.IsUnofficialDefId(catalog, defIds[j]))
                     {
                         continue;
                     }
@@ -1028,6 +1033,11 @@ namespace NineGrid.Core.Systems
                 return;
             }
 
+            if (FormalContentWiring.IsUnofficialDefId(catalog, defId))
+            {
+                return;
+            }
+
             options.AddPlayerCard(content.CreateDraft(defId));
         }
 
@@ -1067,7 +1077,8 @@ namespace NineGrid.Core.Systems
                     continue;
                 }
 
-                if (!CardCombatRules.IsBoardCombatTarget(card.Kind) || card.IsReserve)
+                if (!CardCombatRules.IsBoardCombatTarget(card.Kind)
+                    || FormalContentWiring.IsExcludedFromRandomPools(card))
                 {
                     continue;
                 }

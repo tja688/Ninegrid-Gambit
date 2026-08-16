@@ -28,7 +28,7 @@ namespace NineGrid.Presentation.Cheat
         /// <summary>
         /// 构建候选池。过滤规则：
         /// 1) 仅 Monster / Trap / HelpCard（战斗中卡组可合法出现的三类）；
-        /// 2) 排除归档卡组成员（deck.help_archive / deck.relic_archive —— 表现层配置器冗余归档卡）。
+        /// 2) 排除非正式卡组（归档 / AI 拓展 / 过渡，ADR-0054）。
         /// <paramref name="descriptionProvider"/> 可选注入卡面描述（运行时走表现层 DTO，测试可不传）。
         /// </summary>
         public static List<CardEntry> Build(
@@ -56,7 +56,17 @@ namespace NineGrid.Presentation.Cheat
                     continue;
                 }
 
-                if (card.Kind == CardKind.HelpCard && HelpCardDecks.IsArchive(card.DeckId))
+                if (card.Kind == CardKind.HelpCard && FormalContentWiring.IsUnofficialDeck(card.DeckId))
+                {
+                    continue;
+                }
+
+                if (card.Kind == CardKind.Trap && FormalContentWiring.IsUnofficialDeck(card.DeckId))
+                {
+                    continue;
+                }
+
+                if (card.Kind == CardKind.Monster && FormalContentWiring.IsUnofficialDeck(card.DeckId))
                 {
                     continue;
                 }

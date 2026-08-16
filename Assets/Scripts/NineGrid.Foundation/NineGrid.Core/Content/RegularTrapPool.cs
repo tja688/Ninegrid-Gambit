@@ -36,7 +36,7 @@ namespace NineGrid.Core.Content
                 var card = pair.Value;
                 if (card == null
                     || card.Kind != CardKind.Trap
-                    || card.IsReserve
+                    || FormalContentWiring.IsExcludedFromRandomPools(card)
                     || card.Rarity != ContentRarity.White)
                 {
                     continue;

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text.RegularExpressions;
 using NineGrid.Content.CardPresentation;
+using NineGrid.Core.Content;
 using UnityEngine;
 
 namespace NineGrid.Content
@@ -68,6 +69,7 @@ namespace NineGrid.Content
             findings.AddRange(ValidateEmptyShellSkills());
             findings.AddRange(ValidateArchiveReachability());
             findings.AddRange(ValidateAiExpansionReachability());
+            findings.AddRange(ValidateExpandedRewardPools());
             findings.AddRange(ValidateNonCombatUsableTargets());
             findings.AddRange(ValidateDescriptionTokenContract());
             return findings;
@@ -291,8 +293,9 @@ namespace NineGrid.Content
                 }
 
                 var deck = dto.deckId.Trim();
-                if (string.Equals(deck, "deck.relic_archive", StringComparison.OrdinalIgnoreCase)
-                    || string.Equals(deck, "deck.help_archive", StringComparison.OrdinalIgnoreCase))
+                if (HelpCardDecks.IsArchive(deck)
+                    || RelicDecks.IsArchive(deck)
+                    || string.Equals(deck, FormalContentWiring.TransitionDeckId, StringComparison.OrdinalIgnoreCase))
                 {
                     archived.Add(pair.Key);
                 }
@@ -390,7 +393,7 @@ namespace NineGrid.Content
         /// </summary>
         public static List<Finding> ValidateAiExpansionReachability()
         {
-            const string aiDeckId = "deck.ai_expansion";
+            const string aiDeckId = FormalContentWiring.AiExpansionDeckId;
             var findings = new List<Finding>();
             var dtos = LoadAllDtos();
             var members = new HashSet<string>(StringComparer.Ordinal);
@@ -507,6 +510,80 @@ namespace NineGrid.Content
                             });
                         }
                     }
+                }
+            }
+
+            return findings;
+        }
+
+        /// <summary>
+        /// 奖池查询展开后不得含非正式卡组（归档 / AI 拓展 / 过渡）。
+        /// 这是静态 defId 扫描覆盖不到的 ShuffleRandom / query 展开护栏。
+        /// </summary>
+        public static List<Finding> ValidateExpandedRewardPools()
+        {
+            var findings = new List<Finding>();
+            GameContentCatalog catalog;
+            try
+            {
+                catalog = ContentCatalogBootstrap.Load();
+            }
+            catch (Exception ex)
+            {
+                findings.Add(new Finding
+                {
+                    Category = "unofficial-pool",
+                    ContentId = string.Empty,
+                    Detail = "failed to load catalog: " + ex.Message,
+                });
+                return findings;
+            }
+
+            if (catalog == null || catalog.Rewards == null)
+            {
+                return findings;
+            }
+
+            foreach (var pair in catalog.Rewards.Pools)
+            {
+                var pool = pair.Value;
+                if (pool == null || pool.Entries == null)
+                {
+                    continue;
+                }
+
+                for (var i = 0; i < pool.Entries.Count; i++)
+                {
+                    var entry = pool.Entries[i];
+                    if (entry == null || string.IsNullOrEmpty(entry.DefId))
+                    {
+                        continue;
+                    }
+
+                    if (FormalContentWiring.IsUnofficialDefId(catalog, entry.DefId))
+                    {
+                        findings.Add(new Finding
+                        {
+                            Category = "unofficial-pool",
+                            ContentId = pool.Id,
+                            Detail = "expanded entry " + entry.DefId,
+                        });
+                    }
+                }
+            }
+
+            var traps = RegularTrapPool.CollectRegularTraps(catalog);
+            for (var i = 0; i < traps.Count; i++)
+            {
+                var trap = traps[i];
+                if (trap != null && FormalContentWiring.IsUnofficialDeck(trap.DeckId))
+                {
+                    findings.Add(new Finding
+                    {
+                        Category = "unofficial-pool",
+                        ContentId = trap.DefId,
+                        Detail = "regular trap pool contains unofficial deck " + trap.DeckId,
+                    });
                 }
             }
 

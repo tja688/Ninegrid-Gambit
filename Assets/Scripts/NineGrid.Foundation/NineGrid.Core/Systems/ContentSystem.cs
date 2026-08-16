@@ -517,6 +517,10 @@ namespace NineGrid.Core.Systems
                     {
                         report.AddIssue(prefix + ":missing card " + inject.CardDefId);
                     }
+                    else if (FormalContentWiring.IsUnofficialDefId(Catalog, inject.CardDefId))
+                    {
+                        report.AddIssue(prefix + ":unofficial card " + inject.CardDefId);
+                    }
 
                     break;
 
@@ -546,6 +550,10 @@ namespace NineGrid.Core.Systems
                         if (!Catalog.Cards.ContainsKey(option.CardDefId))
                         {
                             report.AddIssue(prefix + ":missing card " + option.CardDefId);
+                        }
+                        else if (FormalContentWiring.IsUnofficialDefId(Catalog, option.CardDefId))
+                        {
+                            report.AddIssue(prefix + ":unofficial card " + option.CardDefId);
                         }
                     }
 
