@@ -6,7 +6,7 @@
     "role": "Defense",
     "displayName": "重盔甲",
     "designSlotName": "",
-    "description": "[basic_armor]+{relic.heavy_armor.base.value}，进入战斗时每有{relic.heavy_armor.node_start.every}点基础[armor]就获得{relic.heavy_armor.node_start.gain}点[armor]",
+    "description": "[basic_armor]+{relic.heavy_armor.base.value}，进入战斗时每有{relic.heavy_armor.node_start.every}点[basic_armor]就获得{relic.heavy_armor.node_start.gain}点[armor]",
     "faceIntro": "穿上以后楼梯突然变长了",
     "extraGlossaryTerms": [],
     "attackPattern": "",

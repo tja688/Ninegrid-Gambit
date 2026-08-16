@@ -6,7 +6,7 @@
     "role": "Defense",
     "displayName": "金币盔甲",
     "designSlotName": "",
-    "description": "基础[armor]+{relic.gold_armor.base.value}，获得：[[金币护甲]]",
+    "description": "[basic_armor]+{relic.gold_armor.base.value}，获得：[[金币护甲]]",
     "faceIntro": "钱包也是身体的一部分",
     "extraGlossaryTerms": [],
     "attackPattern": "",

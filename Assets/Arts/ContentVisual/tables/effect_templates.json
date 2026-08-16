@@ -1316,8 +1316,8 @@
   "state": "Implemented",
   "design_text": "[场上]本卡移动/旋转落地后，若正交邻玩家则为玩家获得1点护甲",
   "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
-  "conditions_json": "[{\"atom\":\"Adjacent\",\"left\":\"Self\",\"right\":\"Player\"}]",
-  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnSelfMove\",\"every\":1},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"GainArmor\",\"amount\":\"{{amount}}\",\"actor\":\"Self\"}}"
+  "conditions_json": "[\"Adjacent:left=Self:right=Player\"]",
+  "body": "{\"kind\":\"Triggered\",\"conditions\":[{\"atom\":\"Adjacent\",\"left\":\"Self\",\"right\":\"Player\"}],\"trigger\":{\"atom\":\"OnSelfMove\",\"every\":1},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"GainArmor\",\"amount\":\"{{amount}}\",\"actor\":\"Self\"}}"
  },
  {
   "id": "tpl.trap.recovery_totem.heal_player_on_move",

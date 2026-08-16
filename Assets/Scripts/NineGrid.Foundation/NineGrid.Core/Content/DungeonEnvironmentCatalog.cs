@@ -36,10 +36,10 @@ namespace NineGrid.Core.Content
                     MakeVariant("forest.jade_mist", 1, 1, 4, "密林", "翡翠迷雾", false, "#172038", "#468232"),
                     MakeVariant("forest.lost_ruins", 1, 5, 8, "密林", "失落遗迹", false, "#1e1d39", "#577277"),
                     MakeVariant("forest.blood", 1, 1, 8, "密林", "血色", true, "#411d31", "#a53030"),
-                    MakeVariant("rock.ossuary", 2, 1, 4, "岩层", "藏骨堂", false, "#151d28", "#4d2b32"),
-                    MakeVariant("rock.magma", 2, 5, 8, "岩层", "熔岩之地", false, "#341c27", "#884b2b"),
+                    MakeVariant("rock.ossuary", 2, 1, 4, "岩层", "藏骨堂", false, "#151d28", "#394a50"),
+                    MakeVariant("rock.magma", 2, 5, 8, "岩层", "熔岩之地", false, "#341c27", "#de9e41"),
                     MakeVariant("rock.blood", 2, 1, 8, "岩层", "血色", true, "#411d31", "#a53030"),
-                    MakeVariant("cave.pale_road", 3, 1, 4, "溶洞", "苍白之路", false, "#202e37", "#577277"),
+                    MakeVariant("cave.pale_road", 3, 1, 4, "溶洞", "苍白之路", false, "#202e37", "#819796"),
                     MakeVariant("cave.twilight_hall", 3, 5, 8, "溶洞", "黄昏礼堂", false, "#411d31", "#884b2b"),
                     MakeVariant("cave.blood", 3, 1, 8, "溶洞", "血色", true, "#411d31", "#a53030"),
                 }
@@ -236,11 +236,11 @@ namespace NineGrid.Core.Content
                 case "密林_失落遗迹":
                     return "#577277";
                 case "岩层_藏骨堂":
-                    return "#4d2b32";
+                    return "#394a50";
                 case "岩层_熔岩之地":
-                    return "#884b2b";
+                    return "#de9e41";
                 case "溶洞_苍白之路":
-                    return "#577277";
+                    return "#819796";
                 case "溶洞_黄昏礼堂":
                     return "#884b2b";
                 default:

@@ -6,7 +6,7 @@
     "role": "Defense",
     "displayName": "铁盾",
     "designSlotName": "",
-    "description": "基础[armor]+{relic.iron_shield.base.value}；获得{relic.iron_shield.reduction.value}层：[[伤害减免]]",
+    "description": "[basic_armor]+{relic.iron_shield.base.value}；获得{relic.iron_shield.reduction.value}层：[[伤害减免]]",
     "faceIntro": "没有花纹，因为花纹不挡刀",
     "extraGlossaryTerms": [],
     "attackPattern": "",

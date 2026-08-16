@@ -62,6 +62,49 @@ namespace NineGrid.Presentation.Tests
         }
 
         [Test]
+        public void MoveOtherCard_PlayerDoesNotGainArmor()
+        {
+            var content = mArch.GetSystem<IContentSystem>();
+            content.Load(NineGrid.Content.ContentCatalogBootstrap.Load());
+            mArch.GetUtility<IConfigUtility>().Set(ContentConfigKeys.DefaultCatalog, content.Catalog);
+
+            var avatar = CreateAvatarOnBoard(SlotId.Board(5));
+            CreateRealCardOnBoard("trap.armor_totem", SlotId.Board(8));
+            var mover = CreateMonsterOnBoard("monster.test.mover", SlotId.Board(2));
+
+            Run(new MoveCardAction(mover.Uid, SlotId.Board(3)));
+            Assert.AreEqual(0, StatArmorUtility.GetCurrentArmor(avatar), "其他卡移动不应触发增幅器给玩家叠甲");
+        }
+
+        [Test]
+        public void Rotate_AfterLandingNotAdjacent_PlayerDoesNotGainArmor()
+        {
+            var content = mArch.GetSystem<IContentSystem>();
+            content.Load(NineGrid.Content.ContentCatalogBootstrap.Load());
+            mArch.GetUtility<IConfigUtility>().Set(ContentConfigKeys.DefaultCatalog, content.Catalog);
+
+            var avatar = CreateAvatarOnBoard(SlotId.Board(5));
+            CreateRealCardOnBoard("trap.armor_totem", SlotId.Board(8));
+
+            Run(new RotateBoardClockwiseAction());
+            Assert.AreEqual(0, StatArmorUtility.GetCurrentArmor(avatar), "落地后不邻接应保持 0 甲");
+        }
+
+        [Test]
+        public void Rotate_AfterLandingAdjacent_PlayerGainsArmor()
+        {
+            var content = mArch.GetSystem<IContentSystem>();
+            content.Load(NineGrid.Content.ContentCatalogBootstrap.Load());
+            mArch.GetUtility<IConfigUtility>().Set(ContentConfigKeys.DefaultCatalog, content.Catalog);
+
+            var avatar = CreateAvatarOnBoard(SlotId.Board(5));
+            CreateRealCardOnBoard("trap.armor_totem", SlotId.Board(9));
+
+            Run(new RotateBoardClockwiseAction());
+            Assert.AreEqual(1, StatArmorUtility.GetCurrentArmor(avatar), "落地后邻接应 +1 甲");
+        }
+
+        [Test]
         public void Rotate_PlayerAdjacent_GainsStackingArmor()
         {
             var content = mArch.GetSystem<IContentSystem>();
@@ -69,15 +112,15 @@ namespace NineGrid.Presentation.Tests
             mArch.GetUtility<IConfigUtility>().Set(ContentConfigKeys.DefaultCatalog, content.Catalog);
 
             var avatar = CreateAvatarOnBoard(SlotId.Board(5));
-            var totem = CreateRealCardOnBoard("trap.armor_totem", SlotId.Board(8));
-            CreateRealCardOnBoard("monster.melee_3", SlotId.Board(7));
+            var totem = CreateRealCardOnBoard("trap.armor_totem", SlotId.Board(9));
+            CreateRealCardOnBoard("monster.melee_3", SlotId.Board(3));
             CreateMonsterOnBoard("monster.test.far", SlotId.Board(1));
 
             Run(new RotateBoardClockwiseAction());
             Assert.AreEqual(1, StatArmorUtility.GetCurrentArmor(avatar), "邻接玩家第一次 +1 甲");
 
             Run(new RotateBoardClockwiseAction());
-            Assert.AreEqual(2, StatArmorUtility.GetCurrentArmor(avatar), "邻接玩家第二次再 +1 甲");
+            Assert.AreEqual(1, StatArmorUtility.GetCurrentArmor(avatar), "第二次落地不邻接则不再叠甲");
         }
 
         [Test]

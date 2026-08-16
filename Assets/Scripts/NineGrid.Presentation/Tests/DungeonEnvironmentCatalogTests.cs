@@ -73,7 +73,7 @@ namespace NineGrid.Presentation.Tests
             var env = DungeonEnvironmentCatalog.Resolve(2, 1, false);
             Assert.AreEqual("岩层_藏骨堂", env.DisplayName);
             Assert.AreEqual("#151d28", env.MainBackgroundColorHex);
-            Assert.AreEqual("#4d2b32", env.SlotColorHex);
+            Assert.AreEqual("#394a50", env.SlotColorHex);
         }
 
         [Test]
@@ -82,7 +82,7 @@ namespace NineGrid.Presentation.Tests
             var env = DungeonEnvironmentCatalog.Resolve(2, 6, false);
             Assert.AreEqual("岩层_熔岩之地", env.DisplayName);
             Assert.AreEqual("#341c27", env.MainBackgroundColorHex);
-            Assert.AreEqual("#884b2b", env.SlotColorHex);
+            Assert.AreEqual("#de9e41", env.SlotColorHex);
         }
 
         [Test]
