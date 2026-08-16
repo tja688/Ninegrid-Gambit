@@ -115,3 +115,7 @@ Thumbs.db
 
 # Tickets Implementor mirror state
 .opencode/tickets/
+
+# Playtest FNS credentials (never commit)
+/[Aa]ssets/[Ss]treaming[Aa]ssets/fns-playtest.secret.json
+/[Aa]ssets/[Ss]treaming[Aa]ssets/fns-playtest.secret.json.meta

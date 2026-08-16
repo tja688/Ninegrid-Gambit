@@ -44,6 +44,19 @@ namespace NineGrid.Flow.Diagnostics
             }
         }
 
+        /// <summary>本地五轨快照 + 按原文件名分段合并成一篇文本（试玩上报用）。</summary>
+        public readonly struct MergedUpload
+        {
+            public readonly Result LocalSave;
+            public readonly string Markdown;
+
+            public MergedUpload(Result localSave, string markdown)
+            {
+                LocalSave = localSave;
+                Markdown = markdown ?? string.Empty;
+            }
+        }
+
         /// <summary>
         /// 戳 UserMark → 把当前内存中的四轨日志写入独立快照目录（含 AI 必读说明）。
         /// </summary>
@@ -130,6 +143,48 @@ namespace NineGrid.Flow.Diagnostics
                 Debug.LogWarning("[DiagTraceManualSnapshot] " + fail);
                 return new Result(false, string.Empty, string.Empty, tag, fail, 0);
             }
+        }
+
+        /// <summary>
+        /// 先按原逻辑落本地快照目录，再把目录内文件按原文件名拼成一段合并文本。
+        /// </summary>
+        public static MergedUpload SaveMerged(string userTag)
+        {
+            var saved = Save(userTag);
+            var sb = new StringBuilder(4096);
+            if (!string.IsNullOrEmpty(saved.FolderPath) && Directory.Exists(saved.FolderPath))
+            {
+                var files = Directory.GetFiles(saved.FolderPath);
+                Array.Sort(files, StringComparer.OrdinalIgnoreCase);
+                for (var i = 0; i < files.Length; i++)
+                {
+                    var name = Path.GetFileName(files[i]);
+                    string body;
+                    try
+                    {
+                        body = File.ReadAllText(files[i], Encoding.UTF8);
+                    }
+                    catch (Exception ex)
+                    {
+                        body = "(read failed: " + ex.Message + ")";
+                    }
+
+                    sb.AppendLine();
+                    sb.AppendLine("======== FILE: " + name + " ========");
+                    sb.AppendLine();
+                    sb.AppendLine(body);
+                    sb.AppendLine();
+                    sb.AppendLine("======== END FILE: " + name + " ========");
+                    sb.AppendLine();
+                }
+            }
+
+            if (sb.Length == 0)
+            {
+                sb.AppendLine("(no local snapshot files)");
+            }
+
+            return new MergedUpload(saved, sb.ToString());
         }
 
         public static string ResolveRootDirectory()
@@ -252,6 +307,7 @@ namespace NineGrid.Flow.Diagnostics
             sb.AppendLine("- nodeIndex: " + DiagTraceShared.ResolveNodeIndex());
             sb.AppendLine("- folder: `" + folder + "`");
             sb.AppendLine("- unityVersion: " + Application.unityVersion);
+            sb.AppendLine("- productVersion: " + Application.version);
             sb.AppendLine("- productName: " + Application.productName);
             sb.AppendLine("- platform: " + Application.platform);
             sb.AppendLine("- isEditor: " + Application.isEditor);

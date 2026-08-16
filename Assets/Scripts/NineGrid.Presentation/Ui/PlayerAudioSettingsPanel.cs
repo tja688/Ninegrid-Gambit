@@ -181,6 +181,12 @@ namespace NineGrid.Presentation.Ui
                 return false;
             }
 
+            // 试玩反馈窗开着时 Esc 只关窗，不连带关整个功能菜单。
+            if (PlaytestFeedbackPanel.TryHandleEscape())
+            {
+                return true;
+            }
+
             // 提示框开着（或本帧刚被它消费）时 Esc 让位给提示框，不连带关整个功能菜单。
             if (UiConfirmPrompt.IsAnyOpen || UiConfirmPrompt.EscapeHandledThisFrame)
             {
@@ -243,6 +249,8 @@ namespace NineGrid.Presentation.Ui
             // 存档/读档模块（名字含 '/'，不能走 transform.Find 路径语义）。
             RunSaveLoadPanel.EnsureBound(
                 FindDirectChildNamed(mPanelRoot.transform, RunSaveLoadPanel.ModuleName));
+
+            PlaytestFeedbackPanel.EnsureBound(mPanelRoot.transform);
 
             var volume = mPanelRoot.transform.Find(VolumeModuleName);
             if (volume != null)
@@ -317,6 +325,7 @@ namespace NineGrid.Presentation.Ui
             }
             else
             {
+                PlaytestFeedbackPanel.CloseForm();
                 mDragging = null;
                 mPanelRoot.SetActive(false);
                 if (mDimmerHeld)

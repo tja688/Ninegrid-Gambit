@@ -1,6 +1,6 @@
 # Ui 面板与 Cheat 作弊工具
 
-> 覆盖范围：`Ui/` 14 个文件 + `Cheat/` 6 个文件，共 20 个。
+> 覆盖范围：`Ui/` 15 个文件 + `Cheat/` 6 个文件，共 21 个。
 > `Ui/` 是世界空间（SpriteRenderer + Collider）面板的场景接线层；`Cheat/` 是 F12 作弊面板（仅 `UNITY_EDITOR || DEVELOPMENT_BUILD`，正式包不含）。
 
 ## Ui/ 职责综述
@@ -20,7 +20,8 @@
 
 | 类型 | 文件 | 一句话职责 |
 |------|------|-----------|
-| `PlayerAudioSettingsPanel` | `Ui/PlayerAudioSettingsPanel.cs` | 局内功能菜单（`UI面板/局内功能菜单BG`）总接线：`AfterSceneLoad` Install 强制 EnsureBound（失活面板不 Awake，否则主菜单「菜单按钮」挂不上命中代理）；音量模块双静音开关 + BGM/SFX 滑条双向绑定 `IPlayerAudioSettingsSystem`；`功能模块/回到主菜单`、`退出游戏` 先经 `功能模块/提示框`（`UiConfirmPrompt`）确认，同意才发 `ReturnToMainMenuCommand` / `GameFlowController.QuitGame`；`关闭面板`/Esc/半黑屏→关闭（提示框开着时 Esc 让位给提示框）；把 `存档/读档模块` 交给 `RunSaveLoadPanel.EnsureBound`（名字含 `/`，须按直接子节点名查找，不能用 `transform.Find` 路径语义）；滑条拖拽在 Update 里用 `WorldPointerUtility.IsPrimaryHeld` 轮询 |
+| `PlayerAudioSettingsPanel` | `Ui/PlayerAudioSettingsPanel.cs` | 局内功能菜单（`UI面板/局内功能菜单BG`）总接线：`AfterSceneLoad` Install 强制 EnsureBound（失活面板不 Awake，否则主菜单「菜单按钮」挂不上命中代理）；音量模块双静音开关 + BGM/SFX 滑条双向绑定 `IPlayerAudioSettingsSystem`；`功能模块/回到主菜单`、`退出游戏` 先经 `功能模块/提示框`（`UiConfirmPrompt`）确认，同意才发 `ReturnToMainMenuCommand` / `GameFlowController.QuitGame`；`关闭面板`/Esc/半黑屏→关闭（反馈窗开着时 Esc 先关反馈窗；提示框开着时 Esc 让位给提示框）；把 `存档/读档模块` 交给 `RunSaveLoadPanel.EnsureBound`（名字含 `/`，须按直接子节点名查找，不能用 `transform.Find` 路径语义）；并把 `功能模块/BugLogo` 交给 `PlaytestFeedbackPanel.EnsureBound`；滑条拖拽在 Update 里用 `WorldPointerUtility.IsPrimaryHeld` 轮询 |
+| `PlaytestFeedbackPanel` | `Ui/PlaytestFeedbackPanel.cs` | 局内试玩反馈：点子 Logo 打开 `输入框窗口`（默认失活，WorldSpace Canvas）；上勾「导出log日志按钮」提交 Bug——本地五轨快照仍落 `ManualBugSnapshots`，网络侧把同目录文件按 `======== FILE: 原文件名 ========` 合并成一篇写入 FNS `游戏开发项目/九宫格登神/游戏开发协作/LOG/`，并在 `玩家Bug反馈.md` 追加双向链接；下勾「提交意见按钮」只追加 `玩家意见建议.md`；叉关窗。凭据只读 gitignore 的 `StreamingAssets/fns-playtest.secret.json`；提交协程挂 DDOL 宿主，关菜单不中断上报 |
 | `RunSaveLoadPanel` | `Ui/RunSaveLoadPanel.cs` | 存档/读档模块（ADR-0041）：默认展示**保存**面板（保存钮激活/加载钮失活），「加载」切读档列表；保存视图恒四行——槽位一为**默认存档**（自动档展示，系统维护不可手动覆盖）+ 三个手动槽（空位直接存、已有存档先经提示框确认覆盖）；加载视图只列已有存档（自动档 + 手动槽 ≤4，无档显示「暂无存档」）；条目按场景预置「保存条目模板」「加载条目模板」克隆进「UI槽位」（行位常量 RowTopLocalY=1.05 / 间距 0.75）；保存写 `RunSaveService.SaveCheckpointToSlot`，读取 `RequestLoadSlot` 前先关面板 |
 | `CharacterSelectPanel` | `Ui/CharacterSelectPanel.cs` | 选人界面（`UI面板/选人界面BG`，**纯黑屏底幕**）：主菜单「开始游戏」→ `RequestOpen()`（缺预置返回 false，调用方回退直接开局）；角色1=战士——`立绘/__Art` 挂 `ResourcesSpriteLoop` 会动 idle（帧高 5.6 世界单位、按包围盒回中，Play 实测校准）+「角色专属道具卡」显示初始遗物图标，**点击立绘即选定并出发**（`BeginFormalRun`）；角色2/3=未解锁席（Layla/Icey 序列帧黑剪影，点击拒绝音 + 描述文字闪橙提示）；难度三档可点选（普通默认，全部路由默认数据，仅记录进 `RunSetupSelection` 供结算展示——后续实装难度路由再扩展）；`回到主菜单 (1)` 直接返回**不提示**，小字说明**悬停才出现**；Esc 关闭；Shell 相位离开 MainMenu 自动收起 |
 | `RunSummaryPanel` | `Ui/RunSummaryPanel.cs` | 完结结算（`UI面板/完结结算BG`，**纯黑屏底幕**）：`TryShowAndWaitAsync(victory, ct)` 展示——胜负大字（胜利金字/失败灰红字，文案不同）、会动战士立绘、本局所选难度图标（读 `RunSetupSelection`）、本局遗物墙（12 占位槽按视觉序填充）、右侧文字统计（所用时长/击败怪物数/损失血量/使用道具卡数，数据源 `RunRecapTracker`）；`回到主菜单`/`退出游戏` 先经 `提示框` 确认，`再来一局` 直接收面板放行回主菜单收口后自动重开选人界面；**阻塞到玩家选择去向**（UniTaskCompletionSource + 外部取消自动收起）；只读展示不发 Core 指令（终端相位纪律）；缺预置返回 false 回退旧 Notice |
@@ -75,7 +76,7 @@ F12 综合测试后门（#与 code-map「Cheat」节对齐）：接线 MainScene
 - `PlayerAudioSettingsPanel.Awake` **不得**强制 SetActive(false)（会把刚打开的面板立刻关掉——代码注释记录过这个 bug）；开局误激活的收口只在 Install。
 - `存档/读档模块` 节点名含 `/`——只能按直接子节点遍历名字匹配（`FindDirectChildNamed`），`transform.Find` 会当路径解析。
 - **`纯黑屏BG` 不得挂 `BattleUiDimmerOverlay`**：该组件是单例（Awake 抢 s_instance），复制半黑屏做纯黑屏时必须摘掉组件（场景已摘，`PureBlackScreenOverlay.EnsureBound` 另有防御性摘除）。
-- **Esc 优先级**：提示框开着时 Esc 只取消提示框（`UiConfirmPrompt.IsAnyOpen / EscapeHandledThisFrame` 双判），宿主面板同帧不得再消费同一次按键。
+- **Esc 优先级**：反馈窗开着时 Esc 只关反馈窗（`PlaytestFeedbackPanel.TryHandleEscape`）；提示框开着时 Esc 只取消提示框（`UiConfirmPrompt.IsAnyOpen / EscapeHandledThisFrame` 双判），宿主面板同帧不得再消费同一次按键。
 - `RunSummaryPanel` 只读快照，**不发 Core 指令**（终端相位纪律，ADR-0039 精神）；`RunRecapTracker` 同为只读旁路，失败静默不阻塞主线。
 - 战士序列帧（`Human_Soldier_Sword_Shield_Idle-Sheet`）pivot 在**脚底**且 96×96 帧内主体只占一小块——面板立绘必须走 `PanelArtUtility.FitWorldHeight`（含包围盒回中），帧高常数是 Play 实测校准值，勿凭 PPU 推算。
 - Cheat 全目录 `#if UNITY_EDITOR || DEVELOPMENT_BUILD`；Release 构建物不含（#142 Release 打包终验），引用它们的代码同样要编译隔离。
