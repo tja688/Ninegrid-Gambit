@@ -2,56 +2,361 @@
   "schema": 1,
   "language": "en",
   "entries": {
-    "行动图标": { "displayName": "Action Icon", "intro": "Marks effects tied to the Action Count." },
-    "正交相邻": { "displayName": "Adjacent", "intro": "Only affects orthogonally adjacent cells or units." },
-    "攻击": { "displayName": "Attack", "intro": "Attack: the base value of damage dealt." },
-    "防御": { "displayName": "Armor", "intro": "Armor: absorbs incoming damage." },
-    "血量": { "displayName": "HP", "intro": "Current HP." },
-    "金币": { "displayName": "Gold", "intro": "The gold currency." },
-    "血量上限": { "displayName": "Max HP", "intro": "Maximum HP." },
-    "死亡": { "displayName": "Death", "intro": "Effects tied to death or kills." },
-    "基础防御": { "displayName": "Base Armor", "intro": "Base Armor value." },
-    "潜伏近战": { "displayName": "Lurk", "intro": "When the countdown hits zero: if orthogonally adjacent to the player, flip face-down." },
-    "普通攻击": { "displayName": "Standard Attack", "intro": "A regular attack made by the player within attack range." },
-    "移动计数": { "displayName": "Move Count", "intro": "+1 whenever its owner makes a move." },
-    "普通近战": { "displayName": "Standard Melee", "intro": "Attacks orthogonally adjacent targets." },
-    "全向近战": { "displayName": "Omni Melee", "intro": "Attacks all 8 adjacent cells." },
-    "斜角近战": { "displayName": "Diagonal Melee", "intro": "Attacks diagonally adjacent targets." },
-    "链接近战": { "displayName": "Link Melee", "intro": "Melee attack shared by linked monsters." },
-    "远程武器": { "displayName": "Ranged Weapon", "intro": "No first strike or counter when the player engages it; volleys unaffected." },
-    "神圣决斗": { "displayName": "Holy Duel", "intro": "After fighting it, fighting other monsters deals 2 damage to you; clears when it flips or leaves." },
-    "潜伏": { "displayName": "Lurk", "intro": "When the countdown hits zero: if orthogonally adjacent to the player, flip face-down." },
-    "链接": { "displayName": "Link", "intro": "Forms a link with adjacent linked monsters." },
-    "无视护甲": { "displayName": "Piercing", "intro": "This damage ignores Armor." },
-    "逃避": { "displayName": "Evade", "intro": "After combat: swaps with a random card in a corner cell; skips if none, or after lethal damage." },
-    "起来": { "displayName": "Rise Up", "intro": "After it damages you: a random face-up monster flips face-down." },
-    "吸收": { "displayName": "Absorb", "intro": "When an adjacent monster is removed: gains a random buff." },
-    "献火": { "displayName": "Fire Offering", "intro": "On removal: a Flame joins the fight." },
-    "剧烈燃烧": { "displayName": "Intense Burning", "intro": "Each Flame added to the combat deck brings one more; no recursion." },
-    "损耗": { "displayName": "Attrition", "intro": "When a monster is removed: this card attack -1, HP -10." },
-    "快递": { "displayName": "Delivery", "intro": "Every 5 moves: swaps an adjacent Item Card with a combat-deck monster." },
-    "历战": { "displayName": "Battle-Hardened", "intro": "In combat: per 2 total damage dealt to you, its attack +1." },
-    "嘲讽": { "displayName": "Taunt", "intro": "While adjacent, you may only fight this card." },
-    "叠甲": { "displayName": "Plating", "intro": "Every 6 Interactions: other monsters gain 2 Armor." },
-    "天涯若比邻": { "displayName": "Distant Neighbors", "intro": "All monster cards count as orthogonally adjacent; skill adjacency only." },
-    "刺客领袖": { "displayName": "Assassin Leader", "intro": "While face-up: monsters flip face-down as they are played." },
-    "死亡之主": { "displayName": "Lord of Death", "intro": "When another monster is removed: plays a Revive Stone to that cell." },
-    "烈焰沸腾": { "displayName": "Boiling Flames", "intro": "Per 5 of your Interactions: Flame damage +1; stacks." },
-    "吞云吐雾": { "displayName": "Fire Breather", "intro": "Every 5 Interactions: consumes all Flames on board, dealing damage per Flame." },
-    "生生不息": { "displayName": "Everburning", "intro": "When a Flame is removed: shuffles in another Flame." },
-    "空间掌握": { "displayName": "Spatial Mastery", "intro": "After you fight it: the board rotates once." },
-    "转动": { "displayName": "Spin", "intro": "On entry: rotates the board once." },
-    "献身": { "displayName": "Martyrdom", "intro": "On removal: other monsters on board gain +1 attack." },
-    "跳杀": { "displayName": "Pounce", "intro": "On flipping face-up while orthogonally adjacent to you: deals its attack." },
-    "提速": { "displayName": "Quicken", "intro": "Each time it damages you: other monsters' countdowns tick down by 1." },
-    "链接战术": { "displayName": "Link Tactics", "intro": "Adjacent monsters gain +1 attack; ends when adjacency breaks. Aura." },
-    "链接准备": { "displayName": "Link Prep", "intro": "Every 5 Interactions: removes adjacent Item Cards." },
-    "链接护甲": { "displayName": "Link Armor", "intro": "Every 3 Interactions: adjacent monsters gain +1 Armor." },
-    "盗取": { "displayName": "Steal", "intro": "On flipping face-up: removes a random adjacent Item Card." },
-    "呼唤": { "displayName": "Beckon", "intro": "Every 5 Interactions: calls a Melee 6 into the combat deck." },
-    "死亡召唤": { "displayName": "Death Summon", "intro": "On removal: plays a Revive Stone to its cell." },
-    "吟唱": { "displayName": "Chant", "intro": "Every 6 Interactions: calls a Melee 3 into the combat deck." },
-    "休养": { "displayName": "Recuperate", "intro": "On flipping face-up: attack +1, Armor +2." },
-    "技能同步触发": { "displayName": "Synced Skill", "intro": "This card carries a skill synced to its countdown: when the count hits zero, the attack and the skill fire on the same beat, without spending an extra count." }
+    "行动图标": {
+      "displayName": "Action Icon",
+      "intro": "Marks effects tied to the Action Count."
+    },
+    "正交相邻": {
+      "displayName": "Adjacent",
+      "intro": "Only affects orthogonally adjacent cells or units."
+    },
+    "攻击": {
+      "displayName": "Attack",
+      "intro": "Attack: the base value of damage dealt."
+    },
+    "防御": {
+      "displayName": "Armor",
+      "intro": "Armor: absorbs incoming damage."
+    },
+    "血量": {
+      "displayName": "HP",
+      "intro": "Current HP."
+    },
+    "金币": {
+      "displayName": "Gold",
+      "intro": "The gold currency."
+    },
+    "血量上限": {
+      "displayName": "Max HP",
+      "intro": "Maximum HP."
+    },
+    "死亡": {
+      "displayName": "Death",
+      "intro": "Effects tied to death or kills."
+    },
+    "基础防御": {
+      "displayName": "Base Armor",
+      "intro": "Base Armor value."
+    },
+    "潜伏近战": {
+      "displayName": "Lurk",
+      "intro": "When the countdown hits zero: if orthogonally adjacent to the player, flip face-down."
+    },
+    "普通攻击": {
+      "displayName": "Standard Attack",
+      "intro": "A regular attack made by the player within attack range."
+    },
+    "移动计数": {
+      "displayName": "Move Count",
+      "intro": "+1 whenever its owner makes a move."
+    },
+    "普通近战": {
+      "displayName": "Standard Melee",
+      "intro": "Attacks orthogonally adjacent targets."
+    },
+    "全向近战": {
+      "displayName": "Omni Melee",
+      "intro": "Attacks all 8 adjacent cells."
+    },
+    "斜角近战": {
+      "displayName": "Diagonal Melee",
+      "intro": "Attacks diagonally adjacent targets."
+    },
+    "链接近战": {
+      "displayName": "Link Melee",
+      "intro": "Melee attack shared by linked monsters."
+    },
+    "远程武器": {
+      "displayName": "Ranged Weapon",
+      "intro": "No first strike or counter when the player engages it; volleys unaffected."
+    },
+    "神圣决斗": {
+      "displayName": "Holy Duel",
+      "intro": "After fighting it, fighting other monsters deals 2 damage to you; clears when it flips or leaves."
+    },
+    "潜伏": {
+      "displayName": "Lurk",
+      "intro": "When the countdown hits zero: if orthogonally adjacent to the player, flip face-down."
+    },
+    "链接": {
+      "displayName": "Link",
+      "intro": "Forms a link with adjacent linked monsters."
+    },
+    "无视护甲": {
+      "displayName": "Piercing",
+      "intro": "This damage ignores Armor."
+    },
+    "逃避": {
+      "displayName": "Evade",
+      "intro": "After combat: swaps with a random card in a corner cell; skips if none, or after lethal damage."
+    },
+    "起来": {
+      "displayName": "Rise Up",
+      "intro": "After it damages you: a random face-up monster flips face-down."
+    },
+    "吸收": {
+      "displayName": "Absorb",
+      "intro": "When an adjacent monster is removed: gains a random buff."
+    },
+    "献火": {
+      "displayName": "Fire Offering",
+      "intro": "On removal: a Flame joins the fight."
+    },
+    "剧烈燃烧": {
+      "displayName": "Intense Burning",
+      "intro": "Each Flame added to the combat deck brings one more; no recursion."
+    },
+    "损耗": {
+      "displayName": "Attrition",
+      "intro": "When a monster is removed: this card attack -1, HP -10."
+    },
+    "快递": {
+      "displayName": "Delivery",
+      "intro": "Every 5 moves: swaps an adjacent Item Card with a combat-deck monster."
+    },
+    "历战": {
+      "displayName": "Battle-Hardened",
+      "intro": "In combat: per 2 total damage dealt to you, its attack +1."
+    },
+    "嘲讽": {
+      "displayName": "Taunt",
+      "intro": "While adjacent, you may only fight this card."
+    },
+    "叠甲": {
+      "displayName": "Plating",
+      "intro": "Every 6 Interactions: other monsters gain 2 Armor."
+    },
+    "天涯若比邻": {
+      "displayName": "Distant Neighbors",
+      "intro": "All monster cards count as orthogonally adjacent; skill adjacency only."
+    },
+    "刺客领袖": {
+      "displayName": "Assassin Leader",
+      "intro": "While face-up: monsters flip face-down as they are played."
+    },
+    "死亡之主": {
+      "displayName": "Lord of Death",
+      "intro": "When another monster is removed: plays a Revive Stone to that cell."
+    },
+    "烈焰沸腾": {
+      "displayName": "Boiling Flames",
+      "intro": "Per 5 of your Interactions: Flame damage +1; stacks."
+    },
+    "吞云吐雾": {
+      "displayName": "Fire Breather",
+      "intro": "Every 5 Interactions: consumes all Flames on board, dealing damage per Flame."
+    },
+    "生生不息": {
+      "displayName": "Everburning",
+      "intro": "When a Flame is removed: shuffles in another Flame."
+    },
+    "空间掌握": {
+      "displayName": "Spatial Mastery",
+      "intro": "After you fight it: the board rotates once."
+    },
+    "转动": {
+      "displayName": "Spin",
+      "intro": "On entry: rotates the board once."
+    },
+    "献身": {
+      "displayName": "Martyrdom",
+      "intro": "On removal: other monsters on board gain +1 attack."
+    },
+    "跳杀": {
+      "displayName": "Pounce",
+      "intro": "On flipping face-up while orthogonally adjacent to you: deals its attack."
+    },
+    "提速": {
+      "displayName": "Quicken",
+      "intro": "Each time it damages you: other monsters' countdowns tick down by 1."
+    },
+    "链接战术": {
+      "displayName": "Link Tactics",
+      "intro": "Adjacent monsters gain +1 attack; ends when adjacency breaks. Aura."
+    },
+    "链接准备": {
+      "displayName": "Link Prep",
+      "intro": "Every 5 Interactions: removes adjacent Item Cards."
+    },
+    "链接护甲": {
+      "displayName": "Link Armor",
+      "intro": "Every 3 Interactions: adjacent monsters gain +1 Armor."
+    },
+    "盗取": {
+      "displayName": "Steal",
+      "intro": "On flipping face-up: removes a random adjacent Item Card."
+    },
+    "呼唤": {
+      "displayName": "Beckon",
+      "intro": "When the countdown hits zero: adds a 'Melee 6' monster card to the combat deck."
+    },
+    "死亡召唤": {
+      "displayName": "Death Summon",
+      "intro": "On removal: plays a Revive Stone to its cell."
+    },
+    "吟唱": {
+      "displayName": "Chant",
+      "intro": "When the countdown hits zero: adds a 'Little Slime' to the combat deck."
+    },
+    "休养": {
+      "displayName": "Recuperate",
+      "intro": "On flipping face-up: attack +1, Armor +2."
+    },
+    "技能同步触发": {
+      "displayName": "Synced Skill",
+      "intro": "This card carries a skill synced to its countdown: when the count hits zero, the attack and the skill fire on the same beat, without spending an extra count."
+    },
+    "互动": {
+      "displayName": "Interaction",
+      "intro": "A player action on the grid: engage an orthogonally adjacent monster, pick up an orthogonally adjacent item card, or click an orthogonally adjacent empty cell. Using an item card is not an Interaction and doesn't advance any countdown."
+    },
+    "交战": {
+      "displayName": "Engage",
+      "intro": "Clicking an orthogonally adjacent monster card to trade blows: the player strikes first; if the target survives, it counterattacks. The side that dies deals no further damage."
+    },
+    "伤害减免": {
+      "displayName": "Damage Reduction",
+      "intro": "Subtracted from incoming damage before Armor absorbs it; stacks from multiple sources, 0 if none. Applied before Armor."
+    },
+    "伤害护盾": {
+      "displayName": "Damage Shield",
+      "intro": "Armed once when your Armor breaks for the first time each Combat: the next damage taken is fully nullified (the hit that broke Armor itself is not)."
+    },
+    "先手还击": {
+      "displayName": "First Strike",
+      "intro": "Determines the strike order in an engagement: whoever holds First Strike goes first. It only changes the order, no extra attack."
+    },
+    "击杀": {
+      "displayName": "Kill",
+      "intro": "A monster card's HP reaching zero and leaving the field through an engagement or damage. Killing real monsters grants a gold bounty; destroying a trap is not a kill and grants none."
+    },
+    "反伤": {
+      "displayName": "Reflect",
+      "intro": "Deals damage back to the attacker as you take it. Unlike a counterattack, it still applies even if the attacker dies in this exchange."
+    },
+    "反击": {
+      "displayName": "Counter",
+      "intro": "In an engagement, after the first striker hits, the other side lands one return hit if it survived."
+    },
+    "回收": {
+      "displayName": "Recycle",
+      "intro": "Drag cards from the item slots into the recycle zone to exchange for gold, +10 each; dragging an equipped relic into the same zone discards it, +20 gold."
+    },
+    "基础护甲": {
+      "displayName": "Base Armor",
+      "intro": "The character's static Armor stat. At each node start, current Armor is initialized from Base Armor plus bonuses; permanent growth applies to this layer."
+    },
+    "复活石": {
+      "displayName": "Revive Stone",
+      "intro": "Special trap: after 6 Interactions it removes itself and plays a Revived Skeleton monster to the same cell."
+    },
+    "层主": {
+      "displayName": "Floor Boss",
+      "intro": "The strongest monster of each monster deck, guarding the last room of each floor. Killing the floor boss shuffles gold chest cards and gold cards into the combat deck."
+    },
+    "常规怪物": {
+      "displayName": "Regular Monster",
+      "intro": "Monster cards of 'common' tier (excluding floor bosses and elites). Some removal and destroy effects only affect regular monsters."
+    },
+    "恢复": {
+      "displayName": "Heal",
+      "intro": "Increases current HP, up to the maximum. Some relics can amplify healing (e.g. doubling all of it)."
+    },
+    "战斗卡组": {
+      "displayName": "Combat Deck",
+      "intro": "At each battle start, the draw pile formed by the remaining cards of the player deck and monster deck plus random trap cards. When a cell empties, it refills from the top."
+    },
+    "护甲": {
+      "displayName": "Armor",
+      "intro": "A depletable defensive resource. Damage is deducted from Armor first; HP only after Armor is gone. The player's Armor resets at each node start."
+    },
+    "拾取": {
+      "displayName": "Pick Up",
+      "intro": "Click an orthogonally adjacent item card to put it into the item slots. Can't pick up when the item slots are full."
+    },
+    "斜角相邻": {
+      "displayName": "Diagonal Adjacent",
+      "intro": "Diagonally adjacent cells (e.g. the four corner cells around the center)."
+    },
+    "旋转": {
+      "displayName": "Rotate",
+      "intro": "Except the center cell (where the player stands), the other eight cards move one cell clockwise along the fixed path. Engaging and removing a monster or trap, picking up an item, or clicking an empty cell triggers a rotation after refill; some effects rotate extra times or counterclockwise."
+    },
+    "木质套装": {
+      "displayName": "Wood Set",
+      "intro": "Equipping the Wood Shield, Wood Sword and Wood Armor together activates all three set bonuses (bonus Armor, Attack and Max HP)."
+    },
+    "机关卡": {
+      "displayName": "Trap Card",
+      "intro": "A non-monster card on the field that can be engaged and damaged: not a real monster, destroying it grants no bounty, and it never counterattacks. Regular traps are shuffled in randomly at each battle start; special traps only come from skills or relics."
+    },
+    "正面": {
+      "displayName": "Face-Up",
+      "intro": "A card's normal state: its attack, skills and countdown work as usual."
+    },
+    "烈焰": {
+      "displayName": "Flame",
+      "intro": "Special trap: every 1 move it deals 1 damage to an orthogonally adjacent player; removes itself after 3 moves."
+    },
+    "玩家侧卡组": {
+      "displayName": "Player Deck",
+      "intro": "The item cards dealt onto the field at each battle start, regenerated by capacity: fixed cards plus random draws. A separate container from the item slots."
+    },
+    "登场": {
+      "displayName": "Enter",
+      "intro": "The instant a card is played from the combat deck onto the field."
+    },
+    "离开机关": {
+      "displayName": "Exit Trap",
+      "intro": "The battle room's exit trap: can only be destroyed by engaging it; destroying it ends the battle and leaves the room."
+    },
+    "移除": {
+      "displayName": "Removed",
+      "intro": "A card leaving the grid, whether killed, destroyed by an effect, or otherwise; triggers the corresponding 'on removal' effects."
+    },
+    "稀有度": {
+      "displayName": "Rarity",
+      "intro": "Quality tiers for cards and relics: white common, blue and gold rarer, red unique. Common items enter random draws; higher rarities only come from shops, rewards and other targeted channels."
+    },
+    "翻面": {
+      "displayName": "Flip",
+      "intro": "Switch a card between face-up and face-down."
+    },
+    "背面": {
+      "displayName": "Face-Down",
+      "intro": "A card lying face-down: can't be damaged, doesn't advance countdowns or attack, and passive skills are disabled by default. Effects can flip it back."
+    },
+    "行动计数": {
+      "displayName": "Action Count",
+      "intro": "The countdown on a card. Each grid Interaction by the player decreases it by 1; at zero the card fires its attack and synced skill, then resets."
+    },
+    "补牌": {
+      "displayName": "Refill",
+      "intro": "When a cell empties, automatically draw the top card of the combat deck onto it; stops when the combat deck is exhausted."
+    },
+    "角格": {
+      "displayName": "Corner Cell",
+      "intro": "The four corner cells of the grid: cells 1, 3, 7 and 9."
+    },
+    "道具卡": {
+      "displayName": "Item Card",
+      "intro": "A usable card that helps the player. Pick up orthogonally adjacent ones into the item slots; click to use from the slots without range limits; removed after use."
+    },
+    "道具卡格": {
+      "displayName": "Item Slots",
+      "intro": "Slots holding picked-up or purchased item cards: 3 initially, up to 5. Cards persist across nodes until used, recycled or discarded."
+    },
+    "遗物": {
+      "displayName": "Relic",
+      "intro": "Equippable passive items granting permanent stats or special effects, up to 12 at once. Drag into the recycle zone to discard for gold."
+    },
+    "金币护甲": {
+      "displayName": "Coin Armor",
+      "intro": "Passive granted by the Gold Armor: when damaged, every 5 gold coins offset 1 point of Armor damage."
+    },
+    "魔免": {
+      "displayName": "Magic Immunity",
+      "intro": "Unaffected by any external effect: item effects, skill effects etc. all fail, but it can still be destroyed by engagement damage."
+    }
   }
 }

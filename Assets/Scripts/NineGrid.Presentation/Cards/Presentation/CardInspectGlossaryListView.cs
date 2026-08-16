@@ -27,6 +27,25 @@ namespace NineGrid.Cards.Presentation
         private readonly List<CardInspectGlossaryRowView> _spawned = new List<CardInspectGlossaryRowView>();
         private static Sprite s_viewportClipSprite;
 
+        private Color? _defaultBodyColor;
+
+        /// <summary>
+        /// 强制本列表词条行正文默认色（浅色底面板改黑；缺省用模板色）。
+        /// 装配后、行生成前设置，生成的行与 hover 槽都会吃到该色。
+        /// </summary>
+        public void SetDefaultBodyColor(Color color)
+        {
+            _defaultBodyColor = color;
+        }
+
+        private void ApplyDefaultBodyColor(CardInspectGlossaryRowView row)
+        {
+            if (row != null && _defaultBodyColor.HasValue)
+            {
+                row.SetDefaultBodyColor(_defaultBodyColor.Value);
+            }
+        }
+
         public void Configure(RectTransform contentRoot, CardInspectGlossaryRowView prefab)
         {
             content = contentRoot;
@@ -52,6 +71,7 @@ namespace NineGrid.Cards.Presentation
                     row.gameObject.SetActive(true);
                     row.name = "词条行_" + term.DisplayName;
                     row.EnsureLayoutElement();
+                    ApplyDefaultBodyColor(row);
                     row.Bind(term.DisplayName, term.Explanation, term.HasColor, term.Color);
                     row.transform.SetAsLastSibling();
                     ApplyGlossaryRowMaskInteraction(row.gameObject, GetScrollViewport());
@@ -63,6 +83,7 @@ namespace NineGrid.Cards.Presentation
             if (hoverRow != null)
             {
                 hoverRow.gameObject.SetActive(true);
+                ApplyDefaultBodyColor(hoverRow);
                 hoverRow.BindHint(HoverHintText);
                 hoverRow.transform.SetAsFirstSibling();
                 ApplyGlossaryRowMaskInteraction(hoverRow.gameObject, GetScrollViewport());
@@ -78,6 +99,7 @@ namespace NineGrid.Cards.Presentation
             }
 
             hoverRow.gameObject.SetActive(true);
+            ApplyDefaultBodyColor(hoverRow);
             hoverRow.Bind(displayName, explanation, hasColor, color);
             hoverRow.transform.SetAsFirstSibling();
             ApplyGlossaryRowMaskInteraction(hoverRow.gameObject, GetScrollViewport());
@@ -124,6 +146,7 @@ namespace NineGrid.Cards.Presentation
             hoverRow.gameObject.SetActive(true);
             hoverRow.name = "词条Hover槽";
             hoverRow.EnsureLayoutElement();
+            ApplyDefaultBodyColor(hoverRow);
             hoverRow.BindHint(HoverHintText);
             hoverRow.transform.SetAsFirstSibling();
             ApplyGlossaryRowMaskInteraction(hoverRow.gameObject, GetScrollViewport());

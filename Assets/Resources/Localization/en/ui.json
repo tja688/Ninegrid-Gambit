@@ -9,13 +9,11 @@
     "menu.subtitle": "— Ninegrid Dungeon —",
     "menu.version": "Dev Build 1.0",
     "menu.language": "English",
-
     "settings.return_main_menu": "Main Menu",
     "settings.key_controls": "Controls",
     "settings.quit_game": "Quit Game",
     "settings.save": "Save",
     "settings.load": "Load",
-
     "notice.victory": "Victory",
     "notice.defeat": "Defeat",
     "notice.gold_insufficient": "Not enough gold",
@@ -30,7 +28,6 @@
     "notice.tutorial_complete_continue": "Tutorial complete! Your adventure begins…",
     "notice.tutorial_complete": "Tutorial complete!",
     "notice.attribute_pick_complete": "2 attribute cards selected",
-
     "briefTip.leave": "Leave room",
     "briefTip.go_down": "Go to next floor",
     "briefTip.go_up": "Back to previous floor",
@@ -43,7 +40,6 @@
     "briefTip.room_elite": "At battle start, pick 2 random special item cards into your deck, and 2 strong monsters into the enemy deck",
     "briefTip.room_boss": "Ready for the challenge?",
     "briefTip.price_gold": "{0} Gold",
-
     "floor.level": "Floor {0}",
     "floor.room_elite": "Elite Combat Room",
     "floor.room_boss": "Boss Room",
@@ -52,23 +48,19 @@
     "floor.room_battle": "Combat Room",
     "floor.room_treasure_reward": "Treasure Reward Room",
     "floor.room_item_reward": "Item Reward Room",
-
     "preview.room_info": "Room: {room}\nFloor: {floor}\nProgress: {progress}",
     "preview.player_label": "Player:",
     "preview.monster_label": "Monsters:",
     "preview.environment_label": "Environment:",
-
     "charselect.locked": "Character not yet unlocked",
     "charselect.stats": "HP {0} · Attack {1}",
     "charselect.warrior_name": "Warrior",
-
     "save.empty_slot": "Empty slot {0}",
     "save.auto_entry": "Auto {0}",
     "save.auto_none": "Auto save (none)",
     "save.date_format": "MMM d HH:mm",
     "save.default_hero_name": "Adventurer",
     "save.entry_format": "{0} {1} Floor {2}·{3}",
-
     "summary.title_victory": "Triumphant Return",
     "summary.title_defeat": "Fallen Short",
     "summary.subtitle_victory": "You conquered all three floors — the Ninegrid legend will remember your name!",
@@ -80,14 +72,29 @@
     "summary.interactions": "Grid interactions: {0}",
     "summary.stats": "Final stats: HP {0}/{1} · Attack {2} · Armor {3}",
     "summary.relics": "Relics: {0}",
-
     "choice.attack_plus": "Attack +1",
     "choice.armor_plus": "Armor +1",
     "choice.hp_plus": "HP +2",
     "hud.avatar_fallback_name": "Player",
-
     "inspect.hover_hint": "Hover over an icon on the card preview to see its meaning.",
     "inspect.term_no_intro": "(No description yet)",
-    "inspect.term_unconfigured": "(Term not configured)"
+    "inspect.term_unconfigured": "(Term not configured)",
+    "battleLog.avatar": "Player",
+    "battleLog.floor": "Floor {0}",
+    "battleLog.openingBaselineArmor": "Base Armor",
+    "battleLog.section.unknown": "New Room",
+    "battleLog.stat.armor": "Max Armor",
+    "battleLog.stat.attack": "Attack",
+    "battleLog.stat.currentArmor": "Armor",
+    "battleLog.stat.hp": "HP",
+    "battleLog.stat.maxHp": "Max HP",
+    "battleLog.stat.range": "Interaction Range",
+    "battleLog.stat.recovery": "Recovery",
+    "menu.continue_no_save": "No save available",
+    "save.default_entry": "Default Save {0}",
+    "save.default_none": "Default Save (auto-written upon entering battle)",
+    "save.none": "No saves yet",
+    "summary.duration_format": "{0} min {1} sec",
+    "summary.stats_body": "Elapsed: {0}\n\nMonsters defeated: {1}\n\nHP lost: {2}\n\nItem cards used: {3}"
   }
 }

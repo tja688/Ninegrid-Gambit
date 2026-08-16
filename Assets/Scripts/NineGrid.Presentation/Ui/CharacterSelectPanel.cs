@@ -12,8 +12,9 @@ namespace NineGrid.Presentation.Ui
     /// <summary>
     /// 选人界面：主菜单「开始游戏」后弹出，纯黑屏底幕（<see cref="PureBlackScreenOverlay"/>）。
     /// 场景预置 <c>UI面板/选人界面BG</c>（默认失活）：
-    /// - 角色1 = 战士（会动的立绘 + 专属遗物图标），点击立绘即选定该角色并出发；
+    /// - 角色1 = 战士（会动的立绘 + 专属遗物图标），点击立绘切换选中；专属遗物右键开详述；
     /// - 角色2/3 = 未解锁席位（Layla / Icey 黑色剪影 + 「尚未实装」文案，点击拒绝）；
+    /// - 「开始游戏」在已选解锁角色时正式出发（<see cref="GameFlowController.BeginFormalRun"/>）；
     /// - 难度选项三档均可点选（当前全部路由普通数据，仅记录到 <see cref="RunSetupSelection"/>）；
     /// - 「回到主菜单 (1)」直接返回不提示，小字说明悬停才出现。
     /// </summary>
@@ -22,8 +23,10 @@ namespace NineGrid.Presentation.Ui
     public sealed class CharacterSelectPanel : MonoBehaviour
     {
         public const string PanelRootName = "选人界面BG";
+        public const string StartButtonName = "开始游戏";
         public const string BackButtonName = "回到主菜单 (1)";
         public const string PortraitNodeName = "立绘";
+        private const string HighlightChildName = "__Highlight";
 
         private const string OverlayReason = "character-select";
         private const string WarriorIdleKey =
@@ -49,9 +52,11 @@ namespace NineGrid.Presentation.Ui
         {
             public Transform Root;
             public SpriteRenderer PortraitArt;
+            public SpriteRenderer PortraitHighlight;
             public TMP_Text Description;
             public Color DescriptionBaseColor;
             public bool Unlocked;
+            public string RelicDefId;
         }
 
         private sealed class DifficultyOption
@@ -68,6 +73,7 @@ namespace NineGrid.Presentation.Ui
         private readonly CharacterSlot[] mSlots = new CharacterSlot[3];
         private readonly DifficultyOption[] mDifficulties = new DifficultyOption[3];
         private TMP_Text mBackLabel;
+        private int mSelectedSlotIndex = -1;
         private int mSelectedDifficulty;
         private bool mBound;
         private bool mOverlayHeld;
@@ -175,6 +181,7 @@ namespace NineGrid.Presentation.Ui
             WireDifficulty(0, "难度选项：普通", RunSetupSelection.NormalDifficultyId, "普通");
             WireDifficulty(1, "难度选项：进阶", "advanced", "进阶");
             WireDifficulty(2, "难度选项：困难", "hard", "困难");
+            WireStartButton();
             WireBackButton();
 
             mBound = true;
@@ -234,6 +241,7 @@ namespace NineGrid.Presentation.Ui
             }
 
             SelectDifficulty(0, silent: true);
+            SelectCharacter(FindFirstUnlockedSlotIndex(), silent: true);
             SetBackLabelVisible(false);
         }
 
@@ -259,6 +267,7 @@ namespace NineGrid.Presentation.Ui
                     unlocked ? Color.white : SilhouetteTint,
                     PortraitSortingOrder);
 
+                slot.PortraitHighlight = portrait.Find(HighlightChildName)?.GetComponent<SpriteRenderer>();
                 WirePortraitButton(portrait, slot);
             }
 
@@ -273,16 +282,19 @@ namespace NineGrid.Presentation.Ui
             var itemCard = FindDirectChildByPrefix(root, "角色专属道具卡");
             if (itemCard != null)
             {
-                DisableSlotCollider(itemCard);
                 if (unlocked)
                 {
-                    var relicSprite = ResolveWarriorRelicSprite();
+                    slot.RelicDefId = ResolveSlotRelicDefId(index);
+                    var relicSprite = ResolveRelicSprite(slot.RelicDefId);
                     var art = PanelArtUtility.SetStaticArt(itemCard, relicSprite, ItemIconSortingOrder);
                     PanelArtUtility.FitWorldHeight(art, ItemIconWorldHeight);
+                    WireRelicInspect(itemCard, slot.RelicDefId);
                 }
                 else
                 {
+                    slot.RelicDefId = null;
                     PanelArtUtility.SetStaticArt(itemCard, null, ItemIconSortingOrder);
+                    DisableSlotCollider(itemCard);
                 }
             }
 
@@ -360,15 +372,34 @@ namespace NineGrid.Presentation.Ui
                 return;
             }
 
-            if (mDeparting)
+            var index = FindSlotIndex(slot);
+            if (index >= 0)
             {
+                SelectCharacter(index, silent: false);
+            }
+        }
+
+        private void OnStartClicked()
+        {
+            if (!IsOpen || mDeparting)
+            {
+                return;
+            }
+
+            var slot = GetSelectedSlot();
+            if (slot == null || !slot.Unlocked)
+            {
+                InteractionAudioCues.Pulse(
+                    InteractionAudioCues.MainMenuReject,
+                    "CharacterSelectPanel.OnStartClicked",
+                    "character_select.start_locked");
                 return;
             }
 
             mDeparting = true;
             InteractionAudioCues.Pulse(
                 InteractionAudioCues.UiConfirm,
-                "CharacterSelectPanel.OnCharacterClicked",
+                "CharacterSelectPanel.OnStartClicked",
                 "character_select.depart");
             SetOpen(false);
 
@@ -380,6 +411,76 @@ namespace NineGrid.Presentation.Ui
             }
 
             Debug.LogWarning("[CharacterSelect] 未找到 GameFlowController，无法开局。");
+        }
+
+        private void SelectCharacter(int index, bool silent)
+        {
+            if (index < 0 || index >= mSlots.Length || mSlots[index] == null || !mSlots[index].Unlocked)
+            {
+                return;
+            }
+
+            mSelectedSlotIndex = index;
+            RefreshSelectionVisuals();
+
+            if (!silent)
+            {
+                InteractionAudioCues.Pulse(
+                    InteractionAudioCues.UiPress,
+                    "CharacterSelectPanel.SelectCharacter",
+                    "character_select.slot." + index);
+            }
+        }
+
+        private void RefreshSelectionVisuals()
+        {
+            for (var i = 0; i < mSlots.Length; i++)
+            {
+                var slot = mSlots[i];
+                if (slot?.PortraitHighlight == null)
+                {
+                    continue;
+                }
+
+                var selected = i == mSelectedSlotIndex;
+                slot.PortraitHighlight.enabled = selected;
+            }
+        }
+
+        private CharacterSlot GetSelectedSlot()
+        {
+            if (mSelectedSlotIndex < 0 || mSelectedSlotIndex >= mSlots.Length)
+            {
+                return null;
+            }
+
+            return mSlots[mSelectedSlotIndex];
+        }
+
+        private int FindSlotIndex(CharacterSlot slot)
+        {
+            for (var i = 0; i < mSlots.Length; i++)
+            {
+                if (mSlots[i] == slot)
+                {
+                    return i;
+                }
+            }
+
+            return -1;
+        }
+
+        private int FindFirstUnlockedSlotIndex()
+        {
+            for (var i = 0; i < mSlots.Length; i++)
+            {
+                if (mSlots[i] != null && mSlots[i].Unlocked)
+                {
+                    return i;
+                }
+            }
+
+            return 0;
         }
 
         private void FlashLockedDescription(CharacterSlot slot)
@@ -507,6 +608,33 @@ namespace NineGrid.Presentation.Ui
             }
         }
 
+        private void WireStartButton()
+        {
+            var start = FindDirectChild(transform, StartButtonName);
+            if (start == null)
+            {
+                Debug.LogWarning("[CharacterSelect] 缺少开始按钮：" + StartButtonName);
+                return;
+            }
+
+            EnsureButtonCollider(start);
+            var button = start.GetComponent<WorldUiHitButton>();
+            if (button == null)
+            {
+                button = start.gameObject.AddComponent<WorldUiHitButton>();
+            }
+
+            button.Configure(
+                OnStartClicked,
+                BattleUiDimmerOverlay.CloseHitSort + 2,
+                PointerHitSurfacePriorities.Overlay,
+                hoverScale: 1.08f,
+                onHoverEnter: () => InteractionAudioCues.Pulse(
+                    InteractionAudioCues.MainMenuHover,
+                    "CharacterSelectPanel.StartHover",
+                    "character_select.start"));
+        }
+
         private void WireBackButton()
         {
             var back = FindDirectChild(transform, BackButtonName);
@@ -560,11 +688,57 @@ namespace NineGrid.Presentation.Ui
             SetOpen(false);
         }
 
-        private static Sprite ResolveWarriorRelicSprite()
+        private static string ResolveSlotRelicDefId(int slotIndex)
         {
-            var relicDefId = ProfessionCatalog.Default != null
+            if (slotIndex != 0)
+            {
+                return null;
+            }
+
+            return ProfessionCatalog.Default != null
                 ? ProfessionCatalog.Default.InitialRelicDefId
                 : null;
+        }
+
+        private static void WireRelicInspect(Transform itemCard, string relicDefId)
+        {
+            if (itemCard == null || string.IsNullOrEmpty(relicDefId))
+            {
+                return;
+            }
+
+            var proxy = itemCard.GetComponent<ContentIconSlotHitProxy>();
+            if (proxy == null)
+            {
+                proxy = itemCard.gameObject.AddComponent<ContentIconSlotHitProxy>();
+            }
+
+            proxy.DefId = relicDefId;
+
+            var collider = itemCard.GetComponent<BoxCollider2D>();
+            if (collider == null)
+            {
+                collider = itemCard.gameObject.AddComponent<BoxCollider2D>();
+            }
+
+            collider.isTrigger = true;
+            collider.enabled = true;
+            if (collider.size.sqrMagnitude < 0.01f)
+            {
+                var renderer = itemCard.GetComponent<SpriteRenderer>();
+                if (renderer != null && renderer.sprite != null)
+                {
+                    collider.size = renderer.sprite.bounds.size;
+                }
+                else
+                {
+                    collider.size = new Vector2(0.8f, 0.8f);
+                }
+            }
+        }
+
+        private static Sprite ResolveRelicSprite(string relicDefId)
+        {
             if (string.IsNullOrEmpty(relicDefId))
             {
                 return null;

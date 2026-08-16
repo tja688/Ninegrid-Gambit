@@ -622,14 +622,14 @@
    "kind": "HelpCard",
    "file": "help_armor_card.json",
    "displayName": "头甲",
-   "description": "基础[armor]+{help.armor_card.use.delta}",
+   "description": "[basic_armor]+{help.armor_card.use.delta}",
    "faceIntro": "说明书第一页：别戴反"
   },
   "help.attack_card": {
    "kind": "HelpCard",
    "file": "help_attack_card.json",
    "displayName": "皮质手套",
-   "description": "基础[attack]+{help.attack_card.use.delta}",
+   "description": "[attack]+{help.attack_card.use.delta}",
    "faceIntro": "戴上后总想试试桌子结不结实"
   },
   "help.blue_chest_card": {
@@ -650,7 +650,7 @@
    "kind": "HelpCard",
    "file": "help_brutality_card.json",
    "displayName": "暴力",
-   "description": "玩家下一次对怪物造成的普通攻击伤害翻倍",
+   "description": "[attack]翻倍，战斗后复原",
    "faceIntro": "一天不吃，浑身难受"
   },
   "help.charge_horn": {
@@ -692,7 +692,7 @@
    "kind": "HelpCard",
    "file": "help_food_card.json",
    "displayName": "生日蛋糕",
-   "description": "将[HP]完整恢复",
+   "description": "将[HP]恢复到[MHP]",
    "faceIntro": "蜡烛数量已做隐私处理"
   },
   "help.gold_card": {
@@ -748,7 +748,7 @@
    "kind": "HelpCard",
    "file": "help_rotation_wheel.json",
    "displayName": "旋转轮",
-   "description": "逆时针旋转一次",
+   "description": "逆时针旋转1次",
    "faceIntro": "给我回来！"
   },
   "help.sturdy_shield": {
@@ -790,28 +790,26 @@
    "kind": "Monster",
    "file": "monster_beggar.json",
    "displayName": "人面莱姆",
-   "description": "[[普通近战]]，[[吸收]]",
+   "description": "[[吸收]]",
    "faceIntro": "其实是由六只莱姆组合成的"
   },
   "monster.big_skeleton": {
    "kind": "Monster",
    "file": "monster_big_skeleton.json",
    "displayName": "巨剑骷髅",
-   "description": "[[全向近战]]",
    "faceIntro": "蝉联三年最帅骷髅的称号"
   },
   "monster.big_skeleton_reborn": {
    "kind": "Monster",
    "file": "monster_big_skeleton_reborn.json",
    "displayName": "双球莱姆",
-   "description": "[[全向近战]]，[[远程武器]]",
+   "description": "[[远程武器]]",
    "faceIntro": "偶像是豌豆射手"
   },
   "monster.big_stone": {
    "kind": "Monster",
    "file": "monster_big_stone.json",
    "displayName": "小蜜蜂",
-   "description": "[[斜角近战]]",
    "faceIntro": "是CS高手"
   },
   "monster.bone_club_skeleton": {
@@ -831,22 +829,22 @@
   "monster.brainless_orc": {
    "kind": "Monster",
    "file": "monster_brainless_orc.json",
-   "displayName": "食人花",
-   "description": "[[全向近战]]，[[远程武器]]，[[起来]]",
-   "faceIntro": "躲在密林间阴险地发射火球"
+   "displayName": "黑寡妇",
+   "description": "[[远程武器]]，[[起来]]",
+   "faceIntro": "躲在密林间阴险地喷射蛛网"
   },
   "monster.dragon_cult_leader": {
    "kind": "Monster",
    "file": "monster_dragon_cult_leader.json",
    "displayName": "蓝焰",
-   "description": "[[普通近战]]，[[献火]]",
+   "description": "[[献火]]",
    "faceIntro": "烈焰一族的中坚力量"
   },
   "monster.dragon_follower": {
    "kind": "Monster",
    "file": "monster_dragon_follower.json",
    "displayName": "幽灵炎",
-   "description": "[[普通近战]]，[[剧烈燃烧]]",
+   "description": "[[剧烈燃烧]]",
    "faceIntro": "会灼烧灵魂"
   },
   "monster.fire_bather": {
@@ -860,7 +858,7 @@
    "kind": "Monster",
    "file": "monster_fire_dragon.json",
    "displayName": "莫西干鸟",
-   "description": "[[普通近战]]，[[快递]]",
+   "description": "[[快递]]",
    "faceIntro": "他的发型是他的生命"
   },
   "monster.fire_priest": {
@@ -916,56 +914,55 @@
    "kind": "Monster",
    "file": "monster_headless_skeleton.json",
    "displayName": "钢铁莱姆",
-   "description": "[[普通近战]][[叠甲]]",
+   "description": "[[叠甲]]",
    "faceIntro": "很耐揍"
   },
   "monster.hoodlum": {
    "kind": "Monster",
    "file": "monster_hoodlum.json",
    "displayName": "火把哥布",
-   "description": "[[普通近战]]，[[天涯若比邻]]",
+   "description": "[[天涯若比邻]]",
    "faceIntro": "主要起到照明作用"
   },
   "monster.melee_3": {
    "kind": "Monster",
    "file": "monster_melee_3.json",
    "displayName": "小小莱姆",
-   "description": "[[普通近战]]",
    "faceIntro": "人畜无害"
   },
   "monster.orc_commander": {
    "kind": "Monster",
    "file": "monster_orc_commander.json",
-   "displayName": "潜水鳄",
-   "description": "[[普通近战]]，[[刺客领袖]]，[[起来]]",
+   "displayName": "沙虫",
+   "description": "[[刺客领袖]]，[[起来]]",
    "faceIntro": "嘘，都给我悄悄的"
   },
   "monster.pickpocket": {
    "kind": "Monster",
    "file": "monster_pickpocket.json",
    "displayName": "狼骑哥布",
-   "description": "[[全向近战]]，[[远程武器]]，[[链接]]",
+   "description": "[[远程武器]]，[[链接]]",
    "faceIntro": "在第三次射箭大赛中完胜轻弓骷髅"
   },
   "monster.ringleader": {
    "kind": "Monster",
    "file": "monster_ringleader.json",
    "displayName": "巨棒哥布",
-   "description": "[[链接近战]]",
+   "description": "[[链接]]",
    "faceIntro": "会狠狠的给对面来上一棍子"
   },
   "monster.rogue": {
    "kind": "Monster",
    "file": "monster_rogue.json",
    "displayName": "亡灵法师",
-   "description": "[[普通近战]]，[[死亡之主]]",
+   "description": "[[死亡之主]]",
    "faceIntro": "亡灵法师不总是一个眼冒鬼火的骷髅架子"
   },
   "monster.salamander": {
    "kind": "Monster",
    "file": "monster_salamander.json",
    "displayName": "小蓝焰",
-   "description": "[[全向近战]]，[[远程武器]]，[[烈焰沸腾]]",
+   "description": "[[远程武器]]，[[烈焰沸腾]]",
    "faceIntro": "会把自己发射出去灼伤敌人"
   },
   "monster.shelter_stone": {
@@ -979,49 +976,49 @@
    "kind": "Monster",
    "file": "monster_skeleton_king.json",
    "displayName": "紫袍鹰王",
-   "description": "[[普通近战]]，[[空间掌握]]",
+   "description": "[[空间掌握]]",
    "faceIntro": "不会飞是因为吃太胖了"
   },
   "monster.skeleton_taunter": {
    "kind": "Monster",
    "file": "monster_skeleton_taunter.json",
    "displayName": "独眼蝙蝠",
-   "description": "[[普通近战]]，[[转动]]",
+   "description": "[[转动]]",
    "faceIntro": "反复纠正他没有在读研究生"
   },
   "monster.skull_head": {
    "kind": "Monster",
    "file": "monster_skull_head.json",
    "displayName": "负伤莱姆",
-   "description": "[[普通近战]]，[[献身]]",
+   "description": "[[献身]]",
    "faceIntro": "随时做好奉献自己的准备"
   },
   "monster.sky_eye": {
    "kind": "Monster",
    "file": "monster_sky_eye.json",
    "displayName": "大黄蜂",
-   "description": "[[普通近战]]，[[远程武器]]，[[逃避]]",
+   "description": "[[远程武器]]，[[逃避]]",
    "faceIntro": "不会变形"
   },
   "monster.smart_orc": {
    "kind": "Monster",
    "file": "monster_smart_orc.json",
    "displayName": "紫蝎",
-   "description": "[[普通近战]]，[[跳杀]]，[[潜伏]]",
+   "description": "[[跳杀]]，[[潜伏]]",
    "faceIntro": "哎，扎死你呀哈哈哈哈"
   },
   "monster.smuggler": {
    "kind": "Monster",
    "file": "monster_smuggler.json",
    "displayName": "轻弓骷髅",
-   "description": "[[全向近战]]，[[远程武器]]，[[提速]]",
+   "description": "[[远程武器]]，[[提速]]",
    "faceIntro": "准头不是很高"
   },
   "monster.thug": {
    "kind": "Monster",
    "file": "monster_thug.json",
    "displayName": "小刀哥布",
-   "description": "[[链接近战]]，[[链接战术]]",
+   "description": "[[链接战术]]，[[链接]]",
    "faceIntro": "跑得快，通常兼任传信官"
   },
   "monster.tide_heart": {
@@ -1063,77 +1060,77 @@
    "kind": "Monster",
    "file": "monster_vagrant.json",
    "displayName": "哥布将军",
-   "description": "[[链接近战]]，[[链接准备]]，[[链接护甲]]",
+   "description": "[[链接准备]]，[[链接护甲]]，[[链接]]",
    "faceIntro": "猪是借来的"
   },
   "monster.veteran_orc": {
    "kind": "Monster",
    "file": "monster_veteran_orc.json",
-   "displayName": "沙虫",
-   "description": "[[普通近战]]，[[盗取]]，[[潜伏]]",
-   "faceIntro": "悄悄摸摸的咬掉一块肉"
+   "displayName": "寄居蟹",
+   "description": "[[盗取]]，[[潜伏]]",
+   "faceIntro": "悄悄摸摸的靠近"
   },
   "monster.void_lost": {
    "kind": "Monster",
    "file": "monster_void_lost.json",
    "displayName": "小火焰",
-   "description": "[[普通近战]]，[[呼唤]]",
+   "description": "[[呼唤]]",
    "faceIntro": "烈焰一族的小宝贝"
   },
   "monster.wandering_child": {
    "kind": "Monster",
    "file": "monster_wandering_child.json",
    "displayName": "巨斧骷髅",
-   "description": "[[普通近战]]，[[死亡召唤]]",
+   "description": "[[死亡召唤]]",
    "faceIntro": "骷髅没肌肉怎么举起武器是困扰骷髅届百年的问题"
   },
   "monster.world_turning_hand": {
    "kind": "Monster",
    "file": "monster_world_turning_hand.json",
    "displayName": "短剑骷髅",
-   "description": "[[普通近战]]，[[吟唱]]",
+   "description": "[[吟唱]]",
    "faceIntro": "剑是捡的"
   },
   "monster.young_orc": {
    "kind": "Monster",
    "file": "monster_young_orc.json",
-   "displayName": "仙人掌",
-   "description": "[[普通近战]]，[[休养]]，[[潜伏]]",
+   "displayName": "红甲虫",
+   "description": "[[休养]]，[[潜伏]]",
    "faceIntro": "别碰我"
   },
   "relic.armor_strip_knife": {
    "kind": "Relic",
    "file": "relic_armor_strip_knife.json",
    "displayName": "破甲",
-   "description": "攻击时若目标当前[armor]大于{relic.armor_strip_knife.battle.value}，攻击伤害+{relic.armor_strip_knife.armor_hit.value}",
+   "description": "[attack]时若目标当前[armor]大于{relic.armor_strip_knife.battle.value}，[attack]伤害+{relic.armor_strip_knife.armor_hit.value}",
    "faceIntro": "专挑穿得厚的下手"
   },
   "relic.berserker_axe": {
    "kind": "Relic",
    "file": "relic_berserker_axe.json",
    "displayName": "狂战",
-   "description": "攻击+{relic.berserker_axe.base.value}，血量低于一半时玩家攻击翻倍",
+   "description": "[attack]+{relic.berserker_axe.base.value}，[HP]低于一半时玩家[attack]翻倍",
    "faceIntro": "半条命之后才进入工作状态"
   },
   "relic.beyond_dimension": {
    "kind": "Relic",
    "file": "relic_beyond_dimension.json",
    "displayName": "超越维度",
-   "description": "攻击+{relic.beyond_dimension.base.value}，攻击后旋转{relic.beyond_dimension.battle.count}次",
+   "description": "[attack]+{relic.beyond_dimension.base.value}，攻击后旋转{relic.beyond_dimension.battle.count}次",
    "faceIntro": "打完一拳顺便换个角度理解世界"
   },
   "relic.blood_burst": {
    "kind": "Relic",
    "file": "relic_blood_burst.json",
    "displayName": "血盾",
-   "description": "血量上限+{relic.blood_burst.max_hp.value}，受伤时对随机怪物：反伤",
+   "description": "[MHP]+{relic.blood_burst.max_hp.value}，受伤时对随机怪物：反伤",
    "faceIntro": "你掉血，它替你记仇"
   },
   "relic.blood_cycle": {
    "kind": "Relic",
    "file": "relic_blood_cycle.json",
    "displayName": "血圣杯",
-   "description": "血量上限+{relic.blood_cycle.max_hp.value}，受到伤害时恢复{relic.blood_cycle.taken.amount}点血量",
+   "description": "[MHP]+{relic.blood_cycle.max_hp.value}，受到伤害时恢复{relic.blood_cycle.taken.amount}点[HP]",
    "faceIntro": "漏出去一点，它又给你倒回来一点"
   },
   "relic.blood_demon": {
@@ -1182,8 +1179,8 @@
    "kind": "Relic",
    "file": "relic_craving.json",
    "displayName": "渴望",
-   "description": "[MHP]+{relic.craving.max_hp.delta}，所有恢复血量的效果翻倍",
-   "faceIntro": "喝多少都觉得还差一口"
+   "description": "[MHP]+{relic.craving.max_hp.delta}，所有恢复血量的效果X2",
+   "faceIntro": "比心~"
   },
   "relic.dragon_scale_armor": {
    "kind": "Relic",
@@ -1196,8 +1193,8 @@
    "kind": "Relic",
    "file": "relic_foam_armor.json",
    "displayName": "泡沫盔甲",
-   "description": "基础[armor]+{relic.foam_armor.base.value}，每场战斗第一次破甲后获得伤害护盾",
-   "faceIntro": "第一眼像玩具，第二下再说"
+   "description": "[B_armor]+{relic.foam_armor.base.value}，每场战斗第一次破甲后获得:[[伤害护盾]]",
+   "faceIntro": "卖垃圾能换不少钱"
   },
   "relic.forge_bracer": {
    "kind": "Relic",
@@ -1217,7 +1214,7 @@
    "kind": "Relic",
    "file": "relic_gold_armor.json",
    "displayName": "金币盔甲",
-   "description": "基础[armor]+{relic.gold_armor.base.value}，每{relic.gold_armor.rule.every}点[money]视作{relic.gold_armor.rule.value}点[armor]",
+   "description": "基础[armor]+{relic.gold_armor.base.value}，获得：[[金币护甲]]",
    "faceIntro": "钱包也是身体的一部分"
   },
   "relic.gold_blood": {
@@ -1259,7 +1256,7 @@
    "kind": "Relic",
    "file": "relic_iron_shield.json",
    "displayName": "铁盾",
-   "description": "基础[armor]+{relic.iron_shield.base.value}；获得{relic.iron_shield.reduction.value}层：伤害减免",
+   "description": "基础[armor]+{relic.iron_shield.base.value}；获得{relic.iron_shield.reduction.value}层：[[伤害减免]]",
    "faceIntro": "没有花纹，因为花纹不挡刀"
   },
   "relic.junk_amplifier": {
@@ -1371,7 +1368,7 @@
    "kind": "Relic",
    "file": "relic_rotten_cleave_axe.json",
    "displayName": "顺劈斧",
-   "description": "[attack]+{relic.rotten_cleave_axe.base.value}，普通攻击改为对目标[adjacent]范围造成{relic.rotten_cleave_axe.cleave.amount}点伤害",
+   "description": "[attack]+{relic.rotten_cleave_axe.base.value}，[[普通攻击]]改为对目标[adjacent]范围造成{relic.rotten_cleave_axe.cleave.amount}点伤害",
    "faceIntro": "转起来！"
   },
   "relic.rpm_engine": {
@@ -1520,8 +1517,8 @@
   "skill.ambush_melee": {
    "kind": "Skill",
    "file": "skill_ambush_melee.json",
-   "displayName": "潜伏近战",
-   "description": "[场上]卡级开火窗口时，若本卡正面且与玩家卡正交相邻，对玩家造成等同本卡攻击的伤害并翻面"
+   "displayName": "潜伏",
+   "description": "[场上]卡级开火窗口时，若本卡正面且与玩家卡正交相邻，[翻面]"
   },
   "skill.assassin_leader": {
    "kind": "Skill",
@@ -1575,13 +1572,13 @@
    "kind": "Skill",
    "file": "skill_call_melee6.json",
    "displayName": "呼唤",
-   "description": "每互动5次将近战6加入战斗卡组"
+   "description": "每互动5次将一张蓝焰加入战斗卡组"
   },
   "skill.chant": {
    "kind": "Skill",
    "file": "skill_chant.json",
    "displayName": "吟唱",
-   "description": "每互动6次将近战3加入战斗卡组"
+   "description": "每互动6次将一张巨剑骷髅加入战斗卡组"
   },
   "skill.cloud_breath": {
    "kind": "Skill",
@@ -2055,7 +2052,7 @@
    "kind": "Trap",
    "file": "trap_healing_spring.json",
    "displayName": "疗愈之光",
-   "description": "每移动{trap.healing_spring.heal_on_move.every}次，若玩家在[adjacent]则恢复{trap.healing_spring.heal_on_move.amount}点血量",
+   "description": "每移动{trap.healing_spring.heal_on_move.every}次，若玩家在[adjacent]则恢复{trap.healing_spring.heal_on_move.amount}点[HP]",
    "faceIntro": "遮阳伞有害"
   },
   "trap.hourglass": {
@@ -2083,14 +2080,14 @@
    "kind": "Trap",
    "file": "trap_recovery_totem.json",
    "displayName": "恢复图腾",
-   "description": "每移动{trap.recovery_totem.heal_on_move.every}次，[adjacent]的怪物和玩家各恢复{trap.recovery_totem.heal_on_move.amount}点血量",
+   "description": "每移动{trap.recovery_totem.heal_on_move.every}次，[adjacent]的怪物和玩家各恢复{trap.recovery_totem.heal_on_move.amount}点[HP]",
    "faceIntro": "医者仁心"
   },
   "trap.revive_stone": {
    "kind": "Trap",
    "file": "trap_revive_stone.json",
    "displayName": "复活石",
-   "description": "[action]{trap.revive_stone.interact.every}次后[death]，将{trap.revive_stone.remove.count}张重生骷髅打出到同格",
+   "description": "[action]{trap.revive_stone.interact.every}次后[death]，将{trap.revive_stone.remove.count}张巨剑骷髅打出到同格",
    "faceIntro": "花费75阳光铲除它"
   },
   "trap.rolling_stone": {
@@ -2146,7 +2143,7 @@
    "kind": "Trap",
    "file": "trap_tutorial_countdown.json",
    "displayName": "教学·计数",
-   "description": "怪物卡角有行动计数",
+   "description": "怪物卡角有[action]",
    "faceIntro": "那个数字会倒数"
   },
   "trap.tutorial.deal": {
@@ -2265,7 +2262,7 @@
    "kind": "Trap",
    "file": "trap_tutorial_retreat.json",
    "displayName": "教学·撤退",
-   "description": "血量吃紧就早点破门",
+   "description": "[HP]吃紧就早点破门",
    "faceIntro": "活着才有下一局"
   },
   "trap.tutorial.rotate": {

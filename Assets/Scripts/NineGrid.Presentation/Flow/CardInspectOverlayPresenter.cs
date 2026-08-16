@@ -39,6 +39,9 @@ namespace NineGrid.Flow
         /// <summary>有衍生卡时的文案前缀（后接卡名，多张以顿号分隔）。</summary>
         private const string DerivedCardTextPrefix = "衍生卡：";
 
+        /// <summary>常规描述面板为浅色底，词条行正文默认色改黑（敌方深色面板保持模板白）。</summary>
+        private static readonly Color RegularGlossaryRowBodyColor = new Color(0f, 0f, 0f, 1f);
+
         private static CardInspectOverlayPresenter s_instance;
 
         [SerializeField] private GameObject root;
@@ -601,6 +604,12 @@ namespace NineGrid.Flow
             }
 
             list.Configure(content, _rowPrefab);
+
+            // 常规描述面板为浅色底：词条行正文（含 hover 槽）改黑保证可读；敌方面板深色底保持模板白。
+            if (ReferenceEquals(panel, regularPanel))
+            {
+                list.SetDefaultBodyColor(RegularGlossaryRowBodyColor);
+            }
         }
 
         private static RectTransform FindScrollContent(Transform panelRoot)

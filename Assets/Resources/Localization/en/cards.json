@@ -150,12 +150,12 @@
     },
     "help.armor_card": {
       "displayName": "Helm",
-      "description": "Base [armor]+{help.armor_card.use.delta}",
+      "description": "[basic_armor]+{help.armor_card.use.delta}",
       "faceIntro": "Manual, page 1: not backwards."
     },
     "help.attack_card": {
       "displayName": "Leather Gloves",
-      "description": "Base [attack]+{help.attack_card.use.delta}",
+      "description": "[attack]+{help.attack_card.use.delta}",
       "faceIntro": "Makes you want to punch a table."
     },
     "help.blue_chest_card": {
@@ -170,7 +170,7 @@
     },
     "help.brutality_card": {
       "displayName": "Brutality",
-      "description": "Your next Standard Attack deals double damage",
+      "description": "[attack] doubles; restored after combat",
       "faceIntro": "One day without it hurts all over."
     },
     "help.charge_horn": {
@@ -200,7 +200,7 @@
     },
     "help.food_card": {
       "displayName": "Birthday Cake",
-      "description": "Fully restore [HP]",
+      "description": "Restore [HP] up to [MHP]",
       "faceIntro": "Candle count redacted."
     },
     "help.gold_card": {
@@ -270,22 +270,20 @@
     },
     "monster.beggar": {
       "displayName": "Face Slime",
-      "description": "[[Standard Melee]], [[Absorb]]",
+      "description": "[[Absorb]]",
       "faceIntro": "Secretly six slimes in one."
     },
     "monster.big_skeleton": {
       "displayName": "Greatsword Skeleton",
-      "description": "[[Omni Melee]]",
       "faceIntro": "Handsomest skeleton, 3 years running."
     },
     "monster.big_skeleton_reborn": {
       "displayName": "Twin-Orb Slime",
-      "description": "[[Omni Melee]], [[Ranged Weapon]]",
+      "description": "[[Ranged Weapon]]",
       "faceIntro": "Idolizes the Peashooter."
     },
     "monster.big_stone": {
       "displayName": "Little Bee",
-      "description": "[[Diagonal Melee]]",
       "faceIntro": "Secretly a CS pro."
     },
     "monster.bone_club_skeleton": {
@@ -299,18 +297,18 @@
       "faceIntro": "Biding time..."
     },
     "monster.brainless_orc": {
-      "displayName": "Maneater Flower",
-      "description": "[[Omni Melee]], [[Ranged Weapon]], [[Rise Up]]",
-      "faceIntro": "Lobs fireballs from the thicket."
+      "displayName": "Black Widow",
+      "description": "[[Ranged Weapon]], [[Rise Up]]",
+      "faceIntro": "Sneaks in the thicket, spraying webs."
     },
     "monster.dragon_cult_leader": {
       "displayName": "Blue Flame",
-      "description": "[[Standard Melee]], [[Fire Offering]]",
+      "description": "[[Fire Offering]]",
       "faceIntro": "Backbone of the Flame clan."
     },
     "monster.dragon_follower": {
       "displayName": "Ghost Flame",
-      "description": "[[Standard Melee]], [[Intense Burning]]",
+      "description": "[[Intense Burning]]",
       "faceIntro": "Burns the soul itself."
     },
     "monster.fire_bather": {
@@ -320,7 +318,7 @@
     },
     "monster.fire_dragon": {
       "displayName": "Mohawk Bird",
-      "description": "[[Standard Melee]], [[Delivery]]",
+      "description": "[[Delivery]]",
       "faceIntro": "The hairdo is his life."
     },
     "monster.fire_priest": {
@@ -360,42 +358,41 @@
     },
     "monster.headless_skeleton": {
       "displayName": "Iron Slime",
-      "description": "[[Standard Melee]][[Plating]]",
+      "description": "[[Plating]]",
       "faceIntro": "Takes a beating."
     },
     "monster.hoodlum": {
       "displayName": "Torch Goblin",
-      "description": "[[Standard Melee]], [[Distant Neighbors]]",
+      "description": "[[Distant Neighbors]]",
       "faceIntro": "Mainly here for the lighting."
     },
     "monster.melee_3": {
       "displayName": "Tiny Slime",
-      "description": "[[Standard Melee]]",
       "faceIntro": "Perfectly harmless."
     },
     "monster.orc_commander": {
-      "displayName": "Diving Croc",
-      "description": "[[Standard Melee]], [[Assassin Leader]], [[Rise Up]]",
+      "displayName": "Sandworm",
+      "description": "[[Assassin Leader]], [[Rise Up]]",
       "faceIntro": "Shh. Everyone, quiet."
     },
     "monster.pickpocket": {
       "displayName": "Wolf Rider Goblin",
-      "description": "[[Omni Melee]], [[Ranged Weapon]], [[Link]]",
+      "description": "[[Ranged Weapon]], [[Link]]",
       "faceIntro": "Outshot the Shortbow Skeleton at the 3rd archery meet."
     },
     "monster.ringleader": {
       "displayName": "Club Goblin",
-      "description": "[[Link Melee]]",
+      "description": "[[Link]]",
       "faceIntro": "Delivers one mean wallop."
     },
     "monster.rogue": {
       "displayName": "Necromancer",
-      "description": "[[Standard Melee]], [[Lord of Death]]",
+      "description": "[[Lord of Death]]",
       "faceIntro": "Not always a ghost-eyed bag of bones."
     },
     "monster.salamander": {
       "displayName": "Little Blue Flame",
-      "description": "[[Omni Melee]], [[Ranged Weapon]], [[Boiling Flames]]",
+      "description": "[[Ranged Weapon]], [[Boiling Flames]]",
       "faceIntro": "Launches itself to scorch foes."
     },
     "monster.shelter_stone": {
@@ -405,37 +402,37 @@
     },
     "monster.skeleton_king": {
       "displayName": "Purple Eagle King",
-      "description": "[[Standard Melee]], [[Spatial Mastery]]",
+      "description": "[[Spatial Mastery]]",
       "faceIntro": "Too fat to fly."
     },
     "monster.skeleton_taunter": {
       "displayName": "One-Eyed Bat",
-      "description": "[[Standard Melee]], [[Spin]]",
+      "description": "[[Spin]]",
       "faceIntro": "Insists he is not in grad school."
     },
     "monster.skull_head": {
       "displayName": "Wounded Slime",
-      "description": "[[Standard Melee]], [[Martyrdom]]",
+      "description": "[[Martyrdom]]",
       "faceIntro": "Ready to give itself, any time."
     },
     "monster.sky_eye": {
       "displayName": "Bumblebee",
-      "description": "[[Standard Melee]], [[Ranged Weapon]], [[Evade]]",
+      "description": "[[Ranged Weapon]], [[Evade]]",
       "faceIntro": "Does not transform."
     },
     "monster.smart_orc": {
       "displayName": "Purple Scorpion",
-      "description": "[[Standard Melee]], [[Pounce]], [[Lurk]]",
+      "description": "[[Pounce]], [[Lurk]]",
       "faceIntro": "Stab stab, hahahaha!"
     },
     "monster.smuggler": {
       "displayName": "Shortbow Skeleton",
-      "description": "[[Omni Melee]], [[Ranged Weapon]], [[Quicken]]",
+      "description": "[[Ranged Weapon]], [[Quicken]]",
       "faceIntro": "Aim could be better."
     },
     "monster.thug": {
       "displayName": "Knife Goblin",
-      "description": "[[Link Melee]], [[Link Tactics]]",
+      "description": "[[Link Tactics]], [[Link]]",
       "faceIntro": "Fast runner; doubles as courier."
     },
     "monster.tide_heart": {
@@ -465,57 +462,57 @@
     },
     "monster.vagrant": {
       "displayName": "Goblin General",
-      "description": "[[Link Melee]], [[Link Prep]], [[Link Armor]]",
+      "description": "[[Link Prep]], [[Link Armor]], [[Link]]",
       "faceIntro": "The boar is borrowed."
     },
     "monster.veteran_orc": {
-      "displayName": "Sandworm",
-      "description": "[[Standard Melee]], [[Steal]], [[Lurk]]",
-      "faceIntro": "Sneaks a bite when you're not looking."
+      "displayName": "Hermit Crab",
+      "description": "[[Steal]], [[Lurk]]",
+      "faceIntro": "Sneaks closer when you're not looking."
     },
     "monster.void_lost": {
       "displayName": "Flamelet",
-      "description": "[[Standard Melee]], [[Beckon]]",
+      "description": "[[Beckon]]",
       "faceIntro": "The Flame clan's little darling."
     },
     "monster.wandering_child": {
       "displayName": "Greataxe Skeleton",
-      "description": "[[Standard Melee]], [[Death Summon]]",
+      "description": "[[Death Summon]]",
       "faceIntro": "No muscles, big axe. A true mystery."
     },
     "monster.world_turning_hand": {
       "displayName": "Shortsword Skeleton",
-      "description": "[[Standard Melee]], [[Chant]]",
+      "description": "[[Chant]]",
       "faceIntro": "Found the sword."
     },
     "monster.young_orc": {
-      "displayName": "Cactus",
-      "description": "[[Standard Melee]], [[Recuperate]], [[Lurk]]",
+      "displayName": "Red Beetle",
+      "description": "[[Recuperate]], [[Lurk]]",
       "faceIntro": "Don't touch me."
     },
     "relic.armor_strip_knife": {
       "displayName": "Armorbane",
-      "description": "If target [armor] > {relic.armor_strip_knife.battle.value}: attack damage +{relic.armor_strip_knife.armor_hit.value}",
+      "description": "[attack]: if target [armor] > {relic.armor_strip_knife.battle.value}, [attack] damage +{relic.armor_strip_knife.armor_hit.value}",
       "faceIntro": "Preys on the heavily dressed."
     },
     "relic.berserker_axe": {
       "displayName": "Berserk",
-      "description": "Attack +{relic.berserker_axe.base.value}; below half HP, your Attack doubles",
+      "description": "[attack]+{relic.berserker_axe.base.value}; below half [HP], your [attack] doubles",
       "faceIntro": "Clocks in at Half-Life."
     },
     "relic.beyond_dimension": {
       "displayName": "Beyond Dimensions",
-      "description": "Attack +{relic.beyond_dimension.base.value}; after attacking, rotate {relic.beyond_dimension.battle.count} times",
+      "description": "[attack]+{relic.beyond_dimension.base.value}; after attacking, rotate {relic.beyond_dimension.battle.count} times",
       "faceIntro": "Punch, then see the world anew."
     },
     "relic.blood_burst": {
       "displayName": "Blood Shield",
-      "description": "Max HP +{relic.blood_burst.max_hp.value}; when hurt: reflect to a random monster",
+      "description": "[MHP]+{relic.blood_burst.max_hp.value}; when hurt: reflect to a random monster",
       "faceIntro": "You bleed, it holds the grudge."
     },
     "relic.blood_cycle": {
       "displayName": "Blood Chalice",
-      "description": "Max HP +{relic.blood_cycle.max_hp.value}; when damaged, restore {relic.blood_cycle.taken.amount} HP",
+      "description": "[MHP]+{relic.blood_cycle.max_hp.value}; when damaged, restore {relic.blood_cycle.taken.amount} [HP]",
       "faceIntro": "Spill a little, it pours some back."
     },
     "relic.blood_demon": {
@@ -550,8 +547,8 @@
     },
     "relic.craving": {
       "displayName": "Craving",
-      "description": "[MHP]+{relic.craving.max_hp.delta}; all healing doubled",
-      "faceIntro": "Always one sip short."
+      "description": "[MHP]+{relic.craving.max_hp.delta}; all healing effects x2",
+      "faceIntro": "Heart hands~"
     },
     "relic.dragon_scale_armor": {
       "displayName": "Dragonscale Armor",
@@ -560,8 +557,8 @@
     },
     "relic.foam_armor": {
       "displayName": "Foam Armor",
-      "description": "Base [armor]+{relic.foam_armor.base.value}; first armor break each Combat grants a damage shield",
-      "faceIntro": "Looks like a toy, until the second hit."
+      "description": "[B_armor]+{relic.foam_armor.base.value}; first armor break each Combat grants [[Damage Shield]]",
+      "faceIntro": "Selling junk pays well."
     },
     "relic.forge_bracer": {
       "displayName": "Smith's Bracer",
@@ -575,7 +572,7 @@
     },
     "relic.gold_armor": {
       "displayName": "Gold Armor",
-      "description": "Base [armor]+{relic.gold_armor.base.value}; every {relic.gold_armor.rule.every}[money] counts as {relic.gold_armor.rule.value}[armor]",
+      "description": "Base [armor]+{relic.gold_armor.base.value}; grants [[Coin Armor]]",
       "faceIntro": "The wallet is a body part too."
     },
     "relic.gold_blood": {
@@ -605,7 +602,7 @@
     },
     "relic.iron_shield": {
       "displayName": "Iron Shield",
-      "description": "Base [armor]+{relic.iron_shield.base.value}; gain {relic.iron_shield.reduction.value} stacks: damage reduction",
+      "description": "Base [armor]+{relic.iron_shield.base.value}; gain {relic.iron_shield.reduction.value} stacks: [[Damage Reduction]]",
       "faceIntro": "Plain, because patterns don't parry."
     },
     "relic.junk_amplifier": {
@@ -685,7 +682,7 @@
     },
     "relic.rotten_cleave_axe": {
       "displayName": "Cleaving Axe",
-      "description": "[attack]+{relic.rotten_cleave_axe.base.value}; Standard Attacks instead deal {relic.rotten_cleave_axe.cleave.amount} damage to target's [adjacent] area",
+      "description": "[attack]+{relic.rotten_cleave_axe.base.value}; [[Standard Attack]] instead deals {relic.rotten_cleave_axe.cleave.amount} damage to the target's [adjacent] area",
       "faceIntro": "Get spinning!"
     },
     "relic.rpm_engine": {
@@ -791,7 +788,7 @@
     },
     "skill.ambush_melee": {
       "displayName": "Lurk",
-      "description": "[On Board] At the card fire window: if face-up and orthogonally adjacent to the player, flip"
+      "description": "[On Board] At the card fire window: if face-up and orthogonally adjacent to the player, [Flip]"
     },
     "skill.assassin_leader": {
       "displayName": "Assassin Leader",
@@ -827,7 +824,7 @@
     },
     "skill.call_melee6": {
       "displayName": "Beckon",
-      "description": "Every 5 Interactions: add a Melee 6 to the combat deck"
+      "description": "Every 5 Interactions: add a Blue Flame to the combat deck"
     },
     "skill.chant": {
       "displayName": "Chant",
@@ -1149,7 +1146,7 @@
     },
     "trap.healing_spring": {
       "displayName": "Healing Light",
-      "description": "Per {trap.healing_spring.heal_on_move.every} moves: [adjacent] player restores {trap.healing_spring.heal_on_move.amount} HP",
+      "description": "Per {trap.healing_spring.heal_on_move.every} moves: [adjacent] player restores {trap.healing_spring.heal_on_move.amount} [HP]",
       "faceIntro": "Parasols considered harmful."
     },
     "trap.hourglass": {
@@ -1169,7 +1166,7 @@
     },
     "trap.recovery_totem": {
       "displayName": "Recovery Totem",
-      "description": "Per {trap.recovery_totem.heal_on_move.every} moves: [adjacent] monsters and player restore {trap.recovery_totem.heal_on_move.amount} HP",
+      "description": "Per {trap.recovery_totem.heal_on_move.every} moves: [adjacent] monsters and player restore {trap.recovery_totem.heal_on_move.amount} [HP]",
       "faceIntro": "A healer's heart."
     },
     "trap.revive_stone": {
@@ -1214,7 +1211,7 @@
     },
     "trap.tutorial.countdown": {
       "displayName": "Tutorial: Count",
-      "description": "Monster corners show Action Count",
+      "description": "Monster corners show [action]",
       "faceIntro": "That number counts down."
     },
     "trap.tutorial.deal": {
@@ -1299,7 +1296,7 @@
     },
     "trap.tutorial.retreat": {
       "displayName": "Tutorial: Retreat",
-      "description": "Low on HP? Break the door early",
+      "description": "Low on [HP]? Break the door early",
       "faceIntro": "Survive for the next run."
     },
     "trap.tutorial.rotate": {

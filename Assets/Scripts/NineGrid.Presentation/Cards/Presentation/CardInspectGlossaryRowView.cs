@@ -17,6 +17,16 @@ namespace NineGrid.Cards.Presentation
         private bool _hasBaseMargin;
         private Vector4 _baseMargin;
 
+        /// <summary>
+        /// 强制本行正文默认色（模板色为白色半透明；浅色底面板行须改黑保证可读）。
+        /// 先于 Bind/BindHint 调用，避免 EnsureBody 捕获模板色覆盖。
+        /// </summary>
+        public void SetDefaultBodyColor(Color color)
+        {
+            _defaultColor = color;
+            _hasDefaultColor = true;
+        }
+
         public void Bind(string displayName, string explanation, bool hasColor, Color color)
         {
             EnsureBody();
