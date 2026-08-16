@@ -36,6 +36,9 @@ namespace NineGrid.Flow.MainMenu
         private const float MinScale = 0.0001f;
         // Extra tiled coverage so wrapping one tile never exposes an empty edge.
         private const float WrapMarginTiles = 2f;
+        private const float ReferencePixelHeight = 540f;
+        private const float FallbackPixelsPerUnit = 32f;
+        private static readonly int PixelSnapId = Shader.PropertyToID("_PixelSnap");
 
         [Header("场景绑定")]
         [SerializeField] private SpriteRenderer backgroundRenderer;
@@ -76,6 +79,7 @@ namespace NineGrid.Flow.MainMenu
         private readonly List<MainMenuFallingIcon> _live = new List<MainMenuFallingIcon>(16);
 
         private Transform _rainRoot;
+        private MaterialPropertyBlock _propertyBlock;
         private bool _raining;
         private bool _capturedAuthored;
         private Vector3 _authoredLocalPos;
@@ -139,14 +143,14 @@ namespace NineGrid.Flow.MainMenu
             sInstance = this;
             EnsureBindings();
             CaptureAuthoredIfNeeded();
-            ClearLegacyUvScroll();
+            PrepareRendererVisuals();
         }
 
         private void OnEnable()
         {
             EnsureBindings();
             CaptureAuthoredIfNeeded();
-            ClearLegacyUvScroll();
+            PrepareRendererVisuals();
             EnsureWrapMargin();
             ApplyScrollTransform();
         }
@@ -298,10 +302,28 @@ namespace NineGrid.Flow.MainMenu
                 return;
             }
 
+            var t = backgroundRenderer.transform;
             var pos = _authoredLocalPos;
             pos.x += _scrollLocal.x;
             pos.y += _scrollLocal.y;
-            backgroundRenderer.transform.localPosition = pos;
+
+            var parent = t.parent;
+            var world = parent != null ? parent.TransformPoint(pos) : pos;
+            var pixel = GetWorldPixelSize();
+            world.x = Mathf.Round(world.x / pixel) * pixel;
+            world.y = Mathf.Round(world.y / pixel) * pixel;
+
+            if (parent != null)
+            {
+                var local = parent.InverseTransformPoint(world);
+                local.z = _authoredLocalPos.z;
+                t.localPosition = local;
+            }
+            else
+            {
+                world.z = _authoredLocalPos.z;
+                t.localPosition = world;
+            }
         }
 
         private void RestoreAuthoredTransform()
@@ -321,12 +343,43 @@ namespace NineGrid.Flow.MainMenu
             backgroundRenderer.SetPropertyBlock(null);
         }
 
-        private void ClearLegacyUvScroll()
+        private void PrepareRendererVisuals()
         {
-            if (backgroundRenderer != null)
+            if (backgroundRenderer == null)
             {
-                backgroundRenderer.SetPropertyBlock(null);
+                return;
             }
+
+            backgroundRenderer.SetPropertyBlock(null);
+            DisableSpritePixelSnap();
+        }
+
+        private void DisableSpritePixelSnap()
+        {
+            if (backgroundRenderer == null)
+            {
+                return;
+            }
+
+            _propertyBlock ??= new MaterialPropertyBlock();
+            backgroundRenderer.GetPropertyBlock(_propertyBlock);
+            _propertyBlock.SetFloat(PixelSnapId, 0f);
+            backgroundRenderer.SetPropertyBlock(_propertyBlock);
+        }
+
+        private float GetWorldPixelSize()
+        {
+            var cam = worldCamera != null ? worldCamera : Camera.main;
+            if (cam != null && cam.orthographic && cam.orthographicSize > MinScale)
+            {
+                var ppu = ReferencePixelHeight / (2f * cam.orthographicSize);
+                if (ppu > MinScale)
+                {
+                    return 1f / ppu;
+                }
+            }
+
+            return 1f / FallbackPixelsPerUnit;
         }
 
         private void TickRain(float dt)
