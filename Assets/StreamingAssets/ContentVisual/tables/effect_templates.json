@@ -261,7 +261,7 @@
   "design_text": "[每关卡开始时] 每有两点基础护甲，额外获得1点当前护甲",
   "requires_json": "[\"NoOwnerEntity\"]",
   "conditions_json": "[]",
-  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnNodeStart\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"GainArmor\",\"value\":{\"op\":\"Floor\",\"values\":[{\"op\":\"Multiply\",\"values\":[{\"source\":\"{{source}}\",\"stat\":\"Armor\"},{\"constant\":0.5}]}]}}}"
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnNodeStart\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"GainArmor\",\"value\":{\"op\":\"Multiply\",\"values\":[{\"op\":\"Floor\",\"values\":[{\"op\":\"Divide\",\"values\":[{\"source\":\"Player\",\"stat\":\"Armor\",\"effective\":true},{\"constant\":\"{{every}}\"}]}]},{\"constant\":\"{{gain}}\"}]}}}"
  },
  {
   "id": "tpl.relic.junk_launcher.use",

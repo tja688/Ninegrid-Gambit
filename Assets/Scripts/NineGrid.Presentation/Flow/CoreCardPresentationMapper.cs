@@ -166,7 +166,11 @@ namespace NineGrid.Flow
                 Attack = previous.Attack,
                 Armor = previous.Armor,
                 Hp = previous.Hp,
+                HasAttack = previous.HasAttack,
+                HasArmor = previous.HasArmor,
+                HasHp = previous.HasHp,
                 ActionCount = previous.ActionCount,
+                HasActionCount = previous.HasActionCount,
                 AttackPattern = previous.AttackPattern,
                 HasSyncRhythmSkills = previous.HasSyncRhythmSkills,
                 HasActiveRhythm = previous.HasActiveRhythm,
@@ -176,6 +180,7 @@ namespace NineGrid.Flow
                 DetailDescription = previous.DetailDescription,
                 FaceIntro = previous.FaceIntro,
                 FrameColor = previous.FrameColor,
+                Rarity = previous.Rarity,
                 CommittedCountdownRemaining = CopyCommittedRemaining(previous.CommittedCountdownRemaining),
             };
 
@@ -184,7 +189,11 @@ namespace NineGrid.Flow
             snapshot.Attack = previous.Attack;
             snapshot.Armor = previous.Armor;
             snapshot.Hp = previous.Hp;
+            snapshot.HasAttack = previous.HasAttack;
+            snapshot.HasArmor = previous.HasArmor;
+            snapshot.HasHp = previous.HasHp;
             snapshot.ActionCount = previous.ActionCount;
+            snapshot.HasActionCount = previous.HasActionCount;
             snapshot.ShowActionCount = previous.ShowActionCount;
             card.CommitPresentation(snapshot);
         }
@@ -281,7 +290,11 @@ namespace NineGrid.Flow
                 Attack = source.Attack,
                 Armor = source.Armor,
                 Hp = source.Hp,
+                HasAttack = source.HasAttack,
+                HasArmor = source.HasArmor,
+                HasHp = source.HasHp,
                 ActionCount = source.ActionCount,
+                HasActionCount = source.HasActionCount,
                 AttackPattern = source.AttackPattern,
                 HasSyncRhythmSkills = source.HasSyncRhythmSkills,
                 HasActiveRhythm = source.HasActiveRhythm,
@@ -432,7 +445,11 @@ namespace NineGrid.Flow
                     Attack = previous.Attack,
                     Armor = previous.Armor,
                     Hp = previous.Hp,
+                    HasAttack = previous.HasAttack,
+                    HasArmor = previous.HasArmor,
+                    HasHp = previous.HasHp,
                     ActionCount = previous.ActionCount,
+                    HasActionCount = previous.HasActionCount,
                     AttackPattern = previous.AttackPattern,
                     HasSyncRhythmSkills = previous.HasSyncRhythmSkills,
                     HasActiveRhythm = previous.HasActiveRhythm,

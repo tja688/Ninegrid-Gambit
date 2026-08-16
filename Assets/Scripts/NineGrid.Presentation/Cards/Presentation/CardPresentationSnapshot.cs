@@ -31,6 +31,17 @@ namespace NineGrid.Cards.Presentation
         public int ActionCount;
 
         /// <summary>
+        /// 数值通道是否已经由结算指令提交。生成类指令只能补齐尚未提交的通道，
+        /// 避免跨锚点派发时用旧生成值覆盖 Impact 已提交的结果。
+        /// </summary>
+        public bool HasAttack;
+        public bool HasArmor;
+        public bool HasHp;
+
+        /// <summary>行动倒计时通道是否已经由结算指令提交。</summary>
+        public bool HasActionCount;
+
+        /// <summary>
         /// 攻击模式（ADR-0011）；局内怪物由 Core 投影，用于卡面攻击模式槽图标切换（见
         /// <see cref="CardFaceAttackPatternIconResolver"/>，当前仅三档近战）。
         /// </summary>

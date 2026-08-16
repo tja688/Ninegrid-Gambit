@@ -330,12 +330,21 @@ namespace NineGrid.Flow.Presentation
                 return;
             }
 
-            // 生成/发牌/亮相：攻=ResultValue，血/甲=Remaining*，与后续增量同一 Commit 出口。
+            // 生成/发牌/亮相只补齐尚未由 Impact 等结算指令提交的通道。
+            // 同批内 CardDealt 可能在 Settled 才消费，而 HpChanged 已在 Impact 提交；
+            // 不能用生成事件携带的旧满血/满甲覆盖后者。
+            var previous = card.CommittedPresentation;
             CommitNumeric(
                 card,
-                attack: Mathf.Max(0, gameEvent.ResultValue),
-                armor: Mathf.Max(0, gameEvent.RemainingArmor),
-                hp: Mathf.Max(0, gameEvent.RemainingHp),
+                attack: previous == null || !previous.HasAttack
+                    ? (int?)Mathf.Max(0, gameEvent.ResultValue)
+                    : null,
+                armor: previous == null || !previous.HasArmor
+                    ? (int?)Mathf.Max(0, gameEvent.RemainingArmor)
+                    : null,
+                hp: previous == null || !previous.HasHp
+                    ? (int?)Mathf.Max(0, gameEvent.RemainingHp)
+                    : null,
                 actionCount: null);
         }
 
@@ -446,21 +455,25 @@ namespace NineGrid.Flow.Presentation
             if (attack.HasValue)
             {
                 snapshot.Attack = attack.Value;
+                snapshot.HasAttack = true;
             }
 
             if (armor.HasValue)
             {
                 snapshot.Armor = armor.Value;
+                snapshot.HasArmor = true;
             }
 
             if (hp.HasValue)
             {
                 snapshot.Hp = hp.Value;
+                snapshot.HasHp = true;
             }
 
             if (actionCount.HasValue)
             {
                 snapshot.ActionCount = actionCount.Value;
+                snapshot.HasActionCount = true;
             }
 
             card.CommitPresentation(snapshot);
@@ -483,7 +496,11 @@ namespace NineGrid.Flow.Presentation
                 Attack = source.Attack,
                 Armor = source.Armor,
                 Hp = source.Hp,
+                HasAttack = source.HasAttack,
+                HasArmor = source.HasArmor,
+                HasHp = source.HasHp,
                 ActionCount = source.ActionCount,
+                HasActionCount = source.HasActionCount,
                 AttackPattern = source.AttackPattern,
                 HasSyncRhythmSkills = source.HasSyncRhythmSkills,
                 HasActiveRhythm = source.HasActiveRhythm,
