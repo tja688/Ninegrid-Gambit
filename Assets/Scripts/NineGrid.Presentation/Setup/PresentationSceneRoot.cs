@@ -167,6 +167,7 @@ namespace NineGrid.Presentation.Setup
             RhythmFaceFlowTraceBinder.EnsureInstalled();
             BattleLogRecorder.EnsureInstalled();
             NineGrid.Flow.BoardBriefTip.VenueEnvironmentPresenter.EnsureExists();
+            NineGrid.Flow.MainMenu.MainMenuBackdropPresenter.EnsureExists();
 
             if (damageNumberManager == null)
             {

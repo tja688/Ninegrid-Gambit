@@ -2,6 +2,7 @@ using System;
 using NineGrid.Content.CardPresentation;
 using NineGrid.Core;
 using NineGrid.Flow;
+using NineGrid.Flow;
 using NineGrid.Flow.Presentation;
 using NineGrid.Presentation.Systems;
 using TMPro;
@@ -197,6 +198,8 @@ namespace NineGrid.Presentation.Ui
 
             if (open)
             {
+                SetMainMenuChromeVisible(false);
+
                 if (PureBlackScreenOverlay.Acquire(OverlayReason))
                 {
                     mOverlayHeld = true;
@@ -220,6 +223,23 @@ namespace NineGrid.Presentation.Ui
                     PureBlackScreenOverlay.Release(OverlayReason);
                     mOverlayHeld = false;
                 }
+
+                if (!mDeparting)
+                {
+                    SetMainMenuChromeVisible(true);
+                }
+            }
+        }
+
+        /// <summary>选人叠层打开时收起主菜单按钮/立绘，避免 UI 层元素压在纯黑幕之上。</summary>
+        private static void SetMainMenuChromeVisible(bool visible)
+        {
+            var router = UnityEngine.Object.FindFirstObjectByType<UiPanelRouter>();
+            router?.EnsureBindings();
+            var panel = router != null ? router.MainPanel : null;
+            if (panel != null && panel.activeSelf != visible)
+            {
+                panel.SetActive(visible);
             }
         }
 
