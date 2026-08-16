@@ -29,7 +29,8 @@ namespace NineGrid.Flow.MainMenu
 
         private const string ArtChildName = "__Art";
         private const string IconSortingLayer = "UI";
-        private const int IconSortingBase = 4;
+        // Keep decorative rain below the normal main-menu UI orders (-6/-3/-2).
+        private const int IconSortingBase = -20;
         private static readonly int ScrollUvId = Shader.PropertyToID("_ScrollUv");
         private const float MinScale = 0.0001f;
 
@@ -47,8 +48,8 @@ namespace NineGrid.Flow.MainMenu
 
         [Header("主图标投放")]
         [SerializeField] private bool rainEnabled = true;
-        [Tooltip("叠在卡面 mainVisual.uniformScale 之上；2 = 标准卡面立绘两倍。")]
-        [SerializeField] private float iconExternalScale = 2f;
+        [Tooltip("叠在卡面 mainVisual.uniformScale 之上；1 = 标准卡面立绘大小。")]
+        [SerializeField] private float iconExternalScale = 1f;
         [Tooltip("下落重力（世界单位/秒²）。水平速度恒定，竖直加速，轨迹为抛物线。")]
         [SerializeField] private float fallGravity = 2.2f;
         [Tooltip("入场竖直速度（向下为正）。无上抛。")]
