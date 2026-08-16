@@ -304,6 +304,41 @@ namespace NineGrid.Flow.Presentation
         }
 
         /// <summary>
+        /// 按谓词把隔离区中匹配的 Impact 指令放回当批暂挂（多决斗者逐个命中帧报点）。
+        /// </summary>
+        public void ReleaseQuarantinedWhere(Func<PresentationInstruction, bool> predicate)
+        {
+            if (predicate == null || mQuarantined.Count == 0)
+            {
+                return;
+            }
+
+            var released = new List<PresentationInstruction>(mQuarantined.Count);
+            for (var i = mQuarantined.Count - 1; i >= 0; i--)
+            {
+                var instruction = mQuarantined[i];
+                if (instruction == null
+                    || instruction.MapEntry == null
+                    || instruction.MapEntry.Beat != PresentationBeat.Impact
+                    || !predicate(instruction))
+                {
+                    continue;
+                }
+
+                mQuarantined.RemoveAt(i);
+                released.Add(instruction);
+            }
+
+            if (released.Count == 0)
+            {
+                return;
+            }
+
+            released.Sort((a, b) => a.Sequence.CompareTo(b.Sequence));
+            mPending.AddRange(released);
+        }
+
+        /// <summary>
         /// 非锁步旁路：临时装载一批并冲刷 Impact→Settled，恢复原先 pending（不搅乱锁步当批）。
         /// </summary>
         public void PresentStandalone(PresentationBatch batch)

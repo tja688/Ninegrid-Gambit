@@ -9,7 +9,7 @@ namespace NineGrid.Core
     {
         public const int DefaultItemDeckCapacity = 6;
         /// <summary>道具卡格容量初始值（ADR-0025）。</summary>
-        public const int DefaultItemSlotsCapacity = 3;
+        public const int DefaultItemSlotsCapacity = 2;
         /// <summary>道具卡格容量上限（ADR-0025）。</summary>
         public const int MaxItemSlotsCapacity = 5;
         /// <summary>装备栏上限（设计案：12）。</summary>
@@ -99,7 +99,7 @@ namespace NineGrid.Core
             get { return mItemDeckCapacity; }
         }
 
-        /// <summary>道具卡格容量（初始 3，最高 5）；与 <see cref="ItemDeckCapacity"/> 拆开（ADR-0025）。</summary>
+        /// <summary>道具卡格容量（初始 2，最高 5）；与 <see cref="ItemDeckCapacity"/> 拆开（ADR-0025）。</summary>
         public int ItemSlotsCapacity
         {
             get { return mItemSlotsCapacity; }

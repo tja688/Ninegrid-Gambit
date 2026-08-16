@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using NineGrid.Core;
 using NineGrid.Core.Stats;
 using NineGrid.Core.Systems;
@@ -8,11 +9,8 @@ namespace NineGrid.Presentation.Tests
 {
     /// <summary>
     /// 神圣决斗（skill.holy_duel）标记结算回归。
-    /// 锁死的 bug 形态：新目标自己也持有神圣决斗时，旧实现先转移标记并提前 return，
-    /// 旧持有者的惩罚（EffectTriggered + 对玩家 2 伤）从未入队——
-    /// 决斗套（同场怪物全员持有）里该技能整场静默，表现层追加攻击也无从触发。
-    /// 正确语义（effect_templates design_text）：与持有者交战后再主动与「其他怪物卡」
-    /// 战斗即惩罚，不排除其他怪同为持有者；惩罚先结算，标记后转移。
+    /// 多标记叠加：与每只持有者交战后各自记标；打其他怪时所有存活正面持有者各罚 2；
+    /// 仅该持有者死亡/离场摘标；翻面保留标记。
     /// </summary>
     public class HolyDuelMarkRegressionTests
     {
@@ -36,7 +34,7 @@ namespace NineGrid.Presentation.Tests
         }
 
         [Test]
-        public void AttackHolderThenOtherHolder_PunishesFromFirstHolder_AndTransfersMark()
+        public void AttackHolderThenOtherHolder_PunishesFromFirstHolder_AndStacksMarks()
         {
             var avatar = CreateAvatarOnBoard(10);
             var holderA = CreateMonsterOnBoard("monster.test.duelist_a", 4, withHolyDuel: true);
@@ -44,17 +42,14 @@ namespace NineGrid.Presentation.Tests
             var player = mArch.GetModel<PlayerModel>();
 
             Hit(avatar, holderA);
-            Assert.AreEqual(holderA.Uid, player.DuelMarkMonsterUid, "打持有者 A 后应记下决斗标记");
+            AssertMarkUids(player, "打持有者 A 后应记下决斗标记", holderA.Uid);
 
             var startIndex = EventCount();
             Hit(avatar, holderB);
 
             AssertPunished(startIndex, holderA.Uid, avatar.Uid);
             Assert.AreEqual(8, (int)avatar.Stats.GetBase(StatId.Hp), "惩罚应对玩家造成 2 伤");
-            Assert.AreEqual(
-                holderB.Uid,
-                player.DuelMarkMonsterUid,
-                "惩罚结算后标记应转移到新持有者 B");
+            AssertMarkUids(player, "惩罚后应叠加 B 的标记，A 仍保留", holderA.Uid, holderB.Uid);
         }
 
         [Test]
@@ -71,10 +66,7 @@ namespace NineGrid.Presentation.Tests
 
             AssertPunished(startIndex, holder.Uid, avatar.Uid);
             Assert.AreEqual(8, (int)avatar.Stats.GetBase(StatId.Hp));
-            Assert.AreEqual(
-                holder.Uid,
-                player.DuelMarkMonsterUid,
-                "目标非持有者时标记应保留在原持有者上");
+            AssertMarkUids(player, "目标非持有者时标记应保留在原持有者上", holder.Uid);
         }
 
         [Test]
@@ -92,7 +84,50 @@ namespace NineGrid.Presentation.Tests
         }
 
         [Test]
-        public void MarkedHolderTurnedFaceDown_ClearsMarkWithoutPunishment()
+        public void ThreeMarkedHolders_AttackingFourth_PunishesAllThreeInOrder()
+        {
+            var avatar = CreateAvatarOnBoard(20);
+            var holderA = CreateMonsterOnBoard("monster.test.duelist_a", 1, withHolyDuel: true);
+            var holderB = CreateMonsterOnBoard("monster.test.duelist_b", 2, withHolyDuel: true);
+            var holderC = CreateMonsterOnBoard("monster.test.duelist_c", 3, withHolyDuel: true);
+            var plain = CreateMonsterOnBoard("monster.test.plain", 7, withHolyDuel: false);
+
+            Hit(avatar, holderA);
+            Hit(avatar, holderB);
+            Hit(avatar, holderC);
+
+            var startIndex = EventCount();
+            Hit(avatar, plain);
+
+            var punishedHolders = GetPunishedHolderOrder(startIndex, avatar.Uid);
+            CollectionAssert.AreEqual(
+                new[] { holderA.Uid, holderB.Uid, holderC.Uid },
+                punishedHolders,
+                "应按挂标顺序逐个惩罚");
+            Assert.AreEqual(6, CountPunishmentDamage(startIndex, avatar.Uid), "三只各 2 伤共 6");
+        }
+
+        [Test]
+        public void AttackMarkedHolderWithOtherMarked_OnlyOtherHolderPunishes()
+        {
+            var avatar = CreateAvatarOnBoard(10);
+            var holderA = CreateMonsterOnBoard("monster.test.duelist_a", 4, withHolyDuel: true);
+            var holderB = CreateMonsterOnBoard("monster.test.duelist_b", 6, withHolyDuel: true);
+            var player = mArch.GetModel<PlayerModel>();
+
+            Hit(avatar, holderA);
+            Hit(avatar, holderB);
+
+            var startIndex = EventCount();
+            Hit(avatar, holderA);
+
+            AssertPunished(startIndex, holderB.Uid, avatar.Uid);
+            Assert.AreEqual(2, CountPunishmentDamage(startIndex, avatar.Uid), "只应 B 罚，A 为当前目标");
+            AssertMarkUids(player, "两只标记均应保留", holderA.Uid, holderB.Uid);
+        }
+
+        [Test]
+        public void MarkedHolderTurnedFaceDown_KeepsMarkWithoutPunishment_UntilFaceUpAgain()
         {
             var avatar = CreateAvatarOnBoard(10);
             var holder = CreateMonsterOnBoard("monster.test.duelist", 4, withHolyDuel: true);
@@ -100,15 +135,45 @@ namespace NineGrid.Presentation.Tests
             var player = mArch.GetModel<PlayerModel>();
 
             Hit(avatar, holder);
-            // 惰性校验路径：直接注入背面状态（FlipCardAction 主动清标记是另一条路径）。
             holder.FaceUp = false;
 
             var startIndex = EventCount();
             Hit(avatar, plain);
 
-            Assert.AreEqual(0, CountPunishmentDamage(startIndex, avatar.Uid), "持有者已翻面不得惩罚");
+            Assert.AreEqual(0, CountPunishmentDamage(startIndex, avatar.Uid), "背面持有者不得惩罚");
             Assert.AreEqual(10, (int)avatar.Stats.GetBase(StatId.Hp));
-            Assert.AreEqual(0, player.DuelMarkMonsterUid, "持有者失效应清空标记");
+            AssertMarkUids(player, "翻面应保留标记", holder.Uid);
+
+            holder.FaceUp = true;
+            startIndex = EventCount();
+            Hit(avatar, plain);
+
+            AssertPunished(startIndex, holder.Uid, avatar.Uid);
+            Assert.AreEqual(8, (int)avatar.Stats.GetBase(StatId.Hp), "翻回正面后打别人应再罚");
+        }
+
+        [Test]
+        public void KillingMarkedHolder_RemovesOnlyThatMark_OthersStillPunish()
+        {
+            var avatar = CreateAvatarOnBoard(20);
+            var holderA = CreateMonsterOnBoard("monster.test.duelist_a", 4, withHolyDuel: true, hp: 5);
+            var holderB = CreateMonsterOnBoard("monster.test.duelist_b", 6, withHolyDuel: true);
+            var plain = CreateMonsterOnBoard("monster.test.plain", 7, withHolyDuel: false);
+            var player = mArch.GetModel<PlayerModel>();
+
+            Hit(avatar, holderA);
+            Hit(avatar, holderB);
+
+            avatar.Stats.SetBase(StatId.Attack, 99);
+            Hit(avatar, holderA);
+
+            var startIndex = EventCount();
+            Hit(avatar, plain);
+
+            AssertMarkUids(player, "打别人时惰性摘掉已死 A，只留 B", holderB.Uid);
+
+            AssertPunished(startIndex, holderB.Uid, avatar.Uid);
+            Assert.AreEqual(2, CountPunishmentDamage(startIndex, avatar.Uid), "只剩 B 应罚一次");
         }
 
         private CardInstance CreateAvatarOnBoard(int hp)
@@ -121,17 +186,20 @@ namespace NineGrid.Presentation.Tests
             return avatar;
         }
 
-        private CardInstance CreateMonsterOnBoard(string defId, int slotIndex, bool withHolyDuel)
+        private CardInstance CreateMonsterOnBoard(
+            string defId,
+            int slotIndex,
+            bool withHolyDuel,
+            int hp = 5)
         {
             var registry = mArch.GetModel<CardRegistry>();
             var monster = registry.Create(defId, CardKind.Monster);
-            monster.Stats.SetBase(StatId.MaxHp, 5);
-            monster.Stats.SetBase(StatId.Hp, 5);
+            monster.Stats.SetBase(StatId.MaxHp, hp);
+            monster.Stats.SetBase(StatId.Hp, hp);
             mArch.GetModel<BoardModel>().PlaceCard(monster, SlotId.Board(slotIndex));
 
             if (withHolyDuel)
             {
-                // 与 tpl.skill.holy_duel.activate 等价的 Persistent 规则（测试不走内容装配）。
                 mArch.GetSystem<IStatSystem>().RuleModifiers.Add(new RuleModifier(
                     RuleId.HolyDuel,
                     ModifierOp.Add,
@@ -156,7 +224,11 @@ namespace NineGrid.Presentation.Tests
             return mArch.GetSystem<IActionPipelineSystem>().EventLog.Entries.Count;
         }
 
-        /// <summary>断言批内出现完整惩罚事件对：持有者 EffectTriggered 脉冲 + 对玩家 2 伤。</summary>
+        private static void AssertMarkUids(PlayerModel player, string message, params int[] expectedUids)
+        {
+            CollectionAssert.AreEqual(expectedUids, new List<int>(player.DuelMarkMonsterUids), message);
+        }
+
         private void AssertPunished(int startIndex, int holderUid, int avatarUid)
         {
             var entries = mArch.GetSystem<IActionPipelineSystem>().EventLog.Entries;
@@ -173,13 +245,14 @@ namespace NineGrid.Presentation.Tests
                 }
                 else if (e.Type == CoreEventType.DamageDealt
                     && e.TargetUid == avatarUid
-                    && e.SourceDefId == PunishmentSource)
+                    && e.SourceDefId == PunishmentSource
+                    && (e.ActorUid == holderUid || e.ActorUid == 0))
                 {
                     damage += e.Amount;
                 }
             }
 
-            Assert.IsTrue(pulseSeen, "批内应有持有者的 skill.holy_duel.activate 触发事件（表现层脉冲/追加攻击依赖它）");
+            Assert.IsTrue(pulseSeen, "批内应有持有者的 skill.holy_duel.activate 触发事件");
             Assert.AreEqual(2, damage, "批内应有 source=skill.holy_duel 的对玩家 2 伤");
         }
 
@@ -199,6 +272,24 @@ namespace NineGrid.Presentation.Tests
             }
 
             return damage;
+        }
+
+        private List<int> GetPunishedHolderOrder(int startIndex, int avatarUid)
+        {
+            var entries = mArch.GetSystem<IActionPipelineSystem>().EventLog.Entries;
+            var holders = new List<int>();
+            for (var i = startIndex; i < entries.Count; i++)
+            {
+                var e = entries[i];
+                if (e.Type == CoreEventType.EffectTriggered
+                    && e.Message == ActivateMessage
+                    && e.CardUid > 0)
+                {
+                    holders.Add(e.CardUid);
+                }
+            }
+
+            return holders;
         }
     }
 }

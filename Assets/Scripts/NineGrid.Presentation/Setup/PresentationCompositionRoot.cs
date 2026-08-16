@@ -243,6 +243,7 @@ namespace NineGrid.Presentation.Setup
             BattleBeatHook.FlushImpactOnly = mBeatScheduler.FlushImpactOnly;
             BattleBeatHook.QuarantineImpactWhere = mBeatScheduler.QuarantineImpactWhere;
             BattleBeatHook.ReleaseQuarantined = mBeatScheduler.ReleaseQuarantined;
+            BattleBeatHook.ReleaseQuarantinedWhere = mBeatScheduler.ReleaseQuarantinedWhere;
             BattleBeatHook.HoldStrikeImpactWhere = mBeatScheduler.HoldStrikeImpactWhere;
             BattleBeatHook.FlushStrikeHeldWhere = mBeatScheduler.FlushStrikeHeldWhere;
             // ADR-0050 效果打击编排：开批建打击计划（暂扣效果伤害指令），
