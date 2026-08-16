@@ -182,10 +182,14 @@ namespace NineGrid.Flow.Diagnostics
             Action<string, string> done)
         {
             var url = sBaseUrl.TrimEnd('/') + apiPath;
+            var bytes = Encoding.UTF8.GetBytes(json ?? "{}");
             var req = new UnityWebRequest(url, UnityWebRequest.kHttpVerbPOST);
-            req.uploadHandler = new UploadHandlerRaw(Encoding.UTF8.GetBytes(json ?? "{}"));
+            req.uploadHandler = new UploadHandlerRaw(bytes);
             req.downloadHandler = new DownloadHandlerBuffer();
-            req.timeout = 120;
+            req.timeout = 20;
+            req.useHttpContinue = false;
+            req.disposeUploadHandlerOnDispose = true;
+            req.disposeDownloadHandlerOnDispose = true;
             req.SetRequestHeader("Content-Type", "application/json; charset=utf-8");
             req.SetRequestHeader("X-Client", WebGuiClient);
             if (withToken && !string.IsNullOrEmpty(sCachedToken))
@@ -193,10 +197,28 @@ namespace NineGrid.Flow.Diagnostics
                 req.SetRequestHeader("token", sCachedToken);
             }
 
-            yield return req.SendWebRequest();
+            Debug.Log("[FnsPlaytest] POST " + url + " bytes=" + bytes.Length);
+            var op = req.SendWebRequest();
+            var elapsed = 0f;
+            while (op != null && !op.isDone)
+            {
+                elapsed += Time.unscaledDeltaTime;
+                if (elapsed >= 20f)
+                {
+                    req.Abort();
+                    req.Dispose();
+                    done?.Invoke(null, "网络超时，笔记库没有在 20 秒内响应。");
+                    yield break;
+                }
+
+                yield return null;
+            }
+
             try
             {
                 var text = req.downloadHandler != null ? req.downloadHandler.text : string.Empty;
+                Debug.Log("[FnsPlaytest] POST done result=" + req.result + " code=" + req.responseCode
+                    + " err=" + req.error + " bodyChars=" + (text != null ? text.Length : 0));
                 if (req.result != UnityWebRequest.Result.Success && string.IsNullOrEmpty(text))
                 {
                     done?.Invoke(null, "网络错误：" + req.error);

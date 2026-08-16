@@ -17,6 +17,7 @@ namespace NineGrid.Presentation.Ui
     {
         public const string LogoName = "BugLogo";
         public const string FormName = "输入框窗口";
+        public const string FormNameMoved = "BugLogo输入框窗口";
         public const string BugInputName = "遇到问题了？遇到 bug 了?";
         public const string SuggestionInputName = "你对游戏的意见、建议";
         public const string BugSubmitName = "导出log日志按钮";
@@ -112,10 +113,10 @@ namespace NineGrid.Presentation.Ui
             }
 
             sInstance = this;
-            mForm = mLogo.Find(FormName)?.gameObject;
+            mForm = FindForm(mLogo);
             if (mForm == null)
             {
-                Debug.LogWarning("[PlaytestFeedback] 未找到「" + FormName + "」。");
+                Debug.LogWarning("[PlaytestFeedback] 未找到「" + FormName + "」或「" + FormNameMoved + "」。");
                 return;
             }
 
@@ -388,6 +389,32 @@ namespace NineGrid.Presentation.Ui
                 hitSort,
                 PointerHitSurfacePriorities.Overlay,
                 hoverScale: onClick != null ? 1.08f : 1f);
+        }
+
+        private static GameObject FindForm(Transform logo)
+        {
+            if (logo == null)
+            {
+                return null;
+            }
+
+            var found = logo.Find(FormName) ?? logo.Find(FormNameMoved);
+            if (found != null)
+            {
+                return found.gameObject;
+            }
+
+            var module = logo.parent;
+            if (module != null)
+            {
+                found = module.Find(FormName) ?? module.Find(FormNameMoved);
+                if (found != null)
+                {
+                    return found.gameObject;
+                }
+            }
+
+            return null;
         }
 
         private static TMP_InputField FindInput(Transform root, string name)
