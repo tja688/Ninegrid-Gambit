@@ -15,15 +15,17 @@ using UnityEngine.SceneManagement;
 namespace NineGrid.Flow.MainMenu
 {
     /// <summary>
-    /// 主菜单动态背景：纹理 45° 匀速 wrap 滑动，并从正式接线池投放怪物 / 道具 / 场地卡主图标。
+    /// 菜单背景 / MainBG 动态底：Tiled 精灵按一格 wrap 平移（不改 UV，图案本身不变），
+    /// 主菜单再投放正式接线怪物 / 道具 / 场地卡主图标。
     /// 图标摆放复用战斗信息展示的 <see cref="BattleInfoPreviewIconPlayer"/>（卡面 mainVisual）。
-    /// 挂在 <c>Panels/MainBG</c>；选中该物体即可在 Inspector 调参。
+    /// 挂在 <c>Panels/MainBG</c> 与 <c>MainPanel/菜单背景</c>；选中该物体即可在 Inspector 调参。
     /// </summary>
     [DisallowMultipleComponent]
     [AddComponentMenu("NineGrid/Flow/Main Menu Backdrop Presenter")]
     public sealed class MainMenuBackdropPresenter : MonoBehaviour
     {
         public const string BackgroundObjectName = "MainBG";
+        public const string MenuBackgroundObjectName = "菜单背景";
         public const string RainRootName = "MainMenuIconRain";
         public const string TutorialDeckId = "deck.tutorial";
 
@@ -31,8 +33,9 @@ namespace NineGrid.Flow.MainMenu
         private const string IconSortingLayer = "UI";
         // Keep decorative rain below the normal main-menu UI orders (-6/-3/-2).
         private const int IconSortingBase = -20;
-        private static readonly int ScrollUvId = Shader.PropertyToID("_ScrollUv");
         private const float MinScale = 0.0001f;
+        // Extra tiled coverage so wrapping one tile never exposes an empty edge.
+        private const float WrapMarginTiles = 2f;
 
         [Header("场景绑定")]
         [SerializeField] private SpriteRenderer backgroundRenderer;
@@ -41,9 +44,9 @@ namespace NineGrid.Flow.MainMenu
 
         [Header("背景滑动")]
         [SerializeField] private bool scrollEnabled = true;
-        [Tooltip("世界单位/秒；沿下方角度匀速平移，按纹理一格 wrap。")]
+        [Tooltip("世界单位/秒；沿下方角度匀速平移整块 Tiled 图案，按一格 wrap。物体可见时一直滚。")]
         [SerializeField] private float scrollSpeed = 0.55f;
-        [Tooltip("0=向右，-45=右下 45°（默认）。")]
+        [Tooltip("0=向右，45=右上，-45=右下。")]
         [SerializeField] private float scrollAngleDegrees = -45f;
 
         [Header("主图标投放")]
@@ -73,9 +76,12 @@ namespace NineGrid.Flow.MainMenu
         private readonly List<MainMenuFallingIcon> _live = new List<MainMenuFallingIcon>(16);
 
         private Transform _rainRoot;
-        private MaterialPropertyBlock _scrollPropertyBlock;
-        private bool _running;
-        private Vector2 _texScrollOffset;
+        private bool _raining;
+        private bool _capturedAuthored;
+        private Vector3 _authoredLocalPos;
+        private Vector2 _authoredTiledSize;
+        private bool _authoredWasTiled;
+        private Vector2 _scrollLocal;
         private float _spawnCooldown;
         private string _lastDefId;
         private int _sortCursor;
@@ -83,34 +89,36 @@ namespace NineGrid.Flow.MainMenu
 
         public static MainMenuBackdropPresenter EnsureExists()
         {
-            if (sInstance != null)
+            var menu = EnsureOn(FindSceneObjectByName(MenuBackgroundObjectName));
+            var main = EnsureOn(FindSceneObjectByName(BackgroundObjectName));
+            sInstance = menu != null ? menu : main;
+            if (sInstance == null)
             {
-                sInstance.EnsureBindings();
-                return sInstance;
+                sInstance = FindFirstObjectByType<MainMenuBackdropPresenter>(FindObjectsInactive.Include);
+                if (sInstance != null)
+                {
+                    sInstance.EnsureBindings();
+                }
             }
 
-            var found = FindFirstObjectByType<MainMenuBackdropPresenter>(FindObjectsInactive.Include);
-            if (found != null)
-            {
-                sInstance = found;
-                found.EnsureBindings();
-                return found;
-            }
+            return sInstance;
+        }
 
-            var host = FindBackgroundObject();
+        private static MainMenuBackdropPresenter EnsureOn(GameObject host)
+        {
             if (host == null)
             {
                 return null;
             }
 
-            sInstance = host.GetComponent<MainMenuBackdropPresenter>();
-            if (sInstance == null)
+            var presenter = host.GetComponent<MainMenuBackdropPresenter>();
+            if (presenter == null)
             {
-                sInstance = host.AddComponent<MainMenuBackdropPresenter>();
+                presenter = host.AddComponent<MainMenuBackdropPresenter>();
             }
 
-            sInstance.EnsureBindings();
-            return sInstance;
+            presenter.EnsureBindings();
+            return presenter;
         }
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
@@ -130,19 +138,23 @@ namespace NineGrid.Flow.MainMenu
         {
             sInstance = this;
             EnsureBindings();
+            CaptureAuthoredIfNeeded();
+            ClearLegacyUvScroll();
         }
 
-        private void Start()
+        private void OnEnable()
         {
-            if (ShouldRunBackdrop())
-            {
-                StartBackdrop();
-            }
+            EnsureBindings();
+            CaptureAuthoredIfNeeded();
+            ClearLegacyUvScroll();
+            EnsureWrapMargin();
+            ApplyScrollTransform();
         }
 
         private void OnDestroy()
         {
-            StopBackdrop();
+            StopRain();
+            RestoreAuthoredTransform();
             if (ReferenceEquals(sInstance, this))
             {
                 sInstance = null;
@@ -151,34 +163,31 @@ namespace NineGrid.Flow.MainMenu
 
         private void OnDisable()
         {
-            StopBackdrop();
+            StopRain();
         }
 
         private void Update()
         {
-            var menu = ShouldRunBackdrop();
-            if (menu && !_running)
-            {
-                StartBackdrop();
-            }
-            else if (!menu && _running)
-            {
-                StopBackdrop();
-            }
-
-            if (!_running)
-            {
-                return;
-            }
-
             var dt = Time.unscaledDeltaTime;
-            if (dt <= 0f)
+            if (dt > 0f && scrollEnabled)
             {
-                return;
+                TickScroll(dt);
             }
 
-            TickScroll(dt);
-            TickRain(dt);
+            var wantRain = rainEnabled && ShouldRunRain();
+            if (wantRain && !_raining)
+            {
+                StartRain();
+            }
+            else if (!wantRain && _raining)
+            {
+                StopRain();
+            }
+
+            if (_raining && dt > 0f)
+            {
+                TickRain(dt);
+            }
         }
 
         public void EnsureBindings()
@@ -188,65 +197,66 @@ namespace NineGrid.Flow.MainMenu
                 backgroundRenderer = GetComponent<SpriteRenderer>();
             }
 
-            if (backgroundRenderer == null && !string.Equals(name, BackgroundObjectName, StringComparison.Ordinal))
-            {
-                var host = FindBackgroundObject();
-                if (host != null)
-                {
-                    backgroundRenderer = host.GetComponent<SpriteRenderer>();
-                }
-            }
-
             if (worldCamera == null)
             {
                 worldCamera = Camera.main;
             }
         }
 
-        private void StartBackdrop()
+        private void StartRain()
         {
             EnsureBindings();
-            _running = true;
-            _texScrollOffset = Vector2.zero;
+            _raining = true;
             _spawnCooldown = 0f;
-            ApplyScrollUv(Vector2.zero);
             RebuildPool();
             EnsureRainRoot();
-            if (rainEnabled)
-            {
-                PrewarmIcons();
-            }
+            PrewarmIcons();
         }
 
-        private void StopBackdrop()
+        private void StopRain()
         {
-            _running = false;
+            _raining = false;
             ClearLiveIcons();
-            RestoreScrollVisual();
         }
 
         private void TickScroll(float dt)
         {
-            if (!scrollEnabled || backgroundRenderer == null || backgroundRenderer.sprite == null)
+            if (backgroundRenderer == null || backgroundRenderer.sprite == null)
             {
                 return;
             }
 
-            var tileWorld = GetTileWorldSize();
-            if (tileWorld.x < MinScale || tileWorld.y < MinScale)
+            CaptureAuthoredIfNeeded();
+            var tileLocal = GetTileLocalSize();
+            if (tileLocal.x < MinScale || tileLocal.y < MinScale)
             {
                 return;
             }
 
+            EnsureWrapMargin();
+            var scale = backgroundRenderer.transform.lossyScale;
             var rad = scrollAngleDegrees * Mathf.Deg2Rad;
-            var worldDx = Mathf.Cos(rad) * scrollSpeed * dt;
-            var worldDy = Mathf.Sin(rad) * scrollSpeed * dt;
-            _texScrollOffset.x = RepeatPositive(_texScrollOffset.x + worldDx / tileWorld.x, 1f);
-            _texScrollOffset.y = RepeatPositive(_texScrollOffset.y + worldDy / tileWorld.y, 1f);
-            ApplyScrollUv(_texScrollOffset);
+            var localDx = Mathf.Cos(rad) * scrollSpeed * dt / Mathf.Max(MinScale, Mathf.Abs(scale.x));
+            var localDy = Mathf.Sin(rad) * scrollSpeed * dt / Mathf.Max(MinScale, Mathf.Abs(scale.y));
+            _scrollLocal.x = RepeatPositive(_scrollLocal.x + localDx, tileLocal.x);
+            _scrollLocal.y = RepeatPositive(_scrollLocal.y + localDy, tileLocal.y);
+            ApplyScrollTransform();
         }
 
-        private Vector2 GetTileWorldSize()
+        private void CaptureAuthoredIfNeeded()
+        {
+            if (_capturedAuthored || backgroundRenderer == null)
+            {
+                return;
+            }
+
+            _authoredLocalPos = backgroundRenderer.transform.localPosition;
+            _authoredWasTiled = backgroundRenderer.drawMode == SpriteDrawMode.Tiled;
+            _authoredTiledSize = backgroundRenderer.size;
+            _capturedAuthored = true;
+        }
+
+        private Vector2 GetTileLocalSize()
         {
             if (backgroundRenderer == null || backgroundRenderer.sprite == null)
             {
@@ -254,28 +264,65 @@ namespace NineGrid.Flow.MainMenu
             }
 
             var size = backgroundRenderer.sprite.bounds.size;
-            var scale = backgroundRenderer.transform.lossyScale;
-            return new Vector2(
-                Mathf.Abs(size.x * scale.x),
-                Mathf.Abs(size.y * scale.y));
+            return new Vector2(Mathf.Abs(size.x), Mathf.Abs(size.y));
         }
 
-        private void ApplyScrollUv(Vector2 offset)
+        private void EnsureWrapMargin()
         {
-            if (backgroundRenderer == null)
+            if (backgroundRenderer == null || !_capturedAuthored || !_authoredWasTiled)
             {
                 return;
             }
 
-            _scrollPropertyBlock ??= new MaterialPropertyBlock();
-            backgroundRenderer.GetPropertyBlock(_scrollPropertyBlock);
-            _scrollPropertyBlock.SetVector(ScrollUvId, offset);
-            backgroundRenderer.SetPropertyBlock(_scrollPropertyBlock);
+            var tile = GetTileLocalSize();
+            if (tile.x < MinScale || tile.y < MinScale)
+            {
+                return;
+            }
+
+            var need = new Vector2(
+                _authoredTiledSize.x + tile.x * WrapMarginTiles,
+                _authoredTiledSize.y + tile.y * WrapMarginTiles);
+            var current = backgroundRenderer.size;
+            if (current.x + 0.001f < need.x || current.y + 0.001f < need.y)
+            {
+                backgroundRenderer.drawMode = SpriteDrawMode.Tiled;
+                backgroundRenderer.size = need;
+            }
         }
 
-        private void RestoreScrollVisual()
+        private void ApplyScrollTransform()
         {
-            _texScrollOffset = Vector2.zero;
+            if (backgroundRenderer == null || !_capturedAuthored)
+            {
+                return;
+            }
+
+            var pos = _authoredLocalPos;
+            pos.x += _scrollLocal.x;
+            pos.y += _scrollLocal.y;
+            backgroundRenderer.transform.localPosition = pos;
+        }
+
+        private void RestoreAuthoredTransform()
+        {
+            if (!_capturedAuthored || backgroundRenderer == null)
+            {
+                return;
+            }
+
+            backgroundRenderer.transform.localPosition = _authoredLocalPos;
+            if (_authoredWasTiled)
+            {
+                backgroundRenderer.drawMode = SpriteDrawMode.Tiled;
+                backgroundRenderer.size = _authoredTiledSize;
+            }
+
+            backgroundRenderer.SetPropertyBlock(null);
+        }
+
+        private void ClearLegacyUvScroll()
+        {
             if (backgroundRenderer != null)
             {
                 backgroundRenderer.SetPropertyBlock(null);
@@ -574,14 +621,14 @@ namespace NineGrid.Flow.MainMenu
             return max.x - min.x > MinScale && max.y - min.y > MinScale;
         }
 
-        private static bool ShouldRunBackdrop()
+        private static bool ShouldRunRain()
         {
             if (!IsMainMenuShellState())
             {
                 return false;
             }
 
-            // 选人 / 加载存档 / 设置等叠层仍处 MainMenu 相位，但不应再播主菜单动态背景。
+            // 选人 / 加载存档 / 设置等叠层仍处 MainMenu 相位，图标雨暂停；纹理滚动不受此门禁。
             if (CharacterSelectPanel.IsOpen
                 || MainMenuLoadPanel.IsOpen
                 || PlayerAudioSettingsPanel.IsOpen
@@ -605,18 +652,12 @@ namespace NineGrid.Flow.MainMenu
             return shell.State.Value == GameFlowShellState.MainMenu;
         }
 
-        private static GameObject FindBackgroundObject()
+        private static GameObject FindSceneObjectByName(string objectName)
         {
-            var named = GameObject.Find(BackgroundObjectName);
-            if (named != null)
-            {
-                return named;
-            }
-
             var roots = SceneManager.GetActiveScene().GetRootGameObjects();
             for (var i = 0; i < roots.Length; i++)
             {
-                var found = FindDeep(roots[i].transform, BackgroundObjectName);
+                var found = FindDeep(roots[i].transform, objectName);
                 if (found != null)
                 {
                     return found.gameObject;
