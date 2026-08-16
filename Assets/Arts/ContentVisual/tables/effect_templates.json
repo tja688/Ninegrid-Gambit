@@ -685,7 +685,7 @@
   "design_text": "[场上]玩家卡每互动5次，烈焰机关造成的伤害再+1（可叠加）",
   "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
   "conditions_json": "[]",
-  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnInteract\",\"every\":5},\"target\":{\"atom\":\"Self\"},\"action\":{\"atom\":\"AddRuleModifier\",\"rule\":\"DamageFlatDelta\",\"op\":\"Add\",\"value\":\"{{value}}\",\"sourceAction\":\"DealDamage\",\"sourceDefId\":\"trap.flame\",\"conditionTarget\":\"None\",\"layer\":\"Persistent\",\"scope\":\"Permanent\",\"source\":\"{{source}}\"}}"
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnInteract\",\"every\":5},\"target\":{\"atom\":\"Self\"},\"action\":{\"atom\":\"AddRuleModifier\",\"rule\":\"DamageFlatDelta\",\"op\":\"Add\",\"value\":\"{{value}}\",\"sourceAction\":\"DealDamage\",\"sourceDefId\":\"trap.flame\",\"conditionTarget\":\"None\",\"layer\":\"Persistent\",\"scope\":\"UntilNodeEnds\",\"source\":\"{{source}}\"}}"
  },
  {
   "id": "tpl.skill.flame_breath.move",
