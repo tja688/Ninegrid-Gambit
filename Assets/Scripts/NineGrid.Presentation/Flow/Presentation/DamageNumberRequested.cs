@@ -14,8 +14,11 @@ namespace NineGrid.Flow.Presentation
         /// <summary>拆分模式：血量伤害（红色）。</summary>
         HpDamage,
 
-        /// <summary>拆分模式：护甲伤害（绿灰色）。</summary>
-        ArmorDamage
+        /// <summary>拆分模式：护甲伤害（绿灰色，已扣除金币代偿部分的净甲伤）。</summary>
+        ArmorDamage,
+
+        /// <summary>金币盔甲代偿（金色）：受击位置飘「金币 -N」（N = 代偿甲伤 × 每点 5 金）。</summary>
+        GoldSpend
     }
 
     /// <summary>请求在世界坐标弹出伤害数字（单向 FX，不回写规则）。</summary>

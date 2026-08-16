@@ -64,6 +64,9 @@ namespace NineGrid.Flow
         [Tooltip("拆分模式护甲伤害颜色（#5E7E74）。")]
         [SerializeField] private Color armorDamageColor = new Color(0.369f, 0.494f, 0.455f, 1f);
 
+        [Tooltip("金币盔甲代偿飘字颜色（金色，显示 -N）。")]
+        [SerializeField] private Color goldSpendColor = new Color(1f, 0.824f, 0.22f, 1f);
+
         [Tooltip("拆分飘字缩放区间上界：拆分数值普遍小于总伤害，单独收窄上界让曲线仍可触达满倍。")]
         [SerializeField] private float splitScaleToNumber = 12f;
 
@@ -108,7 +111,8 @@ namespace NineGrid.Flow
 
         private void OnDamageNumberRequested(DamageNumberRequested e)
         {
-            if (e.Amount <= 0)
+            // GoldSpend 以负数承载「-N」显示；其余种类仍要求正数。
+            if (e.Amount == 0 || (e.Amount < 0 && e.Kind != DamageNumberKind.GoldSpend))
             {
                 return;
             }
@@ -240,7 +244,9 @@ namespace NineGrid.Flow
 
         private static bool IsSplitKind(DamageNumberKind kind)
         {
-            return kind == DamageNumberKind.HpDamage || kind == DamageNumberKind.ArmorDamage;
+            return kind == DamageNumberKind.HpDamage
+                || kind == DamageNumberKind.ArmorDamage
+                || kind == DamageNumberKind.GoldSpend;
         }
 
         private Color ResolveColor(DamageNumberKind kind)
@@ -253,6 +259,8 @@ namespace NineGrid.Flow
                     return hpDamageColor;
                 case DamageNumberKind.ArmorDamage:
                     return armorDamageColor;
+                case DamageNumberKind.GoldSpend:
+                    return goldSpendColor;
                 default:
                     return damageColor;
             }

@@ -228,7 +228,10 @@ namespace NineGrid.Flow.Diagnostics
                     kind = card.Kind.ToString(),
                     atk = stats.GetEffectiveInt(card, StatId.Attack),
                     hp = stats.GetEffectiveInt(card, StatId.Hp),
-                    armor = stats.GetEffectiveInt(card, StatId.Armor),
+                    // 快照甲 = 当前护甲，与卡面 / 事件 RemainingArmor 同口径（2026-08-16 复盘）。
+                    // 有效甲单独进 effectiveArmor，不再复用 armor 字段。
+                    armor = StatArmorUtility.GetCurrentArmor(card),
+                    effectiveArmor = stats.GetEffectiveInt(card, StatId.Armor),
                 };
             }
             catch (Exception ex)
@@ -304,6 +307,12 @@ namespace NineGrid.Flow.Diagnostics
                 summary += " hp=" + e.RemainingHp + " armor=" + e.RemainingArmor;
             }
 
+            if (e.Type == CoreEventType.DamageDealt && e.GoldAbsorbedArmor > 0)
+            {
+                summary += " armorDmg=" + e.ArmorDamage
+                    + " goldAbsorbed=" + e.GoldAbsorbedArmor;
+            }
+
             if (!string.IsNullOrEmpty(e.SourceDefId) || !string.IsNullOrEmpty(e.Cause))
             {
                 summary += " source=" + e.SourceDefId + " cause=" + e.Cause;
@@ -326,6 +335,9 @@ namespace NineGrid.Flow.Diagnostics
                 delta = e.Delta,
                 remainingHp = e.RemainingHp,
                 remainingArmor = e.RemainingArmor,
+                armorDamage = e.ArmorDamage,
+                hpDamage = e.HpDamage,
+                goldAbsorbedArmor = e.GoldAbsorbedArmor,
                 sourceDefId = e.SourceDefId ?? string.Empty,
                 cause = e.Cause ?? string.Empty,
                 summary = summary,

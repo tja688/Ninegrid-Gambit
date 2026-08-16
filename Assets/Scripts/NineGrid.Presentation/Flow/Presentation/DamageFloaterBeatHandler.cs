@@ -69,17 +69,28 @@ namespace NineGrid.Flow.Presentation
 
                 if (DisplayMode == DamageFloaterDisplayMode.SplitDamage)
                 {
-                    // 拆分：血伤红字 + 甲伤绿灰字（甲吸收部分含金甲代偿；IgnoreArmor 时甲伤为 0）。
+                    // 拆分：血伤红字 + 净甲伤绿灰字 + 金币盔甲代偿金色字（代偿部分不再报成甲伤）。
+                    // ArmorDamage 是毛甲伤（含金甲代偿，ADR-0028 口径）；卡面当前甲只按净额下降，
+                    // 飘字必须与卡面同口径，否则全代偿命中会误读成「卡面漏扣甲」。
                     var hpDamage = Math.Max(0, gameEvent.HpDamage);
+                    var goldAbsorbed = Math.Max(0, gameEvent.GoldAbsorbedArmor);
                     var armorDamage = Math.Max(0, gameEvent.ArmorDamage);
+                    var netArmorDamage = Math.Max(0, armorDamage - goldAbsorbed);
                     if (hpDamage > 0)
                     {
                         DamageNumberHook.RequestSpawnHpDamage(pos.Value, hpDamage);
                     }
 
-                    if (armorDamage > 0)
+                    if (netArmorDamage > 0)
                     {
-                        DamageNumberHook.RequestSpawnArmorDamage(pos.Value, armorDamage);
+                        DamageNumberHook.RequestSpawnArmorDamage(pos.Value, netArmorDamage);
+                    }
+
+                    if (goldAbsorbed > 0)
+                    {
+                        DamageNumberHook.RequestSpawnGoldSpend(
+                            pos.Value,
+                            goldAbsorbed * DealDamageAction.GoldPerArmorAbsorbed);
                     }
                 }
                 else

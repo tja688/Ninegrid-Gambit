@@ -8,6 +8,9 @@ namespace NineGrid.Core
 {
     public sealed class DealDamageAction : GameAction
     {
+        /// <summary>金币盔甲（<see cref="RuleId.GoldArmorAbsorb"/>）代偿口径：每 1 点当前甲伤消耗 5 金币。</summary>
+        public const int GoldPerArmorAbsorbed = 5;
+
         private static readonly TriggerPoint[] sPostTriggersInEngagement =
         {
             TriggerPoint.AfterAction,
@@ -143,7 +146,7 @@ namespace NineGrid.Core
                     .WithTarget(TargetUid)
                     .WithCard(TargetUid)
                     .WithAmount(context.GetModel<PlayerModel>().Coins.Value)
-                    .WithDelta(-goldAbsorbed * 5)
+                    .WithDelta(-goldAbsorbed * GoldPerArmorAbsorbed)
                     .WithMessage("goldArmor")
                     .WithSource(SourceDefId, Cause));
             }
@@ -177,6 +180,7 @@ namespace NineGrid.Core
                 .WithAmount(damage)
                 .WithDelta(armorLoss + hpLoss)
                 .WithDamageSplit(armorDamage, hpLoss)
+                .WithGoldAbsorbedArmor(goldAbsorbed)
                 .WithRemaining(newHp, newArmor)
                 .WithSource(SourceDefId, Cause));
 
@@ -196,13 +200,13 @@ namespace NineGrid.Core
         private static int AbsorbArmorDamageWithGold(GameActionContext context, int maxArmorDamage)
         {
             var player = context.GetModel<PlayerModel>();
-            var goldToSpend = Math.Min(player.Coins.Value / 5, maxArmorDamage);
+            var goldToSpend = Math.Min(player.Coins.Value / GoldPerArmorAbsorbed, maxArmorDamage);
             if (goldToSpend <= 0)
             {
                 return 0;
             }
 
-            player.AddCoins(-goldToSpend * 5);
+            player.AddCoins(-goldToSpend * GoldPerArmorAbsorbed);
             return goldToSpend;
         }
 

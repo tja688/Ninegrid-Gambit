@@ -46,6 +46,8 @@ namespace NineGrid.Flow.Diagnostics
 
     /// <summary>
     /// 结算前门禁两侧卡牌快照。
+    /// armor = 当前护甲（CurrentArmor，与卡面 / 事件 RemainingArmor 同口径）；
+    /// effectiveArmor = 有效护甲（管线结算值，含借甲图腾等外部修正）。
     /// </summary>
     [Serializable]
     public sealed class BattleTraceCardSnap
@@ -55,11 +57,16 @@ namespace NineGrid.Flow.Diagnostics
         public string kind = string.Empty;
         public int atk;
         public int hp;
+        /// <summary>当前护甲（卡面 / RemainingArmor 同口径）。</summary>
         public int armor;
+        /// <summary>有效护甲（管线结算值，可含借甲等外部修正）。</summary>
+        public int effectiveArmor;
     }
 
     /// <summary>
     /// EventLog 切片中的一行，供 AI/回归直接读「谁打了谁、打了多少」。
+    /// DamageDealt 行的 armorDamage（毛，含金币代偿）/ hpDamage / goldAbsorbedArmor（代偿量）
+    /// 直接落字段，无需回源码拆账；remainingArmor 为该拍结算后当前甲（净）。
     /// </summary>
     [Serializable]
     public sealed class BattleTraceEventRow
@@ -74,6 +81,12 @@ namespace NineGrid.Flow.Diagnostics
         public int delta;
         public int remainingHp;
         public int remainingArmor;
+        /// <summary>仅 DamageDealt：毛甲伤（含金币代偿）。</summary>
+        public int armorDamage;
+        /// <summary>仅 DamageDealt：实际扣血伤害。</summary>
+        public int hpDamage;
+        /// <summary>仅 DamageDealt：金币盔甲代偿的甲伤量（含在 armorDamage 内）。</summary>
+        public int goldAbsorbedArmor;
         public string sourceDefId = string.Empty;
         public string cause = string.Empty;
         public string summary = string.Empty;

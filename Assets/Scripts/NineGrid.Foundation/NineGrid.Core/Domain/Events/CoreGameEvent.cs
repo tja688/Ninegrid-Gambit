@@ -43,10 +43,16 @@ namespace NineGrid.Core
         public int ResultValue { get; private set; }
         public int RemainingHp { get; private set; }
         public int RemainingArmor { get; private set; }
-        /// <summary>仅 DamageDealt：被护甲吸收的伤害（含金甲代偿部分；IgnoreArmor 时为 0）。</summary>
+        /// <summary>仅 DamageDealt：被护甲吸收的伤害（毛甲伤，含金甲代偿部分；IgnoreArmor 时为 0）。</summary>
         public int ArmorDamage { get; private set; }
         /// <summary>仅 DamageDealt：实际扣除血量的伤害（溢出部分）。</summary>
         public int HpDamage { get; private set; }
+        /// <summary>
+        /// 仅 DamageDealt：由金币盔甲等代偿的护甲伤害量（含在 <see cref="ArmorDamage"/> 内）。
+        /// 卡面/结算的「当前甲」只按 <c>ArmorDamage - GoldAbsorbedArmor</c> 净额下降，
+        /// 本字段供表现层/日志把「被代偿的甲伤」与「真实扣甲」拆账（IgnoreArmor 时为 0）。
+        /// </summary>
+        public int GoldAbsorbedArmor { get; private set; }
         public int RemovedAttack { get; private set; }
         public int RemovedArmor { get; private set; }
         public string SourceDefId { get; private set; }
@@ -104,12 +110,22 @@ namespace NineGrid.Core
         }
 
         /// <summary>
-        /// 仅 DamageDealt：写入护甲/血量伤害拆分量（甲吸收 + 溢出血伤）。
+        /// 仅 DamageDealt：写入护甲/血量伤害拆分量（毛甲吸收 + 溢出血伤）。
         /// </summary>
         public CoreGameEvent WithDamageSplit(int armorDamage, int hpDamage)
         {
             ArmorDamage = Math.Max(0, armorDamage);
             HpDamage = Math.Max(0, hpDamage);
+            return this;
+        }
+
+        /// <summary>
+        /// 仅 DamageDealt：写入金币代偿的甲伤量（含在 <see cref="ArmorDamage"/> 内，
+        /// 不影响 <see cref="ArmorDamage"/> 毛口径；无代偿 / IgnoreArmor 时为 0）。
+        /// </summary>
+        public CoreGameEvent WithGoldAbsorbedArmor(int amount)
+        {
+            GoldAbsorbedArmor = Math.Max(0, amount);
             return this;
         }
 

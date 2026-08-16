@@ -34,6 +34,18 @@ Editor 落 `Assets/Notes/Logs/`；**Development Player 落 exe 旁 `GameLogs/Log
 - **Node**：事件/op 级 `nodeIndex`（shell 整局节点 1..24 优先，回退 RunModel 层内 0..7）。
 - **Battle**：FlowTrace 事件 `refBattleOpIndex` → BattleTrace `ops[opIndex]`。
 
+## 护甲三口径（2026-08-16 复盘后统一，对卡面必读）
+
+| 口径 | 出现位置 | 含义 |
+|------|----------|------|
+| 当前护甲（CurrentArmor） | op 快照 `armor`、事件 `remainingArmor`、卡面 | **卡面 / 对账同源**。快照甲 = 该 op 结算前的当前甲，`remainingArmor` = 该拍结算后当前甲，二者可比；用它们对卡面，不许用 effectiveArmor |
+| 有效护甲 | op 快照 `effectiveArmor` | 管线结算值（含借甲图腾等外部修正）。**快照 `armor` 已不用它**；有效甲 ≠ 当前甲时是借甲类机制在生效，不是卡面 bug |
+| 毛甲伤 | 事件行 `armorDamage` | DamageDealt 的甲吸收量，**含金币代偿**（金币盔甲：每 5 金抵 1 点甲伤）。卡面甲只按 `armorDamage - goldAbsorbedArmor` 净额下降 |
+| 净甲伤 / 代偿 | 事件行 `goldAbsorbedArmor`（+ `remainingArmor`） | 代偿掉的甲伤量。全代偿时无 `ArmorChanged`、`remainingArmor` 不变，**卡面不动是对的**；伤害飘字/日志口径见下 |
+
+战斗日志行（BattleLog）同口径：有代偿时显示「甲 0 · 金币代偿 N (-N×5金)」而不是把毛甲伤写成「甲 N」。
+**「卡面甲只增不减」类报告**：先查 op 261 形态（`GoldModified delta=-20` + 无 `ArmorChanged` + `DamageDealt.goldAbsorbedArmor>0`）——那是金币代偿在正确工作，不是指令丢失。
+
 ## Rhythm 诊断轨（#206：节奏 / 翻面 / 敌方行动裁决）
 
 CoreLog（FlowTrace）`category=Rhythm`，由 `RhythmFaceFlowTraceBinder` 全互动链扫描（含拾取/点空/翻开，不只交战）：

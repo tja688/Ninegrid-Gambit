@@ -485,10 +485,24 @@ namespace NineGrid.Flow.BattleLog
             var head = Subject(e.ActorUid, target);
             var body = head + " " + BattleLogPalette.Wrap(BattleLogPalette.Damage, "-" + dealt);
 
-            var detail = new List<string>(3);
-            if (e.ArmorDamage > 0)
+            var detail = new List<string>(4);
+            // 口径对齐：ArmorDamage 是毛甲伤（含金币代偿）；卡面当前甲只按净额下降，
+            // 日志必须把代偿部分拆出来，否则全代偿命中会误读成「甲被扣了但卡面不动」。
+            var goldAbsorbed = Math.Max(0, e.GoldAbsorbedArmor);
+            var netArmorDamage = Math.Max(0, e.ArmorDamage - goldAbsorbed);
+            if (netArmorDamage > 0)
             {
-                detail.Add("甲 " + e.ArmorDamage);
+                detail.Add("甲 " + netArmorDamage);
+            }
+            else if (e.ArmorDamage > 0)
+            {
+                detail.Add("甲 0");
+            }
+
+            if (goldAbsorbed > 0)
+            {
+                detail.Add("金币代偿 " + goldAbsorbed
+                    + " (-" + goldAbsorbed * DealDamageAction.GoldPerArmorAbsorbed + "金)");
             }
 
             if (e.HpDamage > 0)

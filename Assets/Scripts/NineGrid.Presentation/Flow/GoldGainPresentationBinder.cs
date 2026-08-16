@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using NineGrid.Content.Vfx;
 using NineGrid.Core;
@@ -16,6 +17,9 @@ namespace NineGrid.Flow
     public sealed class GoldGainPresentationBinder : MonoBehaviour
     {
         private const string GoldFlightSemanticRole = "gold-flight";
+
+        /// <summary>金币盔甲代偿的 GoldModified 事件 Message 标记（CoreActions 同源）。</summary>
+        private const string GoldArmorSpendReason = "goldArmor";
 
         private static GoldGainPresentationBinder sInstance;
         private IUnRegister mEventUnRegister;
@@ -137,6 +141,12 @@ namespace NineGrid.Flow
                 var hud = PlayerInfoHudPresenter.TryGetInstance();
                 hud?.SnapGold(e.AmountAfter);
                 GoldHudDomainHost.Instance?.SnapIconToBase();
+                if (string.Equals(e.Reason, GoldArmorSpendReason, StringComparison.Ordinal)
+                    && e.OriginWorld.HasValue)
+                {
+                    PulseGoldArmorSpendFlight(e.OriginWorld.Value, Mathf.Abs(e.Delta));
+                }
+
                 RecordGoldChangedFlow(
                     FlowTraceNames.GoldSpent,
                     e.Delta,
@@ -204,6 +214,26 @@ namespace NineGrid.Flow
             }
 
             return result;
+        }
+
+        /// <summary>
+        /// 金币盔甲代偿的受击位置反馈：从受击卡到金币 HUD 的短途金币飞损脉冲（纯装饰，
+        /// 不占主线 ack；VFX 失败按既有金币表现策略降级——HUD SnapGold 已先行收敛）。
+        /// 复用 gold-flight 播放器：PositionSnapshot=受击位置，DomainHost=金币 HUD 终点。
+        /// </summary>
+        private static void PulseGoldArmorSpendFlight(Vector3 originWorld, int goldSpent)
+        {
+            var spatial = new VfxSpatialContext(
+                GoldFlightSemanticRole,
+                GoldHudDomainHost.Instance,
+                originWorld,
+                diagnosticOwnerUid: 0,
+                amount: goldSpent);
+            TriggerPulseHub.PulseVfx(
+                VfxCueRequest.Simple(
+                    GoldGainVfxCues.FlyIn,
+                    "GoldGainPresentationBinder.PulseGoldArmorSpendFlight"),
+                spatial);
         }
 
         public static void RecordGoldChangedFlow(
