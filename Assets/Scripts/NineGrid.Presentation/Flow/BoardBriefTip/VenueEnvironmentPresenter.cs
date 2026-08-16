@@ -10,10 +10,17 @@ namespace NineGrid.Flow.BoardBriefTip
 {
     /// <summary>
     /// 场地框 <c>GroundPanel </c>、<c>MainBG</c> 与 <c>GroundAnchors</c> 格面随地下城环境切换（ADR-0053 扩展）。
+    /// 运行时换色接线可由 <see cref="ApplyVenueBoardVisualTheming"/> 暂禁，场景作者值为准（ADR-0055）。
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class VenueEnvironmentPresenter : MonoBehaviour
     {
+        /// <summary>
+        /// 为 <c>false</c> 时仍轮询 <see cref="GetCurrentDungeonEnvironmentQuery"/>，但不改写
+        /// GroundPanel / MainBG / GroundAnchors 格面；卡面背景等其它虚构接线不受影响。
+        /// </summary>
+        public const bool ApplyVenueBoardVisualTheming = false;
+
         public const string GroundPanelObjectName = "GroundPanel ";
         public const string MainBackgroundObjectName = "MainBG";
         public const string GroundAnchorsObjectName = "GroundAnchors";
@@ -115,6 +122,11 @@ namespace NineGrid.Flow.BoardBriefTip
             }
 
             EnsureBindings();
+            if (!ApplyVenueBoardVisualTheming)
+            {
+                return;
+            }
+
             ApplyGroundPanel(environment.GroundPanelResourcePath);
             ApplyMainBackground(environment.MainBackgroundColorHex);
             ApplySlotTint(environment.SlotColorHex);

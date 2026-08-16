@@ -22,7 +22,10 @@
     被拉起登录窗甚至崩溃 Editor。开启后 Init 前还会先 `IsSteamRunning` 探测客户端。
   - **Development Build**（如 Build Profile「Development Windows64 Player」）：运行时
     `Debug.isDebugBuild` 判定，整体跳过 Steam 自举（**临时措施**，未上架前打包分发用）。
-    原因：Steamworks.NET 打包只拷 `steam_api64.dll`、不拷 `steam_appid.txt` 到输出目录，
+  - **Release Build 且仍为占位 AppId（480）**：桌面直发正式包（如 `game2/`）同样跳过 Steam 自举——
+    否则 `RestartAppIfNecessary` 会拉起 Steam 验证并 `Application.Quit` 秒退。注册正式 AppId 并改
+    `SteamAppIds.Current` 后，经 Steam 客户端启动的 Release Build 才走完整发行流程。
+    原因（Dev / 占位 Release 共用）：Steamworks.NET 打包只拷 `steam_api64.dll`、不拷 `steam_appid.txt` 到输出目录，
     Player 启动时 `RestartAppIfNecessary` 会拉起 Steam 登录验证并直接退出游戏。
     上架 / 需要在 Player 里实测 Steam 时再解除（届时把 `steam_appid.txt` 手动放到 exe 旁，
     或已有正式 AppId 走 Steam 启动）。

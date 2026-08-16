@@ -10,6 +10,9 @@ namespace NineGrid.Flow.Diagnostics
     /// <summary>
     /// 试玩反馈上报：登录 Fast Note Sync（须 <c>X-Client: WebGui</c>），
     /// 在协作目录下为每次 Bug / 意见各新建一篇笔记（不续写、不传 log）。
+    /// 明文 HTTP 依赖 Player Settings <c>insecureHttpOption=AlwaysAllowed</c>；
+    /// Release 包若仍是 DevelopmentOnly，<c>SendWebRequest</c> 会抛
+    /// <c>Insecure connection not allowed</c>，界面会一直停在「正在提交…」。
     /// </summary>
     public static class FnsPlaytestClient
     {
@@ -198,12 +201,22 @@ namespace NineGrid.Flow.Diagnostics
             }
 
             Debug.Log("[FnsPlaytest] POST " + url + " bytes=" + bytes.Length);
-            var op = req.SendWebRequest();
-            var elapsed = 0f;
+            UnityWebRequestAsyncOperation op;
+            try
+            {
+                op = req.SendWebRequest();
+            }
+            catch (InvalidOperationException ex)
+            {
+                req.Dispose();
+                done?.Invoke(null, MapTransportError(ex.Message));
+                yield break;
+            }
+
+            var startedAt = Time.realtimeSinceStartup;
             while (op != null && !op.isDone)
             {
-                elapsed += Time.unscaledDeltaTime;
-                if (elapsed >= 20f)
+                if (Time.realtimeSinceStartup - startedAt >= 20f)
                 {
                     req.Abort();
                     req.Dispose();
@@ -221,7 +234,7 @@ namespace NineGrid.Flow.Diagnostics
                     + " err=" + req.error + " bodyChars=" + (text != null ? text.Length : 0));
                 if (req.result != UnityWebRequest.Result.Success && string.IsNullOrEmpty(text))
                 {
-                    done?.Invoke(null, "网络错误：" + req.error);
+                    done?.Invoke(null, MapTransportError(req.error));
                     yield break;
                 }
 
@@ -307,6 +320,17 @@ namespace NineGrid.Flow.Diagnostics
             }
 
             return string.IsNullOrEmpty(body) ? "未知错误" : body;
+        }
+
+        private static string MapTransportError(string raw)
+        {
+            if (!string.IsNullOrEmpty(raw)
+                && raw.IndexOf("Insecure", StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                return "正式包禁止明文 HTTP，笔记提交被拦截。";
+            }
+
+            return "网络错误：" + (string.IsNullOrEmpty(raw) ? "未知错误" : raw);
         }
 
         private static string JsonEscape(string raw)

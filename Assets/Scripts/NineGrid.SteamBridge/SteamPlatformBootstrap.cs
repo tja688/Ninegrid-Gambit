@@ -20,8 +20,8 @@ namespace NineGrid.SteamBridge
     /// 游戏行为与无 Steam 完全一致（本地存档照常）。
     /// Editor 下默认**不**初始化：须本机显式开启（EditorPrefs 开关 <c>EditorSteamEnabled</c>，
     /// 菜单 NineGrid/Steam/在本机 Editor 启用 Steam），避免未跑 Steam 的开发机进 Play 时
-    /// 被拉起登录窗甚至崩溃。Development Build 的 Player 也整体跳过（临时措施，未上架前
-    /// 打包分发不触发 Steam 登录验证）；仅正式（非 Development）Build 走完整发行流程。
+    /// 被拉起登录窗甚至崩溃。未上架 Steam 前（Development Build 或占位 AppId 的 Release 直发包）
+    /// 整体跳过 Steam 自举，避免 RestartAppIfNecessary 秒退；注册正式 AppId 后 Release 经 Steam 启动走完整发行流程。
     /// </summary>
     public static class SteamPlatformBootstrap
     {
@@ -66,13 +66,15 @@ namespace NineGrid.SteamBridge
             }
 #endif
 
-            // 临时措施（未上架 Steam 前）：Development Build 的 Player 完全跳过 Steam 自举。
-            // Steamworks.NET 打包时不拷 steam_appid.txt 到输出目录，RestartAppIfNecessary
-            // 会拉起 Steam 登录验证并退出游戏。正式（非 Development）Build 保持发行流程不变；
-            // 上架时按 docs/steam/README.md 清单处理。
-            if (!Application.isEditor && Debug.isDebugBuild)
+            // 临时措施（未上架 Steam 前）：Development Build 或仍为占位 AppId 的 Release 直发包
+            // 均跳过 Steam 自举。Steamworks.NET 打包不拷 steam_appid.txt 到输出目录，
+            // RestartAppIfNecessary 会拉起 Steam 登录验证并 Application.Quit 秒退。
+            // 注册正式 AppId 并改 Current 后，仅经 Steam 客户端启动的 Release Build 走完整发行流程。
+            if (!Application.isEditor && ShouldSkipSteamForPreLaunchDistribution())
             {
-                Debug.Log("[Steam] Development Build 跳过 Steam 初始化（临时措施，详见 docs/steam/README.md）。");
+                Debug.Log("[Steam] 未上架 Steam 前的 Player 跳过 Steam 初始化（"
+                    + (Debug.isDebugBuild ? "Development Build" : "占位 AppId")
+                    + "；详见 docs/steam/README.md）。");
                 return;
             }
 
@@ -154,6 +156,11 @@ namespace NineGrid.SteamBridge
             }
 
             SteamAPI.Shutdown();
+        }
+
+        private static bool ShouldSkipSteamForPreLaunchDistribution()
+        {
+            return Debug.isDebugBuild || SteamAppIds.IsPreLaunchPlaceholder;
         }
 #endif
     }

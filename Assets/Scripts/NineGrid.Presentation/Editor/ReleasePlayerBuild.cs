@@ -16,6 +16,8 @@ namespace NineGrid.Presentation.Editor
     public static class ReleasePlayerBuild
     {
         private const string StatusFile = "Temp/ninegrid_release_player_build_status.json";
+        private const string DesktopReleasePlayerFolderName = "game2";
+        private const string DesktopReleasePlayerExeName = "Ninegrid Gambit.exe";
 
         private static bool sPending;
         private static bool sBuilding;
@@ -36,6 +38,24 @@ namespace NineGrid.Presentation.Editor
                 "Builds/ReleaseWin64/NinegridGambit.exe",
                 cleanCache: true);
             Debug.Log("[ReleasePlayerBuild] " + result);
+        }
+
+        [MenuItem("NineGrid/Build/Release Windows64 Player (Desktop/game2)")]
+        public static void BuildReleaseWindows64ToDesktopGame2FromMenu()
+        {
+            var result = QueueReleaseWindows64(
+                GetDesktopGame2OutputPath(),
+                cleanCache: true);
+            Debug.Log("[ReleasePlayerBuild] " + result);
+        }
+
+        /// <summary>
+        /// 桌面 Release 包输出路径：<c>Desktop/game2/Ninegrid Gambit.exe</c>（非 Development，无 Debug Console / F9 画面实验室 / F12 作弊面板）。
+        /// </summary>
+        public static string GetDesktopGame2OutputPath()
+        {
+            var desktop = Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory);
+            return Path.Combine(desktop, DesktopReleasePlayerFolderName, DesktopReleasePlayerExeName);
         }
 
         /// <summary>

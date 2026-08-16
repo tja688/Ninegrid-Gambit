@@ -31,6 +31,14 @@ unity command eval "return NineGrid.Presentation.Editor.DevPlayerBuild.QueueDeve
 
 **备选**：`--options '["Development","CleanBuildCache","AllowDebugging","DetailedBuildReport"]'`（须为 JSON 数组字符串）。
 
+## Release Player 打包
+
+`NineGrid/Build/Release Windows64 Player` 菜单，或桌面正式版 `NineGrid/Build/Release Windows64 Player (Desktop/game2)`：
+
+```bash
+unity command eval "return NineGrid.Presentation.Editor.ReleasePlayerBuild.QueueReleaseWindows64(NineGrid.Presentation.Editor.ReleasePlayerBuild.GetDesktopGame2OutputPath(), true);" --project-path "<repo>" --format json
+```
+
 ## 参考
 
 - `Library/PackageCache/com.unity.pipeline@*/Documentation~/index.md`

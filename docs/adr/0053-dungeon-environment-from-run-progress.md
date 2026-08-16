@@ -24,7 +24,7 @@ status: accepted
 - `scripts/set-monster-face-backgrounds.py` 按 deck 批量写 `faceBackground` **已废弃**；怪物 JSON 断链背景应清空而非误导。
 - 楼层提示 / 战前信息预览须读 Query 或 Catalog，不得硬编码罗马数字楼层。
 - 读档快照 `RunSaveSnapshot.difficultyId` 与跨关 `RunInventorySnapshot` 须保留难度，避免 Bootstrap 重置后环境/数值回退。
-- GroundPanel / MainBG / GroundAnchors 格面由同一 Query 驱动（表字段 `groundPanel` / `mainBackgroundHex` / `slotHex`）；作者在 `NineGrid/表现层配置` 侧栏 **地下城虚构** 换图换色，保存双写 JSON。氛围底取环境色族偏暗一档（不用近黑中性色），格面取同族更亮的填充色，让九宫白框 tint 跟着环境走。
+- GroundPanel / MainBG / GroundAnchors 格面由同一 Query 驱动（表字段 `groundPanel` / `mainBackgroundHex` / `slotHex`）；作者在 `NineGrid/表现层配置` 侧栏 **地下城虚构** 换图换色，保存双写 JSON。氛围底取环境色族偏暗一档（不用近黑中性色），格面取同族更亮的填充色，让九宫白框 tint 跟着环境走。**暂禁**：运行时接线已断开，场景静态配色为准，见 [ADR-0055](0055-venue-board-visuals-static-fallback.md)。
 - 缺表或未命中行时 `DungeonEnvironmentCatalog` 回退烘焙默认，不崩。
 
 ## 相关

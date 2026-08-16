@@ -34,7 +34,7 @@
 | 类型 | 文件 | 一句话职责 |
 |-----|------|-----------|
 | `DevPlayerBuild` | `Editor/DevPlayerBuild.cs` | Development Win64 打包（菜单两条：`Builds/DevWin64/` 与桌面 `game1/`，后者含 F12 作弊面板）；异步队列 + `Temp/ninegrid_dev_player_build_status.json` 状态轮询——绕过 Pipeline `build --options` string[] 绑定失效（CLI 传 Development 到不了服务端） |
-| `ReleasePlayerBuild` | `Editor/ReleasePlayerBuild.cs` | Release（非 Development）Win64 打包镜像（#142 终验：验证 Release 无 QuickTest 入口、无 DevTest Missing Script——`#if DEVELOPMENT_BUILD` 组件被剥掉） |
+| `ReleasePlayerBuild` | `Editor/ReleasePlayerBuild.cs` | Release（非 Development）Win64 打包（菜单两条：`Builds/ReleaseWin64/` 与桌面 `game2/` 正式版——无 Debug Console、无 F9 画面实验室、无 F12 作弊；#142 终验：`#if DEVELOPMENT_BUILD` 组件被剥掉）；异步队列 + `Temp/ninegrid_release_player_build_status.json` |
 | `FeelTransitionSceneInstall` | `Editor/FeelTransitionSceneInstall.cs` | 一次性/可重入：MainScene 装配 Feel `MMFaderRound`+`Directional` 过场 Canvas + 创建 `Resources/Transitions/RunSceneTransition.asset`（菜单 `NineGrid/Setup/Install Run Scene Transitions`） |
 | `SmileySansSdfCharsetBaker` | `Editor/SmileySansSdfCharsetBaker.cs` | SmileySans SDF 原地补字（7000 汉字字符集，不换 GUID 不重绑场景）：开 Multi Atlas、`TryAddCharacters`、关 Clear Dynamic Data On Build（菜单 `NineGrid/Fonts/…`；供 CLI eval） |
 | `UiStrokeThickenBatch` | `Editor/UiStrokeThickenBatch.cs` | Fantasy UI 包素材 9-slice 描边加粗批处理（localScale×2 + Sprite size÷2 保持世界尺寸，同步 collider/子节点/文字缩放；`__UiStroke2x` 标记防重复；支持 Dry Run；作用于 MainScene + 5 个指定预制体） |
