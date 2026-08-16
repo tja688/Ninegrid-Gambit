@@ -1,7 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Threading;
-using Cysharp.Threading.Tasks;
 using NineGrid.Cards;
 using NineGrid.Core;
 using NineGrid.Core.Content;
@@ -18,7 +16,8 @@ namespace NineGrid.Flow.RoomIcons
     /// 在场地空格位弹出该房开局注入的候选真卡——属性房 3 张属性道具卡、金币/宝箱/恢复房固定卡、
     /// 困难房 2 张怪物卡（序列 3/4 代表）、层主房 Boss 卡。
     /// 落格复用牌店二级候选的 <see cref="InRoomOfferSlotPlanner"/> 动态避让（避开 Avatar、全部图标格，
-    /// 并保留 Avatar→被悬停图标的空路）；入场走 <see cref="InRoomShelfAnimation.DropInToSlotAsync"/>。
+    /// 并保留 Avatar→被悬停图标的空路）；半虚化（<see cref="PreviewAlpha"/>）区分预览，无入场动画，
+    /// 悬停即现、移开即撤。
     /// 纯表现投影：不写 BoardModel、不注册 RoomIconOccupancy、不接点击。
     /// </summary>
     public sealed class RoomIconHoverPreviewPresenter
@@ -27,12 +26,14 @@ namespace NineGrid.Flow.RoomIcons
 
         public const int DefaultAvatarSlot = 5;
 
+        /// <summary>预览半虚化 alpha（区别于实卡与手牌弱化 0.45）。</summary>
+        public const float PreviewAlpha = 0.55f;
+
         /// <summary>预览卡偏好落格（与牌店候选同源 #93）。</summary>
         public static readonly int[] PreferredSlots = { 1, 3, 4, 6, 7, 9 };
 
         private readonly List<ManagedCard> mPreviewCards = new List<ManagedCard>(4);
         private readonly List<int> mPreviewSlots = new List<int>(4);
-        private CancellationTokenSource mAnimCts;
         private IArchitecture mArch;
 
         /// <summary>当前预览真卡（表现权威只读投影，供房内装饰层聚合）。</summary>
@@ -99,12 +100,6 @@ namespace NineGrid.Flow.RoomIcons
                 return;
             }
 
-            mAnimCts?.Cancel();
-            mAnimCts?.Dispose();
-            mAnimCts = new CancellationTokenSource();
-            var ct = mAnimCts.Token;
-            var animTasks = new List<UniTask>(defIds.Count);
-
             for (var i = 0; i < defIds.Count; i++)
             {
                 var slot = slots[i];
@@ -139,24 +134,21 @@ namespace NineGrid.Flow.RoomIcons
 
                 managed.View.transform.rotation = Quaternion.identity;
                 CoreCardPresentationMapper.ApplyVisualsByDefId(managed, kind);
+                var anchor = geometry.GetGroundAnchor(slot);
+                if (anchor != null)
+                {
+                    managed.Transform.position = anchor.position;
+                }
+
+                CardOpacityUtility.SetAlpha(managed, PreviewAlpha);
                 mPreviewCards.Add(managed);
                 mPreviewSlots.Add(slot);
-                animTasks.Add(InRoomShelfAnimation.DropInToSlotAsync(managed, geometry, slot, ct));
-            }
-
-            if (animTasks.Count > 0)
-            {
-                UniTask.WhenAll(animTasks).Forget();
             }
         }
 
-        /// <summary>撤预览：释放全部预览卡并取消入场动画。</summary>
+        /// <summary>撤预览：恢复 alpha 并释放全部预览卡（无退场动画）。</summary>
         public void Hide()
         {
-            mAnimCts?.Cancel();
-            mAnimCts?.Dispose();
-            mAnimCts = null;
-
             var cards = CardEntityLifecycleHook.CardsOrNull()
                         ?? UnityEngine.Object.FindFirstObjectByType<CardManagerSingleton>();
             for (var i = 0; i < mPreviewCards.Count; i++)
@@ -167,6 +159,7 @@ namespace NineGrid.Flow.RoomIcons
                     continue;
                 }
 
+                CardOpacityUtility.ClearCache(card.Uid);
                 cards?.Release(card, "RoomIconHoverPreview.Hide");
             }
 
