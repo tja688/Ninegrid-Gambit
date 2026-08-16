@@ -36,7 +36,12 @@
     "briefTip.go_up": "Back to previous floor",
     "briefTip.cancel_select": "Cancel",
     "briefTip.refresh_shelf": "Restock",
-    "briefTip.opening_inject": "{0}: {1} opening injects",
+    "briefTip.room_attribute": "Attribute Room: at battle start, pick 2 of 3 attribute item cards (may repeat) into your deck",
+    "briefTip.room_gold": "Gold Room: at battle start, add 1 gold card to your deck",
+    "briefTip.room_treasure": "Treasure Room: at battle start, add 1 treasure chest card to your deck",
+    "briefTip.room_fountain": "Fountain Room: at battle start, add 1 food card to your deck",
+    "briefTip.room_elite": "At battle start, pick 2 random special item cards into your deck, and 2 strong monsters into the enemy deck",
+    "briefTip.room_boss": "Ready for the challenge?",
     "briefTip.price_gold": "{0} Gold",
 
     "floor.level": "Floor {0}",

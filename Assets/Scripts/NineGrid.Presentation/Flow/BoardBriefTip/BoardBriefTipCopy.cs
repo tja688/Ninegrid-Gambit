@@ -19,6 +19,10 @@ namespace NineGrid.Flow.BoardBriefTip
         public static string AttributePickCompleteNotice =>
             L10n.Tr("notice.attribute_pick_complete", "已选择 2 张属性卡");
 
+        /// <summary>
+        /// 场地图标悬停文案：按房间类型输出「特色产物」描述（策划房间.md 口径，ADR-0020）。
+        /// 困难房描述较长不带房名前缀；层主房用口号；无专属文案回退显示名。
+        /// </summary>
         public static string ForRoom(RoomDefinition room)
         {
             if (room == null || string.IsNullOrWhiteSpace(room.DisplayName))
@@ -26,15 +30,33 @@ namespace NineGrid.Flow.BoardBriefTip
                 return string.Empty;
             }
 
-            if (room.OpeningInjects != null && room.OpeningInjects.Count > 0)
+            switch (room.Kind)
             {
-                return string.Format(
-                    L10n.Tr("briefTip.opening_inject", "{0}：开局注入 {1} 项"),
-                    room.DisplayName,
-                    room.OpeningInjects.Count);
+                case RoomKind.Attribute:
+                    return L10n.Tr(
+                        "briefTip.room_attribute",
+                        "属性房：关卡开始时，从3张属性相关道具卡中选择2张（可重复）加入玩家侧卡组");
+                case RoomKind.Gold:
+                    return L10n.Tr(
+                        "briefTip.room_gold",
+                        "金币房：关卡开始时，将1张金币卡加入玩家侧卡组");
+                case RoomKind.Treasure:
+                    return L10n.Tr(
+                        "briefTip.room_treasure",
+                        "宝箱房：关卡开始时，将1张宝箱卡加入玩家侧卡组");
+                case RoomKind.Fountain:
+                    return L10n.Tr(
+                        "briefTip.room_fountain",
+                        "恢复房：关卡开始时，将1张食品卡加入玩家侧卡组");
+                case RoomKind.Elite:
+                    return L10n.Tr(
+                        "briefTip.room_elite",
+                        "关卡开始时，从特殊道具卡中随机选择2张加入玩家侧卡组，将两张强力怪物加入怪物侧卡组");
+                case RoomKind.Boss:
+                    return L10n.Tr("briefTip.room_boss", "准备迎接挑战了吗？");
+                default:
+                    return room.DisplayName;
             }
-
-            return room.DisplayName;
         }
 
         public static string ForNavigation(NavigationKind kind)

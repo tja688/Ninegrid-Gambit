@@ -17,6 +17,7 @@ namespace NineGrid.Flow.InRoomBoard
         /// <summary>
         /// 为 <paramref name="count"/> 个条目分配落格；每项优先 <paramref name="preferredPerIndex"/>[i]，
         /// 冲突时从 <paramref name="fallbackPool"/> 选取，并校验 Avatar→Leave 的 PreferEmpty 通路。
+        /// <paramref name="excludedSlots"/> 为绝对禁区（如悬停预览不可覆盖的图标/站位格）。
         /// </summary>
         public static int[] Plan(
             BoardModel board,
@@ -26,7 +27,8 @@ namespace NineGrid.Flow.InRoomBoard
             IReadOnlyList<int> fallbackPool,
             int leaveSlot = DefaultLeaveSlot,
             int refreshSlot = DefaultRefreshSlot,
-            bool reserveRefresh = true)
+            bool reserveRefresh = true,
+            IReadOnlyCollection<int> excludedSlots = null)
         {
             if (count <= 0)
             {
@@ -52,7 +54,8 @@ namespace NineGrid.Flow.InRoomBoard
                     refreshSlot,
                     used,
                     preferred,
-                    fallbackPool);
+                    fallbackPool,
+                    excludedSlots);
                 result[i] = slot;
                 if (slot > 0)
                 {
@@ -72,7 +75,8 @@ namespace NineGrid.Flow.InRoomBoard
             IReadOnlyCollection<int> alreadyUsed,
             int leaveSlot = DefaultLeaveSlot,
             int refreshSlot = DefaultRefreshSlot,
-            bool reserveRefresh = true)
+            bool reserveRefresh = true,
+            IReadOnlyCollection<int> excludedSlots = null)
         {
             var used = new HashSet<int>(alreadyUsed ?? new int[0]);
             used.Add(leaveSlot);
@@ -81,7 +85,15 @@ namespace NineGrid.Flow.InRoomBoard
                 used.Add(refreshSlot);
             }
 
-            return PickSlot(board, avatarSlot, leaveSlot, refreshSlot, used, preferredSlot, fallbackPool);
+            return PickSlot(
+                board,
+                avatarSlot,
+                leaveSlot,
+                refreshSlot,
+                used,
+                preferredSlot,
+                fallbackPool,
+                excludedSlots);
         }
 
         private static int PickSlot(
@@ -91,22 +103,23 @@ namespace NineGrid.Flow.InRoomBoard
             int refreshSlot,
             HashSet<int> used,
             int preferred,
-            IReadOnlyList<int> fallbackPool)
+            IReadOnlyList<int> fallbackPool,
+            IReadOnlyCollection<int> excludedSlots = null)
         {
             var candidates = new List<int>(8);
-            TryAddCandidate(candidates, preferred, avatarSlot, leaveSlot, refreshSlot, used);
+            TryAddCandidate(candidates, preferred, avatarSlot, leaveSlot, refreshSlot, used, excludedSlots);
 
             if (fallbackPool != null)
             {
                 for (var i = 0; i < fallbackPool.Count; i++)
                 {
-                    TryAddCandidate(candidates, fallbackPool[i], avatarSlot, leaveSlot, refreshSlot, used);
+                    TryAddCandidate(candidates, fallbackPool[i], avatarSlot, leaveSlot, refreshSlot, used, excludedSlots);
                 }
             }
 
             for (var s = SlotId.MinBoardIndex; s <= SlotId.MaxBoardIndex; s++)
             {
-                TryAddCandidate(candidates, s, avatarSlot, leaveSlot, refreshSlot, used);
+                TryAddCandidate(candidates, s, avatarSlot, leaveSlot, refreshSlot, used, excludedSlots);
             }
 
             for (var i = 0; i < candidates.Count; i++)
@@ -129,7 +142,8 @@ namespace NineGrid.Flow.InRoomBoard
             int avatarSlot,
             int leaveSlot,
             int refreshSlot,
-            HashSet<int> used)
+            HashSet<int> used,
+            IReadOnlyCollection<int> excludedSlots)
         {
             if (slot < SlotId.MinBoardIndex || slot > SlotId.MaxBoardIndex)
             {
@@ -137,6 +151,11 @@ namespace NineGrid.Flow.InRoomBoard
             }
 
             if (slot == avatarSlot || slot == leaveSlot || slot == refreshSlot || used.Contains(slot))
+            {
+                return;
+            }
+
+            if (IsExcluded(excludedSlots, slot))
             {
                 return;
             }
@@ -150,6 +169,24 @@ namespace NineGrid.Flow.InRoomBoard
             }
 
             candidates.Add(slot);
+        }
+
+        private static bool IsExcluded(IReadOnlyCollection<int> excludedSlots, int slot)
+        {
+            if (excludedSlots == null)
+            {
+                return false;
+            }
+
+            foreach (var excluded in excludedSlots)
+            {
+                if (excluded == slot)
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         private static bool IsPlacementValid(

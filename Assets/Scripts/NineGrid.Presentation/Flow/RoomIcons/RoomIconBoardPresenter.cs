@@ -57,6 +57,7 @@ namespace NineGrid.Flow.RoomIcons
         {
             CancelDwellWatch();
             mDwell.Cancel();
+            RoomIconHoverPreviewPresenter.Current.Hide();
             for (var i = 0; i < mSpawned.Count; i++)
             {
                 if (mSpawned[i] != null)
@@ -422,7 +423,12 @@ namespace NineGrid.Flow.RoomIcons
                 proxy = go.AddComponent<BoardBriefTipHitProxy>();
             }
 
-            proxy.Configure(tip, walkBoardSlot);
+            // 悬停：文字框描述 + 场地空格位弹「特色产物」候选真卡（避开 Avatar/图标格）。
+            proxy.Configure(
+                tip,
+                walkBoardSlot,
+                () => RoomIconHoverPreviewPresenter.Current.Show(contentId, arch, walkBoardSlot),
+                () => RoomIconHoverPreviewPresenter.Current.Hide());
         }
 
         private static RoomDefinition ResolveRoomDefinition(IArchitecture arch, RoomKind kind)

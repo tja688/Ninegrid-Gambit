@@ -1,3 +1,4 @@
+using System;
 using NineGrid.Cards;
 using NineGrid.Core;
 using NineGrid.Flow;
@@ -33,6 +34,15 @@ namespace NineGrid.Flow.BoardBriefTip
 
         public void Configure(string tip, int walkBoardSlot)
         {
+            Configure(tip, walkBoardSlot, hoverEnter: null, hoverExit: null);
+        }
+
+        /// <summary>
+        /// 悬停附加反馈：<paramref name="hoverEnter"/> / <paramref name="hoverExit"/> 随格位认领生效
+        /// （场地图标悬停弹「特色产物」预览用，ADR-0023）。
+        /// </summary>
+        public void Configure(string tip, int walkBoardSlot, Action hoverEnter, Action hoverExit)
+        {
             TipText = tip;
             mWalkBoardSlot = walkBoardSlot;
 
@@ -49,7 +59,7 @@ namespace NineGrid.Flow.BoardBriefTip
                 return;
             }
 
-            var claimant = new SlotClaimant(this, tipText, ActivateWalk);
+            var claimant = new SlotClaimant(this, tipText, ActivateWalk, hoverEnter, hoverExit);
             field.TryClaimSlot(mWalkBoardSlot, claimant);
         }
 
