@@ -6,8 +6,9 @@
     "role": "Utility",
     "displayName": "旋转之源",
     "designSlotName": "",
-    "description": "每击杀{relic.rotation_trick.remove.threshold}张怪物卡，添加{relic.rotation_trick.remove.count}张旋转轮到卡组",
-    "faceIntro": "转久了会觉得世界本来就是歪的",    "attackPattern": "",
+    "description": "[attack]+{relic.rotation_trick.attack.value}，每击杀{relic.rotation_trick.remove.threshold}张怪物卡，添加{relic.rotation_trick.remove.count}张旋转轮到卡组",
+    "faceIntro": "转久了会觉得世界本来就是歪的",
+    "attackPattern": "",
     "rhythmSource": "",
     "rhythmPeriod": 0,
     "gold": 0,
@@ -79,10 +80,16 @@
     ],
     "effectAssemblies": [
         {
+            "id": "relic.rotation_trick.attack",
+            "templateId": "tpl.relic.wood_sword.base",
+            "containerType": "Relic",
+            "argsJson": "{\"value\":1}"
+        },
+        {
             "id": "relic.rotation_trick.remove",
             "templateId": "tpl.relic.rotation_trick.remove",
             "containerType": "Relic",
-            "argsJson": "{\"count\":1,\"threshold\":6,\"projectKey\":\"relic.rotation_trick.remove.threshold\"}"
+            "argsJson": "{\"count\":1,\"threshold\":5,\"projectKey\":\"relic.rotation_trick.remove.threshold\"}"
         }
     ],
     "effectIds": [],

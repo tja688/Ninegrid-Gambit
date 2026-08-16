@@ -14,7 +14,7 @@
         "hp": 4,
         "armor": 0,
         "attack": 1,
-        "action": 5,
+        "action": 4,
         "recovery": 0
     },
     "sprites": {
@@ -92,5 +92,5 @@
     "iconPrefab": "",
     "boardSlot": 0,
     "rhythmSource": "行动计数",
-    "rhythmPeriod": 5
+    "rhythmPeriod": 4
 }

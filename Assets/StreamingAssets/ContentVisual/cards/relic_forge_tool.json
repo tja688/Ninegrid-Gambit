@@ -88,7 +88,7 @@
             "id": "relic.forge_tool.node_start",
             "templateId": "tpl.relic.forge_tool.node_start",
             "containerType": "Relic",
-            "argsJson": "{\"threshold\":5,\"amount\":5,\"delta\":1,\"cause\":\"relic.forge_tool\"}"
+            "argsJson": "{\"threshold\":2,\"amount\":2,\"delta\":1,\"cause\":\"relic.forge_tool\"}"
         }
     ],
     "effectIds": [],

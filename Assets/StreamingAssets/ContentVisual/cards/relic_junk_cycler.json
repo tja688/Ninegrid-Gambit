@@ -7,7 +7,8 @@
     "displayName": "回收手链",
     "designSlotName": "",
     "description": "每使用{relic.junk_cycler.use.threshold}张道具卡，添加{relic.junk_cycler.use.count}张道具卡到卡组",
-    "faceIntro": "环保！",    "attackPattern": "",
+    "faceIntro": "环保！",
+    "attackPattern": "",
     "rhythmSource": "",
     "rhythmPeriod": 0,
     "gold": 0,
@@ -82,7 +83,7 @@
             "id": "relic.junk_cycler.use",
             "templateId": "tpl.relic.junk_cycler.use",
             "containerType": "Relic",
-            "argsJson": "{\"count\":1,\"threshold\":9,\"projectKey\":\"relic.junk_cycler.use.threshold\"}"
+            "argsJson": "{\"count\":1,\"threshold\":6,\"projectKey\":\"relic.junk_cycler.use.threshold\"}"
         }
     ],
     "effectIds": [],

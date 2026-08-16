@@ -6,7 +6,7 @@
     "role": "Utility",
     "displayName": "交换之书",
     "designSlotName": "",
-    "description": "进入战斗时将{relic.swap_button.node_start.count}张交换置入手牌",
+    "description": "[attack]+{relic.swap_button.attack.value}，进入战斗时将{relic.swap_button.node_start.count}张交换置入手牌",
     "faceIntro": "为他人着想！",    "attackPattern": "",
     "rhythmSource": "",
     "rhythmPeriod": 0,
@@ -78,6 +78,12 @@
         "tag.special"
     ],
     "effectAssemblies": [
+        {
+            "id": "relic.swap_button.attack",
+            "templateId": "tpl.relic.wood_sword.base",
+            "containerType": "Relic",
+            "argsJson": "{\"value\":1}"
+        },
         {
             "id": "relic.swap_button.node_start",
             "templateId": "tpl.relic.swap_button.node_start",

@@ -13,7 +13,7 @@
         "hp": 12,
         "armor": 0,
         "attack": 2,
-        "action": 5,
+        "action": 3,
         "recovery": 0
     },
     "sprites": {
@@ -92,5 +92,5 @@
     "sequence": 3,
     "designSlotName": "特5",
     "rhythmSource": "行动计数",
-    "rhythmPeriod": 5
+    "rhythmPeriod": 3
 }

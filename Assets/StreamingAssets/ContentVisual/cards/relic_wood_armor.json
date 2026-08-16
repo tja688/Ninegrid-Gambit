@@ -7,7 +7,8 @@
     "displayName": "木甲",
     "designSlotName": "",
     "description": "[MHP]+{relic.wood_armor.base.value}，木质套装：[MHP]额外+{relic.wood_armor.set.value}",
-    "faceIntro": "木匠坚持认为这不是他的作品",    "attackPattern": "",
+    "faceIntro": "木匠坚持认为这不是他的作品",
+    "attackPattern": "",
     "rhythmSource": "",
     "rhythmPeriod": 0,
     "gold": 0,
@@ -82,7 +83,7 @@
             "id": "relic.wood_armor.base",
             "templateId": "tpl.relic.wood_armor.base",
             "containerType": "Relic",
-            "argsJson": "{\"value\":2}"
+            "argsJson": "{\"value\":4}"
         },
         {
             "id": "relic.wood_armor.set",

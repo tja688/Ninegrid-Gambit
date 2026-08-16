@@ -5,22 +5,23 @@
     "deckId": "deck.stone_legion",
     "role": "",
     "displayName": "蓝焰",
-    "designSlotName": "",
+    "designSlotName": "近战6",
     "description": "[[献火]]",
-    "faceIntro": "烈焰一族的中坚力量",    "attackPattern": "普通近战",
+    "faceIntro": "烈焰一族的中坚力量",
+    "attackPattern": "普通近战",
     "rhythmSource": "行动计数",
-    "rhythmPeriod": 5,
+    "rhythmPeriod": 4,
     "gold": 5,
     "stats": {
         "hp": 4,
         "armor": 0,
         "attack": 1,
-        "action": 5,
+        "action": 4,
         "recovery": 0
     },
     "sprites": {
         "mainIcon": "Assets/Resources/ContentArt/Multiple/pixel_art_card_pack 1.png",
-        "faceBackground": "Assets/Resources/ContentArt/Png/Other/\u5ca9\u5c42_\u7194\u5ca9\u4e4b\u5730.png",
+        "faceBackground": "Assets/Resources/ContentArt/Png/Other/岩层_熔岩之地.png",
         "cardFrame": "",
         "banner": "",
         "backBorder": "",
@@ -29,7 +30,7 @@
     },
     "mainVisual": {
         "offsetX": 0.0,
-        "offsetY": -0.30000001192092898,
+        "offsetY": -0.30000001192092896,
         "uniformScale": 0.800000011920929
     },
     "animations": {

@@ -5,9 +5,10 @@
     "deckId": "deck.smallanimal",
     "role": "",
     "displayName": "火把哥布",
-    "designSlotName": "",
+    "designSlotName": "特9",
     "description": "[[天涯若比邻]]",
-    "faceIntro": "主要起到照明作用",    "attackPattern": "普通近战",
+    "faceIntro": "主要起到照明作用",
+    "attackPattern": "普通近战",
     "rhythmSource": "行动计数",
     "rhythmPeriod": 5,
     "gold": 5,
@@ -29,7 +30,7 @@
     },
     "mainVisual": {
         "offsetX": 0.0,
-        "offsetY": -0.17000000178813935,
+        "offsetY": -0.17000000178813934,
         "uniformScale": 1.0
     },
     "animations": {

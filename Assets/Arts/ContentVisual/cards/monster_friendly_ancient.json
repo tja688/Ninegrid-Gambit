@@ -10,10 +10,10 @@
     "attackPattern": "普通近战",
     "gold": 5,
     "stats": {
-        "hp": 18,
+        "hp": 12,
         "armor": 5,
-        "attack": 2,
-        "action": 5,
+        "attack": 1,
+        "action": 6,
         "recovery": 0
     },
     "sprites": {
@@ -92,5 +92,5 @@
     "sequence": 3,
     "designSlotName": "特1",
     "rhythmSource": "行动计数",
-    "rhythmPeriod": 5
+    "rhythmPeriod": 6
 }

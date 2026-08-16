@@ -89,7 +89,7 @@
             "id": "relic.blood_cycle.taken",
             "templateId": "tpl.relic.blood_cycle.taken",
             "containerType": "Relic",
-            "argsJson": "{\"amount\":2}"
+            "argsJson": "{\"amount\":1}"
         }
     ],
     "effectIds": [],

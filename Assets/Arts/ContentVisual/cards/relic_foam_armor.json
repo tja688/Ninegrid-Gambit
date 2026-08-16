@@ -84,7 +84,7 @@
             "id": "relic.foam_armor.base",
             "templateId": "tpl.shared.4.relic_dragon_scale_armor_base",
             "containerType": "Relic",
-            "argsJson": "{\"value\":1}"
+            "argsJson": "{\"value\":2}"
         },
         {
             "id": "relic.foam_armor.activate",

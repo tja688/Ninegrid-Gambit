@@ -5,7 +5,7 @@
     "deckId": "deck.dragon",
     "role": "",
     "displayName": "人面莱姆",
-    "designSlotName": "",
+    "designSlotName": "boss1",
     "description": "[[吸收]]",
     "faceIntro": "其实是由六只莱姆组合成的",
     "extraGlossaryTerms": [],
@@ -14,7 +14,7 @@
     "rhythmPeriod": 5,
     "gold": 5,
     "stats": {
-        "hp": 30,
+        "hp": 60,
         "armor": 0,
         "attack": 3,
         "action": 5,

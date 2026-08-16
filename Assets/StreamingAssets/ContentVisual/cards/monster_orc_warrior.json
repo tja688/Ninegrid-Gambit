@@ -10,9 +10,9 @@
     "attackPattern": "普通近战",
     "gold": 5,
     "stats": {
-        "hp": 10,
+        "hp": 12,
         "armor": 0,
-        "attack": 2,
+        "attack": 1,
         "action": 5,
         "recovery": 0
     },

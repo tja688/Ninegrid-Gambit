@@ -5,9 +5,10 @@
     "deckId": "deck.insect",
     "role": "",
     "displayName": "轻弓骷髅",
-    "designSlotName": "",
+    "designSlotName": "远程3",
     "description": "[[远程武器]]，[[提速]]",
-    "faceIntro": "准头不是很高",    "attackPattern": "全向近战",
+    "faceIntro": "准头不是很高",
+    "attackPattern": "全向近战",
     "rhythmSource": "行动计数",
     "rhythmPeriod": 5,
     "gold": 5,
@@ -20,7 +21,7 @@
     },
     "sprites": {
         "mainIcon": "Assets/Resources/ContentArt/Multiple/pixel_art_card_pack 1.png",
-        "faceBackground": "Assets/Resources/ContentArt/Png/Other/\u5ca9\u5c42_\u85cf\u9aa8\u5802.png",
+        "faceBackground": "Assets/Resources/ContentArt/Png/Other/岩层_藏骨堂.png",
         "cardFrame": "",
         "banner": "",
         "backBorder": "",
@@ -29,7 +30,7 @@
     },
     "mainVisual": {
         "offsetX": 0.0,
-        "offsetY": -0.20000000298023225,
+        "offsetY": -0.20000000298023224,
         "uniformScale": 1.0
     },
     "animations": {

@@ -6,7 +6,7 @@
     "role": "Attack",
     "displayName": "黑暗长戟",
     "designSlotName": "",
-    "description": "[attack]+{relic.sharp_longsword.base.value}；每次击杀玩家[attack]+{relic.sharp_longsword.kill.value}，维持到战斗结束",
+    "description": "[attack]+{relic.sharp_longsword.base.value}；每移除{relic.sharp_longsword.kill.threshold}张怪物卡，[attack]+{relic.sharp_longsword.kill.value}，维持到战斗结束",
     "faceIntro": "越打越来劲",    "attackPattern": "",
     "rhythmSource": "",
     "rhythmPeriod": 0,
@@ -88,7 +88,13 @@
             "id": "relic.sharp_longsword.kill",
             "templateId": "tpl.relic.sharp_longsword.kill",
             "containerType": "Relic",
-            "argsJson": "{\"value\":1,\"source\":\"relic.sharp_longsword\"}"
+            "argsJson": "{\"value\":1,\"threshold\":3,\"projectKey\":\"relic.sharp_longsword.kill.threshold\",\"source\":\"relic.sharp_longsword\"}"
+        },
+        {
+            "id": "relic.sharp_longsword.node_start",
+            "templateId": "tpl.relic.sharp_longsword.node_start",
+            "containerType": "Relic",
+            "argsJson": "{}"
         }
     ],
     "effectIds": [],

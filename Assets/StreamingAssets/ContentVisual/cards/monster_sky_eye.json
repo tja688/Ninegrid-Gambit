@@ -5,17 +5,18 @@
     "deckId": "deck.orc_legion",
     "role": "",
     "displayName": "大黄蜂",
-    "designSlotName": "",
+    "designSlotName": "远程2",
     "description": "[[远程武器]]，[[逃避]]",
-    "faceIntro": "不会变形",    "attackPattern": "普通近战",
+    "faceIntro": "不会变形",
+    "attackPattern": "普通近战",
     "rhythmSource": "行动计数",
-    "rhythmPeriod": 3,
+    "rhythmPeriod": 5,
     "gold": 5,
     "stats": {
         "hp": 4,
         "armor": 0,
         "attack": 1,
-        "action": 3,
+        "action": 5,
         "recovery": 0
     },
     "sprites": {

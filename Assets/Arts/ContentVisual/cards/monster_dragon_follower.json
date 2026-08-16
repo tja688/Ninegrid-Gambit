@@ -5,9 +5,10 @@
     "deckId": "deck.stone_legion",
     "role": "",
     "displayName": "幽灵炎",
-    "designSlotName": "",
+    "designSlotName": "特12",
     "description": "[[剧烈燃烧]]",
-    "faceIntro": "会灼烧灵魂",    "attackPattern": "普通近战",
+    "faceIntro": "会灼烧灵魂",
+    "attackPattern": "普通近战",
     "rhythmSource": "行动计数",
     "rhythmPeriod": 5,
     "gold": 5,
@@ -20,7 +21,7 @@
     },
     "sprites": {
         "mainIcon": "",
-        "faceBackground": "Assets/Resources/ContentArt/Png/Other/\u5ca9\u5c42_\u7194\u5ca9\u4e4b\u5730.png",
+        "faceBackground": "Assets/Resources/ContentArt/Png/Other/岩层_熔岩之地.png",
         "cardFrame": "",
         "banner": "",
         "backBorder": "",
@@ -29,7 +30,7 @@
     },
     "mainVisual": {
         "offsetX": 0.0,
-        "offsetY": -0.20000000298023225,
+        "offsetY": -0.20000000298023224,
         "uniformScale": 0.8999999761581421
     },
     "animations": {

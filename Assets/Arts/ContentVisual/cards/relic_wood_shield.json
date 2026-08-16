@@ -7,7 +7,8 @@
     "displayName": "木盾",
     "designSlotName": "",
     "description": "基础[armor]+{relic.wood_shield.base.value}，木质套装：基础[armor]额外+{relic.wood_shield.set.value}",
-    "faceIntro": "曾经是一张门板",    "attackPattern": "",
+    "faceIntro": "曾经是一张门板",
+    "attackPattern": "",
     "rhythmSource": "",
     "rhythmPeriod": 0,
     "gold": 0,
@@ -82,7 +83,7 @@
             "id": "relic.wood_shield.base",
             "templateId": "tpl.shared.4.relic_dragon_scale_armor_base",
             "containerType": "Relic",
-            "argsJson": "{\"value\":1}"
+            "argsJson": "{\"value\":2}"
         },
         {
             "id": "relic.wood_shield.set",
