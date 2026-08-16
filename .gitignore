@@ -13,6 +13,7 @@
 
 # Agent scratch workspace & Python cache
 .scratch/
+/.playwright-cli/
 __pycache__/
 
 # Gradle cache directory (Unity 2019.3+)
