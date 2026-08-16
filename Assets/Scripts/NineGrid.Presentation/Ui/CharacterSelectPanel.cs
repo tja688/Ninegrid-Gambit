@@ -23,7 +23,7 @@ namespace NineGrid.Presentation.Ui
     public sealed class CharacterSelectPanel : MonoBehaviour
     {
         public const string PanelRootName = "选人界面BG";
-        public const string StartButtonName = "开始游戏";
+        public const string StartButtonName = "开始游戏按钮";
         public const string BackButtonName = "回到主菜单 (1)";
         public const string PortraitNodeName = "立绘";
         private const string HighlightChildName = "__Highlight";
@@ -610,7 +610,8 @@ namespace NineGrid.Presentation.Ui
 
         private void WireStartButton()
         {
-            var start = FindDirectChild(transform, StartButtonName);
+            var start = FindDirectChild(transform, StartButtonName)
+                        ?? FindDirectChildByPrefix(transform, "开始游戏");
             if (start == null)
             {
                 Debug.LogWarning("[CharacterSelect] 缺少开始按钮：" + StartButtonName);
@@ -766,17 +767,23 @@ namespace NineGrid.Presentation.Ui
                 collider = node.gameObject.AddComponent<BoxCollider2D>();
             }
 
-            if (collider.size.x < 0.01f || collider.size.y < 0.01f)
+            var renderer = node.GetComponent<SpriteRenderer>();
+            if (renderer != null && renderer.sprite != null)
             {
-                var renderer = node.GetComponent<SpriteRenderer>();
-                var size = renderer != null && renderer.sprite != null
-                    ? (renderer.drawMode == SpriteDrawMode.Simple
-                        ? (Vector2)renderer.sprite.bounds.size
-                        : renderer.size)
-                    : new Vector2(0.5f, 0.5f);
-                collider.size = size;
+                var size = renderer.drawMode == SpriteDrawMode.Sliced
+                    ? renderer.size
+                    : (Vector2)renderer.sprite.bounds.size;
+                if (size.x > 0.01f && size.y > 0.01f)
+                {
+                    collider.size = size;
+                }
+            }
+            else if (collider.size.x < 0.01f || collider.size.y < 0.01f)
+            {
+                collider.size = new Vector2(0.5f, 0.5f);
             }
 
+            collider.offset = Vector2.zero;
             collider.isTrigger = false;
             collider.enabled = true;
         }
