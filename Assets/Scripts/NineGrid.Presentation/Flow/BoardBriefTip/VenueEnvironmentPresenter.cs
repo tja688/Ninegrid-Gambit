@@ -9,21 +9,24 @@ using UnityEngine.SceneManagement;
 namespace NineGrid.Flow.BoardBriefTip
 {
     /// <summary>
-    /// 场地框 <c>GroundPanel </c> 与 <c>MainBG</c> 随地下城环境切换（ADR-0053 扩展）。
+    /// 场地框 <c>GroundPanel </c>、<c>MainBG</c> 与 <c>GroundAnchors</c> 格面随地下城环境切换（ADR-0053 扩展）。
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class VenueEnvironmentPresenter : MonoBehaviour
     {
         public const string GroundPanelObjectName = "GroundPanel ";
         public const string MainBackgroundObjectName = "MainBG";
+        public const string GroundAnchorsObjectName = "GroundAnchors";
 
         private static VenueEnvironmentPresenter sInstance;
 
         [SerializeField] private SpriteRenderer groundPanelRenderer;
         [SerializeField] private SpriteRenderer mainBackgroundRenderer;
+        [SerializeField] private SpriteRenderer[] slotRenderers;
 
         private string mLastGroundPanelPath = null;
         private string mLastMainBackgroundHex = null;
+        private string mLastSlotHex = null;
         private readonly Dictionary<string, Sprite> mSpriteCache = new Dictionary<string, Sprite>(StringComparer.Ordinal);
 
         public static VenueEnvironmentPresenter EnsureExists()
@@ -114,6 +117,7 @@ namespace NineGrid.Flow.BoardBriefTip
             EnsureBindings();
             ApplyGroundPanel(environment.GroundPanelResourcePath);
             ApplyMainBackground(environment.MainBackgroundColorHex);
+            ApplySlotTint(environment.SlotColorHex);
         }
 
         public void EnsureBindings()
@@ -134,6 +138,11 @@ namespace NineGrid.Flow.BoardBriefTip
                 {
                     mainBackgroundRenderer = mainBg.GetComponent<SpriteRenderer>();
                 }
+            }
+
+            if (slotRenderers == null || slotRenderers.Length == 0 || slotRenderers[0] == null)
+            {
+                slotRenderers = CollectSlotRenderers();
             }
         }
 
@@ -178,6 +187,69 @@ namespace NineGrid.Flow.BoardBriefTip
 
             mainBackgroundRenderer.color = color;
             mLastMainBackgroundHex = colorHex;
+        }
+
+        private void ApplySlotTint(string colorHex)
+        {
+            if (string.IsNullOrWhiteSpace(colorHex))
+            {
+                return;
+            }
+
+            if (string.Equals(mLastSlotHex, colorHex, StringComparison.OrdinalIgnoreCase)
+                && slotRenderers != null
+                && slotRenderers.Length > 0)
+            {
+                return;
+            }
+
+            if (!TryParseHexColor(colorHex, out var color))
+            {
+                return;
+            }
+
+            if (slotRenderers == null || slotRenderers.Length == 0 || slotRenderers[0] == null)
+            {
+                slotRenderers = CollectSlotRenderers();
+            }
+
+            if (slotRenderers == null || slotRenderers.Length == 0)
+            {
+                return;
+            }
+
+            for (var i = 0; i < slotRenderers.Length; i++)
+            {
+                var renderer = slotRenderers[i];
+                if (renderer != null)
+                {
+                    renderer.color = color;
+                }
+            }
+
+            mLastSlotHex = colorHex;
+        }
+
+        private static SpriteRenderer[] CollectSlotRenderers()
+        {
+            var root = FindSceneObjectByName(GroundAnchorsObjectName);
+            if (root == null)
+            {
+                return Array.Empty<SpriteRenderer>();
+            }
+
+            var childCount = root.transform.childCount;
+            var list = new List<SpriteRenderer>(childCount);
+            for (var i = 0; i < childCount; i++)
+            {
+                var renderer = root.transform.GetChild(i).GetComponent<SpriteRenderer>();
+                if (renderer != null)
+                {
+                    list.Add(renderer);
+                }
+            }
+
+            return list.ToArray();
         }
 
         private Sprite LoadGroundPanelSprite(string resourcePath)

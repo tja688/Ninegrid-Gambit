@@ -51,26 +51,38 @@ namespace NineGrid.Presentation.Tests
                 + DungeonEnvironmentCatalog.GroundPanelBloodSpriteName
                 + ".png",
                 env.GroundPanelResourcePath);
-            Assert.AreEqual("#241527", env.MainBackgroundColorHex);
+            Assert.AreEqual("#411d31", env.MainBackgroundColorHex);
+            Assert.AreEqual("#a53030", env.SlotColorHex);
         }
 
         [Test]
-        public void Resolve_Floor1_EmeraldMist_MainBgIs151d28()
+        public void Resolve_Floor1_EmeraldMist_UsesMistNavyAndMossSlots()
         {
             var env = DungeonEnvironmentCatalog.Resolve(1, 1, false);
             Assert.AreEqual("密林_翡翠迷雾", env.DisplayName);
             Assert.AreEqual(
                 DungeonEnvironmentCatalog.GroundPanelResourceFolder + "F_UI_Panel_H_密林_翡翠迷雾.png",
                 env.GroundPanelResourcePath);
-            Assert.AreEqual("#151d28", env.MainBackgroundColorHex);
+            Assert.AreEqual("#172038", env.MainBackgroundColorHex);
+            Assert.AreEqual("#468232", env.SlotColorHex);
         }
 
         [Test]
-        public void Resolve_Floor2_BoneHall_MainBgIs090a14()
+        public void Resolve_Floor2_BoneHall_UsesCoolNavyAndBoneSlots()
         {
             var env = DungeonEnvironmentCatalog.Resolve(2, 1, false);
             Assert.AreEqual("岩层_藏骨堂", env.DisplayName);
-            Assert.AreEqual("#090a14", env.MainBackgroundColorHex);
+            Assert.AreEqual("#151d28", env.MainBackgroundColorHex);
+            Assert.AreEqual("#4d2b32", env.SlotColorHex);
+        }
+
+        [Test]
+        public void Resolve_Floor2_Magma_UsesWarmNightAndCopperSlots()
+        {
+            var env = DungeonEnvironmentCatalog.Resolve(2, 6, false);
+            Assert.AreEqual("岩层_熔岩之地", env.DisplayName);
+            Assert.AreEqual("#341c27", env.MainBackgroundColorHex);
+            Assert.AreEqual("#884b2b", env.SlotColorHex);
         }
 
         [Test]
@@ -79,6 +91,7 @@ namespace NineGrid.Presentation.Tests
             var table = DungeonEnvironmentCatalog.CreateDefaultTable();
             table.variants[0].faceBackground = "Assets/Resources/ContentArt/Png/Other/密林_阴森沼泽.png";
             table.variants[0].mainBackgroundHex = "#090a14";
+            table.variants[0].slotHex = "#577277";
             DungeonEnvironmentCatalog.SetTable(table);
 
             var env = DungeonEnvironmentCatalog.Resolve(1, 1, false);
@@ -87,6 +100,7 @@ namespace NineGrid.Presentation.Tests
                 "Assets/Resources/ContentArt/Png/Other/密林_阴森沼泽.png",
                 env.FaceBackgroundResourcePath);
             Assert.AreEqual("#090a14", env.MainBackgroundColorHex);
+            Assert.AreEqual("#577277", env.SlotColorHex);
         }
     }
 }

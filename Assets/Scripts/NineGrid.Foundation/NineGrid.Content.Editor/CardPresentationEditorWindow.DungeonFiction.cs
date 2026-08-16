@@ -212,7 +212,8 @@ namespace NineGrid.Content.Editor
             contentRoot.Add(ContentVisualWarmConsoleUi.CreateStatsGrid(
                 ("楼层", row.floor.ToString(), row.layerName),
                 ("房间", row.roomMin + "–" + row.roomMax, row.isBlood ? "困难整层" : "普通切分"),
-                ("MainBG", row.mainBackgroundHex, "Apollo 纯色")));
+                ("MainBG", row.mainBackgroundHex, "氛围底"),
+                ("格面", row.slotHex, "九宫 slots")));
 
             contentRoot.Add(ContentVisualWarmConsoleUi.CreateSectionCard(
                 "文案",
@@ -347,7 +348,7 @@ namespace NineGrid.Content.Editor
 
             contentRoot.Add(ContentVisualWarmConsoleUi.CreateSectionCard(
                 "场地与底色",
-                "GroundPanel 是 9-slice 场地框；MainBG 只改纯色 tint，不换插画。",
+                "GroundPanel 是 9-slice 场地框；MainBG 是画面氛围底；格面是 GroundAnchors 下白色 slot 框的 tint。三色须同属 Apollo，明度分层：底最暗、格面中间、框上已画亮轨。",
                 column =>
                 {
                     panelPreview = CreateSpritePreview(row.groundPanel, 96f, 96f);
@@ -373,38 +374,63 @@ namespace NineGrid.Content.Editor
                         panelPathLabel.text = row.groundPanel ?? string.Empty;
                     });
 
-                    var parsed = ParseHexColor(row.mainBackgroundHex);
-                    var colorField = new ColorField { value = parsed, showAlpha = false };
-                    var hexField = new TextField { value = row.mainBackgroundHex };
-                    colorField.RegisterValueChangedCallback(evt =>
-                    {
-                        var hex = "#" + ColorUtility.ToHtmlStringRGB(evt.newValue).ToLowerInvariant();
-                        row.mainBackgroundHex = hex;
-                        hexField.SetValueWithoutNotify(hex);
-                        MarkDungeonFictionDirty();
-                    });
-                    hexField.RegisterValueChangedCallback(evt =>
-                    {
-                        row.mainBackgroundHex = string.IsNullOrWhiteSpace(evt.newValue)
-                            ? "#241527"
-                            : evt.newValue.Trim();
-                        if (ColorUtility.TryParseHtmlString(row.mainBackgroundHex, out var color))
-                        {
-                            color.a = 1f;
-                            colorField.SetValueWithoutNotify(color);
-                        }
-
-                        MarkDungeonFictionDirty();
-                    });
-                    column.Add(ContentVisualWarmConsoleUi.WrapControl(
+                    AddApolloColorFields(
+                        column,
                         "MainBG 色",
-                        "须是 Apollo 色板内的 hex。",
-                        colorField));
-                    column.Add(ContentVisualWarmConsoleUi.WrapControl(
+                        "画面外围氛围。取环境色族偏暗的一档，不要用近黑中性色。",
                         "MainBG hex",
-                        "例如 #151d28。",
-                        hexField));
+                        () => row.mainBackgroundHex,
+                        hex => row.mainBackgroundHex = hex,
+                        "#411d31");
+                    AddApolloColorFields(
+                        column,
+                        "格面色",
+                        "GroundAnchors/slotN 白色框 tint。与场地框填充同族、比 MainBG 亮，让九宫格读得出来。",
+                        "格面 hex",
+                        () => row.slotHex,
+                        hex => row.slotHex = hex,
+                        "#a53030");
                 }));
+        }
+
+        private void AddApolloColorFields(
+            VisualElement column,
+            string colorLabel,
+            string colorHint,
+            string hexLabel,
+            Func<string> getHex,
+            Action<string> setHex,
+            string fallbackHex)
+        {
+            var parsed = ParseHexColor(getHex());
+            var colorField = new ColorField { value = parsed, showAlpha = false };
+            var hexField = new TextField { value = getHex() };
+            colorField.RegisterValueChangedCallback(evt =>
+            {
+                var hex = "#" + ColorUtility.ToHtmlStringRGB(evt.newValue).ToLowerInvariant();
+                setHex(hex);
+                hexField.SetValueWithoutNotify(hex);
+                MarkDungeonFictionDirty();
+            });
+            hexField.RegisterValueChangedCallback(evt =>
+            {
+                var hex = string.IsNullOrWhiteSpace(evt.newValue)
+                    ? fallbackHex
+                    : evt.newValue.Trim();
+                setHex(hex);
+                if (ColorUtility.TryParseHtmlString(hex, out var color))
+                {
+                    color.a = 1f;
+                    colorField.SetValueWithoutNotify(color);
+                }
+
+                MarkDungeonFictionDirty();
+            });
+            column.Add(ContentVisualWarmConsoleUi.WrapControl(colorLabel, colorHint, colorField));
+            column.Add(ContentVisualWarmConsoleUi.WrapControl(
+                hexLabel,
+                "须是 Apollo 色板内的 hex。",
+                hexField));
         }
 
         private void MarkDungeonFictionDirty()

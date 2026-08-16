@@ -33,15 +33,15 @@ namespace NineGrid.Core.Content
                 roomSplit = 4,
                 variants = new[]
                 {
-                    MakeVariant("forest.jade_mist", 1, 1, 4, "密林", "翡翠迷雾", false, "#151d28"),
-                    MakeVariant("forest.lost_ruins", 1, 5, 8, "密林", "失落遗迹", false, "#241527"),
-                    MakeVariant("forest.blood", 1, 1, 8, "密林", "血色", true, "#241527"),
-                    MakeVariant("rock.ossuary", 2, 1, 4, "岩层", "藏骨堂", false, "#090a14"),
-                    MakeVariant("rock.magma", 2, 5, 8, "岩层", "熔岩之地", false, "#241527"),
-                    MakeVariant("rock.blood", 2, 1, 8, "岩层", "血色", true, "#241527"),
-                    MakeVariant("cave.pale_road", 3, 1, 4, "溶洞", "苍白之路", false, "#202e37"),
-                    MakeVariant("cave.twilight_hall", 3, 5, 8, "溶洞", "黄昏礼堂", false, "#241527"),
-                    MakeVariant("cave.blood", 3, 1, 8, "溶洞", "血色", true, "#241527"),
+                    MakeVariant("forest.jade_mist", 1, 1, 4, "密林", "翡翠迷雾", false, "#172038", "#468232"),
+                    MakeVariant("forest.lost_ruins", 1, 5, 8, "密林", "失落遗迹", false, "#1e1d39", "#577277"),
+                    MakeVariant("forest.blood", 1, 1, 8, "密林", "血色", true, "#411d31", "#a53030"),
+                    MakeVariant("rock.ossuary", 2, 1, 4, "岩层", "藏骨堂", false, "#151d28", "#4d2b32"),
+                    MakeVariant("rock.magma", 2, 5, 8, "岩层", "熔岩之地", false, "#341c27", "#884b2b"),
+                    MakeVariant("rock.blood", 2, 1, 8, "岩层", "血色", true, "#411d31", "#a53030"),
+                    MakeVariant("cave.pale_road", 3, 1, 4, "溶洞", "苍白之路", false, "#202e37", "#577277"),
+                    MakeVariant("cave.twilight_hall", 3, 5, 8, "溶洞", "黄昏礼堂", false, "#411d31", "#884b2b"),
+                    MakeVariant("cave.blood", 3, 1, 8, "溶洞", "血色", true, "#411d31", "#a53030"),
                 }
             };
         }
@@ -70,6 +70,7 @@ namespace NineGrid.Core.Content
                 FaceBackgroundResourceFolder + displayName + ".png",
                 ResolveGroundPanelResourcePath(displayName, isBloodTheme),
                 ResolveMainBackgroundColorHex(displayName, isBloodTheme),
+                ResolveSlotColorHex(displayName, isBloodTheme),
                 isBloodTheme,
                 safeFloor,
                 safeRoom);
@@ -138,11 +139,15 @@ namespace NineGrid.Core.Content
             var hex = string.IsNullOrWhiteSpace(hit.mainBackgroundHex)
                 ? ResolveMainBackgroundColorHex(displayName, isBloodTheme)
                 : hit.mainBackgroundHex;
+            var slotHex = string.IsNullOrWhiteSpace(hit.slotHex)
+                ? ResolveSlotColorHex(displayName, isBloodTheme)
+                : hit.slotHex;
             info = new DungeonEnvironmentInfo(
                 displayName,
                 face,
                 ground,
                 hex,
+                slotHex,
                 isBloodTheme,
                 floor,
                 room);
@@ -157,7 +162,8 @@ namespace NineGrid.Core.Content
             string layerName,
             string variantName,
             bool isBlood,
-            string mainBackgroundHex)
+            string mainBackgroundHex,
+            string slotHex)
         {
             var displayName = layerName + "_" + variantName;
             var groundName = isBlood ? GroundPanelBloodSpriteName : "F_UI_Panel_H_" + displayName;
@@ -173,6 +179,7 @@ namespace NineGrid.Core.Content
                 faceBackground = FaceBackgroundResourceFolder + displayName + ".png",
                 groundPanel = GroundPanelResourceFolder + groundName + ".png",
                 mainBackgroundHex = mainBackgroundHex,
+                slotHex = slotHex,
                 isBlood = isBlood,
                 notes = isBlood ? "困难档整层使用" : string.Empty
             };
@@ -190,23 +197,54 @@ namespace NineGrid.Core.Content
         {
             if (isBloodTheme)
             {
-                return "#241527";
+                return "#411d31";
             }
 
             switch (displayName)
             {
                 case "密林_翡翠迷雾":
-                    return "#151d28";
+                    return "#172038";
+                case "密林_失落遗迹":
+                    return "#1e1d39";
                 case "岩层_藏骨堂":
-                    return "#090a14";
+                    return "#151d28";
+                case "岩层_熔岩之地":
+                    return "#341c27";
                 case "溶洞_苍白之路":
                     return "#202e37";
-                case "密林_失落遗迹":
-                case "岩层_熔岩之地":
                 case "溶洞_黄昏礼堂":
-                    return "#241527";
+                    return "#411d31";
                 default:
-                    return "#241527";
+                    return "#411d31";
+            }
+        }
+
+        /// <summary>
+        /// GroundAnchors 格面 tint。与场地框内填充同族、比 MainBG 亮一档，让九宫格读得出来。
+        /// </summary>
+        public static string ResolveSlotColorHex(string displayName, bool isBloodTheme)
+        {
+            if (isBloodTheme)
+            {
+                return "#a53030";
+            }
+
+            switch (displayName)
+            {
+                case "密林_翡翠迷雾":
+                    return "#468232";
+                case "密林_失落遗迹":
+                    return "#577277";
+                case "岩层_藏骨堂":
+                    return "#4d2b32";
+                case "岩层_熔岩之地":
+                    return "#884b2b";
+                case "溶洞_苍白之路":
+                    return "#577277";
+                case "溶洞_黄昏礼堂":
+                    return "#884b2b";
+                default:
+                    return "#a53030";
             }
         }
 
@@ -268,7 +306,8 @@ namespace NineGrid.Core.Content
         public string displayName = string.Empty;
         public string faceBackground = string.Empty;
         public string groundPanel = string.Empty;
-        public string mainBackgroundHex = "#241527";
+        public string mainBackgroundHex = "#411d31";
+        public string slotHex = "#a53030";
         public bool isBlood;
         public string notes = string.Empty;
     }
@@ -280,6 +319,7 @@ namespace NineGrid.Core.Content
             string faceBackgroundResourcePath,
             string groundPanelResourcePath,
             string mainBackgroundColorHex,
+            string slotColorHex,
             bool isBloodTheme,
             int floor,
             int room)
@@ -288,6 +328,7 @@ namespace NineGrid.Core.Content
             FaceBackgroundResourcePath = faceBackgroundResourcePath ?? string.Empty;
             GroundPanelResourcePath = groundPanelResourcePath ?? string.Empty;
             MainBackgroundColorHex = mainBackgroundColorHex ?? string.Empty;
+            SlotColorHex = slotColorHex ?? string.Empty;
             IsBloodTheme = isBloodTheme;
             Floor = floor;
             Room = room;
@@ -297,6 +338,7 @@ namespace NineGrid.Core.Content
         public string FaceBackgroundResourcePath { get; }
         public string GroundPanelResourcePath { get; }
         public string MainBackgroundColorHex { get; }
+        public string SlotColorHex { get; }
         public bool IsBloodTheme { get; }
         public int Floor { get; }
         public int Room { get; }

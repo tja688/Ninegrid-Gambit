@@ -123,7 +123,12 @@ namespace NineGrid.Content.Editor
                 row.displayName = row.displayName ?? string.Empty;
                 row.faceBackground = (row.faceBackground ?? string.Empty).Replace('\\', '/');
                 row.groundPanel = (row.groundPanel ?? string.Empty).Replace('\\', '/');
-                row.mainBackgroundHex = NormalizeHex(row.mainBackgroundHex);
+                row.mainBackgroundHex = string.IsNullOrWhiteSpace(row.mainBackgroundHex)
+                    ? DungeonEnvironmentCatalog.ResolveMainBackgroundColorHex(row.displayName, row.isBlood)
+                    : NormalizeHex(row.mainBackgroundHex);
+                row.slotHex = string.IsNullOrWhiteSpace(row.slotHex)
+                    ? DungeonEnvironmentCatalog.ResolveSlotColorHex(row.displayName, row.isBlood)
+                    : NormalizeHex(row.slotHex);
                 row.notes = row.notes ?? string.Empty;
                 if (row.roomMin < 1)
                 {
@@ -141,7 +146,7 @@ namespace NineGrid.Content.Editor
         {
             if (string.IsNullOrWhiteSpace(hex))
             {
-                return "#241527";
+                return "#411d31";
             }
 
             hex = hex.Trim();
