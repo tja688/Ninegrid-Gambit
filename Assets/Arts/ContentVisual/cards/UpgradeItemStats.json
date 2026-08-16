@@ -7,8 +7,9 @@
     "displayName": "道具强化",
     "designSlotName": "",
     "description": "提升所有道具卡数值3点",
-    "faceIntro": "",    "attackPattern": "",
-    "gold": 50,
+    "faceIntro": "",
+    "attackPattern": "",
+    "gold": 75,
     "stats": {
         "hp": 0,
         "armor": 0,

@@ -9,29 +9,35 @@ using UnityEngine;
 namespace NineGrid.Cards
 {
     /// <summary>
-    /// 通用炸牌入组：从原点并行飞到圆周散点 → 同步停稳 → 集体上飞入组。
+    /// 通用炸牌入组：不依赖任何宿主位置，在 GroundPanel 范围内分散落点；
+    /// 逐卡由极小缩放弹性放大出现（泡泡菜单同款 back.out 弹出 + 随机倾斜），先后错峰；
+    /// 最后一张出现后停顿，集体回正并垂直上飞入组。
     /// </summary>
     public static class CardBurstScatterIntoDeckPresenter
     {
+        /// <summary>出现前的最小缩放（相对基准，≈0 但避开零缩放渲染问题）。</summary>
+        private const float PopStartScale = 0.02f;
+
+        /// <summary>弹出起始倾角相对目标倾角的倍率（先更歪再回正，增加灵动感）。</summary>
+        private const float TiltOvershootFactor = 1.7f;
+
+        /// <summary>集体上飞前回正倾角的时长（秒）。</summary>
+        private const float StraightenDuration = 0.16f;
+
+        /// <summary>逐卡出现延迟的随机抖动（秒），泡泡菜单 staggerDelay 同款 ±0.05。</summary>
+        private const float RandomDelayVariance = 0.05f;
+
         public static async UniTask PresentAsync(
             IReadOnlyList<ManagedCard> cards,
-            Vector3 origin,
-            float radius,
-            float burstDuration,
-            float burstHoldDuration,
-            float fieldExitDuration,
+            GroundFieldLayoutSettings fieldLayout,
             CardDeckManagerSingleton deckManager,
             CancellationToken cancellationToken = default,
-            float? phaseRadians = null,
             float fieldToDeckDwellDuration = 0f)
         {
             if (cards == null || cards.Count == 0 || deckManager == null)
             {
                 return;
             }
-
-            // fieldExitDuration 由 LaunchReturn 内部读 LayoutSettings；此处保留参数以兼容调用方。
-            _ = fieldExitDuration;
 
             var cardManager = CardEntityLifecycleHook.CardsOrNull();
             var active = new List<ManagedCard>(cards.Count);
@@ -50,8 +56,6 @@ namespace NineGrid.Cards
                     cardManager.EnsureComplexDomainStack(card);
                 }
 
-                PlaceAtOrigin(card, origin);
-                FlightSortingChannel.Raise(card);
                 active.Add(card);
             }
 
@@ -60,16 +64,65 @@ namespace NineGrid.Cards
                 return;
             }
 
-            var phase = phaseRadians ?? BurstScatterPointSampler.RandomPhaseRadians();
-            var targets = BurstScatterPointSampler.SampleOnCircle(origin, radius, active.Count, phase);
-            var duration = Mathf.Max(0.01f, burstDuration);
-            var scatterTasks = new List<UniTask>(active.Count);
+            // 打散出场顺序：同批卡每次炸开的位置与先后都不同。
+            ShuffleList(active);
+
+            var layout = fieldLayout;
+            var popDuration = layout != null ? Mathf.Max(0.01f, layout.burstScatterDuration) : 0.5f;
+            var postPopHold = layout != null ? Mathf.Max(0f, layout.burstScatterHoldDuration) : 0.1f;
+            var staggerDelay = layout != null ? Mathf.Max(0f, layout.burstScatterStaggerDelay) : 0.12f;
+            var tiltAngle = layout != null ? Mathf.Max(0f, layout.burstScatterTiltAngle) : 8f;
+            var padding = layout != null ? Mathf.Max(0f, layout.burstScatterPadding) : 1f;
+
+            var rect = BurstScatterFieldBounds.ResolveWorldRect(padding);
+            var points = BurstScatterPointSampler.SampleInRect(rect, active.Count);
+
+            var popTasks = new List<UniTask>(active.Count);
             for (var i = 0; i < active.Count; i++)
             {
-                scatterTasks.Add(MoveToPointAsync(active[i], targets[i], duration, cancellationToken));
+                var card = active[i];
+                if (card?.Transform == null)
+                {
+                    continue;
+                }
+
+                PlaceAtPoint(card, points[i]);
+                FlightSortingChannel.Raise(card);
+
+                var t = card.Transform;
+                CardDeckTween.KillMotion(t, "BurstScatter.Pop", card.Uid);
+
+                var baseScale = t.localScale;
+                if (baseScale.sqrMagnitude <= 0.0001f)
+                {
+                    baseScale = Vector3.one;
+                }
+
+                var tilt = UnityEngine.Random.Range(-tiltAngle, tiltAngle);
+                var startTilt = tilt * TiltOvershootFactor;
+
+                // 极小 + 更歪的起始姿态，随后弹性放大 + 回正到目标倾角。
+                t.localScale = baseScale * PopStartScale;
+                t.rotation = Quaternion.Euler(0f, 0f, startTilt);
+
+                var delay = Mathf.Max(
+                    0f,
+                    i * staggerDelay + UnityEngine.Random.Range(-RandomDelayVariance, RandomDelayVariance));
+                var scaleTween = t
+                    .DOScale(baseScale, popDuration)
+                    .SetDelay(delay)
+                    .SetEase(Ease.OutBack)
+                    .SetLink(t.gameObject, LinkBehaviour.KillOnDestroy);
+                var rotateTween = t
+                    .DORotateQuaternion(Quaternion.Euler(0f, 0f, tilt), popDuration)
+                    .SetDelay(delay)
+                    .SetEase(Ease.OutCubic)
+                    .SetLink(t.gameObject, LinkBehaviour.KillOnDestroy);
+                popTasks.Add(AwaitTweensAsync(scaleTween, rotateTween, cancellationToken));
             }
 
-            await UniTask.WhenAll(scatterTasks);
+            // 等最后一张卡放大出现完毕。
+            await UniTask.WhenAll(popTasks);
 
             // 中途被 Release（如 BounceFan teardown）时剔除，避免后续入组挂死。
             active.RemoveAll(c => c?.Transform == null);
@@ -79,12 +132,34 @@ namespace NineGrid.Cards
                 return;
             }
 
-            if (burstHoldDuration > 0f)
+            // 最后一张出现后停顿，再集体上飞。
+            if (postPopHold > 0f)
             {
                 await UniTask.Delay(
-                    TimeSpan.FromSeconds(burstHoldDuration),
+                    TimeSpan.FromSeconds(postPopHold),
                     cancellationToken: cancellationToken);
             }
+
+            // 集体回正：上飞前把倾斜收掉，保证入组时姿态与卡组一致。
+            var straightenTasks = new List<UniTask>(active.Count);
+            for (var i = 0; i < active.Count; i++)
+            {
+                var card = active[i];
+                if (card?.Transform == null)
+                {
+                    continue;
+                }
+
+                var t = card.Transform;
+                CardDeckTween.KillMotion(t, "BurstScatter.Straighten", card.Uid);
+                var tween = t
+                    .DORotateQuaternion(Quaternion.identity, StraightenDuration)
+                    .SetEase(Ease.OutCubic)
+                    .SetLink(t.gameObject, LinkBehaviour.KillOnDestroy);
+                straightenTasks.Add(AwaitTweenAsync(tween, cancellationToken));
+            }
+
+            await UniTask.WhenAll(straightenTasks);
 
             var launchedUids = new List<int>(active.Count);
             for (var i = 0; i < active.Count; i++)
@@ -135,7 +210,16 @@ namespace NineGrid.Cards
             }
         }
 
-        private static void PlaceAtOrigin(ManagedCard card, Vector3 origin)
+        private static void ShuffleList<T>(List<T> list)
+        {
+            for (var i = list.Count - 1; i > 0; i--)
+            {
+                var j = UnityEngine.Random.Range(0, i + 1);
+                (list[i], list[j]) = (list[j], list[i]);
+            }
+        }
+
+        private static void PlaceAtPoint(ManagedCard card, Vector3 point)
         {
             if (card?.Transform == null)
             {
@@ -146,54 +230,29 @@ namespace NineGrid.Cards
                     card,
                     out _,
                     out _,
-                    "BurstScatter.PlaceOrigin"))
+                    "BurstScatter.PlacePoint"))
             {
-                card.Transform.position = origin;
+                card.Transform.position = point;
                 return;
             }
 
             SlotFrameConvergence.SnapHome(
                 card,
-                origin,
-                "BurstScatter.PlaceOrigin",
+                point,
+                "BurstScatter.PlacePoint",
                 card.Uid);
-            // Park/Snap L2 后清 L3，避免视觉位偏离炸开原点。
-            EffectFrameConvergence.SnapHome(card, "BurstScatter.PlaceOrigin");
+            // Park/Snap L2 后清 L3，避免视觉位偏离炸开落点。
+            EffectFrameConvergence.SnapHome(card, "BurstScatter.PlacePoint");
         }
 
-        private static async UniTask MoveToPointAsync(
-            ManagedCard card,
-            Vector3 target,
-            float duration,
+        private static async UniTask AwaitTweensAsync(
+            Tween first,
+            Tween second,
             CancellationToken cancellationToken)
         {
-            if (card?.Transform == null)
-            {
-                return;
-            }
-
-            if (EffectFrameConvergence.TryGetDriver(card, out _))
-            {
-                await EffectFrameConvergence.ConvergeVisualToWorldAsync(
-                    card,
-                    target,
-                    duration,
-                    cancellationToken,
-                    parkRootOnComplete: true);
-                return;
-            }
-
-            if (card.Transform == null)
-            {
-                return;
-            }
-
-            CardDeckTween.KillMotion(card.Transform, "BurstScatter.Move", card.Uid);
-            var tween = card.Transform
-                .DOMove(target, duration)
-                .SetEase(Ease.OutCubic)
-                .SetLink(card.Transform.gameObject, LinkBehaviour.KillOnDestroy);
-            await AwaitTweenAsync(tween, cancellationToken);
+            await UniTask.WhenAll(
+                AwaitTweenAsync(first, cancellationToken),
+                AwaitTweenAsync(second, cancellationToken));
         }
 
         private static async UniTask AwaitTweenAsync(Tween tween, CancellationToken cancellationToken)

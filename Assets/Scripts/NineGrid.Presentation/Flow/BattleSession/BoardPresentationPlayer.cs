@@ -24,7 +24,6 @@ namespace NineGrid.Flow
 
         private int _boardPresentationRequestId;
         private bool _pendingSyncFromCore;
-        private Transform _shuffleOriginScratch;
         private readonly ShuffleIntoDeckPresentSink _shuffleIntoSink = new ShuffleIntoDeckPresentSink();
         private readonly ShuffleIntoDeckScheduler _shuffleIntoScheduler = new ShuffleIntoDeckScheduler();
 
@@ -1090,25 +1089,7 @@ namespace NineGrid.Flow
                     return;
                 }
 
-                var originEntry = group.Entries[0];
-                if (!TryResolveShuffleIntoOrigin(originEntry, out var originTransform)
-                    || originTransform == null)
-                {
-                    if (!deckManager.TryGetDefaultDealOrigin(out originTransform)
-                        || originTransform == null)
-                    {
-                        Debug.LogWarning(
-                            $"[InBattleManager] BurstScatter action={group.ActionId} 无炸开原点，回退单条洗回。");
-                        for (var i = 0; i < group.Entries.Count; i++)
-                        {
-                            await PresentOneShuffleIntoDeckAsync(group.Entries[i], ct);
-                        }
-
-                        return;
-                    }
-                }
-
-                var origin = originTransform.position;
+                // 炸牌不依赖任何宿主位置：统一在 GroundPanel 范围内分散落点，由 Presenter 内部解析。
                 var cards = new List<ManagedCard>(group.Entries.Count);
                 for (var i = 0; i < group.Entries.Count; i++)
                 {
@@ -1133,25 +1114,16 @@ namespace NineGrid.Flow
                 CardLifecycleAudioCues.Pulse(
                     CardLifecycleAudioCues.Shuffle,
                     "BoardPresentationPlayer.PresentBurstScatterShuffleGroupAsync",
-                    originEntry.DefId);
+                    group.Entries[0].DefId);
 
                 var fieldLayout = fieldManager != null ? fieldManager.LayoutSettings : null;
-                var radius = fieldLayout != null ? fieldLayout.burstScatterRadius : 1.1f;
-                var burstDuration = fieldLayout != null ? fieldLayout.burstScatterDuration : 0.28f;
-                var holdDuration = fieldLayout != null ? fieldLayout.burstScatterHoldDuration : 0.06f;
-                var exitDuration = fieldLayout != null ? fieldLayout.fieldExitDuration : 0.35f;
                 var dwellDuration = fieldLayout != null ? fieldLayout.fieldToDeckDwellDuration : 0.28f;
 
                 await CardBurstScatterIntoDeckPresenter.PresentAsync(
                     cards,
-                    origin,
-                    radius,
-                    burstDuration,
-                    holdDuration,
-                    exitDuration,
+                    fieldLayout,
                     deckManager,
                     ct,
-                    phaseRadians: null,
                     fieldToDeckDwellDuration: dwellDuration);
             }
             finally
@@ -1270,89 +1242,6 @@ namespace NineGrid.Flow
             {
                 Debug.LogWarning($"[InBattleManager] ShuffleInto 入组失败 uid={entry.Uid} def={entry.DefId}。");
             }
-        }
-
-        private bool TryResolveShuffleIntoOrigin(
-            ShuffleIntoDeckPresentationEntry entry,
-            out Transform origin)
-        {
-            origin = null;
-            var cardManager = Cards;
-
-            // 优先死亡格锚点；禁止 StageFieldDead 后的尸体 live transform（y-80 → 炸开全程离屏）。
-            if (ShuffleBurstOriginResolver.TryResolveWorld(
-                    entry,
-                    ResolveBurstBoardSlotWorld,
-                    uid =>
-                    {
-                        if (cardManager == null
-                            || !cardManager.TryGet(uid, out var trigger)
-                            || !ShuffleBurstOriginResolver.IsUsableLiveTrigger(trigger))
-                        {
-                            return null;
-                        }
-
-                        return trigger;
-                    },
-                    PresentationOutputProjector.ResolveCardWorldPosition,
-                    out var world)
-                && TryGetShuffleOriginScratch(world, out origin))
-            {
-                return true;
-            }
-
-            if (!string.IsNullOrEmpty(entry.Cause) && _session.TryResolveHandDealOrigin(entry.Cause, out origin))
-            {
-                return true;
-            }
-
-            var deckManager = Deck;
-            return deckManager != null && deckManager.TryGetDefaultDealOrigin(out origin);
-        }
-
-        private Vector3? ResolveBurstBoardSlotWorld(int groundSlot)
-        {
-            if (groundSlot <= 0)
-            {
-                return null;
-            }
-
-            var field = Field;
-            if (field != null)
-            {
-                // 直接取格锚，避免 ResolveBoardSlotWorldPosition 仍读到 staged 尸体位。
-                var anchor = field.GetGroundAnchor(groundSlot);
-                if (anchor != null)
-                {
-                    return anchor.position;
-                }
-            }
-
-            return PresentationOutputProjector.ResolveBoardSlotWorldPosition(groundSlot);
-        }
-
-        private bool TryGetShuffleOriginScratch(Vector3 worldPosition, out Transform origin)
-        {
-            origin = EnsureShuffleOriginScratch();
-            if (origin == null)
-            {
-                return false;
-            }
-
-            origin.position = worldPosition;
-            return true;
-        }
-
-        private Transform EnsureShuffleOriginScratch()
-        {
-            if (_shuffleOriginScratch == null)
-            {
-                var scratchGo = new GameObject("ShuffleIntoOriginScratch");
-                scratchGo.hideFlags = HideFlags.HideAndDontSave;
-                _shuffleOriginScratch = scratchGo.transform;
-            }
-
-            return _shuffleOriginScratch;
         }
 
         private async UniTask PresentSkillRemovedCardsAsync(int[] removedUids, CancellationToken ct)

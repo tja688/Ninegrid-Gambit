@@ -1303,7 +1303,7 @@ namespace NineGrid.Core
             string source,
             string sourceAction,
             string excludeSourcePrefix)
-            : this(targetUid, useTargetCondition, actorUid, targetKind, rule, op, value, layer, scope, source, sourceAction, string.Empty, excludeSourcePrefix)
+            : this(targetUid, useTargetCondition, actorUid, targetKind, rule, op, value, layer, scope, source, sourceAction, string.Empty, excludeSourcePrefix, false)
         {
         }
 
@@ -1321,6 +1321,25 @@ namespace NineGrid.Core
             string sourceAction,
             string sourceDefId,
             string excludeSourcePrefix)
+            : this(targetUid, useTargetCondition, actorUid, targetKind, rule, op, value, layer, scope, source, sourceAction, sourceDefId, excludeSourcePrefix, false)
+        {
+        }
+
+        public AddRuleModifierAction(
+            int targetUid,
+            bool useTargetCondition,
+            int actorUid,
+            CardKind targetKind,
+            RuleId rule,
+            ModifierOp op,
+            float value,
+            ModifierLayer layer,
+            ModifierScope scope,
+            string source,
+            string sourceAction,
+            string sourceDefId,
+            string excludeSourcePrefix,
+            bool requireEmptySource)
         {
             TargetUid = targetUid;
             UseTargetCondition = useTargetCondition;
@@ -1335,6 +1354,7 @@ namespace NineGrid.Core
             SourceAction = sourceAction ?? string.Empty;
             SourceDefId = sourceDefId ?? string.Empty;
             ExcludeSourcePrefix = excludeSourcePrefix ?? string.Empty;
+            RequireEmptySource = requireEmptySource;
         }
 
         public int TargetUid { get; private set; }
@@ -1350,6 +1370,12 @@ namespace NineGrid.Core
         public string SourceAction { get; private set; }
         public string SourceDefId { get; private set; }
         public string ExcludeSourcePrefix { get; private set; }
+
+        /// <summary>
+        /// 为真时仅匹配来源为空（SourceDefId 为空）的结算——即玩家直接交战攻击，
+        /// 遗物齐射 / 机关伤害等带 defId 来源的伤害不满足（暴力卡回归修复）。
+        /// </summary>
+        public bool RequireEmptySource { get; private set; }
         public override string ActionName { get { return "AddRuleModifier"; } }
 
         public override GameActionResult Apply(GameActionContext context)
@@ -1378,6 +1404,11 @@ namespace NineGrid.Core
             if (!string.IsNullOrEmpty(ExcludeSourcePrefix))
             {
                 conditions.Add(new ExcludeSourcePrefixCondition(ExcludeSourcePrefix));
+            }
+
+            if (RequireEmptySource)
+            {
+                conditions.Add(new EmptySourceCondition());
             }
 
             IStatCondition condition = conditions.Count == 0

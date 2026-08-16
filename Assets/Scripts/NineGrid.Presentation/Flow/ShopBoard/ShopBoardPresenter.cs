@@ -11,6 +11,7 @@ using NineGrid.Flow;
 using NineGrid.Flow.BoardBriefTip;
 using NineGrid.Flow.InRoomBoard;
 using NineGrid.Flow.Presentation;
+using NineGrid.Flow.PurchaseAmountTip;
 using NineGrid.Flow.RoomIcons;
 using NineGrid.Flow.Transitions;
 using NineGrid.Presentation;
@@ -126,6 +127,7 @@ namespace NineGrid.Flow.ShopBoard
             mExtras.Clear();
             mRefreshGo = null;
             mLeaveGo = null;
+            PurchaseAmountTipPresenter.HideAll();
             RoomIconOccupancy.Current.Clear();
             RoomIconOccupancySlotHits.Refresh(mArch);
             BoardBriefTipPresenter.InstanceOrNull()?.HardClear();
@@ -328,7 +330,13 @@ namespace NineGrid.Flow.ShopBoard
             var tip = BoardBriefTipCopy.ForOptionOrShelf(
                 NineGrid.Core.Localization.L10n.Tr("briefTip.refresh_shelf", "刷新货架"),
                 pending.ShopRefreshPriceGold.Value);
-            AttachClickProxy(mRefreshGo, ShopBoardHitKind.Refresh, -1, tip, ShopBoardSlotResolver.RefreshSlot);
+            AttachClickProxy(
+                mRefreshGo,
+                ShopBoardHitKind.Refresh,
+                -1,
+                tip,
+                ShopBoardSlotResolver.RefreshSlot,
+                pending.ShopRefreshPriceGold.Value);
         }
 
         /// <summary>
@@ -420,7 +428,7 @@ namespace NineGrid.Flow.ShopBoard
                             newOptionGos.Add(go);
                             newCards.Add(null);
                             newDefIds.Add(entry.DefId);
-                            AttachClickProxy(go, ShopBoardHitKind.BuyShelf, i, tip, slot);
+                            AttachClickProxy(go, ShopBoardHitKind.BuyShelf, i, tip, slot, ResolveShelfPriceGold(entry.DefId, content));
                             continue;
                         }
 
@@ -428,7 +436,7 @@ namespace NineGrid.Flow.ShopBoard
                         newCards.Add(card);
                         newOptionGos.Add(null);
                         newDefIds.Add(entry.DefId);
-                        AttachClickProxy(card.View.gameObject, ShopBoardHitKind.BuyShelf, i, tip, slot);
+                        AttachClickProxy(card.View.gameObject, ShopBoardHitKind.BuyShelf, i, tip, slot, ResolveShelfPriceGold(entry.DefId, content));
                         continue;
                     }
                 }
@@ -447,7 +455,7 @@ namespace NineGrid.Flow.ShopBoard
                     if (go != null)
                     {
                         var tip = BuildShelfTip(entry.DefId, content);
-                        AttachClickProxy(go, ShopBoardHitKind.BuyShelf, i, tip, slot);
+                        AttachClickProxy(go, ShopBoardHitKind.BuyShelf, i, tip, slot, ResolveShelfPriceGold(entry.DefId, content));
                         animTasks.Add(InRoomShelfAnimation.DropOptionGoInAsync(go, geometry, slot, ct));
                     }
                 }
@@ -471,7 +479,7 @@ namespace NineGrid.Flow.ShopBoard
                         managed.View.transform.rotation = Quaternion.identity;
                         CoreCardPresentationMapper.ApplyVisualsByDefId(managed, CardPresentationKind.HelpCard);
                         var tip = BuildShelfTip(entry.DefId, content);
-                        AttachClickProxy(managed.View.gameObject, ShopBoardHitKind.BuyShelf, i, tip, slot);
+                        AttachClickProxy(managed.View.gameObject, ShopBoardHitKind.BuyShelf, i, tip, slot, ResolveShelfPriceGold(entry.DefId, content));
                         animTasks.Add(InRoomShelfAnimation.DropInToSlotAsync(managed, geometry, slot, ct));
                     }
                 }
@@ -557,7 +565,7 @@ namespace NineGrid.Flow.ShopBoard
                         continue;
                     }
 
-                    AttachClickProxy(go, ShopBoardHitKind.BuyShelf, i, tip, slot);
+                    AttachClickProxy(go, ShopBoardHitKind.BuyShelf, i, tip, slot, ResolveShelfPriceGold(entry.DefId, content));
                     // 占位对齐 Pending 索引，避免 PresentShelfAcquireOrShatter 错位。
                     mShelfCards.Add(null);
                     continue;
@@ -586,7 +594,7 @@ namespace NineGrid.Flow.ShopBoard
                 managed.View.transform.rotation = Quaternion.identity;
 
                 CoreCardPresentationMapper.ApplyVisualsByDefId(managed, CardPresentationKind.HelpCard);
-                AttachClickProxy(managed.View.gameObject, ShopBoardHitKind.BuyShelf, i, tip, slot);
+                AttachClickProxy(managed.View.gameObject, ShopBoardHitKind.BuyShelf, i, tip, slot, ResolveShelfPriceGold(entry.DefId, content));
                 mShelfCards.Add(managed);
             }
         }
@@ -610,7 +618,7 @@ namespace NineGrid.Flow.ShopBoard
             var tip = BoardBriefTipCopy.ForOptionOrShelf(
                 NineGrid.Core.Localization.L10n.Tr("briefTip.refresh_shelf", "刷新货架"),
                 refreshPrice);
-            AttachClickProxy(go, ShopBoardHitKind.Refresh, -1, tip, ShopBoardSlotResolver.RefreshSlot);
+            AttachClickProxy(go, ShopBoardHitKind.Refresh, -1, tip, ShopBoardSlotResolver.RefreshSlot, refreshPrice);
             mExtras.Add(go);
             mRefreshGo = go;
         }
@@ -644,13 +652,40 @@ namespace NineGrid.Flow.ShopBoard
                 StringComparison.Ordinal);
         }
 
+        private static int ResolveShelfPriceGold(string defId, IContentSystem content)
+        {
+            if (IsShopSlotUpgradeOption(defId))
+            {
+                var catalogPrice = ResolveCatalogPriceGold(defId, content);
+                return catalogPrice > 0 ? catalogPrice : RewardSystem.ShopExpandItemSlotsPriceGold;
+            }
+
+            return ResolveCatalogPriceGold(defId, content);
+        }
+
+        private static int ResolveCatalogPriceGold(string defId, IContentSystem content)
+        {
+            if (content != null && content.HasCatalog
+                && content.Catalog.Cards.TryGetValue(defId, out var card)
+                && card != null
+                && card.Price > 0)
+            {
+                return card.Price;
+            }
+
+            if (CardPresentationConfigCatalog.TryGet(defId, out var dto) && dto != null && dto.gold > 0)
+            {
+                return dto.gold;
+            }
+
+            return 0;
+        }
+
         private static string BuildShelfTip(string defId, IContentSystem content)
         {
             string name = defId;
             string brief = string.Empty;
-            int? price = IsShopSlotUpgradeOption(defId)
-                ? RewardSystem.ShopExpandItemSlotsPriceGold
-                : (int?)null;
+            var price = ResolveShelfPriceGold(defId, content);
             if (content != null && content.HasCatalog
                 && content.Catalog.Cards.TryGetValue(defId, out var card)
                 && card != null)
@@ -658,11 +693,6 @@ namespace NineGrid.Flow.ShopBoard
                 if (!string.IsNullOrWhiteSpace(card.DisplayName))
                 {
                     name = card.DisplayName;
-                }
-
-                if (card.Price > 0)
-                {
-                    price = card.Price;
                 }
             }
 
@@ -677,15 +707,10 @@ namespace NineGrid.Flow.ShopBoard
                 {
                     brief = dto.description;
                 }
-
-                if (dto.gold > 0)
-                {
-                    price = dto.gold;
-                }
             }
 
             var body = string.IsNullOrWhiteSpace(brief) ? name : name + "：" + brief.Trim();
-            return BoardBriefTipCopy.ForOptionOrShelf(body, price);
+            return BoardBriefTipCopy.ForOptionOrShelf(body, price > 0 ? (int?)price : null);
         }
 
         private void AttachClickProxy(
@@ -693,7 +718,8 @@ namespace NineGrid.Flow.ShopBoard
             ShopBoardHitKind kind,
             int shelfIndex,
             string tip,
-            int boardSlot)
+            int boardSlot,
+            int amountGold = 0)
         {
             if (go == null)
             {
@@ -714,7 +740,7 @@ namespace NineGrid.Flow.ShopBoard
                 proxy = go.AddComponent<ShopBoardHitProxy>();
             }
 
-            proxy.Configure(kind, shelfIndex, tip, HandleHit, boardSlot);
+            proxy.Configure(kind, shelfIndex, tip, HandleHit, boardSlot, amountGold);
         }
 
         private static void AttachBriefTipOnly(
@@ -811,6 +837,8 @@ namespace NineGrid.Flow.ShopBoard
                 "ShopBoardPresenter.TryBuy",
                 defId);
             Debug.Log("[ShopBoard] Buy accepted shelfIndex=" + shelfIndex);
+            // 购后旧货架即将撤场：金额提示随即隐藏，防止残留旧价（代数制仍会兜底脏写）。
+            PurchaseAmountTipPresenter.HideAll();
             InRoomGoldPresentation.PresentGoldChangesSince(arch, logStart);
             // ADR-0025：购入直写 ItemSlots；货架纯表现卡须换成 Core uid 并接入手牌，勿只碎裂。
             PresentShelfAcquireOrShatter(shelfIndex, arch, logStart);
@@ -895,6 +923,7 @@ namespace NineGrid.Flow.ShopBoard
                 FlowRoomEconomyAudioCues.ShopRefresh,
                 "ShopBoardPresenter.TryRefresh");
             Debug.Log("[ShopBoard] Refresh accepted");
+            PurchaseAmountTipPresenter.HideAll();
             InRoomGoldPresentation.PresentGoldChangesSince(arch, logStart);
             mReplanShelfSlots = true;
             ResyncFromPending(arch);

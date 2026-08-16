@@ -58,14 +58,20 @@ namespace NineGrid.Cards
         public float fieldToDeckDwellDuration = 0.28f;
 
         [Header("Burst Scatter Into Deck")]
-        [Tooltip("炸牌散点圆半径（世界单位）。同批新生洗入卡从死位炸到圆周上的点。")]
-        public float burstScatterRadius = 1.1f;
+        [Tooltip("炸牌散点相对 GroundPanel 边界的内缩（世界单位），保证炸开的卡不越出场地框。")]
+        public float burstScatterPadding = 1f;
 
-        [Tooltip("炸牌散点飞到圆周的时长（秒）；同批共用此时长以同步停稳。")]
-        public float burstScatterDuration = 0.48f;
+        [Tooltip("炸牌单卡由极小放大到正常的时长（秒）；OutBack 弹性，泡泡菜单同款。")]
+        public float burstScatterDuration = 0.5f;
 
-        [Tooltip("炸牌散点停稳后、集体上飞入组前的短暂停顿（秒）。")]
-        public float burstScatterHoldDuration = 0.22f;
+        [Tooltip("炸牌先后出现的间隔（秒）；每张再叠加 ±0.05 随机抖动。")]
+        public float burstScatterStaggerDelay = 0.12f;
+
+        [Tooltip("炸牌卡面的最大随机倾斜角（度）；正负对称，模仿泡泡菜单按钮的灵动倾斜。")]
+        public float burstScatterTiltAngle = 8f;
+
+        [Tooltip("最后一张炸牌放大出现后、集体上飞入组前的停顿（秒）。")]
+        public float burstScatterHoldDuration = 0.1f;
 
         [Header("Hover")]
         [Tooltip("场地卡 hover 时 localScale 相对基准的放大增量（如 0.05 表示约为 1.05 倍）。")]

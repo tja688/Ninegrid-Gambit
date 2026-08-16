@@ -515,8 +515,40 @@ namespace NineGrid.Core.Systems
         public const string TavernUpgradeDefId = "UpgradeItemStats";
         public const string TavernFixItemDefId = "FixItem";
         public const string TavernExpandDefId = "ExpandItemCapacity";
-        public const int TavernServicePriceGold = 50;
         public const int TavernUpgradeStatDelta = 3;
+
+        // 卡店服务定价（新一轮设计）：强化 75 起每用一次 +25；固定 50 恒定；扩容 150 起每用一次 +50。
+        // 底价以内容 JSON gold 为策划配置源，以下常量为目录缺失时的代码兜底。
+        public const int TavernUpgradeBasePriceGold = 75;
+        public const int TavernUpgradePriceStepGold = 25;
+        public const int TavernFixItemPriceGold = 50;
+        public const int TavernExpandBasePriceGold = 150;
+        public const int TavernExpandPriceStepGold = 50;
+
+        /// <summary>
+        /// 卡店服务当前价（权威：Core 扣费与表现层提示共用同一口径）。
+        /// <paramref name="catalogPrice"/> 为卡目录价（ContentVisual JSON gold，策划配置底价）；
+        /// 强化 / 扩容在此基础上按本局已购次数累加步进（PlayerModel 计数），固定价恒定。
+        /// </summary>
+        public static int ResolveTavernServicePrice(PlayerModel player, string defId, int catalogPrice)
+        {
+            if (string.Equals(defId, TavernUpgradeDefId, StringComparison.Ordinal))
+            {
+                var basePrice = catalogPrice > 0 ? catalogPrice : TavernUpgradeBasePriceGold;
+                var uses = player != null ? player.TavernUpgradePurchaseCount : 0;
+                return basePrice + TavernUpgradePriceStepGold * uses;
+            }
+
+            if (string.Equals(defId, TavernExpandDefId, StringComparison.Ordinal))
+            {
+                var basePrice = catalogPrice > 0 ? catalogPrice : TavernExpandBasePriceGold;
+                var uses = player != null ? player.TavernExpandPurchaseCount : 0;
+                return basePrice + TavernExpandPriceStepGold * uses;
+            }
+
+            // 道具卡固定：恒定 50（目录价可覆盖底价）。
+            return catalogPrice > 0 ? catalogPrice : TavernFixItemPriceGold;
+        }
 
         /// <summary>属性房三选二会话（#136，已退役流程）遗留常量。</summary>
         public const int AttributePickCount = 2;

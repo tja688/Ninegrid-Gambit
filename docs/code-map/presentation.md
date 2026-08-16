@@ -238,6 +238,7 @@
 - 场景：`BoardBriefTipPresenter`（**#141 起场景序列化**于 `Panels/简要解释文字框`，`panelRoot` 显式指向面板自身；运行时 AddComponent 兜底仅存于未序列化的开发场景）→ 简要解释文字框（`EnsureExists` 优先绑定命名面板，sceneLoaded 再绑，避免无 TMP 孤儿）；`FloorHintPresenter` → 楼层提示
 - 命中：场地图标 `BoardBriefTipHitProxy`；商店 `ShopBoardHitProxy`；卡店 `TavernBoardHitProxy`；特殊房 `RewardBoardHitProxy`；属性房候选 `AttributeBoardHitProxy`；离开图标仍 `BoardBriefTipHitProxy` + 驻留——均**认领格位**、不自建命中盒、不注册 Router（#102）
 - 悬停/点击同源：`GroundFieldHitSurface` 读当前格认领者的 `BriefTipText` / `Activate`
+- 金额提示：**`Flow/PurchaseAmountTip/PurchaseAmountTipPresenter`**（新一轮设计）——商店/卡店购买选项悬停时在**格位中心**显示购买金额，文字源为场景 `Panels/ShopPanel/金额购买提示模板`（3D TMP，运行时脱离 ShopPanel 父级独立显隐）；金额经 `ShopBoardPresenter.ResolveShelfPriceGold` / `TavernBoardPresenter.ResolveServicePriceGold`（与 Core 扣费同口径，卡店强化 75+25×次数 / 固定 50 / 扩容 150+50×次数，刷新价=本店当前翻倍价）；悬停进入/退出挂 `SlotClaimant.HoverEnter/Exit`（与简要文案同源），**代数制**防旧悬停脏写，购/刷/撤场 `HideAll` 硬清
 - 显示：有文案时激活面板并打开底板 `SpriteRenderer`；无悬停/Notice 即隐藏
 - 清理：场地板 `DespawnAll` 与进战 `StartBattleNode` / `PlayRealBattle` 调用 `HardClear`，避免房内 Notice（如「金币不足」）或悬停粘连进战斗；胜负 Notice 仍由 `HideNotice` 按时收起
 - 胜负 / 房间 stub Notice：`GameFlowController.ShowNotice` 改走简要解释文字框，旧 `NoticeText` 不再写出

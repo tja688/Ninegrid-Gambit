@@ -74,6 +74,9 @@ namespace NineGrid.Core
         public int itemDeckCapacity;
         public int itemSlotsCapacity;
         public int itemStatBonus;
+        /// <summary>卡店服务已购次数（价格步进计数；旧存档缺省 0）。</summary>
+        public int tavernUpgradePurchaseCount;
+        public int tavernExpandPurchaseCount;
         public string[] relicDefIds = Array.Empty<string>();
         /// <summary>已消费的一次性遗物效果 id（如黄金鱼竿给宝箱卡），恢复时先写回再重装遗物，防重复发放。</summary>
         public string[] consumedRelicEffectIds = Array.Empty<string>();
@@ -187,6 +190,8 @@ namespace NineGrid.Core
                 itemDeckCapacity = player.ItemDeckCapacity,
                 itemSlotsCapacity = player.ItemSlotsCapacity,
                 itemStatBonus = player.ItemStatBonus,
+                tavernUpgradePurchaseCount = player.TavernUpgradePurchaseCount,
+                tavernExpandPurchaseCount = player.TavernExpandPurchaseCount,
                 relicDefIds = CopyList(player.RelicDefIds),
                 consumedRelicEffectIds = CopyList(player.ConsumedRelicEffectIds),
                 itemSourcePoolDefIds = CopyList(player.ItemSourcePoolDefIds),
@@ -323,6 +328,8 @@ namespace NineGrid.Core
                 restoreCatalog,
                 snapshot.fixedItemCardDefIds));
             player.SetItemStatBonus(snapshot.itemStatBonus);
+            player.SetTavernUpgradePurchaseCount(snapshot.tavernUpgradePurchaseCount);
+            player.SetTavernExpandPurchaseCount(snapshot.tavernExpandPurchaseCount);
             run.SetAttributePicks(snapshot.attributePickDefIds);
 
             // 2. 遗物对齐：先弃掉初始局多出的（如职业初始遗物已被玩家丢弃），再补装快照遗物。

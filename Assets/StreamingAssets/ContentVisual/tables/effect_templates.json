@@ -45,7 +45,7 @@
   "design_text": "[使用时] 玩家下一次对怪物造成的战斗伤害翻倍",
   "requires_json": "[\"HasOwnerEntity\", \"ActivatedByUse\", \"CardZoneTriggerable\"]",
   "conditions_json": "[]",
-  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnSelfUsed\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"AddRuleModifier\",\"rule\":\"DamageMultiplier\",\"op\":\"Multiply\",\"value\":\"{{value}}\",\"layer\":\"Temporary\",\"scope\":\"Once\",\"source\":\"{{source}}\",\"conditionTarget\":\"None\",\"conditionActor\":\"Player\",\"conditionTargetKind\":\"Monster\",\"sourceAction\":\"{{sourceAction}}\",\"excludeSourcePrefix\":\"{{excludeSourcePrefix}}\"}}"
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnSelfUsed\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"AddRuleModifier\",\"rule\":\"DamageMultiplier\",\"op\":\"Multiply\",\"value\":\"{{value}}\",\"layer\":\"Temporary\",\"scope\":\"Once\",\"source\":\"{{source}}\",\"conditionTarget\":\"None\",\"conditionActor\":\"Player\",\"conditionTargetKind\":\"Monster\",\"sourceAction\":\"{{sourceAction}}\",\"excludeSourcePrefix\":\"{{excludeSourcePrefix}}\",\"requireEmptySource\":true}}"
  },
  {
   "id": "tpl.help.doubling_tower.board_monster",

@@ -11,6 +11,7 @@ using NineGrid.Flow;
 using NineGrid.Flow.BoardBriefTip;
 using NineGrid.Flow.InRoomBoard;
 using NineGrid.Flow.Presentation;
+using NineGrid.Flow.PurchaseAmountTip;
 using NineGrid.Flow.RoomIcons;
 using NineGrid.Flow.Transitions;
 using NineGrid.Presentation;
@@ -133,6 +134,7 @@ namespace NineGrid.Flow.TavernBoard
             mExtras.Clear();
             mRefreshGo = null;
             mLeaveGo = null;
+            PurchaseAmountTipPresenter.HideAll();
             RoomIconOccupancy.Current.Clear();
             RoomIconOccupancySlotHits.Refresh(mArch);
             BoardBriefTipPresenter.InstanceOrNull()?.HardClear();
@@ -411,7 +413,13 @@ namespace NineGrid.Flow.TavernBoard
             var tip = BoardBriefTipCopy.ForOptionOrShelf(
                 NineGrid.Core.Localization.L10n.Tr("briefTip.refresh_shelf", "刷新货架"),
                 pending.ShopRefreshPriceGold.Value);
-            AttachClickProxy(mRefreshGo, TavernBoardHitKind.Refresh, -1, tip, TavernBoardSlotResolver.RefreshSlot);
+            AttachClickProxy(
+                mRefreshGo,
+                TavernBoardHitKind.Refresh,
+                -1,
+                tip,
+                TavernBoardSlotResolver.RefreshSlot,
+                pending.ShopRefreshPriceGold.Value);
         }
 
         /// <summary>
@@ -461,7 +469,7 @@ namespace NineGrid.Flow.TavernBoard
                         newGos.Add(go);
                         newDefIds.Add(entry.DefId);
                         var tip = BuildServiceTip(entry.DefId, content);
-                        AttachClickProxy(go, TavernBoardHitKind.SelectService, i, tip, slot);
+                        AttachClickProxy(go, TavernBoardHitKind.SelectService, i, tip, slot, ResolveServicePriceGold(entry.DefId, content));
                         mServiceSlotByDefId[entry.DefId] = slot;
                         continue;
                     }
@@ -477,7 +485,7 @@ namespace NineGrid.Flow.TavernBoard
                 if (fresh != null)
                 {
                     var tip = BuildServiceTip(entry.DefId, content);
-                    AttachClickProxy(fresh, TavernBoardHitKind.SelectService, i, tip, slot);
+                    AttachClickProxy(fresh, TavernBoardHitKind.SelectService, i, tip, slot, ResolveServicePriceGold(entry.DefId, content));
                     mServiceSlotByDefId[entry.DefId] = slot;
                     animTasks.Add(InRoomShelfAnimation.DropOptionGoInAsync(fresh, geometry, slot, ct));
                 }
@@ -550,7 +558,8 @@ namespace NineGrid.Flow.TavernBoard
                         TavernBoardHitKind.SelectFixCandidate,
                         i,
                         tip,
-                        slot);
+                        slot,
+                        ResolveServicePriceGold(RewardSystem.TavernFixItemDefId, content));
                     if (oldSlot != slot)
                     {
                         animTasks.Add(InRoomShelfAnimation.HopToSlotAsync(card, geometry, slot, ct));
@@ -582,7 +591,8 @@ namespace NineGrid.Flow.TavernBoard
                         TavernBoardHitKind.SelectFixCandidate,
                         i,
                         tip,
-                        slot);
+                        slot,
+                        ResolveServicePriceGold(RewardSystem.TavernFixItemDefId, content));
                     animTasks.Add(InRoomShelfAnimation.DropInToSlotAsync(managed, geometry, slot, ct));
                 }
             }
@@ -647,7 +657,7 @@ namespace NineGrid.Flow.TavernBoard
                 }
 
                 var tip = BuildServiceTip(entry.DefId, content);
-                AttachClickProxy(go, TavernBoardHitKind.SelectService, i, tip, slot);
+                AttachClickProxy(go, TavernBoardHitKind.SelectService, i, tip, slot, ResolveServicePriceGold(entry.DefId, content));
             }
         }
 
@@ -709,7 +719,8 @@ namespace NineGrid.Flow.TavernBoard
                     TavernBoardHitKind.SelectFixCandidate,
                     i,
                     tip,
-                    slot);
+                    slot,
+                    ResolveServicePriceGold(RewardSystem.TavernFixItemDefId, content));
                 mCandidateCards.Add(managed);
             }
         }
@@ -736,7 +747,7 @@ namespace NineGrid.Flow.TavernBoard
             var tip = BoardBriefTipCopy.ForOptionOrShelf(
                 NineGrid.Core.Localization.L10n.Tr("briefTip.refresh_shelf", "刷新货架"),
                 refreshPrice);
-            AttachClickProxy(go, TavernBoardHitKind.Refresh, -1, tip, TavernBoardSlotResolver.RefreshSlot);
+            AttachClickProxy(go, TavernBoardHitKind.Refresh, -1, tip, TavernBoardSlotResolver.RefreshSlot, refreshPrice);
             mExtras.Add(go);
             mRefreshGo = go;
         }
@@ -763,11 +774,40 @@ namespace NineGrid.Flow.TavernBoard
             mLeaveGo = go;
         }
 
-        private static string BuildServiceTip(string defId, IContentSystem content)
+        /// <summary>
+        /// 卡店服务当前价（与 Core 扣费同口径：RewardSystem.ResolveTavernServicePrice，
+        /// 底价取目录 JSON gold，强化/扩容按本局已购次数步进）。
+        /// </summary>
+        private int ResolveServicePriceGold(string defId, IContentSystem content)
+        {
+            var catalogPrice = ResolveCatalogPriceGold(defId, content);
+            var player = mArch?.GetModel<PlayerModel>() ?? NineGridArchitecture.Current?.GetModel<PlayerModel>();
+            return RewardSystem.ResolveTavernServicePrice(player, defId, catalogPrice);
+        }
+
+        private static int ResolveCatalogPriceGold(string defId, IContentSystem content)
+        {
+            if (content != null && content.HasCatalog
+                && content.Catalog.Cards.TryGetValue(defId, out var card)
+                && card != null
+                && card.Price > 0)
+            {
+                return card.Price;
+            }
+
+            if (CardPresentationConfigCatalog.TryGet(defId, out var dto) && dto != null && dto.gold > 0)
+            {
+                return dto.gold;
+            }
+
+            return 0;
+        }
+
+        private string BuildServiceTip(string defId, IContentSystem content)
         {
             string name = defId;
             string brief = string.Empty;
-            int? price = RewardSystem.TavernServicePriceGold;
+            var price = ResolveServicePriceGold(defId, content);
 
             if (content != null && content.HasCatalog
                 && content.Catalog.Cards.TryGetValue(defId, out var card)
@@ -776,11 +816,6 @@ namespace NineGrid.Flow.TavernBoard
                 if (!string.IsNullOrWhiteSpace(card.DisplayName))
                 {
                     name = card.DisplayName;
-                }
-
-                if (card.Price > 0)
-                {
-                    price = card.Price;
                 }
             }
 
@@ -795,18 +830,13 @@ namespace NineGrid.Flow.TavernBoard
                 {
                     brief = dto.description;
                 }
-
-                if (dto.gold > 0)
-                {
-                    price = dto.gold;
-                }
             }
 
             var body = string.IsNullOrWhiteSpace(brief) ? name : name + "：" + brief.Trim();
-            return BoardBriefTipCopy.ForOptionOrShelf(body, price);
+            return BoardBriefTipCopy.ForOptionOrShelf(body, price > 0 ? (int?)price : null);
         }
 
-        private static string BuildCandidateTip(string defId, IContentSystem content)
+        private string BuildCandidateTip(string defId, IContentSystem content)
         {
             string name = defId;
             string brief = string.Empty;
@@ -831,8 +861,9 @@ namespace NineGrid.Flow.TavernBoard
                 }
             }
 
+            var price = ResolveServicePriceGold(RewardSystem.TavernFixItemDefId, content);
             var body = string.IsNullOrWhiteSpace(brief) ? name : name + "：" + brief.Trim();
-            return BoardBriefTipCopy.ForOptionOrShelf(body, RewardSystem.TavernServicePriceGold);
+            return BoardBriefTipCopy.ForOptionOrShelf(body, price > 0 ? (int?)price : null);
         }
 
         private void AttachClickProxy(
@@ -840,7 +871,8 @@ namespace NineGrid.Flow.TavernBoard
             TavernBoardHitKind kind,
             int optionIndex,
             string tip,
-            int boardSlot)
+            int boardSlot,
+            int amountGold = 0)
         {
             if (go == null)
             {
@@ -859,7 +891,7 @@ namespace NineGrid.Flow.TavernBoard
                 proxy = go.AddComponent<TavernBoardHitProxy>();
             }
 
-            proxy.Configure(kind, optionIndex, tip, HandleHit, boardSlot);
+            proxy.Configure(kind, optionIndex, tip, HandleHit, boardSlot, amountGold);
         }
 
         private static void AttachBriefTipOnly(
@@ -959,6 +991,7 @@ namespace NineGrid.Flow.TavernBoard
                 FlowRoomEconomyAudioCues.TavernBuy,
                 "TavernBoardPresenter.TrySelect",
                 contentId);
+            PurchaseAmountTipPresenter.HideAll();
             InRoomGoldPresentation.PresentGoldChangesSince(arch, logStart);
 
             if (wasNested)
@@ -1077,6 +1110,7 @@ namespace NineGrid.Flow.TavernBoard
         /// <summary>进入二级选择：销毁服务选项与刷新，保留离开（tip 改为取消）。</summary>
         private void HideMainSurfaceExceptLeave()
         {
+            PurchaseAmountTipPresenter.HideAll();
             for (var i = 0; i < mServiceGos.Count; i++)
             {
                 if (mServiceGos[i] != null)
@@ -1168,6 +1202,7 @@ namespace NineGrid.Flow.TavernBoard
             FlowRoomEconomyAudioCues.Pulse(
                 FlowRoomEconomyAudioCues.TavernRefresh,
                 "TavernBoardPresenter.TryRefresh");
+            PurchaseAmountTipPresenter.HideAll();
             InRoomGoldPresentation.PresentGoldChangesSince(arch, logStart);
             mReplanServiceSlots = true;
             ResyncFromPending(arch);

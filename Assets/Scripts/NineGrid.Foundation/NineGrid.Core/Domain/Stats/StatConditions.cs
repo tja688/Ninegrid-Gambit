@@ -484,4 +484,17 @@ namespace NineGrid.Core.Stats
             return !sourceDefId.StartsWith(Prefix, System.StringComparison.OrdinalIgnoreCase);
         }
     }
+
+    /// <summary>
+    /// 仅匹配「来源为空」的结算（玩家直接交战攻击）：效果/遗物/机关发起的伤害都带
+    /// 来源 defId（relic.* / trap.* / help.* …），不满足；暴力卡 ×2 只被玩家自己的
+    /// 普通攻击消费，捡道具卡 / 使用道具卡引发的遗物齐射等不再误吞（策划回归）。
+    /// </summary>
+    public sealed class EmptySourceCondition : IStatCondition
+    {
+        public bool IsMet(StatEvaluationContext context)
+        {
+            return context == null || string.IsNullOrEmpty(context.SourceDefId);
+        }
+    }
 }

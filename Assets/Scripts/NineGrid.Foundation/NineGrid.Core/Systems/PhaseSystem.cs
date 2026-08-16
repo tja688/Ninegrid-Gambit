@@ -1219,24 +1219,21 @@ namespace NineGrid.Core.Systems
             if (string.Equals(defId, RewardSystem.TavernExpandDefId, System.StringComparison.Ordinal))
             {
                 player.SetItemDeckCapacity(player.ItemDeckCapacity + 1);
+                player.AddTavernExpandPurchase();
                 return;
             }
 
             if (string.Equals(defId, RewardSystem.TavernUpgradeDefId, System.StringComparison.Ordinal))
             {
                 player.AddItemStatBonus(RewardSystem.TavernUpgradeStatDelta);
+                player.AddTavernUpgradePurchase();
             }
         }
 
         private int ResolveTavernServicePrice(string defId)
         {
             var catalogPrice = ResolveShopPrice(defId);
-            if (catalogPrice > 0)
-            {
-                return catalogPrice;
-            }
-
-            return RewardSystem.TavernServicePriceGold;
+            return RewardSystem.ResolveTavernServicePrice(this.GetModel<PlayerModel>(), defId, catalogPrice);
         }
 
         public CoreCommandResult RefreshShop()

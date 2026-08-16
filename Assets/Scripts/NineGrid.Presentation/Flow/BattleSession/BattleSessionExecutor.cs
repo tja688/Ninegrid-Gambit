@@ -367,6 +367,9 @@ namespace NineGrid.Flow
             public int InteractionCount;
             public string ProfessionId;
             public int ItemStatBonus;
+            /// <summary>卡店服务已购次数（价格步进跨层持久）。</summary>
+            public int TavernUpgradePurchaseCount;
+            public int TavernExpandPurchaseCount;
             public int Floor;
             public int NodeIndex;
             public ulong Seed;
@@ -411,6 +414,8 @@ namespace NineGrid.Flow
                 InteractionCount = player.InteractionCount.Value,
                 ProfessionId = player.ProfessionId.Value ?? string.Empty,
                 ItemStatBonus = player.ItemStatBonus,
+                TavernUpgradePurchaseCount = player.TavernUpgradePurchaseCount,
+                TavernExpandPurchaseCount = player.TavernExpandPurchaseCount,
                 Floor = run.Floor.Value,
                 NodeIndex = run.NodeIndex.Value,
                 Seed = run.Seed.Value,
@@ -475,6 +480,8 @@ namespace NineGrid.Flow
                 restoreCatalog,
                 inventory.FixedItemCardDefIds));
             player.SetItemStatBonus(inventory.ItemStatBonus);
+            player.SetTavernUpgradePurchaseCount(inventory.TavernUpgradePurchaseCount);
+            player.SetTavernExpandPurchaseCount(inventory.TavernExpandPurchaseCount);
 
             // 消费标记先于遗物重装写回：一次性效果（黄金鱼竿给宝箱卡）跨层不得重复发放。
             player.ReplaceConsumedRelicEffects(inventory.ConsumedRelicEffectIds);

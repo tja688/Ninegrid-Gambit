@@ -3886,6 +3886,7 @@ namespace NineGrid.Core.Effects
         private string mSourceAction = string.Empty;
         private string mSourceDefId = string.Empty;
         private string mExcludeSourcePrefix = string.Empty;
+        private bool mRequireEmptySource;
 
         public void Configure(EffectDslNode config)
         {
@@ -3901,6 +3902,7 @@ namespace NineGrid.Core.Effects
             mSourceAction = config.Get("sourceAction").AsString(string.Empty);
             mSourceDefId = config.Get("sourceDefId").AsString(string.Empty);
             mExcludeSourcePrefix = config.Get("excludeSourcePrefix").AsString(string.Empty);
+            mRequireEmptySource = config.Get("requireEmptySource").AsBool(false);
         }
 
         public IReadOnlyList<GameAction> BuildActions(EffectRuntimeContext context, IReadOnlyList<int> targets)
@@ -3925,7 +3927,8 @@ namespace NineGrid.Core.Effects
                         mSource,
                         mSourceAction,
                         mSourceDefId,
-                        mExcludeSourcePrefix));
+                        mExcludeSourcePrefix,
+                        mRequireEmptySource));
                 }
             }
 

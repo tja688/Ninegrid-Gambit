@@ -24,6 +24,9 @@ namespace NineGrid.Core
         private int mItemDeckCapacity = DefaultItemDeckCapacity;
         private int mItemSlotsCapacity = DefaultItemSlotsCapacity;
         private int mItemStatBonus;
+        // 卡店服务已购次数（价格步进的计数源；跨节点/跨层/存档持久，见 RunSaveGame / RunInventorySnapshot）。
+        private int mTavernUpgradePurchaseCount;
+        private int mTavernExpandPurchaseCount;
 
         // 神圣决斗（skill.holy_duel）：玩家侧交战记忆，先挂简单状态，预留日后 buff 化。
         // 语义：玩家主动与本卡交战后记下持有者 uid；之后主动与其他怪开战 → 对玩家 2 伤；
@@ -110,6 +113,18 @@ namespace NineGrid.Core
         public int ItemStatBonus
         {
             get { return mItemStatBonus; }
+        }
+
+        /// <summary>卡店「道具卡数值强化」本局已购次数（价格 = 75 + 25 × 次数）。</summary>
+        public int TavernUpgradePurchaseCount
+        {
+            get { return mTavernUpgradePurchaseCount; }
+        }
+
+        /// <summary>卡店「道具卡扩容」本局已购次数（价格 = 150 + 50 × 次数）。</summary>
+        public int TavernExpandPurchaseCount
+        {
+            get { return mTavernExpandPurchaseCount; }
         }
 
         protected override void OnInit()
@@ -325,6 +340,42 @@ namespace NineGrid.Core
             ItemStatBonusChangedSink.RaiseChanged();
         }
 
+        public void AddTavernUpgradePurchase()
+        {
+            mTavernUpgradePurchaseCount++;
+            Touch();
+        }
+
+        public void AddTavernExpandPurchase()
+        {
+            mTavernExpandPurchaseCount++;
+            Touch();
+        }
+
+        public void SetTavernUpgradePurchaseCount(int count)
+        {
+            var next = count < 0 ? 0 : count;
+            if (mTavernUpgradePurchaseCount == next)
+            {
+                return;
+            }
+
+            mTavernUpgradePurchaseCount = next;
+            Touch();
+        }
+
+        public void SetTavernExpandPurchaseCount(int count)
+        {
+            var next = count < 0 ? 0 : count;
+            if (mTavernExpandPurchaseCount == next)
+            {
+                return;
+            }
+
+            mTavernExpandPurchaseCount = next;
+            Touch();
+        }
+
         public void ReplaceFixedItemCards(IEnumerable<string> defIds)
         {
             mFixedItemCardDefIds.Clear();
@@ -355,6 +406,8 @@ namespace NineGrid.Core
             mItemSourcePoolDefIds.Clear();
             mFixedItemCardDefIds.Clear();
             mItemStatBonus = 0;
+            mTavernUpgradePurchaseCount = 0;
+            mTavernExpandPurchaseCount = 0;
             mDuelMarkMonsterUid = 0;
             Touch();
         }
