@@ -9,16 +9,13 @@ namespace NineGrid.Flow.Diagnostics
 {
     /// <summary>
     /// 试玩反馈上报：登录 Fast Note Sync（须 <c>X-Client: WebGui</c>），
-    /// 往 MyNote 指定笔记追加，并把合并后的对局 log 写成 LOG 下的一篇笔记。
+    /// 在协作目录下为每次 Bug / 意见各新建一篇笔记（不续写、不传 log）。
     /// </summary>
     public static class FnsPlaytestClient
     {
         public const string DefaultBaseUrl = "http://8.156.36.219:9000";
         public const string DefaultVault = "MyNote";
         public const string CollaborationFolder = "游戏开发项目/九宫格登神/游戏开发协作";
-        public const string BugNotePath = CollaborationFolder + "/玩家Bug反馈.md";
-        public const string SuggestionNotePath = CollaborationFolder + "/玩家意见建议.md";
-        public const string LogFolder = CollaborationFolder + "/LOG";
         public const string WebGuiClient = "WebGui";
         public const string SecretFileName = "fns-playtest.secret.json";
 
@@ -44,32 +41,55 @@ namespace NineGrid.Flow.Diagnostics
         {
             public readonly bool Success;
             public readonly string Message;
-            public readonly string LogNotePath;
+            public readonly string NotePath;
 
-            public SubmitResult(bool success, string message, string logNotePath = "")
+            public SubmitResult(bool success, string message, string notePath = "")
             {
                 Success = success;
                 Message = message ?? string.Empty;
-                LogNotePath = logNotePath ?? string.Empty;
+                NotePath = notePath ?? string.Empty;
             }
         }
 
         public static IEnumerator SubmitBug(string problemText, Action<SubmitResult> done)
         {
-            var problem = (problemText ?? string.Empty).Trim();
-            if (problem.Length == 0)
+            yield return SubmitNewNote(
+                "玩家Bug",
+                "玩家 Bug",
+                problemText,
+                "请先填写遇到的问题再提交。",
+                done);
+        }
+
+        public static IEnumerator SubmitSuggestion(string suggestionText, Action<SubmitResult> done)
+        {
+            yield return SubmitNewNote(
+                "玩家建议",
+                "玩家建议",
+                suggestionText,
+                "请先填写意见或建议再提交。",
+                done);
+        }
+
+        private static IEnumerator SubmitNewNote(
+            string filePrefix,
+            string title,
+            string bodyText,
+            string emptyMessage,
+            Action<SubmitResult> done)
+        {
+            var body = (bodyText ?? string.Empty).Trim();
+            if (body.Length == 0)
             {
-                done?.Invoke(new SubmitResult(false, "请先填写遇到的问题再提交。"));
+                done?.Invoke(new SubmitResult(false, emptyMessage));
                 yield break;
             }
 
             var stamp = DateTime.Now;
-            var version = Application.version;
-            var merged = DiagTraceManualSnapshot.SaveMerged(problem);
-            var stem = BuildLogStem(stamp, problem);
-            var logNotePath = LogFolder + "/" + stem + ".md";
-            var logBody = BuildLogNoteMarkdown(stamp, version, problem, merged, logNotePath);
-            var bugAppend = BuildBugIndexEntry(stamp, version, problem, stem);
+            var path = CollaborationFolder + "/" + filePrefix + "_"
+                + stamp.ToString("yyyyMMdd-HHmmss") + "_"
+                + DiagTraceManualSnapshot.SanitizeForFileName(body, 24) + ".md";
+            var markdown = BuildStandaloneNote(title, stamp, body);
 
             yield return EnsureToken(error =>
             {
@@ -81,60 +101,14 @@ namespace NineGrid.Flow.Diagnostics
             }
 
             string createError = null;
-            yield return PutNote(logNotePath, logBody, err => createError = err);
+            yield return PutNote(path, markdown, err => createError = err);
             if (createError != null)
             {
-                done?.Invoke(new SubmitResult(false, "日志笔记写入失败：" + createError));
+                done?.Invoke(new SubmitResult(false, "笔记写入失败：" + createError));
                 yield break;
             }
 
-            string appendError = null;
-            yield return AppendNote(BugNotePath, bugAppend, err => appendError = err);
-            if (appendError != null)
-            {
-                done?.Invoke(new SubmitResult(false, "Bug 笔记追加失败：" + appendError));
-                yield break;
-            }
-
-            done?.Invoke(new SubmitResult(true, "Bug 已提交到笔记库，日志已合并为一篇。", logNotePath));
-        }
-
-        public static IEnumerator SubmitSuggestion(string suggestionText, Action<SubmitResult> done)
-        {
-            var suggestion = (suggestionText ?? string.Empty).Trim();
-            if (suggestion.Length == 0)
-            {
-                done?.Invoke(new SubmitResult(false, "请先填写意见或建议再提交。"));
-                yield break;
-            }
-
-            var stamp = DateTime.Now;
-            var version = Application.version;
-            var block = new StringBuilder(256);
-            block.AppendLine();
-            block.AppendLine("## " + stamp.ToString("yyyy-MM-dd HH:mm") + " · v" + version);
-            block.AppendLine();
-            block.AppendLine(suggestion);
-            block.AppendLine();
-
-            yield return EnsureToken(error =>
-            {
-                done?.Invoke(new SubmitResult(false, error));
-            });
-            if (string.IsNullOrEmpty(sCachedToken))
-            {
-                yield break;
-            }
-
-            string appendError = null;
-            yield return AppendNote(SuggestionNotePath, block.ToString(), err => appendError = err);
-            if (appendError != null)
-            {
-                done?.Invoke(new SubmitResult(false, "意见笔记追加失败：" + appendError));
-                yield break;
-            }
-
-            done?.Invoke(new SubmitResult(true, "意见已提交到笔记库。"));
+            done?.Invoke(new SubmitResult(true, title + "已提交。", path));
         }
 
         private static IEnumerator EnsureToken(Action<string> onError)
@@ -184,31 +158,6 @@ namespace NineGrid.Flow.Diagnostics
             string body = null;
             string transportError = null;
             yield return PostJson("/api/note", payload, withToken: true, (text, err) =>
-            {
-                body = text;
-                transportError = err;
-            });
-            if (transportError != null)
-            {
-                onError?.Invoke(transportError);
-                yield break;
-            }
-
-            var parsed = JsonUtility.FromJson<SimpleResponse>(body ?? "{}");
-            if (parsed == null || parsed.code < 1)
-            {
-                onError?.Invoke(ExtractMessage(body, parsed));
-            }
-        }
-
-        private static IEnumerator AppendNote(string path, string content, Action<string> onError)
-        {
-            var payload = "{\"vault\":\"" + JsonEscape(sVault)
-                + "\",\"path\":\"" + JsonEscape(path)
-                + "\",\"content\":\"" + JsonEscape(content) + "\"}";
-            string body = null;
-            string transportError = null;
-            yield return PostJson("/api/note/append", payload, withToken: true, (text, err) =>
             {
                 body = text;
                 transportError = err;
@@ -304,74 +253,18 @@ namespace NineGrid.Flow.Diagnostics
             }
         }
 
-        private static string BuildLogStem(DateTime stamp, string problem)
+        private static string BuildStandaloneNote(string title, DateTime stamp, string body)
         {
-            return stamp.ToString("yyyyMMdd-HHmmss") + "_"
-                + DiagTraceManualSnapshot.SanitizeForFileName(problem, 32);
-        }
-
-        private static string BuildLogNoteMarkdown(
-            DateTime stamp,
-            string version,
-            string problem,
-            DiagTraceManualSnapshot.MergedUpload merged,
-            string logNotePath)
-        {
-            var sb = new StringBuilder(merged.Markdown != null ? merged.Markdown.Length + 512 : 512);
-            sb.AppendLine("# 试玩 Bug 日志 " + stamp.ToString("yyyy-MM-dd HH:mm:ss"));
+            var sb = new StringBuilder(body.Length + 160);
+            sb.AppendLine("# " + title);
             sb.AppendLine();
-            sb.AppendLine("- 版本：`" + version + "`");
+            sb.AppendLine("- 时间：" + stamp.ToString("yyyy-MM-dd HH:mm:ss"));
+            sb.AppendLine("- 版本：`" + Application.version + "`");
             sb.AppendLine("- 平台：" + Application.platform);
-            sb.AppendLine("- sessionId：`" + (DiagTraceShared.CurrentSessionId ?? string.Empty) + "`");
-            sb.AppendLine("- seed：`" + (DiagTraceShared.CurrentSeed ?? "0") + "`");
-            sb.AppendLine("- 回链：[[玩家Bug反馈]]");
-            sb.AppendLine("- 本篇：`[[" + StripMd(logNotePath) + "]]`");
             sb.AppendLine();
-            sb.AppendLine("## USER_PROBLEM");
-            sb.AppendLine();
-            sb.AppendLine(problem);
-            sb.AppendLine();
-            if (!string.IsNullOrEmpty(merged.LocalSave.FolderPath))
-            {
-                sb.AppendLine("> 本地快照：" + merged.LocalSave.FolderPath);
-                sb.AppendLine();
-            }
-
-            sb.AppendLine("以下各段用原文件名标识，合并自当次对局诊断轨。");
-            sb.AppendLine();
-            sb.Append(merged.Markdown ?? string.Empty);
-            if (!merged.LocalSave.Success)
-            {
-                sb.AppendLine();
-                sb.AppendLine("> 本地快照未写全：" + merged.LocalSave.Message);
-            }
-
-            return sb.ToString();
-        }
-
-        private static string BuildBugIndexEntry(DateTime stamp, string version, string problem, string stem)
-        {
-            var sb = new StringBuilder(256);
-            sb.AppendLine();
-            sb.AppendLine("## " + stamp.ToString("yyyy-MM-dd HH:mm") + " · v" + version);
-            sb.AppendLine();
-            sb.AppendLine(problem);
-            sb.AppendLine();
-            sb.AppendLine("合并日志：[[" + LogFolder + "/" + stem + "]]");
+            sb.AppendLine(body);
             sb.AppendLine();
             return sb.ToString();
-        }
-
-        private static string StripMd(string path)
-        {
-            if (string.IsNullOrEmpty(path))
-            {
-                return path;
-            }
-
-            return path.EndsWith(".md", StringComparison.OrdinalIgnoreCase)
-                ? path.Substring(0, path.Length - 3)
-                : path;
         }
 
         private static string ExtractMessage(string body, SimpleResponse parsed)

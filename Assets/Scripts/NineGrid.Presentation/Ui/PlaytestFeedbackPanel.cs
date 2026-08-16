@@ -1,7 +1,6 @@
 using System;
 using NineGrid.Core.Localization;
 using NineGrid.Flow;
-using NineGrid.Flow.BoardBriefTip;
 using NineGrid.Flow.Diagnostics;
 using NineGrid.Flow.Presentation;
 using TMPro;
@@ -11,7 +10,7 @@ using UnityEngine.UI;
 namespace NineGrid.Presentation.Ui
 {
     /// <summary>
-    /// 局内功能菜单 BugLogo：打开输入窗；上勾提交 Bug（合并 log → FNS），下勾提交意见。
+    /// 局内功能菜单 BugLogo：打开输入窗；上勾提交 Bug、下勾提交意见，各新建一篇笔记。
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class PlaytestFeedbackPanel : MonoBehaviour
@@ -34,6 +33,7 @@ namespace NineGrid.Presentation.Ui
         private GameObject mForm;
         private TMP_InputField mBugInput;
         private TMP_InputField mSuggestionInput;
+        private TMP_Text mStatusText;
         private bool mBusy;
         private bool mWired;
 
@@ -124,6 +124,10 @@ namespace NineGrid.Presentation.Ui
             mSuggestionInput = FindInput(mForm.transform, SuggestionInputName);
             ConfigureInput(mBugInput, L10n.Tr("playtest.bug_placeholder", "请具体描述你遇到的问题…"));
             ConfigureInput(mSuggestionInput, L10n.Tr("playtest.suggestion_placeholder", "请写下你的意见或建议…"));
+            var suggestionButton = FindNamed(mForm.transform, SuggestionSubmitName);
+            mStatusText = suggestionButton != null
+                ? suggestionButton.GetComponentInChildren<TMP_Text>(true)
+                : null;
 
             WireHit(mLogo, OpenForm, FormSwallowSort);
             WireHit(mForm.transform, null, FormSwallowSort);
@@ -183,7 +187,7 @@ namespace NineGrid.Presentation.Ui
             var text = mBugInput != null ? mBugInput.text : string.Empty;
             if (string.IsNullOrWhiteSpace(text))
             {
-                Notify(L10n.Tr("playtest.bug_empty", "请先填写遇到的问题再提交。"));
+                ShowStatus(L10n.Tr("playtest.bug_empty", "请先填写遇到的问题再提交。"));
                 InteractionAudioCues.Pulse(
                     InteractionAudioCues.UiPress,
                     "PlaytestFeedbackPanel.SubmitBug",
@@ -192,7 +196,7 @@ namespace NineGrid.Presentation.Ui
             }
 
             mBusy = true;
-            Notify(L10n.Tr("playtest.submitting", "正在提交…"));
+            ShowStatus(L10n.Tr("playtest.submitting", "正在提交…"));
             var panel = this;
             EnsureSubmitHost().StartCoroutine(FnsPlaytestClient.SubmitBug(text, result =>
             {
@@ -203,9 +207,13 @@ namespace NineGrid.Presentation.Ui
                     {
                         panel.mBugInput.text = string.Empty;
                     }
+
+                    panel.ShowStatus(
+                        result.Success
+                            ? L10n.Tr("playtest.bug_ok", "bug已提交，立刻加班修复！")
+                            : result.Message);
                 }
 
-                Notify(result.Message);
                 InteractionAudioCues.Pulse(
                     result.Success ? InteractionAudioCues.UiConfirm : InteractionAudioCues.UiPress,
                     "PlaytestFeedbackPanel.SubmitBug",
@@ -223,7 +231,7 @@ namespace NineGrid.Presentation.Ui
             var text = mSuggestionInput != null ? mSuggestionInput.text : string.Empty;
             if (string.IsNullOrWhiteSpace(text))
             {
-                Notify(L10n.Tr("playtest.suggestion_empty", "请先填写意见或建议再提交。"));
+                ShowStatus(L10n.Tr("playtest.suggestion_empty", "请先填写意见或建议再提交。"));
                 InteractionAudioCues.Pulse(
                     InteractionAudioCues.UiPress,
                     "PlaytestFeedbackPanel.SubmitSuggestion",
@@ -232,7 +240,7 @@ namespace NineGrid.Presentation.Ui
             }
 
             mBusy = true;
-            Notify(L10n.Tr("playtest.submitting", "正在提交…"));
+            ShowStatus(L10n.Tr("playtest.submitting", "正在提交…"));
             var panel = this;
             EnsureSubmitHost().StartCoroutine(FnsPlaytestClient.SubmitSuggestion(text, result =>
             {
@@ -243,9 +251,13 @@ namespace NineGrid.Presentation.Ui
                     {
                         panel.mSuggestionInput.text = string.Empty;
                     }
+
+                    panel.ShowStatus(
+                        result.Success
+                            ? L10n.Tr("playtest.suggestion_ok", "建议收到啦，感谢你的支持！")
+                            : result.Message);
                 }
 
-                Notify(result.Message);
                 InteractionAudioCues.Pulse(
                     result.Success ? InteractionAudioCues.UiConfirm : InteractionAudioCues.UiPress,
                     "PlaytestFeedbackPanel.SubmitSuggestion",
@@ -261,12 +273,11 @@ namespace NineGrid.Presentation.Ui
             }
         }
 
-        private static void Notify(string message)
+        private void ShowStatus(string message)
         {
-            var tip = BoardBriefTipPresenter.InstanceOrNull();
-            if (tip != null)
+            if (mStatusText != null)
             {
-                tip.ShowNotice(message);
+                mStatusText.text = message ?? string.Empty;
                 return;
             }
 
