@@ -29,9 +29,9 @@ namespace NineGrid.Core
         private int mTavernExpandPurchaseCount;
 
         // 神圣决斗（skill.holy_duel）：玩家侧交战记忆，先挂简单状态，预留日后 buff 化。
-        // 语义：玩家主动与本卡交战后记下持有者 uid；之后主动与其他怪开战 → 对玩家 2 伤；
-        // 持有者翻面或离场清标记（翻面在 FlipCardAction 清，离场在交战前惰性校验）。
-        private int mDuelMarkMonsterUid;
+        // 语义：玩家主动与每只持有者交战后各自记下 uid；之后主动与其他怪开战 →
+        // 每个仍存活且正面的持有者各对玩家 2 伤；仅该持有者死亡或离场时摘标（翻面保留）。
+        private readonly List<int> mDuelMarkMonsterUids = new List<int>();
 
         public PlayerModel()
         {
@@ -44,31 +44,41 @@ namespace NineGrid.Core
         public BindableProperty<string> ProfessionId { get; private set; }
         public BindableProperty<int> Version { get; private set; }
 
-        /// <summary>神圣决斗标记的持有者怪物 uid；0 = 未标记。</summary>
-        public int DuelMarkMonsterUid
+        /// <summary>神圣决斗标记的持有者怪物 uid 列表（插入序、去重）。</summary>
+        public IReadOnlyList<int> DuelMarkMonsterUids
         {
-            get { return mDuelMarkMonsterUid; }
+            get { return mDuelMarkMonsterUids; }
         }
 
-        public void SetDuelMark(int monsterUid)
+        public void AddDuelMark(int monsterUid)
         {
-            if (mDuelMarkMonsterUid == monsterUid)
+            if (monsterUid <= 0 || mDuelMarkMonsterUids.Contains(monsterUid))
             {
                 return;
             }
 
-            mDuelMarkMonsterUid = monsterUid;
+            mDuelMarkMonsterUids.Add(monsterUid);
             Touch();
         }
 
-        public void ClearDuelMark()
+        public void RemoveDuelMark(int monsterUid)
         {
-            if (mDuelMarkMonsterUid == 0)
+            if (monsterUid <= 0 || !mDuelMarkMonsterUids.Remove(monsterUid))
             {
                 return;
             }
 
-            mDuelMarkMonsterUid = 0;
+            Touch();
+        }
+
+        public void ClearDuelMarks()
+        {
+            if (mDuelMarkMonsterUids.Count == 0)
+            {
+                return;
+            }
+
+            mDuelMarkMonsterUids.Clear();
             Touch();
         }
 
@@ -408,7 +418,7 @@ namespace NineGrid.Core
             mItemStatBonus = 0;
             mTavernUpgradePurchaseCount = 0;
             mTavernExpandPurchaseCount = 0;
-            mDuelMarkMonsterUid = 0;
+            mDuelMarkMonsterUids.Clear();
             Touch();
         }
 

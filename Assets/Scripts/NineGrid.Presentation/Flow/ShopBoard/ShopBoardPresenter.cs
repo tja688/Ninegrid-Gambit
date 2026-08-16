@@ -23,7 +23,7 @@ using UnityEngine.Rendering;
 namespace NineGrid.Flow.ShopBoard
 {
     /// <summary>
-    /// 商店房场地：最多 4 真卡货架 + 道具牌格升级选项 + 刷新就地选项 + 离开图标（#92 / #109 / ADR-0020）。
+    /// 商店房场地：最多 5 真卡货架 + 道具牌格升级选项 + 刷新就地选项 + 离开图标（#92 / #109 / #211 / ADR-0020）。
     /// </summary>
     public sealed class ShopBoardPresenter
     {

@@ -305,31 +305,6 @@ namespace NineGrid.Presentation.Tests
         }
 
         [Test]
-        public void StrikePlan_ExcludesBorrowedArmorDecay()
-        {
-            // 护甲图腾借甲自然流失：负甲变化带容器 SourceDefId 但 cause=borrowedArmorDecay，
-            // 不是图腾主动索取，不得建打击组（否则演成图腾攻击玩家）。
-            var trigger = new CoreGameEvent(CoreEventType.EffectTriggered, actionId: 1, actionName: "ExecuteEffect")
-                .WithCard(12)
-                .WithMessage("trap.armor_totem.refresh_player")
-                .WithSource("trap.armor_totem", "trap.armor_totem.refresh_player");
-            var decay = new CoreGameEvent(CoreEventType.ArmorChanged, actionId: 2, actionName: "SyncAdjacentBorrowedArmor")
-                .WithTarget(1)
-                .WithCard(1)
-                .WithDelta(-1)
-                .WithRemaining(10, 0)
-                .WithSource("trap.armor_totem", NineGrid.Core.BorrowedArmorAuraKeys.DecayCause);
-            var batch = MakeBatch(trigger, decay);
-
-            var plan = EffectStrikePlan.Build(batch, uid => true);
-
-            Assert.AreEqual(0, plan.Groups.Count, "借甲流失不入打击计划");
-            Assert.AreEqual(0, plan.HeldInstructions.Count, "流失指令保持原 Impact 冲刷路径");
-        }
-
-        // ==================== ④ Core 因果深度盖章 ====================
-
-        [Test]
         public void CausalDepth_RootActionZero_TriggeredEffectDeeper()
         {
             NineGridArchitecture.ResetForTests();

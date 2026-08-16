@@ -246,7 +246,7 @@
 
 ### 商店房就地货架（#92 / #109 · ADR-0020 / ADR-0022 / ADR-0025）
 
-- Core：进 `Shop` → `OfferShopSession` 固定 4 货架（宝箱 / 随机属性道具 / 恢复药水 / 食品）+ 容量未满时追加 `ExpandItemSlots`（道具牌格升级，50 金）+ 本次进店刷新价初值 10；`SelectReward` 扣 `Price`、直写道具卡格（满则拒）、**留店**；升级选项扣 50 金写 `ItemSlotsCapacity+1`（不发卡、不改 `ItemDeckCapacity`），满 5 后选项移除/不再出现；`RefreshShop` 扣刷新价并翻倍；`SkipHelpChoice` 出店（不加 skip 金）
+- Core：进 `Shop` → `OfferShopSession` 固定 5 货架（1 宝箱 + 3 随机属性道具 40/40/20 + 1 食品）+ 容量未满时追加 `ExpandItemSlots`（道具牌格升级，50 金）+ 本次进店刷新价初值 10；`SelectReward` 扣 `Price`、直写道具卡格（满则拒）、**留店**；升级选项扣 50 金写 `ItemSlotsCapacity+1`（不发卡、不改 `ItemDeckCapacity`），满 5 后选项移除/不再出现；`RefreshShop` 扣刷新价并翻倍；`SkipHelpChoice` 出店（不加 skip 金）
 - 刷新价作用域：**本次进店**（离开清零；再进店重新从 10 起）
 - 表现：`ShopBoardPresenter` 偏好落格 `{1,3,7,9,4}`（第 5 项为 `ExpandItemSlots`）、2 刷新、8 离开；Avatar 硬切格 5；**购后粘性**：仍在售项保持原 assigned 格不换格、已购格留空；**进店/刷新**经 `InRoomOfferSlotPlanner` 重排——避开 Avatar 站位并保证 PreferEmpty 空路到离开格 8
 - 货架真卡 `GroundCardMode`（预制体原生尺寸，与战斗卡同尺度）；升级/刷新就地选项 / 离开图标同按预制体根缩放（#104 / ADR-0024，已删 `RoomIconVisualFit`）；货架·刷新·升级登记 `SoftBlockOnly`，离开 `WalkDestination`

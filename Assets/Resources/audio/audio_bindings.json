@@ -526,7 +526,7 @@
         },
         {
             "cueId": "sfx.trap.trigger",
-            "note": "护甲图腾（增益声）",
+            "note": "护甲增幅器（增益声）",
             "module": "Battle",
             "enabled": true,
             "clipKey": "audio/SFX/敌方增益增强",

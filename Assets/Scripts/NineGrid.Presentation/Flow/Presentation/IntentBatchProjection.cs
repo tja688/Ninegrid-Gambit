@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using NineGrid.Cards;
 using NineGrid.Core;
 using NineGrid.Core.Systems;
@@ -47,16 +48,16 @@ namespace NineGrid.Flow.Presentation
             summary.Deals = projection.LegacyDeals ?? Array.Empty<PostKillCardDeal>();
             summary.RemovedUids = projection.LegacyRemovedUids ?? Array.Empty<int>();
             summary.DamagePopups = Array.Empty<CombatDamagePopup>();
-            summary.HolyDuelPunishment = ScanHolyDuelPunishment(architecture, pipeline, startIndex);
+            summary.HolyDuelPunishments = ScanHolyDuelPunishments(architecture, pipeline, startIndex);
             return summary;
         }
 
         /// <summary>
-        /// 扫描批内神圣决斗惩罚：EffectTriggered（message=skill.holy_duel.activate）标记持有者，
-        /// 之后以 source=skill.holy_duel 打向玩家卡的 DamageDealt 即惩罚伤害。
-        /// 表现层据此在玩家攻击编排后追加决斗者的攻击表演（见 FieldBattlePresentationExecutor）。
+        /// 扫描批内神圣决斗惩罚：按事件序配对 EffectTriggered（message=skill.holy_duel.activate）
+        /// 与随后 source=skill.holy_duel 打向玩家卡的 DamageDealt（ActorUid=持有者）。
+        /// 表现层据此在玩家攻击编排后逐个追加决斗者攻击表演。
         /// </summary>
-        private static HolyDuelPunishmentPresentation ScanHolyDuelPunishment(
+        private static HolyDuelPunishmentEntry[] ScanHolyDuelPunishments(
             IArchitecture architecture,
             IActionPipelineSystem pipeline,
             int startIndex)
@@ -65,13 +66,13 @@ namespace NineGrid.Flow.Presentation
                 ? architecture.GetModel<BoardModel>().AvatarUid.Value
                 : 0;
             var entries = pipeline?.EventLog?.Entries;
-            if (entries == null)
+            if (entries == null || avatarUid <= 0)
             {
-                return default;
+                return Array.Empty<HolyDuelPunishmentEntry>();
             }
 
-            var holderUid = 0;
-            var amount = 0;
+            var results = new List<HolyDuelPunishmentEntry>(4);
+            var pendingHolderUid = 0;
             for (var i = startIndex; i < entries.Count; i++)
             {
                 var e = entries[i];
@@ -83,23 +84,29 @@ namespace NineGrid.Flow.Presentation
                 if (e.Type == CoreEventType.EffectTriggered
                     && string.Equals(e.Message, "skill.holy_duel.activate", StringComparison.Ordinal))
                 {
-                    holderUid = e.CardUid;
+                    pendingHolderUid = e.CardUid;
                 }
                 else if (e.Type == CoreEventType.DamageDealt
-                    && avatarUid > 0
                     && e.TargetUid == avatarUid
                     && string.Equals(e.SourceDefId, "skill.holy_duel", StringComparison.Ordinal))
                 {
-                    amount = e.Amount;
+                    var holderUid = e.ActorUid > 0 ? e.ActorUid : pendingHolderUid;
+                    if (holderUid > 0 && e.Amount > 0)
+                    {
+                        results.Add(new HolyDuelPunishmentEntry
+                        {
+                            HolderUid = holderUid,
+                            Amount = e.Amount,
+                        });
+                    }
+
+                    pendingHolderUid = 0;
                 }
             }
 
-            if (holderUid <= 0 || amount <= 0)
-            {
-                return default;
-            }
-
-            return new HolyDuelPunishmentPresentation { HolderUid = holderUid, Amount = amount };
+            return results.Count == 0
+                ? Array.Empty<HolyDuelPunishmentEntry>()
+                : results.ToArray();
         }
 
         public static bool ContainsCardKilled(

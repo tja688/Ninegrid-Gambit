@@ -126,18 +126,18 @@ namespace NineGrid.Cards
         /// <summary>旋转/移动技能等造成的 DamageDealt 飘字（如投石）。</summary>
         public CombatDamagePopup[] DamagePopups;
         /// <summary>
-        /// 神圣决斗惩罚（HolderUid&gt;0 时有效）：本批含决斗者 A 对玩家的惩罚伤害，
-        /// 表现层须以决斗者攻击编排打出该伤害（而非只播触发脉冲 + 掉血）。
+        /// 神圣决斗惩罚（非空时有效）：本批各决斗持有者对玩家的惩罚伤害，
+        /// 表现层须以决斗者攻击编排逐个打出（而非只播触发脉冲 + 掉血）。
         /// </summary>
-        public HolyDuelPunishmentPresentation HolyDuelPunishment;
+        public HolyDuelPunishmentEntry[] HolyDuelPunishments;
     }
 
     /// <summary>
-    /// 神圣决斗惩罚载荷：决斗持有者对玩家卡的惩罚伤害摘要（由 IntentBatchProjection 填充）。
+    /// 单条神圣决斗惩罚：一名决斗持有者对玩家卡的惩罚伤害摘要。
     /// </summary>
-    public struct HolyDuelPunishmentPresentation
+    public struct HolyDuelPunishmentEntry
     {
-        /// <summary>决斗持有者怪物 uid；0 = 无惩罚。</summary>
+        /// <summary>决斗持有者怪物 uid。</summary>
         public int HolderUid;
         /// <summary>惩罚伤害量（当前设计 2）。</summary>
         public int Amount;

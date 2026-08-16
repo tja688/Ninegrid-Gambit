@@ -14,7 +14,7 @@ namespace NineGrid.Core.Systems
         NodeDeckOptions BuildNodeDeckOptions(int nodeIndex, string monsterDeckId);
         int ResolveRoom(RoomKind roomKind);
 
-        /// <summary>商店货架草案（随机属性 / 药水 / 食品）；宝箱卡不上架（仅宝箱房渠道，ADR-0033 修订）。</summary>
+        /// <summary>商店货架草案（1 宝箱 + 3 随机属性 + 1 食品 + 可选道具牌格扩容；房间.md）。</summary>
         IReadOnlyList<RewardEntry> BuildShopShelves();
 
         /// <summary>
@@ -401,15 +401,17 @@ namespace NineGrid.Core.Systems
         }
 
         /// <summary>
-        /// 商店货架：随机属性道具 / 恢复药水 / 食品；容量未满时追加「道具牌格升级」（#109 / ADR-0025）。
-        /// 宝箱卡不上商店货架（仅宝箱房 / 宝箱奖励房 / 击杀掉落渠道，ADR-0033 修订）。
+        /// 商店货架（房间.md）：1 宝箱卡 + 3 随机属性相关道具卡 + 1 食品卡；
+        /// 道具牌格未满时追加「道具牌格扩容」（#109 / ADR-0025）。
         /// </summary>
         public IReadOnlyList<RewardEntry> BuildShopShelves()
         {
-            var shelves = new List<RewardEntry>(4)
+            var shelves = new List<RewardEntry>(6)
             {
+                new RewardEntry(ShopChestDefId, CardKind.HelpCard, 1, 1),
                 new RewardEntry(RollShopAttributeDefId(), CardKind.HelpCard, 1, 1),
-                new RewardEntry(ShopPotionDefId, CardKind.HelpCard, 1, 1),
+                new RewardEntry(RollShopAttributeDefId(), CardKind.HelpCard, 1, 1),
+                new RewardEntry(RollShopAttributeDefId(), CardKind.HelpCard, 1, 1),
                 new RewardEntry(ShopFoodDefId, CardKind.HelpCard, 1, 1),
             };
             var player = this.GetModel<PlayerModel>();
@@ -506,7 +508,6 @@ namespace NineGrid.Core.Systems
         }
 
         public const string ShopChestDefId = "help.common_chest_card";
-        public const string ShopPotionDefId = "help.healing_potion";
         public const string ShopFoodDefId = "help.food_card";
         /// <summary>商店「道具牌格升级」选项（#109）；勿与卡店 <see cref="TavernExpandDefId"/> 混淆。</summary>
         public const string ShopExpandItemSlotsDefId = "ExpandItemSlots";

@@ -262,14 +262,6 @@ namespace NineGrid.Flow.Presentation
                 return false;
             }
 
-            // 借甲自然流失（护甲图腾等）：离开邻接后未消耗借甲消退，
-            // 不是持有卡主动索取，不编排打击表演。
-            if (gameEvent.Type == CoreEventType.ArmorChanged
-                && string.Equals(gameEvent.Cause, BorrowedArmorAuraKeys.DecayCause, StringComparison.Ordinal))
-            {
-                return false;
-            }
-
             if (gameEvent.CardUid <= 0
                 || string.IsNullOrEmpty(gameEvent.SourceDefId)
                 || HasDedicatedPresentation(gameEvent.SourceDefId))

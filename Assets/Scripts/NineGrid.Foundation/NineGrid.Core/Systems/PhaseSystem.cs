@@ -147,6 +147,8 @@ namespace NineGrid.Core.Systems
             }
 
             mInRoomRewardContext = false;
+            // 决斗标记不跨节点持久；uid 复用后须清空，避免误罚。
+            this.GetModel<PlayerModel>().ClearDuelMarks();
             var run = this.GetModel<RunModel>();
             // #116：清掉上一关 UntilNodeEnds 修正（废物增幅器等）。
             this.GetSystem<IBattleScopeSystem>().ClearScopedModifiers(ModifierScope.UntilNodeEnds);
@@ -350,10 +352,8 @@ namespace NineGrid.Core.Systems
 
         /// <summary>
         /// 神圣决斗（skill.holy_duel）标记结算（玩家主动交战入口）：
-        /// 先结算旧标记——目标为「其他怪」且旧持有者仍在场正面 → 对玩家 2 伤
-        /// （持有者已离场/翻面 → 清标记不惩罚）；之后目标若为持有者 → 记录/转移标记。
-        /// 两只持有者互为「其他怪」：A→B 连打必须先打出 A 的惩罚再把标记转给 B，
-        /// 不得因目标也是持有者而提前转标吞掉惩罚（决斗套全员持有时曾整场静默）。
+        /// 先对每个已有标记且 uid != 当前目标 的持有者尝试惩罚（正面在场存活 → 2 伤）；
+        /// 背面仍保留标记但不罚；死亡/离场只摘该 uid。之后目标若为持有者 → 叠加标记（去重）。
         /// </summary>
         private void ApplyHolyDuelMark(
             CardInstance avatar,
@@ -366,21 +366,25 @@ namespace NineGrid.Core.Systems
             }
 
             var player = this.GetModel<PlayerModel>();
-            var markedUid = player.DuelMarkMonsterUid;
-            if (markedUid != 0 && markedUid != target.Uid)
+            var markedUids = new List<int>(player.DuelMarkMonsterUids);
+            for (var i = 0; i < markedUids.Count; i++)
             {
-                EnqueueHolyDuelPunishment(player, markedUid, avatar, pipeline);
+                var markedUid = markedUids[i];
+                if (markedUid != target.Uid)
+                {
+                    EnqueueHolyDuelPunishment(player, markedUid, avatar, pipeline);
+                }
             }
 
             if (HasRule(target, RuleId.HolyDuel))
             {
-                player.SetDuelMark(target.Uid);
+                player.AddDuelMark(target.Uid);
             }
         }
 
         /// <summary>
-        /// 神圣决斗惩罚入队：旧持有者失效（离场/翻面/已死）→ 清标记不惩罚；
-        /// 否则以持有者为源对玩家 2 伤（惩罚后标记保留，除非被新持有者转移）。
+        /// 神圣决斗惩罚入队：持有者死亡或离场 → 只摘该 uid 不惩罚；
+        /// 背面在场存活 → 保留标记、本次不罚；正面在场存活 → 对玩家 2 伤。
         /// </summary>
         private void EnqueueHolyDuelPunishment(
             PlayerModel player,
@@ -393,10 +397,14 @@ namespace NineGrid.Core.Systems
             if (!registry.TryGet(markedUid, out holder)
                 || holder == null
                 || holder.Zone.Value != ZoneId.Board
-                || !holder.FaceUp
                 || !IsCardAlive(holder))
             {
-                player.ClearDuelMark();
+                player.RemoveDuelMark(markedUid);
+                return;
+            }
+
+            if (!holder.FaceUp)
+            {
                 return;
             }
 

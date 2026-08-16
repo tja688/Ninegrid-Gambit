@@ -3158,59 +3158,6 @@ namespace NineGrid.Core.Effects
         }
     }
 
-    [EffectAtom("SyncAdjacentBorrowedArmor", EffectAtomKind.Action)]
-    public sealed class SyncAdjacentBorrowedArmorEffectAction : IAction
-    {
-        private EffectValueExpression mAmount;
-        private string mSource = string.Empty;
-        private string mAdjacentToRef = "Self";
-        private BorrowedArmorSyncPhase mPhase = BorrowedArmorSyncPhase.Grant;
-
-        public void Configure(EffectDslNode config)
-        {
-            mAmount = EffectValueExpression.FromActionAmount(config);
-            mSource = config.Get("source").AsString(string.Empty);
-            mAdjacentToRef = config.Get("adjacentTo").AsString("Self");
-            mPhase = ParsePhase(config.Get("phase").AsString(string.Empty));
-        }
-
-        public IReadOnlyList<GameAction> BuildActions(EffectRuntimeContext context, IReadOnlyList<int> targets)
-        {
-            var result = new List<GameAction>();
-            var sourceUid = TargetResolver.ResolveSingleCardRef(context, mAdjacentToRef);
-            if (sourceUid == 0)
-            {
-                return result;
-            }
-
-            for (var i = 0; i < targets.Count; i++)
-            {
-                if (targets[i] != 0)
-                {
-                    result.Add(new SyncAdjacentBorrowedArmorAction(
-                        targets[i],
-                        sourceUid,
-                        mAmount.Evaluate(context, targets[i]),
-                        mSource,
-                        context.SourceDefId,
-                        mPhase));
-                }
-            }
-
-            return result;
-        }
-
-        private static BorrowedArmorSyncPhase ParsePhase(string phase)
-        {
-            if (string.Equals(phase, "settle", StringComparison.OrdinalIgnoreCase))
-            {
-                return BorrowedArmorSyncPhase.Settle;
-            }
-
-            return BorrowedArmorSyncPhase.Grant;
-        }
-    }
-
     [EffectAtom("TransferArmor", EffectAtomKind.Action)]
     public sealed class TransferArmorEffectAction : IAction
     {

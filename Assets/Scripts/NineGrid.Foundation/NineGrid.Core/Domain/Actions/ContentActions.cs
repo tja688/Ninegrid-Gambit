@@ -762,7 +762,7 @@ namespace NineGrid.Core
         }
     }
 
-    /// <summary>商店四货架会话（#92）：固定角色货架 + 本次进店刷新价。</summary>
+    /// <summary>商店货架会话（#92 / #211）：固定角色货架 + 本次进店刷新价。</summary>
     public sealed class OfferShopSessionAction : GameAction
     {
         public const int DefaultRefreshPriceGold = 10;

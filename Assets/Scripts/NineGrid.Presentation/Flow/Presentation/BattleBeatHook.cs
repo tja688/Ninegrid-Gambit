@@ -27,6 +27,9 @@ namespace NineGrid.Flow.Presentation
         /// <summary>放回隔离区指令（决斗者攻击命中帧报点前）。</summary>
         public static Action ReleaseQuarantined;
 
+        /// <summary>按谓词放回隔离区中的部分指令（多决斗者逐个命中帧）。</summary>
+        public static Action<Func<PresentationInstruction, bool>> ReleaseQuarantinedWhere;
+
         /// <summary>效果打击暂扣：把满足谓词的 Impact 指令移入打击暂扣区（ADR-0050）。</summary>
         public static Action<Func<PresentationInstruction, bool>> HoldStrikeImpactWhere;
 
@@ -43,6 +46,7 @@ namespace NineGrid.Flow.Presentation
             FlushImpactOnly = null;
             QuarantineImpactWhere = null;
             ReleaseQuarantined = null;
+            ReleaseQuarantinedWhere = null;
             HoldStrikeImpactWhere = null;
             FlushStrikeHeldWhere = null;
         }
@@ -85,6 +89,11 @@ namespace NineGrid.Flow.Presentation
         public static void NotifyReleaseQuarantined()
         {
             ReleaseQuarantined?.Invoke();
+        }
+
+        public static void NotifyReleaseQuarantinedWhere(Func<PresentationInstruction, bool> predicate)
+        {
+            ReleaseQuarantinedWhere?.Invoke(predicate);
         }
 
         public static void NotifyHoldStrikeImpactWhere(Func<PresentationInstruction, bool> predicate)

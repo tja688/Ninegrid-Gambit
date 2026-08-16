@@ -436,7 +436,7 @@ namespace NineGrid.Core.Effects
                 return;
             }
 
-            if (Same(atom, "DealDamage") || Same(atom, "Heal") || Same(atom, "GainArmor") || Same(atom, "SyncAdjacentBorrowedArmor"))
+            if (Same(atom, "DealDamage") || Same(atom, "Heal") || Same(atom, "GainArmor"))
             {
                 if (!node.Has("amount") && !node.Has("value"))
                 {
@@ -895,7 +895,7 @@ namespace NineGrid.Core.Effects
                 return;
             }
 
-            if ((Same(atom, "DealDamage") || Same(atom, "Heal") || Same(atom, "GainArmor") || Same(atom, "SyncAdjacentBorrowedArmor"))
+            if ((Same(atom, "DealDamage") || Same(atom, "Heal") || Same(atom, "GainArmor"))
                 && node.Has("amount")
                 && node.Get("amount").AsInt(0) < 0)
             {

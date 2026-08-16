@@ -22,34 +22,4 @@ namespace NineGrid.Core
         /// <summary>实例来自本关玩家侧装填（开局生成 / 注入）；清关时与其它帮助卡一并结算移除。</summary>
         public const string PlayerSideDeck = "playerSideDeck";
     }
-
-    /// <summary>护甲图腾借甲同步阶段：每转盘一笔贷款，先结算再赋予。</summary>
-    public enum BorrowedArmorSyncPhase
-    {
-        /// <summary>盘面位移开始前：收回未耗借甲并清 token。</summary>
-        Settle,
-        /// <summary>盘面位移落地后：邻接则无条件再借。</summary>
-        Grant
-    }
-
-    /// <summary>邻接图腾借甲光环：在目标卡上按来源 uid 记录借出前的 CurrentArmor 基线。</summary>
-    public static class BorrowedArmorAuraKeys
-    {
-        /// <summary>
-        /// 借甲自然流失（离开邻接）事件 cause：图腾不主动索取，
-        /// 表现层不得把该负甲变化编排成「图腾攻击目标」的打击表演。
-        /// </summary>
-        public const string DecayCause = "borrowedArmorDecay";
-
-        public static string BaselineKey(int sourceUid)
-        {
-            return CoreCounterKeys.EffectCounterPrefix + "borrowedArmor." + sourceUid;
-        }
-
-        public static bool IsTracking(CardInstance card, int sourceUid)
-        {
-            return card != null
-                && card.Counters.Values.ContainsKey(BaselineKey(sourceUid));
-        }
-    }
 }

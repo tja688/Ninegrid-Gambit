@@ -1,7 +1,7 @@
 namespace NineGrid.Flow.ShopBoard
 {
     /// <summary>
-    /// 商店七占格：最多 5 货架（含道具牌格升级）+ 刷新 + 离开（#92 / #109）。Avatar 落格 5。
+    /// 商店七占格：最多 6 货架（含道具牌格升级）+ 刷新 + 离开（#92 / #109 / #211）。Avatar 落格 5。
     /// </summary>
     public static class ShopBoardSlotResolver
     {

@@ -4,10 +4,11 @@
     "kind": "Trap",
     "deckId": "deck.trap",
     "role": "",
-    "displayName": "护甲图腾",
+    "displayName": "护甲增幅器",
     "designSlotName": "",
-    "description": "[adjacent]的怪物和玩家[armor]+{trap.armor_totem.aura.value}",
-    "faceIntro": "借给你的护甲是要还的",    "attackPattern": "无",
+    "description": "每移动{trap.armor_totem.armor_on_move.every}次，[adjacent]的怪物和玩家各获得{trap.armor_totem.armor_on_move.amount}点[armor]",
+    "faceIntro": "层层加固",
+    "attackPattern": "无",
     "rhythmSource": "",
     "rhythmPeriod": 0,
     "gold": 0,
@@ -77,49 +78,21 @@
     "tags": [],
     "effectAssemblies": [
         {
-            "id": "trap.armor_totem.aura",
-            "templateId": "tpl.trap.armor_totem.aura",
+            "id": "trap.armor_totem.armor_on_move",
+            "templateId": "tpl.trap.armor_totem.armor_on_move",
             "containerType": "Trap",
-            "argsJson": "{\"value\":1,\"source\":\"trap.armor_totem\"}"
+            "argsJson": "{\"amount\":1,\"every\":1}"
         },
         {
-            "id": "trap.armor_totem.refresh",
-            "templateId": "tpl.trap.armor_totem.refresh",
+            "id": "trap.armor_totem.armor_player_on_move",
+            "templateId": "tpl.trap.armor_totem.armor_player_on_move",
             "containerType": "Trap",
-            "argsJson": "{\"value\":1,\"source\":\"trap.armor_totem\"}"
-        },
-        {
-            "id": "trap.armor_totem.settle",
-            "templateId": "tpl.trap.armor_totem.settle",
-            "containerType": "Trap",
-            "argsJson": "{\"value\":1,\"source\":\"trap.armor_totem\"}"
-        },
-        {
-            "id": "trap.armor_totem.aura_player",
-            "templateId": "tpl.trap.armor_totem.aura_player",
-            "containerType": "Trap",
-            "argsJson": "{\"value\":1,\"source\":\"trap.armor_totem\"}"
-        },
-        {
-            "id": "trap.armor_totem.refresh_player",
-            "templateId": "tpl.trap.armor_totem.refresh_player",
-            "containerType": "Trap",
-            "argsJson": "{\"value\":1,\"source\":\"trap.armor_totem\"}"
-        },
-        {
-            "id": "trap.armor_totem.settle_player",
-            "templateId": "tpl.trap.armor_totem.settle_player",
-            "containerType": "Trap",
-            "argsJson": "{\"value\":1,\"source\":\"trap.armor_totem\"}"
+            "argsJson": "{\"amount\":1}"
         }
     ],
     "effectIds": [
-        "trap.armor_totem.aura",
-        "trap.armor_totem.refresh",
-        "trap.armor_totem.settle",
-        "trap.armor_totem.aura_player",
-        "trap.armor_totem.refresh_player",
-        "trap.armor_totem.settle_player"
+        "trap.armor_totem.armor_on_move",
+        "trap.armor_totem.armor_player_on_move"
     ],
     "skillIds": [],
     "level": "1",

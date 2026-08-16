@@ -384,7 +384,7 @@ namespace NineGrid.Cards.Vfx
 
         /// <summary>
         /// 机关是否具有邻接影响范围：任一效果模板 Body 含邻接原子
-        /// （SyncAdjacentBorrowedArmor / AdjacentMonstersAndPlayer / adjacentTo 等，均为正交邻接语义）。
+        /// （AdjacentMonstersAndPlayer / adjacentTo 等，均为正交邻接语义）。
         /// 与 CoreCardPresentationMapper.DetectSyncRhythmFromDto 同款模板扫描；不缓存，跟随 Catalog 重载。
         /// </summary>
         private static bool TrapHasAdjacentInfluence(string defId)

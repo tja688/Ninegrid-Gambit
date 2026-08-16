@@ -1115,9 +1115,9 @@
       "description": "[On Board] All monster cards count as orthogonally adjacent (skill adjacency only; attack range unaffected)"
     },
     "trap.armor_totem": {
-      "displayName": "Armor Totem",
-      "description": "[adjacent] monsters and player: [armor]+{trap.armor_totem.aura.value}",
-      "faceIntro": "Borrowed armor comes due."
+      "displayName": "Armor Amplifier",
+      "description": "Per {trap.armor_totem.armor_on_move.every} moves: [adjacent] monsters and player gain {trap.armor_totem.armor_on_move.amount} [armor]",
+      "faceIntro": "Layer upon layer."
     },
     "trap.attack_totem": {
       "displayName": "Attack Totem",

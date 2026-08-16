@@ -162,7 +162,7 @@ namespace NineGrid.Core
             return true;
         }
 
-        /// <summary>商店货架会话：4 货架 + 本次进店刷新价。</summary>
+        /// <summary>商店货架会话：5–6 货架 + 本次进店刷新价。</summary>
         public void OfferShop(IReadOnlyList<RewardEntry> shelves, int refreshPriceGold)
         {
             OfferRewards(ShopPoolId, shelves);
