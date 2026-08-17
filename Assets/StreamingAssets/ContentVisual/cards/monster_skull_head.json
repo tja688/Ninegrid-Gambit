@@ -81,7 +81,7 @@
             "id": "skill.sacrifice.remove",
             "templateId": "tpl.skill.sacrifice.remove",
             "containerType": "MonsterSkill",
-            "argsJson": "{\"delta\":1,\"reason\":\"skill.sacrifice\"}"
+            "argsJson": "{\"delta\":2,\"reason\":\"skill.sacrifice\"}"
         }
     ],
     "effectIds": [],

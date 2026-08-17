@@ -47,9 +47,9 @@ namespace NineGrid.Presentation.Tests
             StartCombatNode();
 
             Assert.AreEqual(
-                6,
+                7,
                 StatArmorUtility.GetCurrentArmor(avatar),
-                "攻击 5 → floor(5/3)=1，开局当前护甲应为 5+1=6");
+                "攻击 5 → floor(5/2)=2，开局当前护甲应为 5+2=7");
         }
 
         [Test]
@@ -61,9 +61,9 @@ namespace NineGrid.Presentation.Tests
             StartCombatNode();
 
             Assert.AreEqual(
-                8,
+                9,
                 StatArmorUtility.GetCurrentArmor(avatar),
-                "攻击 9 → floor(9/3)=3，开局当前护甲应为 5+3=8");
+                "攻击 9 → floor(9/2)=4，开局当前护甲应为 5+4=9");
         }
 
         [Test]
@@ -111,9 +111,9 @@ namespace NineGrid.Presentation.Tests
                 HasActiveEffectInstanceFrom("relic.composite_armor"),
                 "StartNode 应自愈重挂缺失的遗物效果");
             Assert.AreEqual(
-                6,
+                7,
                 StatArmorUtility.GetCurrentArmor(avatar),
-                "自愈后 OnNodeStart 当节点生效：护甲应为 5+floor(5/3)=6");
+                "自愈后 OnNodeStart 当节点生效：护甲应为 5+floor(5/2)=7");
         }
 
         /// <summary>
@@ -174,9 +174,9 @@ namespace NineGrid.Presentation.Tests
             if (pickedDefId == "relic.composite_armor")
             {
                 Assert.AreEqual(
-                    effectiveArmor + effectiveAttack / 3,
+                    effectiveArmor + effectiveAttack / 2,
                     StatArmorUtility.GetCurrentArmor(avatar),
-                    "复合盔甲开局应加 floor(攻击/3) 点当前护甲（战前甲=" + armorBeforeReset + "）");
+                    "复合盔甲开局应加 floor(攻击/2) 点当前护甲（战前甲=" + armorBeforeReset + "）");
             }
 
             // 关键断言 2：下一节点开始后效果实例仍存活（未被中途清掉）。

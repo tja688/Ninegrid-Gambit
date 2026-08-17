@@ -146,9 +146,9 @@ namespace NineGrid.Presentation.Tests
             StartCombatNode();
 
             Assert.AreEqual(
-                22,
+                24,
                 stats.GetEffectiveInt(avatar, StatId.MaxHp),
-                "StartNode 自愈应检测空挂死实例并重挂：木甲 +2 上限生效（20 → 22）");
+                "StartNode 自愈应检测空挂死实例并重挂：木甲 +4 上限生效（20 → 24）");
         }
 
         // ==================== 4. MaxHp 修饰遗物回血 ====================
@@ -161,13 +161,13 @@ namespace NineGrid.Presentation.Tests
 
             var stats = mArch.GetSystem<IStatSystem>();
             Assert.AreEqual(
-                22,
+                24,
                 stats.GetEffectiveInt(avatar, StatId.MaxHp),
-                "木甲应加 2 点有效血量上限（20 → 22）");
+                "木甲应加 4 点有效血量上限（20 → 24）");
             Assert.AreEqual(
-                17,
+                19,
                 (int)Math.Round(avatar.Stats.GetBase(StatId.Hp)),
-                "加上限须回等量当前血（15 → 17，局内统一约定）");
+                "加上限须回等量当前血（15 → 19，局内统一约定）");
         }
 
         [Test]
@@ -177,9 +177,9 @@ namespace NineGrid.Presentation.Tests
             Run(new GrantRelicAction("relic.wood_armor"));
 
             Assert.AreEqual(
-                22,
+                24,
                 (int)Math.Round(avatar.Stats.GetBase(StatId.Hp)),
-                "满血获得木甲：回血填满新上限（20 → 22）");
+                "满血获得木甲：回血填满新上限（20 → 24）");
         }
 
         [Test]
@@ -203,7 +203,7 @@ namespace NineGrid.Presentation.Tests
         {
             var avatar = CreateAvatar(hp: 20);
             Run(new GrantRelicAction("relic.wood_armor"));
-            Assert.AreEqual(22, (int)Math.Round(avatar.Stats.GetBase(StatId.Hp)), "前提：获得木甲后 22/22");
+            Assert.AreEqual(24, (int)Math.Round(avatar.Stats.GetBase(StatId.Hp)), "前提：获得木甲后 24/24");
 
             Run(new DiscardRelicAction("relic.wood_armor"));
 
@@ -211,11 +211,11 @@ namespace NineGrid.Presentation.Tests
             Assert.AreEqual(
                 20,
                 stats.GetEffectiveInt(avatar, StatId.MaxHp),
-                "丢弃木甲后有效上限回落（22 → 20）");
+                "丢弃木甲后有效上限回落（24 → 20）");
             Assert.AreEqual(
                 20,
                 (int)Math.Round(avatar.Stats.GetBase(StatId.Hp)),
-                "丢弃后当前血应钳到新上限（22 → 20）");
+                "丢弃后当前血应钳到新上限（24 → 20）");
         }
 
         // ==================== 5. 挂载审计事件 ====================

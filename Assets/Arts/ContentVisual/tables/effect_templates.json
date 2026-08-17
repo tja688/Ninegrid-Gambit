@@ -490,7 +490,7 @@
  {
   "id": "tpl.skill.absorb.remove",
   "state": "Implemented",
-  "design_text": "[场上] 正交相邻格每有一张怪物卡被移除，本卡从攻击+1/护甲+2/血量+4中随机获得一种",
+  "design_text": "[场上] 正交相邻格每有一张怪物卡被移除，本卡从攻击+2/护甲+4/血量+4中随机获得一种",
   "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
   "conditions_json": "[\"EventFilter:eventType=CardRemoved\", \"Adjacent:left=Self:right=EventCard\"]",
   "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnAnyCardRemoved\"},\"conditions\":[{\"atom\":\"EventFilter\",\"eventType\":\"CardRemoved\",\"targetKind\":\"Monster\"},{\"atom\":\"Adjacent\",\"left\":\"Self\",\"right\":\"EventCard\"}],\"target\":{\"atom\":\"Self\"},\"action\":{\"atom\":\"WeightedRandom\",\"choices\":[{\"weight\":\"{{weight}}\",\"action\":{\"atom\":\"ModifyBaseStat\",\"stat\":\"Attack\",\"delta\":\"{{delta}}\",\"reason\":\"{{reason}}\"}},{\"weight\":\"{{weight}}\",\"action\":{\"atom\":\"ModifyBaseStat\",\"stat\":\"Armor\",\"delta\":\"{{action_choices_1_action_delta}}\",\"reason\":\"{{reason}}\"}},{\"weight\":\"{{weight}}\",\"action\":{\"atom\":\"ModifyBaseStat\",\"stat\":\"MaxHp\",\"delta\":\"{{action_choices_2_action_delta}}\",\"reason\":\"{{reason}}\"}}]}}"
@@ -682,7 +682,7 @@
  {
   "id": "tpl.skill.flame_boiling.rule",
   "state": "Implemented",
-  "design_text": "[场上]玩家卡每互动5次，烈焰机关造成的伤害再+1（可叠加）",
+  "design_text": "[场上]玩家卡每互动5次，烈焰机关造成的伤害再+2（可叠加）",
   "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
   "conditions_json": "[]",
   "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnInteract\",\"every\":5},\"target\":{\"atom\":\"Self\"},\"action\":{\"atom\":\"AddRuleModifier\",\"rule\":\"DamageFlatDelta\",\"op\":\"Add\",\"value\":\"{{value}}\",\"sourceAction\":\"DealDamage\",\"sourceDefId\":\"trap.flame\",\"conditionTarget\":\"None\",\"layer\":\"Persistent\",\"scope\":\"UntilNodeEnds\",\"source\":\"{{source}}\"}}"
@@ -826,7 +826,7 @@
  {
   "id": "tpl.skill.link_armor.interact",
   "state": "Implemented",
-  "design_text": "[场上]玩家卡每互动3次，正交相邻格上怪物卡护甲+1",
+  "design_text": "[场上]玩家卡每互动3次，正交相邻格上怪物卡护甲+2",
   "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
   "conditions_json": "[]",
   "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnInteract\",\"every\":3},\"target\":{\"atom\":\"FilteredCards\",\"kind\":\"Monster\",\"zone\":\"Board\",\"adjacentTo\":\"Self\",\"exclude\":[\"Self\"]},\"action\":{\"atom\":\"GainArmor\",\"amount\":\"{{amount}}\"}}"
@@ -834,7 +834,7 @@
  {
   "id": "tpl.skill.link_attack_bonus.rule",
   "state": "Implemented",
-  "design_text": "[场上]若本卡正交相邻格子有其他怪物卡，则本卡攻击伤害+1",
+  "design_text": "[场上]若本卡正交相邻格子有其他怪物卡，则本卡攻击伤害+2",
   "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
   "conditions_json": "[\"AdjacentHasCard\"]",
   "body": "{\"kind\":\"RuleModifier\",\"conditions\":[{\"atom\":\"AdjacentHasCard\",\"kind\":\"Monster\"}],\"ruleModifier\":{\"rule\":\"EnemyAttackDelta\",\"op\":\"Add\",\"value\":\"{{value}}\",\"target\":\"Self\",\"layer\":\"Conditional\",\"scope\":\"Permanent\",\"source\":\"{{source}}\"}}"
@@ -850,7 +850,7 @@
  {
   "id": "tpl.skill.sacrifice.remove",
   "state": "Implemented",
-  "design_text": "[场上] [被移除时]，使[场上]其他怪物卡攻击+1",
+  "design_text": "[场上] [被移除时]，使[场上]其他怪物卡攻击+2",
   "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
   "conditions_json": "[]",
   "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnSelfRemoved\"},\"target\":{\"atom\":\"FilteredCards\",\"kind\":\"Monster\",\"zone\":\"Board\",\"exclude\":[\"Self\"]},\"action\":{\"atom\":\"ModifyBaseStat\",\"stat\":\"Attack\",\"delta\":\"{{delta}}\",\"reason\":\"{{reason}}\"}}"
@@ -970,7 +970,7 @@
  {
   "id": "tpl.skill.recuperate.flip",
   "state": "Implemented",
-  "design_text": "[场上][翻面后]若正面朝上，本卡攻击+1、护甲+2",
+  "design_text": "[场上][翻面后]若正面朝上，本卡攻击+3、护甲+5",
   "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
   "conditions_json": "[\"IsFaceUp:target=Self\"]",
   "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnFlip\"},\"conditions\":[{\"atom\":\"IsFaceUp\",\"target\":\"Self\"}],\"target\":{\"atom\":\"Self\"},\"action\":{\"atom\":\"Sequence\",\"actions\":[{\"atom\":\"ModifyBaseStat\",\"stat\":\"Attack\",\"delta\":\"{{delta}}\",\"reason\":\"{{reason}}\"},{\"atom\":\"ModifyBaseStat\",\"stat\":\"Armor\",\"delta\":\"{{armor}}\",\"reason\":\"{{reason}}\"}]}}"
@@ -1122,7 +1122,7 @@
  {
   "id": "tpl.skill.link_tactics.activate",
   "state": "Implemented",
-  "design_text": "[场上]邻接怪物攻击+1；离开邻接后失效（常驻光环，不随移动叠层）",
+  "design_text": "[场上]邻接怪物攻击+4；离开邻接后失效（常驻光环，不随移动叠层）",
   "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
   "conditions_json": "[]",
   "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnActivate\"},\"target\":{\"atom\":\"FilteredCards\",\"kind\":\"Monster\",\"zone\":\"Board\",\"exclude\":[\"Self\"]},\"action\":{\"atom\":\"AddModifier\",\"stat\":\"Attack\",\"op\":\"Add\",\"value\":\"{{value}}\",\"layer\":\"Conditional\",\"scope\":\"Permanent\",\"source\":\"{{source}}\",\"activeWhileAdjacentTo\":\"Self\",\"replaceSameSource\":true}}"
@@ -1130,7 +1130,7 @@
  {
   "id": "tpl.skill.link_tactics.refresh",
   "state": "Implemented",
-  "design_text": "[场上]邻接怪物攻击+1；离开邻接后失效（常驻光环，不随移动叠层）；任意卡移动时刷新邻接光环",
+  "design_text": "[场上]邻接怪物攻击+4；离开邻接后失效（常驻光环，不随移动叠层）；任意卡移动时刷新邻接光环",
   "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
   "conditions_json": "[]",
   "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnEvent\",\"eventType\":\"CardMoved\"},\"target\":{\"atom\":\"FilteredCards\",\"kind\":\"Monster\",\"zone\":\"Board\",\"exclude\":[\"Self\"]},\"action\":{\"atom\":\"AddModifier\",\"stat\":\"Attack\",\"op\":\"Add\",\"value\":\"{{value}}\",\"layer\":\"Conditional\",\"scope\":\"Permanent\",\"source\":\"{{source}}\",\"activeWhileAdjacentTo\":\"Self\",\"replaceSameSource\":true}}"

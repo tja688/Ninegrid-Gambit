@@ -82,7 +82,7 @@
             "id": "skill.absorb.remove",
             "templateId": "tpl.skill.absorb.remove",
             "containerType": "MonsterSkill",
-            "argsJson": "{\"weight\":1,\"delta\":1,\"reason\":\"skill.absorb\",\"action_choices_1_action_delta\":2,\"action_choices_2_action_delta\":4}"
+            "argsJson": "{\"weight\":1,\"delta\":2,\"reason\":\"skill.absorb\",\"action_choices_1_action_delta\":4,\"action_choices_2_action_delta\":4}"
         }
     ],
     "effectIds": [],

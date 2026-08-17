@@ -56,12 +56,12 @@ namespace NineGrid.Presentation.Tests
             var logStart = mArch.GetSystem<IActionPipelineSystem>().EventLog.Entries.Count;
             StartCombatNode();
 
-            Assert.AreEqual(7, StatArmorUtility.GetCurrentArmor(avatar), "Core 当前甲应为 5+floor(7/3)=7");
+            Assert.AreEqual(8, StatArmorUtility.GetCurrentArmor(avatar), "Core 当前甲应为 5+floor(7/2)=8");
 
             var entries = mArch.GetSystem<IActionPipelineSystem>().EventLog.Entries;
             var replayed = ReplayOpeningBootstrapArmor(entries, logStart, avatar.Uid);
 
-            Assert.AreEqual(7, replayed, "Opening 重放后卡面甲应跟 ArmorChanged(7)，不能停在 AvatarAppeared(5)");
+            Assert.AreEqual(8, replayed, "Opening 重放后卡面甲应跟 ArmorChanged(8)，不能停在 AvatarAppeared(5)");
 
             var legacyReplayed = ReplayLegacySettledOnlyArmor(entries, logStart, avatar.Uid);
             Assert.AreEqual(5, legacyReplayed, "旧逻辑（仅 Settled 生成类）会错误钉在 5——本回归锁此形态");

@@ -14,9 +14,9 @@
     "rhythmPeriod": 5,
     "gold": 5,
     "stats": {
-        "hp": 12,
+        "hp": 30,
         "armor": 0,
-        "attack": 1,
+        "attack": 2,
         "action": 5,
         "recovery": 0
     },
@@ -88,7 +88,7 @@
             "id": "skill.recuperate.flip",
             "templateId": "tpl.skill.recuperate.flip",
             "containerType": "MonsterSkill",
-            "argsJson": "{\"delta\":1,\"armor\":2,\"reason\":\"skill.recuperate\"}"
+            "argsJson": "{\"delta\":3,\"armor\":5,\"reason\":\"skill.recuperate\"}"
         }
     ],
     "effectIds": [],
