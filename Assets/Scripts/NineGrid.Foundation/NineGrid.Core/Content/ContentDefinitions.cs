@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using NineGrid.Core.Effects;
+using NineGrid.Core.Utilities;
 
 namespace NineGrid.Core.Content
 {
@@ -411,6 +412,157 @@ namespace NineGrid.Core.Content
                 default:
                     return 0;
             }
+        }
+
+        /// <summary>
+        /// 从 defId 池按常规三档 60/30/10 加权抽一张；同档内均匀。池内缺档不参与；
+        /// catalog 缺失时回退全池均匀。池空或 rng 缺失返回 null。
+        /// </summary>
+        public static string PickRegularDefIdWeighted(
+            GameContentCatalog catalog,
+            IReadOnlyList<string> pool,
+            IRngUtility rng)
+        {
+            if (pool == null || pool.Count == 0 || rng == null)
+            {
+                return null;
+            }
+
+            if (catalog == null)
+            {
+                return pool[rng.Range(0, pool.Count)];
+            }
+
+            var tiers = CreateEmptyRegularTierLists<string>();
+            PartitionRegularDefIdsIntoTiers(catalog, pool, tiers);
+            var picked = PickFromRegularTiers(tiers, rng, out var tierTotal);
+            if (picked != null)
+            {
+                return picked;
+            }
+
+            return tierTotal <= 0 ? pool[rng.Range(0, pool.Count)] : null;
+        }
+
+        /// <summary>
+        /// 从已过滤的常规道具候选按 60/30/10 加权抽一张；同档内均匀。候选空或 rng 缺失返回 null。
+        /// </summary>
+        public static CardContentDefinition PickRegularCardWeighted(
+            IReadOnlyList<CardContentDefinition> candidates,
+            IRngUtility rng)
+        {
+            if (candidates == null || candidates.Count == 0 || rng == null)
+            {
+                return null;
+            }
+
+            var tiers = CreateEmptyRegularTierLists<CardContentDefinition>();
+            for (var i = 0; i < candidates.Count; i++)
+            {
+                var card = candidates[i];
+                if (card == null)
+                {
+                    continue;
+                }
+
+                AddToRegularTier(tiers, card.Rarity, card);
+            }
+
+            var picked = PickFromRegularTiers(tiers, rng, out var tierTotal);
+            if (picked != null)
+            {
+                return picked;
+            }
+
+            return tierTotal <= 0 ? candidates[rng.Range(0, candidates.Count)] : null;
+        }
+
+        private static List<T>[] CreateEmptyRegularTierLists<T>()
+        {
+            return new List<T>[]
+            {
+                new List<T>(),
+                new List<T>(),
+                new List<T>(),
+            };
+        }
+
+        private static void PartitionRegularDefIdsIntoTiers(
+            GameContentCatalog catalog,
+            IReadOnlyList<string> pool,
+            List<string>[] tiers)
+        {
+            for (var i = 0; i < pool.Count; i++)
+            {
+                var defId = pool[i];
+                CardContentDefinition card;
+                if (string.IsNullOrEmpty(defId)
+                    || !catalog.TryGetCard(defId, out card)
+                    || card == null
+                    || FormalContentWiring.IsUnofficialDeck(card.DeckId))
+                {
+                    continue;
+                }
+
+                AddToRegularTier(tiers, card.Rarity, defId);
+            }
+        }
+
+        private static void AddToRegularTier<T>(List<T>[] tiers, ContentRarity rarity, T item)
+        {
+            switch (rarity)
+            {
+                case ContentRarity.White:
+                    tiers[0].Add(item);
+                    break;
+                case ContentRarity.Blue:
+                    tiers[1].Add(item);
+                    break;
+                case ContentRarity.Gold:
+                    tiers[2].Add(item);
+                    break;
+            }
+        }
+
+        private static T PickFromRegularTiers<T>(List<T>[] tiers, IRngUtility rng, out int tierTotal)
+        {
+            tierTotal = 0;
+            var weights = new[]
+            {
+                RegularWeightHigh,
+                RegularWeightMid,
+                RegularWeightLow,
+            };
+            for (var k = 0; k < tiers.Length; k++)
+            {
+                if (tiers[k].Count > 0)
+                {
+                    tierTotal += weights[k];
+                }
+            }
+
+            if (tierTotal <= 0)
+            {
+                return default;
+            }
+
+            var roll = rng.Range(0, tierTotal);
+            for (var k = 0; k < tiers.Length; k++)
+            {
+                if (tiers[k].Count == 0)
+                {
+                    continue;
+                }
+
+                if (roll < weights[k])
+                {
+                    return tiers[k][rng.Range(0, tiers[k].Count)];
+                }
+
+                roll -= weights[k];
+            }
+
+            return default;
         }
 
         public static bool IsArchive(string deckId)

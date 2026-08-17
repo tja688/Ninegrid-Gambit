@@ -963,7 +963,13 @@ namespace NineGrid.Core
             var result = new GameActionResult();
             for (var i = 0; i < Count; i++)
             {
-                var definition = candidates[rng.Range(0, candidates.Count)];
+                var definition = Kind == CardKind.HelpCard
+                    ? HelpCardDecks.PickRegularCardWeighted(candidates, rng)
+                    : candidates[rng.Range(0, candidates.Count)];
+                if (definition == null)
+                {
+                    continue;
+                }
                 var draft = content.CreateDraft(definition.DefId);
                 var card = draft.Kind == CardKind.Unknown ? registry.Create(definition.DefId, Kind) : draft.Create(registry);
                 content.ApplyContentToCard(card);
@@ -1039,6 +1045,13 @@ namespace NineGrid.Core
                 }
 
                 if (FormalContentWiring.IsUnofficialDeck(card.DeckId))
+                {
+                    continue;
+                }
+
+                // ADR-0033：ShuffleRandomContent HelpCard 只扫常规三档（白/蓝/金），
+                // 排除 Red 特殊卡（宝箱卡 / 属性卡 / 金币卡等定向渠道卡）。
+                if (kind == CardKind.HelpCard && !HelpCardDecks.IsRegularRarity(card.Rarity))
                 {
                     continue;
                 }

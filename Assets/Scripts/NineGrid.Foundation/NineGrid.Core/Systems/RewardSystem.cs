@@ -601,76 +601,7 @@ namespace NineGrid.Core.Systems
             }
 
             var rng = this.GetUtility<IRngUtility>();
-            if (catalog != null)
-            {
-                var tiers = new List<string>[]
-                {
-                    new List<string>(),
-                    new List<string>(),
-                    new List<string>(),
-                };
-                var weights = new[]
-                {
-                    HelpCardDecks.RegularWeightHigh,
-                    HelpCardDecks.RegularWeightMid,
-                    HelpCardDecks.RegularWeightLow,
-                };
-                for (var i = 0; i < pool.Count; i++)
-                {
-                    var defId = pool[i];
-                    CardContentDefinition card;
-                    if (string.IsNullOrEmpty(defId)
-                        || !catalog.TryGetCard(defId, out card)
-                        || card == null
-                        || FormalContentWiring.IsUnofficialDeck(card.DeckId))
-                    {
-                        continue;
-                    }
-
-                    switch (card.Rarity)
-                    {
-                        case ContentRarity.White:
-                            tiers[0].Add(defId);
-                            break;
-                        case ContentRarity.Blue:
-                            tiers[1].Add(defId);
-                            break;
-                        case ContentRarity.Gold:
-                            tiers[2].Add(defId);
-                            break;
-                    }
-                }
-
-                var total = 0;
-                for (var k = 0; k < tiers.Length; k++)
-                {
-                    if (tiers[k].Count > 0)
-                    {
-                        total += weights[k];
-                    }
-                }
-
-                if (total > 0)
-                {
-                    var roll = rng.Range(0, total);
-                    for (var k = 0; k < tiers.Length; k++)
-                    {
-                        if (tiers[k].Count == 0)
-                        {
-                            continue;
-                        }
-
-                        if (roll < weights[k])
-                        {
-                            return tiers[k][rng.Range(0, tiers[k].Count)];
-                        }
-
-                        roll -= weights[k];
-                    }
-                }
-            }
-
-            return pool[rng.Range(0, pool.Count)];
+            return HelpCardDecks.PickRegularDefIdWeighted(catalog, pool, rng);
         }
 
         private IEnumerable<GameAction> ReactToKill(TriggerContext context)

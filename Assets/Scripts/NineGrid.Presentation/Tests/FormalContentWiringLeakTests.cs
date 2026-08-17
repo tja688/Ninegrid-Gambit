@@ -19,6 +19,9 @@ namespace NineGrid.Presentation.Tests
         private const string AiHelpId = "help.charge_horn";
         private const string AiRelicId = "relic.forge_bracer";
         private const string ArchiveRelicId = "relic.tower_child";
+        private const string CommonChestCardId = "help.common_chest_card";
+        private const string GoldenChestCardId = "help.golden_chest_card";
+        private const string GoldCardId = "help.gold_card";
 
         private IArchitecture mArch;
         private GameContentCatalog mCatalog;
@@ -66,6 +69,81 @@ namespace NineGrid.Presentation.Tests
                 excludeDeckId: string.Empty);
             AssertUnofficialAbsent(pool, "ShuffleRandomContent HelpCard");
             AssertDefIdAbsent(pool, DoublingTowerId, "ShuffleRandomContent HelpCard");
+        }
+
+        [Test]
+        public void ShuffleRandomHelpCardPool_ExcludesSpecialRarityDirectedCards()
+        {
+            var pool = ShuffleRandomContentIntoDrawPileAction.FindCatalogCandidates(
+                mCatalog,
+                CardKind.HelpCard,
+                minLevel: 0,
+                maxLevel: 0,
+                excludeElite: false,
+                excludeBoss: false,
+                excludeDeckId: string.Empty);
+            AssertDefIdAbsent(pool, CommonChestCardId, "造物之镰等 ShuffleRandomContent HelpCard");
+            AssertDefIdAbsent(pool, GoldenChestCardId, "造物之镰等 ShuffleRandomContent HelpCard");
+            AssertDefIdAbsent(pool, GoldCardId, "造物之镰等 ShuffleRandomContent HelpCard");
+            for (var i = 0; i < pool.Count; i++)
+            {
+                var card = pool[i];
+                if (card == null)
+                {
+                    continue;
+                }
+
+                Assert.IsTrue(
+                    HelpCardDecks.IsRegularRarity(card.Rarity),
+                    card.DefId + " 为特殊稀有度，不得进入 ShuffleRandomContent HelpCard 池");
+            }
+        }
+
+        [Test]
+        public void ShuffleRandomHelpCardPool_UsesRegularTierWeights()
+        {
+            var pool = ShuffleRandomContentIntoDrawPileAction.FindCatalogCandidates(
+                mCatalog,
+                CardKind.HelpCard,
+                minLevel: 0,
+                maxLevel: 0,
+                excludeElite: false,
+                excludeBoss: false,
+                excludeDeckId: string.Empty);
+            Assert.Greater(pool.Count, 0, "需要 live 常规道具候选");
+
+            var rng = new DeterministicRngUtility(42UL);
+            var white = 0;
+            var blue = 0;
+            var gold = 0;
+            const int samples = 6000;
+            for (var i = 0; i < samples; i++)
+            {
+                var card = HelpCardDecks.PickRegularCardWeighted(pool, rng);
+                Assert.NotNull(card);
+                switch (card.Rarity)
+                {
+                    case ContentRarity.White:
+                        white++;
+                        break;
+                    case ContentRarity.Blue:
+                        blue++;
+                        break;
+                    case ContentRarity.Gold:
+                        gold++;
+                        break;
+                    default:
+                        Assert.Fail(card.DefId + " 非常规档却进入加权抽取");
+                        break;
+                }
+            }
+
+            Assert.Greater(white, samples * 55 / 100, "白档应约 60%");
+            Assert.Less(white, samples * 65 / 100, "白档应约 60%");
+            Assert.Greater(blue, samples * 25 / 100, "蓝档应约 30%");
+            Assert.Less(blue, samples * 35 / 100, "蓝档应约 30%");
+            Assert.Greater(gold, samples * 5 / 100, "金档应约 10%");
+            Assert.Less(gold, samples * 15 / 100, "金档应约 10%");
         }
 
         [Test]
