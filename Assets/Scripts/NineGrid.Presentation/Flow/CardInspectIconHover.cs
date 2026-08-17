@@ -188,71 +188,7 @@ namespace NineGrid.Flow
 
         private bool TryFindHoveredInlineCode(out string code)
         {
-            code = null;
-            if (_description == null
-                || _description.textInfo == null
-                || !_description.gameObject.activeInHierarchy)
-            {
-                return false;
-            }
-
-            if (!WorldPointerUtility.TryGetPointerScreen(out var screen))
-            {
-                return false;
-            }
-
-            _description.ForceMeshUpdate(true);
-            var cam = WorldPointerUtility.ResolveCamera(_uiCamera);
-            if (!TMP_TextUtilities.IsIntersectingRectTransform(_description.rectTransform, screen, cam))
-            {
-                return false;
-            }
-
-            var charIndex = TMP_TextUtilities.FindNearestCharacter(_description, screen, cam, visibleOnly: true);
-            if (charIndex < 0 || charIndex >= _description.textInfo.characterCount)
-            {
-                return false;
-            }
-
-            var info = _description.textInfo.characterInfo[charIndex];
-            if (!info.isVisible || info.elementType != TMP_TextElementType.Sprite)
-            {
-                return false;
-            }
-
-            // sprite 名存在 rich text 源串；从 character 的 string 索引切片取 <sprite name="…">。
-            var source = _description.text;
-            if (string.IsNullOrEmpty(source) || info.index < 0 || info.index >= source.Length)
-            {
-                return false;
-            }
-
-            var sliceStart = info.index;
-            // 向前找最近的 <sprite
-            var tagStart = source.LastIndexOf("<sprite", sliceStart, StringComparison.OrdinalIgnoreCase);
-            if (tagStart < 0)
-            {
-                tagStart = sliceStart;
-            }
-
-            var sliceEnd = Mathf.Min(source.Length, tagStart + 96);
-            var slice = source.Substring(tagStart, sliceEnd - tagStart);
-            const string marker = "name=\"";
-            var nameAt = slice.IndexOf(marker, StringComparison.Ordinal);
-            if (nameAt < 0)
-            {
-                return false;
-            }
-
-            var valueStart = nameAt + marker.Length;
-            var valueEnd = slice.IndexOf('"', valueStart);
-            if (valueEnd <= valueStart)
-            {
-                return false;
-            }
-
-            code = slice.Substring(valueStart, valueEnd - valueStart);
-            return !string.IsNullOrEmpty(code);
+            return CardInspectInlineSpriteHoverUtility.TryFindHoveredSpriteCode(_description, _uiCamera, out code);
         }
     }
 }
