@@ -36,8 +36,6 @@ namespace NineGrid.Flow.MainMenu
         private const float MinScale = 0.0001f;
         // Extra tiled coverage so wrapping one tile never exposes an empty edge.
         private const float WrapMarginTiles = 2f;
-        private const float ReferencePixelHeight = 540f;
-        private const float FallbackPixelsPerUnit = 32f;
         private static readonly int PixelSnapId = Shader.PropertyToID("_PixelSnap");
 
         [Header("场景绑定")]
@@ -48,7 +46,7 @@ namespace NineGrid.Flow.MainMenu
         [Header("背景滑动")]
         [SerializeField] private bool scrollEnabled = true;
         [Tooltip("世界单位/秒；沿下方角度匀速平移整块 Tiled 图案，按一格 wrap。物体可见时一直滚。")]
-        [SerializeField] private float scrollSpeed = 0.55f;
+        [SerializeField] private float scrollSpeed = 1.1f;
         [Tooltip("0=向右，45=右上，-45=右下。")]
         [SerializeField] private float scrollAngleDegrees = -45f;
 
@@ -56,6 +54,8 @@ namespace NineGrid.Flow.MainMenu
         [SerializeField] private bool rainEnabled = true;
         [Tooltip("叠在卡面 mainVisual.uniformScale 之上；1 = 标准卡面立绘大小。")]
         [SerializeField] private float iconExternalScale = 1f;
+        private const float IconScaleJitterMin = 0.8f;
+        private const float IconScaleJitterMax = 1.2f;
         [Tooltip("下落重力（世界单位/秒²）。水平速度恒定，竖直加速，轨迹为抛物线。")]
         [SerializeField] private float fallGravity = 2.2f;
         [Tooltip("入场竖直速度（向下为正）。无上抛。")]
@@ -173,11 +173,6 @@ namespace NineGrid.Flow.MainMenu
         private void Update()
         {
             var dt = Time.unscaledDeltaTime;
-            if (dt > 0f && scrollEnabled)
-            {
-                TickScroll(dt);
-            }
-
             var wantRain = rainEnabled && ShouldRunRain();
             if (wantRain && !_raining)
             {
@@ -191,6 +186,15 @@ namespace NineGrid.Flow.MainMenu
             if (_raining && dt > 0f)
             {
                 TickRain(dt);
+            }
+        }
+
+        private void LateUpdate()
+        {
+            var dt = Time.unscaledDeltaTime;
+            if (dt > 0f && scrollEnabled)
+            {
+                TickScroll(dt);
             }
         }
 
@@ -302,28 +306,10 @@ namespace NineGrid.Flow.MainMenu
                 return;
             }
 
-            var t = backgroundRenderer.transform;
             var pos = _authoredLocalPos;
             pos.x += _scrollLocal.x;
             pos.y += _scrollLocal.y;
-
-            var parent = t.parent;
-            var world = parent != null ? parent.TransformPoint(pos) : pos;
-            var pixel = GetWorldPixelSize();
-            world.x = Mathf.Round(world.x / pixel) * pixel;
-            world.y = Mathf.Round(world.y / pixel) * pixel;
-
-            if (parent != null)
-            {
-                var local = parent.InverseTransformPoint(world);
-                local.z = _authoredLocalPos.z;
-                t.localPosition = local;
-            }
-            else
-            {
-                world.z = _authoredLocalPos.z;
-                t.localPosition = world;
-            }
+            backgroundRenderer.transform.localPosition = pos;
         }
 
         private void RestoreAuthoredTransform()
@@ -365,21 +351,6 @@ namespace NineGrid.Flow.MainMenu
             backgroundRenderer.GetPropertyBlock(_propertyBlock);
             _propertyBlock.SetFloat(PixelSnapId, 0f);
             backgroundRenderer.SetPropertyBlock(_propertyBlock);
-        }
-
-        private float GetWorldPixelSize()
-        {
-            var cam = worldCamera != null ? worldCamera : Camera.main;
-            if (cam != null && cam.orthographic && cam.orthographicSize > MinScale)
-            {
-                var ppu = ReferencePixelHeight / (2f * cam.orthographicSize);
-                if (ppu > MinScale)
-                {
-                    return 1f / ppu;
-                }
-            }
-
-            return 1f / FallbackPixelsPerUnit;
         }
 
         private void TickRain(float dt)
@@ -470,7 +441,10 @@ namespace NineGrid.Flow.MainMenu
 
             var player = go.AddComponent<BattleInfoPreviewIconPlayer>();
             player.BindTarget(art, null);
-            player.PlayIdleOrStatic(defId, Mathf.Max(MinScale, iconExternalScale));
+            var spawnScale = Mathf.Max(
+                MinScale,
+                iconExternalScale * UnityEngine.Random.Range(IconScaleJitterMin, IconScaleJitterMax));
+            player.PlayIdleOrStatic(defId, spawnScale);
             if (art.sprite == null)
             {
                 Destroy(go);
@@ -620,8 +594,7 @@ namespace NineGrid.Flow.MainMenu
                 return false;
             }
 
-            return string.Equals(kind, "Monster", StringComparison.OrdinalIgnoreCase)
-                || string.Equals(kind, "HelpCard", StringComparison.OrdinalIgnoreCase)
+            return string.Equals(kind, "HelpCard", StringComparison.OrdinalIgnoreCase)
                 || string.Equals(kind, "Item", StringComparison.OrdinalIgnoreCase)
                 || string.Equals(kind, "Trap", StringComparison.OrdinalIgnoreCase);
         }
