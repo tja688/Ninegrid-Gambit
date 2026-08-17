@@ -51,6 +51,12 @@ namespace NineGrid.Cards.Vfx
                 runner.HideIfOwnedBy(requester);
             }
         }
+
+        /// <summary>教学阶段2：常驻显示玩家攻击范围（不依赖 hover）。</summary>
+        public static void SetAvatarRangePinned(Behaviour owner, bool pinned)
+        {
+            BoardRangeGlowRunner.Ensure().SetAvatarRangePinned(owner, pinned);
+        }
     }
 
     [DisallowMultipleComponent]
@@ -86,6 +92,8 @@ namespace NineGrid.Cards.Vfx
         private readonly SpriteRenderer[] _cellRenderers = new SpriteRenderer[GroundSlotTopology.MaxSlot + 1];
 
         private Behaviour _requester;
+        private Behaviour _pinnedOwner;
+        private bool _avatarPinned;
         private int _originUid;
         private int _originSlot;
         private bool _avatarMode;
@@ -228,6 +236,11 @@ namespace NineGrid.Cards.Vfx
 
         public void HideIfOwnedBy(Behaviour requester)
         {
+            if (_avatarPinned && ReferenceEquals(_pinnedOwner, requester))
+            {
+                return;
+            }
+
             if (_requester == null || !ReferenceEquals(_requester, requester))
             {
                 return;
@@ -238,8 +251,42 @@ namespace NineGrid.Cards.Vfx
             ClearTargets();
         }
 
+        public void SetAvatarRangePinned(Behaviour owner, bool pinned)
+        {
+            if (pinned)
+            {
+                _avatarPinned = true;
+                _pinnedOwner = owner;
+                if (owner != null)
+                {
+                    ShowAvatarIfSlotMatches(owner, ResolveAvatarSlotOrMinusOne());
+                }
+
+                return;
+            }
+
+            if (!ReferenceEquals(_pinnedOwner, owner) && owner != null)
+            {
+                return;
+            }
+
+            _avatarPinned = false;
+            _pinnedOwner = null;
+            if (_avatarMode && ReferenceEquals(_requester, owner))
+            {
+                _requester = null;
+                _avatarMode = false;
+                ClearTargets();
+            }
+        }
+
         private void Update()
         {
+            if (_avatarPinned && _pinnedOwner != null && _pinnedOwner.isActiveAndEnabled)
+            {
+                ShowAvatarIfSlotMatches(_pinnedOwner, ResolveAvatarSlotOrMinusOne());
+            }
+
             ValidateActiveRequest();
             TickCellVisuals();
         }
@@ -269,6 +316,11 @@ namespace NineGrid.Cards.Vfx
         private void ValidateActiveRequest()
         {
             if (_requester == null)
+            {
+                return;
+            }
+
+            if (_avatarPinned && ReferenceEquals(_requester, _pinnedOwner))
             {
                 return;
             }

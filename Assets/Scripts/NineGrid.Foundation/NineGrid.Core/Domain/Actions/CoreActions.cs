@@ -84,6 +84,22 @@ namespace NineGrid.Core
                 return GameActionResult.Empty;
             }
 
+            // 教学提示卡：允许攻击演出但免疫伤害（tag=tutorial.hint）。
+            var content = context.GetSystem<IContentSystem>();
+            if (content != null
+                && content.Catalog != null
+                && content.Catalog.Cards.TryGetValue(target.DefId ?? string.Empty, out var cardDef)
+                && cardDef != null)
+            {
+                for (var i = 0; i < cardDef.Tags.Count; i++)
+                {
+                    if (string.Equals(cardDef.Tags[i], "tutorial.hint", StringComparison.Ordinal))
+                    {
+                        return GameActionResult.Empty;
+                    }
+                }
+            }
+
             // ADR-0028：Amount → Multiplier/FlatDelta → 伤害减免 →（无视护甲 ? 直打血 : 甲吸收/金甲/溢出）
             var baseDamage = Math.Max(0, Amount);
             var multipliedDamage = Math.Max(0, (int)Math.Round(statSystem.EvaluateRule(RuleId.DamageMultiplier, baseDamage, statContext)));

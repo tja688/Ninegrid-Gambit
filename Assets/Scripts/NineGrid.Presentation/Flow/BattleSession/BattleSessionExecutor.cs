@@ -8,6 +8,7 @@ using NineGrid.Core.Stats;
 using NineGrid.Core.Systems;
 using NineGrid.Flow.Diagnostics;
 using NineGrid.Flow.Presentation;
+using NineGrid.Flow.Tutorial;
 using NineGrid.Presentation;
 using NineGrid.Presentation.Systems;
 using NineGrid.Presentation.Ui;
@@ -653,6 +654,12 @@ namespace NineGrid.Flow
 
         private static bool ShouldRaiseBattleEndedForAvatarDefeat(PostKillBoardPresentationResult result)
         {
+            if (TutorialBattleSessionHook.ShouldSuppressAvatarDefeatEnd())
+            {
+                TutorialBattleSessionHook.RequestAvatarDefeatRestart();
+                return false;
+            }
+
             if (result.AvatarDefeated)
             {
                 return true;

@@ -1967,4 +1967,13 @@
   "conditions_json": "[]",
   "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnNodeEnd\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"ModifyGold\",\"delta\":\"{{delta}}\",\"reason\":\"{{reason}}\"}}"
  }
+ ,
+ {
+  "id": "tpl.tutorial.dummy.rhythm_death",
+  "state": "Implemented",
+  "design_text": "教学假人：节奏开火后离场",
+  "requires_json": "[]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnCardRhythmFire\"},\"target\":{\"atom\":\"Self\"},\"action\":{\"atom\":\"RemoveCard\",\"destination\":\"Removed\",\"reason\":\"tutorialDummyRhythm\"}}"
+ }
 ]

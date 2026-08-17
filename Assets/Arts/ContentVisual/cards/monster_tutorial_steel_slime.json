@@ -1,0 +1,76 @@
+{
+    "schemaVersion": 2,
+    "contentId": "monster.tutorial.steel_slime",
+    "kind": "Monster",
+    "deckId": "deck.tutorial",
+    "role": "",
+    "displayName": "钢铁莱姆",
+    "designSlotName": "特1",
+    "description": "[[叠甲]]",
+    "faceIntro": "很耐揍",
+    "attackPattern": "普通近战",
+    "rhythmSource": "行动计数",
+    "rhythmPeriod": 6,
+    "gold": 0,
+    "stats": {
+        "hp": 40,
+        "armor": 0,
+        "attack": 1,
+        "action": 6,
+        "recovery": 0
+    },
+    "sprites": {
+        "mainIcon": "Assets/Resources/ContentArt/Multiple/pixel_art_card_pack 1.png",
+        "faceBackground": "Assets/Resources/ContentArt/Png/Other/岩层_浅岩层.png",
+        "cardFrame": "",
+        "banner": "",
+        "backBorder": "",
+        "backShirt": "",
+        "backLogo": ""
+    },
+    "mainVisual": {
+        "offsetX": 0.05000000074505806,
+        "offsetY": -0.10000000149011612,
+        "uniformScale": 0.8199999928474426
+    },
+    "animations": {
+        "defaultFps": 8.0,
+        "slots": [
+            {
+                "id": "idle",
+                "sourceType": "folder",
+                "path": "Assets/Resources/ContentArt/Png/像素怪物合集/sprites/21sandmonster_idle_01",
+                "offsetX": 0.0,
+                "offsetY": 0.0
+            }
+        ]
+    },
+    "extraSlots": [],
+    "rarity": "None",
+    "tags": [],
+    "effectAssemblies": [
+        {
+            "id": "fx.tutorial.steel_slime",
+            "templateId": "tpl.skill.stack_armor.interact",
+            "containerType": "MonsterSkill",
+            "argsJson": "{\"amount\":2}"
+        }
+    ],
+    "effectIds": [],
+    "skillIds": [],
+    "level": "普通",
+    "sequence": 0,
+    "isElite": false,
+    "isBoss": false,
+    "isReserve": false,
+    "containerType": "",
+    "deckKind": "",
+    "monsterDefIds": [],
+    "usableOutsideBattle": false,
+    "weight": 0,
+    "rewardPoolId": "",
+    "shopOfferCount": 0,
+    "openingInjects": [],
+    "iconPrefab": "",
+    "boardSlot": 0
+}

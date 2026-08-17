@@ -1,98 +1,100 @@
 {
-    "schemaVersion": 2,
-    "contentId": "trap.tutorial.boss_door",
-    "kind": "Trap",
-    "deckId": "deck.tutorial",
-    "role": "",
-    "displayName": "教学2-补牌",
-    "designSlotName": "",
-    "description": "当场地出现空缺时，如果卡组有牌会用顶层卡牌进行补充",
-    "faceIntro": "可以根据下一张牌来合理规划自己的战术",
-    "extraGlossaryTerms": [],
-    "attackPattern": "无",
-    "rhythmSource": "",
-    "rhythmPeriod": 0,
-    "gold": 0,
-    "stats": {
-        "hp": 6,
-        "armor": 0,
-        "attack": 0,
-        "action": 0,
-        "recovery": 0
-    },
-    "sprites": {
-        "mainIcon": "Assets/Arts/Images/Png/Items/arrow_lower_step.png",
-        "faceBackground": "",
-        "cardFrame": "",
-        "banner": "",
-        "backBorder": "",
-        "backShirt": "",
-        "backLogo": ""
-    },
-    "mainVisual": {
+  "schemaVersion": 2,
+  "contentId": "trap.tutorial.boss_door",
+  "kind": "Trap",
+  "deckId": "deck.tutorial",
+  "role": "",
+  "displayName": "教学2-补牌",
+  "designSlotName": "",
+  "description": "当场地出现空缺时，如果卡组有牌会用顶层卡牌进行补充",
+  "faceIntro": "可以根据下一张牌来合理规划自己的战术",
+  "extraGlossaryTerms": [],
+  "attackPattern": "无",
+  "rhythmSource": "",
+  "rhythmPeriod": 0,
+  "gold": 0,
+  "stats": {
+    "hp": 6,
+    "armor": 0,
+    "attack": 0,
+    "action": 0,
+    "recovery": 0
+  },
+  "sprites": {
+    "mainIcon": "Assets/Arts/Images/Png/Items/arrow_lower_step.png",
+    "faceBackground": "",
+    "cardFrame": "",
+    "banner": "",
+    "backBorder": "",
+    "backShirt": "",
+    "backLogo": ""
+  },
+  "mainVisual": {
+    "offsetX": 0.0,
+    "offsetY": 0.5,
+    "uniformScale": 1.0
+  },
+  "animations": {
+    "defaultFps": 8.0,
+    "slots": [
+      {
+        "id": "idle",
+        "sourceType": "none",
+        "path": "",
         "offsetX": 0.0,
-        "offsetY": 0.5,
-        "uniformScale": 1.0
-    },
-    "animations": {
-        "defaultFps": 8.0,
-        "slots": [
-            {
-                "id": "idle",
-                "sourceType": "none",
-                "path": "",
-                "offsetX": 0.0,
-                "offsetY": 0.0
-            },
-            {
-                "id": "attack",
-                "sourceType": "none",
-                "path": "",
-                "offsetX": 0.0,
-                "offsetY": 0.0
-            },
-            {
-                "id": "hurt",
-                "sourceType": "none",
-                "path": "",
-                "offsetX": 0.0,
-                "offsetY": 0.0
-            },
-            {
-                "id": "death",
-                "sourceType": "none",
-                "path": "",
-                "offsetX": 0.0,
-                "offsetY": 0.0
-            },
-            {
-                "id": "lunch",
-                "sourceType": "none",
-                "path": "",
-                "offsetX": 0.0,
-                "offsetY": 0.0
-            }
-        ]
-    },
-    "extraSlots": [],
-    "rarity": "None",
-    "tags": [],
-    "effectAssemblies": [],
-    "effectIds": [],
-    "skillIds": [],
-    "level": "1",
-    "sequence": 0,
-    "isElite": false,
-    "isBoss": false,
-    "isReserve": false,
-    "containerType": "",
-    "deckKind": "",
-    "monsterDefIds": [],
-    "usableOutsideBattle": false,
-    "weight": 0,
-    "rewardPoolId": "",
-    "shopOfferCount": 0,
-    "openingInjects": [],
-    "iconPrefab": "",
-    "boardSlot": 0
+        "offsetY": 0.0
+      },
+      {
+        "id": "attack",
+        "sourceType": "none",
+        "path": "",
+        "offsetX": 0.0,
+        "offsetY": 0.0
+      },
+      {
+        "id": "hurt",
+        "sourceType": "none",
+        "path": "",
+        "offsetX": 0.0,
+        "offsetY": 0.0
+      },
+      {
+        "id": "death",
+        "sourceType": "none",
+        "path": "",
+        "offsetX": 0.0,
+        "offsetY": 0.0
+      },
+      {
+        "id": "lunch",
+        "sourceType": "none",
+        "path": "",
+        "offsetX": 0.0,
+        "offsetY": 0.0
+      }
+    ]
+  },
+  "extraSlots": [],
+  "rarity": "None",
+  "tags": [
+    "tutorial.hint"
+  ],
+  "effectAssemblies": [],
+  "effectIds": [],
+  "skillIds": [],
+  "level": "1",
+  "sequence": 0,
+  "isElite": false,
+  "isBoss": false,
+  "isReserve": false,
+  "containerType": "",
+  "deckKind": "",
+  "monsterDefIds": [],
+  "usableOutsideBattle": false,
+  "weight": 0,
+  "rewardPoolId": "",
+  "shopOfferCount": 0,
+  "openingInjects": [],
+  "iconPrefab": "",
+  "boardSlot": 0
 }
