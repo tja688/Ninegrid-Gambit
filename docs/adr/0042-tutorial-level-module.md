@@ -21,8 +21,8 @@
 
 - Core 缝：`NodeDeckOptions.PreserveDealOrder`（仅教学置 true）——`OpeningDealAction` 跳过洗牌与离开机关落点重排，抽牌堆保持装填顺序；配合 `FillEmptySlotsAction` 固定补格序（1,2,3,6,9,8,7,4）实现确定性铺场。正式流程该开关恒为 false，行为不变。
 - 阅读序换算：卡面描述按玩家阅读习惯（格 1,2,3 / 4,6 / 7,8,9 逐行）编排，`TutorialDeckPlan` 把阅读序重排为抽牌堆序。
-- 波次切换：`TutorialBattleDirector` 逐帧巡检 Core 状态，把「清场批（`RemoveCardAction`，reason=clearResidualBoard，不派发 OnRemove 连锁）→ 补发批（`ShuffleIntoDrawPileAction` 逆序顶插）→ 盘面稳定化」作为真时间线脚本经 `MutateMainline` 挂主线——复用既有 Resolve/Present/ack 锁步与发牌表演。非锁步小补给（机关无限补位、飞刀练习靶）走作弊面板同款「直跑管线 + 事件切片冲刷」。
-- 批次投影通道：导演自持私有 `QueuedBoardPresentChannel`，换波各批（清场 / 补发 / 稳定化）的 EventLog 切片投影**必须投递该私有通道**（PresentStep 消费的就是它）；投进生产 Explore 通道无人消费，会导致换波在 Core 落地但零表演（旧卡影子留场、新卡「虚空发牌」）。
+- 波次切换：`TutorialBattleDirector` 逐帧巡检 Core 状态，把「清场批（`RemoveCardAction`，reason=clearResidualBoard，不派发 OnRemove 连锁）→ 指定格直摆（`SpawnCardAction`）→ 盘面 Present」作为真时间线脚本经 `MutateMainline` 挂主线。**空池开局仍须把卡组切到 `CardDeckMode.InGame`**（`BeginEntry` 无待入场牌时直接切；`EnsureInGameIfStandby`），否则 `DealCardByUid` 拒绝发牌，Core 占格 / 表现空格会占格对账死循环。
+- 批次投影通道：导演自持私有 `QueuedBoardPresentChannel`，换阶段各批的 EventLog 切片投影**必须投递该私有通道**（PresentStep 消费的就是它）；投进生产 Explore 通道无人消费，会导致换阶段在 Core 落地但零表演。
 - 换波期输入管控：换波条件按 Core 真相先行判定（击杀批一解算即为真），满足即复用 **Opening 输入门**（`PresentationInputGates.SetOpening(true)`）锁玩家输入，直到新波发牌表演完成、`ScanWave` 登记完毕才解锁；相位切换（清关 / 战败）与导演 `Stop()` 兜底释放，不粘门。这堵住「击杀表演收尾 → 换波脚本入队」之间主线短暂空闲的输入窗口。
 
 ### 4. 五阶段剧本（行为约定，2026-08-17 修订）

@@ -1360,9 +1360,16 @@ namespace NineGrid.Cards
                 return;
             }
 
-            if (CurrentMode != CardDeckMode.Standby || _pendingEntryCards.Count == 0)
+            if (CurrentMode != CardDeckMode.Standby)
             {
-                Debug.LogWarning("[CardDeckManager] 无待入场卡牌或模式不正确。");
+                Debug.LogWarning("[CardDeckManager] 入场要求 Standby 模式。");
+                return;
+            }
+
+            if (_pendingEntryCards.Count == 0)
+            {
+                // 空抽牌堆开局（教学关直摆前）仍须进入 InGame，否则后续 DealCardByUid 会永久失败。
+                EnsureInGameIfStandby();
                 return;
             }
 
@@ -1846,15 +1853,33 @@ namespace NineGrid.Cards
                 basePosition.z + stackIndex * layoutSettings.standbyStackZStep);
         }
 
+        /// <summary>
+        /// 空抽牌堆开局：Standby 且无待入场牌时直接进入 InGame。
+        /// 教学关指定格直摆依赖这条发牌通道。
+        /// </summary>
+        public void EnsureInGameIfStandby()
+        {
+            if (CurrentMode == CardDeckMode.Standby && _pendingEntryCards.Count == 0 && !_isBusy)
+            {
+                CurrentMode = CardDeckMode.InGame;
+            }
+        }
+
         private bool EnsureInGameForDeal()
         {
-            if (CurrentMode != CardDeckMode.InGame)
+            if (CurrentMode == CardDeckMode.InGame)
             {
-                Debug.LogWarning("[CardDeckManager] 发牌仅在 InGame 模式可用。");
-                return false;
+                return true;
             }
 
-            return true;
+            EnsureInGameIfStandby();
+            if (CurrentMode == CardDeckMode.InGame)
+            {
+                return true;
+            }
+
+            Debug.LogWarning("[CardDeckManager] 发牌仅在 InGame 模式可用。");
+            return false;
         }
 
         private bool TryFindDeckSlotByUid(int uid, out int deckSlotIndex)

@@ -41,6 +41,7 @@ namespace NineGrid.Flow.Tutorial
         private int mPhase2KillCount;
         private int mPhase2RefillSlot;
         private int mPhase2PendingRotate;
+        private bool mPhasePiecesSpawned;
 
         private int mDummyUid;
         private int mActionDummyUid;
@@ -120,6 +121,7 @@ namespace NineGrid.Flow.Tutorial
 
         private void EnqueueInitialPhaseSetup()
         {
+            CardEntityLifecycleHook.DeckOrNull()?.EnsureInGameIfStandby();
             mTransitionQueued = true;
             HoldPlayerInput();
             var runtime = mArchitecture.GetSystem<IPresentationRuntimeSystem>();
@@ -219,6 +221,11 @@ namespace NineGrid.Flow.Tutorial
             switch (mPhase)
             {
                 case 1:
+                    if (!mPhasePiecesSpawned)
+                    {
+                        return 0;
+                    }
+
                     return IsDeadOrGone(mDummyUid) ? 2 : 0;
                 case 2:
                     if (mPhase2KillCount < 1)
@@ -250,6 +257,7 @@ namespace NineGrid.Flow.Tutorial
 
         private void EnqueuePhase2Refill()
         {
+            CardEntityLifecycleHook.DeckOrNull()?.EnsureInGameIfStandby();
             if (mPhase2RefillSlot <= 0)
             {
                 mPhase2RefillSlot = 9;
@@ -302,6 +310,7 @@ namespace NineGrid.Flow.Tutorial
 
         private void EnqueuePhaseRestart()
         {
+            CardEntityLifecycleHook.DeckOrNull()?.EnsureInGameIfStandby();
             mRestartQueued = true;
             HoldPlayerInput();
             var clearItems = mPhase >= 4;
@@ -322,6 +331,7 @@ namespace NineGrid.Flow.Tutorial
                     mPhase2KillCount = 0;
                     mPhase2PendingRotate = 0;
                     mLegality.Phase2KillCount = 0;
+                    mPhasePiecesSpawned = false;
                     ScanPhase();
                     ReleasePlayerInput();
                 }));
@@ -330,12 +340,14 @@ namespace NineGrid.Flow.Tutorial
 
         private void EnqueuePhaseTransition(int nextPhase)
         {
+            CardEntityLifecycleHook.DeckOrNull()?.EnsureInGameIfStandby();
             mTransitionQueued = true;
             mPhase = nextPhase;
             mPhaseReady = false;
             mPhase2KillCount = 0;
             mPhase2PendingRotate = 0;
             mLegality.Phase2KillCount = 0;
+            mPhasePiecesSpawned = false;
             SetAvatarRangePinned(mPhase == 2);
             Debug.Log($"[Tutorial] 换阶段 → 第{mPhase}阶段");
 
@@ -409,6 +421,27 @@ namespace NineGrid.Flow.Tutorial
             }
 
             mLegality.ApplyPhase(mPhase);
+            if (mPhase == 1 || mPhase == 2)
+            {
+                mPhasePiecesSpawned |= mDummyUid > 0;
+            }
+            else if (mPhase == 3)
+            {
+                mPhasePiecesSpawned |= mActionDummyUid > 0 && mMoveDummyUid > 0;
+            }
+            else if (mPhase == 4)
+            {
+                mPhasePiecesSpawned |= mKnifeBoardUid > 0 && mPotionBoardUid > 0;
+            }
+            else if (mPhase == 5)
+            {
+                mPhasePiecesSpawned |= mSteelSlimeUid > 0;
+            }
+            else
+            {
+                mPhasePiecesSpawned = true;
+            }
+
             mPhaseReady = true;
             Debug.Log($"[Tutorial] 第{mPhase}阶段就位");
         }
