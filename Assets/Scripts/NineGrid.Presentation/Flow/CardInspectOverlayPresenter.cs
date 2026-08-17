@@ -39,8 +39,8 @@ namespace NineGrid.Flow
         /// <summary>有衍生卡时的文案前缀（后接卡名，多张以顿号分隔）。</summary>
         private const string DerivedCardTextPrefix = "衍生卡：";
 
-        /// <summary>常规描述面板为浅色底，词条行正文默认色改黑（敌方深色面板保持模板白）。</summary>
-        private static readonly Color RegularGlossaryRowBodyColor = new Color(0f, 0f, 0f, 1f);
+        /// <summary>常规描述面板为浅色底，正文改黑（敌方深色面板保持模板白）。</summary>
+        private static readonly Color RegularPanelBodyTextColor = new Color(0f, 0f, 0f, 1f);
 
         private static CardInspectOverlayPresenter s_instance;
 
@@ -174,6 +174,8 @@ namespace NineGrid.Flow
             WireDerivedCardButton(regularDerivedCardButton, regularDerivedCardText);
             WirePanelDismiss(enemyPanel);
             WirePanelDismiss(regularPanel);
+
+            ApplyRegularPanelTextColors();
 
             // 占位只作锚点：关掉场景里放的成品 mock 图，真卡面开面板时再挂。
             HidePlaceholderMockVisuals(enemyCardFace);
@@ -381,6 +383,11 @@ namespace NineGrid.Flow
             if (derived == null || derived.Count == 0)
             {
                 text.text = NoDerivedCardText;
+                if (!isMonster)
+                {
+                    ApplyPanelBodyTextColor(text);
+                }
+
                 return;
             }
 
@@ -396,6 +403,10 @@ namespace NineGrid.Flow
             }
 
             text.text = builder.ToString();
+            if (!isMonster)
+            {
+                ApplyPanelBodyTextColor(text);
+            }
         }
 
         private static string ResolveDerivedDisplayName(string defId)
@@ -504,8 +515,8 @@ namespace NineGrid.Flow
                     ApplyInspectSorting(_regularBinder.gameObject);
                 }
 
-                SetText(regularFaceIntro, texts.FaceIntro);
-                SetText(regularDeckIntro, texts.DeckIntro);
+                SetRegularPanelText(regularFaceIntro, texts.FaceIntro);
+                SetRegularPanelText(regularDeckIntro, texts.DeckIntro);
                 BindGlossaryPanel(regularGlossaryList, terms, _regularBinder, glossaryCatalog, snapshot);
             }
 
@@ -608,7 +619,22 @@ namespace NineGrid.Flow
             // 常规描述面板为浅色底：词条行正文（含 hover 槽）改黑保证可读；敌方面板深色底保持模板白。
             if (ReferenceEquals(panel, regularPanel))
             {
-                list.SetDefaultBodyColor(RegularGlossaryRowBodyColor);
+                list.SetDefaultBodyColor(RegularPanelBodyTextColor);
+            }
+        }
+
+        private void ApplyRegularPanelTextColors()
+        {
+            ApplyPanelBodyTextColor(regularFaceIntro);
+            ApplyPanelBodyTextColor(regularDeckIntro);
+            ApplyPanelBodyTextColor(regularDerivedCardText);
+        }
+
+        private static void ApplyPanelBodyTextColor(TMP_Text tmp)
+        {
+            if (tmp != null)
+            {
+                tmp.color = RegularPanelBodyTextColor;
             }
         }
 
@@ -1320,6 +1346,17 @@ namespace NineGrid.Flow
             {
                 tmp.text = value ?? string.Empty;
             }
+        }
+
+        private static void SetRegularPanelText(TMP_Text tmp, string value)
+        {
+            if (tmp == null)
+            {
+                return;
+            }
+
+            tmp.text = value ?? string.Empty;
+            tmp.color = RegularPanelBodyTextColor;
         }
     }
 }
