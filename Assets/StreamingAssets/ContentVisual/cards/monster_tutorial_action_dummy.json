@@ -8,6 +8,7 @@
     "designSlotName": "",
     "description": "[[行动计数]]归零后自毁",
     "faceIntro": "教学用",
+    "extraGlossaryTerms": [],
     "attackPattern": "无",
     "rhythmSource": "行动计数",
     "rhythmPeriod": 5,
@@ -20,7 +21,7 @@
         "recovery": 0
     },
     "sprites": {
-        "mainIcon": "Assets/Arts/Images/Png/Items/character.png",
+        "mainIcon": "Assets/Resources/ContentArt/Png/Items/character.png",
         "faceBackground": "",
         "cardFrame": "",
         "banner": "",

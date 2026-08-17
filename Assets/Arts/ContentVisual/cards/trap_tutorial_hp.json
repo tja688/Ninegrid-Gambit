@@ -21,7 +21,7 @@
         "recovery": 0
     },
     "sprites": {
-        "mainIcon": "Assets/Arts/Images/Png/Items/grid_tile_place.png",
+        "mainIcon": "Assets/Resources/ContentArt/Png/Items/grid_tile_place.png",
         "faceBackground": "",
         "cardFrame": "",
         "banner": "",

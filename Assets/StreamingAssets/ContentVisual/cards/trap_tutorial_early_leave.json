@@ -21,7 +21,7 @@
         "recovery": 0
     },
     "sprites": {
-        "mainIcon": "Assets/Arts/Images/Png/Items/hand.png",
+        "mainIcon": "Assets/Resources/ContentArt/Png/Items/hand.png",
         "faceBackground": "",
         "cardFrame": "",
         "banner": "",

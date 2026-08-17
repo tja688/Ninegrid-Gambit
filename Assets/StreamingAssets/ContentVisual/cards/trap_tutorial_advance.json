@@ -21,7 +21,7 @@
         "recovery": 0
     },
     "sprites": {
-        "mainIcon": "Assets/Arts/Images/Png/Items/sword.png",
+        "mainIcon": "Assets/Resources/ContentArt/Png/Items/sword.png",
         "faceBackground": "",
         "cardFrame": "",
         "banner": "",
