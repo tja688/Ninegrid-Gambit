@@ -314,7 +314,7 @@ _Avoid_: 恢复「描述区与道具卡格互斥」、战斗内隐藏简要解�
 _Avoid_: 把 `Unknown` 卡组放进正式层池、同一套卡组在多层复用（用尽后同层档内才允许回退复用）
 
 **怪物层数数值叠加**：
-相对第 1 层 JSON 基准：**每进新层**攻击 +1、血量 +2；**每满 4 个全局节点**（跨层累计）再叠攻击 +1、血量 +2（`MonsterFloorStatScaling` 双轨相加）。困难选人档（`RunModel.DifficultyId=hard`）将上述两轨档位翻倍为 +2/+4；普通/进阶不变。在 `ContentSystem.CreateDraft` 按 `RunModel.Floor` / `NodeIndex` / 难度注入，对任意主题卡组生效。
+相对第 1 层 JSON 基准：**每层中段（节点 4 起，含 Boss 战）** 攻击 +1、血量 +2；**每打完一层 Boss 进新层** 再叠攻击 +1、血量 +2（即每层包含中段与打完 Boss 两档，`MonsterFloorStatScaling` 档数 `(floor-1)*2 + (nodeIndex>=3?1:0)`）。困难选人档（`RunModel.DifficultyId=hard`）将档位加成翻倍为 +2/+4；普通/进阶不变。在 `ContentSystem.CreateDraft` 按 `RunModel.Floor` / `NodeIndex` / 难度注入，对任意主题卡组生效。
 _Avoid_: 在卡面 JSON 里手填层数加成、仅部分卡组享受叠加、把主题 deck 静态 `faceBackground` 当环境权威
 
 **地下城环境变体**：

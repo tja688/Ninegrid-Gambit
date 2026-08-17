@@ -10,7 +10,7 @@ status: accepted
 - **困难档**：整层使用对应层的「血色」环境名；普通/进阶按层内前四/后四房间切换前段/后段环境。
 - **卡面背景资源**：表字段 `faceBackground`（默认 `Assets/Resources/ContentArt/Png/Other/{显示名}.png`，可在表现层配置器「地下城虚构」里换图）。
 - **怪物卡 JSON `sprites.faceBackground` 不是运行时权威**：内容 JSON 可留空或仅作编辑器预览；正式怪物卡面背景在表现层 `CoreCardPresentationMapper` 经 `GetCurrentDungeonEnvironmentQuery` 覆盖后写入 `CardPresentationSnapshot.FaceBackground` → `CardFacePresentationBinder`「背景」槽。其他卡种仍走 JSON。
-- **困难数值**：`MonsterFloorStatScaling` 在困难档将层档与每满 4 全局节点档的攻/血加成翻倍（+1/+2 → +2/+4）；普通/进阶公式不变。`ContentSystem.CreateDraft` 读 `RunModel.DifficultyId` 传入缩放。
+- **困难数值**：`MonsterFloorStatScaling` 在困难档将中段档与打完 Boss 层档的攻/血加成翻倍（每档 +1/+2 → +2/+4）；普通/进阶公式不变。`ContentSystem.CreateDraft` 读 `RunModel.DifficultyId` 传入缩放。
 - **文案**：大楼层提示与战斗信息预览的 `{floor}`（或等价字段）显示环境显示名，不是「一层/二层」或「楼层·Ⅱ」。
 
 权威解析：`DungeonEnvironmentCatalog.Resolve`。作者真源为 `Arts/ContentVisual/tables/dungeon_environments.json`（StreamingAssets 双写）；缺表时回退烘焙默认。运行时读：`GetCurrentDungeonEnvironmentQuery`。
