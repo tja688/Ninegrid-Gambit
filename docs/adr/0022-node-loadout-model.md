@@ -13,7 +13,7 @@ superseded_in_part_by: ADR-0025, ADR-0031
 
 - **每层开局**从**本层难度档**的主题怪物卡组里随机抽 **1 套未用过的**，记入 `RunModel`；三层各一套，互不重复。
 - 难度档与层号对齐（策划 `怪物卡.md`）：**普通**（`deck_kind=WeakElite`）→ 第 1 层池；**中等**（`StrongElite`）→ 第 2 层池；**困难**（`Boss`，卡组难度非怪物层主 rank）→ 第 3 层池。契约见 `ThemeDeckFloorTierMapping` + `MonsterDeckFloorPool`。
-- **怪物成长数值叠加（节点中段+层双轨）**：① 每层中段（节点 4 起，含 Boss 战）所有怪物卡攻击 +1、血量 +2；② 每打完一层 Boss 进入新层（第 1 层为基准 0）攻击 +1、血量 +2；两轨相加，即总档数 `(floor-1)*2 + (nodeIndex>=3?1:0)`（任意主题卡组；`MonsterFloorStatScaling` 在 `CreateDraft` 注入）。
+- **怪物成长数值叠加（节点中段+层双轨）**：中等难度标准档数 `(floor-1)*2 + (nodeIndex>=3?1:0)`；简单难度频率减半 `(floor-1)*1 + (nodeIndex>=3?1:0)`；困难难度档位同中等但数值翻倍（任意主题卡组；`MonsterFloorStatScaling` 在 `CreateDraft` 注入）。
 - 每套固定 5 张，按 **序列 1–5** 排列，序列 5 即该套的**层主**。
 - 怪物卡 JSON 新增 `sequence`（1–5）与 `level`（普通 / 层主）。
 - `NodeDeckRule` 由「`level1/2/3_min/max` + `elite_count` + `boss_count` + `deck_kind`」改为「**节点 → 序列 1..5 各抽几张**」，总数为该节点固定值。

@@ -11,7 +11,7 @@ namespace NineGrid.Presentation.Ui
         public const string NormalDifficultyId = NineGrid.Core.Content.RunDifficultyIds.Normal;
 
         public static string DifficultyId { get; private set; } = NormalDifficultyId;
-        public static string DifficultyLabel { get; private set; } = "普通";
+        public static string DifficultyLabel { get; private set; } = "旅途";
 
         /// <summary>选人界面难度选项的图标精灵（结算面板「此次对局所选的难度」直接复用）。</summary>
         public static Sprite DifficultyIcon { get; private set; }
@@ -25,15 +25,30 @@ namespace NineGrid.Presentation.Ui
         public static void SetDifficulty(string id, string label, Sprite icon)
         {
             DifficultyId = string.IsNullOrEmpty(id) ? NormalDifficultyId : id;
-            DifficultyLabel = label ?? string.Empty;
+            DifficultyLabel = !string.IsNullOrEmpty(label) ? label : GetDefaultLabel(DifficultyId);
             DifficultyIcon = icon;
         }
 
         public static void ResetToDefault()
         {
             DifficultyId = NormalDifficultyId;
-            DifficultyLabel = "普通";
+            DifficultyLabel = GetDefaultLabel(NormalDifficultyId);
             DifficultyIcon = null;
+        }
+
+        public static string GetDefaultLabel(string difficultyId)
+        {
+            if (string.Equals(difficultyId, NineGrid.Core.Content.RunDifficultyIds.Hard, System.StringComparison.OrdinalIgnoreCase))
+            {
+                return "血色";
+            }
+
+            if (string.Equals(difficultyId, NineGrid.Core.Content.RunDifficultyIds.Advanced, System.StringComparison.OrdinalIgnoreCase))
+            {
+                return "冒险";
+            }
+
+            return "旅途";
         }
     }
 }

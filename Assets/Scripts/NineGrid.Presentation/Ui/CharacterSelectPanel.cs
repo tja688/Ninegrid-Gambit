@@ -179,9 +179,9 @@ namespace NineGrid.Presentation.Ui
             WireCharacterSlot(0, "角色1", unlocked: true);
             WireCharacterSlot(1, "角色2", unlocked: false);
             WireCharacterSlot(2, "角色3", unlocked: false);
-            WireDifficulty(0, "难度选项：普通", RunSetupSelection.NormalDifficultyId, "普通");
-            WireDifficulty(1, "难度选项：进阶", "advanced", "进阶");
-            WireDifficulty(2, "难度选项：困难", "hard", "困难");
+            WireDifficulty(0, "难度选项：普通", RunSetupSelection.NormalDifficultyId, "旅途");
+            WireDifficulty(1, "难度选项：进阶", "advanced", "冒险");
+            WireDifficulty(2, "难度选项：困难", "hard", "血色");
             WireStartButton();
             WireBackButton();
 

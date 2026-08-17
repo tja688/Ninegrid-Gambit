@@ -184,8 +184,7 @@ namespace NineGrid.Core.Systems
                 var difficultyId = run != null && run.DifficultyId != null
                     ? run.DifficultyId.Value
                     : RunDifficultyIds.Normal;
-                var isHard = DungeonEnvironmentCatalog.IsHardDifficulty(difficultyId);
-                MonsterFloorStatScaling.ApplyToDraft(draft, floor, nodeIndex, isHard);
+                MonsterFloorStatScaling.ApplyToDraft(draft, floor, nodeIndex, difficultyId);
             }
 
             return draft;

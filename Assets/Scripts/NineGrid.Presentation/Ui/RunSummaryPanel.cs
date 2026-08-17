@@ -30,6 +30,7 @@ namespace NineGrid.Presentation.Ui
         public const string CharacterInfoName = "角色信息";
         public const string PortraitNodeName = "立绘";
         public const string DifficultyIconName = "此次对局所选的难度";
+        public const string DifficultyTextName = "难度文本";
         public const string RelicWallName = "此次对局所使用的遗物";
         public const string QuitButtonName = "退出游戏";
         public const string RestartButtonName = "再来一局";
@@ -54,6 +55,7 @@ namespace NineGrid.Presentation.Ui
         private TMP_Text mStatsBodyText;
         private SpriteRenderer mPortraitArt;
         private SpriteRenderer mDifficultyIcon;
+        private TMP_Text mDifficultyText;
         private readonly List<Transform> mRelicSlots = new List<Transform>(12);
         private UiConfirmPrompt mPrompt;
         private bool mBound;
@@ -182,7 +184,17 @@ namespace NineGrid.Presentation.Ui
                 }
 
                 var difficulty = FindDirectChild(characterInfo, DifficultyIconName);
-                mDifficultyIcon = difficulty != null ? difficulty.GetComponent<SpriteRenderer>() : null;
+                if (difficulty != null)
+                {
+                    mDifficultyIcon = difficulty.GetComponent<SpriteRenderer>();
+                    mDifficultyText = FindTmp(difficulty, DifficultyTextName)
+                        ?? difficulty.GetComponentInChildren<TMP_Text>(true);
+                }
+                else
+                {
+                    mDifficultyIcon = null;
+                    mDifficultyText = null;
+                }
 
                 CollectRelicSlots(FindDirectChild(characterInfo, RelicWallName));
             }
@@ -241,9 +253,24 @@ namespace NineGrid.Presentation.Ui
                 PanelArtUtility.FitWorldHeight(mPortraitArt, PortraitWorldHeight);
             }
 
-            if (mDifficultyIcon != null && RunSetupSelection.DifficultyIcon != null)
+            var run = NineGridArchitecture.Current?.GetModel<RunModel>();
+            var difficultyId = run?.DifficultyId?.Value ?? RunSetupSelection.DifficultyId;
+            var difficultyLabel = !string.IsNullOrEmpty(RunSetupSelection.DifficultyLabel)
+                ? RunSetupSelection.DifficultyLabel
+                : RunSetupSelection.GetDefaultLabel(difficultyId);
+
+            if (mDifficultyIcon != null)
             {
-                mDifficultyIcon.sprite = RunSetupSelection.DifficultyIcon;
+                var icon = RunSetupSelection.DifficultyIcon ?? ResolveDifficultyIconFallback(difficultyId);
+                if (icon != null)
+                {
+                    mDifficultyIcon.sprite = icon;
+                }
+            }
+
+            if (mDifficultyText != null)
+            {
+                mDifficultyText.text = $"难度：{difficultyLabel}";
             }
 
             PopulateStats();
@@ -502,6 +529,28 @@ namespace NineGrid.Presentation.Ui
             {
                 target.text = text ?? string.Empty;
             }
+        }
+
+        private static Sprite ResolveDifficultyIconFallback(string difficultyId)
+        {
+            var targetNodeName = string.Equals(difficultyId, NineGrid.Core.Content.RunDifficultyIds.Hard, StringComparison.OrdinalIgnoreCase)
+                ? "难度选项：困难"
+                : (string.Equals(difficultyId, NineGrid.Core.Content.RunDifficultyIds.Advanced, StringComparison.OrdinalIgnoreCase)
+                    ? "难度选项：进阶"
+                    : "难度选项：普通");
+
+            var panel = FindSceneNamed(CharacterSelectPanel.PanelRootName);
+            if (panel != null)
+            {
+                var node = FindDirectChild(panel.transform, targetNodeName);
+                var sr = node != null ? node.GetComponent<SpriteRenderer>() : null;
+                if (sr != null && sr.sprite != null)
+                {
+                    return sr.sprite;
+                }
+            }
+
+            return null;
         }
 
         private static Transform FindDirectChild(Transform parent, string childName)
