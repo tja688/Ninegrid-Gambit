@@ -4,7 +4,7 @@
     "kind": "Trap",
     "deckId": "deck.tutorial",
     "role": "",
-    "displayName": "教学3-标准动作",
+    "displayName": "教学5-标准动作",
     "designSlotName": "",
     "description": "玩家的拾取、攻击、移动动作为标准动作，触发行动计数[action]",
     "faceIntro": "行动计数是许多怪物攻击与能力触发的倒计时",

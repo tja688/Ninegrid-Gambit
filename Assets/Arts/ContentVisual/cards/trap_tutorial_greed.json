@@ -4,7 +4,7 @@
     "kind": "Trap",
     "deckId": "deck.tutorial",
     "role": "",
-    "displayName": "教学5-移动计数",
+    "displayName": "教学3-移动计数",
     "designSlotName": "",
     "description": "[move]是弱化版的行动计数，只有移动事件才会减少其数值",
     "faceIntro": "富贵险中求",
