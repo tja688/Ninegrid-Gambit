@@ -18,6 +18,7 @@ namespace NineGrid.Flow.Tutorial
         public const string Phase1HintB = "trap.tutorial.countdown";
         public const string Phase2HintA = "trap.tutorial.attack";
         public const string Phase2HintB = "trap.tutorial.boss_door";
+        public const string Phase2HintC = "trap.tutorial.hp";
         public const string Phase3HintA = "trap.tutorial.fire";
         public const string Phase3HintB = "trap.tutorial.greed";
         public const string Phase4HintA = "trap.tutorial.early_leave";

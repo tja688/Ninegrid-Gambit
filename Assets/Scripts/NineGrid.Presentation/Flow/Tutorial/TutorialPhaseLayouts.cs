@@ -36,6 +36,7 @@ namespace NineGrid.Flow.Tutorial
                     {
                         new Placement(1, TutorialContentIds.Phase2HintA, CardKind.Trap),
                         new Placement(2, TutorialContentIds.Phase2HintB, CardKind.Trap),
+                        new Placement(3, TutorialContentIds.Phase2HintC, CardKind.Trap),
                         new Placement(9, TutorialContentIds.DummyTrapDefId, CardKind.Trap),
                     };
                 case 3:
@@ -95,7 +96,7 @@ namespace NineGrid.Flow.Tutorial
             switch (phase)
             {
                 case 1: return new[] { TutorialContentIds.Phase1HintA, TutorialContentIds.Phase1HintB };
-                case 2: return new[] { TutorialContentIds.Phase2HintA, TutorialContentIds.Phase2HintB };
+                case 2: return new[] { TutorialContentIds.Phase2HintA, TutorialContentIds.Phase2HintB, TutorialContentIds.Phase2HintC };
                 case 3: return new[] { TutorialContentIds.Phase3HintA, TutorialContentIds.Phase3HintB };
                 case 4: return new[] { TutorialContentIds.Phase4HintA, TutorialContentIds.Phase4HintB };
                 case 5: return new[] { TutorialContentIds.Phase5HintA, TutorialContentIds.Phase5HintB };

@@ -48,7 +48,7 @@ namespace NineGrid.Presentation.Tests
             var stab = mArch.GetSystem<IBoardStabilizationSystem>();
             stab.IsRefillSuspended = true;
 
-            // 1. 设置阶段2场面：直摆格1、2提示卡 + 格9假人，抽牌堆1张假人
+            // 1. 设置阶段2场面：直摆格1、2、3提示卡 + 格9假人，抽牌堆1张假人
             mArch.SendCommand(new TutorialSetupPhaseCommand(2));
 
             var board = mArch.GetModel<BoardModel>();
@@ -56,6 +56,11 @@ namespace NineGrid.Presentation.Tests
             var registry = mArch.GetModel<CardRegistry>();
 
             Assert.AreEqual(1, deck.DrawPileUids.Count, "阶段2开局抽牌堆应有且仅有1张补位假人");
+            Assert.IsFalse(board.IsEmpty(SlotId.Board(1)), "格1应有提示卡A");
+            Assert.IsFalse(board.IsEmpty(SlotId.Board(2)), "格2应有提示卡B");
+            Assert.IsFalse(board.IsEmpty(SlotId.Board(3)), "格3应有提示卡C（交互范围）");
+            Assert.AreEqual(TutorialContentIds.Phase2HintC, registry.Get(board.GetCardUid(SlotId.Board(3))).DefId);
+
             Assert.IsFalse(board.IsEmpty(SlotId.Board(9)), "格9应有第一张假人");
             var dummy1Uid = board.GetCardUid(SlotId.Board(9));
             Assert.IsTrue(registry.TryGet(dummy1Uid, out var dummy1Card));
