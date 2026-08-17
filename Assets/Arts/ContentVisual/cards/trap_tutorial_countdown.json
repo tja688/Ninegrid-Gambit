@@ -21,7 +21,7 @@
         "recovery": 0
     },
     "sprites": {
-        "mainIcon": "",
+        "mainIcon": "Assets/Arts/Images/Png/Items/script_text.png",
         "faceBackground": "",
         "cardFrame": "",
         "banner": "",
@@ -31,7 +31,7 @@
     },
     "mainVisual": {
         "offsetX": 0.0,
-        "offsetY": 0.0,
+        "offsetY": 0.5,
         "uniformScale": 1.0
     },
     "animations": {
