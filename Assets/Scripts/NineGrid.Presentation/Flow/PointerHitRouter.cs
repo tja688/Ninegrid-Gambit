@@ -1,5 +1,7 @@
 using NineGrid.Cards;
 using NineGrid.Flow.BattleInfoPreview;
+using NineGrid.Flow.BoardBriefTip;
+using NineGrid.Flow.PurchaseAmountTip;
 using NineGrid.Presentation;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -64,6 +66,12 @@ namespace NineGrid.Flow
 
                 _hovered = best;
                 _hovered?.HandlePointerEnter();
+
+                if (_hovered == null)
+                {
+                    PurchaseAmountTipPresenter.HideAll();
+                    BoardBriefTipPresenter.InstanceOrNull()?.ClearHover();
+                }
             }
             else if (_hovered is IMultiColliderPointerHitTarget multiStay)
             {
@@ -218,17 +226,14 @@ namespace NineGrid.Flow
 
         private void ClearHover()
         {
-            if (_hovered == null)
-            {
-                return;
-            }
-
-            if (IsTargetAlive(_hovered))
+            if (_hovered != null && IsTargetAlive(_hovered))
             {
                 _hovered.HandlePointerExit();
             }
 
             _hovered = null;
+            PurchaseAmountTipPresenter.HideAll();
+            BoardBriefTipPresenter.InstanceOrNull()?.ClearHover();
         }
 
         private Camera ResolveCamera()

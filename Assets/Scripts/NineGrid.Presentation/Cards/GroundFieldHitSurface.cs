@@ -135,6 +135,7 @@ namespace NineGrid.Cards
             BoardRangeGlowFx.Hide(this);
             _resolvedSlot = 0;
             _resolvedCollider = null;
+            BoardBriefTipPresenter.InstanceOrNull()?.ClearHover();
         }
 
         /// <inheritdoc cref="IMultiColliderPointerHitTarget.RefreshPointerHover"/>
@@ -241,18 +242,20 @@ namespace NineGrid.Cards
                 _hoveredClaimant = null;
             }
 
-            if (_hoverTipGeneration <= 0)
+            if (_hoverTipGeneration > 0)
             {
-                return;
-            }
+                var presenter = BoardBriefTipPresenter.InstanceOrNull();
+                if (presenter != null)
+                {
+                    presenter.ClearHover(_hoverTipGeneration);
+                }
 
-            var presenter = BoardBriefTipPresenter.InstanceOrNull();
-            if (presenter != null)
+                _hoverTipGeneration = 0;
+            }
+            else
             {
-                presenter.ClearHover(_hoverTipGeneration);
+                BoardBriefTipPresenter.InstanceOrNull()?.ClearHover();
             }
-
-            _hoverTipGeneration = 0;
         }
 
         private BoxCollider2D GetSlotCollider(int slot)

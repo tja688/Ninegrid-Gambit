@@ -15,7 +15,8 @@ namespace NineGrid.Flow.PurchaseAmountTip
     /// </summary>
     public static class PurchaseAmountTipPresenter
     {
-        public const string TemplateObjectName = "金额购买提示模板";
+        public const string TemplateObjectName = "购买金额";
+        public const string LegacyTemplateObjectName = "金额购买提示模板";
 
         private static GameObject sTemplateGo;
         private static TMP_Text sText;
@@ -42,7 +43,9 @@ namespace NineGrid.Flow.PurchaseAmountTip
             }
 
             sText.text = "+" + Mathf.Max(0, amount);
-            sTemplateGo.transform.position = anchor.position;
+            var pos = anchor.position;
+            pos.z = -0.05f;
+            sTemplateGo.transform.position = pos;
             if (!sTemplateGo.activeSelf)
             {
                 sTemplateGo.SetActive(true);
@@ -87,32 +90,23 @@ namespace NineGrid.Flow.PurchaseAmountTip
 
         private static bool EnsureTemplate()
         {
-            if (sTemplateGo != null)
+            if (sTemplateGo != null && sText != null)
             {
                 return true;
             }
 
-            if (sLookedUp)
+            // 1. 优先从 Panels/ShopPanel（含未激活）寻找用户制作的「购买金额」或含 TMP 的子对象
+            var templateTransform = FindInShopPanel();
+
+            // 2. 场景全局查找候选对象名
+            if (templateTransform == null)
             {
-                return false;
+                templateTransform = FindInSceneAll();
             }
 
-            sLookedUp = true;
-            var all = Resources.FindObjectsOfTypeAll<Transform>();
-            for (var i = 0; i < all.Length; i++)
+            if (templateTransform != null)
             {
-                var t = all[i];
-                if (t == null || t.name != TemplateObjectName)
-                {
-                    continue;
-                }
-
-                if (!t.gameObject.scene.IsValid())
-                {
-                    continue;
-                }
-
-                sTemplateGo = t.gameObject;
+                sTemplateGo = templateTransform.gameObject;
                 sText = sTemplateGo.GetComponentInChildren<TMP_Text>(true);
                 // 模板挂在未激活的 ShopPanel 下：脱离父级后提示本体可独立显隐渲染，
                 // 不依赖 ShopPanel 激活态（后续 Shop 面板 UI 启用也不会误伤本提示）。
@@ -121,11 +115,103 @@ namespace NineGrid.Flow.PurchaseAmountTip
                     sTemplateGo.transform.SetParent(null, worldPositionStays: true);
                 }
 
+                var mr = sTemplateGo.GetComponent<MeshRenderer>();
+                if (mr != null)
+                {
+                    if (string.IsNullOrEmpty(mr.sortingLayerName) || mr.sortingLayerName == "Default")
+                    {
+                        mr.sortingLayerName = "Main";
+                    }
+
+                    mr.sortingOrder = Mathf.Max(94, mr.sortingOrder);
+                }
+
                 sTemplateGo.SetActive(false);
-                return true;
+                return sText != null;
             }
 
-            return false;
+            if (sLookedUp)
+            {
+                return sTemplateGo != null && sText != null;
+            }
+
+            sLookedUp = true;
+
+            // 3. 兜底：动态创建标准金色 TMP 提示对象，永不静默失效
+            return CreateFallbackTemplate();
+        }
+
+        private static Transform FindInShopPanel()
+        {
+            var all = Resources.FindObjectsOfTypeAll<Transform>();
+            Transform shopPanel = null;
+            for (var i = 0; i < all.Length; i++)
+            {
+                var t = all[i];
+                if (t != null && t.name == "ShopPanel" && t.gameObject.scene.IsValid())
+                {
+                    shopPanel = t;
+                    break;
+                }
+            }
+
+            if (shopPanel == null)
+            {
+                return null;
+            }
+
+            // 精确名匹配
+            var direct = shopPanel.Find(TemplateObjectName) ?? shopPanel.Find(LegacyTemplateObjectName);
+            if (direct != null)
+            {
+                return direct;
+            }
+
+            // 查找含 TMP_Text 的子对象
+            var tmp = shopPanel.GetComponentInChildren<TMP_Text>(true);
+            return tmp != null ? tmp.transform : null;
+        }
+
+        private static Transform FindInSceneAll()
+        {
+            var all = Resources.FindObjectsOfTypeAll<Transform>();
+            for (var i = 0; i < all.Length; i++)
+            {
+                var t = all[i];
+                if (t == null || !t.gameObject.scene.IsValid())
+                {
+                    continue;
+                }
+
+                if (t.name == TemplateObjectName || t.name == LegacyTemplateObjectName)
+                {
+                    return t;
+                }
+            }
+
+            return null;
+        }
+
+        private static bool CreateFallbackTemplate()
+        {
+            var go = new GameObject(TemplateObjectName);
+            var tmp = go.AddComponent<TextMeshPro>();
+            tmp.text = "+0";
+            tmp.fontSize = 6f;
+            tmp.color = new Color(0.972f, 0.806f, 0.440f, 1f);
+            tmp.alignment = TextAlignmentOptions.Center;
+
+            var mr = go.GetComponent<MeshRenderer>();
+            if (mr != null)
+            {
+                mr.sortingLayerName = "Main";
+                mr.sortingOrder = 94;
+            }
+
+            sTemplateGo = go;
+            sText = tmp;
+            sTemplateGo.SetActive(false);
+            return true;
         }
     }
 }

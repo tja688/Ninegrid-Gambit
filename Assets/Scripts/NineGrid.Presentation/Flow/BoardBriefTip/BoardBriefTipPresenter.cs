@@ -1,3 +1,6 @@
+using System;
+using System.Threading;
+using Cysharp.Threading.Tasks;
 using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -12,6 +15,7 @@ namespace NineGrid.Flow.BoardBriefTip
     public sealed class BoardBriefTipPresenter : MonoBehaviour
     {
         public const string PanelObjectName = "简要解释文字框";
+        public const float DefaultNoticeDurationSeconds = 1.5f;
 
         private static BoardBriefTipPresenter sInstance;
 
@@ -126,16 +130,40 @@ namespace NineGrid.Flow.BoardBriefTip
 
         public int ShowNotice(string text)
         {
+            return ShowNotice(text, DefaultNoticeDurationSeconds);
+        }
+
+        public int ShowNotice(string text, float durationSeconds)
+        {
             var self = EnsureExists();
             if (!ReferenceEquals(self, this))
             {
-                return self.ShowNotice(text);
+                return self.ShowNotice(text, durationSeconds);
             }
 
             EnsureBindings();
             var gen = mSession.ShowNotice(text);
             ApplyVisual();
+            if (durationSeconds > 0f && !string.IsNullOrEmpty(text))
+            {
+                AutoClearNoticeAsync(gen, durationSeconds).Forget();
+            }
+
             return gen;
+        }
+
+        private async UniTaskVoid AutoClearNoticeAsync(int gen, float durationSeconds)
+        {
+            try
+            {
+                await UniTask.Delay(
+                    TimeSpan.FromSeconds(durationSeconds),
+                    cancellationToken: this != null ? destroyCancellationToken : CancellationToken.None);
+                ClearNotice(gen);
+            }
+            catch (OperationCanceledException)
+            {
+            }
         }
 
         public void ClearNotice(int generation)
@@ -228,7 +256,7 @@ namespace NineGrid.Flow.BoardBriefTip
                 sInstance = presenter;
                 if (orphan != null)
                 {
-                    Object.Destroy(orphan);
+                    UnityEngine.Object.Destroy(orphan);
                 }
 
                 return;
