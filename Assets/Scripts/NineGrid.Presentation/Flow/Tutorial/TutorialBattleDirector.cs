@@ -45,8 +45,8 @@ namespace NineGrid.Flow.Tutorial
         private int mActionDummyUid;
         private int mMoveDummyUid;
         private int mSteelSlimeUid;
-        private int mKnifeBoardUid;
-        private int mPotionBoardUid;
+        private int mKnifeUid;
+        private int mPotionUid;
 
         private readonly HashSet<int> mTrackedUids = new HashSet<int>();
         private CancellationTokenSource mCts;
@@ -317,6 +317,8 @@ namespace NineGrid.Flow.Tutorial
                     mRestartQueued = false;
                     mPhasePiecesSpawned = false;
                     mMissingPiecesWarned = false;
+                    mKnifeUid = 0;
+                    mPotionUid = 0;
                     ScanPhase();
                     ReleasePlayerInput();
                 }));
@@ -338,6 +340,8 @@ namespace NineGrid.Flow.Tutorial
             mPhaseReady = false;
             mPhasePiecesSpawned = false;
             mMissingPiecesWarned = false;
+            mKnifeUid = 0;
+            mPotionUid = 0;
             SetAvatarRangePinned(mPhase == 2);
             Debug.Log($"[Tutorial] 换阶段 → 第{mPhase}阶段");
 
@@ -386,8 +390,11 @@ namespace NineGrid.Flow.Tutorial
             mActionDummyUid = 0;
             mMoveDummyUid = 0;
             mSteelSlimeUid = 0;
-            mKnifeBoardUid = 0;
-            mPotionBoardUid = 0;
+            if (mPhase != 4)
+            {
+                mKnifeUid = 0;
+                mPotionUid = 0;
+            }
 
             var board = mArchitecture.GetModel<BoardModel>();
             var deck = mArchitecture.GetModel<DeckModel>();
@@ -421,7 +428,7 @@ namespace NineGrid.Flow.Tutorial
             }
             else if (mPhase == 4)
             {
-                mPhasePiecesSpawned |= mKnifeBoardUid > 0 && mPotionBoardUid > 0;
+                mPhasePiecesSpawned |= mKnifeUid > 0 && mPotionUid > 0;
             }
             else if (mPhase == 5)
             {
@@ -482,35 +489,82 @@ namespace NineGrid.Flow.Tutorial
                 return;
             }
 
-            if (defId == TutorialContentIds.KnifeDefId && card.Zone.Value == ZoneId.Board)
+            if (mPhase == 4)
             {
-                mKnifeBoardUid = uid;
-                return;
-            }
+                if (defId == TutorialContentIds.KnifeDefId)
+                {
+                    if (mKnifeUid <= 0 || card.Zone.Value == ZoneId.Board)
+                    {
+                        mKnifeUid = uid;
+                    }
+                    return;
+                }
 
-            if (defId == TutorialContentIds.PotionDefId && card.Zone.Value == ZoneId.Board)
-            {
-                mPotionBoardUid = uid;
+                if (defId == TutorialContentIds.PotionDefId)
+                {
+                    if (mPotionUid <= 0 || card.Zone.Value == ZoneId.Board)
+                    {
+                        mPotionUid = uid;
+                    }
+                }
             }
         }
 
         private bool ArePhase4ItemsPickedUp()
         {
-            return HasItemInSlots(TutorialContentIds.KnifeDefId)
-                   && HasItemInSlots(TutorialContentIds.PotionDefId);
-        }
-
-        private bool HasItemInSlots(string defId)
-        {
-            var deck = mArchitecture.GetModel<DeckModel>();
             var registry = mArchitecture.GetModel<CardRegistry>();
-            var items = deck.ItemSlotUids;
-            for (var i = 0; i < items.Count; i++)
+            var board = mArchitecture.GetModel<BoardModel>();
+            if (registry == null || board == null)
             {
-                var uid = items[i];
-                if (uid > 0 && registry.TryGet(uid, out var card) && card != null && card.DefId == defId)
+                return false;
+            }
+
+            // 1. 若已记录阶段4两张道具卡 UID，只要均已脱离 Board（进入道具槽、墓地或被移除），即判定已拾取
+            if (mKnifeUid > 0 && mPotionUid > 0)
+            {
+                if (IsItemPickedUpFromBoard(registry, mKnifeUid) && IsItemPickedUpFromBoard(registry, mPotionUid))
                 {
                     return true;
+                }
+            }
+
+            // 2. 兜底判定：关键件已生成过且场上不再有飞刀或药水
+            if (mPhasePiecesSpawned
+                && !HasDefIdOnBoard(board, registry, TutorialContentIds.KnifeDefId)
+                && !HasDefIdOnBoard(board, registry, TutorialContentIds.PotionDefId))
+            {
+                return true;
+            }
+
+            return false;
+        }
+
+        private static bool IsItemPickedUpFromBoard(CardRegistry registry, int uid)
+        {
+            if (uid <= 0)
+            {
+                return false;
+            }
+
+            if (!registry.TryGet(uid, out var card) || card == null)
+            {
+                return true;
+            }
+
+            return card.Zone.Value != ZoneId.Board;
+        }
+
+        private static bool HasDefIdOnBoard(BoardModel board, CardRegistry registry, string defId)
+        {
+            for (var i = SlotId.MinBoardIndex; i <= SlotId.MaxBoardIndex; i++)
+            {
+                var uid = board.GetCardUid(SlotId.Board(i));
+                if (uid > 0 && registry.TryGet(uid, out var card) && card != null)
+                {
+                    if (card.DefId == defId && card.Zone.Value == ZoneId.Board)
+                    {
+                        return true;
+                    }
                 }
             }
 
