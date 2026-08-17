@@ -654,12 +654,22 @@ namespace NineGrid.Flow
 
         private static bool ShouldRaiseBattleEndedForAvatarDefeat(PostKillBoardPresentationResult result)
         {
+            if (!IsAvatarActuallyDefeated(result))
+            {
+                return false;
+            }
+
             if (TutorialBattleSessionHook.ShouldSuppressAvatarDefeatEnd())
             {
                 TutorialBattleSessionHook.RequestAvatarDefeatRestart();
                 return false;
             }
 
+            return true;
+        }
+
+        private static bool IsAvatarActuallyDefeated(PostKillBoardPresentationResult result)
+        {
             if (result.AvatarDefeated)
             {
                 return true;
@@ -691,7 +701,7 @@ namespace NineGrid.Flow
             }
 
             CardInstance avatar;
-            if (!registry.TryGet(avatarUid, out avatar))
+            if (!registry.TryGet(avatarUid, out avatar) || avatar == null)
             {
                 return true;
             }
