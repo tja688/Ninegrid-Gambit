@@ -15,8 +15,8 @@ using UnityEngine.SceneManagement;
 namespace NineGrid.Flow.MainMenu
 {
     /// <summary>
-    /// 菜单背景 / MainBG 动态底：Tiled 精灵按一格 wrap 平移（不改 UV，图案本身不变），
-    /// 主菜单再投放正式接线怪物 / 道具 / 场地卡主图标。
+    /// 菜单背景 / MainBG 动态底：Tiled 精灵通过 _ScrollUv 平移采样（不改 Transform，图案不变），
+    /// GPU Repeat 采样保证 wrap 无跳变；主菜单再投放正式接线怪物 / 道具 / 场地卡主图标。
     /// 图标摆放复用战斗信息展示的 <see cref="BattleInfoPreviewIconPlayer"/>（卡面 mainVisual）。
     /// 挂在 <c>Panels/MainBG</c> 与 <c>MainPanel/菜单背景</c>；选中该物体即可在 Inspector 调参。
     /// </summary>
@@ -34,9 +34,8 @@ namespace NineGrid.Flow.MainMenu
         // Keep decorative rain below the normal main-menu UI orders (-6/-3/-2).
         private const int IconSortingBase = -20;
         private const float MinScale = 0.0001f;
-        // Extra tiled coverage so wrapping one tile never exposes an empty edge.
-        private const float WrapMarginTiles = 2f;
         private static readonly int PixelSnapId = Shader.PropertyToID("_PixelSnap");
+        private static readonly int ScrollUvId = Shader.PropertyToID("_ScrollUv");
 
         [Header("场景绑定")]
         [SerializeField] private SpriteRenderer backgroundRenderer;
@@ -45,7 +44,7 @@ namespace NineGrid.Flow.MainMenu
 
         [Header("背景滑动")]
         [SerializeField] private bool scrollEnabled = true;
-        [Tooltip("世界单位/秒；沿下方角度匀速平移整块 Tiled 图案，按一格 wrap。物体可见时一直滚。")]
+        [Tooltip("世界单位/秒；沿下方角度匀速平移 Tiled 图案，按一格 UV wrap（GPU Repeat，无跳变）。物体可见时一直滚。")]
         [SerializeField] private float scrollSpeed = 1.1f;
         [Tooltip("0=向右，45=右上，-45=右下。")]
         [SerializeField] private float scrollAngleDegrees = -45f;
@@ -81,11 +80,7 @@ namespace NineGrid.Flow.MainMenu
         private Transform _rainRoot;
         private MaterialPropertyBlock _propertyBlock;
         private bool _raining;
-        private bool _capturedAuthored;
-        private Vector3 _authoredLocalPos;
-        private Vector2 _authoredTiledSize;
-        private bool _authoredWasTiled;
-        private Vector2 _scrollLocal;
+        private Vector2 _scrollUv;
         private float _spawnCooldown;
         private string _lastDefId;
         private int _sortCursor;
@@ -142,23 +137,18 @@ namespace NineGrid.Flow.MainMenu
         {
             sInstance = this;
             EnsureBindings();
-            CaptureAuthoredIfNeeded();
             PrepareRendererVisuals();
         }
 
         private void OnEnable()
         {
             EnsureBindings();
-            CaptureAuthoredIfNeeded();
             PrepareRendererVisuals();
-            EnsureWrapMargin();
-            ApplyScrollTransform();
         }
 
         private void OnDestroy()
         {
             StopRain();
-            RestoreAuthoredTransform();
             if (ReferenceEquals(sInstance, this))
             {
                 sInstance = null;
@@ -234,37 +224,21 @@ namespace NineGrid.Flow.MainMenu
                 return;
             }
 
-            CaptureAuthoredIfNeeded();
-            var tileLocal = GetTileLocalSize();
-            if (tileLocal.x < MinScale || tileLocal.y < MinScale)
+            var tileWorld = GetTileWorldSize();
+            if (tileWorld.x < MinScale || tileWorld.y < MinScale)
             {
                 return;
             }
 
-            EnsureWrapMargin();
-            var scale = backgroundRenderer.transform.lossyScale;
             var rad = scrollAngleDegrees * Mathf.Deg2Rad;
-            var localDx = Mathf.Cos(rad) * scrollSpeed * dt / Mathf.Max(MinScale, Mathf.Abs(scale.x));
-            var localDy = Mathf.Sin(rad) * scrollSpeed * dt / Mathf.Max(MinScale, Mathf.Abs(scale.y));
-            _scrollLocal.x = RepeatPositive(_scrollLocal.x + localDx, tileLocal.x);
-            _scrollLocal.y = RepeatPositive(_scrollLocal.y + localDy, tileLocal.y);
-            ApplyScrollTransform();
+            var worldDx = Mathf.Cos(rad) * scrollSpeed * dt;
+            var worldDy = Mathf.Sin(rad) * scrollSpeed * dt;
+            _scrollUv.x = RepeatPositive(_scrollUv.x + worldDx / tileWorld.x, 1f);
+            _scrollUv.y = RepeatPositive(_scrollUv.y + worldDy / tileWorld.y, 1f);
+            ApplyScrollVisuals();
         }
 
-        private void CaptureAuthoredIfNeeded()
-        {
-            if (_capturedAuthored || backgroundRenderer == null)
-            {
-                return;
-            }
-
-            _authoredLocalPos = backgroundRenderer.transform.localPosition;
-            _authoredWasTiled = backgroundRenderer.drawMode == SpriteDrawMode.Tiled;
-            _authoredTiledSize = backgroundRenderer.size;
-            _capturedAuthored = true;
-        }
-
-        private Vector2 GetTileLocalSize()
+        private Vector2 GetTileWorldSize()
         {
             if (backgroundRenderer == null || backgroundRenderer.sprite == null)
             {
@@ -272,75 +246,13 @@ namespace NineGrid.Flow.MainMenu
             }
 
             var size = backgroundRenderer.sprite.bounds.size;
-            return new Vector2(Mathf.Abs(size.x), Mathf.Abs(size.y));
+            var scale = backgroundRenderer.transform.lossyScale;
+            return new Vector2(
+                Mathf.Abs(size.x * scale.x),
+                Mathf.Abs(size.y * scale.y));
         }
 
-        private void EnsureWrapMargin()
-        {
-            if (backgroundRenderer == null || !_capturedAuthored || !_authoredWasTiled)
-            {
-                return;
-            }
-
-            var tile = GetTileLocalSize();
-            if (tile.x < MinScale || tile.y < MinScale)
-            {
-                return;
-            }
-
-            var need = new Vector2(
-                _authoredTiledSize.x + tile.x * WrapMarginTiles,
-                _authoredTiledSize.y + tile.y * WrapMarginTiles);
-            var current = backgroundRenderer.size;
-            if (current.x + 0.001f < need.x || current.y + 0.001f < need.y)
-            {
-                backgroundRenderer.drawMode = SpriteDrawMode.Tiled;
-                backgroundRenderer.size = need;
-            }
-        }
-
-        private void ApplyScrollTransform()
-        {
-            if (backgroundRenderer == null || !_capturedAuthored)
-            {
-                return;
-            }
-
-            var pos = _authoredLocalPos;
-            pos.x += _scrollLocal.x;
-            pos.y += _scrollLocal.y;
-            backgroundRenderer.transform.localPosition = pos;
-        }
-
-        private void RestoreAuthoredTransform()
-        {
-            if (!_capturedAuthored || backgroundRenderer == null)
-            {
-                return;
-            }
-
-            backgroundRenderer.transform.localPosition = _authoredLocalPos;
-            if (_authoredWasTiled)
-            {
-                backgroundRenderer.drawMode = SpriteDrawMode.Tiled;
-                backgroundRenderer.size = _authoredTiledSize;
-            }
-
-            backgroundRenderer.SetPropertyBlock(null);
-        }
-
-        private void PrepareRendererVisuals()
-        {
-            if (backgroundRenderer == null)
-            {
-                return;
-            }
-
-            backgroundRenderer.SetPropertyBlock(null);
-            DisableSpritePixelSnap();
-        }
-
-        private void DisableSpritePixelSnap()
+        private void ApplyScrollVisuals()
         {
             if (backgroundRenderer == null)
             {
@@ -350,7 +262,13 @@ namespace NineGrid.Flow.MainMenu
             _propertyBlock ??= new MaterialPropertyBlock();
             backgroundRenderer.GetPropertyBlock(_propertyBlock);
             _propertyBlock.SetFloat(PixelSnapId, 0f);
+            _propertyBlock.SetVector(ScrollUvId, new Vector4(_scrollUv.x, _scrollUv.y, 0f, 0f));
             backgroundRenderer.SetPropertyBlock(_propertyBlock);
+        }
+
+        private void PrepareRendererVisuals()
+        {
+            ApplyScrollVisuals();
         }
 
         private void TickRain(float dt)
