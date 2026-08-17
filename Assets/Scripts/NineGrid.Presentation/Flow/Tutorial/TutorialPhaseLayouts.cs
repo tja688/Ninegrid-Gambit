@@ -43,8 +43,8 @@ namespace NineGrid.Flow.Tutorial
                     {
                         new Placement(1, TutorialContentIds.Phase3HintA, CardKind.Trap),
                         new Placement(2, TutorialContentIds.Phase3HintB, CardKind.Trap),
-                        new Placement(6, TutorialContentIds.ActionDummyDefId, CardKind.Monster),
-                        new Placement(8, TutorialContentIds.MoveDummyDefId, CardKind.Monster),
+                        new Placement(6, TutorialContentIds.ActionDummyDefId, CardKind.Trap),
+                        new Placement(8, TutorialContentIds.MoveDummyDefId, CardKind.Trap),
                     };
                 case 4:
                     return new[]

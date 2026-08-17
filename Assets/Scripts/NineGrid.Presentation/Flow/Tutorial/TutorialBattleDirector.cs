@@ -480,7 +480,9 @@ namespace NineGrid.Flow.Tutorial
 
             mTrackedUids.Add(uid);
             var defId = card.DefId ?? string.Empty;
-            if (defId == TutorialContentIds.DummyTrapDefId && !IsDeadOrGone(uid))
+            if (defId == TutorialContentIds.DummyTrapDefId
+                && card.Zone.Value == ZoneId.Board
+                && !IsDeadOrGone(uid))
             {
                 mDummyUid = uid;
                 return;

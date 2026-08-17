@@ -27,7 +27,7 @@ namespace NineGrid.Cards.Presentation
         /// 卡级共享倒计时图标节点：怪物与机关模板都叫「行动计数」，
         /// 语义按卡级节奏源在行动计数 / 移动计数之间切换，故不进槽代号表。
         /// </summary>
-        private static readonly string[] RhythmCountIconNodeNames =
+        public static readonly string[] RhythmCountIconNodeNames =
         {
             "行动计数", "Action_Count_Icon", "ActionCountIcon",
         };

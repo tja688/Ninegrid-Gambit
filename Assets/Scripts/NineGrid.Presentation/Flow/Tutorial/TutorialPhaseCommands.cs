@@ -151,7 +151,9 @@ namespace NineGrid.Flow.Tutorial
 
         private static CardKind ResolveKind(string defId)
         {
-            if (defId == TutorialContentIds.DummyTrapDefId)
+            if (defId == TutorialContentIds.DummyTrapDefId
+                || defId == TutorialContentIds.ActionDummyDefId
+                || defId == TutorialContentIds.MoveDummyDefId)
             {
                 return CardKind.Trap;
             }
@@ -165,7 +167,7 @@ namespace NineGrid.Flow.Tutorial
         }
     }
 
-    /// <summary>阶段2：补牌到指定格（刚死假人那一格）。</summary>
+    /// <summary>阶段2：把抽牌堆顶的教学假人补到刚死那一格（真补牌，不另造第三张）。</summary>
     public sealed class TutorialRefillDummyToSlotCommand : AbstractCommand<CoreCommandResult>
     {
         private readonly int mSlot;
@@ -178,15 +180,86 @@ namespace NineGrid.Flow.Tutorial
         protected override CoreCommandResult OnExecute()
         {
             var pipeline = this.GetSystem<IActionPipelineSystem>();
-            pipeline.Enqueue(new SpawnCardAction(
+            pipeline.Enqueue(new TutorialDealDrawPileToSlotAction(
+                mSlot,
                 TutorialContentIds.DummyTrapDefId,
-                CardKind.Trap,
-                ZoneId.Board,
-                SlotId.Board(mSlot),
-                1,
-                cause: "tutorialPhase2Refill"));
+                "tutorialPhase2Refill"));
             pipeline.RunToCompletion();
+
+            var board = this.GetModel<BoardModel>();
+            if (board.IsEmpty(SlotId.Board(mSlot)))
+            {
+                pipeline.Enqueue(new SpawnCardAction(
+                    TutorialContentIds.DummyTrapDefId,
+                    CardKind.Trap,
+                    ZoneId.Board,
+                    SlotId.Board(mSlot),
+                    1,
+                    cause: "tutorialPhase2Refill"));
+                pipeline.RunToCompletion();
+            }
+
             return CoreCommandResult.Accept(1);
+        }
+    }
+
+    /// <summary>将抽牌堆顶指定 defId 放到指定格，供教学阶段2补牌。</summary>
+    public sealed class TutorialDealDrawPileToSlotAction : GameAction
+    {
+        private static readonly TriggerPoint[] sPostTriggers =
+        {
+            TriggerPoint.AfterAction,
+            TriggerPoint.OnDeal,
+            TriggerPoint.OnEnter
+        };
+
+        public TutorialDealDrawPileToSlotAction(int slot, string expectedDefId, string cause)
+        {
+            Slot = SlotId.Board(slot);
+            ExpectedDefId = expectedDefId ?? string.Empty;
+            Cause = cause ?? string.Empty;
+        }
+
+        public SlotId Slot { get; private set; }
+        public string ExpectedDefId { get; private set; }
+        public string Cause { get; private set; }
+        public override string ActionName { get { return "TutorialDealDrawPileToSlot"; } }
+
+        public override GameActionResult Apply(GameActionContext context)
+        {
+            var deck = context.GetModel<DeckModel>();
+            var board = context.GetModel<BoardModel>();
+            var registry = context.GetModel<CardRegistry>();
+            if (!Slot.IsBoardSlot || !board.IsEmpty(Slot) || !deck.TryPeekDrawPile(out var uid))
+            {
+                return GameActionResult.Empty;
+            }
+
+            CardInstance card;
+            if (!registry.TryGet(uid, out card)
+                || card == null
+                || (!string.IsNullOrEmpty(ExpectedDefId) && card.DefId != ExpectedDefId))
+            {
+                return GameActionResult.Empty;
+            }
+
+            deck.RemoveUid(uid);
+            board.PlaceCard(card, Slot);
+            return new GameActionResult()
+                .AddWithFaceAbsolutes(
+                    context,
+                    card,
+                    new CoreGameEvent(CoreEventType.CardDealt, context.ActionId, ActionName)
+                        .WithCard(uid)
+                        .WithSlots(SlotId.None, Slot)
+                        .WithSource(card.DefId, Cause));
+        }
+
+        public override IEnumerable<TriggerPoint> GetPostTriggerPoints(
+            GameActionContext context,
+            IReadOnlyList<CoreGameEvent> events)
+        {
+            return sPostTriggers;
         }
     }
 

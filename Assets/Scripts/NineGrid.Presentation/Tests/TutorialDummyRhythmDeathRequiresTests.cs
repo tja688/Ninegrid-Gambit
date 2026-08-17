@@ -59,7 +59,7 @@ namespace NineGrid.Presentation.Tests
             Assert.DoesNotThrow(
                 () => pipeline.Execute(new SpawnCardAction(
                     "monster.tutorial.action_dummy",
-                    CardKind.Monster,
+                    CardKind.Trap,
                     ZoneId.Board,
                     SlotId.Board(6),
                     1,
@@ -68,7 +68,7 @@ namespace NineGrid.Presentation.Tests
             Assert.DoesNotThrow(
                 () => pipeline.Execute(new SpawnCardAction(
                     "monster.tutorial.move_dummy",
-                    CardKind.Monster,
+                    CardKind.Trap,
                     ZoneId.Board,
                     SlotId.Board(8),
                     1,
@@ -85,6 +85,10 @@ namespace NineGrid.Presentation.Tests
             Assert.IsTrue(registry.TryGet(moveUid, out var moveCard) && moveCard != null);
             Assert.AreEqual("monster.tutorial.action_dummy", actionCard.DefId);
             Assert.AreEqual("monster.tutorial.move_dummy", moveCard.DefId);
+            Assert.AreEqual(CardKind.Trap, actionCard.Kind);
+            Assert.AreEqual(CardKind.Trap, moveCard.Kind);
+            Assert.AreEqual(CardRhythmSource.Action, actionCard.RhythmSource);
+            Assert.AreEqual(CardRhythmSource.Move, moveCard.RhythmSource);
         }
 
         private CardInstance CreateAvatarOnBoard(SlotId slot)

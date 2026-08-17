@@ -1,7 +1,7 @@
 {
     "schemaVersion": 2,
     "contentId": "monster.tutorial.move_dummy",
-    "kind": "Monster",
+    "kind": "Trap",
     "deckId": "deck.tutorial",
     "role": "",
     "displayName": "移动假人",
@@ -44,7 +44,7 @@
         {
             "id": "fx.tutorial.move_dummy",
             "templateId": "tpl.tutorial.dummy.rhythm_death",
-            "containerType": "MonsterSkill",
+            "containerType": "Trap",
             "argsJson": "{}"
         }
     ],

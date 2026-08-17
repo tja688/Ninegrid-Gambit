@@ -5,6 +5,7 @@ using NineGrid.Cards;
 using NineGrid.Cards.Anim;
 using NineGrid.Cards.Slots;
 using NineGrid.Content.CardPresentation;
+using NineGrid.Core;
 using TMPro;
 using UnityEngine;
 
@@ -70,6 +71,7 @@ namespace NineGrid.Cards.Presentation
             ApplyName(snapshot.DisplayName);
             ApplyStats(snapshot);
             ApplyRhythmIconMatrix(snapshot);
+            ApplyRhythmCountIcon(snapshot);
             ApplyBasicDescription(snapshot);
             ApplyFaceOrientation(snapshot.FaceUp);
             TryPlayIdleOrStatic(snapshot);
@@ -547,6 +549,60 @@ namespace NineGrid.Cards.Presentation
             }
         }
 
+        /// <summary>
+        /// 倒计时类型图标：机关模板默认移动计数，怪物模板默认行动计数。
+        /// 有活跃节奏时按 JSON <c>rhythmSource</c> 换成对应词条 Sprite。
+        /// </summary>
+        private void ApplyRhythmCountIcon(CardPresentationSnapshot snapshot)
+        {
+            if (snapshot == null || !snapshot.HasActiveRhythm)
+            {
+                return;
+            }
+
+            if (!CardFaceSlotNodeMap.TryFindRendererByNodeNames(
+                    transform,
+                    CardFaceIconGlossaryTargets.RhythmCountIconNodeNames,
+                    out var renderer)
+                || renderer == null)
+            {
+                return;
+            }
+
+            var term = CardRhythmRules.TokenAction;
+            var iconCode = "action";
+            if (!string.IsNullOrWhiteSpace(snapshot.DefId)
+                && CardPresentationConfigCatalog.TryGet(snapshot.DefId.Trim(), out var dto)
+                && dto != null
+                && CardRhythmRules.TryParse(dto.rhythmSource, out var source)
+                && source == CardRhythmSource.Move)
+            {
+                term = CardRhythmRules.TokenMove;
+                iconCode = "move";
+            }
+
+            var catalog = PeekDescriptionIconCatalog();
+            CardFaceDescriptionIconCatalogSO.Entry entry = null;
+            if (catalog != null)
+            {
+                catalog.TryGetByDisplayName(term, out entry);
+                if ((entry == null || entry.sprite == null)
+                    && catalog.TryGetByCode(iconCode, out var byCode))
+                {
+                    entry = byCode;
+                }
+            }
+
+            if (entry == null || entry.sprite == null)
+            {
+                return;
+            }
+
+            renderer.sprite = entry.sprite;
+            renderer.enabled = true;
+            renderer.gameObject.SetActive(true);
+        }
+
         private void SetNumericSlotVisible(string slotCode, bool visible)
         {
             if (!CardFaceSlotNodeMap.TryFindText(transform, slotCode, out var text) || text == null)
@@ -748,7 +804,7 @@ namespace NineGrid.Cards.Presentation
 
                 case CardPresentationKind.Trap:
                     SetNumeric(CardFaceSlotCodes.Hp, snapshot.Hp);
-                    if (snapshot.ShowActionCount)
+                    if (snapshot.HasActiveRhythm || snapshot.ShowActionCount)
                     {
                         SetNumeric(CardFaceSlotCodes.ActionCount, snapshot.ActionCount);
                         SetNumericSlotVisible(CardFaceSlotCodes.ActionCount, true);
