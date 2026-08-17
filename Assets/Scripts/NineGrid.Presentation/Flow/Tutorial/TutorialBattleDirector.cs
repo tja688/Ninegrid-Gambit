@@ -42,6 +42,7 @@ namespace NineGrid.Flow.Tutorial
         private int mPhase2RefillSlot;
         private int mPhase2PendingRotate;
         private bool mPhasePiecesSpawned;
+        private bool mMissingPiecesWarned;
 
         private int mDummyUid;
         private int mActionDummyUid;
@@ -179,6 +180,11 @@ namespace NineGrid.Flow.Tutorial
 
             if (mPhaseReady)
             {
+                if (!mPhasePiecesSpawned && !runtime.MainlineBusy.Value && sync.ActiveBatchId == 0)
+                {
+                    ScanPhase();
+                }
+
                 if (mPhase == 2 && mPhase2PendingRotate > 0 && !runtime.MainlineBusy.Value && sync.ActiveBatchId == 0)
                 {
                     EnqueuePhase2Rotate();
@@ -218,38 +224,44 @@ namespace NineGrid.Flow.Tutorial
 
         private int NextPhaseIfCompleted()
         {
+            if (!mPhasePiecesSpawned)
+            {
+                return 0;
+            }
+
             switch (mPhase)
             {
                 case 1:
-                    if (!mPhasePiecesSpawned)
-                    {
-                        return 0;
-                    }
-
                     return IsDeadOrGone(mDummyUid) ? 2 : 0;
                 case 2:
                     if (mPhase2KillCount < 1)
                     {
-                        if (IsDeadOrGone(mDummyUid))
+                        if (mDummyUid > 0 && IsDeadOrGone(mDummyUid))
                         {
                             mPhase2RefillSlot = ResolveLastDummyDeathSlot();
                             mPhase2KillCount = 1;
                             mPhase2PendingRotate = 1;
                             mLegality.Phase2KillCount = 1;
                             EnqueuePhase2Refill();
-                            return 0;
                         }
 
                         return 0;
                     }
 
-                    return IsDeadOrGone(mDummyUid) ? 3 : 0;
+                    return mDummyUid > 0 && IsDeadOrGone(mDummyUid) ? 3 : 0;
                 case 3:
-                    return IsDeadOrGone(mActionDummyUid) && IsDeadOrGone(mMoveDummyUid) ? 4 : 0;
+                    return mActionDummyUid > 0
+                           && mMoveDummyUid > 0
+                           && IsDeadOrGone(mActionDummyUid)
+                           && IsDeadOrGone(mMoveDummyUid)
+                        ? 4
+                        : 0;
                 case 4:
                     return ArePhase4ItemsPickedUp() ? 5 : 0;
                 case 5:
-                    return IsDeadOrGone(mSteelSlimeUid) ? TutorialDeckPlan.PhaseCount + 1 : 0;
+                    return mSteelSlimeUid > 0 && IsDeadOrGone(mSteelSlimeUid)
+                        ? TutorialDeckPlan.PhaseCount + 1
+                        : 0;
                 default:
                     return 0;
             }
@@ -332,6 +344,7 @@ namespace NineGrid.Flow.Tutorial
                     mPhase2PendingRotate = 0;
                     mLegality.Phase2KillCount = 0;
                     mPhasePiecesSpawned = false;
+                    mMissingPiecesWarned = false;
                     ScanPhase();
                     ReleasePlayerInput();
                 }));
@@ -348,6 +361,7 @@ namespace NineGrid.Flow.Tutorial
             mPhase2PendingRotate = 0;
             mLegality.Phase2KillCount = 0;
             mPhasePiecesSpawned = false;
+            mMissingPiecesWarned = false;
             SetAvatarRangePinned(mPhase == 2);
             Debug.Log($"[Tutorial] 换阶段 → 第{mPhase}阶段");
 
@@ -443,7 +457,18 @@ namespace NineGrid.Flow.Tutorial
             }
 
             mPhaseReady = true;
-            Debug.Log($"[Tutorial] 第{mPhase}阶段就位");
+            if (!mPhasePiecesSpawned)
+            {
+                if (!mMissingPiecesWarned)
+                {
+                    mMissingPiecesWarned = true;
+                    Debug.LogWarning($"[Tutorial] 第{mPhase}阶段关键卡尚未就位，等待生成。");
+                }
+            }
+            else
+            {
+                Debug.Log($"[Tutorial] 第{mPhase}阶段就位");
+            }
         }
 
         private void RegisterCard(CardRegistry registry, int uid)
