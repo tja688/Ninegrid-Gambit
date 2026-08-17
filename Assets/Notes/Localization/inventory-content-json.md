@@ -256,7 +256,7 @@ Streaming 镜像：`Assets/StreamingAssets/ContentVisual/`，与 Authoring **文
 | 类 | 样例 contentId | displayName | description 片段 |
 |----|---------------|-------------|-----------------|
 | Monster | `monster.orc_commander` | 潜水鳄 | `[[普通近战]]，[[刺客领袖]]，[[起来]]` |
-| Relic | `relic.golden_sword` | 机械巨弩 | `[attack]+{…}，[[普通攻击]]时[attack]-1` |
+| Relic | `relic.golden_sword` | 机械巨弩 | `[attack]+{…}，击杀怪物[attack]{…}` |
 | HelpCard | `help.healing_potion` | 恢复药水 | `恢复{…}点[HP]` |
 | Trap | `trap.bear_trap` | 捕熊陷阱 | `对下张[adjacent]的怪物/道具造成{…}点伤害` |
 | Skill | `skill.blessing` | 庇佑 | `下一次受到伤害时，该次伤害变为0` |

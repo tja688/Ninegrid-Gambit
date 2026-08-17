@@ -1274,10 +1274,10 @@
  {
   "id": "tpl.trap.bear_trap.fill",
   "state": "Implemented",
- "design_text": "[场上]正交邻格补牌时：真怪造成10点伤害并移除本卡；道具移除该卡并移除本卡；机关卡不触发（本卡保留）；机关效果移除卡后该格补牌不触发；开局铺场批与本卡同批被发出（登场批）不触发",
- "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
- "conditions_json": "[\"ActionSource\", \"NotInOpeningDeal\", \"SelfNotDealtThisBatch\", \"EventFilter:eventType=CardDealt\", \"EventFilterExcludeCause:eventType=CardDealt:cause=refillAfterTrapRemoval\", \"Adjacent:left=Self:right=EventCard\"]",
- "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnDeal\"},\"conditions\":[{\"atom\":\"ActionSource\",\"action\":\"FillEmptySlots\"},{\"atom\":\"NotInOpeningDeal\"},{\"atom\":\"SelfNotDealtThisBatch\"},{\"atom\":\"EventFilter\",\"eventType\":\"CardDealt\"},{\"atom\":\"EventFilterExcludeCause\",\"eventType\":\"CardDealt\",\"cause\":\"refillAfterTrapRemoval\"},{\"atom\":\"Adjacent\",\"left\":\"Self\",\"right\":\"EventCard\"}],\"target\":{\"atom\":\"EventCard\"},\"action\":{\"atom\":\"Conditional\",\"condition\":{\"atom\":\"EventFilter\",\"eventType\":\"CardDealt\",\"targetKind\":\"Monster\"},\"action\":{\"atom\":\"Sequence\",\"actions\":[{\"atom\":\"DealDamage\",\"amount\":\"{{amount}}\",\"actor\":\"Self\"},{\"atom\":\"RemoveCard\",\"target\":{\"atom\":\"Self\"},\"destination\":\"Removed\",\"reason\":\"{{reason}}\"}]},\"elseAction\":{\"atom\":\"Conditional\",\"condition\":{\"atom\":\"EventFilter\",\"eventType\":\"CardDealt\",\"targetKind\":\"HelpCard\"},\"action\":{\"atom\":\"Sequence\",\"actions\":[{\"atom\":\"RemoveCard\",\"destination\":\"Removed\",\"reason\":\"{{reason}}\"},{\"atom\":\"RemoveCard\",\"target\":{\"atom\":\"Self\"},\"destination\":\"Removed\",\"reason\":\"{{reason}}\"}]}}}}"
+  "design_text": "[场上]正交邻格补牌时：真怪造成10点伤害并移除本卡；道具移除该卡并移除本卡；机关卡不触发（本卡保留）；机关效果移除卡后该格补牌不触发；开局铺场批与本卡同批被发出（登场批）不触发",
+  "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[\"ActionSource\", \"NotInOpeningDeal\", \"SelfNotDealtThisBatch\", \"EventFilter:eventType=CardDealt\", \"EventFilterExcludeCause:eventType=CardDealt:cause=refillAfterTrapRemoval\", \"Adjacent:left=Self:right=EventCard\"]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnDeal\"},\"conditions\":[{\"atom\":\"ActionSource\",\"action\":\"FillEmptySlots\"},{\"atom\":\"NotInOpeningDeal\"},{\"atom\":\"SelfNotDealtThisBatch\"},{\"atom\":\"EventFilter\",\"eventType\":\"CardDealt\"},{\"atom\":\"EventFilterExcludeCause\",\"eventType\":\"CardDealt\",\"cause\":\"refillAfterTrapRemoval\"},{\"atom\":\"Adjacent\",\"left\":\"Self\",\"right\":\"EventCard\"}],\"target\":{\"atom\":\"EventCard\"},\"action\":{\"atom\":\"Conditional\",\"condition\":{\"atom\":\"EventFilter\",\"eventType\":\"CardDealt\",\"targetKind\":\"Monster\"},\"action\":{\"atom\":\"Sequence\",\"actions\":[{\"atom\":\"DealDamage\",\"amount\":\"{{amount}}\",\"actor\":\"Self\"},{\"atom\":\"RemoveCard\",\"target\":{\"atom\":\"Self\"},\"destination\":\"Removed\",\"reason\":\"{{reason}}\"}]},\"elseAction\":{\"atom\":\"Conditional\",\"condition\":{\"atom\":\"EventFilter\",\"eventType\":\"CardDealt\",\"targetKind\":\"HelpCard\"},\"action\":{\"atom\":\"Sequence\",\"actions\":[{\"atom\":\"RemoveCard\",\"destination\":\"Removed\",\"reason\":\"{{reason}}\"},{\"atom\":\"RemoveCard\",\"target\":{\"atom\":\"Self\"},\"destination\":\"Removed\",\"reason\":\"{{reason}}\"}]}}}}"
  },
  {
   "id": "tpl.trap.flame.move",
@@ -1670,7 +1670,7 @@
   "requires_json": "[\"NoOwnerEntity\"]",
   "conditions_json": "[]",
   "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnCumulative\",\"metric\":\"monsterRemoved\",\"threshold\":\"{{threshold}}\",\"counterKey\":\"relic.terror_mask.remove\",\"projectKey\":\"{{projectKey}}\",\"scope\":\"battle\"},\"target\":{\"atom\":\"FilteredCards\",\"kind\":\"Monster\",\"zone\":\"Board\",\"excludeBoss\":true,\"random\":true,\"count\":\"{{count}}\"},\"action\":{\"atom\":\"RemoveCard\",\"destination\":\"Removed\",\"reason\":\"{{reason}}\"}}"
-},
+ },
  {
   "id": "tpl.relic.junk_cycler.use",
   "state": "Implemented",
@@ -1728,20 +1728,20 @@
   "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnActivate\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"ModifyRelicRunContribution\",\"stat\":\"Attack\",\"value\":\"{{value}}\"}}"
  },
  {
-  "id": "tpl.relic.golden_sword.battle",
-  "state": "Implemented",
-  "design_text": "[战斗时] 本遗物提供的攻击-1（最低为0）",
-  "requires_json": "[\"NoOwnerEntity\"]",
-  "conditions_json": "[]",
-  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnBattle\",\"sourceAction\":\"{{sourceAction}}\",\"targetKind\":\"Monster\",\"maxActionDepth\":0},\"conditions\":[{\"atom\":\"EventFilterActorIsPlayer\",\"eventType\":\"DamageDealt\",\"targetKind\":\"Monster\"}],\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"ModifyRelicRunContribution\",\"stat\":\"Attack\",\"delta\":\"{{delta}}\",\"floor\":0}}"
- },
- {
   "id": "tpl.relic.golden_sword.kill",
   "state": "Implemented",
-  "design_text": "[击杀怪物时] 本遗物提供的攻击+1",
+  "design_text": "[击杀怪物时] 本遗物提供的攻击{{delta}}（最低为{{floor}}）",
   "requires_json": "[\"NoOwnerEntity\"]",
   "conditions_json": "[]",
-  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnKill\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"ModifyRelicRunContribution\",\"stat\":\"Attack\",\"delta\":\"{{delta}}\"}}"
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnKill\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"ModifyRelicRunContribution\",\"stat\":\"Attack\",\"delta\":\"{{delta}}\",\"floor\":\"{{floor}}\"}}"
+ },
+ {
+  "id": "tpl.relic.golden_sword.node_end",
+  "state": "Implemented",
+  "design_text": "[每关卡结束时] 重置本遗物攻击贡献为{{value}}",
+  "requires_json": "[\"NoOwnerEntity\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnNodeEnd\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"ModifyRelicRunContribution\",\"stat\":\"Attack\",\"value\":\"{{value}}\"}}"
  },
  {
   "id": "tpl.relic.foam_armor.arm",
@@ -1966,8 +1966,7 @@
   "requires_json": "[\"NoOwnerEntity\"]",
   "conditions_json": "[]",
   "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnNodeEnd\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"ModifyGold\",\"delta\":\"{{delta}}\",\"reason\":\"{{reason}}\"}}"
- }
- ,
+ },
  {
   "id": "tpl.tutorial.dummy.rhythm_death",
   "state": "Implemented",

@@ -39,6 +39,12 @@ unity command eval "return NineGrid.Presentation.Editor.DevPlayerBuild.QueueDeve
 unity command eval "return NineGrid.Presentation.Editor.ReleasePlayerBuild.QueueReleaseWindows64(NineGrid.Presentation.Editor.ReleasePlayerBuild.GetDesktopGame2OutputPath(), true);" --project-path "<repo>" --format json
 ```
 
+桌面纯净存档正式版 `NineGrid/Build/Release Windows64 Player (Desktop/game3 - Clean Save)`（自动清空存档与教学标记）：
+
+```bash
+unity command eval "NineGrid.Presentation.Editor.ReleasePlayerBuild.ClearAllSaveDataAndTutorialProfile(); NineGrid.Presentation.Editor.ReleasePlayerBuild.CleanDesktopGame3OutputFolder(); return NineGrid.Presentation.Editor.ReleasePlayerBuild.QueueReleaseWindows64(NineGrid.Presentation.Editor.ReleasePlayerBuild.GetDesktopGame3OutputPath(), true);" --project-path "<repo>" --format json
+```
+
 ## 参考
 
 - `Library/PackageCache/com.unity.pipeline@*/Documentation~/index.md`

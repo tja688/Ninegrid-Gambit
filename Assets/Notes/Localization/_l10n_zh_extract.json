@@ -1242,7 +1242,7 @@
    "kind": "Relic",
    "file": "relic_golden_sword.json",
    "displayName": "机械巨弩",
-   "description": "[attack]+{relic.golden_sword.init.value}，[[普通攻击]]时[attack]-1，击杀时[attack]+1",
+   "description": "[attack]+{relic.golden_sword.init.value}，击杀怪物[attack]{relic.golden_sword.kill.delta}（最低{relic.golden_sword.kill.floor}攻），每场战斗结束后重置",
    "faceIntro": "需要战果给齿轮上油"
   },
   "relic.heavy_armor": {

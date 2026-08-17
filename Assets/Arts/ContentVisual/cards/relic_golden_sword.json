@@ -6,8 +6,10 @@
     "role": "Attack",
     "displayName": "机械巨弩",
     "designSlotName": "",
-    "description": "[attack]+{relic.golden_sword.init.value}，[[普通攻击]]时[attack]-1，击杀时[attack]+1",
-    "faceIntro": "需要战果给齿轮上油",    "attackPattern": "",
+    "description": "[attack]+{relic.golden_sword.init.value}，击杀怪物[attack]{relic.golden_sword.kill.delta}（最低{relic.golden_sword.kill.floor}），战斗结束后重置",
+    "faceIntro": "哪怕是钢铁也需要休息",
+    "extraGlossaryTerms": [],
+    "attackPattern": "",
     "rhythmSource": "",
     "rhythmPeriod": 0,
     "gold": 0,
@@ -85,16 +87,16 @@
             "argsJson": "{\"value\":8}"
         },
         {
-            "id": "relic.golden_sword.battle",
-            "templateId": "tpl.relic.golden_sword.battle",
-            "containerType": "Relic",
-            "argsJson": "{\"sourceAction\":\"DealDamage\",\"delta\":-1}"
-        },
-        {
             "id": "relic.golden_sword.kill",
             "templateId": "tpl.relic.golden_sword.kill",
             "containerType": "Relic",
-            "argsJson": "{\"delta\":1}"
+            "argsJson": "{\"delta\":-1,\"floor\":1}"
+        },
+        {
+            "id": "relic.golden_sword.node_end",
+            "templateId": "tpl.relic.golden_sword.node_end",
+            "containerType": "Relic",
+            "argsJson": "{\"value\":8}"
         }
     ],
     "effectIds": [],

@@ -17,6 +17,7 @@ namespace NineGrid.Presentation.Editor
     {
         private const string StatusFile = "Temp/ninegrid_release_player_build_status.json";
         private const string DesktopReleasePlayerFolderName = "game2";
+        private const string DesktopCleanSaveReleasePlayerFolderName = "game3";
         private const string DesktopReleasePlayerExeName = "Ninegrid Gambit.exe";
 
         private static bool sPending;
@@ -49,6 +50,27 @@ namespace NineGrid.Presentation.Editor
             Debug.Log("[ReleasePlayerBuild] " + result);
         }
 
+        [MenuItem("NineGrid/Build/Release Windows64 Player (Desktop/game3 - Clean Save)")]
+        public static void BuildReleaseWindows64ToDesktopGame3FromMenu()
+        {
+            ClearAllSaveDataAndTutorialProfile();
+            CleanDesktopGame3OutputFolder();
+            var result = QueueReleaseWindows64(
+                GetDesktopGame3OutputPath(),
+                cleanCache: true);
+            Debug.Log("[ReleasePlayerBuild] [game3 Clean Build] " + result);
+        }
+
+        [MenuItem("NineGrid/Save/清空本机存档与教学标记 (Reset All Saves & Tutorial)")]
+        public static void ClearAllSaveDataFromMenu()
+        {
+            ClearAllSaveDataAndTutorialProfile();
+            EditorUtility.DisplayDialog(
+                "存档与教学标记已清空",
+                "本机 persistentDataPath 存档目录（NineGridSaves）、教学完成标记及 PlayerPrefs 已全部清空。\n下次开始游戏将重新进入新手教程流程。",
+                "确定");
+        }
+
         /// <summary>
         /// 桌面 Release 包输出路径：<c>Desktop/game2/Ninegrid Gambit.exe</c>（非 Development，无 Debug Console / F9 画面实验室 / F12 作弊面板）。
         /// </summary>
@@ -56,6 +78,84 @@ namespace NineGrid.Presentation.Editor
         {
             var desktop = Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory);
             return Path.Combine(desktop, DesktopReleasePlayerFolderName, DesktopReleasePlayerExeName);
+        }
+
+        /// <summary>
+        /// 桌面纯净存档 Release 包输出路径：<c>Desktop/game3/Ninegrid Gambit.exe</c>（非 Development，打包前已重置本机存档与教学标记）。
+        /// </summary>
+        public static string GetDesktopGame3OutputPath()
+        {
+            var desktop = Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory);
+            return Path.Combine(desktop, DesktopCleanSaveReleasePlayerFolderName, DesktopReleasePlayerExeName);
+        }
+
+        /// <summary>
+        /// 清理旧的 Desktop/game3 输出目录，确保无残留旧包文件。
+        /// </summary>
+        public static void CleanDesktopGame3OutputFolder()
+        {
+            try
+            {
+                var desktop = Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory);
+                var game3Dir = Path.Combine(desktop, DesktopCleanSaveReleasePlayerFolderName);
+                if (Directory.Exists(game3Dir))
+                {
+                    Directory.Delete(game3Dir, true);
+                    Debug.Log("[ReleasePlayerBuild] 已清理旧的桌面 game3 输出目录：" + game3Dir);
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.LogWarning("[ReleasePlayerBuild] 清理旧桌面 game3 目录时遇到异常（可忽略）：" + ex.Message);
+            }
+        }
+
+        /// <summary>
+        /// 清空本机 persistentDataPath 下所有 NineGridSaves 存档、教学完成标记以及 PlayerPrefs。
+        /// </summary>
+        public static void ClearAllSaveDataAndTutorialProfile()
+        {
+            try
+            {
+                var deletedCount = 0;
+                if (Directory.Exists(Application.persistentDataPath))
+                {
+                    var savesDir = Path.Combine(Application.persistentDataPath, "NineGridSaves");
+                    if (Directory.Exists(savesDir))
+                    {
+                        var files = Directory.GetFiles(savesDir, "*.*", SearchOption.AllDirectories);
+                        deletedCount += files.Length;
+                        Directory.Delete(savesDir, true);
+                    }
+
+                    var es3Files = Directory.GetFiles(Application.persistentDataPath, "*.es3", SearchOption.AllDirectories);
+                    foreach (var file in es3Files)
+                    {
+                        try
+                        {
+                            File.Delete(file);
+                            deletedCount++;
+                        }
+                        catch
+                        {
+                        }
+                    }
+                }
+
+                if (Application.isPlaying)
+                {
+                    NineGrid.Flow.Tutorial.TutorialProgressStore.ResetCompleted();
+                }
+
+                PlayerPrefs.DeleteAll();
+                PlayerPrefs.Save();
+
+                Debug.Log($"[ReleasePlayerBuild] 本机存档与教学标记已全部清空（清理了 {deletedCount} 个存档文件，已重置 PlayerPrefs 与 TutorialProfile）。");
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError("[ReleasePlayerBuild] 清空存档与教学标记时发生异常：" + ex.Message);
+            }
         }
 
         /// <summary>
