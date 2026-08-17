@@ -5,9 +5,13 @@
     "deckId": "deck.transition",
     "role": "",
     "displayName": "红蛙",
+    "designSlotName": "红蛙",
     "description": "",
     "faceIntro": "根据常规的游戏逻辑，绿色蛙才有毒，红蛙也是这样想的",
+    "extraGlossaryTerms": [],
     "attackPattern": "全向近战",
+    "rhythmSource": "行动计数",
+    "rhythmPeriod": 5,
     "gold": 5,
     "stats": {
         "hp": 18,
@@ -17,7 +21,7 @@
         "recovery": 0
     },
     "sprites": {
-        "mainIcon": "Assets/Resources/ContentArt/Multiple/pixel_art_card_pack 1.png",
+        "mainIcon": "Assets/Resources/ContentArt/Multiple/pixel_art_card_pack 1.png#pixel_art_card_pack 1_91",
         "faceBackground": "",
         "cardFrame": "",
         "banner": "",
@@ -27,16 +31,16 @@
     },
     "mainVisual": {
         "offsetX": 0.0,
-        "offsetY": -0.05999999865889549,
-        "uniformScale": 1.0
+        "offsetY": -0.10000000149011612,
+        "uniformScale": 2.0
     },
     "animations": {
         "defaultFps": 8.0,
         "slots": [
             {
                 "id": "idle",
-                "sourceType": "folder",
-                "path": "Assets/Resources/ContentArt/Png/像素怪物合集/sprites/17frog_idle_01",
+                "sourceType": "none",
+                "path": "",
                 "offsetX": 0.0,
                 "offsetY": 0.0
             },
@@ -77,20 +81,18 @@
     "effectIds": [],
     "skillIds": [],
     "level": "普通",
+    "sequence": 0,
     "isElite": false,
     "isBoss": false,
     "isReserve": true,
     "containerType": "",
     "deckKind": "",
     "monsterDefIds": [],
+    "usableOutsideBattle": false,
     "weight": 0,
-    "goldDelta": 0,
-    "maxHpDelta": 0,
-    "healToFull": false,
     "rewardPoolId": "",
     "shopOfferCount": 0,
-    "sequence": 0,
-    "designSlotName": "红蛙",
-    "rhythmSource": "行动计数",
-    "rhythmPeriod": 5
+    "openingInjects": [],
+    "iconPrefab": "",
+    "boardSlot": 0
 }
