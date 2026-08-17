@@ -227,6 +227,11 @@ namespace NineGrid.Flow.Presentation
                 return;
             }
 
+            if (boardSlot >= SlotId.MinBoardIndex && boardSlot <= SlotId.MaxBoardIndex)
+            {
+                mArchitecture.GetSystem<IBoardStabilizationSystem>().PriorityRefillSlot = SlotId.Board(boardSlot);
+            }
+
             mStabilization.Append(
                 timeline,
                 mArchitecture,

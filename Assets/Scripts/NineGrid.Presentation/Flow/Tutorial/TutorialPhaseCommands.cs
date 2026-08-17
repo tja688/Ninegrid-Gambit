@@ -185,20 +185,6 @@ namespace NineGrid.Flow.Tutorial
                 TutorialContentIds.DummyTrapDefId,
                 "tutorialPhase2Refill"));
             pipeline.RunToCompletion();
-
-            var board = this.GetModel<BoardModel>();
-            if (board.IsEmpty(SlotId.Board(mSlot)))
-            {
-                pipeline.Enqueue(new SpawnCardAction(
-                    TutorialContentIds.DummyTrapDefId,
-                    CardKind.Trap,
-                    ZoneId.Board,
-                    SlotId.Board(mSlot),
-                    1,
-                    cause: "tutorialPhase2Refill"));
-                pipeline.RunToCompletion();
-            }
-
             return CoreCommandResult.Accept(1);
         }
     }

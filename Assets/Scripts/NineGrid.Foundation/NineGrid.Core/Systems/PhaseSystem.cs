@@ -1617,7 +1617,7 @@ namespace NineGrid.Core.Systems
             foreach (var uid in board.BoardCardUids())
             {
                 CardInstance card;
-                if (!registry.TryGet(uid, out card) || card.Kind != CardKind.Monster)
+                if (!registry.TryGet(uid, out card) || !CardCombatRules.IsBoardCombatTarget(card.Kind))
                 {
                     continue;
                 }
@@ -1710,7 +1710,7 @@ namespace NineGrid.Core.Systems
             var pipeline = this.GetSystem<IActionPipelineSystem>();
             CardInstance monster;
             if (!registry.TryGet(monsterUid, out monster)
-                || monster.Kind != CardKind.Monster
+                || !CardCombatRules.IsBoardCombatTarget(monster.Kind)
                 || monster.Zone.Value != ZoneId.Board
                 || !IsCardAlive(monster))
             {
@@ -1815,7 +1815,7 @@ namespace NineGrid.Core.Systems
             IActionPipelineSystem pipeline,
             CardInstance monster)
         {
-            if (pipeline == null || monster == null || !CardRhythmRules.HasActiveRhythm(monster))
+            if (pipeline == null || monster == null || monster.Zone.Value != ZoneId.Board || !CardRhythmRules.HasActiveRhythm(monster))
             {
                 return 0;
             }

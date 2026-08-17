@@ -494,6 +494,13 @@ namespace NineGrid.Core
         /// <summary>机关效果（滚石等）移除卡造成的空位补牌事件 cause；捕熊陷阱等以该 cause 排除响应。</summary>
         public const string TrapVacatedRefillCause = "refillAfterTrapRemoval";
 
+        public FillEmptySlotsAction(SlotId prioritySlot = default)
+        {
+            PrioritySlot = prioritySlot;
+        }
+
+        public SlotId PrioritySlot { get; private set; }
+
         public override string ActionName { get { return "FillEmptySlots"; } }
 
         public static IReadOnlyList<SlotId> FillOrder { get { return sFillOrder; } }
@@ -507,6 +514,22 @@ namespace NineGrid.Core
             var result = new GameActionResult();
             var filled = 0;
             IReadOnlyList<SlotId> fillOrder = sFillOrder;
+
+            if (PrioritySlot.IsBoardSlot)
+            {
+                var list = new List<SlotId>(sFillOrder.Length + 1) { PrioritySlot };
+                for (var i = 0; i < sFillOrder.Length; i++)
+                {
+                    if (sFillOrder[i] != PrioritySlot)
+                    {
+                        list.Add(sFillOrder[i]);
+                    }
+                }
+
+                fillOrder = list;
+            }
+
+            var isSuspended = context.GetSystem<IBoardStabilizationSystem>()?.IsRefillSuspended ?? false;
 
             if (run.Phase.Value == GamePhase.DealOpeningCards && board.AvatarUid.Value > 0)
             {
@@ -562,6 +585,12 @@ namespace NineGrid.Core
                     }
 
                     result.AddWithFaceAbsolutes(context, card, dealt);
+
+                    if (isSuspended && PrioritySlot.IsBoardSlot && slot == PrioritySlot)
+                    {
+                        pileEmpty = true;
+                        break;
+                    }
                 }
 
                 if (pileEmpty)

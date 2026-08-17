@@ -38,9 +38,6 @@ namespace NineGrid.Flow.Tutorial
         private bool mSuppressDefeatEnd;
         private bool mAvatarDefeatPending;
 
-        private int mPhase2KillCount;
-        private int mPhase2RefillSlot;
-        private int mPhase2PendingRotate;
         private bool mPhasePiecesSpawned;
         private bool mMissingPiecesWarned;
 
@@ -89,6 +86,13 @@ namespace NineGrid.Flow.Tutorial
             TutorialBattleSessionHook.Clear();
             mIntentIntake?.SetLegalityOverride(null);
             TutorialBattleGlowHost.DestroyIfExists();
+            var stab = mArchitecture.GetSystem<IBoardStabilizationSystem>();
+            if (stab != null)
+            {
+                stab.IsRefillSuspended = false;
+                stab.PriorityRefillSlot = SlotId.None;
+            }
+
             if (mCts == null)
             {
                 return;
@@ -123,6 +127,13 @@ namespace NineGrid.Flow.Tutorial
         private void EnqueueInitialPhaseSetup()
         {
             CardEntityLifecycleHook.DeckOrNull()?.EnsureInGameIfStandby();
+            var stab = mArchitecture.GetSystem<IBoardStabilizationSystem>();
+            if (stab != null)
+            {
+                stab.IsRefillSuspended = true;
+                stab.PriorityRefillSlot = SlotId.None;
+            }
+
             mTransitionQueued = true;
             HoldPlayerInput();
             var runtime = mArchitecture.GetSystem<IPresentationRuntimeSystem>();
@@ -185,12 +196,6 @@ namespace NineGrid.Flow.Tutorial
                     ScanPhase();
                 }
 
-                if (mPhase == 2 && mPhase2PendingRotate > 0 && !runtime.MainlineBusy.Value && sync.ActiveBatchId == 0)
-                {
-                    EnqueuePhase2Rotate();
-                    return;
-                }
-
                 var nextPhase = NextPhaseIfCompleted();
                 if (nextPhase > 0)
                 {
@@ -234,21 +239,7 @@ namespace NineGrid.Flow.Tutorial
                 case 1:
                     return IsDeadOrGone(mDummyUid) ? 2 : 0;
                 case 2:
-                    if (mPhase2KillCount < 1)
-                    {
-                        if (mDummyUid > 0 && IsDeadOrGone(mDummyUid))
-                        {
-                            mPhase2RefillSlot = ResolveLastDummyDeathSlot();
-                            mPhase2KillCount = 1;
-                            mPhase2PendingRotate = 1;
-                            mLegality.Phase2KillCount = 1;
-                            EnqueuePhase2Refill();
-                        }
-
-                        return 0;
-                    }
-
-                    return mDummyUid > 0 && IsDeadOrGone(mDummyUid) ? 3 : 0;
+                    return IsPhase2Complete() ? 3 : 0;
                 case 3:
                     return mActionDummyUid > 0
                            && mMoveDummyUid > 0
@@ -267,62 +258,46 @@ namespace NineGrid.Flow.Tutorial
             }
         }
 
-        private void EnqueuePhase2Refill()
+        private bool IsPhase2Complete()
         {
-            CardEntityLifecycleHook.DeckOrNull()?.EnsureInGameIfStandby();
-            if (mPhase2RefillSlot <= 0)
+            var board = mArchitecture.GetModel<BoardModel>();
+            var deck = mArchitecture.GetModel<DeckModel>();
+            var registry = mArchitecture.GetModel<CardRegistry>();
+            if (board == null || deck == null || registry == null)
             {
-                mPhase2RefillSlot = 9;
+                return false;
             }
 
-            mTransitionQueued = true;
-            HoldPlayerInput();
-            var runtime = mArchitecture.GetSystem<IPresentationRuntimeSystem>();
-            runtime?.MutateMainline(timeline =>
+            if (deck.DrawPileUids.Count > 0)
             {
-                var sync = mArchitecture.GetSystem<IPresentationSyncSystem>();
-                var gate = PresentationSyncBatchGate.FromSync(
-                    sync,
-                    () => ResolveAndProject(() =>
-                        mDispatcher.Send(new TutorialRefillDummyToSlotCommand(mPhase2RefillSlot))),
-                    slice: "TutorialPhase2Refill");
-                timeline.Enqueue(new ResolveBatchStep(gate));
-                timeline.Enqueue(new PresentStep(gate, mBoardChannel, channelName: "TutorialPhase2Refill"));
-                timeline.Enqueue(new TutorialCallbackStep(() =>
-                {
-                    mTransitionQueued = false;
-                    ScanPhase();
-                }));
-            });
-        }
+                return false;
+            }
 
-        private void EnqueuePhase2Rotate()
-        {
-            mPhase2PendingRotate = 0;
-            mTransitionQueued = true;
-            HoldPlayerInput();
-            var runtime = mArchitecture.GetSystem<IPresentationRuntimeSystem>();
-            runtime?.MutateMainline(timeline =>
+            for (var i = SlotId.MinBoardIndex; i <= SlotId.MaxBoardIndex; i++)
             {
-                var sync = mArchitecture.GetSystem<IPresentationSyncSystem>();
-                var gate = PresentationSyncBatchGate.FromSync(
-                    sync,
-                    () => ResolveAndProject(() => mDispatcher.Send(new TutorialForceRotateCommand())),
-                    slice: "TutorialPhase2Rotate");
-                timeline.Enqueue(new ResolveBatchStep(gate));
-                timeline.Enqueue(new PresentStep(gate, mBoardChannel, channelName: "TutorialPhase2Rotate"));
-                timeline.Enqueue(new TutorialCallbackStep(() =>
+                var uid = board.GetCardUid(SlotId.Board(i));
+                if (uid > 0 && registry.TryGet(uid, out var card) && card != null)
                 {
-                    mTransitionQueued = false;
-                    ScanPhase();
-                    ReleasePlayerInput();
-                }));
-            });
+                    if (card.DefId == TutorialContentIds.DummyTrapDefId && !IsDeadOrGone(uid))
+                    {
+                        return false;
+                    }
+                }
+            }
+
+            return true;
         }
 
         private void EnqueuePhaseRestart()
         {
             CardEntityLifecycleHook.DeckOrNull()?.EnsureInGameIfStandby();
+            var stab = mArchitecture.GetSystem<IBoardStabilizationSystem>();
+            if (stab != null)
+            {
+                stab.IsRefillSuspended = mPhase != 5;
+                stab.PriorityRefillSlot = SlotId.None;
+            }
+
             mRestartQueued = true;
             HoldPlayerInput();
             var clearItems = mPhase >= 4;
@@ -340,9 +315,6 @@ namespace NineGrid.Flow.Tutorial
                 timeline.Enqueue(new TutorialCallbackStep(() =>
                 {
                     mRestartQueued = false;
-                    mPhase2KillCount = 0;
-                    mPhase2PendingRotate = 0;
-                    mLegality.Phase2KillCount = 0;
                     mPhasePiecesSpawned = false;
                     mMissingPiecesWarned = false;
                     ScanPhase();
@@ -354,12 +326,16 @@ namespace NineGrid.Flow.Tutorial
         private void EnqueuePhaseTransition(int nextPhase)
         {
             CardEntityLifecycleHook.DeckOrNull()?.EnsureInGameIfStandby();
+            var stab = mArchitecture.GetSystem<IBoardStabilizationSystem>();
+            if (stab != null)
+            {
+                stab.IsRefillSuspended = nextPhase != 5;
+                stab.PriorityRefillSlot = SlotId.None;
+            }
+
             mTransitionQueued = true;
             mPhase = nextPhase;
             mPhaseReady = false;
-            mPhase2KillCount = 0;
-            mPhase2PendingRotate = 0;
-            mLegality.Phase2KillCount = 0;
             mPhasePiecesSpawned = false;
             mMissingPiecesWarned = false;
             SetAvatarRangePinned(mPhase == 2);
@@ -539,20 +515,6 @@ namespace NineGrid.Flow.Tutorial
             }
 
             return false;
-        }
-
-        private int ResolveLastDummyDeathSlot()
-        {
-            var board = mArchitecture.GetModel<BoardModel>();
-            for (var i = SlotId.MinBoardIndex; i <= SlotId.MaxBoardIndex; i++)
-            {
-                if (board.IsEmpty(SlotId.Board(i)))
-                {
-                    return i;
-                }
-            }
-
-            return 9;
         }
 
         private bool IsDeadOrGone(int uid)

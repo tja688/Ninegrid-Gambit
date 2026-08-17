@@ -422,7 +422,7 @@ namespace NineGrid.Core.Systems
             foreach (var pair in Catalog.Cards)
             {
                 var card = pair.Value;
-                if (card.Kind != CardKind.Monster)
+                if (card.Kind != CardKind.Monster && card.Kind != CardKind.Trap)
                 {
                     continue;
                 }

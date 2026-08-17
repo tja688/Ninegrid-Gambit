@@ -7,6 +7,8 @@ namespace NineGrid.Core.Systems
     public interface IBoardStabilizationSystem : ISystem
     {
         bool NeedsRefill { get; }
+        bool IsRefillSuspended { get; set; }
+        SlotId PriorityRefillSlot { get; set; }
         int PendingEmptySlotCount { get; }
         CoreCommandResult ResolveNextSlice();
         int ResolveUntilStable(int maxSlices = 64);
@@ -24,10 +26,29 @@ namespace NineGrid.Core.Systems
         private readonly HashSet<int> mDeferredDrawUids = new HashSet<int>();
         private readonly List<int> mDeferredTopUids = new List<int>();
 
+        public bool IsRefillSuspended { get; set; }
+        public SlotId PriorityRefillSlot { get; set; }
+
         public bool NeedsRefill
         {
             get
             {
+                if (IsRefillSuspended)
+                {
+                    if (PriorityRefillSlot.IsBoardSlot)
+                    {
+                        var boardModel = this.GetModel<BoardModel>();
+                        var deckModel = this.GetModel<DeckModel>();
+                        return boardModel != null
+                            && deckModel != null
+                            && deckModel.DrawPileUids.Count > 0
+                            && PriorityRefillSlot != boardModel.AvatarSlot.Value
+                            && boardModel.IsEmpty(PriorityRefillSlot);
+                    }
+
+                    return false;
+                }
+
                 var phase = this.GetSystem<IPhaseSystem>();
                 if (phase == null || phase.CurrentPhase != GamePhase.InteractionLoop)
                 {
@@ -74,6 +95,8 @@ namespace NineGrid.Core.Systems
 
         protected override void OnInit()
         {
+            IsRefillSuspended = false;
+            PriorityRefillSlot = SlotId.None;
             mDeferredDrawUids.Clear();
             mDeferredTopUids.Clear();
         }
@@ -85,6 +108,9 @@ namespace NineGrid.Core.Systems
                 Complete();
                 return CoreCommandResult.Accept(0);
             }
+
+            var prioritySlot = PriorityRefillSlot;
+            PriorityRefillSlot = SlotId.None;
 
             var deck = this.GetModel<DeckModel>();
             PruneDeferredUids(deck.DrawPileUids);
@@ -100,7 +126,7 @@ namespace NineGrid.Core.Systems
             int resolved;
             try
             {
-                resolved = this.GetSystem<IActionPipelineSystem>().Execute(new FillEmptySlotsAction());
+                resolved = this.GetSystem<IActionPipelineSystem>().Execute(new FillEmptySlotsAction(prioritySlot));
             }
             finally
             {
@@ -150,6 +176,7 @@ namespace NineGrid.Core.Systems
 
         public void Complete()
         {
+            PriorityRefillSlot = SlotId.None;
             RestoreDeferredTopOrder();
             mDeferredDrawUids.Clear();
             mDeferredTopUids.Clear();

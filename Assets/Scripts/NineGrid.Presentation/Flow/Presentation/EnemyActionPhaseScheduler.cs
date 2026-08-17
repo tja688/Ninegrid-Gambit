@@ -319,7 +319,11 @@ namespace NineGrid.Flow.Presentation
             return dispatch;
         }
 
-        private static bool HasParticipatingEnemy(IArchitecture architecture)
+        /// <summary>
+        /// 是否与 Core <see cref="PhaseSystem.RegisterEnemyActionPhaseInternal"/> 同谓词：
+        /// 盘面战斗目标（Monster 或 Trap）+ 正面 + 活跃节奏。纯机关场（教学阶段3）也须开齐射。
+        /// </summary>
+        internal static bool HasParticipatingEnemy(IArchitecture architecture)
         {
             var board = architecture.GetModel<BoardModel>();
             var registry = architecture.GetModel<CardRegistry>();
@@ -333,7 +337,8 @@ namespace NineGrid.Flow.Presentation
                 CardInstance card;
                 if (!registry.TryGet(uid, out card)
                     || card == null
-                    || card.Kind != CardKind.Monster)
+                    || !CardCombatRules.IsBoardCombatTarget(card.Kind)
+                    || !card.FaceUp)
                 {
                     continue;
                 }
