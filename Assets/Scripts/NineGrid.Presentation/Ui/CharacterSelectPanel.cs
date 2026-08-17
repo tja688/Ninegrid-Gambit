@@ -385,7 +385,7 @@ namespace NineGrid.Presentation.Ui
             if (!slot.Unlocked)
             {
                 InteractionAudioCues.Pulse(
-                    InteractionAudioCues.MainMenuReject,
+                    InteractionAudioCues.UiReject,
                     "CharacterSelectPanel.OnCharacterClicked",
                     "character_select.locked");
                 FlashLockedDescription(slot);
@@ -410,7 +410,7 @@ namespace NineGrid.Presentation.Ui
             if (slot == null || !slot.Unlocked)
             {
                 InteractionAudioCues.Pulse(
-                    InteractionAudioCues.MainMenuReject,
+                    InteractionAudioCues.UiReject,
                     "CharacterSelectPanel.OnStartClicked",
                     "character_select.start_locked");
                 return;

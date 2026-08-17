@@ -78,7 +78,8 @@ namespace NineGrid.Flow.BoardBriefTip
             ReleaseClaims();
         }
 
-        private void ReleaseClaims()
+        /// <summary>立刻注销格位认领（换货 / 撤场前调用，勿依赖 Destroy 推迟 OnDisable）。</summary>
+        public void ReleaseClaims()
         {
             var field = GroundFieldGeometryHook.FieldOrNull();
             if (field != null)

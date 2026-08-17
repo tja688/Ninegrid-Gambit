@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using Cysharp.Threading.Tasks;
@@ -95,6 +95,7 @@ namespace NineGrid.Flow.ShopBoard
                     continue;
                 }
 
+                InRoomOfferClaimLifecycle.ReleaseNow(card);
                 if (cards != null)
                 {
                     cards.Release(card, "ShopBoard.Despawn");
@@ -108,6 +109,7 @@ namespace NineGrid.Flow.ShopBoard
             {
                 if (mShelfOptionGos[i] != null)
                 {
+                    InRoomOfferClaimLifecycle.ReleaseNow(mShelfOptionGos[i]);
                     UnityEngine.Object.Destroy(mShelfOptionGos[i]);
                 }
             }
@@ -120,6 +122,7 @@ namespace NineGrid.Flow.ShopBoard
             {
                 if (mExtras[i] != null)
                 {
+                    InRoomOfferClaimLifecycle.ReleaseNow(mExtras[i]);
                     UnityEngine.Object.Destroy(mExtras[i]);
                 }
             }
@@ -394,6 +397,27 @@ namespace NineGrid.Flow.ShopBoard
                             : 0;
                     }
                 }
+            }
+
+            if (replan)
+            {
+                InRoomOfferClaimLifecycle.ReleaseAllShelfClaims(oldCards, oldOptionGos);
+            }
+            else
+            {
+                for (var i = 0; i < newOptions.Count; i++)
+                {
+                    var entry = newOptions[i];
+                    if (entry == null || string.IsNullOrEmpty(entry.DefId))
+                    {
+                        continue;
+                    }
+
+                    InRoomShelfAnimation.TryMatchOldIndex(oldDefIds, keptOld, entry.DefId, i);
+                }
+
+                InRoomOfferClaimLifecycle.ReleaseUnkeptShelfClaims(oldCards, oldOptionGos, keptOld);
+                keptOld = new bool[oldCards.Count];
             }
 
             var newCards = new List<ManagedCard>(newOptions.Count);
@@ -962,8 +986,7 @@ namespace NineGrid.Flow.ShopBoard
                 return;
             }
 
-            var tip = BoardBriefTipPresenter.EnsureExists();
-            tip.ShowNotice(message ?? string.Empty);
+            NineGrid.Flow.InfoNotice.InfoNoticePresenter.Show(message ?? string.Empty);
         }
 
         private void StartAvatarWatch()

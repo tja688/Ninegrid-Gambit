@@ -820,7 +820,7 @@ namespace NineGrid.Core.Systems
             }
 
             var run = this.GetModel<RunModel>();
-            if (run.Room.Value == RoomKind.Boss)
+            if (run.Room.Value == RoomKind.Boss && EnemyPoolContainsOpeningEliteOrBoss(options))
             {
                 return;
             }
@@ -833,6 +833,30 @@ namespace NineGrid.Core.Systems
             }
 
             options.AddEnemyCard(draft);
+        }
+
+        /// <summary>
+        /// 层主房 ADR-0026 前提：开局敌池已编入层主。若 Boss 房却缺层主/精英，
+        /// 仍编入离开机关，避免「无门可出」软锁（如壳层节点错位）。
+        /// </summary>
+        private static bool EnemyPoolContainsOpeningEliteOrBoss(NodeDeckOptions options)
+        {
+            if (options == null)
+            {
+                return false;
+            }
+
+            var enemyCards = options.EnemyCards;
+            for (var i = 0; i < enemyCards.Count; i++)
+            {
+                var draft = enemyCards[i];
+                if (draft != null && (draft.IsElite || draft.IsBoss))
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         /// <summary>

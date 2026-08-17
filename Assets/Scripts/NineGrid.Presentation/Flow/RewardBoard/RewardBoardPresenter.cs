@@ -87,6 +87,7 @@ namespace NineGrid.Flow.RewardBoard
                     continue;
                 }
 
+                InRoomOfferClaimLifecycle.ReleaseNow(card);
                 if (cards != null)
                 {
                     cards.Release(card, "RewardBoard.Despawn");
@@ -100,6 +101,7 @@ namespace NineGrid.Flow.RewardBoard
             {
                 if (mExtras[i] != null)
                 {
+                    InRoomOfferClaimLifecycle.ReleaseNow(mExtras[i]);
                     UnityEngine.Object.Destroy(mExtras[i]);
                 }
             }
@@ -241,6 +243,20 @@ namespace NineGrid.Flow.RewardBoard
             var oldCards = new List<ManagedCard>(mShelfCards);
             var oldDefIds = new List<string>(mShelfDefIds);
             var keptOld = new bool[oldCards.Count];
+
+            for (var i = 0; i < newOptions.Count; i++)
+            {
+                var entry = newOptions[i];
+                if (entry == null || string.IsNullOrEmpty(entry.DefId))
+                {
+                    continue;
+                }
+
+                InRoomShelfAnimation.TryMatchOldIndex(oldDefIds, keptOld, entry.DefId, i);
+            }
+
+            InRoomOfferClaimLifecycle.ReleaseUnkeptShelfClaims(oldCards, null, keptOld);
+            keptOld = new bool[oldCards.Count];
 
             var newCards = new List<ManagedCard>(newOptions.Count);
             var newDefIds = new List<string>(newOptions.Count);

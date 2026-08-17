@@ -1375,8 +1375,8 @@
             "note": "主菜单操作被忙碌门禁拒绝",
             "module": "MainMenu",
             "enabled": true,
-            "clipKey": "audio/SFX/失败铃声 00增强",
-            "volumeDb": -10,
+            "clipKey": "audio/SFX/复古单声",
+            "volumeDb": -6,
             "startOffsetSeconds": 0,
             "bindingDelaySeconds": 0,
             "minimumIntervalSeconds": 0.15,
@@ -1386,7 +1386,7 @@
             "selectorRoomId": "",
             "selectorItemDefId": "",
             "selectorContentId": "",
-            "authoringStatus": "aiDraft"
+            "authoringStatus": "humanConfirmed"
         },
         {
             "cueId": "ui.action.hover",
@@ -1555,8 +1555,8 @@
             "note": "通用界面操作被拒绝",
             "module": "UI",
             "enabled": true,
-            "clipKey": "audio/SFX/失败铃声 00增强",
-            "volumeDb": -10,
+            "clipKey": "audio/SFX/复古单声",
+            "volumeDb": -6,
             "startOffsetSeconds": 0,
             "bindingDelaySeconds": 0,
             "minimumIntervalSeconds": 0.15,
@@ -1566,7 +1566,7 @@
             "selectorRoomId": "",
             "selectorItemDefId": "",
             "selectorContentId": "",
-            "authoringStatus": "aiDraft"
+            "authoringStatus": "humanConfirmed"
         },
         {
             "cueId": "card.use.chest_reject",

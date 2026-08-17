@@ -251,11 +251,31 @@ namespace NineGrid.Presentation.Systems
         }
 
         /// <summary>
-        /// 作弊跨层：把壳层全局节点序号对齐到指定楼层/层内节点（与 <see cref="RewardSystem.BuildNodeDeckOptions"/> 全局序一致）。
+        /// 作弊跨层：把壳层全局节点序号设为「目标节点的前一格」，
+        /// 与 <see cref="SetNodeProgressBeforeRestoredNode"/> 同口径，使节点循环
+        /// 首次 <see cref="IncrementNodeIndex"/> 后落在
+        /// <c>(floor-1)*NodesPerFloor + ToDisplayNode(nodeIndex)</c>。
         /// </summary>
         internal void SyncShellNodeIndexForCheat(int floor, int nodeIndex)
         {
-            mNodeIndex = (floor - 1) * RunModel.NodesPerFloor + nodeIndex + 1;
+            var targetGlobal = (floor - 1) * RunModel.NodesPerFloor + MapNodeProgression.ToDisplayNode(nodeIndex);
+            mNodeIndex = targetGlobal > 0 ? targetGlobal - 1 : 0;
+        }
+
+        /// <summary>
+        /// 正式 Run 发牌内容节点：跟 Core <see cref="RunModel"/> 楼层/层内节点，
+        /// 不跟壳层 <see cref="NodeIndex"/>（作弊跨层等会令二者漂移）。
+        /// </summary>
+        internal static int ResolveFormalBattleContentNodeIndex(RunModel run)
+        {
+            if (run == null)
+            {
+                return 1;
+            }
+
+            var floor = run.Floor != null ? run.Floor.Value : 1;
+            var nodeIndex = run.NodeIndex != null ? run.NodeIndex.Value : 0;
+            return (floor - 1) * RunModel.NodesPerFloor + MapNodeProgression.ToDisplayNode(nodeIndex);
         }
 
         /// <summary>

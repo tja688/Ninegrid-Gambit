@@ -479,9 +479,14 @@ namespace NineGrid.Flow
                 monsterDeckId = pinnedDeckId;
                 contentNodeIndex = QuickTestDeckCatalog.GetDefaultNodeIndexForDeckId(catalog, pinnedDeckId);
             }
-            else
+            else if (mShell.IsQuickTestMode)
             {
                 contentNodeIndex = mShell.ResolveBattleContentNodeIndex();
+            }
+            else
+            {
+                contentNodeIndex = GameFlowShellSystem.ResolveFormalBattleContentNodeIndex(
+                    arch.GetModel<RunModel>());
             }
 
             var options = arch.GetSystem<IRewardSystem>().BuildNodeDeckOptions(contentNodeIndex, monsterDeckId);

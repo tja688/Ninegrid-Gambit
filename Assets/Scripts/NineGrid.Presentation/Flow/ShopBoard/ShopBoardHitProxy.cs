@@ -58,7 +58,10 @@ namespace NineGrid.Flow.ShopBoard
             }
 
             var claimant = new SlotClaimant(this, mTip, ActivateHit, hoverEnter, hoverExit);
-            field.TryClaimSlot(boardSlot, claimant);
+            if (!field.TryClaimSlot(boardSlot, claimant))
+            {
+                return;
+            }
         }
 
         private void Awake()
@@ -71,7 +74,13 @@ namespace NineGrid.Flow.ShopBoard
             ReleaseClaims();
         }
 
-        private void ReleaseClaims()
+        private void OnDestroy()
+        {
+            ReleaseClaims();
+        }
+
+        /// <summary>立刻注销格位认领（换货 / 撤场前调用，勿依赖 Destroy 推迟 OnDisable）。</summary>
+        public void ReleaseClaims()
         {
             var field = GroundFieldGeometryHook.FieldOrNull();
             if (field != null)

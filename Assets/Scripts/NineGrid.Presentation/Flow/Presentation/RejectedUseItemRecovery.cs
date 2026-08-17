@@ -42,6 +42,7 @@ namespace NineGrid.Flow.Presentation
             if (!string.IsNullOrEmpty(rejectReason))
             {
                 BoardBriefTipPresenter.EnsureExists().ShowNotice(rejectReason);
+                InfoNotice.InfoNoticePresenter.Show(rejectReason);
             }
 
             var cueId = chestRelicFull

@@ -565,6 +565,9 @@ namespace NineGrid.Cards
             if (HandCount >= layoutSettings.maxSlots)
             {
                 FlowFieldTraceSink.PickupGate?.Invoke(card.Uid, "HandFull", false, null);
+                NineGrid.Flow.InfoNotice.InfoNoticePresenter.Show(
+                    NineGrid.Core.Localization.L10n.Tr("notice.hand_full", "已达到手牌上限"),
+                    NineGrid.Flow.Presentation.InteractionAudioCues.UiReject);
                 return false;
             }
 
@@ -630,6 +633,12 @@ namespace NineGrid.Cards
             if (!pickup.Accepted)
             {
                 FlowFieldTraceSink.PickupGate?.Invoke(card.Uid, "CoreReject", false, pickup.Reason);
+                if (!string.IsNullOrEmpty(pickup.Reason))
+                {
+                    NineGrid.Flow.InfoNotice.InfoNoticePresenter.Show(
+                        pickup.Reason,
+                        NineGrid.Flow.Presentation.InteractionAudioCues.UiReject);
+                }
                 return false;
             }
 

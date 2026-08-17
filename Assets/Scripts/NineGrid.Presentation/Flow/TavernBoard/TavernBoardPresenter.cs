@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using Cysharp.Threading.Tasks;
@@ -100,6 +100,7 @@ namespace NineGrid.Flow.TavernBoard
                     continue;
                 }
 
+                InRoomOfferClaimLifecycle.ReleaseNow(card);
                 if (cards != null)
                 {
                     cards.Release(card, "TavernBoard.Despawn");
@@ -113,6 +114,7 @@ namespace NineGrid.Flow.TavernBoard
             {
                 if (mServiceGos[i] != null)
                 {
+                    InRoomOfferClaimLifecycle.ReleaseNow(mServiceGos[i]);
                     UnityEngine.Object.Destroy(mServiceGos[i]);
                 }
             }
@@ -127,6 +129,7 @@ namespace NineGrid.Flow.TavernBoard
             {
                 if (mExtras[i] != null)
                 {
+                    InRoomOfferClaimLifecycle.ReleaseNow(mExtras[i]);
                     UnityEngine.Object.Destroy(mExtras[i]);
                 }
             }
@@ -445,6 +448,34 @@ namespace NineGrid.Flow.TavernBoard
             var oldDefIds = new List<string>(mServiceDefIds);
             var keptOld = new bool[oldGos.Count];
 
+            if (replan)
+            {
+                InRoomOfferClaimLifecycle.ReleaseAllShelfClaims(null, oldGos);
+            }
+            else
+            {
+                for (var i = 0; i < newOptions.Count; i++)
+                {
+                    var entry = newOptions[i];
+                    if (entry == null || string.IsNullOrEmpty(entry.DefId))
+                    {
+                        continue;
+                    }
+
+                    InRoomShelfAnimation.TryMatchOldIndex(oldDefIds, keptOld, entry.DefId, i);
+                }
+
+                for (var j = 0; j < keptOld.Length; j++)
+                {
+                    if (!keptOld[j] && j < oldGos.Count)
+                    {
+                        InRoomOfferClaimLifecycle.ReleaseNow(oldGos[j]);
+                    }
+                }
+
+                keptOld = new bool[oldGos.Count];
+            }
+
             var newGos = new List<GameObject>(newOptions.Count);
             var newDefIds = new List<string>(newOptions.Count);
             var animTasks = new List<UniTask>(newOptions.Count);
@@ -529,6 +560,20 @@ namespace NineGrid.Flow.TavernBoard
             var oldCards = new List<ManagedCard>(mCandidateCards);
             var oldDefIds = new List<string>(mCandidateDefIds);
             var keptOld = new bool[oldCards.Count];
+
+            for (var i = 0; i < newOptions.Count; i++)
+            {
+                var entry = newOptions[i];
+                if (entry == null || string.IsNullOrEmpty(entry.DefId))
+                {
+                    continue;
+                }
+
+                InRoomShelfAnimation.TryMatchOldIndex(oldDefIds, keptOld, entry.DefId, i);
+            }
+
+            InRoomOfferClaimLifecycle.ReleaseUnkeptShelfClaims(oldCards, null, keptOld);
+            keptOld = new bool[oldCards.Count];
 
             var newCards = new List<ManagedCard>(newOptions.Count);
             var newDefIds = new List<string>(newOptions.Count);
@@ -1115,6 +1160,7 @@ namespace NineGrid.Flow.TavernBoard
             {
                 if (mServiceGos[i] != null)
                 {
+                    InRoomOfferClaimLifecycle.ReleaseNow(mServiceGos[i]);
                     UnityEngine.Object.Destroy(mServiceGos[i]);
                 }
             }
@@ -1124,6 +1170,7 @@ namespace NineGrid.Flow.TavernBoard
 
             if (mRefreshGo != null)
             {
+                InRoomOfferClaimLifecycle.ReleaseNow(mRefreshGo);
                 UnityEngine.Object.Destroy(mRefreshGo);
                 mExtras.Remove(mRefreshGo);
                 mRefreshGo = null;
@@ -1254,8 +1301,7 @@ namespace NineGrid.Flow.TavernBoard
                 return;
             }
 
-            var tip = BoardBriefTipPresenter.EnsureExists();
-            tip.ShowNotice(message ?? string.Empty);
+            NineGrid.Flow.InfoNotice.InfoNoticePresenter.Show(message ?? string.Empty);
         }
 
         private void StartAvatarWatch()

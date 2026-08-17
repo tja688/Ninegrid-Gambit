@@ -15,8 +15,8 @@ using UnityEngine.SceneManagement;
 namespace NineGrid.Flow.MainMenu
 {
     /// <summary>
-    /// 菜单背景 / MainBG 动态底：Tiled 精灵通过 _ScrollUv 平移采样（不改 Transform，图案不变），
-    /// GPU Repeat 采样保证 wrap 无跳变；主菜单再投放正式接线怪物 / 道具 / 场地卡主图标。
+    /// 菜单背景 / MainBG 动态底：Tiled 精灵滑动；按贴图 wrap 自动选 UV 偏移（Repeat，无跳变）
+    /// 或 Transform 漂移（Clamp 等）。主菜单再投放正式接线怪物 / 道具 / 场地卡主图标。
     /// 图标摆放复用战斗信息展示的 <see cref="BattleInfoPreviewIconPlayer"/>（卡面 mainVisual）。
     /// 挂在 <c>Panels/MainBG</c> 与 <c>MainPanel/菜单背景</c>；选中该物体即可在 Inspector 调参。
     /// </summary>
@@ -34,8 +34,17 @@ namespace NineGrid.Flow.MainMenu
         // Keep decorative rain below the normal main-menu UI orders (-6/-3/-2).
         private const int IconSortingBase = -20;
         private const float MinScale = 0.0001f;
+        // Extra tiled coverage for transform-drift mode so edges stay covered while offset grows.
+        private const float WrapMarginTiles = 2f;
         private static readonly int PixelSnapId = Shader.PropertyToID("_PixelSnap");
         private static readonly int ScrollUvId = Shader.PropertyToID("_ScrollUv");
+
+        private enum BackdropScrollMode
+        {
+            Auto = 0,
+            UvOffset = 1,
+            TransformDrift = 2,
+        }
 
         [Header("场景绑定")]
         [SerializeField] private SpriteRenderer backgroundRenderer;
@@ -44,7 +53,9 @@ namespace NineGrid.Flow.MainMenu
 
         [Header("背景滑动")]
         [SerializeField] private bool scrollEnabled = true;
-        [Tooltip("世界单位/秒；沿下方角度匀速平移 Tiled 图案，按一格 UV wrap（GPU Repeat，无跳变）。物体可见时一直滚。")]
+        [Tooltip("Auto：贴图 Repeat → UV 偏移（无缝）；Clamp 等 → Transform 漂移。也可强制指定。")]
+        [SerializeField] private BackdropScrollMode scrollMode = BackdropScrollMode.Auto;
+        [Tooltip("世界单位/秒；沿下方角度匀速平移 Tiled 图案。物体可见时一直滚。")]
         [SerializeField] private float scrollSpeed = 1.1f;
         [Tooltip("0=向右，45=右上，-45=右下。")]
         [SerializeField] private float scrollAngleDegrees = -45f;
@@ -81,6 +92,13 @@ namespace NineGrid.Flow.MainMenu
         private MaterialPropertyBlock _propertyBlock;
         private bool _raining;
         private Vector2 _scrollUv;
+        private bool _capturedAuthored;
+        private Vector3 _authoredLocalPos;
+        private Vector2 _authoredTiledSize;
+        private bool _authoredWasTiled;
+        private Vector2 _scrollLocal;
+        private BackdropScrollMode _resolvedScrollMode;
+        private bool _loggedScrollMode;
         private float _spawnCooldown;
         private string _lastDefId;
         private int _sortCursor;
@@ -143,12 +161,16 @@ namespace NineGrid.Flow.MainMenu
         private void OnEnable()
         {
             EnsureBindings();
+            CaptureAuthoredIfNeeded();
+            _resolvedScrollMode = ResolveActiveScrollMode();
+            LogScrollModeOnce();
             PrepareRendererVisuals();
         }
 
         private void OnDestroy()
         {
             StopRain();
+            RestoreAuthoredTransform();
             if (ReferenceEquals(sInstance, this))
             {
                 sInstance = null;
@@ -224,6 +246,20 @@ namespace NineGrid.Flow.MainMenu
                 return;
             }
 
+            _resolvedScrollMode = ResolveActiveScrollMode();
+            switch (_resolvedScrollMode)
+            {
+                case BackdropScrollMode.UvOffset:
+                    TickScrollUv(dt);
+                    break;
+                case BackdropScrollMode.TransformDrift:
+                    TickScrollTransform(dt);
+                    break;
+            }
+        }
+
+        private void TickScrollUv(float dt)
+        {
             var tileWorld = GetTileWorldSize();
             if (tileWorld.x < MinScale || tileWorld.y < MinScale)
             {
@@ -236,6 +272,133 @@ namespace NineGrid.Flow.MainMenu
             _scrollUv.x = RepeatPositive(_scrollUv.x + worldDx / tileWorld.x, 1f);
             _scrollUv.y = RepeatPositive(_scrollUv.y + worldDy / tileWorld.y, 1f);
             ApplyScrollVisuals();
+        }
+
+        private void TickScrollTransform(float dt)
+        {
+            CaptureAuthoredIfNeeded();
+            var tileLocal = GetTileLocalSize();
+            if (tileLocal.x < MinScale || tileLocal.y < MinScale)
+            {
+                return;
+            }
+
+            EnsureWrapMargin();
+            var scale = backgroundRenderer.transform.lossyScale;
+            var rad = scrollAngleDegrees * Mathf.Deg2Rad;
+            var localDx = Mathf.Cos(rad) * scrollSpeed * dt / Mathf.Max(MinScale, Mathf.Abs(scale.x));
+            var localDy = Mathf.Sin(rad) * scrollSpeed * dt / Mathf.Max(MinScale, Mathf.Abs(scale.y));
+            _scrollLocal.x += localDx;
+            _scrollLocal.y += localDy;
+            ApplyScrollVisuals();
+        }
+
+        private BackdropScrollMode ResolveActiveScrollMode()
+        {
+            if (scrollMode != BackdropScrollMode.Auto)
+            {
+                return scrollMode;
+            }
+
+            return SupportsUvScrollSampling() ? BackdropScrollMode.UvOffset : BackdropScrollMode.TransformDrift;
+        }
+
+        private bool SupportsUvScrollSampling()
+        {
+            var sprite = backgroundRenderer != null ? backgroundRenderer.sprite : null;
+            var tex = sprite != null ? sprite.texture : null;
+            if (tex == null)
+            {
+                return false;
+            }
+
+            return tex.wrapModeU == TextureWrapMode.Repeat && tex.wrapModeV == TextureWrapMode.Repeat;
+        }
+
+        private void LogScrollModeOnce()
+        {
+            if (_loggedScrollMode || backgroundRenderer == null)
+            {
+                return;
+            }
+
+            _loggedScrollMode = true;
+            if (scrollMode != BackdropScrollMode.Auto)
+            {
+                return;
+            }
+
+            if (_resolvedScrollMode == BackdropScrollMode.TransformDrift)
+            {
+                var sprite = backgroundRenderer.sprite;
+                Debug.LogWarning(
+                    $"[MainMenuBackdrop] {name} 贴图 wrap 非 Repeat，已回退 Transform 漂移。"
+                    + $" 若需无缝 UV 滚动，请在导入设置把 {sprite?.name ?? "sprite"} 的 Wrap Mode 改为 Repeat。",
+                    this);
+            }
+        }
+
+        private void CaptureAuthoredIfNeeded()
+        {
+            if (_capturedAuthored || backgroundRenderer == null)
+            {
+                return;
+            }
+
+            _authoredLocalPos = backgroundRenderer.transform.localPosition;
+            _authoredWasTiled = backgroundRenderer.drawMode == SpriteDrawMode.Tiled;
+            _authoredTiledSize = backgroundRenderer.size;
+            _capturedAuthored = true;
+        }
+
+        private Vector2 GetTileLocalSize()
+        {
+            if (backgroundRenderer == null || backgroundRenderer.sprite == null)
+            {
+                return Vector2.zero;
+            }
+
+            var size = backgroundRenderer.sprite.bounds.size;
+            return new Vector2(Mathf.Abs(size.x), Mathf.Abs(size.y));
+        }
+
+        private void EnsureWrapMargin()
+        {
+            if (backgroundRenderer == null || !_capturedAuthored || !_authoredWasTiled)
+            {
+                return;
+            }
+
+            var tile = GetTileLocalSize();
+            if (tile.x < MinScale || tile.y < MinScale)
+            {
+                return;
+            }
+
+            var need = new Vector2(
+                _authoredTiledSize.x + tile.x * WrapMarginTiles,
+                _authoredTiledSize.y + tile.y * WrapMarginTiles);
+            var current = backgroundRenderer.size;
+            if (current.x + 0.001f < need.x || current.y + 0.001f < need.y)
+            {
+                backgroundRenderer.drawMode = SpriteDrawMode.Tiled;
+                backgroundRenderer.size = need;
+            }
+        }
+
+        private void RestoreAuthoredTransform()
+        {
+            if (!_capturedAuthored || backgroundRenderer == null)
+            {
+                return;
+            }
+
+            backgroundRenderer.transform.localPosition = _authoredLocalPos;
+            if (_authoredWasTiled)
+            {
+                backgroundRenderer.drawMode = SpriteDrawMode.Tiled;
+                backgroundRenderer.size = _authoredTiledSize;
+            }
         }
 
         private Vector2 GetTileWorldSize()
@@ -259,10 +422,33 @@ namespace NineGrid.Flow.MainMenu
                 return;
             }
 
+            CaptureAuthoredIfNeeded();
+            _resolvedScrollMode = ResolveActiveScrollMode();
+
             _propertyBlock ??= new MaterialPropertyBlock();
             backgroundRenderer.GetPropertyBlock(_propertyBlock);
             _propertyBlock.SetFloat(PixelSnapId, 0f);
-            _propertyBlock.SetVector(ScrollUvId, new Vector4(_scrollUv.x, _scrollUv.y, 0f, 0f));
+
+            if (_resolvedScrollMode == BackdropScrollMode.UvOffset)
+            {
+                _propertyBlock.SetVector(ScrollUvId, new Vector4(_scrollUv.x, _scrollUv.y, 0f, 0f));
+                if (_capturedAuthored)
+                {
+                    backgroundRenderer.transform.localPosition = _authoredLocalPos;
+                }
+            }
+            else
+            {
+                _propertyBlock.SetVector(ScrollUvId, Vector4.zero);
+                if (_capturedAuthored)
+                {
+                    var pos = _authoredLocalPos;
+                    pos.x += _scrollLocal.x;
+                    pos.y += _scrollLocal.y;
+                    backgroundRenderer.transform.localPosition = pos;
+                }
+            }
+
             backgroundRenderer.SetPropertyBlock(_propertyBlock);
         }
 
