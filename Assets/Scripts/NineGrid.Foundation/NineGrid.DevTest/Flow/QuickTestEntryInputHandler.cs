@@ -135,15 +135,18 @@ namespace NineGrid.DevTest.Flow
 
         private void ConfirmAndClose()
         {
-            if (_digitBuffer.Length > 0 && int.TryParse(_digitBuffer, out var code))
+            var code = 0;
+            if (_digitBuffer.Length > 0 && int.TryParse(_digitBuffer, out var parsedCode))
             {
-                var arch = NineGridArchitecture.Interface ?? NineGridArchitecture.Current;
-                var started = arch != null
-                    && arch.SendCommand(new TryBeginQuickTestFromPickerCodeCommand(code));
-                if (started)
-                {
-                    Debug.Log("[QuickTestEntry] 选关开始 code=" + code);
-                }
+                code = parsedCode;
+            }
+
+            var arch = NineGridArchitecture.Interface ?? NineGridArchitecture.Current;
+            var started = arch != null
+                && arch.SendCommand(new TryBeginQuickTestFromPickerCodeCommand(code));
+            if (started)
+            {
+                Debug.Log("[QuickTestEntry] 快速测试开始 code=" + code);
             }
 
             loopManager.HideQuickTestPickerNotice();

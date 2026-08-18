@@ -12,7 +12,7 @@ namespace NineGrid.Flow
     /// </summary>
     public static class QuickTestDeckCatalog
     {
-        public const int MaxPickerCode = 9;
+        public const int MaxPickerCode = 0;
 
         public sealed class ChannelPreset
         {
@@ -38,57 +38,14 @@ namespace NineGrid.Flow
         }
 
         /// <summary>
-        /// 通道预算——同通道多技能按格号升序一怪一技分发（见 <c>BattleSessionCheat</c>）；
-        /// 储备技 <c>purge_followers</c> 不占码。
-        /// <c>\0</c> 流程测试（正式开局内容 + Sequential 节点序 + QuickTest 作弊）；
-        /// <c>\1</c> 移除向；<c>\2</c> 互动向；<c>\3</c> 翻面向（含休养）；
-        /// <c>\4</c>–<c>\5</c> 批次1 六技打包（一通道三技、一怪一技）；
-        /// <c>\6</c>–<c>\9</c> 批次2 六技（提速/远程武器/死亡召唤/死亡之主/神圣决斗/潜伏近战）。
-        /// 机关注入：<c>\1</c>–<c>\9</c> 九张 Trap 各一（与 skillIds 并存；见机关卡落地计划 §3.2）。
-        /// 列表顺序 = 挂载顺序（格号小→大）。
+        /// \0 快速测试通道（正式开局内容 + 正常流程 + HP99/金币999，局内 0~9 触发快捷测试）。
         /// </summary>
         private static readonly ChannelPreset[] sPresets =
         {
             new ChannelPreset(
-                "流程测试",
+                "快速测试",
                 Array.Empty<string>(),
                 nodeOrder: QuickTestNodeOrderMode.Sequential),
-            new ChannelPreset(
-                "移除向",
-                new[] { "skill.sacrifice", "skill.absorb", "skill.offer_fire" },
-                trapContentIds: new[] { "trap.rolling_stone" }),
-            new ChannelPreset(
-                "互动向",
-                new[] { "skill.call_melee6", "skill.link_prep" },
-                trapContentIds: new[] { "trap.attack_totem" }),
-            new ChannelPreset(
-                "翻面向",
-                new[] { "skill.leap_kill", "skill.steal", "skill.recuperate" },
-                trapContentIds: new[] { "trap.armor_totem" }),
-            new ChannelPreset(
-                "批次1·打伤联动",
-                new[] { "skill.flame_boiling", "skill.rise_up", "skill.evade" },
-                trapContentIds: new[] { "trap.recovery_totem" }),
-            new ChannelPreset(
-                "批次1·成长移动",
-                new[] { "skill.battle_hardened", "skill.link_tactics", "skill.delivery" },
-                trapContentIds: new[] { "trap.spike" }),
-            new ChannelPreset(
-                "批次2·交战提速",
-                new[] { "skill.speed_up", "skill.ranged_weapon", "skill.holy_duel" },
-                trapContentIds: new[] { "trap.bear_trap" }),
-            new ChannelPreset(
-                "批次2·死亡潜伏",
-                new[] { "skill.death_summon", "skill.lord_of_death", "skill.ambush_melee" },
-                trapContentIds: new[] { "trap.healing_spring" }),
-            new ChannelPreset(
-                "刺客领袖",
-                new[] { "skill.assassin_leader" },
-                trapContentIds: new[] { "trap.flame" }),
-            new ChannelPreset(
-                "天涯若比邻",
-                new[] { "skill.world_as_neighbors", "skill.link_tactics" },
-                trapContentIds: new[] { "trap.revive_stone" }),
         };
 
         public static bool TryResolvePickerCode(int code, out ChannelPreset preset)
@@ -143,69 +100,11 @@ namespace NineGrid.Flow
 
         public static string BuildPickerMenuText(GameContentCatalog catalog)
         {
-            var builder = new StringBuilder(320);
-            builder.AppendLine("[快速测试 · 效果通道]");
-            builder.AppendLine("HP99 ATK5 · 怪技能仅本通道动态挂");
-            for (var code = 0; code <= MaxPickerCode; code++)
-            {
-                if (!TryResolvePickerCode(code, out var preset))
-                {
-                    continue;
-                }
-
-                builder.Append(code).Append(' ');
-                builder.Append(ResolveDisplayName(catalog, preset));
-                if (preset.NodeOrder == QuickTestNodeOrderMode.Sequential
-                    && (preset.SkillIds == null || preset.SkillIds.Count == 0)
-                    && (preset.TrapContentIds == null || preset.TrapContentIds.Count == 0))
-                {
-                    builder.Append(" · 正式流程连跑");
-                }
-
-                var hasSkills = preset.SkillIds != null && preset.SkillIds.Count > 0;
-                var hasTraps = preset.TrapContentIds != null && preset.TrapContentIds.Count > 0;
-                if (hasSkills || hasTraps)
-                {
-                    builder.Append(" (");
-                    if (hasSkills)
-                    {
-                        for (var i = 0; i < preset.SkillIds.Count; i++)
-                        {
-                            if (i > 0)
-                            {
-                                builder.Append(',');
-                            }
-
-                            builder.Append(ShortSkillId(preset.SkillIds[i]));
-                        }
-                    }
-
-                    if (hasTraps)
-                    {
-                        if (hasSkills)
-                        {
-                            builder.Append(" | ");
-                        }
-
-                        for (var i = 0; i < preset.TrapContentIds.Count; i++)
-                        {
-                            if (i > 0)
-                            {
-                                builder.Append(',');
-                            }
-
-                            builder.Append(ShortTrapId(preset.TrapContentIds[i]));
-                        }
-                    }
-
-                    builder.Append(')');
-                }
-
-                builder.AppendLine();
-            }
-
-            builder.Append("长按 \\ 选码，释放确认");
-            return builder.ToString().TrimEnd();
+            var builder = new StringBuilder(240);
+            builder.AppendLine("[快速测试 \\0]");
+            builder.AppendLine("HP99 金币999 · 正常流程游玩 · 局内数字键 0~9 切换顺劈斧弹道效果");
+            builder.Append("释放确认开局");
+            return builder.ToString();
         }
 
         private static string ResolveDisplayName(GameContentCatalog catalog, ChannelPreset preset)

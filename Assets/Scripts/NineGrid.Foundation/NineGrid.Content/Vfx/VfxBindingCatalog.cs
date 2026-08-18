@@ -373,7 +373,9 @@ namespace NineGrid.Content.Vfx
         return false;
       }
 
-      if (dto.cueBindings == null || dto.stateBindings == null)
+      if (dto.cueBindings == null || dto.stateBindings == null
+          || json.Contains("\"cueBindings\":null") || json.Contains("\"cueBindings\": null")
+          || json.Contains("\"stateBindings\":null") || json.Contains("\"stateBindings\": null"))
       {
         error = "catalog cueBindings or stateBindings collection is null.";
         return false;

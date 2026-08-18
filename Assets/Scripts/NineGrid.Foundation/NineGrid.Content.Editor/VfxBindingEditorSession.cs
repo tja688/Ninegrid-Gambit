@@ -410,13 +410,22 @@ namespace NineGrid.Content.Editor
     private static HashSet<string> CollectDeclaredCueIds()
     {
       var ids = new HashSet<string>(StringComparer.Ordinal);
-      var scan = VfxDeclarationScanner.Scan(ResolvePresentationAssembly());
-      for (var i = 0; i < scan.CueDeclarations.Count; i++)
+      foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
       {
-        var cueId = scan.CueDeclarations[i]?.Attribute?.CueId;
-        if (!string.IsNullOrWhiteSpace(cueId))
+        var name = assembly.GetName().Name;
+        if (name == null || !name.StartsWith("NineGrid", StringComparison.Ordinal))
         {
-          ids.Add(cueId.Trim());
+          continue;
+        }
+
+        var scan = VfxDeclarationScanner.Scan(assembly);
+        for (var i = 0; i < scan.CueDeclarations.Count; i++)
+        {
+          var cueId = scan.CueDeclarations[i]?.Attribute?.CueId;
+          if (!string.IsNullOrWhiteSpace(cueId))
+          {
+            ids.Add(cueId.Trim());
+          }
         }
       }
 
@@ -426,13 +435,22 @@ namespace NineGrid.Content.Editor
     private static HashSet<string> CollectDeclaredStateIds()
     {
       var ids = new HashSet<string>(StringComparer.Ordinal);
-      var scan = VfxDeclarationScanner.Scan(ResolvePresentationAssembly());
-      for (var i = 0; i < scan.StateDeclarations.Count; i++)
+      foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
       {
-        var stateId = scan.StateDeclarations[i]?.Attribute?.StateId;
-        if (!string.IsNullOrWhiteSpace(stateId))
+        var name = assembly.GetName().Name;
+        if (name == null || !name.StartsWith("NineGrid", StringComparison.Ordinal))
         {
-          ids.Add(stateId.Trim());
+          continue;
+        }
+
+        var scan = VfxDeclarationScanner.Scan(assembly);
+        for (var i = 0; i < scan.StateDeclarations.Count; i++)
+        {
+          var stateId = scan.StateDeclarations[i]?.Attribute?.StateId;
+          if (!string.IsNullOrWhiteSpace(stateId))
+          {
+            ids.Add(stateId.Trim());
+          }
         }
       }
 

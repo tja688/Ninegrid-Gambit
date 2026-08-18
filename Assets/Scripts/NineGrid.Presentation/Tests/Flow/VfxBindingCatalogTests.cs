@@ -210,8 +210,14 @@ namespace NineGrid.Presentation.Tests
       };
 
       Assert.IsFalse(session.TrySaveCue(ambiguous, out var error));
-      StringAssert.Contains("覆盖冲突", error);
+      StringAssert.Contains("coverage-conflict", error);
     }
+
+    [VfxCue("vfx.test.pulse", "测试脉冲", "Tests", "VfxBindingCatalogTests", VfxCueContexts.CardDefId | VfxCueContexts.SkillId)]
+    private const string TestPulseCue = "vfx.test.pulse";
+
+    [VfxCue("vfx.editor.save", "编辑器保存测试", "Tests", "VfxBindingCatalogTests", VfxCueContexts.None)]
+    private const string EditorSaveCue = "vfx.editor.save";
 
     [VfxCue("vfx.scan.bound", "扫描器已绑定测试", "Tests", "VfxBindingCatalogTests", VfxCueContexts.None)]
     private const string ScanBoundCue = "vfx.scan.bound";

@@ -95,6 +95,32 @@ namespace NineGrid.Flow
             return true;
         }
 
+        public static bool TrySetPlayerCoins(int coins)
+        {
+            if (coins < 0)
+            {
+                return false;
+            }
+
+            var arch = NineGridArchitecture.Current;
+            if (arch == null)
+            {
+                return false;
+            }
+
+            var player = arch.GetModel<PlayerModel>();
+            if (player == null)
+            {
+                Debug.LogWarning("[BattleSessionCheat] PlayerModel 不存在，无法改金币。");
+                return false;
+            }
+
+            player.AddCoins(coins - player.Coins.Value);
+            PlayerInfoHudPresenter.TryGetInstance()?.SyncFromCore(animate: false);
+            Debug.Log($"[BattleSessionCheat] Player Coins → {coins}");
+            return true;
+        }
+
         /// <summary>
         /// QuickTest 补宿主用的白板怪。正式配表无技能；仅动态挂载通道技能。
         /// </summary>

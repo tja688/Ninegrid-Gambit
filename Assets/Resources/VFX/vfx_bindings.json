@@ -258,6 +258,102 @@
             "materialKey": "projectile.gleam_streak",
             "timeBase": "scaled",
             "authoringStatus": "aiDraft"
+        },
+        {
+            "cueId": "vfx.projectile.relic",
+            "selectorSkillId": "projectile.magic_bolt",
+            "note": "顺劈斧测试弹道：魔法飞弹 (0)",
+            "module": "Battle",
+            "enabled": true,
+            "playerId": "projectile",
+            "spatialOwnership": "independent",
+            "materialKey": "projectile.magic_bolt",
+            "timeBase": "scaled",
+            "authoringStatus": "aiDraft"
+        },
+        {
+            "cueId": "vfx.projectile.relic",
+            "selectorSkillId": "projectile.arrow_shot",
+            "note": "顺劈斧测试弹道：飞刀直射 (1)",
+            "module": "Battle",
+            "enabled": true,
+            "playerId": "projectile",
+            "spatialOwnership": "independent",
+            "materialKey": "projectile.arrow_shot",
+            "timeBase": "scaled",
+            "authoringStatus": "aiDraft"
+        },
+        {
+            "cueId": "vfx.projectile.relic",
+            "selectorSkillId": "projectile.fireball",
+            "note": "顺劈斧测试弹道：火球 (2)",
+            "module": "Battle",
+            "enabled": true,
+            "playerId": "projectile",
+            "spatialOwnership": "independent",
+            "materialKey": "projectile.fireball",
+            "timeBase": "scaled",
+            "authoringStatus": "aiDraft"
+        },
+        {
+            "cueId": "vfx.projectile.relic",
+            "selectorSkillId": "projectile.void_orb",
+            "note": "顺劈斧测试弹道：虚空法球 (3)",
+            "module": "Battle",
+            "enabled": true,
+            "playerId": "projectile",
+            "spatialOwnership": "independent",
+            "materialKey": "projectile.void_orb",
+            "timeBase": "scaled",
+            "authoringStatus": "aiDraft"
+        },
+        {
+            "cueId": "vfx.projectile.relic",
+            "selectorSkillId": "projectile.spark_zip",
+            "note": "顺劈斧测试弹道：电光急蹿 (4)",
+            "module": "Battle",
+            "enabled": true,
+            "playerId": "projectile",
+            "spatialOwnership": "independent",
+            "materialKey": "projectile.spark_zip",
+            "timeBase": "scaled",
+            "authoringStatus": "aiDraft"
+        },
+        {
+            "cueId": "vfx.projectile.relic",
+            "selectorSkillId": "projectile.bone_shard",
+            "note": "顺劈斧测试弹道：骨刺三连 (5)",
+            "module": "Battle",
+            "enabled": true,
+            "playerId": "projectile",
+            "spatialOwnership": "independent",
+            "materialKey": "projectile.bone_shard",
+            "timeBase": "scaled",
+            "authoringStatus": "aiDraft"
+        },
+        {
+            "cueId": "vfx.projectile.relic",
+            "selectorSkillId": "projectile.venom_glob",
+            "note": "顺劈斧测试弹道：毒液抛射 (6)",
+            "module": "Battle",
+            "enabled": true,
+            "playerId": "projectile",
+            "spatialOwnership": "independent",
+            "materialKey": "projectile.venom_glob",
+            "timeBase": "scaled",
+            "authoringStatus": "aiDraft"
+        },
+        {
+            "cueId": "vfx.projectile.relic",
+            "selectorSkillId": "projectile.gleam_streak",
+            "note": "顺劈斧测试弹道：金色流光 (7)",
+            "module": "Battle",
+            "enabled": true,
+            "playerId": "projectile",
+            "spatialOwnership": "independent",
+            "materialKey": "projectile.gleam_streak",
+            "timeBase": "scaled",
+            "authoringStatus": "aiDraft"
         }
     ],
     "stateBindings": []

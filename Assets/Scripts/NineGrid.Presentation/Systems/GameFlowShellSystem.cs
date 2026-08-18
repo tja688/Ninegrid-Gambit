@@ -18,6 +18,7 @@ namespace NineGrid.Presentation.Systems
     {
         public const float QuickTestTimeScale = 1f;
         public const int QuickTestAvatarHp = 99;
+        public const int QuickTestPlayerCoins = 999;
         public const int QuickTestAvatarAttack = QuickTestRunPlanner.AvatarAttack;
 
         private readonly BindableProperty<GameFlowShellState> mState =

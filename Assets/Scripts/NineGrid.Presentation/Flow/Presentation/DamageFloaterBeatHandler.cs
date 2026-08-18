@@ -64,6 +64,9 @@ namespace NineGrid.Flow.Presentation
                 // 与飘字同缝的受击视觉脉冲：格挡/护甲碎裂/血飞溅（独立型，不占主线）。
                 CombatOutcomeVfx.PulseShowDamage(gameEvent, pos.Value, "DamageFloaterBeatHandler.TryApply");
 
+                // 遗物弹道：顺劈斧触发时从遗物栏图标射向被波及的目标敌人（支持快速测试 0~9 切换预设）。
+                PulseCleaveAxeProjectileIfNeeded(gameEvent, pos.Value);
+
                 // 同缝的物理反馈：抖屏 + 受击卡一颤（装饰，不占主线 ack）。
                 ApplyHitFeedback(gameEvent);
 
@@ -190,6 +193,55 @@ namespace NineGrid.Flow.Presentation
 
             ScreenImpact.Hit(magnitude);
             BoardCardLifeFx.PlayJolt(gameEvent.TargetUid, Mathf.Clamp(magnitude / 12f, 0.3f, 1f));
+        }
+
+        private static void PulseCleaveAxeProjectileIfNeeded(CoreGameEvent gameEvent, Vector3 targetPosition)
+        {
+            if (gameEvent == null)
+            {
+                return;
+            }
+
+            var isCleave = string.Equals(gameEvent.SourceDefId, "relic.rotten_cleave_axe", StringComparison.Ordinal)
+                || string.Equals(gameEvent.Cause, "relic.rotten_cleave_axe.cleave", StringComparison.Ordinal);
+            if (!isCleave)
+            {
+                return;
+            }
+
+            Vector3 sourcePos = targetPosition;
+            var relicManager = UnityEngine.Object.FindFirstObjectByType<RelicManagerSingleton>();
+            if (relicManager != null && relicManager.TryGetDealOrigin("relic.rotten_cleave_axe", out var anchor) && anchor != null)
+            {
+                sourcePos = anchor.position;
+            }
+            else if (relicManager != null)
+            {
+                sourcePos = relicManager.transform.position;
+            }
+            else
+            {
+                var avatarPos = PresentationOutputProjector.ResolveCardWorldPosition(gameEvent.ActorUid);
+                if (avatarPos.HasValue)
+                {
+                    sourcePos = avatarPos.Value;
+                }
+            }
+
+            var skillId = "relic.rotten_cleave_axe.cleave";
+            if (QuickTestProjectileEffectState.TryGetActivePresetForQuickTest(out var testPresetId))
+            {
+                skillId = testPresetId;
+            }
+
+            ProjectileVfxCues.PulseFromTo(
+                ProjectileVfxCues.Relic,
+                "DamageFloaterBeatHandler.PulseCleaveAxeProjectile",
+                "relic.rotten_cleave_axe",
+                skillId,
+                sourcePos,
+                targetPosition,
+                gameEvent.TargetUid);
         }
     }
 }

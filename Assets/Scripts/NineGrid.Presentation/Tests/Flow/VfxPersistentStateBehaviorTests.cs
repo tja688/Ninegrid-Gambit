@@ -163,7 +163,7 @@ namespace NineGrid.Presentation.Tests
             system.SetSlot(ownerA, "shield", "vfx.state.b");
 
             Assert.AreEqual(3, factory.StatePlayers.Count);
-            Assert.AreEqual(VfxStateSlotOutcome.Applied, system.SetSlot(ownerB, "aura", "vfx.state.a").Outcome);
+            Assert.AreEqual(VfxStateSlotOutcome.Applied, system.SetSlot(ownerB, "shield", "vfx.state.a").Outcome);
         }
 
         [Test]

@@ -5,6 +5,7 @@ using NineGrid.Core;
 using NineGrid.DevTest.Commands;
 using NineGrid.Flow;
 using NineGrid.Flow.Diagnostics;
+using NineGrid.Flow.Presentation;
 using NineGrid.Presentation.Systems;
 using QFramework;
 using UnityEngine;
@@ -34,6 +35,40 @@ namespace NineGrid.DevTest.Flow
             }
 
             base.OnEnable();
+        }
+
+        private void Update()
+        {
+            PollQuickTestDigitKeys();
+        }
+
+        private static void PollQuickTestDigitKeys()
+        {
+            var arch = NineGridArchitecture.Interface ?? NineGridArchitecture.Current;
+            if (arch == null)
+            {
+                return;
+            }
+
+            var shell = arch.GetSystem<IGameFlowShellSystem>();
+            if (shell == null || !shell.IsQuickTestMode)
+            {
+                return;
+            }
+
+            for (var i = 0; i <= 9; i++)
+            {
+                var alpha = KeyCode.Alpha0 + i;
+                var keypad = KeyCode.Keypad0 + i;
+                if (KeyboardUtility.GetKeyDown(alpha) || KeyboardUtility.GetKeyDown(keypad))
+                {
+                    if (QuickTestProjectileEffectState.TrySetActiveIndex(i, out var presetId, out var name))
+                    {
+                        Debug.Log($"[QuickTest] 顺劈斧测试弹道切换为 [{i}]: {presetId} ({name})");
+                    }
+                    break;
+                }
+            }
         }
 
         protected override void ConfigureBindings(TestKeyRegistrationBuilder builder)

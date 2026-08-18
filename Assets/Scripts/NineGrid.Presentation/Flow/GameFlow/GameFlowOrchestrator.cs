@@ -128,12 +128,7 @@ namespace NineGrid.Flow
             if (quickTestMode)
             {
                 Debug.Log(
-                    $"[GameFlow] 快速测试模式：全局速度 x1，玩家 HP {GameFlowShellSystem.QuickTestAvatarHp} / ATK {GameFlowShellSystem.QuickTestAvatarAttack} 每关重置，"
-                    + $"节点顺序 {mShell.QuickTestNodeOrderMode}，队列 {QuickTestRunPlanner.FormatNodeOrder(mShell.QuickTestContentNodeQueue)}"
-                    + (string.IsNullOrEmpty(mShell.PinnedFirstBattleDeckId)
-                        ? string.Empty
-                        : $"，首关牌组 {mShell.PinnedFirstBattleDeckId}")
-                    + FormatSkillIdsNote(mShell.QuickTestSkillIds));
+                    $"[GameFlow] 快速测试模式：玩家 HP {GameFlowShellSystem.QuickTestAvatarHp} / 金币 {GameFlowShellSystem.QuickTestPlayerCoins} 每关重置，正常流程游玩，局内数字键 0~9 切换顺劈斧弹道效果");
             }
 
             // 读档恢复：先做恢复版 Bootstrap（Create + 快照覆盖 + RNG 还原），
@@ -1456,10 +1451,10 @@ namespace NineGrid.Flow
                     $"[GameFlow] 快速测试改血失败：目标 {GameFlowShellSystem.QuickTestAvatarHp}，请确认 Avatar 已入场。");
             }
 
-            if (!BattleSessionCheat.TrySetAvatarAttack(GameFlowShellSystem.QuickTestAvatarAttack))
+            if (!BattleSessionCheat.TrySetPlayerCoins(GameFlowShellSystem.QuickTestPlayerCoins))
             {
                 Debug.LogWarning(
-                    $"[GameFlow] 快速测试改攻失败：目标 {GameFlowShellSystem.QuickTestAvatarAttack}，请确认 Avatar 已入场。");
+                    $"[GameFlow] 快速测试改金币失败：目标 {GameFlowShellSystem.QuickTestPlayerCoins}。");
             }
         }
 
