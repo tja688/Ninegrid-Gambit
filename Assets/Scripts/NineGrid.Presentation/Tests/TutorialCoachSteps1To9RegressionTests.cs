@@ -150,19 +150,19 @@ namespace NineGrid.Presentation.Tests
             // 步骤 7: 行动计数
             Assert.IsTrue(TutorialCoach.EvaluateStepIntent(TutorialCoachStep.Step7_MonsterCountdowns, -1, null, out var i7));
             Assert.AreEqual("当心，待怪物行动计数归零后他们会主动发起效果或攻击", i7.Text);
-            Assert.AreEqual(InfoNoticeHoldMode.HoldTwoSeconds, i7.HoldMode);
+            Assert.AreEqual(InfoNoticeHoldMode.ClickToAdvance, i7.HoldMode);
             Assert.IsTrue(i7.IsBlockingMainline);
 
             // 步骤 8: 右键详述
             Assert.IsTrue(TutorialCoach.EvaluateStepIntent(TutorialCoachStep.Step8_InspectCards, -1, null, out var i8));
             Assert.AreEqual("可以右键点击场地卡牌、手牌或者遗物来查看它们的详细描述", i8.Text);
-            Assert.AreEqual(InfoNoticeHoldMode.HoldTwoSeconds, i8.HoldMode);
+            Assert.AreEqual(InfoNoticeHoldMode.ClickToAdvance, i8.HoldMode);
             Assert.IsTrue(i8.IsBlockingMainline);
 
             // 步骤 9: 规则书
             Assert.IsTrue(TutorialCoach.EvaluateStepIntent(TutorialCoachStep.Step9_RuleBook, -1, null, out var i9));
             Assert.AreEqual("你可以点击规则书了解更多内容，祝你游戏愉快！", i9.Text);
-            Assert.AreEqual(InfoNoticeHoldMode.HoldTwoSeconds, i9.HoldMode);
+            Assert.AreEqual(InfoNoticeHoldMode.ClickToAdvance, i9.HoldMode);
             Assert.IsTrue(i9.IsBlockingMainline);
         }
 
@@ -305,11 +305,24 @@ namespace NineGrid.Presentation.Tests
             Assert.IsTrue(TutorialCoach.IsIntentAllowed(new InputIntent(InputIntentKinds.Pickup, 6), out _));
             Assert.IsFalse(TutorialCoach.IsIntentAllowed(new InputIntent(InputIntentKinds.Pickup, 1), out _));
 
-            // 9. 道具拾取完成（步骤 7）
+            // 9. 道具拾取完成（步骤 7，点了才走）
             TutorialCoach.NotifyItemPickedUp(slot: 6);
-            // 立即进入步骤 7
             Assert.AreEqual(TutorialCoachStep.Step7_MonsterCountdowns, TutorialCoach.CurrentStep);
             Assert.IsTrue(TutorialCoach.IsBlockingMainline);
+
+            Assert.IsTrue(TutorialCoach.TryConsumeAdvance());
+            Assert.AreEqual(TutorialCoachStep.Step8_InspectCards, TutorialCoach.CurrentStep);
+            Assert.IsTrue(TutorialCoach.IsRightClickInspectAllowed);
+
+            Assert.IsTrue(TutorialCoach.TryConsumeAdvance());
+            Assert.AreEqual(TutorialCoachStep.Step9_RuleBook, TutorialCoach.CurrentStep);
+            Assert.IsTrue(TutorialCoach.IsRulebookAllowed);
+
+            Assert.IsTrue(TutorialCoach.TryConsumeAdvance());
+            Assert.AreEqual(TutorialCoachStep.Completed, TutorialCoach.CurrentStep);
+            Assert.IsTrue(TutorialProgressStore.IsSteps1To9Completed());
+            Assert.IsFalse(TutorialCoach.IsSteps1To9Active);
+            Assert.IsFalse(TutorialCoach.IsBlockingMainline);
         }
 
         [Test]

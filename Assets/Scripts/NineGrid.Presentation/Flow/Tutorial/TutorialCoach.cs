@@ -2,6 +2,7 @@ using System;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using NineGrid.Cards;
+using NineGrid.Core;
 using NineGrid.Flow.InfoNotice;
 using NineGrid.Flow.Presentation;
 using NineGrid.Presentation;
@@ -95,7 +96,6 @@ namespace NineGrid.Flow.Tutorial
 
         private static UniTaskCompletionSource sAvatarIntroTcs;
         private static UniTaskCompletionSource sBoardIntroTcs;
-        private static CancellationTokenSource sTimedStepsCts;
 
         /// <summary>当前教程入口种类。</summary>
         public static TutorialEntryKind EntryKind => sEntryKind;
@@ -250,7 +250,7 @@ namespace NineGrid.Flow.Tutorial
                     intent = new TutorialOverlayIntent
                     {
                         Text = Step7Text,
-                        HoldMode = InfoNoticeHoldMode.HoldTwoSeconds,
+                        HoldMode = InfoNoticeHoldMode.ClickToAdvance,
                         TargetSlot = -1,
                         TargetCard = null,
                         IsBlockingMainline = true,
@@ -261,7 +261,7 @@ namespace NineGrid.Flow.Tutorial
                     intent = new TutorialOverlayIntent
                     {
                         Text = Step8Text,
-                        HoldMode = InfoNoticeHoldMode.HoldTwoSeconds,
+                        HoldMode = InfoNoticeHoldMode.ClickToAdvance,
                         TargetSlot = -1,
                         TargetCard = null,
                         IsBlockingMainline = true,
@@ -272,7 +272,7 @@ namespace NineGrid.Flow.Tutorial
                     intent = new TutorialOverlayIntent
                     {
                         Text = Step9Text,
-                        HoldMode = InfoNoticeHoldMode.HoldTwoSeconds,
+                        HoldMode = InfoNoticeHoldMode.ClickToAdvance,
                         TargetSlot = -1,
                         TargetCard = null,
                         IsBlockingMainline = true,
@@ -538,7 +538,7 @@ namespace NineGrid.Flow.Tutorial
 
         /// <summary>
         /// 节拍：道具卡拾取并加入手牌完成后调用。
-        /// 触发步骤 7、8、9 的 2 秒定时序列，第 9 步结束写 1–9 标记并放手。
+        /// 触发步骤 7（点了才走），之后由推进点击进入步骤 8、9。
         /// </summary>
         public static void NotifyItemPickedUp(int slot, ManagedCard card = null)
         {
@@ -551,54 +551,10 @@ namespace NineGrid.Flow.Tutorial
             sTargetCard = null;
             TutorialPromptBoxPresenter.HidePrompt();
 
-            sTimedStepsCts?.Cancel();
-            sTimedStepsCts?.Dispose();
-            sTimedStepsCts = new CancellationTokenSource();
-
-            RunTimedSteps7To9Async(sTimedStepsCts.Token).Forget();
-        }
-
-        private static async UniTaskVoid RunTimedSteps7To9Async(CancellationToken ct)
-        {
-            try
-            {
-                // 步骤 7：行动计数
-                sCurrentStep = TutorialCoachStep.Step7_MonsterCountdowns;
-                InfoNoticePresenter.ShowHoldTwoSeconds(Step7Text);
-                PresentationInputGates.TryBeginExternalHold(Steps1To9HoldReason);
-                Debug.Log("[TutorialCoach] 步骤 7 触发：怪物行动计数");
-                await UniTask.Delay(TimeSpan.FromSeconds(2.0f), cancellationToken: ct);
-
-                // 步骤 8：右键详述
-                sCurrentStep = TutorialCoachStep.Step8_InspectCards;
-                InfoNoticePresenter.ShowHoldTwoSeconds(Step8Text);
-                Debug.Log("[TutorialCoach] 步骤 8 触发：右键详细描述（右键已启用）");
-                await UniTask.Delay(TimeSpan.FromSeconds(2.0f), cancellationToken: ct);
-
-                // 步骤 9：规则书
-                sCurrentStep = TutorialCoachStep.Step9_RuleBook;
-                InfoNoticePresenter.ShowHoldTwoSeconds(Step9Text);
-                Debug.Log("[TutorialCoach] 步骤 9 触发：规则书（规则书已启用）");
-                await UniTask.Delay(TimeSpan.FromSeconds(2.0f), cancellationToken: ct);
-
-                // 步骤 1–9 播完写标记并放手
-                TutorialProgressStore.MarkSteps1To9Completed();
-                sCurrentStep = TutorialCoachStep.Completed;
-                sIsSteps1To9Active = false;
-                PresentationInputGates.EndExternalHold(Steps1To9HoldReason);
-                InfoNoticePresenter.DismissHold();
-                Debug.Log("[TutorialCoach] 步骤 1–9 全部完成，已写入进度标记并释放主流程。");
-            }
-            catch (OperationCanceledException)
-            {
-            }
-            finally
-            {
-                if (sCurrentStep == TutorialCoachStep.Completed || !sIsSteps1To9Active)
-                {
-                    PresentationInputGates.ForceEndExternalHold(Steps1To9HoldReason);
-                }
-            }
+            sCurrentStep = TutorialCoachStep.Step7_MonsterCountdowns;
+            InfoNoticePresenter.ShowClickToAdvance(Step7Text);
+            PresentationInputGates.TryBeginExternalHold(Steps1To9HoldReason);
+            Debug.Log("[TutorialCoach] 步骤 7 触发：怪物行动计数");
         }
 
         /// <summary>
@@ -731,9 +687,19 @@ namespace NineGrid.Flow.Tutorial
                     return true;
 
                 case TutorialCoachStep.Step7_MonsterCountdowns:
+                    sCurrentStep = TutorialCoachStep.Step8_InspectCards;
+                    InfoNoticePresenter.ShowClickToAdvance(Step8Text);
+                    Debug.Log("[TutorialCoach] 推进到步骤 8：右键详细描述（右键已启用）");
+                    return true;
+
                 case TutorialCoachStep.Step8_InspectCards:
+                    sCurrentStep = TutorialCoachStep.Step9_RuleBook;
+                    InfoNoticePresenter.ShowClickToAdvance(Step9Text);
+                    Debug.Log("[TutorialCoach] 推进到步骤 9：规则书（规则书已启用）");
+                    return true;
+
                 case TutorialCoachStep.Step9_RuleBook:
-                    // 定时步骤期间消耗点击，不执行棋盘动作
+                    CompleteSteps1To9();
                     return true;
 
                 default:
@@ -744,8 +710,7 @@ namespace NineGrid.Flow.Tutorial
         private static void ShowPromptForSlot(int slot)
         {
             sTargetSlot = slot;
-            var field = GroundFieldGeometryHook.FieldOrNull();
-            if (field != null && field.TryGetCardAt(slot, out var card) && card != null)
+            if (TryGetAuthoritativeCardAtSlot(slot, out var card) && card != null)
             {
                 sTargetCard = card;
                 TutorialPromptBoxPresenter.ShowTarget(card);
@@ -754,6 +719,46 @@ namespace NineGrid.Flow.Tutorial
 
             sTargetCard = null;
             TutorialPromptBoxPresenter.ShowTarget(slot);
+        }
+
+        private static bool TryGetAuthoritativeCardAtSlot(int slot, out ManagedCard card)
+        {
+            card = null;
+            var board = NineGridArchitecture.Current?.GetModel<BoardModel>();
+            if (board != null)
+            {
+                var uid = board.GetCardUid(SlotId.Board(slot));
+                if (uid > 0 && CardEntityLifecycleHook.TryGetCard(uid, out card) && card != null)
+                {
+                    return true;
+                }
+            }
+
+            var field = GroundFieldGeometryHook.FieldOrNull();
+            if (field != null
+                && field.TryGetCardAt(slot, out card)
+                && card != null
+                && field.TryGetSlotOf(card.Uid, out var liveSlot)
+                && liveSlot == slot)
+            {
+                return true;
+            }
+
+            card = null;
+            return false;
+        }
+
+        private static void CompleteSteps1To9()
+        {
+            TutorialProgressStore.MarkSteps1To9Completed();
+            sCurrentStep = TutorialCoachStep.Completed;
+            sIsSteps1To9Active = false;
+            sTargetSlot = -1;
+            sTargetCard = null;
+            TutorialPromptBoxPresenter.HidePrompt();
+            PresentationInputGates.EndExternalHold(Steps1To9HoldReason);
+            InfoNoticePresenter.DismissHold();
+            Debug.Log("[TutorialCoach] 步骤 1–9 全部完成，已写入进度标记并释放主流程。");
         }
 
         private static void CompleteDoorTutorial()
@@ -776,10 +781,6 @@ namespace NineGrid.Flow.Tutorial
             sIsDoorTutorialActive = false;
             sActiveDoorSlot = -1;
             sActiveDoorCard = null;
-
-            sTimedStepsCts?.Cancel();
-            sTimedStepsCts?.Dispose();
-            sTimedStepsCts = null;
 
             sAvatarIntroTcs?.TrySetCanceled();
             sAvatarIntroTcs = null;

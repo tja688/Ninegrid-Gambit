@@ -3,26 +3,31 @@ using UnityEngine;
 namespace NineGrid.Flow.Tutorial
 {
     /// <summary>
-    /// 教学挖洞半黑屏：复制场景「半黑屏BG」的视觉，用 SpriteMask 在框选处挖洞，
-    /// 并随教学提示框呼吸缩放亮区。不 Acquire 局内 <see cref="BattleUiDimmerOverlay"/>，无 collider，不挡输入。
+    /// 教学挖洞半黑屏：复制场景「半黑屏BG」的颜色与 sorting，用四条遮罩条围出框选亮区，
+    /// 并随教学提示框呼吸缩放。不走 SpriteMask（半黑屏自定义材质不参与 mask），
+    /// 不 Acquire 局内 <see cref="BattleUiDimmerOverlay"/>，无 collider，不挡输入。
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class TutorialSpotlightPresenter : MonoBehaviour
     {
         public const string SpotlightObjectName = "教学挖洞遮罩";
-        public const string MaskObjectName = "教学挖洞Mask";
         public const string SourceDimmerObjectName = "半黑屏BG";
         public const string PanelObjectName = "场景UI面板";
 
+        private static readonly string[] BarNames = { "挖洞上", "挖洞下", "挖洞左", "挖洞右" };
+
         private static TutorialSpotlightPresenter sInstance;
-        private static Sprite sFallbackMaskSprite;
+        private static Sprite sFallbackSprite;
 
         [SerializeField] private GameObject spotlightRoot;
-        [SerializeField] private SpriteRenderer dimmerRenderer;
-        [SerializeField] private SpriteMask holeMask;
+        [SerializeField] private SpriteRenderer[] holeBars = new SpriteRenderer[4];
 
         private bool mIsActive;
         private Bounds mCurrentBounds;
+        private Color mDimmerColor = new Color(0f, 0f, 0f, 0.95f);
+        private int mSortingLayerId;
+        private int mSortingOrder = -1;
+        private Sprite mBarSprite;
 
         public static TutorialSpotlightPresenter InstanceOrNull()
         {
@@ -108,6 +113,28 @@ namespace NineGrid.Flow.Tutorial
 
         public Bounds CurrentBounds => mCurrentBounds;
 
+        public int HoleBarCount
+        {
+            get
+            {
+                var count = 0;
+                if (holeBars == null)
+                {
+                    return 0;
+                }
+
+                for (var i = 0; i < holeBars.Length; i++)
+                {
+                    if (holeBars[i] != null)
+                    {
+                        count++;
+                    }
+                }
+
+                return count;
+            }
+        }
+
         private void Awake()
         {
             EnsureBindings();
@@ -175,121 +202,152 @@ namespace NineGrid.Flow.Tutorial
                 spotlightRoot = gameObject;
             }
 
-            if (dimmerRenderer == null)
-            {
-                dimmerRenderer = spotlightRoot.GetComponent<SpriteRenderer>();
-                if (dimmerRenderer == null)
-                {
-                    dimmerRenderer = spotlightRoot.AddComponent<SpriteRenderer>();
-                }
-            }
-
-            CopyVisualFromSceneDimmer();
-            EnsureHoleMask();
+            spotlightRoot.transform.localScale = Vector3.one;
+            CopyStyleFromSceneDimmer();
+            EnsureBars();
             StripColliders(spotlightRoot);
         }
 
-        private void CopyVisualFromSceneDimmer()
+        private void CopyStyleFromSceneDimmer()
         {
             var source = FindSceneDimmerRenderer();
             if (source != null)
             {
-                dimmerRenderer.sprite = source.sprite;
-                dimmerRenderer.color = source.color;
-                dimmerRenderer.sharedMaterial = source.sharedMaterial;
-                dimmerRenderer.sortingLayerID = source.sortingLayerID;
-                dimmerRenderer.sortingOrder = source.sortingOrder;
-                dimmerRenderer.drawMode = SpriteDrawMode.Simple;
-
-                var srcTransform = source.transform;
-                var dstTransform = spotlightRoot.transform;
-                if (srcTransform.parent == dstTransform.parent)
-                {
-                    dstTransform.localPosition = srcTransform.localPosition;
-                    dstTransform.localRotation = srcTransform.localRotation;
-                    dstTransform.localScale = srcTransform.localScale;
-                }
-                else
-                {
-                    dstTransform.position = srcTransform.position;
-                    dstTransform.rotation = srcTransform.rotation;
-                    var parentScale = dstTransform.parent != null
-                        ? dstTransform.parent.lossyScale
-                        : Vector3.one;
-                    dstTransform.localScale = new Vector3(
-                        parentScale.x > 0.001f ? srcTransform.lossyScale.x / parentScale.x : srcTransform.lossyScale.x,
-                        parentScale.y > 0.001f ? srcTransform.lossyScale.y / parentScale.y : srcTransform.lossyScale.y,
-                        parentScale.z > 0.001f ? srcTransform.lossyScale.z / parentScale.z : srcTransform.lossyScale.z);
-                }
+                mDimmerColor = source.color;
+                mSortingLayerId = source.sortingLayerID;
+                mSortingOrder = source.sortingOrder;
+                mBarSprite = source.sprite != null ? source.sprite : GetFallbackSprite();
             }
             else
             {
-                dimmerRenderer.sprite = GetFallbackMaskSprite();
-                dimmerRenderer.color = new Color(0f, 0f, 0f, 0.95f);
-                dimmerRenderer.sortingOrder = -1;
-                spotlightRoot.transform.position = Vector3.zero;
-                spotlightRoot.transform.localScale = new Vector3(40f, 24f, 1f);
+                mDimmerColor = new Color(0f, 0f, 0f, 0.95f);
+                mSortingLayerId = 0;
+                mSortingOrder = -1;
+                mBarSprite = GetFallbackSprite();
             }
-
-            dimmerRenderer.maskInteraction = SpriteMaskInteraction.VisibleOutsideMask;
         }
 
-        private void EnsureHoleMask()
+        private void EnsureBars()
         {
-            if (holeMask == null)
+            if (holeBars == null || holeBars.Length != 4)
             {
-                var maskTransform = spotlightRoot.transform.Find(MaskObjectName);
-                GameObject maskGo;
-                if (maskTransform != null)
-                {
-                    maskGo = maskTransform.gameObject;
-                }
-                else
-                {
-                    maskGo = new GameObject(MaskObjectName);
-                    maskGo.transform.SetParent(spotlightRoot.transform, false);
-                }
-
-                holeMask = maskGo.GetComponent<SpriteMask>();
-                if (holeMask == null)
-                {
-                    holeMask = maskGo.AddComponent<SpriteMask>();
-                }
+                holeBars = new SpriteRenderer[4];
             }
 
-            holeMask.sprite = dimmerRenderer != null && dimmerRenderer.sprite != null
-                ? dimmerRenderer.sprite
-                : GetFallbackMaskSprite();
-            holeMask.alphaCutoff = 0.1f;
-            holeMask.isCustomRangeActive = true;
-            holeMask.frontSortingLayerID = dimmerRenderer.sortingLayerID;
-            holeMask.backSortingLayerID = dimmerRenderer.sortingLayerID;
-            holeMask.frontSortingOrder = dimmerRenderer.sortingOrder;
-            holeMask.backSortingOrder = dimmerRenderer.sortingOrder;
-            StripColliders(holeMask.gameObject);
+            for (var i = 0; i < 4; i++)
+            {
+                if (holeBars[i] == null)
+                {
+                    var existing = spotlightRoot.transform.Find(BarNames[i]);
+                    GameObject barGo;
+                    if (existing != null)
+                    {
+                        barGo = existing.gameObject;
+                    }
+                    else
+                    {
+                        barGo = new GameObject(BarNames[i]);
+                        barGo.transform.SetParent(spotlightRoot.transform, false);
+                    }
+
+                    holeBars[i] = barGo.GetComponent<SpriteRenderer>();
+                    if (holeBars[i] == null)
+                    {
+                        holeBars[i] = barGo.AddComponent<SpriteRenderer>();
+                    }
+                }
+
+                var bar = holeBars[i];
+                bar.sprite = mBarSprite;
+                bar.color = mDimmerColor;
+                bar.sortingLayerID = mSortingLayerId;
+                bar.sortingOrder = mSortingOrder;
+                bar.drawMode = SpriteDrawMode.Simple;
+                bar.maskInteraction = SpriteMaskInteraction.None;
+                bar.sharedMaterial = null;
+                StripColliders(bar.gameObject);
+            }
         }
 
         private void ApplyHole(Bounds worldBounds, Vector2 holeSize)
         {
             mCurrentBounds = worldBounds;
-            if (holeMask == null)
+            if (holeBars == null)
             {
                 return;
             }
 
-            var z = holeMask.transform.position.z;
-            holeMask.transform.position = new Vector3(worldBounds.center.x, worldBounds.center.y, z);
+            var cover = ResolveCoverBounds();
+            var holeCenter = worldBounds.center;
+            var half = new Vector2(Mathf.Max(0.25f, holeSize.x * 0.5f), Mathf.Max(0.25f, holeSize.y * 0.5f));
+            var holeMinX = Mathf.Max(cover.min.x, holeCenter.x - half.x);
+            var holeMaxX = Mathf.Min(cover.max.x, holeCenter.x + half.x);
+            var holeMinY = Mathf.Max(cover.min.y, holeCenter.y - half.y);
+            var holeMaxY = Mathf.Min(cover.max.y, holeCenter.y + half.y);
+            if (holeMaxX <= holeMinX || holeMaxY <= holeMinY)
+            {
+                holeMinX = holeCenter.x - 0.25f;
+                holeMaxX = holeCenter.x + 0.25f;
+                holeMinY = holeCenter.y - 0.25f;
+                holeMaxY = holeCenter.y + 0.25f;
+            }
 
-            var spriteSize = holeMask.sprite != null ? holeMask.sprite.bounds.size : Vector3.one;
-            var sx = spriteSize.x > 0.001f ? holeSize.x / spriteSize.x : holeSize.x;
-            var sy = spriteSize.y > 0.001f ? holeSize.y / spriteSize.y : holeSize.y;
+            var z = spotlightRoot != null ? spotlightRoot.transform.position.z : 0f;
+            SetBar(0, cover.min.x, holeMaxY, cover.max.x, cover.max.y, z);
+            SetBar(1, cover.min.x, cover.min.y, cover.max.x, holeMinY, z);
+            SetBar(2, cover.min.x, holeMinY, holeMinX, holeMaxY, z);
+            SetBar(3, holeMaxX, holeMinY, cover.max.x, holeMaxY, z);
+        }
 
-            // Mask 是遮罩根的子节点；根节点已按半黑屏全屏缩放，须用世界尺寸反推本地 scale。
-            var parent = holeMask.transform.parent;
-            var parentScale = parent != null ? parent.lossyScale : Vector3.one;
-            var localX = parentScale.x > 0.001f ? sx / parentScale.x : sx;
-            var localY = parentScale.y > 0.001f ? sy / parentScale.y : sy;
-            holeMask.transform.localScale = new Vector3(localX, localY, 1f);
+        private void SetBar(int index, float minX, float minY, float maxX, float maxY, float z)
+        {
+            if (holeBars == null || index < 0 || index >= holeBars.Length || holeBars[index] == null)
+            {
+                return;
+            }
+
+            var width = maxX - minX;
+            var height = maxY - minY;
+            var bar = holeBars[index];
+            var active = width > 0.001f && height > 0.001f;
+            if (bar.gameObject.activeSelf != active)
+            {
+                bar.gameObject.SetActive(active);
+            }
+
+            if (!active)
+            {
+                return;
+            }
+
+            bar.transform.position = new Vector3((minX + maxX) * 0.5f, (minY + maxY) * 0.5f, z);
+            var spriteSize = bar.sprite != null ? bar.sprite.bounds.size : Vector3.one;
+            var worldX = spriteSize.x > 0.001f ? width / spriteSize.x : width;
+            var worldY = spriteSize.y > 0.001f ? height / spriteSize.y : height;
+            var parentScale = bar.transform.parent != null ? bar.transform.parent.lossyScale : Vector3.one;
+            bar.transform.localScale = new Vector3(
+                parentScale.x > 0.001f ? worldX / parentScale.x : worldX,
+                parentScale.y > 0.001f ? worldY / parentScale.y : worldY,
+                1f);
+        }
+
+        private Bounds ResolveCoverBounds()
+        {
+            var source = FindSceneDimmerRenderer();
+            if (source != null && source.bounds.size.x > 1f && source.bounds.size.y > 1f)
+            {
+                return source.bounds;
+            }
+
+            var cam = Camera.main;
+            if (cam != null && cam.orthographic)
+            {
+                var height = cam.orthographicSize * 2.2f;
+                var width = height * cam.aspect;
+                return new Bounds(cam.transform.position, new Vector3(width, height, 0f));
+            }
+
+            return new Bounds(Vector3.zero, new Vector3(40f, 24f, 0f));
         }
 
         private static void StripColliders(GameObject go)
@@ -347,20 +405,20 @@ namespace NineGrid.Flow.Tutorial
             return GameObject.Find(objectName);
         }
 
-        private static Sprite GetFallbackMaskSprite()
+        private static Sprite GetFallbackSprite()
         {
-            if (sFallbackMaskSprite != null)
+            if (sFallbackSprite != null)
             {
-                return sFallbackMaskSprite;
+                return sFallbackSprite;
             }
 
             var texture = Texture2D.whiteTexture;
-            sFallbackMaskSprite = Sprite.Create(
+            sFallbackSprite = Sprite.Create(
                 texture,
                 new Rect(0f, 0f, texture.width, texture.height),
                 new Vector2(0.5f, 0.5f),
                 1f);
-            return sFallbackMaskSprite;
+            return sFallbackSprite;
         }
     }
 }

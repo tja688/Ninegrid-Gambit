@@ -55,7 +55,8 @@ namespace NineGrid.Presentation.Tests.Flow
             var spotlight = TutorialSpotlightPresenter.InstanceOrNull();
             Assert.IsNotNull(spotlight);
             Assert.IsNull(spotlight.GetComponent<Collider2D>(), "教学挖洞层不得带 collider");
-            Assert.AreEqual(SpriteMaskInteraction.VisibleOutsideMask, spotlight.GetComponent<SpriteRenderer>().maskInteraction);
+            Assert.AreEqual(0, spotlight.GetComponentsInChildren<SpriteMask>(true).Length, "挖洞不得依赖 SpriteMask");
+            Assert.GreaterOrEqual(spotlight.HoleBarCount, 4, "须用四条遮罩条围出亮区");
         }
 
         [Test]

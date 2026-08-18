@@ -1,6 +1,7 @@
 using System;
 using NineGrid.Cards;
 using NineGrid.Cards.Slots;
+using NineGrid.Core;
 using NineGrid.Flow.Presentation;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -397,21 +398,14 @@ namespace NineGrid.Flow.Tutorial
         private bool TryResolveSlotBounds(int slot, out Bounds bounds)
         {
             bounds = default;
-            var field = GroundFieldGeometryHook.FieldOrNull();
-            if (field != null && field.TryGetSlotClaimant(slot, out var claimant) && claimant != null)
+            if (TryGetAuthoritativeCardAtSlot(slot, out var card) && card?.GameObject != null)
             {
-                if (claimant.Owner is GroundCardHitProxy hitProxy && hitProxy.BoundCardOrNull != null)
-                {
-                    var card = hitProxy.BoundCardOrNull;
-                    mTargetCard = card;
-                    mTargetTransform = card.Transform;
-                    if (card.GameObject != null)
-                    {
-                        return TryCalculateWorldBounds(card.GameObject, out bounds);
-                    }
-                }
+                mTargetCard = card;
+                mTargetTransform = card.Transform;
+                return TryCalculateWorldBounds(card.GameObject, out bounds);
             }
 
+            var field = GroundFieldGeometryHook.FieldOrNull();
             if (field != null && field.TryGetAnchor(slot, out var anchor) && anchor != null)
             {
                 mTargetTransform = anchor;
@@ -419,6 +413,33 @@ namespace NineGrid.Flow.Tutorial
                 return true;
             }
 
+            return false;
+        }
+
+        private static bool TryGetAuthoritativeCardAtSlot(int slot, out ManagedCard card)
+        {
+            card = null;
+            var board = NineGridArchitecture.Current?.GetModel<BoardModel>();
+            if (board != null)
+            {
+                var uid = board.GetCardUid(SlotId.Board(slot));
+                if (uid > 0 && CardEntityLifecycleHook.TryGetCard(uid, out card) && card != null)
+                {
+                    return true;
+                }
+            }
+
+            var field = GroundFieldGeometryHook.FieldOrNull();
+            if (field != null
+                && field.TryGetCardAt(slot, out card)
+                && card != null
+                && field.TryGetSlotOf(card.Uid, out var liveSlot)
+                && liveSlot == slot)
+            {
+                return true;
+            }
+
+            card = null;
             return false;
         }
 
