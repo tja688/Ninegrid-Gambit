@@ -626,6 +626,10 @@ namespace NineGrid.Core
 
             var fromSlot = board.AvatarSlot.Value;
             board.SetAvatar(avatar, ToSlot);
+            if (ToSlot == SlotId.Center || ToSlot == SlotId.Board(5))
+            {
+                board.ClearAvatarOffHome();
+            }
             return new GameActionResult()
                 .AddEvent(new CoreGameEvent(CoreEventType.AvatarMoved, context.ActionId, ActionName)
                     .WithCard(avatarUid)

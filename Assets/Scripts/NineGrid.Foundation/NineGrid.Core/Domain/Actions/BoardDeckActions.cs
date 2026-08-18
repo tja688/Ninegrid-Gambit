@@ -727,6 +727,7 @@ namespace NineGrid.Core
                         .WithCard(avatar.Uid)
                         .WithSlots(avatarFromSlot, toAvatarSlot)
                         .WithSource(SourceDefId, Cause));
+                    AvatarHomingRules.TryTrackAvatarDisplacement(result, context, avatarFromSlot, toAvatarSlot, SourceDefId, Cause);
                 }
             }
 
@@ -825,6 +826,7 @@ namespace NineGrid.Core
                         .WithCard(avatarUid)
                         .WithSlots(Left, Right)
                         .WithSource(SourceDefId, Cause));
+                    AvatarHomingRules.TryTrackAvatarDisplacement(result, context, Left, Right, SourceDefId, Cause);
                 }
                 else if (avatarSlot == Right)
                 {
@@ -833,6 +835,7 @@ namespace NineGrid.Core
                         .WithCard(avatarUid)
                         .WithSlots(Right, Left)
                         .WithSource(SourceDefId, Cause));
+                    AvatarHomingRules.TryTrackAvatarDisplacement(result, context, Right, Left, SourceDefId, Cause);
                 }
             }
 
@@ -971,6 +974,15 @@ namespace NineGrid.Core
                 // 目标格为空格：Avatar 单独迁格
                 resolvedTargetUid = 0;
                 board.SetAvatar(avatar, resolvedTargetSlot);
+            }
+
+            if (resolvedTargetSlot == SlotId.Center || resolvedTargetSlot == SlotId.Board(5))
+            {
+                board.ClearAvatarOffHome();
+            }
+            else
+            {
+                board.StartAvatarOffHomeCountdown();
             }
 
             var result = new GameActionResult();

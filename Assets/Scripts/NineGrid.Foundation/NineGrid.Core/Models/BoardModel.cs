@@ -13,6 +13,8 @@ namespace NineGrid.Core
         public BindableProperty<int> Version { get; private set; }
         public BindableProperty<int> AvatarUid { get; private set; }
         public BindableProperty<SlotId> AvatarSlot { get; private set; }
+        public BindableProperty<int> AvatarHomingSteps { get; private set; }
+        public BindableProperty<bool> IsAvatarOffHome { get; private set; }
 
         protected override void OnInit()
         {
@@ -21,6 +23,8 @@ namespace NineGrid.Core
                 Version = new BindableProperty<int>(0);
                 AvatarUid = new BindableProperty<int>(0);
                 AvatarSlot = new BindableProperty<SlotId>(SlotId.None);
+                AvatarHomingSteps = new BindableProperty<int>(0);
+                IsAvatarOffHome = new BindableProperty<bool>(false);
             }
         }
 
@@ -184,11 +188,26 @@ namespace NineGrid.Core
             Touch();
         }
 
+        public void StartAvatarOffHomeCountdown()
+        {
+            IsAvatarOffHome.Value = true;
+            AvatarHomingSteps.Value = 0;
+            Touch();
+        }
+
+        public void ClearAvatarOffHome()
+        {
+            IsAvatarOffHome.Value = false;
+            AvatarHomingSteps.Value = 0;
+            Touch();
+        }
+
         public void Reset()
         {
             ClearBoardCards();
             AvatarUid.Value = 0;
             AvatarSlot.Value = SlotId.None;
+            ClearAvatarOffHome();
             Touch();
         }
 

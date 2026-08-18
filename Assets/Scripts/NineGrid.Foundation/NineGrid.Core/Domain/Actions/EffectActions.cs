@@ -546,6 +546,7 @@ namespace NineGrid.Core
                     .WithCard(avatarUid)
                     .WithSlots(avatarFromSlot, avatarToSlot)
                     .WithSource(SourceDefId, Cause));
+                AvatarHomingRules.TryTrackAvatarDisplacement(result, context, avatarFromSlot, avatarToSlot, SourceDefId, Cause);
             }
 
             CardRhythmMoveTicks.AppendFromMovedEvents(result, context, result.Events);
