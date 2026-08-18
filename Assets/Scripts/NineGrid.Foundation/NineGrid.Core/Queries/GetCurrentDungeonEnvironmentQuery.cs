@@ -20,7 +20,7 @@ namespace NineGrid.Core
             var nodeIndex = run.NodeIndex != null ? run.NodeIndex.Value : 0;
             var difficultyId = run.DifficultyId != null
                 ? run.DifficultyId.Value
-                : RunDifficultyIds.Normal;
+                : RunDifficultyIds.Default;
             return DungeonEnvironmentCatalog.ResolveFromRun(floor, nodeIndex, difficultyId);
         }
     }

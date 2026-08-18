@@ -148,7 +148,7 @@ namespace NineGrid.Flow.BoardBriefTip
             var environment = DungeonEnvironmentCatalog.ResolveFromRun(
                 floor,
                 nodeIndex,
-                difficultyId ?? RunDifficultyIds.Normal);
+                difficultyId ?? RunDifficultyIds.Default);
             return environment.DisplayName;
         }
 

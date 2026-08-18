@@ -76,14 +76,14 @@ namespace NineGrid.Core
                 Phase = new BindableProperty<GamePhase>(GamePhase.None);
                 Version = new BindableProperty<int>(0);
                 FloorMonsterDeckId = new BindableProperty<string>(string.Empty);
-                DifficultyId = new BindableProperty<string>(RunDifficultyIds.Normal);
+                DifficultyId = new BindableProperty<string>(RunDifficultyIds.Default);
             }
         }
 
         public void SetDifficultyId(string difficultyId)
         {
             var normalized = string.IsNullOrEmpty(difficultyId)
-                ? RunDifficultyIds.Normal
+                ? RunDifficultyIds.Default
                 : difficultyId;
             if (string.Equals(DifficultyId.Value, normalized, System.StringComparison.Ordinal))
             {
@@ -102,7 +102,7 @@ namespace NineGrid.Core
             Room.Value = RoomKind.None;
             Phase.Value = GamePhase.BuildEnemyPool;
             FloorMonsterDeckId.Value = string.Empty;
-            DifficultyId.Value = RunDifficultyIds.Normal;
+            DifficultyId.Value = RunDifficultyIds.Default;
             mUsedMonsterDeckIds.Clear();
             mAttributePickDefIds.Clear();
             Touch();

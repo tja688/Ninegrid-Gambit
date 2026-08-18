@@ -188,9 +188,9 @@ namespace NineGrid.Presentation.Ui
             WireCharacterSlot(0, "角色1", unlocked: true);
             WireCharacterSlot(1, "角色2", unlocked: false);
             WireCharacterSlot(2, "角色3", unlocked: true);
-            WireDifficulty(0, "难度选项：普通", RunSetupSelection.NormalDifficultyId, "旅途");
-            WireDifficulty(1, "难度选项：进阶", "advanced", "冒险");
-            WireDifficulty(2, "难度选项：困难", "hard", "血色");
+            WireDifficulty(0, "难度选项：普通", NineGrid.Core.Content.RunDifficultyIds.Normal, "旅途");
+            WireDifficulty(1, "难度选项：进阶", NineGrid.Core.Content.RunDifficultyIds.Advanced, "冒险");
+            WireDifficulty(2, "难度选项：困难", NineGrid.Core.Content.RunDifficultyIds.Hard, "血色");
             WireStartButton();
             WireBackButton();
 
@@ -252,7 +252,7 @@ namespace NineGrid.Presentation.Ui
             }
         }
 
-        /// <summary>每次打开：装载立绘/图标、难度回默认普通、隐藏返回小字。</summary>
+        /// <summary>每次打开：装载立绘/图标、难度回默认（中间档：进阶/冒险）、隐藏返回小字。</summary>
         private void RefreshOpenVisuals()
         {
             for (var i = 0; i < mSlots.Length; i++)
@@ -271,7 +271,7 @@ namespace NineGrid.Presentation.Ui
                 SyncPortraitCollider(slot);
             }
 
-            SelectDifficulty(0, silent: true);
+            SelectDifficulty(1, silent: true);
             SelectCharacter(FindFirstUnlockedSlotIndex(), silent: true);
             SetBackLabelVisible(false);
         }

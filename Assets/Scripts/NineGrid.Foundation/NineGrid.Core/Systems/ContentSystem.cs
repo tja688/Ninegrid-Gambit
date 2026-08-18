@@ -183,7 +183,7 @@ namespace NineGrid.Core.Systems
                 var nodeIndex = run != null && run.NodeIndex != null ? run.NodeIndex.Value : 0;
                 var difficultyId = run != null && run.DifficultyId != null
                     ? run.DifficultyId.Value
-                    : RunDifficultyIds.Normal;
+                    : RunDifficultyIds.Default;
                 MonsterFloorStatScaling.ApplyToDraft(draft, floor, nodeIndex, difficultyId);
             }
 

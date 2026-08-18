@@ -104,7 +104,7 @@ namespace NineGrid.Flow.BoardBriefTip
             var nodeIndex = run.NodeIndex.Value;
             var difficultyId = run.DifficultyId != null
                 ? run.DifficultyId.Value
-                : NineGrid.Core.Content.RunDifficultyIds.Normal;
+                : NineGrid.Core.Content.RunDifficultyIds.Default;
             var room = run.Room.Value;
             if (floor == mLastFloor
                 && nodeIndex == mLastNodeIndex

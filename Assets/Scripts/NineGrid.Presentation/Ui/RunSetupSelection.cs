@@ -8,10 +8,11 @@ namespace NineGrid.Presentation.Ui
     /// </summary>
     public static class RunSetupSelection
     {
+        public const string DefaultDifficultyId = NineGrid.Core.Content.RunDifficultyIds.Default;
         public const string NormalDifficultyId = NineGrid.Core.Content.RunDifficultyIds.Normal;
 
-        public static string DifficultyId { get; private set; } = NormalDifficultyId;
-        public static string DifficultyLabel { get; private set; } = "旅途";
+        public static string DifficultyId { get; private set; } = DefaultDifficultyId;
+        public static string DifficultyLabel { get; private set; } = "冒险";
 
         /// <summary>选人界面难度选项的图标精灵（结算面板「此次对局所选的难度」直接复用）。</summary>
         public static Sprite DifficultyIcon { get; private set; }
@@ -27,7 +28,7 @@ namespace NineGrid.Presentation.Ui
 
         public static void SetDifficulty(string id, string label, Sprite icon)
         {
-            DifficultyId = string.IsNullOrEmpty(id) ? NormalDifficultyId : id;
+            DifficultyId = string.IsNullOrEmpty(id) ? DefaultDifficultyId : id;
             DifficultyLabel = !string.IsNullOrEmpty(label) ? label : GetDefaultLabel(DifficultyId);
             DifficultyIcon = icon;
         }
@@ -39,8 +40,8 @@ namespace NineGrid.Presentation.Ui
 
         public static void ResetToDefault()
         {
-            DifficultyId = NormalDifficultyId;
-            DifficultyLabel = GetDefaultLabel(NormalDifficultyId);
+            DifficultyId = DefaultDifficultyId;
+            DifficultyLabel = GetDefaultLabel(DefaultDifficultyId);
             DifficultyIcon = null;
             ProfessionId = NineGrid.Core.ProfessionCatalog.Jester;
         }
@@ -52,12 +53,12 @@ namespace NineGrid.Presentation.Ui
                 return "血色";
             }
 
-            if (string.Equals(difficultyId, NineGrid.Core.Content.RunDifficultyIds.Advanced, System.StringComparison.OrdinalIgnoreCase))
+            if (string.Equals(difficultyId, NineGrid.Core.Content.RunDifficultyIds.Normal, System.StringComparison.OrdinalIgnoreCase))
             {
-                return "冒险";
+                return "旅途";
             }
 
-            return "旅途";
+            return "冒险";
         }
     }
 }

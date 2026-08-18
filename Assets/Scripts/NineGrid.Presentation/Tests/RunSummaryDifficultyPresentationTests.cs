@@ -15,15 +15,15 @@ namespace NineGrid.Presentation.Tests
         }
 
         [Test]
-        public void RunSetupSelection_ResetToDefault_RestoresJourneyTier()
+        public void RunSetupSelection_ResetToDefault_RestoresDefaultTier()
         {
             RunSetupSelection.SetDifficulty(RunDifficultyIds.Hard, "血色", null);
             Assert.AreEqual(RunDifficultyIds.Hard, RunSetupSelection.DifficultyId);
             Assert.AreEqual("血色", RunSetupSelection.DifficultyLabel);
 
             RunSetupSelection.ResetToDefault();
-            Assert.AreEqual(RunDifficultyIds.Normal, RunSetupSelection.DifficultyId);
-            Assert.AreEqual("旅途", RunSetupSelection.DifficultyLabel);
+            Assert.AreEqual(RunDifficultyIds.Advanced, RunSetupSelection.DifficultyId);
+            Assert.AreEqual("冒险", RunSetupSelection.DifficultyLabel);
         }
     }
 }

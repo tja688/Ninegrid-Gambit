@@ -63,7 +63,7 @@ namespace NineGrid.Core
         public string[] usedMonsterDeckIds = Array.Empty<string>();
         public string[] attributePickDefIds = Array.Empty<string>();
         /// <summary>选人难度档 id（normal / advanced / hard）。</summary>
-        public string difficultyId = RunDifficultyIds.Normal;
+        public string difficultyId = RunDifficultyIds.Default;
         /// <summary>壳层全局节点序号（GameFlowShellSystem.NodeIndex，捕获时即将开打的节点）。</summary>
         public int shellGlobalNodeIndex = 1;
 
@@ -182,7 +182,7 @@ namespace NineGrid.Core
                 floorMonsterDeckId = run.FloorMonsterDeckId.Value ?? string.Empty,
                 usedMonsterDeckIds = CopyList(run.UsedMonsterDeckIds),
                 attributePickDefIds = CopyList(run.AttributePickDefIds),
-                difficultyId = run.DifficultyId?.Value ?? RunDifficultyIds.Normal,
+                difficultyId = run.DifficultyId?.Value ?? RunDifficultyIds.Default,
                 shellGlobalNodeIndex = shellGlobalNodeIndex,
                 professionId = player.ProfessionId.Value ?? string.Empty,
                 coins = player.Coins.Value,

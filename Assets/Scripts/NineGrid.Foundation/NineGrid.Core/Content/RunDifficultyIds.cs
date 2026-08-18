@@ -6,5 +6,6 @@ namespace NineGrid.Core.Content
         public const string Normal = "normal";
         public const string Advanced = "advanced";
         public const string Hard = "hard";
+        public const string Default = Advanced;
     }
 }

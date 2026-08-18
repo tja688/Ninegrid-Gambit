@@ -421,7 +421,7 @@ namespace NineGrid.Flow
                 Floor = run.Floor.Value,
                 NodeIndex = run.NodeIndex.Value,
                 Seed = run.Seed.Value,
-                DifficultyId = run.DifficultyId?.Value ?? NineGrid.Core.Content.RunDifficultyIds.Normal,
+                DifficultyId = run.DifficultyId?.Value ?? NineGrid.Core.Content.RunDifficultyIds.Default,
             };
             for (var i = 0; i < relics.Count; i++)
             {
