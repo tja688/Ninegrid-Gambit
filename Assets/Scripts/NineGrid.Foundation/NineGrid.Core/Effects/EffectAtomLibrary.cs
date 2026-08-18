@@ -1495,6 +1495,7 @@ namespace NineGrid.Core.Effects
         private bool mExcludeBoss;
         private bool mRandom;
         private int mCount;
+        private bool? mFaceUp;
 
         public void Configure(EffectDslNode config)
         {
@@ -1508,6 +1509,15 @@ namespace NineGrid.Core.Effects
             mExcludeBoss = config.Get("excludeBoss").AsBool(false);
             mRandom = config.Get("random").AsBool(false);
             mCount = Math.Max(0, config.Get("count").AsInt(mRandom ? 1 : 0));
+            if (config.Has("faceUp"))
+            {
+                mFaceUp = config.Get("faceUp").AsBool(true);
+            }
+            else
+            {
+                mFaceUp = null;
+            }
+
             AddZones(config.Get("zones"));
             AddSlots(config.Get("slots"));
             AddRefs(config.Get("include"), mIncludeRefs);
@@ -1533,7 +1543,8 @@ namespace NineGrid.Core.Effects
                 mMaxLevel,
                 mExcludeElite,
                 mExcludeBoss,
-                mExcludeRefs);
+                mExcludeRefs,
+                mFaceUp);
             for (var i = candidates.Count - 1; i >= 0; i--)
             {
                 if (Contains(result, candidates[i]) || !MatchesSlotFilter(context, candidates[i]))
@@ -3455,6 +3466,36 @@ namespace NineGrid.Core.Effects
     }
 
     /// <summary>
+    /// 单向翻开：背面→正面；已正面 no-op（与 <see cref="ConcealFaceAction"/> 对称）。
+    /// </summary>
+    [EffectAtom("RevealFace", EffectAtomKind.Action)]
+    public sealed class RevealFaceEffectAction : IAction
+    {
+        public void Configure(EffectDslNode config)
+        {
+        }
+
+        public IReadOnlyList<GameAction> BuildActions(EffectRuntimeContext context, IReadOnlyList<int> targets)
+        {
+            var result = new List<GameAction>();
+            if (targets == null || targets.Count == 0)
+            {
+                return result;
+            }
+
+            for (var i = 0; i < targets.Count; i++)
+            {
+                if (targets[i] != 0)
+                {
+                    result.Add(new RevealFaceAction(targets[i], context.SourceDefId, context.EffectId));
+                }
+            }
+
+            return result;
+        }
+    }
+
+    /// <summary>
     /// 倒计时加减速（ADR-0013 §6）：对每个目标怪的行动倒计时（attackPattern.countdown）
     /// 增加 delta（提速传 -1）。跳过背面目标——背面期间倒计时冻结（ADR-0016）。
     /// </summary>
@@ -4234,7 +4275,8 @@ namespace NineGrid.Core.Effects
             int maxLevel,
             bool excludeElite,
             bool excludeBoss,
-            IReadOnlyList<string> excludeRefs)
+            IReadOnlyList<string> excludeRefs,
+            bool? faceUp = null)
         {
             var result = new List<int>();
             if (context == null)
@@ -4255,7 +4297,7 @@ namespace NineGrid.Core.Effects
             {
                 for (var i = 0; i < zones.Count; i++)
                 {
-                    AddCardsFromZone(context, result, defId, kind, zones[i], requiresAdjacency, adjacentToCard, minLevel, maxLevel, excludeElite, excludeBoss, excludeRefs);
+                    AddCardsFromZone(context, result, defId, kind, zones[i], requiresAdjacency, adjacentToCard, minLevel, maxLevel, excludeElite, excludeBoss, excludeRefs, faceUp);
                 }
 
                 return result;
@@ -4265,13 +4307,13 @@ namespace NineGrid.Core.Effects
             {
                 foreach (var uid in context.Board.BoardCardUids())
                 {
-                    AddIfMatches(context, result, uid, defId, kind, ZoneId.Board, requiresAdjacency, adjacentToCard, minLevel, maxLevel, excludeElite, excludeBoss, excludeRefs);
+                    AddIfMatches(context, result, uid, defId, kind, ZoneId.Board, requiresAdjacency, adjacentToCard, minLevel, maxLevel, excludeElite, excludeBoss, excludeRefs, faceUp);
                 }
 
                 return result;
             }
 
-            AddCardsFromZone(context, result, defId, kind, zone, requiresAdjacency, adjacentToCard, minLevel, maxLevel, excludeElite, excludeBoss, excludeRefs);
+            AddCardsFromZone(context, result, defId, kind, zone, requiresAdjacency, adjacentToCard, minLevel, maxLevel, excludeElite, excludeBoss, excludeRefs, faceUp);
 
             return result;
         }
@@ -4288,13 +4330,14 @@ namespace NineGrid.Core.Effects
             int maxLevel,
             bool excludeElite,
             bool excludeBoss,
-            IReadOnlyList<string> excludeRefs)
+            IReadOnlyList<string> excludeRefs,
+            bool? faceUp)
         {
             if (zone == ZoneId.Board)
             {
                 foreach (var uid in context.Board.BoardCardUids())
                 {
-                    AddIfMatches(context, result, uid, defId, kind, zone, requiresAdjacency, adjacentToCard, minLevel, maxLevel, excludeElite, excludeBoss, excludeRefs);
+                    AddIfMatches(context, result, uid, defId, kind, zone, requiresAdjacency, adjacentToCard, minLevel, maxLevel, excludeElite, excludeBoss, excludeRefs, faceUp);
                 }
 
                 return;
@@ -4302,7 +4345,7 @@ namespace NineGrid.Core.Effects
 
             foreach (var pair in context.Registry.Cards)
             {
-                AddIfMatches(context, result, pair.Key, defId, kind, zone, requiresAdjacency, adjacentToCard, minLevel, maxLevel, excludeElite, excludeBoss, excludeRefs);
+                AddIfMatches(context, result, pair.Key, defId, kind, zone, requiresAdjacency, adjacentToCard, minLevel, maxLevel, excludeElite, excludeBoss, excludeRefs, faceUp);
             }
         }
 
@@ -4366,7 +4409,8 @@ namespace NineGrid.Core.Effects
             int maxLevel,
             bool excludeElite,
             bool excludeBoss,
-            IReadOnlyList<string> excludeRefs)
+            IReadOnlyList<string> excludeRefs,
+            bool? faceUp)
         {
             CardInstance card;
             if (!context.TryGetCard(uid, out card))
@@ -4389,10 +4433,20 @@ namespace NineGrid.Core.Effects
                 return;
             }
 
-            // ADR-0016：背面卡不进 FilteredCards 候选（与 AllMonsters 一致）。
-            if (!card.FaceUp)
+            if (faceUp.HasValue)
             {
-                return;
+                if (card.FaceUp != faceUp.Value)
+                {
+                    return;
+                }
+            }
+            else
+            {
+                // ADR-0016：背面卡默认不进 FilteredCards 候选（与 AllMonsters 一致）。
+                if (!card.FaceUp)
+                {
+                    return;
+                }
             }
 
             var level = card.Counters.Get(CoreCounterKeys.Level);

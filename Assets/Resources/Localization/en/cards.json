@@ -1012,7 +1012,7 @@
     },
     "skill.rise_up": {
       "displayName": "Rise Up",
-      "description": "[On Board] After this card damages the player: flip a random other face-up monster face-down"
+      "description": "[On Board] After this card damages the player: flip a random other face-down monster face-up"
     },
     "skill.rolling_crush": {
       "displayName": "Rolling Crush",

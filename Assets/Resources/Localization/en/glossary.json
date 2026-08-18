@@ -92,7 +92,7 @@
     },
     "起来": {
       "displayName": "Rise Up",
-      "intro": "After it damages you: a random face-up monster flips face-down."
+      "intro": "After it damages you: a random face-down monster flips face-up."
     },
     "吸收": {
       "displayName": "Absorb",
