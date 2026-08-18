@@ -212,7 +212,7 @@ namespace NineGrid.Content.Editor
             contentRoot.Add(ContentVisualWarmConsoleUi.CreateStatsGrid(
                 ("楼层", row.floor.ToString(), row.layerName),
                 ("房间", row.roomMin + "–" + row.roomMax, row.isBlood ? "困难整层" : "普通切分"),
-                ("MainBG", row.mainBackgroundHex, "氛围底"),
+                ("MainBG", row.mainBackgroundHex, "滑动底色罩"),
                 ("格面", row.slotHex, "九宫 slots")));
 
             contentRoot.Add(ContentVisualWarmConsoleUi.CreateSectionCard(
@@ -374,14 +374,37 @@ namespace NineGrid.Content.Editor
                         panelPathLabel.text = row.groundPanel ?? string.Empty;
                     });
 
+                    Image mainBgPreview = CreateSpritePreview(row.mainBackground, 96f, 96f);
+                    column.Add(mainBgPreview);
+                    var mainBgField = CreateSpriteObjectField(row.mainBackground, sprite =>
+                    {
+                        row.mainBackground = ToSpriteAssetPath(sprite);
+                        if (mainBgPreview != null)
+                        {
+                            mainBgPreview.sprite = sprite;
+                        }
+
+                        MarkDungeonFictionDirty();
+                    });
+                    var mainBgPathLabel = ContentVisualWarmConsoleUi.CreateTinyPathLabel(row.mainBackground);
+                    column.Add(ContentVisualWarmConsoleUi.WrapControl(
+                        "MainBG 滑动贴图",
+                        "32×32 Repeat wrap。密林/岩层/溶洞各一张，血色三层共用。",
+                        mainBgField));
+                    column.Add(mainBgPathLabel);
+                    mainBgField.RegisterValueChangedCallback(_ =>
+                    {
+                        mainBgPathLabel.text = row.mainBackground ?? string.Empty;
+                    });
+
                     AddApolloColorFields(
                         column,
                         "MainBG 色",
-                        "画面外围氛围。取环境色族偏暗的一档，不要用近黑中性色。",
+                        "滑动底色罩。普通层 #b09173，困难血色 #7a0305。",
                         "MainBG hex",
                         () => row.mainBackgroundHex,
                         hex => row.mainBackgroundHex = hex,
-                        "#411d31");
+                        DungeonEnvironmentCatalog.MainBackgroundDefaultColorHex);
                     AddApolloColorFields(
                         column,
                         "格面色",

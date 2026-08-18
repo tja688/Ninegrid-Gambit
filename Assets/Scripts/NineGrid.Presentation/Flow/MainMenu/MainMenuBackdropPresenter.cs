@@ -16,7 +16,8 @@ namespace NineGrid.Flow.MainMenu
 {
     /// <summary>
     /// 菜单背景 / MainBG 动态底：Tiled 精灵滑动；按贴图 wrap 自动选 UV 偏移（Repeat，无跳变）
-    /// 或 Transform 漂移（Clamp 等）。主菜单再投放正式接线怪物 / 道具 / 场地卡主图标。
+    /// 或 Transform 漂移（Clamp 等）。局内 MainBG 按层切换滑动贴图与色罩（ADR-0058）；
+    /// 主菜单再投放正式接线怪物 / 道具 / 场地卡主图标。
     /// 图标摆放复用战斗信息展示的 <see cref="BattleInfoPreviewIconPlayer"/>（卡面 mainVisual）。
     /// 挂在 <c>Panels/MainBG</c> 与 <c>MainPanel/菜单背景</c>；选中该物体即可在 Inspector 调参。
     /// </summary>
@@ -83,6 +84,16 @@ namespace NineGrid.Flow.MainMenu
         [SerializeField] private float spawnMargin = 1.6f;
         [SerializeField] private float despawnMargin = 2.4f;
 
+        [Header("局内层滑动底（仅 MainBG）")]
+        [Tooltip("密林；空则按地下城表路径加载。")]
+        [SerializeField] private Sprite forestScrollSprite;
+        [Tooltip("岩层")]
+        [SerializeField] private Sprite rockScrollSprite;
+        [Tooltip("溶洞")]
+        [SerializeField] private Sprite caveScrollSprite;
+        [Tooltip("困难血色")]
+        [SerializeField] private Sprite bloodScrollSprite;
+
         private static MainMenuBackdropPresenter sInstance;
 
         private readonly List<string> _pool = new List<string>(128);
@@ -103,6 +114,9 @@ namespace NineGrid.Flow.MainMenu
         private string _lastDefId;
         private int _sortCursor;
         private bool _loggedEmptyPool;
+        private Sprite _authoredSprite;
+        private Color _authoredColor = Color.white;
+        private string _appliedBackdropKey;
 
         public static MainMenuBackdropPresenter EnsureExists()
         {
@@ -203,6 +217,7 @@ namespace NineGrid.Flow.MainMenu
 
         private void LateUpdate()
         {
+            TickLayerBackdrop();
             var dt = Time.unscaledDeltaTime;
             if (dt > 0f && scrollEnabled)
             {
@@ -237,6 +252,163 @@ namespace NineGrid.Flow.MainMenu
         {
             _raining = false;
             ClearLiveIcons();
+        }
+
+        private void TickLayerBackdrop()
+        {
+            if (!IsMainBackgroundHost() || backgroundRenderer == null)
+            {
+                return;
+            }
+
+            CaptureAuthoredIfNeeded();
+            if (ShouldUseAuthoredBackdrop())
+            {
+                ApplyLayerBackdropVisual(_authoredSprite, _authoredColor, "authored");
+                return;
+            }
+
+            var arch = NineGridArchitecture.Current ?? NineGridArchitecture.Interface;
+            if (arch == null)
+            {
+                ApplyLayerBackdropVisual(_authoredSprite, _authoredColor, "authored");
+                return;
+            }
+
+            var environment = arch.SendQuery(new GetCurrentDungeonEnvironmentQuery());
+            var sprite = ResolveLayerSprite(environment);
+            if (sprite == null)
+            {
+                sprite = _authoredSprite;
+            }
+
+            var color = TryParseHexColor(environment.MainBackgroundColorHex, out var parsed)
+                ? parsed
+                : _authoredColor;
+            var key = environment.Floor + ":" + (environment.IsBloodTheme ? "blood" : "layer")
+                + ":" + (environment.MainBackgroundResourcePath ?? string.Empty);
+            ApplyLayerBackdropVisual(sprite, color, key);
+        }
+
+        private bool IsMainBackgroundHost()
+        {
+            return string.Equals(name, BackgroundObjectName, StringComparison.Ordinal);
+        }
+
+        private static bool ShouldUseAuthoredBackdrop()
+        {
+            return IsMainMenuShellState();
+        }
+
+        private Sprite ResolveLayerSprite(DungeonEnvironmentInfo environment)
+        {
+            if (!string.IsNullOrWhiteSpace(environment.MainBackgroundResourcePath))
+            {
+                var loaded = CardPresentationSpritePath.LoadSprite(environment.MainBackgroundResourcePath);
+                if (loaded != null)
+                {
+                    return loaded;
+                }
+            }
+
+            if (environment.IsBloodTheme && bloodScrollSprite != null)
+            {
+                return bloodScrollSprite;
+            }
+
+            switch (environment.Floor)
+            {
+                case 2:
+                    return rockScrollSprite != null ? rockScrollSprite : forestScrollSprite;
+                case 3:
+                    return caveScrollSprite != null ? caveScrollSprite : forestScrollSprite;
+                default:
+                    return forestScrollSprite;
+            }
+        }
+
+        private void ApplyLayerBackdropVisual(Sprite sprite, Color color, string key)
+        {
+            if (backgroundRenderer == null)
+            {
+                return;
+            }
+
+            var spriteChanged = sprite != null && backgroundRenderer.sprite != sprite;
+            var keyChanged = !string.Equals(_appliedBackdropKey, key, StringComparison.Ordinal);
+            if (!spriteChanged && !keyChanged && backgroundRenderer.color == color)
+            {
+                EnsureRepeatWrap(backgroundRenderer.sprite);
+                return;
+            }
+
+            if (spriteChanged)
+            {
+                var wasTiled = backgroundRenderer.drawMode == SpriteDrawMode.Tiled;
+                var size = backgroundRenderer.size;
+                backgroundRenderer.sprite = sprite;
+                if (wasTiled)
+                {
+                    backgroundRenderer.drawMode = SpriteDrawMode.Tiled;
+                    backgroundRenderer.size = size;
+                }
+
+                _loggedScrollMode = false;
+                _resolvedScrollMode = ResolveActiveScrollMode();
+            }
+
+            backgroundRenderer.color = color;
+            _appliedBackdropKey = key;
+            EnsureRepeatWrap(backgroundRenderer.sprite);
+        }
+
+        private static void EnsureRepeatWrap(Sprite sprite)
+        {
+            var tex = sprite != null ? sprite.texture : null;
+            if (tex == null)
+            {
+                return;
+            }
+
+            if (tex.wrapModeU != TextureWrapMode.Repeat)
+            {
+                tex.wrapModeU = TextureWrapMode.Repeat;
+            }
+
+            if (tex.wrapModeV != TextureWrapMode.Repeat)
+            {
+                tex.wrapModeV = TextureWrapMode.Repeat;
+            }
+        }
+
+        private static bool TryParseHexColor(string hex, out Color color)
+        {
+            color = Color.white;
+            if (string.IsNullOrWhiteSpace(hex))
+            {
+                return false;
+            }
+
+            var normalized = hex.Trim();
+            if (normalized.StartsWith("#", StringComparison.Ordinal))
+            {
+                normalized = normalized.Substring(1);
+            }
+
+            if (normalized.Length != 6)
+            {
+                return false;
+            }
+
+            if (!byte.TryParse(normalized.Substring(0, 2), System.Globalization.NumberStyles.HexNumber, null, out var r)
+                || !byte.TryParse(normalized.Substring(2, 2), System.Globalization.NumberStyles.HexNumber, null, out var g)
+                || !byte.TryParse(normalized.Substring(4, 2), System.Globalization.NumberStyles.HexNumber, null, out var b))
+            {
+                return false;
+            }
+
+            color = new Color32(r, g, b, 255);
+            return true;
         }
 
         private void TickScroll(float dt)
@@ -348,6 +520,8 @@ namespace NineGrid.Flow.MainMenu
             _authoredLocalPos = backgroundRenderer.transform.localPosition;
             _authoredWasTiled = backgroundRenderer.drawMode == SpriteDrawMode.Tiled;
             _authoredTiledSize = backgroundRenderer.size;
+            _authoredSprite = backgroundRenderer.sprite;
+            _authoredColor = backgroundRenderer.color;
             _capturedAuthored = true;
         }
 
@@ -399,6 +573,13 @@ namespace NineGrid.Flow.MainMenu
                 backgroundRenderer.drawMode = SpriteDrawMode.Tiled;
                 backgroundRenderer.size = _authoredTiledSize;
             }
+
+            if (_authoredSprite != null)
+            {
+                backgroundRenderer.sprite = _authoredSprite;
+            }
+
+            backgroundRenderer.color = _authoredColor;
         }
 
         private Vector2 GetTileWorldSize()

@@ -4,7 +4,7 @@ using QFramework;
 namespace NineGrid.Core
 {
     /// <summary>
-    /// 读当前 Run 进度下的地下城环境（显示名、卡面背景、场地框、MainBG/格面色、是否血色、Floor/Room）。
+    /// 读当前 Run 进度下的地下城环境（显示名、卡面背景、场地框、MainBG 滑动贴图/色罩、格面色、是否血色、Floor/Room）。
     /// </summary>
     public sealed class GetCurrentDungeonEnvironmentQuery : AbstractQuery<DungeonEnvironmentInfo>
     {

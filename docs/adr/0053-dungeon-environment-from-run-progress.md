@@ -28,7 +28,8 @@ status: accepted
 - `scripts/set-monster-face-backgrounds.py` 按 deck 批量写 `faceBackground` **已废弃**；怪物 JSON 断链背景应清空而非误导。
 - 楼层提示 / 战前信息预览须读 Query 或 Catalog，不得硬编码罗马数字楼层。
 - 读档快照 `RunSaveSnapshot.difficultyId` 与跨关 `RunInventorySnapshot` 须保留难度，避免 Bootstrap 重置后环境/数值回退。
-- GroundPanel / MainBG / GroundAnchors 格面由同一 Query 驱动（表字段 `groundPanel` / `mainBackgroundHex` / `slotHex`）；作者在 `NineGrid/表现层配置` 侧栏 **地下城虚构** 换图换色，保存双写 JSON。氛围底取环境色族偏暗一档（不用近黑中性色），格面取同族更亮的填充色，让九宫白框 tint 跟着环境走。**暂禁**：运行时接线已断开，场景静态配色为准，见 [ADR-0055](0055-venue-board-visuals-static-fallback.md)。
+- GroundPanel / GroundAnchors 格面由同一 Query 驱动（表字段 `groundPanel` / `slotHex`）；作者在 `NineGrid/表现层配置` 侧栏 **地下城虚构** 换图换色，保存双写 JSON。**暂禁**：场地框与格面运行时接线已断开，场景静态配色为准，见 [ADR-0055](0055-venue-board-visuals-static-fallback.md)。
+- **MainBG 滑动底** 同 Query 驱动（表字段 `mainBackground` / `mainBackgroundHex`），局内按层切换，见 [ADR-0058](0058-mainbg-scroll-by-dungeon-layer.md)。
 - 缺表或未命中行时 `DungeonEnvironmentCatalog` 回退烘焙默认，不崩。
 
 ## 相关
@@ -38,3 +39,5 @@ status: accepted
 - [ADR-0020](0020-board-as-interaction-surface.md) — 楼层提示
 - [ADR-0021](0021-run-progression-in-core.md) — 层内 8 节点与 `RunModel`
 - [ADR-0014](0014-theme-ids-are-legacy-opaque.md) — deckId 非叙事主键
+- [ADR-0055](0055-venue-board-visuals-static-fallback.md) — 场地框/格面静态回退
+- [ADR-0058](0058-mainbg-scroll-by-dungeon-layer.md) — 局内 MainBG 滑动底按层切换

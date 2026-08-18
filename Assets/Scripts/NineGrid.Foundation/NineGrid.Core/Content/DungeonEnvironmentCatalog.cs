@@ -13,6 +13,13 @@ namespace NineGrid.Core.Content
         public const string FaceBackgroundResourceFolder = "Assets/Resources/ContentArt/Png/Other/";
         public const string GroundPanelResourceFolder = "Assets/Resources/ContentArt/Png/Venue/";
         public const string GroundPanelBloodSpriteName = "F_UI_Panel_H_血色";
+        public const string MainBackgroundResourceFolder = "Assets/Arts/Images/Png/Textures/";
+        public const string MainBackgroundForestSpriteName = "texture185";
+        public const string MainBackgroundRockSpriteName = "texture29";
+        public const string MainBackgroundCaveSpriteName = "texture90";
+        public const string MainBackgroundBloodSpriteName = "texture129";
+        public const string MainBackgroundDefaultColorHex = "#b09173";
+        public const string MainBackgroundBloodColorHex = "#7a0305";
 
         private static DungeonEnvironmentTableDto loadedTable;
 
@@ -33,15 +40,15 @@ namespace NineGrid.Core.Content
                 roomSplit = 4,
                 variants = new[]
                 {
-                    MakeVariant("forest.jade_mist", 1, 1, 4, "密林", "翡翠迷雾", false, "#172038", "#468232"),
-                    MakeVariant("forest.lost_ruins", 1, 5, 8, "密林", "失落遗迹", false, "#1e1d39", "#577277"),
-                    MakeVariant("forest.blood", 1, 1, 8, "密林", "血色", true, "#411d31", "#a53030"),
-                    MakeVariant("rock.ossuary", 2, 1, 4, "岩层", "藏骨堂", false, "#151d28", "#394a50"),
-                    MakeVariant("rock.magma", 2, 5, 8, "岩层", "熔岩之地", false, "#341c27", "#de9e41"),
-                    MakeVariant("rock.blood", 2, 1, 8, "岩层", "血色", true, "#411d31", "#a53030"),
-                    MakeVariant("cave.pale_road", 3, 1, 4, "溶洞", "苍白之路", false, "#202e37", "#819796"),
-                    MakeVariant("cave.twilight_hall", 3, 5, 8, "溶洞", "黄昏礼堂", false, "#411d31", "#884b2b"),
-                    MakeVariant("cave.blood", 3, 1, 8, "溶洞", "血色", true, "#411d31", "#a53030"),
+                    MakeVariant("forest.jade_mist", 1, 1, 4, "密林", "翡翠迷雾", false, MainBackgroundDefaultColorHex, "#468232"),
+                    MakeVariant("forest.lost_ruins", 1, 5, 8, "密林", "失落遗迹", false, MainBackgroundDefaultColorHex, "#577277"),
+                    MakeVariant("forest.blood", 1, 1, 8, "密林", "血色", true, MainBackgroundBloodColorHex, "#a53030"),
+                    MakeVariant("rock.ossuary", 2, 1, 4, "岩层", "藏骨堂", false, MainBackgroundDefaultColorHex, "#394a50"),
+                    MakeVariant("rock.magma", 2, 5, 8, "岩层", "熔岩之地", false, MainBackgroundDefaultColorHex, "#de9e41"),
+                    MakeVariant("rock.blood", 2, 1, 8, "岩层", "血色", true, MainBackgroundBloodColorHex, "#a53030"),
+                    MakeVariant("cave.pale_road", 3, 1, 4, "溶洞", "苍白之路", false, MainBackgroundDefaultColorHex, "#819796"),
+                    MakeVariant("cave.twilight_hall", 3, 5, 8, "溶洞", "黄昏礼堂", false, MainBackgroundDefaultColorHex, "#884b2b"),
+                    MakeVariant("cave.blood", 3, 1, 8, "溶洞", "血色", true, MainBackgroundBloodColorHex, "#a53030"),
                 }
             };
         }
@@ -69,6 +76,7 @@ namespace NineGrid.Core.Content
                 displayName,
                 FaceBackgroundResourceFolder + displayName + ".png",
                 ResolveGroundPanelResourcePath(displayName, isBloodTheme),
+                ResolveMainBackgroundResourcePath(safeFloor, isBloodTheme),
                 ResolveMainBackgroundColorHex(displayName, isBloodTheme),
                 ResolveSlotColorHex(displayName, isBloodTheme),
                 isBloodTheme,
@@ -136,6 +144,9 @@ namespace NineGrid.Core.Content
             var ground = string.IsNullOrWhiteSpace(hit.groundPanel)
                 ? ResolveGroundPanelResourcePath(displayName, isBloodTheme)
                 : hit.groundPanel;
+            var mainBackground = string.IsNullOrWhiteSpace(hit.mainBackground)
+                ? ResolveMainBackgroundResourcePath(floor, isBloodTheme)
+                : hit.mainBackground;
             var hex = string.IsNullOrWhiteSpace(hit.mainBackgroundHex)
                 ? ResolveMainBackgroundColorHex(displayName, isBloodTheme)
                 : hit.mainBackgroundHex;
@@ -146,6 +157,7 @@ namespace NineGrid.Core.Content
                 displayName,
                 face,
                 ground,
+                mainBackground,
                 hex,
                 slotHex,
                 isBloodTheme,
@@ -178,6 +190,7 @@ namespace NineGrid.Core.Content
                 displayName = displayName,
                 faceBackground = FaceBackgroundResourceFolder + displayName + ".png",
                 groundPanel = GroundPanelResourceFolder + groundName + ".png",
+                mainBackground = ResolveMainBackgroundResourcePath(floor, isBlood),
                 mainBackgroundHex = mainBackgroundHex,
                 slotHex = slotHex,
                 isBlood = isBlood,
@@ -193,30 +206,22 @@ namespace NineGrid.Core.Content
             return GroundPanelResourceFolder + spriteName + ".png";
         }
 
+        public static string ResolveMainBackgroundResourcePath(int floor, bool isBloodTheme)
+        {
+            var spriteName = isBloodTheme
+                ? MainBackgroundBloodSpriteName
+                : floor == 2
+                    ? MainBackgroundRockSpriteName
+                    : floor == 3
+                        ? MainBackgroundCaveSpriteName
+                        : MainBackgroundForestSpriteName;
+            return MainBackgroundResourceFolder + spriteName + ".png";
+        }
+
         public static string ResolveMainBackgroundColorHex(string displayName, bool isBloodTheme)
         {
-            if (isBloodTheme)
-            {
-                return "#411d31";
-            }
-
-            switch (displayName)
-            {
-                case "密林_翡翠迷雾":
-                    return "#172038";
-                case "密林_失落遗迹":
-                    return "#1e1d39";
-                case "岩层_藏骨堂":
-                    return "#151d28";
-                case "岩层_熔岩之地":
-                    return "#341c27";
-                case "溶洞_苍白之路":
-                    return "#202e37";
-                case "溶洞_黄昏礼堂":
-                    return "#411d31";
-                default:
-                    return "#411d31";
-            }
+            _ = displayName;
+            return isBloodTheme ? MainBackgroundBloodColorHex : MainBackgroundDefaultColorHex;
         }
 
         /// <summary>
@@ -306,7 +311,8 @@ namespace NineGrid.Core.Content
         public string displayName = string.Empty;
         public string faceBackground = string.Empty;
         public string groundPanel = string.Empty;
-        public string mainBackgroundHex = "#411d31";
+        public string mainBackground = string.Empty;
+        public string mainBackgroundHex = "#b09173";
         public string slotHex = "#a53030";
         public bool isBlood;
         public string notes = string.Empty;
@@ -318,6 +324,7 @@ namespace NineGrid.Core.Content
             string displayName,
             string faceBackgroundResourcePath,
             string groundPanelResourcePath,
+            string mainBackgroundResourcePath,
             string mainBackgroundColorHex,
             string slotColorHex,
             bool isBloodTheme,
@@ -327,6 +334,7 @@ namespace NineGrid.Core.Content
             DisplayName = displayName ?? string.Empty;
             FaceBackgroundResourcePath = faceBackgroundResourcePath ?? string.Empty;
             GroundPanelResourcePath = groundPanelResourcePath ?? string.Empty;
+            MainBackgroundResourcePath = mainBackgroundResourcePath ?? string.Empty;
             MainBackgroundColorHex = mainBackgroundColorHex ?? string.Empty;
             SlotColorHex = slotColorHex ?? string.Empty;
             IsBloodTheme = isBloodTheme;
@@ -337,6 +345,7 @@ namespace NineGrid.Core.Content
         public string DisplayName { get; }
         public string FaceBackgroundResourcePath { get; }
         public string GroundPanelResourcePath { get; }
+        public string MainBackgroundResourcePath { get; }
         public string MainBackgroundColorHex { get; }
         public string SlotColorHex { get; }
         public bool IsBloodTheme { get; }

@@ -11,10 +11,11 @@
             "displayName": "密林_翡翠迷雾",
             "faceBackground": "Assets/Resources/ContentArt/Png/Other/密林_翡翠迷雾.png",
             "groundPanel": "Assets/Resources/ContentArt/Png/Venue/F_UI_Panel_H_密林_翡翠迷雾.png",
-            "mainBackgroundHex": "#245226",
+            "mainBackground": "Assets/Arts/Images/Png/Textures/texture185.png",
+            "mainBackgroundHex": "#b09173",
             "slotHex": "#468232",
             "isBlood": false,
-            "notes": "MainBG=雾蓝夜，格面=苔绿亮一档（相对填充 #25562e）"
+            "notes": "MainBG 滑动=密林 texture185，色罩 #b09173；格面=苔绿亮一档"
         },
         {
             "id": "forest.lost_ruins",
@@ -26,10 +27,11 @@
             "displayName": "密林_失落遗迹",
             "faceBackground": "Assets/Resources/ContentArt/Png/Other/密林_失落遗迹.png",
             "groundPanel": "Assets/Resources/ContentArt/Png/Venue/F_UI_Panel_H_密林_失落遗迹.png",
-            "mainBackgroundHex": "#341c27",
+            "mainBackground": "Assets/Arts/Images/Png/Textures/texture185.png",
+            "mainBackgroundHex": "#b09173",
             "slotHex": "#577277",
             "isBlood": false,
-            "notes": "MainBG=靛暮，填充=#394a50 冷灰石，格面=更亮灰青"
+            "notes": "MainBG 滑动同密林 texture185"
         },
         {
             "id": "forest.blood",
@@ -41,10 +43,11 @@
             "displayName": "密林_血色",
             "faceBackground": "Assets/Resources/ContentArt/Png/Other/密林_血色.png",
             "groundPanel": "Assets/Resources/ContentArt/Png/Venue/F_UI_Panel_H_血色.png",
-            "mainBackgroundHex": "#411d31",
+            "mainBackground": "Assets/Arts/Images/Png/Textures/texture129.png",
+            "mainBackgroundHex": "#7a0305",
             "slotHex": "#a53030",
             "isBlood": true,
-            "notes": "困难档整层使用。MainBG=酒紫，格面=血轨红"
+            "notes": "困难档整层使用。MainBG 滑动=血色 texture129，色罩 #7a0305"
         },
         {
             "id": "rock.ossuary",
@@ -56,10 +59,11 @@
             "displayName": "岩层_藏骨堂",
             "faceBackground": "Assets/Resources/ContentArt/Png/Other/岩层_藏骨堂.png",
             "groundPanel": "Assets/Resources/ContentArt/Png/Venue/F_UI_Panel_H_岩层_藏骨堂.png",
-            "mainBackgroundHex": "#394a50",
+            "mainBackground": "Assets/Arts/Images/Png/Textures/texture29.png",
+            "mainBackgroundHex": "#b09173",
             "slotHex": "#394a50",
             "isBlood": false,
-            "notes": "MainBG=冷海军，填充=#202e37 暗青石，格面=灰石中轨"
+            "notes": "MainBG 滑动=岩层 texture29，色罩 #b09173"
         },
         {
             "id": "rock.magma",
@@ -71,10 +75,11 @@
             "displayName": "岩层_熔岩之地",
             "faceBackground": "Assets/Resources/ContentArt/Png/Other/岩层_熔岩之地.png",
             "groundPanel": "Assets/Resources/ContentArt/Png/Venue/F_UI_Panel_H_岩层_熔岩之地.png",
-            "mainBackgroundHex": "#602c2c",
+            "mainBackground": "Assets/Arts/Images/Png/Textures/texture29.png",
+            "mainBackgroundHex": "#b09173",
             "slotHex": "#de9e41",
             "isBlood": false,
-            "notes": "MainBG=暖褐夜，填充=#be772b 熔金，格面=更亮金橙"
+            "notes": "MainBG 滑动同岩层 texture29"
         },
         {
             "id": "rock.blood",
@@ -86,7 +91,8 @@
             "displayName": "岩层_血色",
             "faceBackground": "Assets/Resources/ContentArt/Png/Other/岩层_血色.png",
             "groundPanel": "Assets/Resources/ContentArt/Png/Venue/F_UI_Panel_H_血色.png",
-            "mainBackgroundHex": "#411d31",
+            "mainBackground": "Assets/Arts/Images/Png/Textures/texture129.png",
+            "mainBackgroundHex": "#7a0305",
             "slotHex": "#a53030",
             "isBlood": true,
             "notes": "困难档整层使用"
@@ -101,10 +107,11 @@
             "displayName": "溶洞_苍白之路",
             "faceBackground": "Assets/Resources/ContentArt/Png/Other/溶洞_苍白之路.png",
             "groundPanel": "Assets/Resources/ContentArt/Png/Venue/F_UI_Panel_H_溶洞_苍白之路.png",
-            "mainBackgroundHex": "#394a50",
+            "mainBackground": "Assets/Arts/Images/Png/Textures/texture90.png",
+            "mainBackgroundHex": "#b09173",
             "slotHex": "#819796",
             "isBlood": false,
-            "notes": "MainBG=湿青石，填充=#577277 苍白中轨，格面=更亮灰青"
+            "notes": "MainBG 滑动=溶洞 texture90，色罩 #b09173"
         },
         {
             "id": "cave.twilight_hall",
@@ -116,10 +123,11 @@
             "displayName": "溶洞_黄昏礼堂",
             "faceBackground": "Assets/Resources/ContentArt/Png/Other/溶洞_黄昏礼堂.png",
             "groundPanel": "Assets/Resources/ContentArt/Png/Venue/F_UI_Panel_H_溶洞_黄昏礼堂.png",
-            "mainBackgroundHex": "#411d31",
+            "mainBackground": "Assets/Arts/Images/Png/Textures/texture90.png",
+            "mainBackgroundHex": "#b09173",
             "slotHex": "#884b2b",
             "isBlood": false,
-            "notes": "MainBG=酒暮，填充=#602c2c 暮锈，格面=铜橙（与熔岩同暖族但更暗）"
+            "notes": "MainBG 滑动同溶洞 texture90"
         },
         {
             "id": "cave.blood",
@@ -131,7 +139,8 @@
             "displayName": "溶洞_血色",
             "faceBackground": "Assets/Resources/ContentArt/Png/Other/溶洞_血色.png",
             "groundPanel": "Assets/Resources/ContentArt/Png/Venue/F_UI_Panel_H_血色.png",
-            "mainBackgroundHex": "#411d31",
+            "mainBackground": "Assets/Arts/Images/Png/Textures/texture129.png",
+            "mainBackgroundHex": "#7a0305",
             "slotHex": "#a53030",
             "isBlood": true,
             "notes": "困难档整层使用"

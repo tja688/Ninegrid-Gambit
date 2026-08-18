@@ -123,6 +123,9 @@ namespace NineGrid.Content.Editor
                 row.displayName = row.displayName ?? string.Empty;
                 row.faceBackground = (row.faceBackground ?? string.Empty).Replace('\\', '/');
                 row.groundPanel = (row.groundPanel ?? string.Empty).Replace('\\', '/');
+                row.mainBackground = string.IsNullOrWhiteSpace(row.mainBackground)
+                    ? DungeonEnvironmentCatalog.ResolveMainBackgroundResourcePath(row.floor, row.isBlood)
+                    : row.mainBackground.Replace('\\', '/');
                 row.mainBackgroundHex = string.IsNullOrWhiteSpace(row.mainBackgroundHex)
                     ? DungeonEnvironmentCatalog.ResolveMainBackgroundColorHex(row.displayName, row.isBlood)
                     : NormalizeHex(row.mainBackgroundHex);
@@ -146,7 +149,7 @@ namespace NineGrid.Content.Editor
         {
             if (string.IsNullOrWhiteSpace(hex))
             {
-                return "#411d31";
+                return DungeonEnvironmentCatalog.MainBackgroundDefaultColorHex;
             }
 
             hex = hex.Trim();

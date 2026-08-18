@@ -917,6 +917,27 @@ public sealed class PixelArtImageProcessorWindow : EditorWindow
         };
     }
 
+    private TextureWrapMode ResolveWrapMode(string assetPath)
+    {
+        return IsTilingBackdropTexture(assetPath) ? TextureWrapMode.Repeat : settings.wrapMode;
+    }
+
+    private static bool IsTilingBackdropTexture(string assetPath)
+    {
+        if (string.IsNullOrEmpty(assetPath))
+        {
+            return false;
+        }
+
+        var fileName = Path.GetFileName(assetPath);
+        return string.Equals(fileName, "texture21.png", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(fileName, "texture45.png", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(fileName, "texture185.png", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(fileName, "texture29.png", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(fileName, "texture90.png", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(fileName, "texture129.png", StringComparison.OrdinalIgnoreCase);
+    }
+
     private bool TryProcessPngAsset(string assetPath, SpriteImportMode spriteImportMode, string mark, out bool changed)
     {
         changed = false;
@@ -924,6 +945,7 @@ public sealed class PixelArtImageProcessorWindow : EditorWindow
         if (importer == null)
             return false;
 
+        var wrapMode = ResolveWrapMode(assetPath);
         // 先读再比，避免无意义 dirty + reimport。
         TextureImporterPlatformSettings platform = importer.GetDefaultPlatformTextureSettings();
         bool needs =
@@ -935,7 +957,7 @@ public sealed class PixelArtImageProcessorWindow : EditorWindow
             importer.filterMode != settings.filterMode ||
             importer.textureCompression != settings.textureCompression ||
             importer.alphaIsTransparency != settings.alphaIsTransparency ||
-            importer.wrapMode != settings.wrapMode ||
+            importer.wrapMode != wrapMode ||
             platform.maxTextureSize != settings.maxTextureSize ||
             platform.textureCompression != settings.textureCompression ||
             platform.format != settings.textureFormat ||
@@ -951,7 +973,7 @@ public sealed class PixelArtImageProcessorWindow : EditorWindow
         importer.filterMode = settings.filterMode;
         importer.textureCompression = settings.textureCompression;
         importer.alphaIsTransparency = settings.alphaIsTransparency;
-        importer.wrapMode = settings.wrapMode;
+        importer.wrapMode = wrapMode;
 
         platform.maxTextureSize = settings.maxTextureSize;
         platform.textureCompression = settings.textureCompression;
