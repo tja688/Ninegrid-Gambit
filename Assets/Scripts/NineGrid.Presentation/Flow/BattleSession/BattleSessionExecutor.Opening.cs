@@ -692,6 +692,8 @@ namespace NineGrid.Flow
                             snapToAnchor: true);
                     }
                 }
+
+                await TutorialCoach.NotifyAvatarSettledAsync(avatar, cancellationToken);
             }
 
             // 按内核盘面 uid→slot 就位：从发牌原点飞向格位（不占抽牌堆视觉 slot0）。
@@ -949,6 +951,8 @@ namespace NineGrid.Flow
 
                 // 开局收束终对账：赠牌/洗牌后视觉卡组序对齐 Core 抽牌堆（slot 0 = 下一张要发）。
                 await BoardPresentationPlayer.SyncDeckVisualOrderFromCoreAsync(Deck, cancellationToken);
+
+                await TutorialCoach.NotifyOpeningBoardDealtAsync(cancellationToken);
             }
             finally
             {

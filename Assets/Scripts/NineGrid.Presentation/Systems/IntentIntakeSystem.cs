@@ -216,6 +216,11 @@ namespace NineGrid.Presentation.Systems
                 return mLegalityOverride(intent);
             }
 
+            if (!NineGrid.Flow.Tutorial.TutorialCoach.IsIntentAllowed(intent, out rejectReason))
+            {
+                return false;
+            }
+
             var arch = NineGridArchitecture.Interface;
 
             if (string.Equals(intent.Kind, InputIntentKinds.Explore, StringComparison.Ordinal))

@@ -68,6 +68,10 @@ namespace NineGrid.Presentation.Controllers
             {
                 PresentationInputGates.EndExternalHold("Pickup-apply-reject");
             }
+            else
+            {
+                NineGrid.Flow.Tutorial.TutorialCoach.NotifyItemPickedUp(groundSlot);
+            }
 
             return summary;
         }

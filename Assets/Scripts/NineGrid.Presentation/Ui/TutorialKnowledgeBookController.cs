@@ -221,6 +221,11 @@ namespace NineGrid.Presentation.Ui
 
             if (open)
             {
+                if (!NineGrid.Flow.Tutorial.TutorialCoach.IsRulebookAllowed)
+                {
+                    return;
+                }
+
                 if (PlayerAudioSettingsPanel.IsOpen
                     || CharacterSelectPanel.IsOpen
                     || PureBlackScreenOverlay.IsActive
@@ -693,7 +698,8 @@ namespace NineGrid.Presentation.Ui
             private void Update()
             {
                 var inRun = IsInRun();
-                SetVisualsActive(inRun);
+                var rulebookAllowed = NineGrid.Flow.Tutorial.TutorialCoach.IsRulebookAllowed;
+                SetVisualsActive(inRun && rulebookAllowed);
 
                 if (mCollider == null)
                 {
@@ -701,6 +707,7 @@ namespace NineGrid.Presentation.Ui
                 }
 
                 var allowed = inRun
+                    && rulebookAllowed
                     && !IsOpen
                     && !BattleUiDimmerOverlay.IsActive
                     && !PlayerAudioSettingsPanel.IsOpen

@@ -526,7 +526,7 @@ namespace NineGrid.Flow
                 }
             }
 
-            TutorialCoach.OnBattleStarted(TutorialEntryKind.Natural);
+            TutorialCoach.OnBattleStarted(TutorialEntryKind.Natural, mShell.NodeIndex);
             try
             {
                 await session.StartBattleNodeAsync(options, ct);

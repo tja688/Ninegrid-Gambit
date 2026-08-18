@@ -36,12 +36,17 @@ namespace NineGrid.Flow
             }
         }
 
+        public static void SuppressMissingWarningForTests()
+        {
+            sMissingWarned = true;
+        }
+
         public static IRunSaveStore StoreOrNull()
         {
             if (sStore == null && !sMissingWarned)
             {
                 sMissingWarned = true;
-                Debug.LogError(
+                Debug.LogWarning(
                     "[RunSave] 存档后端未注册：Easy Save 3 桥（NineGrid.SaveBridge）缺失，存读档不可用。");
             }
 

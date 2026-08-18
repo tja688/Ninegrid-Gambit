@@ -66,7 +66,7 @@ namespace NineGrid.Flow.Tutorial
             for (var i = 0; i < OpeningCardSequence.Count; i++)
             {
                 var defId = OpeningCardSequence[i];
-                var draft = content?.CreateDraft(defId) ?? new CardDraft(defId, CardKind.None);
+                var draft = content?.CreateDraft(defId) ?? new CardDraft(defId, CardKind.Unknown);
                 options.AddEnemyCard(draft);
             }
 

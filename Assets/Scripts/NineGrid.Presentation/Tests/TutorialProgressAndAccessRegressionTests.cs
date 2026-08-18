@@ -39,6 +39,7 @@ namespace NineGrid.Presentation.Tests
         public void TearDown()
         {
             RunSaveStoreHook.Set(null);
+            RunSaveStoreHook.SuppressMissingWarningForTests();
             RunSetupSelection.ResetToDefault();
         }
 
@@ -117,6 +118,7 @@ namespace NineGrid.Presentation.Tests
         public void TutorialProgressStore_MissingBackend_ReturnsFalseAndDoesNotThrow()
         {
             RunSaveStoreHook.Set(null);
+            RunSaveStoreHook.SuppressMissingWarningForTests();
 
             Assert.IsFalse(TutorialProgressStore.IsSteps1To9Completed());
             Assert.IsFalse(TutorialProgressStore.IsDoorTutorialSeen());

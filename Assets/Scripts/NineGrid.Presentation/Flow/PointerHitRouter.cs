@@ -82,6 +82,11 @@ namespace NineGrid.Flow
 
             if (WorldPointerUtility.WasSecondaryPressedThisFrame())
             {
+                if (!TutorialCoach.IsRightClickInspectAllowed)
+                {
+                    return;
+                }
+
                 // ADR-0027：半黑屏盖住遗物栏时仍须能右键开详述（满栏 Bounce 亦可看）。
                 if (TryInspectEquippedRelicUnderPointer(cam, screen))
                 {
