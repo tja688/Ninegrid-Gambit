@@ -72,6 +72,12 @@ namespace NineGrid.Core
                 return GameActionResult.Empty;
             }
 
+            // ADR-0017：道具卡等非可交战 Kind 免疫 DealDamage（避免 HP=0 误走 KillIfDead）。
+            if (!CardCombatRules.CanReceiveDamage(target.Kind))
+            {
+                return GameActionResult.Empty;
+            }
+
             var statSystem = context.GetSystem<IStatSystem>();
             var statContext = statSystem.CreateContext(target)
                 .WithActionSource(ActionName, SourceDefId, Cause)

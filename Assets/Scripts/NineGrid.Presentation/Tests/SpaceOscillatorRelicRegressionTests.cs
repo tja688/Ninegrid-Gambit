@@ -154,6 +154,36 @@ namespace NineGrid.Presentation.Tests
             AssertOscillatorHit(swapTarget, "中心占用者仍应受伤");
         }
 
+        [Test]
+        public void PositionSwap_AdjacentHelpCard_IsNotDamagedOrRemoved()
+        {
+            CreateAvatarOnBoard(SlotId.Center);
+            var swapTarget = CreateRealCardOnBoard(MonsterDefId, SlotId.Board(1));
+            var helpCard = CreateRealCardOnBoard("help.common_chest_card", SlotId.Board(2));
+            GrantOscillator();
+            var swapCard = CreateItemCard(PositionSwapDefId);
+
+            Assert.IsTrue(UseItem(swapCard.Uid, swapTarget.Uid).Accepted);
+
+            Assert.AreEqual(ZoneId.Board, helpCard.Zone.Value, "邻格道具卡应留在盘面");
+            Assert.AreEqual(helpCard.Uid, mArch.GetModel<BoardModel>().GetCardUid(SlotId.Board(2)));
+            AssertOscillatorMiss(helpCard, "振荡器不得伤害邻格道具卡");
+        }
+
+        [Test]
+        public void PositionSwap_AdjacentTrap_TakesOscillatorDamage()
+        {
+            CreateAvatarOnBoard(SlotId.Center);
+            var swapTarget = CreateRealCardOnBoard(MonsterDefId, SlotId.Board(1));
+            var flame = CreateRealCardOnBoard("trap.flame", SlotId.Board(2));
+            GrantOscillator();
+            var swapCard = CreateItemCard(PositionSwapDefId);
+
+            Assert.IsTrue(UseItem(swapCard.Uid, swapTarget.Uid).Accepted);
+
+            AssertOscillatorHit(flame, "振荡器应对邻格机关造成 2 点伤害");
+        }
+
         private void LoadRealCatalog()
         {
             var content = mArch.GetSystem<IContentSystem>();

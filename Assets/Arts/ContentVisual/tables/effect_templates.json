@@ -141,7 +141,7 @@
   "design_text": "[专属换位卡结算成功后] 以换位后玩家格为原点，对全向邻格合法目标各造成2点伤害，排除自身",
   "requires_json": "[\"NoOwnerEntity\"]",
   "conditions_json": "[\"EventFilter:eventType=AvatarMoved\"]",
-  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnEvent\",\"eventType\":\"AvatarMoved\"},\"conditions\":[{\"atom\":\"EventFilter\",\"eventType\":\"AvatarMoved\",\"sourceDefId\":\"help.position_swap\"}],\"target\":{\"atom\":\"FilteredCards\",\"zone\":\"Board\",\"adjacentTo\":\"Player\",\"adjacency\":\"Omnidirectional\",\"exclude\":[\"Player\"]},\"action\":{\"atom\":\"DealDamage\",\"amount\":\"{{amount}}\",\"actor\":\"Player\"}}"
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnEvent\",\"eventType\":\"AvatarMoved\"},\"conditions\":[{\"atom\":\"EventFilter\",\"eventType\":\"AvatarMoved\",\"sourceDefId\":\"help.position_swap\"}],\"target\":{\"atom\":\"FilteredCards\",\"zone\":\"Board\",\"adjacentTo\":\"Player\",\"adjacency\":\"Omnidirectional\",\"exclude\":[\"Player\"],\"combatTarget\":true},\"action\":{\"atom\":\"DealDamage\",\"amount\":\"{{amount}}\",\"actor\":\"Player\"}}"
  },
  {
   "id": "tpl.help.swap_card.use",

@@ -1497,6 +1497,7 @@ namespace NineGrid.Core.Effects
         private int mCount;
         private bool? mFaceUp;
         private bool mOmnidirectionalAdjacency;
+        private bool mCombatTarget;
 
         public void Configure(EffectDslNode config)
         {
@@ -1505,6 +1506,7 @@ namespace NineGrid.Core.Effects
             mZone = config.Get("zone").AsEnum(ZoneId.None);
             mAdjacentToRef = config.Get("adjacentTo").AsString(string.Empty);
             mOmnidirectionalAdjacency = IsOmnidirectionalAdjacency(config.Get("adjacency").AsString(string.Empty));
+            mCombatTarget = config.Get("combatTarget").AsBool(false);
             mMinLevel = Math.Max(0, config.Get("minLevel").AsInt(0));
             mMaxLevel = Math.Max(0, config.Get("maxLevel").AsInt(0));
             mExcludeElite = config.Get("excludeElite").AsBool(false);
@@ -1547,7 +1549,8 @@ namespace NineGrid.Core.Effects
                 mExcludeBoss,
                 mExcludeRefs,
                 mFaceUp,
-                mOmnidirectionalAdjacency);
+                mOmnidirectionalAdjacency,
+                mCombatTarget);
             for (var i = candidates.Count - 1; i >= 0; i--)
             {
                 if (Contains(result, candidates[i]) || !MatchesSlotFilter(context, candidates[i]))
@@ -4332,7 +4335,8 @@ namespace NineGrid.Core.Effects
             bool excludeBoss,
             IReadOnlyList<string> excludeRefs,
             bool? faceUp = null,
-            bool omnidirectionalAdjacency = false)
+            bool omnidirectionalAdjacency = false,
+            bool combatTarget = false)
         {
             var result = new List<int>();
             if (context == null)
@@ -4353,7 +4357,7 @@ namespace NineGrid.Core.Effects
             {
                 for (var i = 0; i < zones.Count; i++)
                 {
-                    AddCardsFromZone(context, result, defId, kind, zones[i], requiresAdjacency, adjacentToCard, minLevel, maxLevel, excludeElite, excludeBoss, excludeRefs, faceUp, omnidirectionalAdjacency);
+                    AddCardsFromZone(context, result, defId, kind, zones[i], requiresAdjacency, adjacentToCard, minLevel, maxLevel, excludeElite, excludeBoss, excludeRefs, faceUp, omnidirectionalAdjacency, combatTarget);
                 }
 
                 return result;
@@ -4363,13 +4367,13 @@ namespace NineGrid.Core.Effects
             {
                 foreach (var uid in context.Board.BoardCardUids())
                 {
-                    AddIfMatches(context, result, uid, defId, kind, ZoneId.Board, requiresAdjacency, adjacentToCard, minLevel, maxLevel, excludeElite, excludeBoss, excludeRefs, faceUp, omnidirectionalAdjacency);
+                    AddIfMatches(context, result, uid, defId, kind, ZoneId.Board, requiresAdjacency, adjacentToCard, minLevel, maxLevel, excludeElite, excludeBoss, excludeRefs, faceUp, omnidirectionalAdjacency, combatTarget);
                 }
 
                 return result;
             }
 
-            AddCardsFromZone(context, result, defId, kind, zone, requiresAdjacency, adjacentToCard, minLevel, maxLevel, excludeElite, excludeBoss, excludeRefs, faceUp, omnidirectionalAdjacency);
+            AddCardsFromZone(context, result, defId, kind, zone, requiresAdjacency, adjacentToCard, minLevel, maxLevel, excludeElite, excludeBoss, excludeRefs, faceUp, omnidirectionalAdjacency, combatTarget);
 
             return result;
         }
@@ -4388,13 +4392,14 @@ namespace NineGrid.Core.Effects
             bool excludeBoss,
             IReadOnlyList<string> excludeRefs,
             bool? faceUp,
-            bool omnidirectionalAdjacency)
+            bool omnidirectionalAdjacency,
+            bool combatTarget)
         {
             if (zone == ZoneId.Board)
             {
                 foreach (var uid in context.Board.BoardCardUids())
                 {
-                    AddIfMatches(context, result, uid, defId, kind, zone, requiresAdjacency, adjacentToCard, minLevel, maxLevel, excludeElite, excludeBoss, excludeRefs, faceUp, omnidirectionalAdjacency);
+                    AddIfMatches(context, result, uid, defId, kind, zone, requiresAdjacency, adjacentToCard, minLevel, maxLevel, excludeElite, excludeBoss, excludeRefs, faceUp, omnidirectionalAdjacency, combatTarget);
                 }
 
                 return;
@@ -4402,7 +4407,7 @@ namespace NineGrid.Core.Effects
 
             foreach (var pair in context.Registry.Cards)
             {
-                AddIfMatches(context, result, pair.Key, defId, kind, zone, requiresAdjacency, adjacentToCard, minLevel, maxLevel, excludeElite, excludeBoss, excludeRefs, faceUp, omnidirectionalAdjacency);
+                AddIfMatches(context, result, pair.Key, defId, kind, zone, requiresAdjacency, adjacentToCard, minLevel, maxLevel, excludeElite, excludeBoss, excludeRefs, faceUp, omnidirectionalAdjacency, combatTarget);
             }
         }
 
@@ -4468,7 +4473,8 @@ namespace NineGrid.Core.Effects
             bool excludeBoss,
             IReadOnlyList<string> excludeRefs,
             bool? faceUp,
-            bool omnidirectionalAdjacency)
+            bool omnidirectionalAdjacency,
+            bool combatTarget)
         {
             CardInstance card;
             if (!context.TryGetCard(uid, out card))
@@ -4482,6 +4488,11 @@ namespace NineGrid.Core.Effects
             }
 
             if (kind != CardKind.Unknown && card.Kind != kind)
+            {
+                return;
+            }
+
+            if (combatTarget && !CardCombatRules.IsBoardCombatTarget(card.Kind))
             {
                 return;
             }
