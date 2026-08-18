@@ -169,6 +169,7 @@ namespace NineGrid.Flow
             mShell.SetBusy(true);
             TutorialBattleDirector director = null;
             var completed = false;
+            TutorialCoach.OnBattleStarted(TutorialEntryKind.Menu);
             try
             {
                 mShell.IncrementNodeIndex();
@@ -215,6 +216,7 @@ namespace NineGrid.Flow
             finally
             {
                 director?.Stop();
+                TutorialCoach.OnBattleEnded();
                 mShell.SetBusy(false);
             }
 
@@ -489,7 +491,16 @@ namespace NineGrid.Flow
                     arch.GetModel<RunModel>());
             }
 
-            var options = arch.GetSystem<IRewardSystem>().BuildNodeDeckOptions(contentNodeIndex, monsterDeckId);
+            NodeDeckOptions options;
+            if (mShell.NodeIndex == 1 && !mShell.IsQuickTestMode && !TutorialProgressStore.IsSteps1To9Completed())
+            {
+                options = TutorialDeckPlan.BuildOpeningOptions(arch.GetSystem<IContentSystem>());
+            }
+            else
+            {
+                options = arch.GetSystem<IRewardSystem>().BuildNodeDeckOptions(contentNodeIndex, monsterDeckId);
+            }
+
             if (options == null)
             {
                 options = NodeDeckOptions.CreateDefaultBattle();
@@ -515,22 +526,30 @@ namespace NineGrid.Flow
                 }
             }
 
-            await session.StartBattleNodeAsync(options, ct);
-            if (ct.IsCancellationRequested)
+            TutorialCoach.OnBattleStarted(TutorialEntryKind.Natural);
+            try
             {
-                return false;
+                await session.StartBattleNodeAsync(options, ct);
+                if (ct.IsCancellationRequested)
+                {
+                    return false;
+                }
+
+                ApplyQuickTestAvatarCheatsIfNeeded();
+                ApplyQuickTestSkillMountsIfNeeded();
+                ApplyQuickTestTimeScale();
+
+                session.TryEnterNodeSettlement();
+
+                Debug.Log($"[GameFlow] 节点 {mShell.NodeIndex} 已入场，等待节点结算");
+                await mSettlementTcs.Task.AttachExternalCancellation(ct);
+                Debug.Log($"[GameFlow] 节点 {mShell.NodeIndex} 结算就绪，进入奖励");
+                return true;
             }
-
-            ApplyQuickTestAvatarCheatsIfNeeded();
-            ApplyQuickTestSkillMountsIfNeeded();
-            ApplyQuickTestTimeScale();
-
-            session.TryEnterNodeSettlement();
-
-            Debug.Log($"[GameFlow] 节点 {mShell.NodeIndex} 已入场，等待节点结算");
-            await mSettlementTcs.Task.AttachExternalCancellation(ct);
-            Debug.Log($"[GameFlow] 节点 {mShell.NodeIndex} 结算就绪，进入奖励");
-            return true;
+            finally
+            {
+                TutorialCoach.OnBattleEnded();
+            }
         }
 
         private async UniTask PlayRewardChoiceAsync(CancellationToken ct)

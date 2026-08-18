@@ -2,6 +2,7 @@ using NineGrid.Cards;
 using NineGrid.Flow.BattleInfoPreview;
 using NineGrid.Flow.BoardBriefTip;
 using NineGrid.Flow.PurchaseAmountTip;
+using NineGrid.Flow.Tutorial;
 using NineGrid.Presentation;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -93,6 +94,12 @@ namespace NineGrid.Flow
             }
 
             if (!WorldPointerUtility.WasPrimaryPressedThisFrame())
+            {
+                return;
+            }
+
+            // 教程教练卡点推进（阻断棋盘四动作，主键点击只推进教练）
+            if (TutorialCoach.TryConsumeAdvance())
             {
                 return;
             }

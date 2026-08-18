@@ -10,6 +10,7 @@ using NineGrid.Core.Systems;
 using NineGrid.Flow.BoardBriefTip;
 using NineGrid.Flow.Diagnostics;
 using NineGrid.Flow.Presentation;
+using NineGrid.Flow.Tutorial;
 using NineGrid.Presentation;
 using NineGrid.Presentation.Systems;
 using QFramework;
@@ -287,6 +288,7 @@ namespace NineGrid.Flow
                 RefreshPersistentInBattleUi(animate: false);
                 PlayerInfoHudPresenter.TryGetInstance()?.SyncFromCore(animate: false);
                 LogAvatarDefeatProbeAfterStartNode(arch);
+                CheckAndNotifyLeaveTrapSettled();
 
                 // 开局若已置离开机关清关标志（罕见），补走 PostKill→CompleteNodeIfCleared。
                 if (phase.CurrentPhase == GamePhase.InteractionLoop
@@ -300,6 +302,31 @@ namespace NineGrid.Flow
             finally
             {
                 _isBusy = false;
+            }
+        }
+
+        private void CheckAndNotifyLeaveTrapSettled()
+        {
+            if (Field == null)
+            {
+                return;
+            }
+
+            for (var slot = 1; slot <= 9; slot++)
+            {
+                if (slot == GroundSlotTopology.AvatarReservedSlot)
+                {
+                    continue;
+                }
+
+                if (Field.TryGetCardAt(slot, out var card) && card != null && !string.IsNullOrEmpty(card.DefId))
+                {
+                    if (card.DefId.StartsWith("trap.leave", StringComparison.OrdinalIgnoreCase))
+                    {
+                        TutorialCoach.NotifyLeaveTrapSettled(slot, card);
+                        break;
+                    }
+                }
             }
         }
 

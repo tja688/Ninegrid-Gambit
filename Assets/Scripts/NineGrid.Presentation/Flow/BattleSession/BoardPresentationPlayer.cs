@@ -9,6 +9,7 @@ using NineGrid.Core;
 using NineGrid.Core.Systems;
 using NineGrid.Flow.Diagnostics;
 using NineGrid.Flow.Presentation;
+using NineGrid.Flow.Tutorial;
 using NineGrid.Presentation;
 using UnityEngine;
 
@@ -256,6 +257,7 @@ namespace NineGrid.Flow
                             fieldManager,
                             requestId,
                             occupancyPendingVacateUids);
+                        CheckAndNotifyLeaveTrapSettled(fieldManager);
                         FieldTraceHelper.RecordDrainEnd(
                             moveCount,
                             dealCount,
@@ -639,6 +641,31 @@ namespace NineGrid.Flow
                     await UniTask.Delay(
                         TimeSpan.FromSeconds(dealInterval),
                         cancellationToken: ct);
+                }
+            }
+        }
+
+        private static void CheckAndNotifyLeaveTrapSettled(GroundFieldView fieldManager)
+        {
+            if (fieldManager == null)
+            {
+                return;
+            }
+
+            for (var slot = 1; slot <= 9; slot++)
+            {
+                if (slot == GroundSlotTopology.AvatarReservedSlot)
+                {
+                    continue;
+                }
+
+                if (fieldManager.TryGetCardAt(slot, out var card) && card != null && !string.IsNullOrEmpty(card.DefId))
+                {
+                    if (card.DefId.StartsWith("trap.leave", StringComparison.OrdinalIgnoreCase))
+                    {
+                        TutorialCoach.NotifyLeaveTrapSettled(slot, card);
+                        break;
+                    }
                 }
             }
         }
