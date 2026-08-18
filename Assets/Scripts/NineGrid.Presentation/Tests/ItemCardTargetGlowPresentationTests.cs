@@ -4,6 +4,7 @@ using NineGrid.Cards.Vfx;
 using NineGrid.Core;
 using NineGrid.Core.Content;
 using NineGrid.Core.Systems;
+using NineGrid.Flow;
 using NUnit.Framework;
 using QFramework;
 using UnityEngine;
@@ -229,18 +230,14 @@ namespace NineGrid.Presentation.Tests
         {
             BoardCardSelectModeController.Begin(300, "help.swap_card", 2);
 
-            var doorCard = new ManagedCard
+            var doorCard = new ManagedCard(999, "trap.leave", null)
             {
-                Uid = 999,
-                DefId = "trap.leave",
                 CoreKind = CardPresentationKind.Trap,
                 DisplayMode = CardDisplayMode.GroundCardMode,
             };
 
-            var monsterCard = new ManagedCard
+            var monsterCard = new ManagedCard(888, "monster.slime", null)
             {
-                Uid = 888,
-                DefId = "monster.slime",
                 CoreKind = CardPresentationKind.Monster,
                 DisplayMode = CardDisplayMode.GroundCardMode,
             };

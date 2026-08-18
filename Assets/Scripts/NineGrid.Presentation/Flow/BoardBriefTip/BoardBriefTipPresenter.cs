@@ -1,6 +1,7 @@
 using System;
 using System.Threading;
 using Cysharp.Threading.Tasks;
+using NineGrid.Cards.Presentation;
 using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -96,6 +97,7 @@ namespace NineGrid.Flow.BoardBriefTip
 
         private void OnDestroy()
         {
+            ReleaseDescriptionSpriteAsset();
             if (ReferenceEquals(sInstance, this))
             {
                 sInstance = null;
@@ -158,6 +160,7 @@ namespace NineGrid.Flow.BoardBriefTip
             {
                 await UniTask.Delay(
                     TimeSpan.FromSeconds(durationSeconds),
+                    DelayType.Realtime,
                     cancellationToken: this != null ? destroyCancellationToken : CancellationToken.None);
                 ClearNotice(gen);
             }
@@ -214,13 +217,12 @@ namespace NineGrid.Flow.BoardBriefTip
             }
         }
 
+        private TMP_SpriteAsset mDescriptionSpriteAsset;
+
         private void ApplyVisual()
         {
             var text = mSession.DisplayText;
-            if (bodyText != null)
-            {
-                bodyText.text = text;
-            }
+            UpdateBodyText(text);
 
             if (panelRoot == null)
             {
@@ -239,6 +241,56 @@ namespace NineGrid.Flow.BoardBriefTip
             {
                 board.enabled = visible;
             }
+        }
+
+        private void UpdateBodyText(string text)
+        {
+            if (bodyText == null)
+            {
+                return;
+            }
+
+            if (string.IsNullOrEmpty(text))
+            {
+                ReleaseDescriptionSpriteAsset();
+                bodyText.spriteAsset = null;
+                bodyText.text = string.Empty;
+                return;
+            }
+
+            var catalog = CardFacePresentationBinder.GetIconCatalog();
+            var registry = CardFacePresentationBinder.GetDefaultRegistry();
+            var composed = CardFaceDescriptionComposer.Compose(
+                text,
+                assembledIcons: null,
+                registry: registry,
+                catalog: catalog);
+
+            ReleaseDescriptionSpriteAsset();
+            if (composed.Icons.Count > 0)
+            {
+                mDescriptionSpriteAsset = CardFaceDescriptionSpriteAssetBuilder.Build(
+                    composed.Icons,
+                    CardFacePresentationBinder.GetInlineIconStyle());
+                bodyText.spriteAsset = mDescriptionSpriteAsset;
+            }
+            else
+            {
+                bodyText.spriteAsset = null;
+            }
+
+            bodyText.text = composed.TmpRichText;
+        }
+
+        private void ReleaseDescriptionSpriteAsset()
+        {
+            if (mDescriptionSpriteAsset == null)
+            {
+                return;
+            }
+
+            CardFaceDescriptionSpriteAssetBuilder.DestroyBuilt(mDescriptionSpriteAsset);
+            mDescriptionSpriteAsset = null;
         }
 
         private static void AdoptInstance(BoardBriefTipPresenter presenter)

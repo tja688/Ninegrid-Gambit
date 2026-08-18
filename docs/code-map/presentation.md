@@ -236,9 +236,9 @@
 
 ### 简要解释文字框与楼层提示（#89 · ADR-0020）
 
-- 文案：`BoardBriefTipCopy`（房间 DisplayName+注入摘要 / 导航固定文案 / **大楼层提示=当前地下城环境显示名**（ADR-0053）+ 房间类型「战斗房间」等；另备 `ForOptionOrShelf` 供房内货架·就地选项与候选——商店/卡店/特殊奖励房/属性房主循环已接线 #92/#93/#94/#137，非 M2 待落地）
+- 文案：`BoardBriefTipCopy`（房间 DisplayName+注入摘要 / 导航固定文案 / **大楼层提示=当前地下城环境显示名**（ADR-0053）+ 房间类型「战斗房间」等；备 `ForOptionOrShelf` 供房内货架·就地选项与候选；**`ForCard`** 统一解析卡牌名称 + 装配动态参数插值 `HelpCardMagnitudeOverlay.ProjectHelpCardDescription` / `CardFaceDescriptionProjector.Project` 与价格，供商店/卡店/特殊奖励房/属性房 #92/#93/#94/#137 同源消费）
 - 会话：`BoardBriefTipSession`（悬停与 Notice；Notice 盖悬停；代数清；`HardClear` 双路硬清）
-- 场景：`BoardBriefTipPresenter`（**#141 起场景序列化**于 `Panels/简要解释文字框`，`panelRoot` 显式指向面板自身；运行时 AddComponent 兜底仅存于未序列化的开发场景；`ShowNotice` 具备 1.5s 代数自清定时器，防止「金币不足」等 Notice 永久遮蔽悬停）；`FloorHintPresenter` → 楼层提示
+- 场景：`BoardBriefTipPresenter`（**#141 起场景序列化**于 `Panels/简要解释文字框`，`panelRoot` 显式指向面板自身；运行时 AddComponent 兜底仅存于未序列化的开发场景；`ShowNotice` 具备 1.5s 代数自清定时器，防止「金币不足」等 Notice 永久遮蔽悬停；**内联图标与词条富文本**：由 `CardFaceDescriptionComposer.Compose` 转译词条 `[[...]]` 与 `[...]` / `<sprite>`，动态构建 `TMP_SpriteAsset` 赋予 `bodyText.spriteAsset`，清退时安全销毁释放）；`FloorHintPresenter` → 楼层提示
 - 命中：场地图标 `BoardBriefTipHitProxy`；商店 `ShopBoardHitProxy`；卡店 `TavernBoardHitProxy`；特殊房 `RewardBoardHitProxy`；属性房候选 `AttributeBoardHitProxy`；离开图标仍 `BoardBriefTipHitProxy` + 驻留——均**认领格位**、不自建命中盒、不注册 Router（#102）
 - 悬停/点击同源：`GroundFieldHitSurface` 读当前格认领者的 `BriefTipText` / `Activate`
 - 金额提示：**`Flow/PurchaseAmountTip/PurchaseAmountTipPresenter`**（新一轮设计）——商店/卡店购买选项悬停时在**格位中心**显示购买金额，文字源优先为场景 `Panels/ShopPanel/购买金额`（或 `金额购买提示模板` / 3D TMP，运行时脱离 ShopPanel 父级独立显隐与渲染；未找到时自动兜底动态创建标准金色 TMP）；金额经 `ShopBoardPresenter.ResolveShelfPriceGold` / `TavernBoardPresenter.ResolveServicePriceGold`（与 Core 扣费同口径，卡店强化 75+25×次数 / 固定 50 / 扩容 150+50×次数，刷新价=本店当前翻倍价）；悬停进入/退出挂 `SlotClaimant.HoverEnter/Exit`（与简要文案同源），**代数制**防旧悬停脏写，购/刷/撤场 `HideAll` 硬清

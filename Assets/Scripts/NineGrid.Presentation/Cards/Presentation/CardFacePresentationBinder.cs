@@ -704,7 +704,7 @@ namespace NineGrid.Cards.Presentation
             _descriptionSpriteAsset = null;
         }
 
-        private static CardFaceSlotRegistrySO GetDefaultRegistry()
+        public static CardFaceSlotRegistrySO GetDefaultRegistry()
         {
             if (_defaultRegistry == null)
             {
@@ -716,7 +716,7 @@ namespace NineGrid.Cards.Presentation
             return _defaultRegistry;
         }
 
-        private static CardFaceDescriptionInlineIconStyleSO GetInlineIconStyle()
+        public static CardFaceDescriptionInlineIconStyleSO GetInlineIconStyle()
         {
             if (_inlineIconStyleOverride != null)
             {
@@ -733,7 +733,7 @@ namespace NineGrid.Cards.Presentation
             return _cachedInlineIconStyle;
         }
 
-        private static CardFaceDescriptionIconCatalogSO GetIconCatalog()
+        public static CardFaceDescriptionIconCatalogSO GetIconCatalog()
         {
             if (_iconCatalogOverride != null)
             {

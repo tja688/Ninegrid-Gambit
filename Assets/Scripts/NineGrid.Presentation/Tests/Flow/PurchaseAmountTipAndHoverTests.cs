@@ -86,10 +86,51 @@ namespace NineGrid.Presentation.Tests.Flow
             Assert.AreEqual("短时提示", presenter.Session.DisplayText);
             Assert.IsTrue(presenter.Session.IsVisible);
 
-            await UniTask.Delay(TimeSpan.FromMilliseconds(100));
+            await UniTask.Delay(TimeSpan.FromMilliseconds(150), DelayType.Realtime);
 
             Assert.AreEqual(string.Empty, presenter.Session.DisplayText);
             Assert.IsFalse(presenter.Session.IsVisible);
         });
+
+        [Test]
+        public void BoardBriefTipCopy_ForCard_ResolvesParametersAndPrice()
+        {
+            var tip = BoardBriefTipCopy.ForCard("help.bomb", content: null, priceGold: 50);
+            StringAssert.Contains("爆弹", tip);
+            StringAssert.Contains("4", tip);
+            StringAssert.DoesNotContain("{help.bomb.use.amount}", tip);
+            StringAssert.Contains("50 金币", tip);
+        }
+
+        [Test]
+        public void BoardBriefTip_RendersRichTextAndBuildsSpriteAsset()
+        {
+            var presenter = BoardBriefTipPresenter.EnsureExists();
+            presenter.HardClear();
+
+            var go = new GameObject("TestText");
+            var tmp = go.AddComponent<TextMeshProUGUI>();
+            var tip = "泡沫铠甲：[armor]+3，获得:[[伤害护盾]] · 40 金币";
+
+            presenter.ShowHover(tip);
+
+            if (presenter.BodyTextOrNull != null)
+            {
+                var bodyText = presenter.BodyTextOrNull;
+                StringAssert.Contains("<sprite name=\"armor\">", bodyText.text);
+                StringAssert.Contains("伤害护盾", bodyText.text);
+                StringAssert.DoesNotContain("[[", bodyText.text);
+                StringAssert.DoesNotContain("]]", bodyText.text);
+                Assert.IsNotNull(bodyText.spriteAsset, "Should build TMP_SpriteAsset for [armor]");
+            }
+
+            presenter.ClearHover();
+            if (presenter.BodyTextOrNull != null)
+            {
+                Assert.IsNull(presenter.BodyTextOrNull.spriteAsset, "SpriteAsset should be cleared on hover clear");
+            }
+
+            UnityEngine.Object.DestroyImmediate(go);
+        }
     }
 }

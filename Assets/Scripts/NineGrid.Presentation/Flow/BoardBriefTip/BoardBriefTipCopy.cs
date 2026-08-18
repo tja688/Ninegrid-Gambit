@@ -1,7 +1,11 @@
 using System;
+using NineGrid.Cards;
+using NineGrid.Cards.Presentation;
+using NineGrid.Content.CardPresentation;
 using NineGrid.Core;
 using NineGrid.Core.Content;
 using NineGrid.Core.Localization;
+using NineGrid.Core.Systems;
 
 namespace NineGrid.Flow.BoardBriefTip
 {
@@ -113,6 +117,64 @@ namespace NineGrid.Flow.BoardBriefTip
             }
 
             return room.ToString();
+        }
+
+        /// <summary>
+        /// 卡牌/货架/候选卡悬停文案（ADR-0020 / ADR-0035 / ADR-0037）：
+        /// 统一解析卡牌名称 + 填充装配动态参数与强化增益（卡面同口径）+ 附带价格（可选）。
+        /// 词条/图标副文本后续由 <see cref="BoardBriefTipPresenter"/> 渲染为卡面同款富文本与内联图标。
+        /// </summary>
+        public static string ForCard(string defId, IContentSystem content, int? priceGold = null)
+        {
+            if (string.IsNullOrWhiteSpace(defId))
+            {
+                return string.Empty;
+            }
+
+            string name = defId.Trim();
+            string brief = string.Empty;
+
+            if (content != null && content.HasCatalog
+                && content.Catalog.Cards.TryGetValue(name, out var card)
+                && card != null
+                && !string.IsNullOrWhiteSpace(card.DisplayName))
+            {
+                name = card.DisplayName;
+            }
+
+            if (CardPresentationConfigCatalog.TryGet(name, out var dto)
+                || CardPresentationConfigCatalog.TryGet(defId.Trim(), out dto))
+            {
+                if (dto != null)
+                {
+                    if (!string.IsNullOrWhiteSpace(dto.displayName))
+                    {
+                        name = dto.displayName;
+                    }
+
+                    if (!string.IsNullOrWhiteSpace(dto.description))
+                    {
+                        var kind = CoreCardPresentationMapper.ResolvePresentationKindFromDefId(defId);
+                        if (kind == CardPresentationKind.HelpCard
+                            || string.Equals(dto.kind, "HelpCard", StringComparison.OrdinalIgnoreCase))
+                        {
+                            brief = HelpCardMagnitudeOverlay.ProjectHelpCardDescription(
+                                dto.description,
+                                dto.effectAssemblies);
+                        }
+                        else
+                        {
+                            brief = CardFaceDescriptionProjector.Project(
+                                CardDescriptionProjectionMode.Inspect,
+                                dto.description,
+                                dto.effectAssemblies);
+                        }
+                    }
+                }
+            }
+
+            var body = string.IsNullOrWhiteSpace(brief) ? name : name + "：" + brief.Trim();
+            return ForOptionOrShelf(body, priceGold);
         }
 
         /// <summary>

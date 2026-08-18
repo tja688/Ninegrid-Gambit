@@ -20,6 +20,9 @@ namespace NineGrid.Cards.Presentation
         private static readonly Regex BracketToken =
             new Regex(@"\[([^\]]+)\]", RegexOptions.CultureInvariant | RegexOptions.Compiled);
 
+        private static readonly Regex SpriteTagToken =
+            new Regex(@"<sprite\s+name=""([^""]+)""[^>]*>", RegexOptions.CultureInvariant | RegexOptions.Compiled);
+
         public readonly struct InlineIcon
         {
             public InlineIcon(string slotCode, Sprite sprite)
@@ -98,6 +101,17 @@ namespace NineGrid.Cards.Presentation
             }
 
             builder.Append(afterTerms, offset, afterTerms.Length - offset);
+
+            // 补充扫描文本中已有的 <sprite name="..."> 标签，保证外部预转译文案也能提取图集
+            foreach (Match match in SpriteTagToken.Matches(afterTerms))
+            {
+                var code = match.Groups[1].Value;
+                if (seen.Add(code) && TryResolve(code, assembledIcons, registry, catalog, out var sprite))
+                {
+                    icons.Add(new InlineIcon(code, sprite));
+                }
+            }
+
             return new Result(builder.ToString(), icons, explicitTerms);
         }
 

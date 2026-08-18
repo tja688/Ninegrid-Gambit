@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using Cysharp.Threading.Tasks;
@@ -405,31 +405,7 @@ namespace NineGrid.Flow.RewardBoard
 
         private static string BuildShelfTip(string defId, IContentSystem content)
         {
-            string name = defId;
-            string brief = string.Empty;
-            if (content != null && content.HasCatalog
-                && content.Catalog.Cards.TryGetValue(defId, out var card)
-                && card != null
-                && !string.IsNullOrWhiteSpace(card.DisplayName))
-            {
-                name = card.DisplayName;
-            }
-
-            if (CardPresentationConfigCatalog.TryGet(defId, out var dto) && dto != null)
-            {
-                if (!string.IsNullOrWhiteSpace(dto.displayName))
-                {
-                    name = dto.displayName;
-                }
-
-                if (!string.IsNullOrWhiteSpace(dto.description))
-                {
-                    brief = dto.description;
-                }
-            }
-
-            var body = string.IsNullOrWhiteSpace(brief) ? name : name + "：" + brief.Trim();
-            return BoardBriefTipCopy.ForOptionOrShelf(body);
+            return BoardBriefTipCopy.ForCard(defId, content, null);
         }
 
         private void AttachClickProxy(
