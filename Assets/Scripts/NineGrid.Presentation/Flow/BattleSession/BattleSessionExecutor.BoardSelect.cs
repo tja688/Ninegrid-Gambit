@@ -159,6 +159,12 @@ namespace NineGrid.Flow
                 return false;
             }
 
+            if (HelpCardBoardSelectResolver.IsImmuneToItemTargeting(targetCard.Uid, targetCard.DefId))
+            {
+                rejectReason = NineGrid.Core.Localization.L10n.Tr("notice.target_magic_immune", "门具有魔免，无法作为目标");
+                return false;
+            }
+
             if (spec.RequiresTrueMonster && targetCard.CoreKind != CardPresentationKind.Monster)
             {
                 rejectReason = NineGrid.Core.Localization.L10n.Tr("notice.target_not_monster", "只能以怪物为目标");

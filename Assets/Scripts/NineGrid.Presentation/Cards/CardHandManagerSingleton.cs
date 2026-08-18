@@ -1380,6 +1380,7 @@ namespace NineGrid.Cards
             // 惯性倾斜写 L1（拖拽期无人占用该层），不与 hover 在 L0 的 punch 旋转互踩。
             var tiltFrame = ResolveDragTiltFrame(card);
             PlayDragPickupSquash(tiltFrame);
+            UpdateDragTargetGlow(card);
             var tiltPreviousX = card.Transform.position.x;
             var tiltVelocityX = 0f;
             var tiltDegrees = 0f;
@@ -1459,7 +1460,105 @@ namespace NineGrid.Cards
             finally
             {
                 ResetDragTilt(tiltFrame);
+                BoardRangeGlowFx.Hide(this);
             }
+        }
+
+        private void UpdateDragTargetGlow(ManagedCard card)
+        {
+            if (card == null)
+            {
+                BoardRangeGlowFx.Hide(this);
+                return;
+            }
+
+            if (HelpCardBoardSelectResolver.TryGetPlayKind(
+                    card.DefId,
+                    out var playKind,
+                    out var spec))
+            {
+                if (playKind == HelpCardPlayKind.SingleDragTarget)
+                {
+                    var validSlots = ResolveValidTargetSlots(spec);
+                    if (validSlots.Count > 0)
+                    {
+                        BoardRangeGlowFx.ShowItemTargetSlots(this, validSlots);
+                        return;
+                    }
+                }
+                else if (playKind == HelpCardPlayKind.None
+                         || playKind == HelpCardPlayKind.MultiBoardSelect)
+                {
+                    BoardRangeGlowFx.ShowBoardApplyZone(this);
+                    return;
+                }
+            }
+            else
+            {
+                BoardRangeGlowFx.ShowBoardApplyZone(this);
+                return;
+            }
+
+            BoardRangeGlowFx.Hide(this);
+        }
+
+        private static List<int> ResolveValidTargetSlots(HelpCardSelectedCardsSpec spec)
+        {
+            var validSlots = new List<int>(9);
+            var field = GroundFieldGeometryHook.FieldOrNull();
+            if (field == null)
+            {
+                return validSlots;
+            }
+
+            var arch = NineGridArchitecture.Current;
+            var registry = arch?.GetModel<CardRegistry>();
+
+            for (var slot = GroundSlotTopology.MinSlot; slot <= GroundSlotTopology.MaxSlot; slot++)
+            {
+                if (!field.TryGetCardAt(slot, out var boardCard) || boardCard == null)
+                {
+                    continue;
+                }
+
+                if (boardCard.CoreKind == CardPresentationKind.Avatar)
+                {
+                    continue;
+                }
+
+                if (HelpCardBoardSelectResolver.IsImmuneToItemTargeting(boardCard.Uid, boardCard.DefId))
+                {
+                    continue;
+                }
+
+                if (spec.RequiresTrueMonster && boardCard.CoreKind != CardPresentationKind.Monster)
+                {
+                    continue;
+                }
+
+                if (spec.RequiresCombatTarget
+                    && boardCard.CoreKind != CardPresentationKind.Monster
+                    && boardCard.CoreKind != CardPresentationKind.Trap)
+                {
+                    continue;
+                }
+
+                if (spec.RequiresFaceUp)
+                {
+                    var coreCard = registry?.Get(boardCard.Uid);
+                    var isFaceUp = coreCard != null
+                        ? coreCard.FaceUp
+                        : (boardCard.CommittedPresentation?.FaceUp ?? true);
+                    if (!isFaceUp)
+                    {
+                        continue;
+                    }
+                }
+
+                validSlots.Add(slot);
+            }
+
+            return validSlots;
         }
 
         /// <summary>拖拽惯性倾斜参数：横向速度平滑、每单位速度倾角、最大倾角、倾角跟随。</summary>
@@ -1852,6 +1951,7 @@ namespace NineGrid.Cards
         private void ClearDragSession()
         {
             _dragSession = null;
+            BoardRangeGlowFx.Hide(this);
         }
 
         private void ClearHandHoverState(ManagedCard card)

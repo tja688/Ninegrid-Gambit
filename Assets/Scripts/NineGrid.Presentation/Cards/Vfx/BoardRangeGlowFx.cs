@@ -17,6 +17,9 @@ namespace NineGrid.Cards.Vfx
     /// </summary>
     public static class BoardRangeGlowFx
     {
+        /// <summary>道具目标/候选高亮色（明亮金黄）。</summary>
+        public static readonly Color ItemTargetColor = new Color(1f, 0.82f, 0.22f);
+
         /// <summary>悬停进入：解析该卡的威胁/影响范围并点亮；无范围时等价于清除本请求者的显示。</summary>
         public static void ShowThreatRange(Behaviour requester, ManagedCard card)
         {
@@ -42,13 +45,73 @@ namespace NineGrid.Cards.Vfx
             BoardRangeGlowRunner.Ensure().ShowAvatarIfSlotMatches(requester, hoveredSlot);
         }
 
-        /// <summary>悬停离开 / 认领释放：仅当当前显示属于该请求者时清除。</summary>
+        /// <summary>
+        /// 道具卡单体/离散目标：在所有合法目标格四周浮现提醒光圈。
+        /// </summary>
+        public static void ShowItemTargetSlots(
+            Behaviour requester,
+            System.Collections.Generic.IReadOnlyCollection<int> validSlots,
+            Color? color = null)
+        {
+            if (requester == null)
+            {
+                return;
+            }
+
+            BoardRangeGlowRunner.Ensure().ShowItemTargetSlots(requester, validSlots, color);
+        }
+
+        /// <summary>
+        /// 道具卡棋盘全局目标：在整个九宫格棋盘四周浮现一道大光圈，提示拖入棋盘即可释放。
+        /// </summary>
+        public static void ShowBoardApplyZone(Behaviour requester, Color? color = null)
+        {
+            if (requester == null)
+            {
+                return;
+            }
+
+            BoardRangeGlowRunner.Ensure().ShowBoardApplyZone(requester, color);
+        }
+
+        /// <summary>
+        /// 场地多选模式：在所有未选中的合法候选四周浮现光圈，已选中的候选格光圈熄灭。
+        /// </summary>
+        public static void ShowMultiSelectCandidates(
+            Behaviour requester,
+            System.Collections.Generic.IReadOnlyCollection<int> candidateSlots,
+            System.Collections.Generic.IReadOnlyCollection<int> selectedSlots,
+            Color? color = null)
+        {
+            if (requester == null)
+            {
+                return;
+            }
+
+            BoardRangeGlowRunner.Ensure().ShowMultiSelectCandidates(
+                requester,
+                candidateSlots,
+                selectedSlots,
+                color);
+        }
+
+        /// <summary>悬停离开 / 认领释放 / 拖拽结束：仅当当前显示属于该请求者时清除。</summary>
         public static void Hide(Behaviour requester)
         {
             var runner = BoardRangeGlowRunner.InstanceOrNull();
             if (runner != null)
             {
                 runner.HideIfOwnedBy(requester);
+            }
+        }
+
+        /// <summary>强制清除所有光圈显示（用于状态机重置或打断）。</summary>
+        public static void ForceHideAll()
+        {
+            var runner = BoardRangeGlowRunner.InstanceOrNull();
+            if (runner != null)
+            {
+                runner.ForceHideAll();
             }
         }
 
@@ -62,10 +125,21 @@ namespace NineGrid.Cards.Vfx
     [DisallowMultipleComponent]
     public sealed class BoardRangeGlowRunner : MonoBehaviour
     {
+        private enum GlowMode
+        {
+            None = 0,
+            Threat = 1,
+            Avatar = 2,
+            ItemSlots = 3,
+            BoardApplyZone = 4,
+            MultiSelectCandidates = 5,
+        }
+
         // --- 视觉调参（微微荧光、不抢戏） ---
         private static readonly Color ThreatColor = new Color(1f, 0.45f, 0.22f);
         // 机关影响范围用冷青色，与怪物威胁的暖橙拉开区分。
         private static readonly Color TrapInfluenceColor = new Color(0.3f, 0.85f, 1f);
+        public static readonly Color ItemTargetColor = BoardRangeGlowFx.ItemTargetColor;
         private const float BaseAlpha = 0.4f;
         private const float AvatarEmphasisWeight = 1.45f;
         private const float FadeInSeconds = 0.16f;
@@ -91,12 +165,16 @@ namespace NineGrid.Cards.Vfx
         private readonly float[] _currentWeight = new float[GroundSlotTopology.MaxSlot + 1];
         private readonly SpriteRenderer[] _cellRenderers = new SpriteRenderer[GroundSlotTopology.MaxSlot + 1];
 
+        private SpriteRenderer _boardFrameRenderer;
+        private float _targetBoardWeight;
+        private float _currentBoardWeight;
+
         private Behaviour _requester;
         private Behaviour _pinnedOwner;
         private bool _avatarPinned;
         private int _originUid;
         private int _originSlot;
-        private bool _avatarMode;
+        private GlowMode _mode = GlowMode.None;
         private Color _activeColor = ThreatColor;
 
         private Sprite _glowSprite;
@@ -118,7 +196,11 @@ namespace NineGrid.Cards.Vfx
             }
 
             var go = new GameObject("BoardRangeGlowFx");
-            DontDestroyOnLoad(go);
+            if (Application.isPlaying)
+            {
+                DontDestroyOnLoad(go);
+            }
+
             sInstance = go.AddComponent<BoardRangeGlowRunner>();
             return sInstance;
         }
@@ -128,11 +210,31 @@ namespace NineGrid.Cards.Vfx
             return sInstance;
         }
 
+        public Behaviour ActiveRequester => _requester;
+
+        public float TargetBoardWeight => _targetBoardWeight;
+
+        public float CurrentBoardWeight => _currentBoardWeight;
+
+        public bool IsBoardApplyZoneActive => _mode == GlowMode.BoardApplyZone && _targetBoardWeight > 0f;
+
+        public bool IsMultiSelectActive => _mode == GlowMode.MultiSelectCandidates;
+
+        public float GetTargetWeight(int slot)
+        {
+            return GroundSlotTopology.IsValidSlot(slot) ? _targetWeight[slot] : 0f;
+        }
+
+        public float GetCurrentWeight(int slot)
+        {
+            return GroundSlotTopology.IsValidSlot(slot) ? _currentWeight[slot] : 0f;
+        }
+
         public void Show(Behaviour requester, ManagedCard card)
         {
             ClearTargets();
             _requester = null;
-            _avatarMode = false;
+            _mode = GlowMode.None;
 
             if (requester == null || card == null)
             {
@@ -140,12 +242,21 @@ namespace NineGrid.Cards.Vfx
             }
 
             var field = GroundFieldGeometryHook.FieldOrNull();
-            if (field == null || !field.TryGetSlotOf(card.Uid, out var originSlot))
+            int originSlot = -1;
+            if (field != null)
+            {
+                if (!field.TryGetSlotOf(card.Uid, out originSlot))
+                {
+                    return;
+                }
+            }
+
+            if (!TryResolveRange(card, out var filter, out var color))
             {
                 return;
             }
 
-            if (!TryResolveRange(card, out var filter, out var color))
+            if (originSlot <= 0)
             {
                 return;
             }
@@ -161,7 +272,7 @@ namespace NineGrid.Cards.Vfx
             for (var i = 0; i < threatened.Count; i++)
             {
                 var slot = threatened[i];
-                if (!TryPrepareCellRenderer(field, slot))
+                if (field != null && !TryPrepareCellRenderer(field, slot))
                 {
                     continue;
                 }
@@ -175,6 +286,7 @@ namespace NineGrid.Cards.Vfx
                 _requester = requester;
                 _originUid = card.Uid;
                 _originSlot = originSlot;
+                _mode = GlowMode.Threat;
                 _activeColor = color;
             }
         }
@@ -194,7 +306,7 @@ namespace NineGrid.Cards.Vfx
                 return;
             }
 
-            if (_avatarMode
+            if (_mode == GlowMode.Avatar
                 && ReferenceEquals(_requester, requester)
                 && _originSlot == avatarSlot)
             {
@@ -203,19 +315,14 @@ namespace NineGrid.Cards.Vfx
 
             ClearTargets();
             _requester = null;
-            _avatarMode = false;
+            _mode = GlowMode.None;
 
             var field = GroundFieldGeometryHook.FieldOrNull();
-            if (field == null)
-            {
-                return;
-            }
-
             var reachable = GroundSlotTopology.GetNeighbors(avatarSlot, GroundSlotRelation.Orthogonal);
             var shown = false;
             for (var i = 0; i < reachable.Count; i++)
             {
-                if (!TryPrepareCellRenderer(field, reachable[i]))
+                if (field != null && !TryPrepareCellRenderer(field, reachable[i]))
                 {
                     continue;
                 }
@@ -229,8 +336,124 @@ namespace NineGrid.Cards.Vfx
                 _requester = requester;
                 _originUid = 0;
                 _originSlot = avatarSlot;
-                _avatarMode = true;
+                _mode = GlowMode.Avatar;
                 _activeColor = ThreatColor;
+            }
+        }
+
+        /// <summary>
+        /// 道具卡单体/离散目标：点亮所有合法目标槽位。
+        /// </summary>
+        public void ShowItemTargetSlots(
+            Behaviour requester,
+            System.Collections.Generic.IReadOnlyCollection<int> validSlots,
+            Color? color = null)
+        {
+            ClearTargets();
+            _requester = null;
+            _mode = GlowMode.None;
+
+            if (requester == null || validSlots == null || validSlots.Count == 0)
+            {
+                return;
+            }
+
+            var field = GroundFieldGeometryHook.FieldOrNull();
+            var shown = false;
+            foreach (var slot in validSlots)
+            {
+                if (!GroundSlotTopology.IsValidSlot(slot))
+                {
+                    continue;
+                }
+
+                if (field != null && !TryPrepareCellRenderer(field, slot))
+                {
+                    continue;
+                }
+
+                _targetWeight[slot] = 1f;
+                shown = true;
+            }
+
+            if (shown)
+            {
+                _requester = requester;
+                _mode = GlowMode.ItemSlots;
+                _activeColor = color ?? ItemTargetColor;
+            }
+        }
+
+        /// <summary>
+        /// 道具卡棋盘全局目标：点亮覆盖整个 3x3 棋盘的大光圈。
+        /// </summary>
+        public void ShowBoardApplyZone(Behaviour requester, Color? color = null)
+        {
+            ClearTargets();
+            _requester = null;
+            _mode = GlowMode.None;
+
+            if (requester == null)
+            {
+                return;
+            }
+
+            var field = GroundFieldGeometryHook.FieldOrNull();
+            if (field != null && !TryPrepareBoardFrameRenderer(field))
+            {
+                return;
+            }
+
+            _requester = requester;
+            _mode = GlowMode.BoardApplyZone;
+            _activeColor = color ?? ItemTargetColor;
+            _targetBoardWeight = 1f;
+        }
+
+        /// <summary>
+        /// 场地多选模式：在所有未选中的合法候选四周浮现光圈，已选中的候选格光圈熄灭。
+        /// </summary>
+        public void ShowMultiSelectCandidates(
+            Behaviour requester,
+            System.Collections.Generic.IReadOnlyCollection<int> candidateSlots,
+            System.Collections.Generic.IReadOnlyCollection<int> selectedSlots,
+            Color? color = null)
+        {
+            if (requester == null || candidateSlots == null || candidateSlots.Count == 0)
+            {
+                HideIfOwnedBy(requester);
+                return;
+            }
+
+            var field = GroundFieldGeometryHook.FieldOrNull();
+            _requester = requester;
+            _mode = GlowMode.MultiSelectCandidates;
+            _activeColor = color ?? ItemTargetColor;
+            _targetBoardWeight = 0f;
+
+            var selectedSet = selectedSlots != null
+                ? new System.Collections.Generic.HashSet<int>(selectedSlots)
+                : null;
+            var candidateSet = new System.Collections.Generic.HashSet<int>(candidateSlots);
+
+            for (var slot = GroundSlotTopology.MinSlot; slot <= GroundSlotTopology.MaxSlot; slot++)
+            {
+                if (candidateSet.Contains(slot))
+                {
+                    var isSelected = selectedSet != null && selectedSet.Contains(slot);
+                    if (!isSelected && (field == null || TryPrepareCellRenderer(field, slot)))
+                    {
+                        _targetWeight[slot] = 1f;
+                    }
+                    else
+                    {
+                        _targetWeight[slot] = 0f;
+                    }
+                }
+                else
+                {
+                    _targetWeight[slot] = 0f;
+                }
             }
         }
 
@@ -241,13 +464,22 @@ namespace NineGrid.Cards.Vfx
                 return;
             }
 
-            if (_requester == null || !ReferenceEquals(_requester, requester))
+            if (_requester == null || (!ReferenceEquals(_requester, requester) && requester != null))
             {
                 return;
             }
 
             _requester = null;
-            _avatarMode = false;
+            _mode = GlowMode.None;
+            ClearTargets();
+        }
+
+        public void ForceHideAll()
+        {
+            _avatarPinned = false;
+            _pinnedOwner = null;
+            _requester = null;
+            _mode = GlowMode.None;
             ClearTargets();
         }
 
@@ -272,10 +504,10 @@ namespace NineGrid.Cards.Vfx
 
             _avatarPinned = false;
             _pinnedOwner = null;
-            if (_avatarMode && ReferenceEquals(_requester, owner))
+            if (_mode == GlowMode.Avatar && ReferenceEquals(_requester, owner))
             {
                 _requester = null;
-                _avatarMode = false;
+                _mode = GlowMode.None;
                 ClearTargets();
             }
         }
@@ -298,6 +530,11 @@ namespace NineGrid.Cards.Vfx
                 sInstance = null;
             }
 
+            if (_boardFrameRenderer != null)
+            {
+                Destroy(_boardFrameRenderer.gameObject);
+            }
+
             if (_glowMaterial != null)
             {
                 Destroy(_glowMaterial);
@@ -310,8 +547,8 @@ namespace NineGrid.Cards.Vfx
         }
 
         /// <summary>
-        /// 悬停离开事件之外的兜底：源卡换格 / 死亡 / 主线开跑 / 请求者失活时自动淡出，
-        /// 避免旋转、齐射期间残留过期的威胁提示。Avatar 模式改验 Avatar 槽未变。
+        /// 悬停离开/拖拽中断/流程切换之兜底：源卡换格 / 死亡 / 主线开跑 / 请求者失活时自动淡出，
+        /// 避免旋转、齐射期间残留过期的提示。
         /// </summary>
         private void ValidateActiveRequest()
         {
@@ -331,23 +568,31 @@ namespace NineGrid.Cards.Vfx
 
             if (stillValid)
             {
-                if (_avatarMode)
+                switch (_mode)
                 {
-                    stillValid = ResolveAvatarSlotOrMinusOne() == _originSlot;
-                }
-                else
-                {
-                    var field = GroundFieldGeometryHook.FieldOrNull();
-                    stillValid = field != null
-                        && field.TryGetSlotOf(_originUid, out var slot)
-                        && slot == _originSlot;
+                    case GlowMode.Avatar:
+                        stillValid = ResolveAvatarSlotOrMinusOne() == _originSlot;
+                        break;
+                    case GlowMode.Threat:
+                        var field = GroundFieldGeometryHook.FieldOrNull();
+                        stillValid = field != null
+                            && field.TryGetSlotOf(_originUid, out var slot)
+                            && slot == _originSlot;
+                        break;
+                    case GlowMode.MultiSelectCandidates:
+                        stillValid = NineGrid.Cards.BoardCardSelectModeController.IsActive;
+                        break;
+                    case GlowMode.ItemSlots:
+                    case GlowMode.BoardApplyZone:
+                        // 道具拖拽或常驻模式：请求者失活即淡出
+                        break;
                 }
             }
 
             if (!stillValid)
             {
                 _requester = null;
-                _avatarMode = false;
+                _mode = GlowMode.None;
                 ClearTargets();
             }
         }
@@ -358,6 +603,7 @@ namespace NineGrid.Cards.Vfx
             var breath = 1f - BreathDepth
                 * (0.5f + 0.5f * Mathf.Sin(Time.unscaledTime * BreathHz * 2f * Mathf.PI));
 
+            // 1. 单格光圈更新
             for (var slot = GroundSlotTopology.MinSlot; slot <= GroundSlotTopology.MaxSlot; slot++)
             {
                 var target = _targetWeight[slot];
@@ -393,6 +639,128 @@ namespace NineGrid.Cards.Vfx
                 var alpha = Mathf.Clamp01(BaseAlpha * current * breath);
                 renderer.color = new Color(_activeColor.r, _activeColor.g, _activeColor.b, alpha);
             }
+
+            // 2. 棋盘大光圈更新
+            if (_boardFrameRenderer != null)
+            {
+                var boardTarget = _targetBoardWeight;
+                var boardCurrent = _currentBoardWeight;
+                if (boardTarget <= 0f && boardCurrent <= 0.001f)
+                {
+                    if (_boardFrameRenderer.enabled)
+                    {
+                        _boardFrameRenderer.enabled = false;
+                    }
+                }
+                else
+                {
+                    var speed = boardTarget > boardCurrent ? 1f / FadeInSeconds : 1f / FadeOutSeconds;
+                    boardCurrent = Mathf.MoveTowards(boardCurrent, boardTarget, speed * dt);
+                    _currentBoardWeight = boardCurrent;
+
+                    if (boardCurrent <= 0.001f && boardTarget <= 0f)
+                    {
+                        _boardFrameRenderer.enabled = false;
+                    }
+                    else
+                    {
+                        _boardFrameRenderer.enabled = true;
+                        var alpha = Mathf.Clamp01(BaseAlpha * boardCurrent * breath);
+                        _boardFrameRenderer.color = new Color(_activeColor.r, _activeColor.g, _activeColor.b, alpha);
+                    }
+                }
+            }
+        }
+
+        private bool TryPrepareBoardFrameRenderer(GroundFieldView field)
+        {
+            if (field == null)
+            {
+                return false;
+            }
+
+            if (_boardFrameRenderer == null)
+            {
+                _boardFrameRenderer = CreateBoardFrameRenderer();
+                if (_boardFrameRenderer == null)
+                {
+                    return false;
+                }
+            }
+
+            Bounds? combined = null;
+            int sortingLayerID = 0;
+            int sortingOrder = 1;
+            float z = transform.position.z;
+
+            for (var slot = GroundSlotTopology.MinSlot; slot <= GroundSlotTopology.MaxSlot; slot++)
+            {
+                var anchor = field.GetGroundAnchor(slot);
+                if (anchor == null)
+                {
+                    continue;
+                }
+
+                z = anchor.position.z;
+                var anchorRenderer = anchor.GetComponent<SpriteRenderer>();
+                Bounds b;
+                if (anchorRenderer != null)
+                {
+                    sortingLayerID = anchorRenderer.sortingLayerID;
+                    sortingOrder = anchorRenderer.sortingOrder + 1;
+                    b = anchorRenderer.bounds;
+                }
+                else
+                {
+                    b = new Bounds(anchor.position, new Vector3(3.8f, 4.9f, 0f));
+                }
+
+                if (!combined.HasValue)
+                {
+                    combined = b;
+                }
+                else
+                {
+                    var c = combined.Value;
+                    c.Encapsulate(b);
+                    combined = c;
+                }
+            }
+
+            if (!combined.HasValue)
+            {
+                return false;
+            }
+
+            var totalBounds = combined.Value;
+            const float BoardPadding = 0.25f;
+            var sizeX = totalBounds.size.x + BoardPadding * 2f;
+            var sizeY = totalBounds.size.y + BoardPadding * 2f;
+
+            _boardFrameRenderer.sortingLayerID = sortingLayerID;
+            _boardFrameRenderer.sortingOrder = sortingOrder;
+            _boardFrameRenderer.transform.position = new Vector3(totalBounds.center.x, totalBounds.center.y, z);
+            _boardFrameRenderer.size = new Vector2(sizeX, sizeY);
+            return true;
+        }
+
+        private SpriteRenderer CreateBoardFrameRenderer()
+        {
+            var sprite = EnsureGlowSprite();
+            if (sprite == null)
+            {
+                return null;
+            }
+
+            var go = new GameObject("BoardFrameRangeGlow");
+            go.transform.SetParent(transform, false);
+            var renderer = go.AddComponent<SpriteRenderer>();
+            renderer.sprite = sprite;
+            renderer.drawMode = SpriteDrawMode.Sliced;
+            renderer.sharedMaterial = EnsureGlowMaterial();
+            renderer.color = new Color(_activeColor.r, _activeColor.g, _activeColor.b, 0f);
+            renderer.enabled = false;
+            return renderer;
         }
 
         private static bool TryResolveRange(ManagedCard card, out GroundSlotRelation filter, out Color color)
@@ -654,6 +1022,8 @@ namespace NineGrid.Cards.Vfx
             {
                 _targetWeight[slot] = 0f;
             }
+
+            _targetBoardWeight = 0f;
         }
     }
 }

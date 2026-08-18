@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
+using NineGrid.Cards.Vfx;
+using NineGrid.Core;
 using NineGrid.Flow.Presentation;
 using NineGrid.Presentation;
 using NineGrid.Presentation.Systems;
@@ -65,6 +67,7 @@ namespace NineGrid.Cards
             _active = true;
             PresentationInputGates.SetBoardSelect(true);
             RegistryTraceSink.NotifyUserInteraction?.Invoke("BoardSelectBegin");
+            RefreshCandidateGlowVisuals();
             Debug.Log(
                 $"[BoardCardSelectMode] Begin itemUid={itemUid} defId={_itemDefId} required={requiredCount}");
             return true;
@@ -96,6 +99,8 @@ namespace NineGrid.Cards
                 return;
             }
 
+            BoardRangeGlowFx.Hide(BoardRangeGlowRunner.InstanceOrNull());
+
             if (hadSession)
             {
                 ClearSelectedVisuals();
@@ -118,6 +123,8 @@ namespace NineGrid.Cards
         /// <summary>流程打断时由 Flow 调用；未 commit 则回手。</summary>
         public static void RequestAbort(string reason)
         {
+            BoardRangeGlowFx.Hide(BoardRangeGlowRunner.InstanceOrNull());
+
             if (!_active || _committing)
             {
                 // 静态会话已关但门禁布尔残留：强制收口，避免粘住所有权轴。
@@ -145,6 +152,7 @@ namespace NineGrid.Cards
 
             var itemUid = _itemUid;
             var defId = _itemDefId;
+            BoardRangeGlowFx.Hide(BoardRangeGlowRunner.InstanceOrNull());
             ClearSelectedVisuals();
             SelectedUids.Clear();
             RegistryTraceSink.NotifyUserInteraction?.Invoke("BoardSelectCancelParked");
@@ -170,6 +178,11 @@ namespace NineGrid.Cards
             }
 
             if (card.CoreKind == CardPresentationKind.Avatar)
+            {
+                return false;
+            }
+
+            if (NineGrid.Flow.HelpCardBoardSelectResolver.IsImmuneToItemTargeting(card.Uid, card.DefId))
             {
                 return false;
             }
@@ -205,6 +218,7 @@ namespace NineGrid.Cards
                         $"[BoardCardSelectMode] deselect-all-remain-active itemUid={_itemUid} defId={_itemDefId}");
                 }
 
+                RefreshCandidateGlowVisuals();
                 return true;
             }
 
@@ -227,13 +241,88 @@ namespace NineGrid.Cards
                 var itemDefId = _itemDefId;
                 var selected = SelectedUids.ToArray();
                 _active = false;
+                BoardRangeGlowFx.Hide(BoardRangeGlowRunner.InstanceOrNull());
                 RegistryTraceSink.NotifyUserInteraction?.Invoke("BoardSelectCommit");
                 Debug.Log(
                     $"[BoardCardSelectMode] Commit itemUid={itemUid} defId={itemDefId} selected={string.Join(",", selected)}");
                 CommitSelectionAsync(itemUid, itemDefId, selected).Forget();
             }
+            else
+            {
+                RefreshCandidateGlowVisuals();
+            }
 
             return true;
+        }
+
+        public static void RefreshCandidateGlowVisuals()
+        {
+            if (!_active || _committing)
+            {
+                BoardRangeGlowFx.Hide(BoardRangeGlowRunner.InstanceOrNull());
+                return;
+            }
+
+            var runner = BoardRangeGlowRunner.Ensure();
+            var field = GroundFieldGeometryHook.FieldOrNull();
+            if (field == null)
+            {
+                BoardRangeGlowFx.Hide(runner);
+                return;
+            }
+
+            NineGrid.Flow.HelpCardBoardSelectResolver.TryGetPlayKind(_itemDefId, out _, out var spec);
+
+            var arch = NineGridArchitecture.Current;
+            var registry = arch?.GetModel<CardRegistry>();
+
+            var candidateSlots = new List<int>(9);
+            var selectedSlots = new List<int>(4);
+
+            for (var slot = GroundSlotTopology.MinSlot; slot <= GroundSlotTopology.MaxSlot; slot++)
+            {
+                if (!field.TryGetCardAt(slot, out var boardCard) || boardCard == null)
+                {
+                    continue;
+                }
+
+                if (!IsEligibleTarget(boardCard))
+                {
+                    continue;
+                }
+
+                if (spec.RequiresTrueMonster && boardCard.CoreKind != CardPresentationKind.Monster)
+                {
+                    continue;
+                }
+
+                if (spec.RequiresCombatTarget
+                    && boardCard.CoreKind != CardPresentationKind.Monster
+                    && boardCard.CoreKind != CardPresentationKind.Trap)
+                {
+                    continue;
+                }
+
+                if (spec.RequiresFaceUp)
+                {
+                    var coreCard = registry?.Get(boardCard.Uid);
+                    var isFaceUp = coreCard != null
+                        ? coreCard.FaceUp
+                        : (boardCard.CommittedPresentation?.FaceUp ?? true);
+                    if (!isFaceUp)
+                    {
+                        continue;
+                    }
+                }
+
+                candidateSlots.Add(slot);
+                if (IsSelected(boardCard.Uid))
+                {
+                    selectedSlots.Add(slot);
+                }
+            }
+
+            BoardRangeGlowFx.ShowMultiSelectCandidates(runner, candidateSlots, selectedSlots);
         }
 
         private static async UniTaskVoid CommitSelectionAsync(int itemUid, string itemDefId, int[] selected)

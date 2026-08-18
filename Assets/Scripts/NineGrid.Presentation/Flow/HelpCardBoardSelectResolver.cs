@@ -105,6 +105,45 @@ namespace NineGrid.Flow
             return true;
         }
 
+        /// <summary>
+        /// 目标是否具有魔免/门保护等道具卡不可选中特性（如门 trap.leave / MagicImmunity / DoorProtection）。
+        /// 任何道具卡/效果卡均不应将门作为目标。
+        /// </summary>
+        public static bool IsImmuneToItemTargeting(int cardUid, string cardDefId = null)
+        {
+            var arch = NineGridArchitecture.Current ?? NineGridArchitecture.Interface;
+            if (arch != null && cardUid > 0)
+            {
+                var registry = arch.GetModel<CardRegistry>();
+                var statSystem = arch.GetSystem<IStatSystem>();
+                if (registry != null && statSystem != null && registry.TryGet(cardUid, out var coreCard) && coreCard != null)
+                {
+                    var statContext = statSystem.CreateContext(coreCard);
+                    if (statSystem.EvaluateRule(RuleId.MagicImmunity, 0f, statContext) > 0f
+                        || statSystem.EvaluateRule(RuleId.DoorProtection, 0f, statContext) > 0f)
+                    {
+                        return true;
+                    }
+
+                    if (string.IsNullOrEmpty(cardDefId))
+                    {
+                        cardDefId = coreCard.DefId;
+                    }
+                }
+            }
+
+            if (!string.IsNullOrEmpty(cardDefId))
+            {
+                if (cardDefId.StartsWith("trap.leave", StringComparison.OrdinalIgnoreCase)
+                    || cardDefId.IndexOf("door", StringComparison.OrdinalIgnoreCase) >= 0)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
         /// <summary>多选模式默认描述（无 hover 时回退展示）。</summary>
         public static bool TryGetBoardSelectPrompt(string defId, out string prompt)
         {

@@ -187,6 +187,11 @@ namespace NineGrid.Cards
         /// </summary>
         private void ApplyAvatarRangeGlow()
         {
+            if (PresentationInputGates.BoardSelectModeActive)
+            {
+                return;
+            }
+
             var hand = CardEntityLifecycleHook.HandOrNull();
             if (hand != null
                 && (hand.IsDragging

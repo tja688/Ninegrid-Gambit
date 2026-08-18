@@ -163,7 +163,7 @@ namespace NineGrid.Cards
 
         private void HoverEnterClaim()
         {
-            if (!CanRespondToHover())
+            if (PresentationInputGates.BoardSelectModeActive || !CanRespondToHover())
             {
                 return;
             }
