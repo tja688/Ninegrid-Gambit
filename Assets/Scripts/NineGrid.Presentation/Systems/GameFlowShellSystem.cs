@@ -313,6 +313,7 @@ namespace NineGrid.Presentation.Systems
             mQuickTestTrapContentIds = System.Array.Empty<string>();
             mQuickTestContentNodeQueue = null;
             mQuickTestContentNodeCursor = 0;
+            QuickTestProjectileEffectState.Reset();
         }
 
         internal void ClearRunSession()

@@ -87,8 +87,15 @@ namespace NineGrid.Flow.Presentation
             return true;
         }
 
+        /// <summary>离开快速测试时清掉数字键选择，避免残留状态串到下一局。</summary>
+        public static void Reset()
+        {
+            sActiveIndex = 0;
+        }
+
         /// <summary>
         /// 若处于快速测试模式，获取当前选中的测试弹道预设 ID；若非快速测试模式返回 false。
+        /// 调用方必须把此返回值当作发射门闩：false 时不得 Pulse 任何遗物弹道。
         /// </summary>
         public static bool TryGetActivePresetForQuickTest(out string presetId)
         {

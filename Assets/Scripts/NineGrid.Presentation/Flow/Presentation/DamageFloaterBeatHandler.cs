@@ -64,7 +64,7 @@ namespace NineGrid.Flow.Presentation
                 // 与飘字同缝的受击视觉脉冲：格挡/护甲碎裂/血飞溅（独立型，不占主线）。
                 CombatOutcomeVfx.PulseShowDamage(gameEvent, pos.Value, "DamageFloaterBeatHandler.TryApply");
 
-                // 遗物弹道：顺劈斧触发时从遗物栏图标射向被波及的目标敌人（支持快速测试 0~9 切换预设）。
+                // 顺劈斧测试弹道仅 \0 快速测试可发；正式局 / 教程不得走这条表演。
                 PulseCleaveAxeProjectileIfNeeded(gameEvent, pos.Value);
 
                 // 同缝的物理反馈：抖屏 + 受击卡一颤（装饰，不占主线 ack）。
@@ -202,6 +202,12 @@ namespace NineGrid.Flow.Presentation
                 return;
             }
 
+            // 门闩必须在 PulseFromTo 之前：非 QuickTest 连默认遗物弹道也不能发。
+            if (!QuickTestProjectileEffectState.TryGetActivePresetForQuickTest(out var testPresetId))
+            {
+                return;
+            }
+
             var isCleave = string.Equals(gameEvent.SourceDefId, "relic.rotten_cleave_axe", StringComparison.Ordinal)
                 || string.Equals(gameEvent.Cause, "relic.rotten_cleave_axe.cleave", StringComparison.Ordinal);
             if (!isCleave)
@@ -228,17 +234,11 @@ namespace NineGrid.Flow.Presentation
                 }
             }
 
-            var skillId = "relic.rotten_cleave_axe.cleave";
-            if (QuickTestProjectileEffectState.TryGetActivePresetForQuickTest(out var testPresetId))
-            {
-                skillId = testPresetId;
-            }
-
             ProjectileVfxCues.PulseFromTo(
                 ProjectileVfxCues.Relic,
                 "DamageFloaterBeatHandler.PulseCleaveAxeProjectile",
                 "relic.rotten_cleave_axe",
-                skillId,
+                testPresetId,
                 sourcePos,
                 targetPosition,
                 gameEvent.TargetUid);
