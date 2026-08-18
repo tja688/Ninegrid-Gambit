@@ -108,6 +108,19 @@ namespace NineGrid.Core
             return Math.Abs(Row - other.Row) == 1 && Math.Abs(Column - other.Column) == 1;
         }
 
+        /// <summary>
+        /// 全向相邻（切比雪夫距离 1：正交 ∪ 对角，不含自身）。
+        /// </summary>
+        public bool IsOmnidirectionallyAdjacentTo(SlotId other)
+        {
+            if (!IsBoardSlot || !other.IsBoardSlot)
+            {
+                return false;
+            }
+
+            return Math.Max(Math.Abs(Row - other.Row), Math.Abs(Column - other.Column)) == 1;
+        }
+
         public bool Equals(SlotId other)
         {
             return mIndex == other.mIndex;

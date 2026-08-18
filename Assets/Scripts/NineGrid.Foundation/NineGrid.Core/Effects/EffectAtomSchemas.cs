@@ -825,6 +825,11 @@ namespace NineGrid.Core.Effects
                         result.Add("schema.target.zone", path + ".zone is not supported.");
                     }
 
+                    if (node.Has("adjacency") && !IsSupportedAdjacency(node.Get("adjacency").AsString(string.Empty)))
+                    {
+                        result.Add("schema.target.adjacency", path + ".adjacency must be Orthogonal or Omnidirectional.");
+                    }
+
                     var zones = node.Get("zones").AsArray();
                     for (var i = 0; i < zones.Count; i++)
                     {
@@ -1042,6 +1047,13 @@ namespace NineGrid.Core.Effects
                 || Same(metric, "totalDamageTaken")
                 || Same(metric, "monsterRemoved")
                 || Same(metric, "helpCardUsed");
+        }
+
+        private static bool IsSupportedAdjacency(string adjacency)
+        {
+            return string.IsNullOrEmpty(adjacency)
+                || Same(adjacency, "Orthogonal")
+                || Same(adjacency, "Omnidirectional");
         }
 
         private static bool IsSupportedZone(string zone)

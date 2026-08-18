@@ -1496,6 +1496,7 @@ namespace NineGrid.Core.Effects
         private bool mRandom;
         private int mCount;
         private bool? mFaceUp;
+        private bool mOmnidirectionalAdjacency;
 
         public void Configure(EffectDslNode config)
         {
@@ -1503,6 +1504,7 @@ namespace NineGrid.Core.Effects
             mKind = config.Get("kind").AsEnum(CardKind.Unknown);
             mZone = config.Get("zone").AsEnum(ZoneId.None);
             mAdjacentToRef = config.Get("adjacentTo").AsString(string.Empty);
+            mOmnidirectionalAdjacency = IsOmnidirectionalAdjacency(config.Get("adjacency").AsString(string.Empty));
             mMinLevel = Math.Max(0, config.Get("minLevel").AsInt(0));
             mMaxLevel = Math.Max(0, config.Get("maxLevel").AsInt(0));
             mExcludeElite = config.Get("excludeElite").AsBool(false);
@@ -1544,7 +1546,8 @@ namespace NineGrid.Core.Effects
                 mExcludeElite,
                 mExcludeBoss,
                 mExcludeRefs,
-                mFaceUp);
+                mFaceUp,
+                mOmnidirectionalAdjacency);
             for (var i = candidates.Count - 1; i >= 0; i--)
             {
                 if (Contains(result, candidates[i]) || !MatchesSlotFilter(context, candidates[i]))
@@ -1675,6 +1678,11 @@ namespace NineGrid.Core.Effects
             }
 
             return false;
+        }
+
+        private static bool IsOmnidirectionalAdjacency(string value)
+        {
+            return string.Equals(value, "Omnidirectional", StringComparison.OrdinalIgnoreCase);
         }
     }
 
@@ -4323,7 +4331,8 @@ namespace NineGrid.Core.Effects
             bool excludeElite,
             bool excludeBoss,
             IReadOnlyList<string> excludeRefs,
-            bool? faceUp = null)
+            bool? faceUp = null,
+            bool omnidirectionalAdjacency = false)
         {
             var result = new List<int>();
             if (context == null)
@@ -4344,7 +4353,7 @@ namespace NineGrid.Core.Effects
             {
                 for (var i = 0; i < zones.Count; i++)
                 {
-                    AddCardsFromZone(context, result, defId, kind, zones[i], requiresAdjacency, adjacentToCard, minLevel, maxLevel, excludeElite, excludeBoss, excludeRefs, faceUp);
+                    AddCardsFromZone(context, result, defId, kind, zones[i], requiresAdjacency, adjacentToCard, minLevel, maxLevel, excludeElite, excludeBoss, excludeRefs, faceUp, omnidirectionalAdjacency);
                 }
 
                 return result;
@@ -4354,13 +4363,13 @@ namespace NineGrid.Core.Effects
             {
                 foreach (var uid in context.Board.BoardCardUids())
                 {
-                    AddIfMatches(context, result, uid, defId, kind, ZoneId.Board, requiresAdjacency, adjacentToCard, minLevel, maxLevel, excludeElite, excludeBoss, excludeRefs, faceUp);
+                    AddIfMatches(context, result, uid, defId, kind, ZoneId.Board, requiresAdjacency, adjacentToCard, minLevel, maxLevel, excludeElite, excludeBoss, excludeRefs, faceUp, omnidirectionalAdjacency);
                 }
 
                 return result;
             }
 
-            AddCardsFromZone(context, result, defId, kind, zone, requiresAdjacency, adjacentToCard, minLevel, maxLevel, excludeElite, excludeBoss, excludeRefs, faceUp);
+            AddCardsFromZone(context, result, defId, kind, zone, requiresAdjacency, adjacentToCard, minLevel, maxLevel, excludeElite, excludeBoss, excludeRefs, faceUp, omnidirectionalAdjacency);
 
             return result;
         }
@@ -4378,13 +4387,14 @@ namespace NineGrid.Core.Effects
             bool excludeElite,
             bool excludeBoss,
             IReadOnlyList<string> excludeRefs,
-            bool? faceUp)
+            bool? faceUp,
+            bool omnidirectionalAdjacency)
         {
             if (zone == ZoneId.Board)
             {
                 foreach (var uid in context.Board.BoardCardUids())
                 {
-                    AddIfMatches(context, result, uid, defId, kind, zone, requiresAdjacency, adjacentToCard, minLevel, maxLevel, excludeElite, excludeBoss, excludeRefs, faceUp);
+                    AddIfMatches(context, result, uid, defId, kind, zone, requiresAdjacency, adjacentToCard, minLevel, maxLevel, excludeElite, excludeBoss, excludeRefs, faceUp, omnidirectionalAdjacency);
                 }
 
                 return;
@@ -4392,7 +4402,7 @@ namespace NineGrid.Core.Effects
 
             foreach (var pair in context.Registry.Cards)
             {
-                AddIfMatches(context, result, pair.Key, defId, kind, zone, requiresAdjacency, adjacentToCard, minLevel, maxLevel, excludeElite, excludeBoss, excludeRefs, faceUp);
+                AddIfMatches(context, result, pair.Key, defId, kind, zone, requiresAdjacency, adjacentToCard, minLevel, maxLevel, excludeElite, excludeBoss, excludeRefs, faceUp, omnidirectionalAdjacency);
             }
         }
 
@@ -4457,7 +4467,8 @@ namespace NineGrid.Core.Effects
             bool excludeElite,
             bool excludeBoss,
             IReadOnlyList<string> excludeRefs,
-            bool? faceUp)
+            bool? faceUp,
+            bool omnidirectionalAdjacency)
         {
             CardInstance card;
             if (!context.TryGetCard(uid, out card))
@@ -4517,7 +4528,7 @@ namespace NineGrid.Core.Effects
                 return;
             }
 
-            if (requiresAdjacency && (adjacentToCard == null || !context.Architecture.GetSystem<IBoardSystem>().AreAdjacent(card, adjacentToCard)))
+            if (requiresAdjacency && (adjacentToCard == null || !MatchesFilterAdjacency(context, card, adjacentToCard, omnidirectionalAdjacency)))
             {
                 return;
             }
@@ -4531,6 +4542,20 @@ namespace NineGrid.Core.Effects
             }
 
             result.Add(uid);
+        }
+
+        private static bool MatchesFilterAdjacency(
+            EffectRuntimeContext context,
+            CardInstance card,
+            CardInstance origin,
+            bool omnidirectionalAdjacency)
+        {
+            if (omnidirectionalAdjacency)
+            {
+                return card.Slot.Value.IsOmnidirectionallyAdjacentTo(origin.Slot.Value);
+            }
+
+            return context.Architecture.GetSystem<IBoardSystem>().AreAdjacent(card, origin);
         }
 
         public static bool IsSelfRef(string reference)
