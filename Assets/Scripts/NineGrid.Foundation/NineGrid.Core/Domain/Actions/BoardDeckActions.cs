@@ -704,6 +704,32 @@ namespace NineGrid.Core
                     .WithSource(SourceDefId, Cause));
             }
 
+            // ADR-0056 / #217: 搬完卡表后，若 Avatar 占格在环上，沿同一环序搬走 Avatar，并发出占格变化
+            var avatarFromSlot = board.AvatarSlot.Value;
+            var avatarRingIndex = -1;
+            for (var i = 0; i < sClockwisePath.Length; i++)
+            {
+                if (sClockwisePath[i] == avatarFromSlot)
+                {
+                    avatarRingIndex = i;
+                    break;
+                }
+            }
+
+            if (avatarRingIndex >= 0 && board.AvatarUid.Value > 0)
+            {
+                var toAvatarIndex = Clockwise ? (avatarRingIndex + 1) % sClockwisePath.Length : (avatarRingIndex + sClockwisePath.Length - 1) % sClockwisePath.Length;
+                var toAvatarSlot = sClockwisePath[toAvatarIndex];
+                if (registry.TryGet(board.AvatarUid.Value, out var avatar) && avatar != null)
+                {
+                    board.SetAvatar(avatar, toAvatarSlot);
+                    result.AddEvent(new CoreGameEvent(CoreEventType.AvatarMoved, context.ActionId, ActionName)
+                        .WithCard(avatar.Uid)
+                        .WithSlots(avatarFromSlot, toAvatarSlot)
+                        .WithSource(SourceDefId, Cause));
+                }
+            }
+
             result.AddEvent(new CoreGameEvent(CoreEventType.BoardRotated, context.ActionId, ActionName)
                 .WithAmount(Clockwise ? 1 : -1)
                 .WithMessage(Clockwise ? "clockwise" : "counterClockwise")
@@ -787,11 +813,194 @@ namespace NineGrid.Core
                     .WithSource(SourceDefId, Cause));
             }
 
+            // ADR-0056 / #217: 两卡交换若其中一格是 Avatar 当前格，Avatar 被带到对格，避免人卡重叠
+            var avatarUid = board.AvatarUid.Value;
+            if (avatarUid > 0 && Left != Right && registry.TryGet(avatarUid, out var avatar) && avatar != null)
+            {
+                var avatarSlot = board.AvatarSlot.Value;
+                if (avatarSlot == Left)
+                {
+                    board.SetAvatar(avatar, Right);
+                    result.AddEvent(new CoreGameEvent(CoreEventType.AvatarMoved, context.ActionId, ActionName)
+                        .WithCard(avatarUid)
+                        .WithSlots(Left, Right)
+                        .WithSource(SourceDefId, Cause));
+                }
+                else if (avatarSlot == Right)
+                {
+                    board.SetAvatar(avatar, Left);
+                    result.AddEvent(new CoreGameEvent(CoreEventType.AvatarMoved, context.ActionId, ActionName)
+                        .WithCard(avatarUid)
+                        .WithSlots(Right, Left)
+                        .WithSource(SourceDefId, Cause));
+                }
+            }
+
             result.AddEvent(new CoreGameEvent(CoreEventType.CardSwapped, context.ActionId, ActionName)
                     .WithSlots(Left, Right)
                     .WithSource(SourceDefId, Cause));
             CardRhythmMoveTicks.AppendFromMovedEvents(result, context, result.Events);
             // 换位后的邻接光环卡面刷新由统一对账缝自动提交（ADR-0045）。
+            return result;
+        }
+
+        public override IEnumerable<TriggerPoint> GetPreTriggerPoints(GameActionContext context)
+        {
+            return sPreTriggers;
+        }
+
+        public override IEnumerable<TriggerPoint> GetPostTriggerPoints(GameActionContext context, IReadOnlyList<CoreGameEvent> events)
+        {
+            return sPostTriggers;
+        }
+    }
+
+    /// <summary>
+    /// Avatar 与场上卡（或盘面格位）的原子换位（#219 / ADR-0056 / ADR-0057）。
+    /// 人与目标卡互换占格；目标卡发出盘面→盘面换格事件并推进移动计数，不给玩家换位开节奏例外。
+    /// 目标格为空时仅 Avatar 单独迁格。
+    /// </summary>
+    public sealed class SwapAvatarWithCardAction : GameAction
+    {
+        private static readonly TriggerPoint[] sPreTriggers =
+        {
+            TriggerPoint.BeforeAction,
+            TriggerPoint.BeforeBoardMotion
+        };
+
+        private static readonly TriggerPoint[] sPostTriggers =
+        {
+            TriggerPoint.AfterAction,
+            TriggerPoint.OnSwap,
+            TriggerPoint.OnMove,
+            TriggerPoint.OnMoveToSlot
+        };
+
+        public SwapAvatarWithCardAction(SlotId targetSlot)
+            : this(targetSlot, 0, null, null)
+        {
+        }
+
+        public SwapAvatarWithCardAction(SlotId targetSlot, string sourceDefId, string cause)
+            : this(targetSlot, 0, sourceDefId, cause)
+        {
+        }
+
+        public SwapAvatarWithCardAction(int targetCardUid)
+            : this(SlotId.None, targetCardUid, null, null)
+        {
+        }
+
+        public SwapAvatarWithCardAction(int targetCardUid, string sourceDefId, string cause)
+            : this(SlotId.None, targetCardUid, sourceDefId, cause)
+        {
+        }
+
+        private SwapAvatarWithCardAction(SlotId targetSlot, int targetCardUid, string sourceDefId, string cause)
+        {
+            TargetSlot = targetSlot;
+            TargetCardUid = targetCardUid;
+            SourceDefId = sourceDefId ?? string.Empty;
+            Cause = cause ?? string.Empty;
+        }
+
+        public SlotId TargetSlot { get; private set; }
+        public int TargetCardUid { get; private set; }
+        public string SourceDefId { get; private set; }
+        public string Cause { get; private set; }
+        public override string ActionName { get { return "SwapAvatarWithCard"; } }
+
+        public override GameActionResult Apply(GameActionContext context)
+        {
+            var registry = context.GetModel<CardRegistry>();
+            var board = context.GetModel<BoardModel>();
+
+            var avatarUid = board.AvatarUid.Value;
+            if (avatarUid <= 0 || !registry.TryGet(avatarUid, out var avatar) || avatar == null)
+            {
+                return GameActionResult.Empty;
+            }
+
+            var avatarSlot = board.AvatarSlot.Value;
+            if (!avatarSlot.IsBoardSlot)
+            {
+                return GameActionResult.Empty;
+            }
+
+            var resolvedTargetSlot = TargetSlot;
+            var resolvedTargetUid = TargetCardUid;
+
+            if (resolvedTargetUid > 0)
+            {
+                if (!registry.TryGet(resolvedTargetUid, out var targetCard) || targetCard == null)
+                {
+                    return GameActionResult.Empty;
+                }
+
+                if (targetCard.Zone.Value != ZoneId.Board || !targetCard.Slot.Value.IsBoardSlot)
+                {
+                    return GameActionResult.Empty;
+                }
+
+                resolvedTargetSlot = targetCard.Slot.Value;
+            }
+            else if (resolvedTargetSlot.IsBoardSlot)
+            {
+                resolvedTargetUid = board.GetCardUid(resolvedTargetSlot);
+            }
+            else
+            {
+                return GameActionResult.Empty;
+            }
+
+            if (!resolvedTargetSlot.IsBoardSlot || resolvedTargetSlot == avatarSlot)
+            {
+                return GameActionResult.Empty;
+            }
+
+            CardInstance targetCardInstance = null;
+            if (resolvedTargetUid > 0 && registry.TryGet(resolvedTargetUid, out targetCardInstance) && targetCardInstance != null)
+            {
+                // 目标格有场上卡：原子互换
+                board.ClearSlot(resolvedTargetSlot);
+                board.SetAvatar(avatar, resolvedTargetSlot);
+                board.PlaceCard(targetCardInstance, avatarSlot);
+            }
+            else
+            {
+                // 目标格为空格：Avatar 单独迁格
+                resolvedTargetUid = 0;
+                board.SetAvatar(avatar, resolvedTargetSlot);
+            }
+
+            var result = new GameActionResult();
+
+            if (resolvedTargetUid > 0 && targetCardInstance != null)
+            {
+                // 目标卡换格事件（发出盘面格→盘面格换格）
+                result.AddEvent(new CoreGameEvent(CoreEventType.CardMoved, context.ActionId, ActionName)
+                    .WithCard(resolvedTargetUid)
+                    .WithSlots(resolvedTargetSlot, avatarSlot)
+                    .WithSource(SourceDefId, Cause));
+            }
+
+            // Avatar 换格事件（供盘面表现步骤与对账投影）
+            result.AddEvent(new CoreGameEvent(CoreEventType.CardMoved, context.ActionId, ActionName)
+                .WithCard(avatarUid)
+                .WithSlots(avatarSlot, resolvedTargetSlot)
+                .WithSource(SourceDefId, Cause));
+
+            result.AddEvent(new CoreGameEvent(CoreEventType.AvatarMoved, context.ActionId, ActionName)
+                .WithCard(avatarUid)
+                .WithSlots(avatarSlot, resolvedTargetSlot)
+                .WithSource(SourceDefId, Cause));
+
+            result.AddEvent(new CoreGameEvent(CoreEventType.CardSwapped, context.ActionId, ActionName)
+                .WithSlots(avatarSlot, resolvedTargetSlot)
+                .WithSource(SourceDefId, Cause));
+
+            // 推进被移动卡的移动计数（不给玩家换位开例外）
+            CardRhythmMoveTicks.AppendFromMovedEvents(result, context, result.Events);
             return result;
         }
 

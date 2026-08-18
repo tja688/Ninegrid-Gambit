@@ -3380,6 +3380,39 @@ namespace NineGrid.Core.Effects
         }
     }
 
+    [EffectAtom("SwapAvatar", EffectAtomKind.Action)]
+    public sealed class SwapAvatarEffectAction : IAction
+    {
+        private SlotId mTargetSlot = SlotId.None;
+
+        public void Configure(EffectDslNode config)
+        {
+            if (config.Has("targetSlot"))
+            {
+                mTargetSlot = SlotId.Board(config.Get("targetSlot").AsInt(1));
+            }
+            else if (config.Has("slot"))
+            {
+                mTargetSlot = SlotId.Board(config.Get("slot").AsInt(1));
+            }
+        }
+
+        public IReadOnlyList<GameAction> BuildActions(EffectRuntimeContext context, IReadOnlyList<int> targets)
+        {
+            if (mTargetSlot.IsBoardSlot)
+            {
+                return new[] { new SwapAvatarWithCardAction(mTargetSlot, context.SourceDefId, context.EffectId) };
+            }
+
+            if (targets != null && targets.Count > 0 && targets[0] > 0)
+            {
+                return new[] { new SwapAvatarWithCardAction(targets[0], context.SourceDefId, context.EffectId) };
+            }
+
+            return new GameAction[0];
+        }
+    }
+
     [EffectAtom("Rotate", EffectAtomKind.Action)]
     public sealed class RotateEffectAction : IAction
     {

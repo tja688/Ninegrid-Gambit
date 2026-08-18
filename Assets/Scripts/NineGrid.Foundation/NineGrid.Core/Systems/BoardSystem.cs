@@ -13,6 +13,8 @@ namespace NineGrid.Core.Systems
         bool IsSlotAvailable(SlotId slot);
         int RotateClockwise();
         int Swap(SlotId left, SlotId right);
+        int SwapAvatar(SlotId targetSlot);
+        int SwapAvatar(int cardUid);
         int FillEmptySlots();
     }
 
@@ -82,6 +84,16 @@ namespace NineGrid.Core.Systems
         public int Swap(SlotId left, SlotId right)
         {
             return this.GetSystem<IActionPipelineSystem>().Execute(new SwapBoardSlotsAction(left, right));
+        }
+
+        public int SwapAvatar(SlotId targetSlot)
+        {
+            return this.GetSystem<IActionPipelineSystem>().Execute(new SwapAvatarWithCardAction(targetSlot));
+        }
+
+        public int SwapAvatar(int cardUid)
+        {
+            return this.GetSystem<IActionPipelineSystem>().Execute(new SwapAvatarWithCardAction(cardUid));
         }
 
         public int FillEmptySlots()
