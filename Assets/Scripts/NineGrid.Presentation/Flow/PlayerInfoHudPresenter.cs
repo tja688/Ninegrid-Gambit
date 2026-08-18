@@ -36,14 +36,7 @@ namespace NineGrid.Flow
         private const float DefaultBaseMaxHp = 10f;
         private const float HpFillAnimDuration = 0.38f;
         private const float SlotGrowDuration = 0.45f;
-        private const float NumberFlashDuration = 0.2f;
-        private const float MaxHpFlashHalfPeriod = 0.12f;
-        private const int MaxHpFlashPulses = 2;
 
-        private static readonly Color HpNormalColor = new Color32(0xFF, 0xFF, 0xFF, 0xBF);
-        private static readonly Color HpFullColor = new Color32(0xC8, 0xFF, 0xD0, 0xFF);
-        private static readonly Color HpDamageFlash = new Color32(0xFF, 0x6A, 0x6A, 0xFF);
-        private static readonly Color HpHealFlash = new Color32(0x7C, 0xFF, 0x9A, 0xFF);
         private static readonly Color FillNormalColor = Color.white;
         private static readonly Color FillDamageColor = new Color32(0xFF, 0x8A, 0x8A, 0xFF);
         private static readonly Color FillHealColor = new Color32(0xB8, 0xFF, 0xC4, 0xFF);
@@ -105,7 +98,6 @@ namespace NineGrid.Flow
         private bool _hasGoldBaseColor;
 
         private bool _hasSnapshot;
-        private bool _wasAtMaxHp;
         private bool _capturedVesselBase;
         private float _baseSlotWidth;
         private float _baseFillWidth;
@@ -122,9 +114,7 @@ namespace NineGrid.Flow
         private Tween _slotTween;
         private Tween _hpNumberTween;
         private Tween _fillColorTween;
-        private Tween _hpTextColorTween;
         private Tween _barShakeTween;
-        private Coroutine _maxHpPulseRoutine;
 
         public static PlayerInfoHudPresenter Instance
         {
@@ -177,16 +167,18 @@ namespace NineGrid.Flow
             CaptureVesselBaseIfNeeded();
         }
 
+        private void OnEnable()
+        {
+            // 项目启用 Disable Domain Reload 时 Awake 不会每次进 Play 都跑；此处保证血条双显。
+            EnsureBindings();
+            EnsureAllHpHudVisible();
+        }
+
         private void OnDestroy()
         {
             KillHpTweens();
             StopGoldWindow(snapToTarget: false);
             KillGoldFlash();
-            if (_maxHpPulseRoutine != null)
-            {
-                StopCoroutine(_maxHpPulseRoutine);
-                _maxHpPulseRoutine = null;
-            }
 
             if (_instance == this)
             {
@@ -336,7 +328,6 @@ namespace NineGrid.Flow
         public void ClearSnapshot()
         {
             _hasSnapshot = false;
-            _wasAtMaxHp = false;
             _displayedHp = 0f;
             _coreHp = 0;
             _coreMaxHp = 0;
@@ -430,30 +421,38 @@ namespace NineGrid.Flow
 
         private void EnsureAllHpHudVisible()
         {
-            if (currentHpText != null)
+            EnsureHpHudElementVisible(currentHpText);
+            EnsureHpHudElementVisible(currentHpIcon);
+            EnsureHpHudElementVisible(maxHpText);
+            EnsureHpHudElementVisible(maxHpIcon);
+        }
+
+        private static void EnsureHpHudElementVisible(Component element)
+        {
+            if (element == null)
             {
-                currentHpText.enabled = true;
+                return;
             }
 
-            if (currentHpIcon != null)
+            var go = element.gameObject;
+            if (!go.activeSelf)
             {
-                currentHpIcon.enabled = true;
+                go.SetActive(true);
             }
 
-            if (maxHpText != null)
+            if (element is Behaviour behaviour)
             {
-                maxHpText.enabled = true;
-                var color = maxHpText.color;
-                if (color.a < 0.99f)
+                behaviour.enabled = true;
+            }
+
+            if (element is TMP_Text text)
+            {
+                text.alpha = 1f;
+                var renderer = text.GetComponent<Renderer>();
+                if (renderer != null)
                 {
-                    color.a = 1f;
-                    maxHpText.color = color;
+                    renderer.enabled = true;
                 }
-            }
-
-            if (maxHpIcon != null)
-            {
-                maxHpIcon.enabled = true;
             }
         }
 
@@ -505,11 +504,8 @@ namespace NineGrid.Flow
             _coreHp = hp;
             _coreMaxHp = maxHp;
 
-            var atMax = hp >= maxHp;
             var prevHp = firstPaint ? hp : _displayedHp;
             var hpDelta = hp - prevHp;
-            var reachedMax = animate && atMax && !firstPaint && !_wasAtMaxHp;
-            _wasAtMaxHp = atMax;
 
             var targetSlot = ResolveSlotWidth(maxHp);
             var fullFill = ResolveFullFillWidth(maxHp);
@@ -519,6 +515,8 @@ namespace NineGrid.Flow
             {
                 maxHpText.text = maxHp.ToString();
             }
+
+            EnsureAllHpHudVisible();
 
             if (!animate || bloodSlot == null || bloodFill == null)
             {
@@ -531,22 +529,19 @@ namespace NineGrid.Flow
                 if (currentHpText != null)
                 {
                     currentHpText.text = hp.ToString();
-                    currentHpText.color = atMax ? HpFullColor : HpNormalColor;
                 }
 
                 return;
             }
 
-            PlayVesselMotion(targetSlot, targetFill, hp, hpDelta, atMax, reachedMax);
+            PlayVesselMotion(targetSlot, targetFill, hp, hpDelta);
         }
 
         private void PlayVesselMotion(
             float targetSlot,
             float targetFill,
             int hp,
-            float hpDelta,
-            bool atMax,
-            bool reachedMax)
+            float hpDelta)
         {
             KillHpTweens(keepDisplayedNumber: true);
 
@@ -576,13 +571,11 @@ namespace NineGrid.Flow
                 fillDuration = 0.32f;
                 FlashFill(FillDamageColor);
                 PunchBloodBar(damage: true);
-                FlashHpText(HpDamageFlash, atMax ? HpFullColor : HpNormalColor);
             }
             else if (hpDelta > 0f)
             {
                 FlashFill(FillHealColor);
                 PunchBloodBar(damage: false);
-                FlashHpText(HpHealFlash, atMax ? HpFullColor : HpNormalColor);
             }
 
             _fillTween = DOTween
@@ -610,22 +603,11 @@ namespace NineGrid.Flow
                     {
                         _displayedHp = hp;
                         currentHpText.text = hp.ToString();
-                        currentHpText.color = atMax ? HpFullColor : HpNormalColor;
                     });
             }
             else
             {
                 _displayedHp = hp;
-            }
-
-            if (reachedMax)
-            {
-                if (_maxHpPulseRoutine != null)
-                {
-                    StopCoroutine(_maxHpPulseRoutine);
-                }
-
-                _maxHpPulseRoutine = StartCoroutine(FlashMaxHpReached());
             }
         }
 
@@ -703,21 +685,6 @@ namespace NineGrid.Flow
                 .SetLink(bloodFill.gameObject, LinkBehaviour.KillOnDestroy);
         }
 
-        private void FlashHpText(Color flash, Color settle)
-        {
-            if (currentHpText == null)
-            {
-                return;
-            }
-
-            _hpTextColorTween?.Kill();
-            currentHpText.color = flash;
-            _hpTextColorTween = DOTween
-                .To(() => currentHpText.color, c => currentHpText.color = c, settle, NumberFlashDuration)
-                .SetUpdate(true)
-                .SetLink(currentHpText.gameObject, LinkBehaviour.KillOnDestroy);
-        }
-
         private void PunchBloodBar(bool damage)
         {
             if (bloodBarRoot == null)
@@ -744,35 +711,6 @@ namespace NineGrid.Flow
                     .SetLink(bloodBarRoot.gameObject, LinkBehaviour.KillOnDestroy)
                     .OnComplete(RestoreBloodBarBasePose);
             }
-        }
-
-        private IEnumerator FlashMaxHpReached()
-        {
-            if (currentHpText == null)
-            {
-                yield break;
-            }
-
-            var settle = HpFullColor;
-            for (var pulse = 0; pulse < MaxHpFlashPulses; pulse++)
-            {
-                var elapsed = 0f;
-                var half = MaxHpFlashHalfPeriod;
-                while (elapsed < half * 2f)
-                {
-                    elapsed += Time.unscaledDeltaTime;
-                    var rising = elapsed < half;
-                    var t = rising
-                        ? Mathf.Clamp01(elapsed / half)
-                        : Mathf.Clamp01((elapsed - half) / half);
-                    var blend = rising ? t : 1f - t;
-                    currentHpText.color = Color.Lerp(settle, Color.white, blend);
-                    yield return null;
-                }
-            }
-
-            currentHpText.color = settle;
-            _maxHpPulseRoutine = null;
         }
 
         private void ApplyGold(int gold, bool animate)
@@ -972,13 +910,11 @@ namespace NineGrid.Flow
             _slotTween?.Kill();
             _hpNumberTween?.Kill();
             _fillColorTween?.Kill();
-            _hpTextColorTween?.Kill();
             _barShakeTween?.Kill();
             _fillTween = null;
             _slotTween = null;
             _hpNumberTween = null;
             _fillColorTween = null;
-            _hpTextColorTween = null;
             _barShakeTween = null;
 
             if (!keepDisplayedNumber)
