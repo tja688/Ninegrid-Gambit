@@ -1697,6 +1697,7 @@ namespace NineGrid.Core.Effects
         private bool mTrueMonsterOnly;
         private int mCount;
         private bool mAllowAvatar;
+        private bool? mFaceUp;
 
         public void Configure(EffectDslNode config)
         {
@@ -1709,6 +1710,14 @@ namespace NineGrid.Core.Effects
             mTrueMonsterOnly = config.Get("trueMonsterOnly").AsBool(false);
             mCount = Math.Max(0, config.Get("count").AsInt(0));
             mAllowAvatar = config.Get("allowAvatar").AsBool(false);
+            if (config.Has("faceUp"))
+            {
+                mFaceUp = config.Get("faceUp").AsBool(true);
+            }
+            else
+            {
+                mFaceUp = null;
+            }
         }
 
         public IReadOnlyList<int> Resolve(EffectRuntimeContext context)
@@ -1734,6 +1743,11 @@ namespace NineGrid.Core.Effects
                 }
 
                 if (!CardCombatRules.MatchesSelectedKindFilter(card.Kind, mKind, mTrueMonsterOnly))
+                {
+                    continue;
+                }
+
+                if (mFaceUp.HasValue && card.FaceUp != mFaceUp.Value)
                 {
                     continue;
                 }

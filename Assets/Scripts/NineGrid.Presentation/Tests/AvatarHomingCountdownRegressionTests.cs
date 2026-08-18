@@ -332,11 +332,11 @@ namespace NineGrid.Presentation.Tests
         private void RunAndCollectEvents(GameAction action, List<CoreGameEvent> events)
         {
             var pipeline = mArch.GetSystem<IActionPipelineSystem>();
-            var beforeCount = pipeline.EventLog.Count;
+            var beforeCount = pipeline.EventLog.Entries.Count;
             pipeline.Execute(action);
-            for (var i = beforeCount; i < pipeline.EventLog.Count; i++)
+            for (var i = beforeCount; i < pipeline.EventLog.Entries.Count; i++)
             {
-                events.Add(pipeline.EventLog[i]);
+                events.Add(pipeline.EventLog.Entries[i]);
             }
         }
     }

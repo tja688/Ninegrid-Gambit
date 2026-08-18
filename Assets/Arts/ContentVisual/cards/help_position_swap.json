@@ -2,7 +2,7 @@
     "schemaVersion": 2,
     "contentId": "help.position_swap",
     "kind": "HelpCard",
-    "deckId": "deck.player",
+    "deckId": "deck.player_assassin",
     "role": "Utility",
     "displayName": "换位",
     "designSlotName": "",
@@ -79,7 +79,14 @@
     "tags": [
         "tag.displace"
     ],
-    "effectAssemblies": [],
+    "effectAssemblies": [
+        {
+            "id": "help.position_swap.use",
+            "templateId": "tpl.help.position_swap.use",
+            "containerType": "HelpCard",
+            "argsJson": "{\"count\":1}"
+        }
+    ],
     "effectIds": [],
     "skillIds": [],
     "level": "0",

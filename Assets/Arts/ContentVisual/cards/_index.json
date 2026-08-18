@@ -32,6 +32,7 @@
         "deck.npc",
         "deck.orc_legion",
         "deck.player",
+        "deck.player_assassin",
         "deck.relic",
         "deck.relic_archive",
         "deck.skeleton_legion",

@@ -128,6 +128,14 @@
   "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnSelfUsed\"},\"target\":{\"atom\":\"Player\"},\"action\":{\"atom\":\"Conditional\",\"condition\":{\"atom\":\"SelectedOption\",\"option\":\"{{option}}\"},\"action\":{\"atom\":\"ModifyBaseStat\",\"stat\":\"Attack\",\"delta\":\"{{delta}}\",\"reason\":\"{{reason}}\"},\"elseAction\":{\"atom\":\"Conditional\",\"condition\":{\"atom\":\"SelectedOption\",\"option\":\"{{action_elseAction_condition_option}}\"},\"action\":{\"atom\":\"ModifyBaseStat\",\"stat\":\"Armor\",\"delta\":\"{{delta}}\",\"reason\":\"{{action_elseAction_action_reason}}\"},\"elseAction\":{\"atom\":\"Conditional\",\"condition\":{\"atom\":\"SelectedOption\",\"option\":\"{{action_elseAction_elseAction_condition_option}}\"},\"action\":{\"atom\":\"ModifyBaseStat\",\"stat\":\"MaxHp\",\"delta\":\"{{action_elseAction_elseAction_action_delta}}\",\"reason\":\"{{action_elseAction_elseAction_action_reason}}\"}}}}}"
  },
  {
+  "id": "tpl.help.position_swap.use",
+  "state": "Implemented",
+  "design_text": "[使用时] 选择一只正面真怪，与自身互换位置",
+  "requires_json": "[\"HasOwnerEntity\", \"ActivatedByUse\", \"CardZoneTriggerable\"]",
+  "conditions_json": "[]",
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnSelfUsed\"},\"target\":{\"atom\":\"SelectedCards\",\"kind\":\"Monster\",\"zone\":\"Board\",\"count\":\"{{count}}\",\"trueMonsterOnly\":true,\"faceUp\":true},\"action\":{\"atom\":\"SwapAvatar\"}}"
+ },
+ {
   "id": "tpl.help.swap_card.use",
   "state": "Implemented",
   "design_text": "[使用时] 选择除玩家卡外的两张卡牌互换所在格子位置",

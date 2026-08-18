@@ -20,11 +20,12 @@ namespace NineGrid.Flow
     /// </summary>
     public readonly struct HelpCardSelectedCardsSpec
     {
-        public HelpCardSelectedCardsSpec(int count, string kindFilter, bool trueMonsterOnly = false)
+        public HelpCardSelectedCardsSpec(int count, string kindFilter, bool trueMonsterOnly = false, bool? faceUp = null)
         {
             Count = count;
             KindFilter = kindFilter;
             TrueMonsterOnly = trueMonsterOnly;
+            FaceUp = faceUp;
         }
 
         public int Count { get; }
@@ -34,6 +35,9 @@ namespace NineGrid.Flow
 
         /// <summary>ADR-0017：SelectedCards trueMonsterOnly（绑架等仅真怪）。</summary>
         public bool TrueMonsterOnly { get; }
+
+        /// <summary>是否要求目标正面/背面。</summary>
+        public bool? FaceUp { get; }
 
         /// <summary>有 kind=Monster 过滤（可交战或真怪）。</summary>
         public bool RequiresMonster =>
@@ -45,6 +49,9 @@ namespace NineGrid.Flow
 
         /// <summary>仅真怪 Monster。</summary>
         public bool RequiresTrueMonster => RequiresMonster && TrueMonsterOnly;
+
+        /// <summary>要求目标正面。</summary>
+        public bool RequiresFaceUp => FaceUp.HasValue && FaceUp.Value;
     }
 
     /// <summary>
@@ -223,7 +230,13 @@ namespace NineGrid.Flow
 
             TryParseJsonStringField(slice, "kind", out var kindFilter);
             var trueMonsterOnly = TryParseJsonBoolField(slice, "trueMonsterOnly", out var flag) && flag;
-            spec = new HelpCardSelectedCardsSpec(count, kindFilter, trueMonsterOnly);
+            bool? faceUp = null;
+            if (TryParseJsonBoolField(slice, "faceUp", out var faceUpVal))
+            {
+                faceUp = faceUpVal;
+            }
+
+            spec = new HelpCardSelectedCardsSpec(count, kindFilter, trueMonsterOnly, faceUp);
             return true;
         }
 
@@ -328,6 +341,12 @@ namespace NineGrid.Flow
             if (defId.IndexOf("swap_card", StringComparison.OrdinalIgnoreCase) >= 0)
             {
                 spec = new HelpCardSelectedCardsSpec(2, null);
+                return true;
+            }
+
+            if (defId.IndexOf("position_swap", StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                spec = new HelpCardSelectedCardsSpec(1, "Monster", trueMonsterOnly: true, faceUp: true);
                 return true;
             }
 

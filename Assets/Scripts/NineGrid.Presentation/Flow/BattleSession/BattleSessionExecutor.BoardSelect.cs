@@ -73,9 +73,13 @@ namespace NineGrid.Flow
             int[] selectedUids = null;
             if (playKind == HelpCardPlayKind.SingleDragTarget)
             {
-                if (!TryResolveSingleDragTarget(targetGroundSlot, selectedCardsSpec, out var targetUid))
+                if (!TryResolveSingleDragTarget(targetGroundSlot, selectedCardsSpec, out var targetUid, out var rejectReason))
                 {
-                    LogHandDragApplyReject(card, "single-drag-target-missing");
+                    LogHandDragApplyReject(card, "single-drag-target-missing detail=" + rejectReason);
+                    if (!string.IsNullOrEmpty(rejectReason))
+                    {
+                        RejectedUseItemRecovery.SurfaceRejection(rejectReason, card.DefId, chestRelicFull: false);
+                    }
                     return false;
                 }
 
@@ -131,27 +135,33 @@ namespace NineGrid.Flow
         private bool TryResolveSingleDragTarget(
             int? targetGroundSlot,
             HelpCardSelectedCardsSpec spec,
-            out int targetUid)
+            out int targetUid,
+            out string rejectReason)
         {
             targetUid = 0;
+            rejectReason = null;
             if (!targetGroundSlot.HasValue || Field == null)
             {
+                rejectReason = NineGrid.Core.Localization.L10n.Tr("notice.no_target", "未选中有效目标");
                 return false;
             }
 
             if (!Field.TryGetCardAt(targetGroundSlot.Value, out var targetCard)
                 || targetCard == null)
             {
+                rejectReason = NineGrid.Core.Localization.L10n.Tr("notice.no_target", "未选中有效目标");
                 return false;
             }
 
             if (targetCard.CoreKind == CardPresentationKind.Avatar)
             {
+                rejectReason = NineGrid.Core.Localization.L10n.Tr("notice.target_is_player", "不能以玩家为目标");
                 return false;
             }
 
             if (spec.RequiresTrueMonster && targetCard.CoreKind != CardPresentationKind.Monster)
             {
+                rejectReason = NineGrid.Core.Localization.L10n.Tr("notice.target_not_monster", "只能以怪物为目标");
                 return false;
             }
 
@@ -159,7 +169,19 @@ namespace NineGrid.Flow
                 && targetCard.CoreKind != CardPresentationKind.Monster
                 && targetCard.CoreKind != CardPresentationKind.Trap)
             {
+                rejectReason = NineGrid.Core.Localization.L10n.Tr("notice.target_not_combat", "只能以怪物或机关为目标");
                 return false;
+            }
+
+            if (spec.RequiresFaceUp)
+            {
+                var coreCard = NineGridArchitecture.Current?.GetModel<CardRegistry>()?.Get(targetCard.Uid);
+                var isFaceUp = coreCard != null ? coreCard.FaceUp : (targetCard.CommittedPresentation?.FaceUp ?? true);
+                if (!isFaceUp)
+                {
+                    rejectReason = NineGrid.Core.Localization.L10n.Tr("notice.target_face_down", "只能以正面怪物为目标");
+                    return false;
+                }
             }
 
             targetUid = targetCard.Uid;
