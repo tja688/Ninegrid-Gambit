@@ -36,7 +36,8 @@ namespace NineGrid.Cards.Anim
         public bool MirrorX => _mirrorX;
 
         /// <summary>
-        /// 主视觉水平镜像（scale.x 取反）。仅改符号，不重算 Mask 锚点。
+        /// 主视觉水平镜像：按当前槽位重算摆放，并在翻转后把可视中心钉回原位，
+        /// 避免 pivot / tight mesh 偏心导致左右看时整个人在卡面里平移。
         /// </summary>
         public void SetMirrorX(bool mirrorX)
         {
@@ -52,15 +53,7 @@ namespace NineGrid.Cards.Anim
                 return;
             }
 
-            var scale = target.transform.localScale;
-            var absX = Mathf.Abs(scale.x);
-            if (absX < 0.0001f)
-            {
-                absX = 1f;
-            }
-
-            scale.x = mirrorX ? -absX : absX;
-            target.transform.localScale = scale;
+            ApplySlotTransformOnce(_activeSlot, target.sprite);
         }
 
         private void Awake()

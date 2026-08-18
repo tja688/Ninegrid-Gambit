@@ -23,8 +23,7 @@ namespace NineGrid.Cards.Anim
             }
 
             var scale = uniformScale > 0.0001f ? uniformScale : 1f;
-            var scaleX = mirrorX ? -scale : scale;
-            target.transform.localScale = new Vector3(scaleX, scale, 1f);
+            target.transform.localScale = new Vector3(scale, scale, 1f);
 
             if (referenceSprite != null)
             {
@@ -58,6 +57,7 @@ namespace NineGrid.Cards.Anim
             }
 
             target.transform.localPosition = local;
+            PreserveVisualCenterIfMirrored(target, scale, mirrorX);
         }
 
         /// <summary>
@@ -79,8 +79,7 @@ namespace NineGrid.Cards.Anim
             }
 
             var scale = uniformScale > 0.0001f ? uniformScale : 1f;
-            var scaleX = mirrorX ? -scale : scale;
-            target.transform.localScale = new Vector3(scaleX, scale, 1f);
+            target.transform.localScale = new Vector3(scale, scale, 1f);
 
             if (referenceSprite != null)
             {
@@ -110,6 +109,34 @@ namespace NineGrid.Cards.Anim
             }
 
             target.transform.localPosition = local;
+            PreserveVisualCenterIfMirrored(target, scale, mirrorX);
+        }
+
+        /// <summary>
+        /// 先按正向摆好，再只翻 scale.x，并把世界可视中心钉回翻转前，
+        /// 这样左右看只改朝向，不改卡面里的站位。
+        /// </summary>
+        private static void PreserveVisualCenterIfMirrored(SpriteRenderer target, float absScale, bool mirrorX)
+        {
+            if (!mirrorX || target == null)
+            {
+                return;
+            }
+
+            var keepX = target.bounds.center.x;
+            var scale = target.transform.localScale;
+            scale.x = -Mathf.Abs(absScale > 0.0001f ? absScale : 1f);
+            target.transform.localScale = scale;
+
+            var deltaX = keepX - target.bounds.center.x;
+            if (Mathf.Abs(deltaX) < 0.0001f)
+            {
+                return;
+            }
+
+            var world = target.transform.position;
+            world.x += deltaX;
+            target.transform.position = world;
         }
 
         private static bool IsFinite(Vector3 value)

@@ -26,8 +26,10 @@ namespace NineGrid.Presentation.Ui
         private int mFrameIndex;
         private float mElapsed;
         private string mLoadedKey;
+        private bool mPlaying = true;
 
         public string ResourcesKey => resourcesKey;
+        public bool IsPlaying => mPlaying;
 
         public void SetResourcesKey(string key)
         {
@@ -35,6 +37,18 @@ namespace NineGrid.Presentation.Ui
             if (isActiveAndEnabled)
             {
                 LoadFrames();
+            }
+        }
+
+        /// <summary>选人立绘：未选中停在第一帧，选中才循环待机。</summary>
+        public void SetPlaying(bool playing)
+        {
+            mPlaying = playing;
+            if (!playing)
+            {
+                mFrameIndex = 0;
+                mElapsed = 0f;
+                ApplyFirstFrame();
             }
         }
 
@@ -46,7 +60,7 @@ namespace NineGrid.Presentation.Ui
 
         private void Update()
         {
-            if (mFrames.Length <= 1 || mRenderer == null)
+            if (!mPlaying || mFrames.Length <= 1 || mRenderer == null)
             {
                 return;
             }

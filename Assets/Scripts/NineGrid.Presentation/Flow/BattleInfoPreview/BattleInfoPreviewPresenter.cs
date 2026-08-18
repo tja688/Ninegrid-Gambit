@@ -7,6 +7,7 @@ using NineGrid.Core;
 using NineGrid.Core.Content;
 using NineGrid.Core.Systems;
 using NineGrid.Flow.BoardBriefTip;
+using NineGrid.Presentation.Ui;
 using QFramework;
 using TMPro;
 using UnityEngine;
@@ -26,6 +27,15 @@ namespace NineGrid.Flow.BattleInfoPreview
         public const string DefaultAvatarDefId = "avatar.default";
         public const string DefaultLeaveTrapDefId = RegularTrapPool.LeaveTrapDefId;
 
+        public const string NormalFloor1BannerAssetPath =
+            "Assets/Arts/Images/Png/2D Pixel Quest Vol3_ The UI-GUI/Banners/F_UI_GreenBannerD.png";
+        public const string NormalFloor2BannerAssetPath =
+            "Assets/Arts/Images/Png/2D Pixel Quest Vol3_ The UI-GUI/Banners/F_UI_BlueBannerD.png";
+        public const string NormalFloor3BannerAssetPath =
+            "Assets/Arts/Images/Png/2D Pixel Quest Vol3_ The UI-GUI/Banners/F_UI_WhiteBannerD.png";
+        public const string HardBannerAssetPath =
+            "Assets/Arts/Images/Png/2D Pixel Quest Vol3_ The UI-GUI/Banners/F_UI_RedBannerD.png";
+
         private static BattleInfoPreviewPresenter sInstance;
 
         [Header("场景绑定")]
@@ -40,12 +50,24 @@ namespace NineGrid.Flow.BattleInfoPreview
         [SerializeField] private List<BattleInfoPreviewSlotView> environmentSlots = new List<BattleInfoPreviewSlotView>();
         [SerializeField] private BattleInfoPreviewSlotView playerBodySlotView;
 
+        [Header("横幅绑定与配置")]
+        [SerializeField] private SpriteRenderer bannerRenderer;
+        [Tooltip("常规/普通难度：第 1 层横幅 (绿色)")]
+        [SerializeField] private Sprite normalFloor1Banner;
+        [Tooltip("常规/普通难度：第 2 层横幅 (蓝色)")]
+        [SerializeField] private Sprite normalFloor2Banner;
+        [Tooltip("常规/普通难度：第 3 层横幅 (白色)")]
+        [SerializeField] private Sprite normalFloor3Banner;
+        [Tooltip("血色/困难难度：所有层横幅 (红色)")]
+        [SerializeField] private Sprite hardBanner;
+
         [Header("配置")]
         [SerializeField] private BattleInfoPreviewCopySO copyConfig;
         [Tooltip("悬停四角框 tint；默认白以保留素材金色。")]
         [SerializeField] private Color highlightColor = Color.white;
         [Tooltip("悬停四角框（九宫）；空则用 F_U_Frame3 默认路径。")]
         [SerializeField] private Sprite highlightSprite;
+        [Tooltip("Inspector 回退；运行时优先用当前局 Avatar / 职业 defId。")]
         [SerializeField] private string avatarDefId = DefaultAvatarDefId;
         [SerializeField] private bool previewLeaveTrap = true;
         [SerializeField] private string leaveTrapDefId = DefaultLeaveTrapDefId;
@@ -81,6 +103,12 @@ namespace NineGrid.Flow.BattleInfoPreview
                 return TryGetLiveInstance(out var live) && live._open;
             }
         }
+
+        public SpriteRenderer BannerRenderer => bannerRenderer;
+        public Sprite NormalFloor1Banner => normalFloor1Banner;
+        public Sprite NormalFloor2Banner => normalFloor2Banner;
+        public Sprite NormalFloor3Banner => normalFloor3Banner;
+        public Sprite HardBanner => hardBanner;
 
         public static BattleInfoPreviewPresenter InstanceOrNull()
         {
@@ -282,8 +310,9 @@ namespace NineGrid.Flow.BattleInfoPreview
         {
             WireAllSlots();
             ApplyRoomInfoText();
+            ApplyBanner();
 
-            var avatarId = string.IsNullOrWhiteSpace(avatarDefId) ? DefaultAvatarDefId : avatarDefId.Trim();
+            var avatarId = ResolveLiveAvatarDefId();
             if (playerBodySlotView != null)
             {
                 playerBodySlotView.Bind(
@@ -329,6 +358,104 @@ namespace NineGrid.Flow.BattleInfoPreview
                 envDefs,
                 _ => CardPresentationKind.Trap,
                 Mathf.Max(0.01f, environmentIconExternalScale));
+        }
+
+        public Sprite ResolveBannerSprite(int floor, string difficultyId)
+        {
+            if (IsHardDifficulty(difficultyId))
+            {
+                return hardBanner != null ? hardBanner : ResolveAssetSprite(HardBannerAssetPath);
+            }
+
+            if (floor <= 1)
+            {
+                return normalFloor1Banner != null ? normalFloor1Banner : ResolveAssetSprite(NormalFloor1BannerAssetPath);
+            }
+
+            if (floor == 2)
+            {
+                return normalFloor2Banner != null ? normalFloor2Banner : ResolveAssetSprite(NormalFloor2BannerAssetPath);
+            }
+
+            return normalFloor3Banner != null ? normalFloor3Banner : ResolveAssetSprite(NormalFloor3BannerAssetPath);
+        }
+
+        public static bool IsHardDifficulty(string difficultyId)
+        {
+            return string.Equals(difficultyId, RunDifficultyIds.Hard, StringComparison.OrdinalIgnoreCase);
+        }
+
+        public void ApplyBanner(int floor, string difficultyId)
+        {
+            if (bannerRenderer == null)
+            {
+                return;
+            }
+
+            var sprite = ResolveBannerSprite(floor, difficultyId);
+            if (sprite != null)
+            {
+                bannerRenderer.sprite = sprite;
+            }
+        }
+
+        private void ApplyBanner()
+        {
+            if (bannerRenderer == null)
+            {
+                return;
+            }
+
+            var arch = NineGridArchitecture.Current;
+            var run = arch != null ? arch.GetModel<RunModel>() : null;
+            var floor = run != null ? run.Floor.Value : 1;
+            var difficultyId = run != null && run.DifficultyId != null
+                ? run.DifficultyId.Value
+                : RunSetupSelection.DifficultyId;
+
+            ApplyBanner(floor, difficultyId);
+        }
+
+        private static Sprite ResolveAssetSprite(string assetPath)
+        {
+#if UNITY_EDITOR
+            if (string.IsNullOrEmpty(assetPath))
+            {
+                return null;
+            }
+
+            return UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>(assetPath);
+#else
+            return null;
+#endif
+        }
+
+        private string ResolveLiveAvatarDefId()
+        {
+            var arch = NineGridArchitecture.Current ?? NineGridArchitecture.Interface;
+            if (arch != null)
+            {
+                var board = arch.GetModel<BoardModel>();
+                var registry = arch.GetModel<CardRegistry>();
+                if (board != null && registry != null && board.AvatarUid.Value > 0)
+                {
+                    CardInstance avatar;
+                    if (registry.TryGet(board.AvatarUid.Value, out avatar)
+                        && avatar != null
+                        && !string.IsNullOrEmpty(avatar.DefId))
+                    {
+                        return avatar.DefId;
+                    }
+                }
+
+                var player = arch.GetModel<PlayerModel>();
+                if (player != null && !string.IsNullOrEmpty(player.ProfessionId.Value))
+                {
+                    return ProfessionCatalog.Get(player.ProfessionId.Value).AvatarDefId;
+                }
+            }
+
+            return string.IsNullOrWhiteSpace(avatarDefId) ? DefaultAvatarDefId : avatarDefId.Trim();
         }
 
         private void ApplyRoomInfoText()
@@ -793,6 +920,37 @@ namespace NineGrid.Flow.BattleInfoPreview
             CollectPlaceholderSlots(environmentGroup, environmentSlots, excludeBody: false);
 
             EnsurePanelColliderAndProxy();
+
+            if (bannerRenderer == null && panelRoot != null)
+            {
+                var bannerTransform = panelRoot.transform.Find("横幅");
+                if (bannerTransform != null)
+                {
+                    bannerRenderer = bannerTransform.GetComponent<SpriteRenderer>();
+                }
+            }
+
+#if UNITY_EDITOR
+            if (normalFloor1Banner == null)
+            {
+                normalFloor1Banner = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>(NormalFloor1BannerAssetPath);
+            }
+
+            if (normalFloor2Banner == null)
+            {
+                normalFloor2Banner = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>(NormalFloor2BannerAssetPath);
+            }
+
+            if (normalFloor3Banner == null)
+            {
+                normalFloor3Banner = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>(NormalFloor3BannerAssetPath);
+            }
+
+            if (hardBanner == null)
+            {
+                hardBanner = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>(HardBannerAssetPath);
+            }
+#endif
         }
 
         private void CollectPlaceholderSlots(

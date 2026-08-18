@@ -60,7 +60,7 @@ namespace NineGrid.Core
             itemSourceDeckIds: new[] { GenericItemDeckId, WarriorItemDeckId },
             avatarDefId: "avatar.default");
 
-        // #223：第二职业（刺客/Layla）：开局遗物 = 空间振荡器；专属白卡「换位」进该角色专属组。
+        // #223：第二职业（刺客/Icey，内容 id 仍为 avatar.layla）：开局遗物 = 空间振荡器；专属白卡「换位」进该角色专属组。
         private static readonly ProfessionDefinition sAssassin = new ProfessionDefinition(
             Assassin,
             maxHp: 10,

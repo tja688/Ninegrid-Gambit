@@ -2,7 +2,6 @@ using System;
 using NineGrid.Content.CardPresentation;
 using NineGrid.Core;
 using NineGrid.Flow;
-using NineGrid.Flow;
 using NineGrid.Flow.Presentation;
 using NineGrid.Presentation.Systems;
 using TMPro;
@@ -14,8 +13,9 @@ namespace NineGrid.Presentation.Ui
     /// 选人界面：主菜单「开始游戏」后弹出，纯黑屏底幕（<see cref="PureBlackScreenOverlay"/>）。
     /// 场景预置 <c>UI面板/选人界面BG</c>（默认失活）：
     /// - 角色1 = 战士（会动的立绘 + 专属遗物图标），点击立绘切换选中；专属遗物右键开详述；
-    /// - 角色2 = 刺客（Layla 会动立绘 + 空间振荡器遗物图标），点击立绘切换选中；专属遗物右键开详述；
-    /// - 角色3 = 未解锁席位（Icey 黑色剪影 + 「尚未实装」文案，点击拒绝）；
+    /// - 角色2 = 未解锁席位（精灵/远程射手 Layla 黑色剪影 + 「尚未实装」，时装未落地）；
+    /// - 角色3 = 刺客（Icey 会动立绘 + 空间振荡器遗物图标），点击立绘切换选中；专属遗物右键开详述；
+    /// - 仅当前选中的解锁角色播放待机序列帧，其余停在第一帧；
     /// - 「开始游戏」在已选解锁角色时正式出发（<see cref="GameFlowController.BeginFormalRun"/>）；
     /// - 难度选项三档均可点选（当前全部路由普通数据，仅记录到 <see cref="RunSetupSelection"/>）；
     /// - 「回到主菜单 (1)」直接返回不提示，小字说明悬停才出现。
@@ -33,11 +33,16 @@ namespace NineGrid.Presentation.Ui
         private const string OverlayReason = "character-select";
         private const string WarriorIdleKey =
             "ContentArt/Multiple/MonstersAndHumans/SpriteSheets(96x96)/Human_Soldier_Sword_Shield/No_Shadows/Human_Soldier_Sword_Shield_Idle-Sheet";
-        private const string LockedIdleKeyA = "ContentArt/Png/像素怪物合集/sprites/Layla_idle_01";
-        private const string LockedIdleKeyB = "ContentArt/Png/像素怪物合集/sprites/Icey_idle_01";
+        private const string ElfIdleKey = "ContentArt/Png/像素怪物合集/sprites/Layla_idle_01";
+        private const string AssassinIdleKey = "ContentArt/Png/像素怪物合集/sprites/Icey_idle_01";
+        private const string AssassinAvatarDefId = "avatar.layla";
+        private const string LockedDescription = "尚未实装，敬请期待";
+        private const string AssassinSelectIntroFallback = "灵巧的刺客，擅长在操控空间的力量";
 
         // 战士序列帧 96x96 里主体只占中间一小块，帧高给大些才与剪影视觉均衡（Play 实测校准）。
+        // Icey / Layla 帧几乎铺满画布，不能套战士那套高度，否则选人立绘会巨大。
         private const float WarriorPortraitWorldHeight = 5.6f;
+        private const float AssassinPortraitWorldHeight = 1.9f;
         private const float LockedPortraitWorldHeight = 1.9f;
         private const float ItemIconWorldHeight = 0.9f;
         private const int PortraitSortingOrder = 40;
@@ -55,11 +60,13 @@ namespace NineGrid.Presentation.Ui
             public Transform Root;
             public SpriteRenderer PortraitArt;
             public SpriteRenderer PortraitHighlight;
+            public ResourcesSpriteLoop PortraitLoop;
             public TMP_Text Description;
             public Color DescriptionBaseColor;
             public bool Unlocked;
             public string RelicDefId;
             public string ProfessionId;
+            public float PortraitWorldHeight;
         }
 
         private sealed class DifficultyOption
@@ -179,8 +186,8 @@ namespace NineGrid.Presentation.Ui
             }
 
             WireCharacterSlot(0, "角色1", unlocked: true);
-            WireCharacterSlot(1, "角色2", unlocked: true);
-            WireCharacterSlot(2, "角色3", unlocked: false);
+            WireCharacterSlot(1, "角色2", unlocked: false);
+            WireCharacterSlot(2, "角色3", unlocked: true);
             WireDifficulty(0, "难度选项：普通", RunSetupSelection.NormalDifficultyId, "旅途");
             WireDifficulty(1, "难度选项：进阶", "advanced", "冒险");
             WireDifficulty(2, "难度选项：困难", "hard", "血色");
@@ -258,7 +265,9 @@ namespace NineGrid.Presentation.Ui
 
                 PanelArtUtility.FitWorldHeight(
                     slot.PortraitArt,
-                    slot.Unlocked ? WarriorPortraitWorldHeight : LockedPortraitWorldHeight);
+                    slot.PortraitWorldHeight > 0.01f
+                        ? slot.PortraitWorldHeight
+                        : (slot.Unlocked ? WarriorPortraitWorldHeight : LockedPortraitWorldHeight));
                 SyncPortraitCollider(slot);
             }
 
@@ -280,19 +289,23 @@ namespace NineGrid.Presentation.Ui
             {
                 Root = root,
                 Unlocked = unlocked,
-                ProfessionId = ResolveSlotProfessionId(index)
+                ProfessionId = ResolveSlotProfessionId(index),
+                PortraitWorldHeight = ResolvePortraitWorldHeight(index, unlocked)
             };
 
-            // 立绘：__Art 序列帧（战士 = 本色；未解锁 = 黑色剪影）。
+            // 立绘：__Art 序列帧（解锁 = 本色；未解锁 = 黑色剪影）。
             var portrait = FindDirectChild(root, PortraitNodeName);
             if (portrait != null)
             {
-                var key = index == 1 ? LockedIdleKeyA : (index == 2 ? LockedIdleKeyB : WarriorIdleKey);
                 slot.PortraitArt = PanelArtUtility.EnsureLoopArt(
                     portrait,
-                    key,
+                    ResolvePortraitResourcesKey(index),
                     unlocked ? Color.white : SilhouetteTint,
                     PortraitSortingOrder);
+                if (slot.PortraitArt != null)
+                {
+                    slot.PortraitLoop = slot.PortraitArt.GetComponent<ResourcesSpriteLoop>();
+                }
 
                 slot.PortraitHighlight = portrait.Find(HighlightChildName)?.GetComponent<SpriteRenderer>();
                 WirePortraitButton(portrait, slot);
@@ -302,10 +315,11 @@ namespace NineGrid.Presentation.Ui
             slot.Description = FindChildTmpByPrefix(root, "角色描述");
             if (slot.Description != null)
             {
+                ApplySlotDescription(slot, index);
                 slot.DescriptionBaseColor = slot.Description.color;
             }
 
-            // 角色专属道具卡：战士显示初始遗物图标；未解锁席位留空。
+            // 角色专属道具卡：解锁角色显示初始遗物图标；未解锁席位留空。
             var itemCard = FindDirectChildByPrefix(root, "角色专属道具卡");
             if (itemCard != null)
             {
@@ -465,13 +479,20 @@ namespace NineGrid.Presentation.Ui
             for (var i = 0; i < mSlots.Length; i++)
             {
                 var slot = mSlots[i];
-                if (slot?.PortraitHighlight == null)
+                if (slot == null)
                 {
                     continue;
                 }
 
                 var selected = i == mSelectedSlotIndex;
-                slot.PortraitHighlight.enabled = selected;
+                if (slot.PortraitHighlight != null)
+                {
+                    slot.PortraitHighlight.enabled = selected;
+                }
+
+                var loop = slot.PortraitLoop
+                           ?? slot.PortraitArt?.GetComponent<ResourcesSpriteLoop>();
+                loop?.SetPlaying(selected && slot.Unlocked);
             }
         }
 
@@ -725,7 +746,7 @@ namespace NineGrid.Presentation.Ui
                     return ProfessionCatalog.Default != null
                         ? ProfessionCatalog.Default.InitialRelicDefId
                         : "relic.rotten_cleave_axe";
-                case 1:
+                case 2:
                     ProfessionDefinition def;
                     return ProfessionCatalog.TryGet(ProfessionCatalog.Assassin, out def) && def != null
                         ? def.InitialRelicDefId
@@ -741,11 +762,63 @@ namespace NineGrid.Presentation.Ui
             {
                 case 0:
                     return ProfessionCatalog.Jester;
-                case 1:
+                case 2:
                     return ProfessionCatalog.Assassin;
                 default:
                     return null;
             }
+        }
+
+        private static string ResolvePortraitResourcesKey(int slotIndex)
+        {
+            switch (slotIndex)
+            {
+                case 1:
+                    return ElfIdleKey;
+                case 2:
+                    return AssassinIdleKey;
+                default:
+                    return WarriorIdleKey;
+            }
+        }
+
+        private static float ResolvePortraitWorldHeight(int slotIndex, bool unlocked)
+        {
+            if (!unlocked)
+            {
+                return LockedPortraitWorldHeight;
+            }
+
+            return slotIndex == 0 ? WarriorPortraitWorldHeight : AssassinPortraitWorldHeight;
+        }
+
+        private static void ApplySlotDescription(CharacterSlot slot, int index)
+        {
+            if (slot?.Description == null)
+            {
+                return;
+            }
+
+            if (!slot.Unlocked)
+            {
+                slot.Description.text = LockedDescription;
+                return;
+            }
+
+            if (index != 2)
+            {
+                return;
+            }
+
+            if (CardPresentationConfigCatalog.TryGet(AssassinAvatarDefId, out var dto)
+                && dto != null
+                && !string.IsNullOrWhiteSpace(dto.faceIntro))
+            {
+                slot.Description.text = dto.faceIntro.Trim();
+                return;
+            }
+
+            slot.Description.text = AssassinSelectIntroFallback;
         }
 
         private static void WireRelicInspect(Transform itemCard, string relicDefId)

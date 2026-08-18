@@ -39,10 +39,10 @@ namespace NineGrid.Presentation.Ui
         private const string OverlayReason = "run-summary";
         private const string WarriorIdleKey =
             "ContentArt/Multiple/MonstersAndHumans/SpriteSheets(96x96)/Human_Soldier_Sword_Shield/No_Shadows/Human_Soldier_Sword_Shield_Idle-Sheet";
-        private const string LaylaIdleKey = "ContentArt/Png/像素怪物合集/sprites/Layla_idle_01";
+        private const string AssassinIdleKey = "ContentArt/Png/像素怪物合集/sprites/Icey_idle_01";
         // 战士序列帧主体只占 96x96 一小块，帧高按选人界面同参（Play 实测校准）。
         private const float WarriorPortraitWorldHeight = 5.6f;
-        private const float LaylaPortraitWorldHeight = 1.9f;
+        private const float AssassinPortraitWorldHeight = 1.9f;
         private const float RelicIconWorldHeight = 0.72f;
         private const int PortraitSortingOrder = 40;
         private const int RelicIconSortingOrder = 24;
@@ -260,14 +260,14 @@ namespace NineGrid.Presentation.Ui
             {
                 mPortraitArt = PanelArtUtility.EnsureLoopArt(
                     portrait,
-                    isAssassin ? LaylaIdleKey : WarriorIdleKey,
+                    isAssassin ? AssassinIdleKey : WarriorIdleKey,
                     Color.white,
                     PortraitSortingOrder);
             }
 
             if (mPortraitArt != null)
             {
-                PanelArtUtility.FitWorldHeight(mPortraitArt, isAssassin ? LaylaPortraitWorldHeight : WarriorPortraitWorldHeight);
+                PanelArtUtility.FitWorldHeight(mPortraitArt, isAssassin ? AssassinPortraitWorldHeight : WarriorPortraitWorldHeight);
             }
 
             var run = NineGridArchitecture.Current?.GetModel<RunModel>();
