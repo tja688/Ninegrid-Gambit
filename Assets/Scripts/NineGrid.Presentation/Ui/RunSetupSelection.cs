@@ -16,6 +16,9 @@ namespace NineGrid.Presentation.Ui
         /// <summary>选人界面难度选项的图标精灵（结算面板「此次对局所选的难度」直接复用）。</summary>
         public static Sprite DifficultyIcon { get; private set; }
 
+        /// <summary>选人界面所选职业 id（默认战士）。</summary>
+        public static string ProfessionId { get; private set; } = NineGrid.Core.ProfessionCatalog.Jester;
+
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         private static void ResetStatics()
         {
@@ -29,11 +32,17 @@ namespace NineGrid.Presentation.Ui
             DifficultyIcon = icon;
         }
 
+        public static void SetProfession(string id)
+        {
+            ProfessionId = string.IsNullOrEmpty(id) ? NineGrid.Core.ProfessionCatalog.Jester : id;
+        }
+
         public static void ResetToDefault()
         {
             DifficultyId = NormalDifficultyId;
             DifficultyLabel = GetDefaultLabel(NormalDifficultyId);
             DifficultyIcon = null;
+            ProfessionId = NineGrid.Core.ProfessionCatalog.Jester;
         }
 
         public static string GetDefaultLabel(string difficultyId)

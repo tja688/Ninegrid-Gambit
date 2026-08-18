@@ -155,7 +155,11 @@ namespace NineGrid.Core
         private static CardInstance CreateAvatar(IArchitecture architecture, InitialGameOptions options, CardRegistry registry)
         {
             var content = architecture.GetSystem<IContentSystem>();
-            var draft = content.CreateDraft(options.AvatarDefId);
+            var profession = ProfessionCatalog.Get(options.ProfessionId);
+            var avatarDefId = string.IsNullOrEmpty(options.AvatarDefId) || options.AvatarDefId == "avatar.default"
+                ? profession.AvatarDefId
+                : options.AvatarDefId;
+            var draft = content.CreateDraft(avatarDefId);
             CardInstance avatar;
             if (draft.Kind != CardKind.Unknown)
             {
@@ -164,7 +168,7 @@ namespace NineGrid.Core
                 return avatar;
             }
 
-            avatar = registry.Create(options.AvatarDefId, CardKind.Avatar);
+            avatar = registry.Create(avatarDefId, CardKind.Avatar);
             ApplyAvatarStats(avatar, options);
             return avatar;
         }

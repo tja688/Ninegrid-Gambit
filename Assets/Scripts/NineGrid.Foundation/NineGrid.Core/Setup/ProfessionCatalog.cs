@@ -13,7 +13,8 @@ namespace NineGrid.Core
             int armor,
             int recovery,
             string initialRelicDefId,
-            IReadOnlyList<string> itemSourceDeckIds)
+            IReadOnlyList<string> itemSourceDeckIds,
+            string avatarDefId = "avatar.default")
         {
             DefId = defId ?? string.Empty;
             MaxHp = maxHp;
@@ -22,6 +23,7 @@ namespace NineGrid.Core
             Recovery = recovery;
             InitialRelicDefId = initialRelicDefId ?? string.Empty;
             ItemSourceDeckIds = itemSourceDeckIds ?? new string[0];
+            AvatarDefId = string.IsNullOrEmpty(avatarDefId) ? "avatar.default" : avatarDefId;
         }
 
         public string DefId { get; private set; }
@@ -30,19 +32,22 @@ namespace NineGrid.Core
         public int Armor { get; private set; }
         public int Recovery { get; private set; }
         public string InitialRelicDefId { get; private set; }
+        public string AvatarDefId { get; private set; }
 
         /// <summary>道具卡来源池所属卡组 id（通用 + 角色）。</summary>
         public IReadOnlyList<string> ItemSourceDeckIds { get; private set; }
     }
 
     /// <summary>
-    /// 本轮固定职业（战士）：属性、初始遗物、道具卡来源卡组。
+    /// 职业目录：属性、初始遗物、化身、道具卡来源卡组。
     /// </summary>
     public static class ProfessionCatalog
     {
         public const string Jester = "profession.jester";
+        public const string Assassin = "profession.assassin";
         public const string GenericItemDeckId = "deck.help";
         public const string WarriorItemDeckId = "deck.player";
+        public const string AssassinItemDeckId = "deck.player_assassin";
 
         // #116：开局遗物 = 腐朽顺劈斧；战士基础护甲 0（策划案）。
         private static readonly ProfessionDefinition sWarrior = new ProfessionDefinition(
@@ -52,7 +57,19 @@ namespace NineGrid.Core
             armor: 0,
             recovery: 1,
             initialRelicDefId: "relic.rotten_cleave_axe",
-            itemSourceDeckIds: new[] { GenericItemDeckId, WarriorItemDeckId });
+            itemSourceDeckIds: new[] { GenericItemDeckId, WarriorItemDeckId },
+            avatarDefId: "avatar.default");
+
+        // #223：第二职业（刺客/Layla）：开局遗物 = 空间振荡器；专属白卡「换位」进该角色专属组。
+        private static readonly ProfessionDefinition sAssassin = new ProfessionDefinition(
+            Assassin,
+            maxHp: 10,
+            attack: 3,
+            armor: 0,
+            recovery: 1,
+            initialRelicDefId: "relic.space_oscillator",
+            itemSourceDeckIds: new[] { GenericItemDeckId, AssassinItemDeckId },
+            avatarDefId: "avatar.layla");
 
         public static ProfessionDefinition Default
         {
@@ -70,6 +87,11 @@ namespace NineGrid.Core
             if (professionId == Jester)
             {
                 definition = sWarrior;
+                return true;
+            }
+            if (professionId == Assassin)
+            {
+                definition = sAssassin;
                 return true;
             }
 

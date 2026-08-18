@@ -267,7 +267,8 @@ namespace NineGrid.Presentation.Tests
             Assert.IsTrue(board.IsAvatarOffHome.Value);
             Assert.AreEqual(2, board.AvatarHomingSteps.Value);
 
-            // 开启新节点
+            // 开启新节点（前置相位为 NodeCompleted 使得 StartNode 合法）
+            mArch.GetModel<RunModel>().SetPhase(GamePhase.NodeCompleted);
             var phaseSystem = mArch.GetSystem<IPhaseSystem>();
             phaseSystem.StartNode(NodeDeckOptions.CreateDefaultBattle());
 

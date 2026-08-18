@@ -14,7 +14,8 @@ namespace NineGrid.Presentation.Ui
     /// 选人界面：主菜单「开始游戏」后弹出，纯黑屏底幕（<see cref="PureBlackScreenOverlay"/>）。
     /// 场景预置 <c>UI面板/选人界面BG</c>（默认失活）：
     /// - 角色1 = 战士（会动的立绘 + 专属遗物图标），点击立绘切换选中；专属遗物右键开详述；
-    /// - 角色2/3 = 未解锁席位（Layla / Icey 黑色剪影 + 「尚未实装」文案，点击拒绝）；
+    /// - 角色2 = 刺客（Layla 会动立绘 + 空间振荡器遗物图标），点击立绘切换选中；专属遗物右键开详述；
+    /// - 角色3 = 未解锁席位（Icey 黑色剪影 + 「尚未实装」文案，点击拒绝）；
     /// - 「开始游戏」在已选解锁角色时正式出发（<see cref="GameFlowController.BeginFormalRun"/>）；
     /// - 难度选项三档均可点选（当前全部路由普通数据，仅记录到 <see cref="RunSetupSelection"/>）；
     /// - 「回到主菜单 (1)」直接返回不提示，小字说明悬停才出现。
@@ -58,6 +59,7 @@ namespace NineGrid.Presentation.Ui
             public Color DescriptionBaseColor;
             public bool Unlocked;
             public string RelicDefId;
+            public string ProfessionId;
         }
 
         private sealed class DifficultyOption
@@ -177,7 +179,7 @@ namespace NineGrid.Presentation.Ui
             }
 
             WireCharacterSlot(0, "角色1", unlocked: true);
-            WireCharacterSlot(1, "角色2", unlocked: false);
+            WireCharacterSlot(1, "角色2", unlocked: true);
             WireCharacterSlot(2, "角色3", unlocked: false);
             WireDifficulty(0, "难度选项：普通", RunSetupSelection.NormalDifficultyId, "旅途");
             WireDifficulty(1, "难度选项：进阶", "advanced", "冒险");
@@ -274,7 +276,12 @@ namespace NineGrid.Presentation.Ui
                 return;
             }
 
-            var slot = new CharacterSlot { Root = root, Unlocked = unlocked };
+            var slot = new CharacterSlot
+            {
+                Root = root,
+                Unlocked = unlocked,
+                ProfessionId = ResolveSlotProfessionId(index)
+            };
 
             // 立绘：__Art 序列帧（战士 = 本色；未解锁 = 黑色剪影）。
             var portrait = FindDirectChild(root, PortraitNodeName);
@@ -441,6 +448,7 @@ namespace NineGrid.Presentation.Ui
             }
 
             mSelectedSlotIndex = index;
+            RunSetupSelection.SetProfession(mSlots[index]?.ProfessionId);
             RefreshSelectionVisuals();
 
             if (!silent)
@@ -711,14 +719,33 @@ namespace NineGrid.Presentation.Ui
 
         private static string ResolveSlotRelicDefId(int slotIndex)
         {
-            if (slotIndex != 0)
+            switch (slotIndex)
             {
-                return null;
+                case 0:
+                    return ProfessionCatalog.Default != null
+                        ? ProfessionCatalog.Default.InitialRelicDefId
+                        : "relic.rotten_cleave_axe";
+                case 1:
+                    ProfessionDefinition def;
+                    return ProfessionCatalog.TryGet(ProfessionCatalog.Assassin, out def) && def != null
+                        ? def.InitialRelicDefId
+                        : "relic.space_oscillator";
+                default:
+                    return null;
             }
+        }
 
-            return ProfessionCatalog.Default != null
-                ? ProfessionCatalog.Default.InitialRelicDefId
-                : null;
+        private static string ResolveSlotProfessionId(int slotIndex)
+        {
+            switch (slotIndex)
+            {
+                case 0:
+                    return ProfessionCatalog.Jester;
+                case 1:
+                    return ProfessionCatalog.Assassin;
+                default:
+                    return null;
+            }
         }
 
         private static void WireRelicInspect(Transform itemCard, string relicDefId)

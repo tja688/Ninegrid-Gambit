@@ -318,6 +318,7 @@ namespace NineGrid.Flow
                 // 新开局（正式 / 编辑器 Play / QuickTest）：每局新种子，层难度池才真正随机。
                 options = InitialGameOptions.CreateForNewRun();
                 options.DifficultyId = RunSetupSelection.DifficultyId;
+                options.ProfessionId = RunSetupSelection.ProfessionId;
             }
 
             TeardownPresentationRuntime(IntentClearReason.LayerChange);
