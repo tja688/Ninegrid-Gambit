@@ -362,6 +362,7 @@ namespace NineGrid.Flow.BattleInfoPreview
 
         public Sprite ResolveBannerSprite(int floor, string difficultyId)
         {
+            EnsureBindings();
             if (IsHardDifficulty(difficultyId))
             {
                 return hardBanner != null ? hardBanner : ResolveAssetSprite(HardBannerAssetPath);
@@ -387,6 +388,7 @@ namespace NineGrid.Flow.BattleInfoPreview
 
         public void ApplyBanner(int floor, string difficultyId)
         {
+            EnsureBindings();
             if (bannerRenderer == null)
             {
                 return;
