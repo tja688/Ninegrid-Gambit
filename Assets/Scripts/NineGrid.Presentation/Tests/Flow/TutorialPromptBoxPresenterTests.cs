@@ -107,6 +107,52 @@ namespace NineGrid.Presentation.Tests.Flow
             Assert.IsFalse(TutorialPromptBoxPresenter.IsPromptVisible);
         }
 
+        [Test]
+        public void TryCalculateWorldBounds_PrefersCardFrame_ExcludesDescriptionAndHudIcons()
+        {
+            var cardRoot = new GameObject("CardRoot");
+            try
+            {
+                cardRoot.transform.position = new Vector3(4f, -1f, 0f);
+
+                var frameGo = new GameObject("卡框");
+                frameGo.transform.SetParent(cardRoot.transform, false);
+                var frameRenderer = frameGo.AddComponent<SpriteRenderer>();
+                frameRenderer.sprite = CreateSolidSprite(2, 3);
+                frameGo.transform.localPosition = Vector3.zero;
+
+                var descriptionGo = new GameObject("描述");
+                descriptionGo.transform.SetParent(cardRoot.transform, false);
+                var descriptionRenderer = descriptionGo.AddComponent<SpriteRenderer>();
+                descriptionRenderer.sprite = CreateSolidSprite(8, 1);
+                descriptionGo.transform.localPosition = new Vector3(0f, 6f, 0f);
+
+                var hpIconGo = new GameObject("血量");
+                hpIconGo.transform.SetParent(cardRoot.transform, false);
+                var hpRenderer = hpIconGo.AddComponent<SpriteRenderer>();
+                hpRenderer.sprite = CreateSolidSprite(1, 1);
+                hpIconGo.transform.localPosition = new Vector3(3f, 0f, 0f);
+
+                Assert.IsTrue(TutorialPromptBoxPresenter.TryCalculateWorldBounds(cardRoot, out var bounds));
+                Assert.AreEqual(frameRenderer.bounds.center.x, bounds.center.x, 0.05f);
+                Assert.AreEqual(frameRenderer.bounds.center.y, bounds.center.y, 0.05f);
+                Assert.Less(bounds.size.y, 4.0f, "包围盒不得把描述格包进去");
+                Assert.Less(bounds.size.x, 4.0f, "包围盒不得把 HUD 图标包进去");
+            }
+            finally
+            {
+                Object.DestroyImmediate(cardRoot);
+            }
+        }
+
+        private static Sprite CreateSolidSprite(int width, int height)
+        {
+            var texture = new Texture2D(width, height);
+            texture.SetPixels(new Color[width * height]);
+            texture.Apply();
+            return Sprite.Create(texture, new Rect(0f, 0f, width, height), new Vector2(0.5f, 0.5f), 1f);
+        }
+
         [UnityTest]
         public IEnumerator BreathingAnimation_ModifiesSlicedSize_LeavesLocalScaleUntouched() => UniTask.ToCoroutine(async () =>
         {

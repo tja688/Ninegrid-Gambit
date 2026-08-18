@@ -148,8 +148,8 @@ namespace NineGrid.Presentation.Tests
             Assert.AreEqual(16, options.EnemyCards.Count, "第一关开局序列必须为 16 张正式卡牌");
 
             // 三项核心保证
-            Assert.AreEqual("monster.melee_3", options.EnemyCards[1].DefId, "正交邻格真怪（Slot 2）");
-            Assert.AreEqual("help.healing_potion", options.EnemyCards[0].DefId, "首杀稳定后正交可拾道具（Slot 1 旋转后落入 Slot 2）");
+            Assert.AreEqual("monster.melee_3", options.EnemyCards[3].DefId, "正右方教学怪（Slot 6）");
+            Assert.AreEqual("help.healing_potion", options.EnemyCards[2].DefId, "首杀稳定后正交可拾道具（Slot 3 旋转后落入 Slot 6）");
             Assert.AreEqual("trap.leave", options.EnemyCards[12].DefId, "离开机关固定在抽牌堆后半段（第 13 张 / 抽牌堆第 5 张）");
         }
 

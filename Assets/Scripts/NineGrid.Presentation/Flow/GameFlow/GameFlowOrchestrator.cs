@@ -188,6 +188,8 @@ namespace NineGrid.Flow
 
                 mSettlementTcs = new UniTaskCompletionSource();
                 session.BootstrapRun();
+                TutorialDeckPlan.TryPinLimeFloorDeck(
+                    NineGridArchitecture.Current?.GetModel<RunModel>());
                 CoreCardPresentationMapper.EnsureContentCatalogLoaded();
 
                 var content = NineGridArchitecture.Current.GetSystem<IContentSystem>();
@@ -493,6 +495,7 @@ namespace NineGrid.Flow
             if (mShell.NodeIndex == 1 && !mShell.IsQuickTestMode && !TutorialProgressStore.IsSteps1To9Completed())
             {
                 options = TutorialDeckPlan.BuildOpeningOptions(arch.GetSystem<IContentSystem>());
+                TutorialDeckPlan.TryPinLimeFloorDeck(arch.GetModel<RunModel>());
             }
             else
             {

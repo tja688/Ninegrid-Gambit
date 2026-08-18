@@ -10,19 +10,20 @@
 2. **战斗壳「规则书」**：`TutorialKnowledgeBookController` 挂接场景「规则书」（原「教程按钮」），仅在战斗壳显示并从步骤 9 起放行翻阅（步骤 9 前保持隐藏/禁用），主菜单隐藏。
 3. **教学档三路标记**：`TutorialProgressStore` 独立槽位 `tutorial_profile` 承载 `steps1To9Completed`（步骤 1–9 完成）、`doorTutorialSeen`（门教学已见）、`scarletUnlocked`（血色已解锁），与跑图检查点隔离。自然第一关战败亦标记 1–9 完成；整趟跑图胜利标记血色解锁。
 4. **选人与难度**：选人锁定战士；旅途/冒险可选；血色在整趟跑图胜利前锁定、胜利后解开。旧独立五阶段关卡生产入口保持断开。
-5. **第一关保序开局载荷（#228）**：`TutorialDeckPlan.BuildOpeningOptions` 提供一套保序、确定性的正式内容开局载荷（16 张正式卡），确保正交邻格真怪（Slot 2 为 `monster.melee_3`）、首杀稳定后正交可拾道具（Slot 1 `help.healing_potion` 旋转至 Slot 2）、离开机关（`trap.leave`）位于抽牌堆后半段。仅作用于教程第一关，1-2 节点及后续战斗恢复随机编组。旅途与冒险难度第一关呈现相同牌面。
+5. **第一关保序开局载荷（#228，2026-08-18 修订）**：`TutorialDeckPlan.BuildOpeningOptions` 提供一套保序、确定性的正式内容开局载荷（16 张正式卡）：怪物**只允许**小小莱姆 `monster.melee_3`；道具只用第一关 White 白装（恢复药水 / 飞刀 / 坚固盾）；**不塞常规机关**；离开机关 `trap.leave` 仍在抽牌堆后半段。教学目标格为玩家正右方 **Slot 6**（开局 Slot 6 小小莱姆；击杀补牌并顺时针旋转后，Slot 3 恢复药水落入 Slot 6）。仅作用于教程第一关。自然首局 / 菜单教程在 Bootstrap 后立刻 `RunModel.TryBindFloorMonsterDeck("deck.dragon")` 钉死本层莱姆卡组，因此 1-2 起 `BuildNodeDeckOptions` 走莱姆正式编组并恢复常规三张机关注入。已完成 1–9 的正式开局不钉，第 1 层仍按种子在莱姆/植物间抽。旅途与冒险难度第一关呈现相同牌面。
 6. **第一关步骤 1–9 教练（#230）**：
    - 步骤 1（Avatar 就位）：顶部第 1 句（欢迎并框 Avatar Slot 5，卡主流程，点推进）；
    - 步骤 2（顺劈斧）：顶部第 2 句（讲顺劈斧范围攻击，框 Avatar Slot 5，卡主流程，点推进后放行发牌）；
    - 步骤 3（铺场 8 张）：发牌着陆后顶部第 3 句（讲铺场 8 张，卡主流程，点推进）；
-   - 步骤 4（攻击邻格真怪）：顶部第 4 句（框 Slot 2 `monster.melee_3`，白名单仅允许攻击 Slot 2，错点其它格在收口层静默拒绝，不卡主流程以便攻击）；
+   - 步骤 4（攻击邻格真怪）：顶部第 4 句（框 Slot 6 `monster.melee_3`，白名单仅允许攻击 Slot 6，错点其它格在收口层静默拒绝，不卡主流程以便攻击）；
    - 步骤 5（补牌与旋转）：击杀后补牌与顺时针旋转稳定，顶部第 5 句（讲击杀补牌与旋转，卡主流程，点推进）；
-   - 步骤 6（拾取药水）：顶部第 6 句（框旋转至 Slot 2 的 `help.healing_potion`，白名单仅允许拾取 Slot 2，错点其它格拒绝，不卡主流程以便拾取）；
+   - 步骤 6（拾取药水）：顶部第 6 句（框旋转至 Slot 6 的 `help.healing_potion`，白名单仅允许拾取 Slot 6，错点其它格拒绝，不卡主流程以便拾取）；
    - 步骤 7（行动计数）：拾取完成后停 2 秒（讲怪物行动计数，卡主流程）；
    - 步骤 8（右键详述）：停 2 秒（讲右键详述，卡主流程，右键详述自本步起放行）；
    - 步骤 9（规则书）：停 2 秒（讲规则书，卡主流程，规则书自本步起放行）；
    - 步骤 9 播完写入 `TutorialProgressStore.MarkSteps1To9Completed()` 并释放主流程；首关战败亦写 1–9 标记；1-2 节点及后续自然对局不再触发 1–9。
-7. **独立门教学（#229）**：`TutorialCoach` 独立于步骤 1–9 线性状态机。自然对局里，玩家生涯首次离开机关（`trap.leave`）就位（发牌或补牌落地表演就位后）时卡住主流程、`TutorialPromptBoxPresenter` 框住门、`InfoNoticePresenter` 打出第 10 句（「可以打破门来离开，清理掉所有怪物再离开会自动变卖场上的道具」；点了才走保持）。玩家点击推进后立即写入 `TutorialProgressStore.MarkDoorTutorialSeen()`，不要求打破门。若见到门前战败，标记保持 `false`，后续自然对局首次见门仍会提示。主菜单「教程」不走生涯抑制，每次门就位均完整触发第 10 步。
+7. **独立门教学（#229）**：`TutorialCoach` 独立于步骤 1–9 线性状态机。自然对局里，玩家生涯首次离开机关（`trap.leave`）就位（发牌或补牌落地表演就位后）时卡住主流程、`TutorialPromptBoxPresenter` 框住门、`InfoNoticePresenter` 打出第 10 句（「可以打破门来离开，清理掉所有怪物再离开会自动变卖场上的道具」；点了才走保持）。玩家点击推进后立即写入 `TutorialProgressStore.MarkDoorTutorialSeen()`，不要求打破门。若见到门前战败，标记保持 `false`，后续自然对局首次见门仍会提示。主菜单「教程」不走生涯抑制，每次门就位均完整触发第 10 步。门落点不强制正右方。
+8. **框选几何与半黑屏挖洞（2026-08-18）**：教学提示框包围盒优先卡框节点（`卡框` / `CardFaceSlotCodes.CardFrame`），不合并描述格与 HUD 图标。框选出现时 `TutorialSpotlightPresenter` 复制场景 `半黑屏BG` 视觉做无 collider 教学层，用 `SpriteMask` 在框内挖洞并随提示框呼吸缩放亮区；**禁止** `BattleUiDimmerOverlay.TryAcquire`（会吞点击）。无框步骤（3/5/7–9）不铺黑。
 
 ## 背景
 

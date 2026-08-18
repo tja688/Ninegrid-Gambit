@@ -128,10 +128,10 @@ namespace NineGrid.Presentation.Tests
             Assert.IsTrue(i3.IsBlockingMainline);
 
             // 步骤 4: 攻击邻格怪
-            Assert.IsTrue(TutorialCoach.EvaluateStepIntent(TutorialCoachStep.Step4_AttackMonster, 2, null, out var i4));
+            Assert.IsTrue(TutorialCoach.EvaluateStepIntent(TutorialCoachStep.Step4_AttackMonster, 6, null, out var i4));
             Assert.AreEqual("点击你交互范围内的敌方卡牌可以进行攻击并准备迎接敌方的反击", i4.Text);
             Assert.AreEqual(InfoNoticeHoldMode.ClickToAdvance, i4.HoldMode);
-            Assert.AreEqual(2, i4.TargetSlot);
+            Assert.AreEqual(6, i4.TargetSlot);
             Assert.IsFalse(i4.IsBlockingMainline, "步骤 4 不阻断主流程，允许玩家点击目标攻击");
 
             // 步骤 5: 击杀补牌旋转
@@ -141,10 +141,10 @@ namespace NineGrid.Presentation.Tests
             Assert.IsTrue(i5.IsBlockingMainline);
 
             // 步骤 6: 拾取道具
-            Assert.IsTrue(TutorialCoach.EvaluateStepIntent(TutorialCoachStep.Step6_PickupPotion, 2, null, out var i6));
+            Assert.IsTrue(TutorialCoach.EvaluateStepIntent(TutorialCoachStep.Step6_PickupPotion, 6, null, out var i6));
             Assert.AreEqual("可以拾取道具卡，放入手牌并随时使用，手牌可以跨战斗保存", i6.Text);
             Assert.AreEqual(InfoNoticeHoldMode.ClickToAdvance, i6.HoldMode);
-            Assert.AreEqual(2, i6.TargetSlot);
+            Assert.AreEqual(6, i6.TargetSlot);
             Assert.IsFalse(i6.IsBlockingMainline, "步骤 6 不阻断主流程，允许玩家拾取道具");
 
             // 步骤 7: 行动计数
@@ -208,16 +208,16 @@ namespace NineGrid.Presentation.Tests
         }
 
         [Test]
-        public void PurePolicy_IntentLegality_Step4WhitelistsSlot2AttackOnly()
+        public void PurePolicy_IntentLegality_Step4WhitelistsSlot6AttackOnly()
         {
-            var attackSlot2 = new InputIntent(InputIntentKinds.Attack, 2);
+            var attackSlot6 = new InputIntent(InputIntentKinds.Attack, 6);
             var attackSlot3 = new InputIntent(InputIntentKinds.Attack, 3);
             var exploreSlot1 = new InputIntent(InputIntentKinds.Explore, 1);
-            var pickupSlot2 = new InputIntent(InputIntentKinds.Pickup, 2);
+            var pickupSlot6 = new InputIntent(InputIntentKinds.Pickup, 6);
 
             Assert.IsTrue(
-                TutorialCoach.EvaluateIntentLegality(TutorialCoachStep.Step4_AttackMonster, true, attackSlot2, out _),
-                "步骤 4 必须放行 Slot 2 的攻击意图");
+                TutorialCoach.EvaluateIntentLegality(TutorialCoachStep.Step4_AttackMonster, true, attackSlot6, out _),
+                "步骤 4 必须放行 Slot 6 的攻击意图");
 
             Assert.IsFalse(
                 TutorialCoach.EvaluateIntentLegality(TutorialCoachStep.Step4_AttackMonster, true, attackSlot3, out var r1),
@@ -229,20 +229,20 @@ namespace NineGrid.Presentation.Tests
                 "步骤 4 必须拒绝探索格位");
 
             Assert.IsFalse(
-                TutorialCoach.EvaluateIntentLegality(TutorialCoachStep.Step4_AttackMonster, true, pickupSlot2, out _),
+                TutorialCoach.EvaluateIntentLegality(TutorialCoachStep.Step4_AttackMonster, true, pickupSlot6, out _),
                 "步骤 4 必须拒绝非攻击意图");
         }
 
         [Test]
-        public void PurePolicy_IntentLegality_Step6WhitelistsSlot2PickupOnly()
+        public void PurePolicy_IntentLegality_Step6WhitelistsSlot6PickupOnly()
         {
-            var pickupSlot2 = new InputIntent(InputIntentKinds.Pickup, 2);
+            var pickupSlot6 = new InputIntent(InputIntentKinds.Pickup, 6);
             var pickupSlot1 = new InputIntent(InputIntentKinds.Pickup, 1);
-            var attackSlot2 = new InputIntent(InputIntentKinds.Attack, 2);
+            var attackSlot6 = new InputIntent(InputIntentKinds.Attack, 6);
 
             Assert.IsTrue(
-                TutorialCoach.EvaluateIntentLegality(TutorialCoachStep.Step6_PickupPotion, true, pickupSlot2, out _),
-                "步骤 6 必须放行 Slot 2 的拾取意图");
+                TutorialCoach.EvaluateIntentLegality(TutorialCoachStep.Step6_PickupPotion, true, pickupSlot6, out _),
+                "步骤 6 必须放行 Slot 6 的拾取意图");
 
             Assert.IsFalse(
                 TutorialCoach.EvaluateIntentLegality(TutorialCoachStep.Step6_PickupPotion, true, pickupSlot1, out var r1),
@@ -250,7 +250,7 @@ namespace NineGrid.Presentation.Tests
             Assert.AreEqual("tutorialRestrictedTarget", r1);
 
             Assert.IsFalse(
-                TutorialCoach.EvaluateIntentLegality(TutorialCoachStep.Step6_PickupPotion, true, attackSlot2, out _),
+                TutorialCoach.EvaluateIntentLegality(TutorialCoachStep.Step6_PickupPotion, true, attackSlot6, out _),
                 "步骤 6 必须拒绝攻击意图");
         }
 
@@ -283,30 +283,30 @@ namespace NineGrid.Presentation.Tests
             Assert.AreEqual(TutorialCoachStep.Step3_Opening8Cards, TutorialCoach.CurrentStep);
             Assert.IsTrue(TutorialCoach.IsBlockingMainline);
 
-            // 5. 点击推进至步骤 4（框怪、放行 Slot 2 攻击）
+            // 5. 点击推进至步骤 4（框怪、放行 Slot 6 攻击）
             Assert.IsTrue(TutorialCoach.TryConsumeAdvance());
             Assert.AreEqual(TutorialCoachStep.Step4_AttackMonster, TutorialCoach.CurrentStep);
             Assert.IsFalse(TutorialCoach.IsBlockingMainline, "步骤 4 主流程放行");
             Assert.AreEqual(Cysharp.Threading.Tasks.UniTaskStatus.Succeeded, boardTask.Status);
 
             // 6. 验证白名单过滤
-            Assert.IsTrue(TutorialCoach.IsIntentAllowed(new InputIntent(InputIntentKinds.Attack, 2), out _));
+            Assert.IsTrue(TutorialCoach.IsIntentAllowed(new InputIntent(InputIntentKinds.Attack, 6), out _));
             Assert.IsFalse(TutorialCoach.IsIntentAllowed(new InputIntent(InputIntentKinds.Attack, 8), out _));
 
-            // 7. 击杀 Slot 2 怪物后，补牌与旋转完成就位（步骤 5）
+            // 7. 击杀 Slot 6 怪物后，补牌与旋转完成就位（步骤 5）
             TutorialCoach.NotifyPostKillBoardSettled();
             Assert.AreEqual(TutorialCoachStep.Step5_RefillAndRotate, TutorialCoach.CurrentStep);
             Assert.IsTrue(TutorialCoach.IsBlockingMainline);
 
-            // 8. 点击推进至步骤 6（框药水、放行 Slot 2 拾取）
+            // 8. 点击推进至步骤 6（框药水、放行 Slot 6 拾取）
             Assert.IsTrue(TutorialCoach.TryConsumeAdvance());
             Assert.AreEqual(TutorialCoachStep.Step6_PickupPotion, TutorialCoach.CurrentStep);
             Assert.IsFalse(TutorialCoach.IsBlockingMainline, "步骤 6 主流程放行");
-            Assert.IsTrue(TutorialCoach.IsIntentAllowed(new InputIntent(InputIntentKinds.Pickup, 2), out _));
+            Assert.IsTrue(TutorialCoach.IsIntentAllowed(new InputIntent(InputIntentKinds.Pickup, 6), out _));
             Assert.IsFalse(TutorialCoach.IsIntentAllowed(new InputIntent(InputIntentKinds.Pickup, 1), out _));
 
             // 9. 道具拾取完成（步骤 7）
-            TutorialCoach.NotifyItemPickedUp(slot: 2);
+            TutorialCoach.NotifyItemPickedUp(slot: 6);
             // 立即进入步骤 7
             Assert.AreEqual(TutorialCoachStep.Step7_MonsterCountdowns, TutorialCoach.CurrentStep);
             Assert.IsTrue(TutorialCoach.IsBlockingMainline);

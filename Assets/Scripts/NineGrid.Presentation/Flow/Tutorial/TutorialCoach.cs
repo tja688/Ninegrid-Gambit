@@ -78,8 +78,8 @@ namespace NineGrid.Flow.Tutorial
         public const string Steps1To9HoldReason = "TutorialCoachSteps1To9";
         public const string DoorExternalHoldReason = "TutorialCoachStep10Door";
 
-        public const int FirstBattleTargetMonsterSlot = 2;
-        public const int FirstBattleCollectiblePotionSlot = 2;
+        public const int FirstBattleTargetMonsterSlot = 6;
+        public const int FirstBattleCollectiblePotionSlot = 6;
 
         private static TutorialEntryKind sEntryKind = TutorialEntryKind.Natural;
         private static bool sIsSteps1To9Active;
@@ -480,7 +480,7 @@ namespace NineGrid.Flow.Tutorial
 
         /// <summary>
         /// 节拍：开局 8 张卡牌环发着陆后调用。
-        /// 触发步骤 3（铺满场地说明），点击推进到步骤 4（框 Slot 2 邻格真怪，放行 Slot 2 攻击白名单）。
+        /// 触发步骤 3（铺满场地说明），点击推进到步骤 4（框 Slot 6 邻格真怪，放行 Slot 6 攻击白名单）。
         /// </summary>
         public static async UniTask NotifyOpeningBoardDealtAsync(CancellationToken ct)
         {
@@ -515,8 +515,8 @@ namespace NineGrid.Flow.Tutorial
         }
 
         /// <summary>
-        /// 节拍：击杀 Slot 2 怪物后，补牌与顺时针旋转完成且盘面稳定后调用。
-        /// 触发步骤 5（补牌与旋转说明），点击推进到步骤 6（框 Slot 2 药水并放行拾取白名单）。
+        /// 节拍：击杀 Slot 6 怪物后，补牌与顺时针旋转完成且盘面稳定后调用。
+        /// 触发步骤 5（补牌与旋转说明），点击推进到步骤 6（框 Slot 6 药水并放行拾取白名单）。
         /// </summary>
         public static void NotifyPostKillBoardSettled()
         {
@@ -714,22 +714,20 @@ namespace NineGrid.Flow.Tutorial
                 case TutorialCoachStep.Step3_Opening8Cards:
                     // 步骤 3 推进到步骤 4：攻击邻格怪
                     sCurrentStep = TutorialCoachStep.Step4_AttackMonster;
-                    sTargetSlot = FirstBattleTargetMonsterSlot;
                     InfoNoticePresenter.ShowClickToAdvance(Step4Text);
-                    TutorialPromptBoxPresenter.ShowTarget(FirstBattleTargetMonsterSlot);
+                    ShowPromptForSlot(FirstBattleTargetMonsterSlot);
                     PresentationInputGates.EndExternalHold(Steps1To9HoldReason);
                     sBoardIntroTcs?.TrySetResult();
-                    Debug.Log("[TutorialCoach] 推进到步骤 4：攻击邻格怪（白名单放行 Slot 2）");
+                    Debug.Log("[TutorialCoach] 推进到步骤 4：攻击邻格怪（白名单放行 Slot 6）");
                     return true;
 
                 case TutorialCoachStep.Step5_RefillAndRotate:
                     // 步骤 5 推进到步骤 6：拾取药水
                     sCurrentStep = TutorialCoachStep.Step6_PickupPotion;
-                    sTargetSlot = FirstBattleCollectiblePotionSlot;
                     InfoNoticePresenter.ShowClickToAdvance(Step6Text);
-                    TutorialPromptBoxPresenter.ShowTarget(FirstBattleCollectiblePotionSlot);
+                    ShowPromptForSlot(FirstBattleCollectiblePotionSlot);
                     PresentationInputGates.EndExternalHold(Steps1To9HoldReason);
-                    Debug.Log("[TutorialCoach] 推进到步骤 6：拾取道具卡（白名单放行 Slot 2）");
+                    Debug.Log("[TutorialCoach] 推进到步骤 6：拾取道具卡（白名单放行 Slot 6）");
                     return true;
 
                 case TutorialCoachStep.Step7_MonsterCountdowns:
@@ -741,6 +739,21 @@ namespace NineGrid.Flow.Tutorial
                 default:
                     return false;
             }
+        }
+
+        private static void ShowPromptForSlot(int slot)
+        {
+            sTargetSlot = slot;
+            var field = GroundFieldGeometryHook.FieldOrNull();
+            if (field != null && field.TryGetCardAt(slot, out var card) && card != null)
+            {
+                sTargetCard = card;
+                TutorialPromptBoxPresenter.ShowTarget(card);
+                return;
+            }
+
+            sTargetCard = null;
+            TutorialPromptBoxPresenter.ShowTarget(slot);
         }
 
         private static void CompleteDoorTutorial()

@@ -114,7 +114,7 @@ namespace NineGrid.Presentation.Tests
         }
 
         [Test]
-        public void TutorialFirstBattle_OpeningDeal_PlacesOrthogonalTrueMonsterAtSlot2()
+        public void TutorialFirstBattle_OpeningDeal_PlacesOrthogonalTrueMonsterAtSlot6()
         {
             var arch = CreateArchitecture();
             var content = arch.GetSystem<IContentSystem>();
@@ -125,26 +125,22 @@ namespace NineGrid.Presentation.Tests
             var options = TutorialDeckPlan.BuildOpeningOptions(content);
             phaseSystem.StartNode(options);
 
-            // 断言 Avatar 位于中心 Slot 5
             Assert.AreEqual(SlotId.Board(5), board.AvatarSlot.Value);
 
-            // 断言 Slot 2 存在且为真怪（Orthogonal 邻格）
-            var slot2Uid = board.GetCardUid(SlotId.Board(2));
-            Assert.Greater(slot2Uid, 0, "Slot 2 必须有卡牌");
-            Assert.IsTrue(registry.TryGet(slot2Uid, out var slot2Card));
-            Assert.AreEqual(TutorialDeckPlan.FirstTargetMonsterDefId, slot2Card.DefId, "Slot 2 应为小小莱姆 (monster.melee_3)");
-            Assert.AreEqual(CardKind.Monster, slot2Card.Kind);
-            Assert.IsTrue(CardCombatRules.IsTrueMonster(slot2Card.Kind));
-            Assert.IsTrue(board.AvatarSlot.Value.IsAdjacentTo(SlotId.Board(2)), "Slot 2 必须与 Avatar (Slot 5) 正交相邻");
+            var slot6Uid = board.GetCardUid(SlotId.Board(6));
+            Assert.Greater(slot6Uid, 0, "Slot 6 必须有卡牌");
+            Assert.IsTrue(registry.TryGet(slot6Uid, out var slot6Card));
+            Assert.AreEqual(TutorialDeckPlan.FirstTargetMonsterDefId, slot6Card.DefId, "Slot 6 应为小小莱姆 (monster.melee_3)");
+            Assert.AreEqual(CardKind.Monster, slot6Card.Kind);
+            Assert.IsTrue(CardCombatRules.IsTrueMonster(slot6Card.Kind));
+            Assert.IsTrue(board.AvatarSlot.Value.IsAdjacentTo(SlotId.Board(6)), "Slot 6 必须与 Avatar (Slot 5) 正交相邻");
 
-            // 断言 Slot 1 为恢复药水
-            var slot1Uid = board.GetCardUid(SlotId.Board(1));
-            Assert.Greater(slot1Uid, 0);
-            Assert.IsTrue(registry.TryGet(slot1Uid, out var slot1Card));
-            Assert.AreEqual(TutorialDeckPlan.FirstCollectItemDefId, slot1Card.DefId, "Slot 1 应为恢复药水 (help.healing_potion)");
-            Assert.AreEqual(CardKind.HelpCard, slot1Card.Kind);
+            var slot3Uid = board.GetCardUid(SlotId.Board(3));
+            Assert.Greater(slot3Uid, 0);
+            Assert.IsTrue(registry.TryGet(slot3Uid, out var slot3Card));
+            Assert.AreEqual(TutorialDeckPlan.FirstCollectItemDefId, slot3Card.DefId, "Slot 3 应为恢复药水 (help.healing_potion)");
+            Assert.AreEqual(CardKind.HelpCard, slot3Card.Kind);
 
-            // 断言 Slot 8 也为真怪（乞讨莱姆）
             var slot8Uid = board.GetCardUid(SlotId.Board(8));
             Assert.Greater(slot8Uid, 0);
             Assert.IsTrue(registry.TryGet(slot8Uid, out var slot8Card));
@@ -153,7 +149,7 @@ namespace NineGrid.Presentation.Tests
         }
 
         [Test]
-        public void TutorialFirstBattle_FirstKillAndStabilize_RotatesCollectibleItemToAdjacentSlot2()
+        public void TutorialFirstBattle_FirstKillAndStabilize_RotatesCollectibleItemToAdjacentSlot6()
         {
             var arch = CreateArchitecture();
             var content = arch.GetSystem<IContentSystem>();
@@ -165,26 +161,23 @@ namespace NineGrid.Presentation.Tests
             var options = TutorialDeckPlan.BuildOpeningOptions(content);
             phaseSystem.StartNode(options);
 
-            // 战士普通攻击 Slot 2 目标（顺劈斧 + 基础攻击 = 4 点伤害，恰好击杀 4 HP 的小小莱姆并自动触发补牌与旋转）
-            var attackResult = phaseSystem.Attack(SlotId.Board(2));
-            Assert.IsTrue(attackResult.Accepted, "对 Slot 2 攻击应被接受");
+            var attackResult = phaseSystem.Attack(SlotId.Board(6));
+            Assert.IsTrue(attackResult.Accepted, "对 Slot 6 攻击应被接受");
 
-            // 旋转后，原 Slot 1 的恢复药水顺时针移动至 Slot 2
-            var newSlot2Uid = board.GetCardUid(SlotId.Board(2));
-            Assert.Greater(newSlot2Uid, 0, "旋转后 Slot 2 必须有卡牌");
-            Assert.IsTrue(registry.TryGet(newSlot2Uid, out var newSlot2Card));
-            Assert.AreEqual(TutorialDeckPlan.FirstCollectItemDefId, newSlot2Card.DefId, "旋转后 Slot 2 应为恢复药水");
-            Assert.AreEqual(CardKind.HelpCard, newSlot2Card.Kind);
-            Assert.IsTrue(board.AvatarSlot.Value.IsAdjacentTo(SlotId.Board(2)), "Slot 2 恢复药水必须在 Avatar 正交交互范围内");
+            var newSlot6Uid = board.GetCardUid(SlotId.Board(6));
+            Assert.Greater(newSlot6Uid, 0, "旋转后 Slot 6 必须有卡牌");
+            Assert.IsTrue(registry.TryGet(newSlot6Uid, out var newSlot6Card));
+            Assert.AreEqual(TutorialDeckPlan.FirstCollectItemDefId, newSlot6Card.DefId, "旋转后 Slot 6 应为恢复药水");
+            Assert.AreEqual(CardKind.HelpCard, newSlot6Card.Kind);
+            Assert.IsTrue(board.AvatarSlot.Value.IsAdjacentTo(SlotId.Board(6)), "Slot 6 恢复药水必须在 Avatar 正交交互范围内");
 
-            // 验证该道具可以被正常拾取
-            var pickResult = phaseSystem.PickupItem(SlotId.Board(2));
-            Assert.IsTrue(pickResult.Accepted, "对 Slot 2 恢复药水的拾取应被接受");
+            var pickResult = phaseSystem.PickupItem(SlotId.Board(6));
+            Assert.IsTrue(pickResult.Accepted, "对 Slot 6 恢复药水的拾取应被接受");
 
             var inItemSlots = false;
             for (var i = 0; i < deck.ItemSlotUids.Count; i++)
             {
-                if (deck.ItemSlotUids[i] == newSlot2Uid)
+                if (deck.ItemSlotUids[i] == newSlot6Uid)
                 {
                     inItemSlots = true;
                     break;
@@ -277,6 +270,66 @@ namespace NineGrid.Presentation.Tests
                         $"抽牌堆第 {i} 张在不同种子和难度下必须完全一致");
                 }
             }
+        }
+
+        [Test]
+        public void TutorialFirstBattle_PayloadContainsOnlyLimeMonstersWhiteHelpsAndLeaveTrap()
+        {
+            var arch = CreateArchitecture();
+            var content = arch.GetSystem<IContentSystem>();
+            var options = TutorialDeckPlan.BuildOpeningOptions(content);
+
+            var forbidden = new[]
+            {
+                "trap.flame",
+                "trap.spike",
+                "trap.bear_trap",
+                "monster.dragon_follower",
+                "monster.beggar",
+                "help.gold_card",
+            };
+            var allowedHelp = new HashSet<string>
+            {
+                "help.healing_potion",
+                "help.throwing_knife",
+                "help.sturdy_shield",
+            };
+
+            for (var i = 0; i < options.EnemyCards.Count; i++)
+            {
+                var defId = options.EnemyCards[i].DefId;
+                Assert.IsFalse(Array.Exists(forbidden, id => id == defId), $"第 {i} 张不得出现 {defId}");
+
+                var cardDef = mCatalog.Cards[defId];
+                if (cardDef.Kind == CardKind.Monster)
+                {
+                    Assert.AreEqual(TutorialDeckPlan.FirstTargetMonsterDefId, defId, "第一关怪物只能是小小莱姆");
+                }
+                else if (cardDef.Kind == CardKind.HelpCard)
+                {
+                    Assert.IsTrue(allowedHelp.Contains(defId), $"道具 {defId} 必须是第一关 White 白装");
+                    Assert.AreEqual(ContentRarity.White, cardDef.Rarity, $"道具 {defId} 必须为 White");
+                }
+                else if (cardDef.Kind == CardKind.Trap)
+                {
+                    Assert.AreEqual(RegularTrapPool.LeaveTrapDefId, defId, "唯一允许的机关是离开机关");
+                }
+            }
+        }
+
+        [Test]
+        public void TutorialFirstBattle_PinLimeFloorDeck_BindsDragonForLaterNodes()
+        {
+            var arch = CreateArchitecture();
+            var run = arch.GetModel<RunModel>();
+            Assert.IsTrue(string.IsNullOrEmpty(run.FloorMonsterDeckId.Value), "Bootstrap 后本层卡组应尚未绑定");
+            Assert.IsTrue(TutorialDeckPlan.TryPinLimeFloorDeck(run));
+            Assert.AreEqual(TutorialDeckPlan.LimeFloorDeckId, run.FloorMonsterDeckId.Value);
+
+            var node2Options = arch.GetSystem<IRewardSystem>().BuildNodeDeckOptions(2, null);
+            Assert.IsNotNull(node2Options);
+            Assert.IsFalse(node2Options.PreserveDealOrder, "钉层后 1-2 仍走正式编组，不得保序");
+            Assert.AreEqual(TutorialDeckPlan.LimeFloorDeckId, run.FloorMonsterDeckId.Value);
         }
 
         [Test]

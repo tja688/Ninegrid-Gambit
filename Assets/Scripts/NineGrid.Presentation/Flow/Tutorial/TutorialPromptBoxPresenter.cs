@@ -1,5 +1,6 @@
 using System;
 using NineGrid.Cards;
+using NineGrid.Cards.Slots;
 using NineGrid.Flow.Presentation;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -19,6 +20,7 @@ namespace NineGrid.Flow.Tutorial
 
         public const float DefaultBreathFrequency = 3.0f;
         public const float DefaultBreathAmplitude = 0.15f;
+        public static readonly Vector3 FallbackCardFrameSize = new Vector3(2.0f, 2.8f, 0f);
 
         private static TutorialPromptBoxPresenter sInstance;
 
@@ -147,6 +149,19 @@ namespace NineGrid.Flow.Tutorial
 
         public Bounds CurrentBounds => mCurrentBounds;
 
+        public Vector2 CurrentBreathSize
+        {
+            get
+            {
+                var offset = mIsActive
+                    ? Mathf.Sin(Time.unscaledTime * breathFrequency) * breathAmplitude
+                    : 0f;
+                return new Vector2(
+                    Mathf.Max(0.2f, mBaseSize.x + offset),
+                    Mathf.Max(0.2f, mBaseSize.y + offset));
+            }
+        }
+
         public static void ShowTarget(ManagedCard card)
         {
             var presenter = EnsureExists();
@@ -181,6 +196,7 @@ namespace NineGrid.Flow.Tutorial
 
         public static void ResetForTests()
         {
+            TutorialSpotlightPresenter.ResetForTests();
             if (sInstance != null)
             {
                 sInstance.Hide();
@@ -207,7 +223,7 @@ namespace NineGrid.Flow.Tutorial
             }
             else
             {
-                Show(new Bounds(card.Transform.position, new Vector3(2.0f, 2.8f, 0f)));
+                Show(new Bounds(card.Transform.position, FallbackCardFrameSize));
             }
         }
 
@@ -247,7 +263,7 @@ namespace NineGrid.Flow.Tutorial
             }
             else
             {
-                Show(new Bounds(targetGo.transform.position, new Vector3(2.0f, 2.8f, 0f)));
+                Show(new Bounds(targetGo.transform.position, FallbackCardFrameSize));
             }
         }
 
@@ -264,6 +280,7 @@ namespace NineGrid.Flow.Tutorial
 
             ApplyBoundsGeometry(worldBounds);
             ApplyBreathing();
+            TutorialSpotlightPresenter.Show(worldBounds);
         }
 
         public void Hide()
@@ -272,6 +289,7 @@ namespace NineGrid.Flow.Tutorial
             mTargetTransform = null;
             mTargetCard = null;
             mTargetSlot = -1;
+            TutorialSpotlightPresenter.Hide();
 
             if (boxRoot != null)
             {
@@ -336,6 +354,7 @@ namespace NineGrid.Flow.Tutorial
             boxSpriteRenderer.size = new Vector2(
                 Mathf.Max(0.2f, mBaseSize.x + offset),
                 Mathf.Max(0.2f, mBaseSize.y + offset));
+            TutorialSpotlightPresenter.SyncBreathFromPrompt(this);
         }
 
         public static bool TryCalculateWorldBounds(GameObject go, out Bounds bounds)
@@ -346,42 +365,32 @@ namespace NineGrid.Flow.Tutorial
                 return false;
             }
 
-            var renderers = go.GetComponentsInChildren<SpriteRenderer>(false);
-            var hasBounds = false;
-            var combined = new Bounds();
-
-            for (var i = 0; i < renderers.Length; i++)
+            if (TryGetCardFrameBounds(go.transform, out bounds))
             {
-                var r = renderers[i];
-                if (r == null || !r.enabled || !r.gameObject.activeInHierarchy)
-                {
-                    continue;
-                }
-
-                // 排除自身的提示框渲染器，避免递归叠加
-                if (r.gameObject.name == BoxObjectName)
-                {
-                    continue;
-                }
-
-                if (!hasBounds)
-                {
-                    combined = r.bounds;
-                    hasBounds = true;
-                }
-                else
-                {
-                    combined.Encapsulate(r.bounds);
-                }
-            }
-
-            if (hasBounds)
-            {
-                bounds = combined;
                 return true;
             }
 
-            bounds = new Bounds(go.transform.position, new Vector3(2.0f, 2.8f, 0f));
+            bounds = new Bounds(go.transform.position, FallbackCardFrameSize);
+            return true;
+        }
+
+        public static bool TryGetCardFrameBounds(Transform faceRoot, out Bounds bounds)
+        {
+            bounds = default;
+            if (faceRoot == null)
+            {
+                return false;
+            }
+
+            if (!CardFaceSlotNodeMap.TryFindRenderer(faceRoot, CardFaceSlotCodes.CardFrame, out var frame)
+                || frame == null
+                || !frame.enabled
+                || !frame.gameObject.activeInHierarchy)
+            {
+                return false;
+            }
+
+            bounds = frame.bounds;
             return true;
         }
 
@@ -406,7 +415,7 @@ namespace NineGrid.Flow.Tutorial
             if (field != null && field.TryGetAnchor(slot, out var anchor) && anchor != null)
             {
                 mTargetTransform = anchor;
-                bounds = new Bounds(anchor.position, new Vector3(2.0f, 2.8f, 0f));
+                bounds = new Bounds(anchor.position, FallbackCardFrameSize);
                 return true;
             }
 
