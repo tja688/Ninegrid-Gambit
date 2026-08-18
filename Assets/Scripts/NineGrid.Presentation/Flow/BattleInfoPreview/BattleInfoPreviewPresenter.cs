@@ -533,6 +533,11 @@ namespace NineGrid.Flow.BattleInfoPreview
             var all = CollectDefIds(options?.PlayerCards, kind => true);
             if (all.Count == 0)
             {
+                all = CollectDefIds(options?.EnemyCards, kind => kind == CardKind.HelpCard || kind == CardKind.Item || kind == CardKind.PlayerCard);
+            }
+
+            if (all.Count == 0)
+            {
                 return all;
             }
 
