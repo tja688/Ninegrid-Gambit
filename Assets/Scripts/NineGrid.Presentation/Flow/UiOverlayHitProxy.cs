@@ -106,6 +106,12 @@ namespace NineGrid.Flow
                     if (PlayerAudioSettingsPanel.IsOpen)
                     {
                         PlayerAudioSettingsPanel.CloseIfOpen();
+                        break;
+                    }
+
+                    if (TutorialKnowledgeBookController.IsOpen)
+                    {
+                        TutorialKnowledgeBookController.CloseIfOpen();
                     }
 
                     break;

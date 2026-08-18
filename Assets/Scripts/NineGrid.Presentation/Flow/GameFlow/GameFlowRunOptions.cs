@@ -6,8 +6,8 @@ namespace NineGrid.Flow
     /// <summary>
     /// 开局选项；QuickTest 细节复用 <see cref="QuickTestRunOptions"/>。
     /// 正式开局用 <see cref="CreateFormal"/>；QuickTest 镜像/通道用 <see cref="CreateQuickTest"/>；
-    /// 读档恢复用 <see cref="CreateRestore"/>（正式模式 + 恢复快照，从快照战斗节点入场）；
-    /// 教学关卡用 <see cref="CreateTutorial"/>（单场受控教学战斗，不进节点循环）。
+    /// 读档恢复用 <see cref="CreateRestore"/>（正式模式 + 恢复快照，从快照战斗节点入场）。
+    /// <see cref="CreateTutorial"/> 为历史教学关卡载荷，生产开局不再调用。
     /// 模式一律由载荷是否非空推导，调用方不再手拼布尔组合。
     /// </summary>
     public sealed class GameFlowRunOptions

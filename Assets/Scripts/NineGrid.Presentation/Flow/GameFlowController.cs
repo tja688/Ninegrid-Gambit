@@ -269,14 +269,7 @@ namespace NineGrid.Flow
 
             if (WorldPointerUtility.TryOverlapColliderOnPlane(worldCamera, tutorialHit))
             {
-                if (shell.IsBusy)
-                {
-                    PulseMenuRequest(TutorialRejectRequest);
-                    return;
-                }
-
-                PulseMenuRequest(TutorialPressRequest);
-                BeginTutorialRun();
+                // 主菜单「教学」开局已退役：局内教学改由「教程按钮」打开知识库。
                 return;
             }
 
@@ -316,21 +309,14 @@ namespace NineGrid.Flow
                 MainMenuStartCueId,
                 "GameFlowController.BeginFormalRun"));
 
-            // 首次游玩（存档无教学完成标记）：先进教学关卡，通关后自动转正式开局。
-            if (!NineGrid.Flow.Tutorial.TutorialProgressStore.IsCompleted())
-            {
-                Debug.Log("[GameFlow] 首次游玩：先进入教学关卡，通关后自动开始正式冒险。");
-                SendBeginRun(GameFlowRunOptions.CreateTutorial(continueToFormalRun: true));
-                return;
-            }
-
             SendBeginRun(GameFlowRunOptions.CreateFormal());
         }
 
-        /// <summary>主菜单「教学」独立入口：单场教学战斗，完成后返回主菜单。</summary>
+        /// <summary>
+        /// 主菜单「教学」旧入口已退役：局内强制教学关卡不再开局，改由局内「教程按钮」打开知识库。
+        /// </summary>
         public void BeginTutorialRun()
         {
-            SendBeginRun(GameFlowRunOptions.CreateTutorial(continueToFormalRun: false));
         }
 
         public void BeginQuickTestRun(QuickTestRunOptions options)
