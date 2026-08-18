@@ -487,12 +487,36 @@ namespace NineGrid.Core
             var card = registry.Get(CardUid);
             var fromSlot = card.Slot.Value;
 
+            var avatarUid = board.AvatarUid.Value;
+            var avatarDisplaced = false;
+            var avatarFromSlot = SlotId.None;
+            var avatarToSlot = SlotId.None;
+
             if (card.Kind == CardKind.Avatar)
             {
                 board.SetAvatar(card, ToSlot);
             }
             else
             {
+                // ADR-0056 / #217: 按格移卡若落到 Avatar 当前格，盘内卡带走 Avatar 至原格，非盘内卡明确拒绝
+                if (avatarUid > 0 && board.AvatarSlot.Value == ToSlot && ToSlot.IsBoardSlot)
+                {
+                    if (fromSlot.IsBoardSlot && fromSlot != ToSlot)
+                    {
+                        if (registry.TryGet(avatarUid, out var avatar) && avatar != null)
+                        {
+                            avatarDisplaced = true;
+                            avatarFromSlot = ToSlot;
+                            avatarToSlot = fromSlot;
+                            board.SetAvatar(avatar, fromSlot);
+                        }
+                    }
+                    else if (!fromSlot.IsBoardSlot)
+                    {
+                        throw new InvalidOperationException("Cannot place incoming card directly onto Avatar slot: " + ToSlot);
+                    }
+                }
+
                 deck.RemoveCard(card);
                 board.PlaceCard(card, ToSlot);
             }
@@ -514,6 +538,14 @@ namespace NineGrid.Core
             else
             {
                 result.AddEvent(gameEvent);
+            }
+
+            if (avatarDisplaced)
+            {
+                result.AddEvent(new CoreGameEvent(CoreEventType.AvatarMoved, context.ActionId, ActionName)
+                    .WithCard(avatarUid)
+                    .WithSlots(avatarFromSlot, avatarToSlot)
+                    .WithSource(SourceDefId, Cause));
             }
 
             CardRhythmMoveTicks.AppendFromMovedEvents(result, context, result.Events);
