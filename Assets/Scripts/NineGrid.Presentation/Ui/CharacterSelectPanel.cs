@@ -3,6 +3,7 @@ using NineGrid.Content.CardPresentation;
 using NineGrid.Core;
 using NineGrid.Flow;
 using NineGrid.Flow.Presentation;
+using NineGrid.Flow.Tutorial;
 using NineGrid.Presentation.Systems;
 using TMPro;
 using UnityEngine;
@@ -187,7 +188,7 @@ namespace NineGrid.Presentation.Ui
 
             WireCharacterSlot(0, "角色1", unlocked: true);
             WireCharacterSlot(1, "角色2", unlocked: false);
-            WireCharacterSlot(2, "角色3", unlocked: true);
+            WireCharacterSlot(2, "角色3", unlocked: false);
             WireDifficulty(0, "难度选项：普通", NineGrid.Core.Content.RunDifficultyIds.Normal, "旅途");
             WireDifficulty(1, "难度选项：进阶", NineGrid.Core.Content.RunDifficultyIds.Advanced, "冒险");
             WireDifficulty(2, "难度选项：困难", NineGrid.Core.Content.RunDifficultyIds.Hard, "血色");
@@ -272,6 +273,7 @@ namespace NineGrid.Presentation.Ui
             }
 
             SelectDifficulty(1, silent: true);
+            RefreshDifficultyVisuals();
             SelectCharacter(FindFirstUnlockedSlotIndex(), silent: true);
             SetBackLabelVisible(false);
         }
@@ -570,6 +572,16 @@ namespace NineGrid.Presentation.Ui
             return null;
         }
 
+        private static bool IsDifficultyUnlocked(int index)
+        {
+            if (index == 2)
+            {
+                return TutorialProgressStore.IsScarletUnlocked();
+            }
+
+            return true;
+        }
+
         private void WireDifficulty(int index, string nodeName, string id, string displayName)
         {
             var node = FindDirectChild(transform, nodeName);
@@ -604,10 +616,16 @@ namespace NineGrid.Presentation.Ui
                 BattleUiDimmerOverlay.CloseHitSort + 1,
                 PointerHitSurfacePriorities.Overlay,
                 hoverScale: 1.06f,
-                onHoverEnter: () => InteractionAudioCues.Pulse(
-                    InteractionAudioCues.MainMenuHover,
-                    "CharacterSelectPanel.DifficultyHover",
-                    "character_select.difficulty"));
+                onHoverEnter: () =>
+                {
+                    if (IsDifficultyUnlocked(index))
+                    {
+                        InteractionAudioCues.Pulse(
+                            InteractionAudioCues.MainMenuHover,
+                            "CharacterSelectPanel.DifficultyHover",
+                            "character_select.difficulty");
+                    }
+                });
 
             mDifficulties[index] = option;
         }
@@ -619,6 +637,18 @@ namespace NineGrid.Presentation.Ui
                 return;
             }
 
+            if (!IsDifficultyUnlocked(index))
+            {
+                if (!silent)
+                {
+                    InteractionAudioCues.Pulse(
+                        InteractionAudioCues.UiReject,
+                        "CharacterSelectPanel.SelectDifficulty",
+                        "character_select.difficulty_locked");
+                }
+                return;
+            }
+
             mSelectedDifficulty = index;
             var chosen = mDifficulties[index];
             RunSetupSelection.SetDifficulty(
@@ -626,6 +656,19 @@ namespace NineGrid.Presentation.Ui
                 chosen.DisplayName,
                 chosen.Icon != null ? chosen.Icon.sprite : null);
 
+            RefreshDifficultyVisuals();
+
+            if (!silent)
+            {
+                InteractionAudioCues.Pulse(
+                    InteractionAudioCues.UiPress,
+                    "CharacterSelectPanel.SelectDifficulty",
+                    "character_select.difficulty." + chosen.Id);
+            }
+        }
+
+        private void RefreshDifficultyVisuals()
+        {
             for (var i = 0; i < mDifficulties.Length; i++)
             {
                 var option = mDifficulties[i];
@@ -634,26 +677,23 @@ namespace NineGrid.Presentation.Ui
                     continue;
                 }
 
-                var selected = i == mSelectedDifficulty;
+                var unlocked = IsDifficultyUnlocked(i);
+                var selected = i == mSelectedDifficulty && unlocked;
                 if (option.Icon != null)
                 {
-                    option.Icon.color = selected ? Color.white : DifficultyIdleTint;
+                    option.Icon.color = selected
+                        ? Color.white
+                        : (unlocked ? DifficultyIdleTint : SilhouetteTint);
                 }
 
                 if (option.Label != null)
                 {
                     var c = option.Label.color;
-                    c.a = selected ? option.LabelBaseAlpha : option.LabelBaseAlpha * 0.45f;
+                    c.a = selected
+                        ? option.LabelBaseAlpha
+                        : (unlocked ? option.LabelBaseAlpha * 0.45f : option.LabelBaseAlpha * 0.25f);
                     option.Label.color = c;
                 }
-            }
-
-            if (!silent)
-            {
-                InteractionAudioCues.Pulse(
-                    InteractionAudioCues.UiPress,
-                    "CharacterSelectPanel.SelectDifficulty",
-                    "character_select.difficulty." + chosen.Id);
             }
         }
 

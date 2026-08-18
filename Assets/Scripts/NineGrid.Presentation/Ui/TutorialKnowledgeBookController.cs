@@ -1,8 +1,10 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using NineGrid.Core;
 using NineGrid.Flow;
 using NineGrid.Flow.Presentation;
+using NineGrid.Presentation.Systems;
 using TMPro;
 using UnityEngine;
 
@@ -33,6 +35,7 @@ namespace NineGrid.Presentation.Ui
     {
         public const string PanelRootName = "教学知识库BG";
         public const string ToggleButtonName = "教程按钮";
+        public const string RuleBookButtonName = "规则书";
         public const string PrevButtonName = "上一页按钮";
         public const string NextButtonName = "下一页按钮";
         public const string ProgressLabelName = "页面进度";
@@ -183,7 +186,7 @@ namespace NineGrid.Presentation.Ui
             BattleUiDimmerOverlay.EnsureBound(
                 uiRoot != null ? uiRoot.transform.Find("半黑屏BG")?.gameObject : null);
 
-            mToggleButton = FindSceneNamed(ToggleButtonName);
+            mToggleButton = FindSceneNamed(RuleBookButtonName) ?? FindSceneNamed(ToggleButtonName);
             WireToggleButton(mToggleButton);
             WirePanelSwallow(mPanelRoot);
             WireNavButton(
@@ -667,27 +670,38 @@ namespace NineGrid.Presentation.Ui
         }
 
         /// <summary>
-        /// 「教程按钮」可点门禁：覆层 / 其它全屏面板 / 知识库已开时不可点。主菜单可见时也可翻阅。
+        /// 「规则书」（原「教程按钮」）门禁与显隐控制：
+        /// 1. 仅在战斗壳（进入对战后，IsInRun 为真）显示并可点；
+        /// 2. 主菜单（Shell 处于 MainMenu 相位）一律隐藏（禁用渲染器与文字）且禁用碰撞体；
+        /// 3. 覆层 / 其它全屏面板 / 知识库已开时不可点。
         /// </summary>
         [DisallowMultipleComponent]
         [DefaultExecutionOrder(99)]
         private sealed class ToggleButtonGate : MonoBehaviour
         {
             private BoxCollider2D mCollider;
+            private Renderer[] mRenderers = Array.Empty<Renderer>();
+            private TMPro.TMP_Text[] mTexts = Array.Empty<TMPro.TMP_Text>();
 
             private void Awake()
             {
                 mCollider = GetComponent<BoxCollider2D>();
+                mRenderers = GetComponentsInChildren<Renderer>(true);
+                mTexts = GetComponentsInChildren<TMPro.TMP_Text>(true);
             }
 
             private void Update()
             {
+                var inRun = IsInRun();
+                SetVisualsActive(inRun);
+
                 if (mCollider == null)
                 {
                     return;
                 }
 
-                var allowed = !IsOpen
+                var allowed = inRun
+                    && !IsOpen
                     && !BattleUiDimmerOverlay.IsActive
                     && !PlayerAudioSettingsPanel.IsOpen
                     && !CharacterSelectPanel.IsOpen
@@ -696,6 +710,32 @@ namespace NineGrid.Presentation.Ui
                 {
                     mCollider.enabled = allowed;
                 }
+            }
+
+            private void SetVisualsActive(bool active)
+            {
+                for (var i = 0; i < mRenderers.Length; i++)
+                {
+                    if (mRenderers[i] != null && mRenderers[i].enabled != active)
+                    {
+                        mRenderers[i].enabled = active;
+                    }
+                }
+
+                for (var i = 0; i < mTexts.Length; i++)
+                {
+                    if (mTexts[i] != null && mTexts[i].enabled != active)
+                    {
+                        mTexts[i].enabled = active;
+                    }
+                }
+            }
+
+            private static bool IsInRun()
+            {
+                var arch = NineGridArchitecture.Interface ?? NineGridArchitecture.Current;
+                var shell = arch?.GetSystem<IGameFlowShellSystem>();
+                return shell != null && shell.State.Value != GameFlowShellState.MainMenu;
             }
         }
     }

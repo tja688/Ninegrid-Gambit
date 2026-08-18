@@ -3,6 +3,7 @@ using NineGrid.Core;
 using NineGrid.Core.Localization;
 using NineGrid.Flow.BoardBriefTip;
 using NineGrid.Flow.Presentation;
+using NineGrid.Flow.Tutorial;
 using NineGrid.Presentation.Commands;
 using NineGrid.Presentation.Systems;
 using QFramework;
@@ -267,9 +268,18 @@ namespace NineGrid.Flow
                 return;
             }
 
-            if (WorldPointerUtility.TryOverlapColliderOnPlane(worldCamera, tutorialHit))
+            if (tutorialHit != null
+                && tutorialHit.gameObject.activeInHierarchy
+                && WorldPointerUtility.TryOverlapColliderOnPlane(worldCamera, tutorialHit))
             {
-                // 主菜单「教学」开局已退役：局内教学改由「教程按钮」打开知识库。
+                if (shell.IsBusy)
+                {
+                    PulseMenuRequest(TutorialRejectRequest);
+                    return;
+                }
+
+                PulseMenuRequest(TutorialPressRequest);
+                BeginTutorialRun();
                 return;
             }
 
@@ -313,10 +323,15 @@ namespace NineGrid.Flow
         }
 
         /// <summary>
-        /// 主菜单「教学」旧入口已退役：局内强制教学关卡不再开局，改由局内「教程按钮」打开知识库。
+        /// 主菜单「教程」：在步骤 1–9 完成后开放，启动单场教程。
         /// </summary>
         public void BeginTutorialRun()
         {
+            TriggerPulseHub.PulseAudio(AudioCueRequest.Simple(
+                MainMenuStartCueId,
+                "GameFlowController.BeginTutorialRun"));
+
+            SendBeginRun(GameFlowRunOptions.CreateTutorial(continueToFormalRun: false));
         }
 
         public void BeginQuickTestRun(QuickTestRunOptions options)
@@ -401,6 +416,8 @@ namespace NineGrid.Flow
                 }
             }
 
+            RefreshMainMenuTutorialButton();
+
             if (continueGameHit == null)
             {
                 var continueGame = FindDeep("ContinueGame");
@@ -458,9 +475,33 @@ namespace NineGrid.Flow
             tip?.ClearNotice();
         }
 
+        public void RefreshMainMenuTutorialButton()
+        {
+            if (tutorialHit == null)
+            {
+                var tutorial = FindDeep("TutorialRun");
+                if (tutorial != null)
+                {
+                    tutorialHit = tutorial.GetComponent<Collider2D>();
+                }
+            }
+
+            if (tutorialHit == null)
+            {
+                return;
+            }
+
+            var visible = TutorialProgressStore.IsSteps1To9Completed();
+            if (tutorialHit.gameObject.activeSelf != visible)
+            {
+                tutorialHit.gameObject.SetActive(visible);
+            }
+        }
+
         public void ShowMainMenuPanels()
         {
             EnsureViewBindings();
+            RefreshMainMenuTutorialButton();
             panelRouter.ShowMainMenu();
         }
 

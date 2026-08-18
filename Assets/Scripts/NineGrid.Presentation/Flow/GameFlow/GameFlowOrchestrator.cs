@@ -1184,6 +1184,14 @@ namespace NineGrid.Flow
             if (!mShell.IsTutorialMode)
             {
                 RunSaveService.HandleRunEnded();
+                if (victory)
+                {
+                    TutorialProgressStore.MarkScarletUnlocked();
+                }
+                else
+                {
+                    TutorialProgressStore.MarkSteps1To9Completed();
+                }
             }
             CancelLoopWork();
             ResolveSession()?.ClearCardPresentationSurface();
