@@ -57,6 +57,13 @@ namespace NineGrid.Presentation.Tests.Flow
             Assert.IsNull(spotlight.GetComponent<Collider2D>(), "教学挖洞层不得带 collider");
             Assert.AreEqual(0, spotlight.GetComponentsInChildren<SpriteMask>(true).Length, "挖洞不得依赖 SpriteMask");
             Assert.GreaterOrEqual(spotlight.HoleBarCount, 4, "须用四条遮罩条围出亮区");
+            var bar = spotlight.GetComponentInChildren<SpriteRenderer>(true);
+            Assert.IsNotNull(bar);
+            Assert.IsNotNull(bar.sharedMaterial, "URP 下不得留下空材质（会品红）");
+            Assert.IsFalse(
+                bar.sharedMaterial.shader != null
+                && bar.sharedMaterial.shader.name == "Sprites/Default",
+                "不得使用 Built-in Sprites/Default");
         }
 
         [Test]

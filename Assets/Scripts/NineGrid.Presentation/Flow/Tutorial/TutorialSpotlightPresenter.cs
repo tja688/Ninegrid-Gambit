@@ -18,6 +18,10 @@ namespace NineGrid.Flow.Tutorial
 
         private static TutorialSpotlightPresenter sInstance;
         private static Sprite sFallbackSprite;
+        private static Material sUrpSpriteMaterial;
+
+        private const string UrpSpriteUnlitShader = "Universal Render Pipeline/2D/Sprite-Unlit-Default";
+        private const string UrpSpriteLitShader = "Universal Render Pipeline/2D/Sprite-Lit-Default";
 
         [SerializeField] private GameObject spotlightRoot;
         [SerializeField] private SpriteRenderer[] holeBars = new SpriteRenderer[4];
@@ -28,6 +32,7 @@ namespace NineGrid.Flow.Tutorial
         private int mSortingLayerId;
         private int mSortingOrder = -1;
         private Sprite mBarSprite;
+        private Material mBarMaterial;
 
         public static TutorialSpotlightPresenter InstanceOrNull()
         {
@@ -217,6 +222,7 @@ namespace NineGrid.Flow.Tutorial
                 mSortingLayerId = source.sortingLayerID;
                 mSortingOrder = source.sortingOrder;
                 mBarSprite = source.sprite != null ? source.sprite : GetFallbackSprite();
+                mBarMaterial = source.sharedMaterial != null ? source.sharedMaterial : GetUrpSpriteMaterial();
             }
             else
             {
@@ -224,6 +230,7 @@ namespace NineGrid.Flow.Tutorial
                 mSortingLayerId = 0;
                 mSortingOrder = -1;
                 mBarSprite = GetFallbackSprite();
+                mBarMaterial = GetUrpSpriteMaterial();
             }
         }
 
@@ -264,7 +271,7 @@ namespace NineGrid.Flow.Tutorial
                 bar.sortingOrder = mSortingOrder;
                 bar.drawMode = SpriteDrawMode.Simple;
                 bar.maskInteraction = SpriteMaskInteraction.None;
-                bar.sharedMaterial = null;
+                bar.sharedMaterial = mBarMaterial != null ? mBarMaterial : GetUrpSpriteMaterial();
                 StripColliders(bar.gameObject);
             }
         }
@@ -403,6 +410,33 @@ namespace NineGrid.Flow.Tutorial
             }
 
             return GameObject.Find(objectName);
+        }
+
+        private static Material GetUrpSpriteMaterial()
+        {
+            if (sUrpSpriteMaterial != null)
+            {
+                return sUrpSpriteMaterial;
+            }
+
+            var shader = Shader.Find(UrpSpriteUnlitShader);
+            if (shader == null)
+            {
+                shader = Shader.Find(UrpSpriteLitShader);
+            }
+
+            if (shader == null)
+            {
+                Debug.LogError("[TutorialSpotlight] 未找到 URP 2D Sprite shader，挖洞遮罩会品红。");
+                return null;
+            }
+
+            sUrpSpriteMaterial = new Material(shader)
+            {
+                name = "TutorialSpotlightUrpSprite",
+                hideFlags = HideFlags.HideAndDontSave,
+            };
+            return sUrpSpriteMaterial;
         }
 
         private static Sprite GetFallbackSprite()
