@@ -2,7 +2,9 @@ using System.Collections.Generic;
 using System.Threading;
 using System;
 using Cysharp.Threading.Tasks;
+using NineGrid.Core;
 using NineGrid.Flow.Presentation;
+using QFramework;
 using UnityEngine;
 using UnityEngine.Rendering;
 
@@ -60,19 +62,56 @@ namespace NineGrid.Cards
             return true;
         }
 
+        private static int ResolveAvatarSlot(GroundFieldView field = null)
+        {
+            var board = NineGridArchitecture.Current?.GetModel<BoardModel>();
+            if (board != null && board.AvatarSlot.Value.IsBoardSlot)
+            {
+                return board.AvatarSlot.Value.Index;
+            }
+
+            if (field != null)
+            {
+                for (var s = GroundSlotTopology.MinSlot; s <= GroundSlotTopology.MaxSlot; s++)
+                {
+                    if (field.TryGetCardAt(s, out var card)
+                        && card != null
+                        && card.CoreKind == CardPresentationKind.Avatar)
+                    {
+                        return s;
+                    }
+                }
+            }
+
+            return GroundSlotTopology.AvatarReservedSlot;
+        }
+
         public bool TryResolveDirectionForVictimSlot(int victimSlot, out CardBoardDirection direction)
+        {
+            var avatarSlot = ResolveAvatarSlot(GroundFieldGeometryHook.FieldOrNull());
+            return TryResolveDirectionForVictimSlot(victimSlot, avatarSlot, out direction);
+        }
+
+        public bool TryResolveDirectionForVictimSlot(int victimSlot, int avatarSlot, out CardBoardDirection direction)
         {
             direction = CardBoardDirection.None;
             if (!GroundSlotTopology.IsValidSlot(victimSlot)
-                || !GroundSlotTopology.AreOrthogonal(victimSlot, GroundSlotTopology.AvatarReservedSlot))
+                || !GroundSlotTopology.IsValidSlot(avatarSlot)
+                || !GroundSlotTopology.AreOrthogonal(victimSlot, avatarSlot))
             {
                 return false;
             }
 
             direction = CardBoardDirectionUtility.ComputeSelfDirection(
                 victimSlot,
-                GroundSlotTopology.AvatarReservedSlot);
-            return direction != CardBoardDirection.None && _rigByDirection.ContainsKey(direction);
+                avatarSlot);
+            if (direction == CardBoardDirection.None)
+            {
+                return false;
+            }
+
+            EnsureRigsCollected();
+            return _rigByDirection.Count == 0 || _rigByDirection.ContainsKey(direction);
         }
 
         /// <summary>
@@ -81,24 +120,38 @@ namespace NineGrid.Cards
         /// </summary>
         public bool TryResolveCounterAttackDirectionForAttackerSlot(int attackerSlot, out CardBoardDirection direction)
         {
+            var avatarSlot = ResolveAvatarSlot(GroundFieldGeometryHook.FieldOrNull());
+            return TryResolveCounterAttackDirectionForAttackerSlot(attackerSlot, avatarSlot, out direction);
+        }
+
+        public bool TryResolveCounterAttackDirectionForAttackerSlot(int attackerSlot, int avatarSlot, out CardBoardDirection direction)
+        {
             direction = CardBoardDirection.None;
             if (!GroundSlotTopology.IsValidSlot(attackerSlot)
+                || !GroundSlotTopology.IsValidSlot(avatarSlot)
                 || !GroundSlotTopology.AreAdjacentEight(
                     attackerSlot,
-                    GroundSlotTopology.AvatarReservedSlot))
+                    avatarSlot))
             {
                 return false;
             }
 
             var avatarToMonster = CardBoardDirectionUtility.ComputeSelfDirection(
                 attackerSlot,
-                GroundSlotTopology.AvatarReservedSlot);
+                avatarSlot);
             if (avatarToMonster == CardBoardDirection.None)
             {
                 return false;
             }
 
             EnsureRigsCollected();
+            if (_rigByDirection.Count == 0)
+            {
+                var fallbackOpposite = CardBoardDirectionUtility.GetOpposite(avatarToMonster);
+                direction = fallbackOpposite != CardBoardDirection.None ? fallbackOpposite : avatarToMonster;
+                return true;
+            }
+
             var preferred = CardBoardDirectionUtility.GetOpposite(avatarToMonster);
             if (preferred != CardBoardDirection.None
                 && _rigByDirection.ContainsKey(preferred))
@@ -218,17 +271,21 @@ namespace NineGrid.Cards
                 return;
             }
 
-            EnsureRigsCollected();
-            if (!TryResolveDirectionForVictimSlot(victimSlot, out var direction)
-                || !_rigByDirection.TryGetValue(direction, out var rig))
-            {
-                Debug.LogWarning($"[CardAttackBasicAdapter] 格位 {victimSlot} 无可用交战 rig。", this);
-                return;
-            }
-
             if (!TryResolveAttacker(field, out var attackerCard, out var attacker))
             {
                 Debug.LogWarning("[CardAttackBasicAdapter] 未找到 Avatar 攻击者，跳过交战。");
+                return;
+            }
+
+            var attackerSlot = attackerCard != null && field.TryGetSlotOf(attackerCard.Uid, out var aSlot)
+                ? aSlot
+                : ResolveAvatarSlot(field);
+
+            EnsureRigsCollected();
+            if (!TryResolveDirectionForVictimSlot(victimSlot, attackerSlot, out var direction)
+                || !_rigByDirection.TryGetValue(direction, out var rig))
+            {
+                Debug.LogWarning($"[CardAttackBasicAdapter] 格位 {victimSlot}（攻击者在 {attackerSlot}）无可用交战 rig。", this);
                 return;
             }
 
@@ -238,10 +295,10 @@ namespace NineGrid.Cards
             var attackerSnapshot = BattleFinalStateGuard.Capture(
                 attackerCard,
                 field,
-                GroundSlotTopology.AvatarReservedSlot);
+                attackerSlot);
             var victimSnapshot = BattleFinalStateGuard.Capture(victim, field, victimSlot);
 
-            PrepareAttackerAtAvatarAnchor(field, attacker, victimTransform);
+            PrepareAttackerAtSlotAnchor(field, attacker, attackerSlot, victimTransform);
             rig.ResetParticipantMotion(attacker, victimTransform);
             rig.BindParticipants(
                 attacker,
@@ -299,17 +356,21 @@ namespace NineGrid.Cards
                 return;
             }
 
-            EnsureRigsCollected();
-            if (!TryResolveDirectionForVictimSlot(clickedSlot, out var direction)
-                || !_rigByDirection.TryGetValue(direction, out var rig))
-            {
-                Debug.LogWarning($"[CardAttackBasicAdapter] 格位 {clickedSlot} 无可用交战 rig（嘲讽重定向）。");
-                return;
-            }
-
             if (!TryResolveAttacker(field, out var attackerCard, out var attacker))
             {
                 Debug.LogWarning("[CardAttackBasicAdapter] 未找到 Avatar 攻击者，跳过嘲讽重定向交战。");
+                return;
+            }
+
+            var attackerSlot = attackerCard != null && field.TryGetSlotOf(attackerCard.Uid, out var aSlot)
+                ? aSlot
+                : ResolveAvatarSlot(field);
+
+            EnsureRigsCollected();
+            if (!TryResolveDirectionForVictimSlot(clickedSlot, attackerSlot, out var direction)
+                || !_rigByDirection.TryGetValue(direction, out var rig))
+            {
+                Debug.LogWarning($"[CardAttackBasicAdapter] 格位 {clickedSlot}（攻击者在 {attackerSlot}）无可用交战 rig（嘲讽重定向）。");
                 return;
             }
 
@@ -320,10 +381,10 @@ namespace NineGrid.Cards
             var attackerSnapshot = BattleFinalStateGuard.Capture(
                 attackerCard,
                 field,
-                GroundSlotTopology.AvatarReservedSlot);
+                attackerSlot);
             var victimSnapshot = BattleFinalStateGuard.Capture(tauntVictim, field, tauntSlot);
 
-            PrepareAttackerAtAvatarAnchor(field, attacker, clickedTransform);
+            PrepareAttackerAtSlotAnchor(field, attacker, attackerSlot, clickedTransform);
             rig.ResetParticipantMotion(attacker, tauntTransform);
             rig.BindParticipantsTauntRedirect(
                 attacker,
@@ -505,23 +566,50 @@ namespace NineGrid.Cards
                 return;
             }
 
+            var avatarSlot = ResolveAvatarSlot(field);
             EnsureRigsCollected();
-            if (!TryResolveCounterAttackDirectionForAttackerSlot(attackerSlot, out var direction)
+            if (!TryResolveCounterAttackDirectionForAttackerSlot(attackerSlot, avatarSlot, out var direction)
                 || !_rigByDirection.TryGetValue(direction, out var rig))
             {
-                Debug.LogWarning($"[CardAttackBasicAdapter] 格位 {attackerSlot} 无可用反击 rig。", this);
+                Debug.LogWarning($"[CardAttackBasicAdapter] 格位 {attackerSlot}（Avatar 在 {avatarSlot}）无可用反击 rig。", this);
                 return;
             }
 
-            if (!field.TryGetCardAt(GroundSlotTopology.AvatarReservedSlot, out var victim)
-                || victim?.Transform == null)
+            ManagedCard victim = null;
+            if (field != null)
+            {
+                if (field.TryGetCardAt(avatarSlot, out var found)
+                    && found != null
+                    && found.CoreKind == CardPresentationKind.Avatar
+                    && found.Transform != null)
+                {
+                    victim = found;
+                }
+                else
+                {
+                    for (var s = GroundSlotTopology.MinSlot; s <= GroundSlotTopology.MaxSlot; s++)
+                    {
+                        if (field.TryGetCardAt(s, out var candidate)
+                            && candidate != null
+                            && candidate.CoreKind == CardPresentationKind.Avatar
+                            && candidate.Transform != null)
+                        {
+                            victim = candidate;
+                            avatarSlot = s;
+                            break;
+                        }
+                    }
+                }
+            }
+
+            if (victim == null || victim.Transform == null)
             {
                 Debug.LogWarning("[CardAttackBasicAdapter] 未找到 Avatar 受击者，跳过反击。");
                 return;
             }
 
             // 对角无专用 Timeline 时回退四向 rig；必须相对冲刺，否则会播错烘焙轴向。
-            if (GroundSlotTopology.AreDiagonal(attackerSlot, GroundSlotTopology.AvatarReservedSlot)
+            if (GroundSlotTopology.AreDiagonal(attackerSlot, avatarSlot)
                 && (!bind.UseRelativeAttackerMotion || !bind.UseRelativeVictimKnockback))
             {
                 bind = WithForcedRelativeMotion(in bind);
@@ -535,7 +623,7 @@ namespace NineGrid.Cards
             var victimSnapshot = BattleFinalStateGuard.Capture(
                 victim,
                 field,
-                GroundSlotTopology.AvatarReservedSlot);
+                avatarSlot);
 
             PrepareAttackerAtSlotAnchor(field, attackerTransform, attackerSlot, victimTransform);
             rig.ResetParticipantMotion(attackerTransform, victimTransform);
@@ -730,7 +818,7 @@ namespace NineGrid.Cards
         }
 
         /// <summary>
-        /// 优先取场地格5入场的 Avatar 卡；否则用 Inspector defaultAttacker / AttackerProxy 兜底。
+        /// 优先取场地当前 Avatar 占格的 Avatar 卡；否则用 Inspector defaultAttacker / AttackerProxy 兜底。
         /// </summary>
         private bool TryResolveAttacker(
             GroundFieldView field,
@@ -740,12 +828,31 @@ namespace NineGrid.Cards
             attackerCard = null;
             attacker = null;
 
+            var avatarSlot = ResolveAvatarSlot(field);
             if (field != null
-                && field.TryGetCardAt(GroundSlotTopology.AvatarReservedSlot, out attackerCard)
-                && attackerCard?.Transform != null)
+                && field.TryGetCardAt(avatarSlot, out attackerCard)
+                && attackerCard != null
+                && attackerCard.CoreKind == CardPresentationKind.Avatar
+                && attackerCard.Transform != null)
             {
                 attacker = attackerCard.Transform;
                 return true;
+            }
+
+            if (field != null)
+            {
+                for (var s = GroundSlotTopology.MinSlot; s <= GroundSlotTopology.MaxSlot; s++)
+                {
+                    if (field.TryGetCardAt(s, out var candidate)
+                        && candidate != null
+                        && candidate.CoreKind == CardPresentationKind.Avatar
+                        && candidate.Transform != null)
+                    {
+                        attackerCard = candidate;
+                        attacker = candidate.Transform;
+                        return true;
+                    }
+                }
             }
 
             if (defaultAttacker != null)
@@ -757,7 +864,7 @@ namespace NineGrid.Cards
             EnsureAttackerProxy();
             if (_attackerProxy != null && field != null)
             {
-                var anchor = field.GetGroundAnchor(GroundSlotTopology.AvatarReservedSlot);
+                var anchor = field.GetGroundAnchor(avatarSlot);
                 if (anchor != null)
                 {
                     _attackerProxy.position = anchor.position;
@@ -773,10 +880,11 @@ namespace NineGrid.Cards
             Transform attacker,
             Transform victim)
         {
+            var avatarSlot = ResolveAvatarSlot(field);
             PrepareAttackerAtSlotAnchor(
                 field,
                 attacker,
-                GroundSlotTopology.AvatarReservedSlot,
+                avatarSlot,
                 victim);
         }
 

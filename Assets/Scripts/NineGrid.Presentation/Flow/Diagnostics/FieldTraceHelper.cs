@@ -696,16 +696,13 @@ namespace NineGrid.Flow.Diagnostics
             {
                 var arch = NineGridArchitecture.Current;
                 var board = arch?.GetModel<BoardModel>();
+                var avatarUid = board?.AvatarUid.Value ?? 0;
                 if (board != null)
                 {
                     for (var slot = GroundSlotTopology.MinSlot; slot <= GroundSlotTopology.MaxSlot; slot++)
                     {
-                        if (slot == GroundSlotTopology.AvatarReservedSlot)
-                        {
-                            continue;
-                        }
-
-                        if (board.GetCardUid(SlotId.Board(slot)) > 0)
+                        var uid = board.GetCardUid(SlotId.Board(slot));
+                        if (uid > 0 && uid != avatarUid)
                         {
                             coreCount++;
                         }
@@ -716,11 +713,17 @@ namespace NineGrid.Flow.Diagnostics
                 if (field != null)
                 {
                     var snap = field.GetSnapshot();
+                    var cardManager = CardEntityLifecycleHook.CardsOrNull();
                     for (var i = 0; i < snap.Slots.Length; i++)
                     {
                         var occ = snap.Slots[i];
-                        if (!occ.IsEmpty && !occ.IsAvatarReserved)
+                        if (!occ.IsEmpty && occ.Uid != avatarUid)
                         {
+                            if (cardManager != null && cardManager.TryGet(occ.Uid, out var card)
+                                && card != null && card.CoreKind == CardPresentationKind.Avatar)
+                            {
+                                continue;
+                            }
                             presCount++;
                         }
                     }
@@ -1067,9 +1070,13 @@ namespace NineGrid.Flow.Diagnostics
                 hasSnap = snap?.Slots != null;
             }
 
+            var avatarSlot = board != null && board.AvatarSlot.Value.IsBoardSlot
+                ? board.AvatarSlot.Value.Index
+                : GroundSlotTopology.AvatarReservedSlot;
+
             for (var slot = GroundSlotTopology.MinSlot; slot <= GroundSlotTopology.MaxSlot; slot++)
             {
-                if (slot == GroundSlotTopology.AvatarReservedSlot)
+                if (slot == avatarSlot)
                 {
                     continue;
                 }

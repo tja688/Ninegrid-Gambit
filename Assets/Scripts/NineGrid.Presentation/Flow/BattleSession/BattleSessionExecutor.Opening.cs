@@ -393,11 +393,6 @@ namespace NineGrid.Flow
             var boardPlacements = new List<BoardPlacement>();
             for (var slot = SlotId.MinBoardIndex; slot <= SlotId.MaxBoardIndex; slot++)
             {
-                if (slot == GroundSlotTopology.AvatarReservedSlot)
-                {
-                    continue;
-                }
-
                 var slotId = SlotId.Board(slot);
                 var uid = board.GetCardUid(slotId);
                 if (uid <= 0 || uid == plan.AvatarUid)

@@ -137,6 +137,60 @@ namespace NineGrid.Cards
         /// 导演命中批 Present：Core 已 CombatHit；播 lunge/受击/飘字，
         /// 再 Drain 同批 OnBattle 盘面 delta（如逃避 Swap；主目标尸体除外），击杀则 Vacate（不含 Fill/Rotate）。
         /// <paramref name="resolvedCombatUid"/> 必须来自 Resolve 批捕获值，禁止在 Hit 后再 Resolve。
+        private static int ResolveAvatarSlot(IGroundFieldGeometrySystem geometry)
+        {
+            var board = NineGridArchitecture.Current?.GetModel<BoardModel>();
+            if (board != null && board.AvatarSlot.Value.IsBoardSlot)
+            {
+                return board.AvatarSlot.Value.Index;
+            }
+
+            if (geometry != null)
+            {
+                for (var s = GroundSlotTopology.MinSlot; s <= GroundSlotTopology.MaxSlot; s++)
+                {
+                    if (geometry.TryGetCardAt(s, out var card)
+                        && card != null
+                        && card.CoreKind == CardPresentationKind.Avatar)
+                    {
+                        return s;
+                    }
+                }
+            }
+
+            return GroundSlotTopology.AvatarReservedSlot;
+        }
+
+        private static bool TryResolveAvatarCard(IGroundFieldGeometrySystem geometry, out ManagedCard avatar)
+        {
+            avatar = null;
+            if (geometry == null)
+            {
+                return false;
+            }
+
+            var slot = ResolveAvatarSlot(geometry);
+            if (geometry.TryGetCardAt(slot, out avatar)
+                && avatar != null
+                && avatar.CoreKind == CardPresentationKind.Avatar)
+            {
+                return true;
+            }
+
+            for (var s = GroundSlotTopology.MinSlot; s <= GroundSlotTopology.MaxSlot; s++)
+            {
+                if (geometry.TryGetCardAt(s, out avatar)
+                    && avatar != null
+                    && avatar.CoreKind == CardPresentationKind.Avatar)
+                {
+                    return true;
+                }
+            }
+
+            avatar = null;
+            return false;
+        }
+
         /// </summary>
         public async UniTask PlayDirectorAttackHitPresentAsync(
             int clickedSlot,
@@ -152,7 +206,7 @@ namespace NineGrid.Cards
                 return;
             }
 
-            if (!geometry.TryGetCardAt(GroundSlotTopology.AvatarReservedSlot, out var avatar)
+            if (!TryResolveAvatarCard(geometry, out var avatar)
                 || avatar == null)
             {
                 Debug.LogWarning("[FieldBattle] 导演命中 Present：Avatar 不可用。");
@@ -260,7 +314,7 @@ namespace NineGrid.Cards
                 return;
             }
 
-            if (!geometry.TryGetCardAt(GroundSlotTopology.AvatarReservedSlot, out var avatar)
+            if (!TryResolveAvatarCard(geometry, out var avatar)
                 || avatar == null)
             {
                 Debug.LogWarning("[FieldBattle] 导演反击 Present：无 Avatar。");
@@ -629,7 +683,7 @@ namespace NineGrid.Cards
         private static int ResolveAvatarUid(IGroundFieldGeometrySystem geometry)
         {
             return geometry != null
-                && geometry.TryGetCardAt(GroundSlotTopology.AvatarReservedSlot, out var avatar)
+                && TryResolveAvatarCard(geometry, out var avatar)
                 && avatar != null
                     ? avatar.Uid
                     : 0;
@@ -661,13 +715,14 @@ namespace NineGrid.Cards
 
             var cards = CardEntityLifecycleHook.CardsOrNull();
             ManagedCard holder;
+            var avatarSlot = ResolveAvatarSlot(geometry);
             if (cards == null
                 || !cards.TryGet(duelPunishment.HolderUid, out holder)
                 || holder == null
                 || holder.Transform == null
                 || holder.IsFieldDead
                 || !geometry.TryGetSlotOf(holder.Uid, out var holderSlot)
-                || !GroundSlotTopology.AreAdjacentEight(holderSlot, GroundSlotTopology.AvatarReservedSlot))
+                || !GroundSlotTopology.AreAdjacentEight(holderSlot, avatarSlot))
             {
                 ReleaseDuelQuarantineFallback(duelPunishment.HolderUid, avatar.Uid);
                 return;
@@ -904,7 +959,8 @@ namespace NineGrid.Cards
                 return false;
             }
 
-            if (!GroundSlotTopology.AreAdjacentEight(attackerSlot, GroundSlotTopology.AvatarReservedSlot)
+            var avatarSlot = ResolveAvatarSlot(geometry);
+            if (!GroundSlotTopology.AreAdjacentEight(attackerSlot, avatarSlot)
                 || !geometry.TryGetCardAt(attackerSlot, out attacker))
             {
                 Debug.LogWarning($"[FieldBattle] 格位 {attackerSlot} 不可触发怪物反击。");
@@ -917,7 +973,7 @@ namespace NineGrid.Cards
                 return false;
             }
 
-            if (!geometry.TryGetCardAt(GroundSlotTopology.AvatarReservedSlot, out var avatar)
+            if (!TryResolveAvatarCard(geometry, out var avatar)
                 || avatar.IsFieldDead)
             {
                 Debug.LogWarning("[FieldBattle] Avatar 不可用，无法触发反击。");
@@ -972,7 +1028,7 @@ namespace NineGrid.Cards
         {
             var geometry = ResolveGeometry();
             if (geometry != null
-                && geometry.TryGetCardAt(GroundSlotTopology.AvatarReservedSlot, out var avatar)
+                && TryResolveAvatarCard(geometry, out var avatar)
                 && avatar != null
                 && !string.IsNullOrWhiteSpace(avatar.DefId))
             {
@@ -986,7 +1042,7 @@ namespace NineGrid.Cards
         {
             var geometry = ResolveGeometry();
             if (geometry == null
-                || !geometry.TryGetCardAt(GroundSlotTopology.AvatarReservedSlot, out var avatar)
+                || !TryResolveAvatarCard(geometry, out var avatar)
                 || avatar == null
                 || avatar.IsFieldDead)
             {

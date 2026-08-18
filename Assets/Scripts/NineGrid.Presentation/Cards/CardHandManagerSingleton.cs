@@ -1588,7 +1588,11 @@ namespace NineGrid.Cards
             }
 
             var field = GroundFieldGeometryHook.FieldOrNull();
-            var anchor = field?.GetGroundAnchor(GroundSlotTopology.AvatarReservedSlot);
+            var board = NineGridArchitecture.Current?.GetModel<BoardModel>();
+            var avatarSlot = board != null && board.AvatarSlot.Value.IsBoardSlot
+                ? board.AvatarSlot.Value.Index
+                : GroundSlotTopology.AvatarReservedSlot;
+            var anchor = field?.GetGroundAnchor(avatarSlot);
             if (anchor == null)
             {
                 Debug.LogWarning("[CardHandManager] BoardSelect 驻留失败：缺少 Avatar 锚点。");

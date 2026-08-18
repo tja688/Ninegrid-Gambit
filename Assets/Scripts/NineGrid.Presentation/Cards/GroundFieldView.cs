@@ -511,9 +511,16 @@ namespace NineGrid.Cards
 
         public bool IsAvatarOrthogonalBattleSlot(int slot)
         {
-            return Geometry != null
-                ? Geometry.IsAvatarOrthogonalBattleSlot(slot)
-                : GroundSlotTopology.AreOrthogonal(slot, GroundSlotTopology.AvatarReservedSlot);
+            if (Geometry != null)
+            {
+                return Geometry.IsAvatarOrthogonalBattleSlot(slot);
+            }
+
+            var board = NineGridArchitecture.Current?.GetModel<BoardModel>();
+            var avatarSlot = board != null && board.AvatarSlot.Value.IsBoardSlot
+                ? board.AvatarSlot.Value.Index
+                : GroundSlotTopology.AvatarReservedSlot;
+            return GroundSlotTopology.AreOrthogonal(slot, avatarSlot);
         }
 
         public bool TryGetRandomAvatarOrthogonalMonsterSlot(out int slot, out ManagedCard card)

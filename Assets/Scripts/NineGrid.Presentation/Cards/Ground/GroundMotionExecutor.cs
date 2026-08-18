@@ -1048,9 +1048,33 @@ namespace NineGrid.Cards
             return true;
         }
 
+        private int ResolveAvatarSlot()
+        {
+            var board = NineGridArchitecture.Current?.GetModel<BoardModel>();
+            if (board != null && board.AvatarSlot.Value.IsBoardSlot)
+            {
+                return board.AvatarSlot.Value.Index;
+            }
+
+            for (var s = GroundSlotTopology.MinSlot; s <= GroundSlotTopology.MaxSlot; s++)
+            {
+                var uid = _index.GetUidAt(s);
+                if (uid > 0 && CardEntityLifecycleHook.CardsOrNull() != null
+                    && CardEntityLifecycleHook.CardsOrNull().TryGet(uid, out var card)
+                    && card != null
+                    && card.CoreKind == CardPresentationKind.Avatar)
+                {
+                    return s;
+                }
+            }
+
+            return GroundSlotTopology.AvatarReservedSlot;
+        }
+
         public bool IsAvatarOrthogonalBattleSlot(int slot)
         {
-            return GroundSlotTopology.AreOrthogonal(slot, GroundSlotTopology.AvatarReservedSlot);
+            var avatarSlot = ResolveAvatarSlot();
+            return GroundSlotTopology.AreOrthogonal(slot, avatarSlot);
         }
 
         /// <summary>
@@ -1061,7 +1085,7 @@ namespace NineGrid.Cards
             slot = 0;
             card = null;
 
-            var avatarSlot = GroundSlotTopology.AvatarReservedSlot;
+            var avatarSlot = ResolveAvatarSlot();
             var neighbors = GroundSlotTopology.GetNeighbors(avatarSlot, GroundSlotRelation.Orthogonal);
             var candidates = new List<int>(neighbors.Count);
             for (var i = 0; i < neighbors.Count; i++)
@@ -2217,26 +2241,23 @@ namespace NineGrid.Cards
             var cardManager = CardEntityLifecycleHook.CardsOrNull();
             for (var slot = GroundSlotTopology.MinSlot; slot <= GroundSlotTopology.MaxSlot; slot++)
             {
-                if (slot == GroundSlotTopology.AvatarReservedSlot)
-                {
-                    continue;
-                }
-
                 var uid = _index.GetUidAt(slot);
                 if (uid == 0)
                 {
                     continue;
                 }
 
-                if (cardManager != null &&
-                    cardManager.TryGet(uid, out var card) &&
-                    card != null &&
-                    card.IsFieldDead)
+                if (cardManager != null
+                    && cardManager.TryGet(uid, out var card)
+                    && card != null)
                 {
-                    continue;
-                }
+                    if (card.CoreKind == CardPresentationKind.Avatar || card.IsFieldDead)
+                    {
+                        continue;
+                    }
 
-                return true;
+                    return true;
+                }
             }
 
             return false;
