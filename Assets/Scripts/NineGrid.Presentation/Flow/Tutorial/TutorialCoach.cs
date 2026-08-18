@@ -710,13 +710,6 @@ namespace NineGrid.Flow.Tutorial
         private static void ShowPromptForSlot(int slot)
         {
             sTargetSlot = slot;
-            if (TryGetAuthoritativeCardAtSlot(slot, out var card) && card != null)
-            {
-                sTargetCard = card;
-                TutorialPromptBoxPresenter.ShowTarget(card);
-                return;
-            }
-
             sTargetCard = null;
             TutorialPromptBoxPresenter.ShowTarget(slot);
         }

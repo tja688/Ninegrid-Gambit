@@ -112,7 +112,6 @@ namespace NineGrid.Flow
                     }
 
                     FlushDeferredBoardSync(force: true);
-                    TutorialCoach.NotifyPostKillBoardSettled();
                 }
             }
             finally

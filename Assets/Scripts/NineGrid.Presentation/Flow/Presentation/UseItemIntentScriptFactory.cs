@@ -4,6 +4,7 @@ using NineGrid.Cards;
 using NineGrid.Core;
 using NineGrid.Core.Commands;
 using NineGrid.Core.Systems;
+using NineGrid.Flow.Tutorial;
 using QFramework;
 
 namespace NineGrid.Flow.Presentation
@@ -209,7 +210,8 @@ namespace NineGrid.Flow.Presentation
                 mDispatcher,
                 mBoardPresentChannel,
                 boardSlot,
-                mOnBoardBatchProjected);
+                mOnBoardBatchProjected,
+                t => TutorialCoach.NotifyPostKillBoardSettled());
         }
 
         private CoreCommandDispatchResult ResolveUseAndProject(

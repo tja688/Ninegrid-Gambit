@@ -126,18 +126,18 @@ namespace NineGrid.Flow.Tutorial
                 return;
             }
 
-            if (mTargetTransform != null)
-            {
-                if (TryCalculateWorldBounds(mTargetTransform.gameObject, out var updatedBounds))
-                {
-                    ApplyBoundsGeometry(updatedBounds);
-                }
-            }
-            else if (mTargetSlot >= 1 && mTargetSlot <= 9)
+            if (mTargetSlot >= 1 && mTargetSlot <= 9)
             {
                 if (TryResolveSlotBounds(mTargetSlot, out var slotBounds))
                 {
                     ApplyBoundsGeometry(slotBounds);
+                }
+            }
+            else if (mTargetTransform != null)
+            {
+                if (TryCalculateWorldBounds(mTargetTransform.gameObject, out var updatedBounds))
+                {
+                    ApplyBoundsGeometry(updatedBounds);
                 }
             }
 
@@ -401,14 +401,12 @@ namespace NineGrid.Flow.Tutorial
             if (TryGetAuthoritativeCardAtSlot(slot, out var card) && card?.GameObject != null)
             {
                 mTargetCard = card;
-                mTargetTransform = card.Transform;
                 return TryCalculateWorldBounds(card.GameObject, out bounds);
             }
 
             var field = GroundFieldGeometryHook.FieldOrNull();
             if (field != null && field.TryGetAnchor(slot, out var anchor) && anchor != null)
             {
-                mTargetTransform = anchor;
                 bounds = new Bounds(anchor.position, FallbackCardFrameSize);
                 return true;
             }

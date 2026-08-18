@@ -6,6 +6,7 @@ using NineGrid.Core.Commands;
 using NineGrid.Core.Stats;
 using NineGrid.Core.Systems;
 using NineGrid.Flow.Diagnostics;
+using NineGrid.Flow.Tutorial;
 using QFramework;
 
 namespace NineGrid.Flow.Presentation
@@ -260,7 +261,11 @@ namespace NineGrid.Flow.Presentation
                 mBoardPresentChannel,
                 boardSlot,
                 mOnBoardBatchProjected,
-                t => AppendEnemyActionPhase(t, boardSlot));
+                t =>
+                {
+                    TutorialCoach.NotifyPostKillBoardSettled();
+                    AppendEnemyActionPhase(t, boardSlot);
+                });
         }
 
         private void EnqueueNonKillInteractionAdvance(BattleTimeline timeline, int boardSlot)

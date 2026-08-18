@@ -172,5 +172,40 @@ namespace NineGrid.Presentation.Tests.Flow
             Assert.Greater(mSpriteRenderer.size.x, 2.5f);
             Assert.Less(mSpriteRenderer.size.x, 3.5f);
         });
+
+        [Test]
+        public void Show_WithSlot_MaintainsSlotTrackingEvenIfCardMoves()
+        {
+            var fieldGo = new GameObject("TestField");
+            var anchorGo = new GameObject("Anchor6");
+            anchorGo.transform.SetParent(fieldGo.transform);
+            anchorGo.transform.position = new Vector3(5f, 0f, 0f);
+
+            var fieldView = fieldGo.AddComponent<NineGrid.Cards.GroundFieldView>();
+            typeof(NineGrid.Cards.GroundFieldView)
+                .GetField("slotAnchors", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
+                ?.SetValue(fieldView, new Transform[10] { null, null, null, null, null, null, anchorGo.transform, null, null, null });
+
+            NineGrid.Cards.GroundFieldGeometryHook.RequestWire(fieldView);
+
+            try
+            {
+                mPresenter.Show(6);
+                Assert.IsTrue(mPresenter.IsVisible);
+                Assert.AreEqual(5f, mBoxGo.transform.position.x, 0.05f, "初始框选在 6 号位锚点");
+
+                // 模拟 Update 调用
+                typeof(TutorialPromptBoxPresenter)
+                    .GetMethod("Update", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
+                    ?.Invoke(mPresenter, null);
+
+                Assert.AreEqual(5f, mBoxGo.transform.position.x, 0.05f, "Update 后仍锚定在 6 号位");
+            }
+            finally
+            {
+                NineGrid.Cards.GroundFieldGeometryHook.Reset();
+                Object.DestroyImmediate(fieldGo);
+            }
+        }
     }
 }
