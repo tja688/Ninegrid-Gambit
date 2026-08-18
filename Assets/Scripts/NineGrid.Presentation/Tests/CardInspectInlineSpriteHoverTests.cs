@@ -92,5 +92,47 @@ namespace NineGrid.Presentation.Tests
                     br,
                     paddingWorld: 0f));
         }
+
+        [Test]
+        public void GlossaryRow_SetDefaultBodyColor_UsesConfiguredColorForUncoloredTerms()
+        {
+            var go = new UnityEngine.GameObject("TestRow");
+            try
+            {
+                var tmp = go.AddComponent<TMPro.TextMeshPro>();
+                tmp.color = UnityEngine.Color.white;
+                var row = go.AddComponent<NineGrid.Cards.Presentation.CardInspectGlossaryRowView>();
+
+                row.SetDefaultBodyColor(UnityEngine.Color.black);
+                row.Bind("测试词条", "这是一段词条解释", hasColor: false, UnityEngine.Color.yellow);
+
+                Assert.AreEqual(UnityEngine.Color.black, tmp.color);
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(go);
+            }
+        }
+
+        [Test]
+        public void GlossaryRow_BindWithColor_UsesSpecifiedColor()
+        {
+            var go = new UnityEngine.GameObject("TestRow");
+            try
+            {
+                var tmp = go.AddComponent<TMPro.TextMeshPro>();
+                tmp.color = UnityEngine.Color.white;
+                var row = go.AddComponent<NineGrid.Cards.Presentation.CardInspectGlossaryRowView>();
+
+                row.SetDefaultBodyColor(UnityEngine.Color.black);
+                row.Bind("测试词条", "这是一段词条解释", hasColor: true, UnityEngine.Color.red);
+
+                Assert.AreEqual(UnityEngine.Color.red, tmp.color);
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(go);
+            }
+        }
     }
 }

@@ -23,26 +23,25 @@ namespace NineGrid.Cards.Presentation
         [SerializeField] private RectTransform content;
         [SerializeField] private CardInspectGlossaryRowView rowPrefab;
         [SerializeField] private CardInspectGlossaryRowView hoverRow;
+        [SerializeField] private Color defaultBodyColor = new Color(0.816f, 0.816f, 0.816f, 0.875f);
 
         private readonly List<CardInspectGlossaryRowView> _spawned = new List<CardInspectGlossaryRowView>();
         private static Sprite s_viewportClipSprite;
 
-        private Color? _defaultBodyColor;
-
         /// <summary>
-        /// 强制本列表词条行正文默认色（浅色底面板改黑；缺省用模板色）。
-        /// 装配后、行生成前设置，生成的行与 hover 槽都会吃到该色。
+        /// 词条行正文默认色（浅色底面板设为黑色，深色底面板设为浅白）。
+        /// 优先使用场景/预制体序列化的颜色；亦支持运行时按需覆盖。
         /// </summary>
         public void SetDefaultBodyColor(Color color)
         {
-            _defaultBodyColor = color;
+            defaultBodyColor = color;
         }
 
         private void ApplyDefaultBodyColor(CardInspectGlossaryRowView row)
         {
-            if (row != null && _defaultBodyColor.HasValue)
+            if (row != null)
             {
-                row.SetDefaultBodyColor(_defaultBodyColor.Value);
+                row.SetDefaultBodyColor(defaultBodyColor);
             }
         }
 
