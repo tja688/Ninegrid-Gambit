@@ -160,16 +160,15 @@ namespace NineGrid.Flow
         }
 
         /// <summary>
-        /// 教学关卡（独立于节点循环）：BootstrapRun → 受控开局发牌 → 教学导演推进四波 →
-        /// 击破离开机关走 Core 正常清关 → 结算就绪即教学完成。
-        /// 完成后按载荷转正式开局或回主菜单；战败走常规 BattleEnded 收口（不标记完成）。
+        /// 菜单「教程」（单场同构教学战斗）：BootstrapRun → 受控第一关保序开局发牌 →
+        /// TutorialCoach 驱动步骤 1–9 教练与独立门教学（第 10 步）→
+        /// 击破离开机关走 Core 正常清关 / 结算就绪即教学完成 → 回主菜单（不进 1-2，不写检查点）。
+        /// 战败走常规 BattleEnded 收口（不删正式存档）。
         /// </summary>
         private async UniTaskVoid RunTutorialAsync(TutorialRunOptions tutorial, CancellationToken ct)
         {
             mShell.SetBusy(true);
-            TutorialBattleDirector director = null;
             var completed = false;
-            TutorialCoach.OnBattleStarted(TutorialEntryKind.Menu);
             try
             {
                 mShell.IncrementNodeIndex();
@@ -199,13 +198,13 @@ namespace NineGrid.Flow
                 }
 
                 Debug.Log("[Tutorial] 教学关卡入场");
+                TutorialCoach.OnBattleStarted(TutorialEntryKind.Menu, mShell.NodeIndex);
                 await session.StartBattleNodeAsync(TutorialDeckPlan.BuildOpeningOptions(content), ct);
                 if (ct.IsCancellationRequested)
                 {
                     return;
                 }
 
-                director = TutorialBattleDirector.StartNew(ct);
                 session.TryEnterNodeSettlement();
                 await mSettlementTcs.Task.AttachExternalCancellation(ct);
                 completed = true;
@@ -215,7 +214,6 @@ namespace NineGrid.Flow
             }
             finally
             {
-                director?.Stop();
                 TutorialCoach.OnBattleEnded();
                 mShell.SetBusy(false);
             }
@@ -225,7 +223,7 @@ namespace NineGrid.Flow
                 return;
             }
 
-            TutorialProgressStore.MarkCompleted();
+            TutorialProgressStore.MarkSteps1To9Completed();
             var continueToFormal = tutorial != null && tutorial.ContinueToFormalRun;
             Debug.Log("[Tutorial] 教学完成" + (continueToFormal ? "，转入正式开局。" : "，返回主菜单。"));
             FinishTutorialAndContinueAsync(continueToFormal).Forget();
@@ -466,7 +464,7 @@ namespace NineGrid.Flow
 
             // 存档检查点：正式局在 BuildNodeDeckOptions 消耗 RNG 之前捕获，
             // 恢复时以同一 RNG 状态重跑发牌即可复现「本场对战开始」。
-            if (!mShell.IsQuickTestMode)
+            if (!mShell.IsQuickTestMode && !mShell.IsTutorialMode)
             {
                 RunSaveService.CaptureCheckpoint(mShell.NodeIndex);
             }
