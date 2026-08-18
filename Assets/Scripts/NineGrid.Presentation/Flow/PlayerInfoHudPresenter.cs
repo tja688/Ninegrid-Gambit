@@ -11,7 +11,7 @@ namespace NineGrid.Flow
     /// <summary>
     /// 局内「玩家信息」HUD：血槽血管 + 当前/最大血量、基础护甲、金币。
     /// 血槽长度随 MaxHp 相对基础上限伸长（每点 +0.019），总宽封顶 3.2；
-    /// 默认显示当前血量（图标+数值），悬停血条时切换为血量上限（图标+数值）。
+    /// 同时常驻显示当前血量与满血上限（图标+数值）。
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class PlayerInfoHudPresenter : MonoBehaviour
@@ -57,13 +57,13 @@ namespace NineGrid.Flow
         [Tooltip("当前血量 TMP（世界空间 TextMeshPro）。")]
         [SerializeField] private TMP_Text currentHpText;
 
-        [Tooltip("当前血量图标 SpriteRenderer；默认显示，悬停血条时隐藏。")]
+        [Tooltip("当前血量图标 SpriteRenderer。")]
         [SerializeField] private SpriteRenderer currentHpIcon;
 
-        [Tooltip("最大血量 TMP；默认隐藏，悬停血条时显示。")]
+        [Tooltip("最大血量 TMP。")]
         [SerializeField] private TMP_Text maxHpText;
 
-        [Tooltip("满血图标 SpriteRenderer；默认隐藏，悬停血条时与最大血量数值一同显示。")]
+        [Tooltip("满血图标 SpriteRenderer。")]
         [SerializeField] private SpriteRenderer maxHpIcon;
 
         [Tooltip("基础护甲（有效护甲，ADR-0028）TMP；与玩家卡面显示的真实护甲（当前护甲）区分。")]
@@ -88,9 +88,6 @@ namespace NineGrid.Flow
         [Tooltip("编辑器现状对应的基础血量上限；血槽现状宽度即此上限下的基础长度。")]
         [SerializeField] private float baseMaxHp = DefaultBaseMaxHp;
 
-        [Tooltip("血条悬停检测用 Collider2D；优先取血条根上已配置的碰撞盒（不改写尺寸），未配置才运行时在血槽上补 BoxCollider2D 并随槽宽同步。")]
-        [SerializeField] private Collider2D bloodSlotCollider;
-
         private readonly StatSlot _armor = new();
         private readonly StatSlot _gold = new();
 
@@ -107,9 +104,6 @@ namespace NineGrid.Flow
         private Color _goldBaseColor = Color.white;
         private bool _hasGoldBaseColor;
 
-        /// <summary>悬停碰撞盒是否为运行时在血槽上自建的（自建的才随槽宽改写尺寸）。</summary>
-        private bool _autoHoverCollider;
-
         private bool _hasSnapshot;
         private bool _wasAtMaxHp;
         private bool _capturedVesselBase;
@@ -121,10 +115,6 @@ namespace NineGrid.Flow
         private float _animatedSlotWidth;
         private int _coreHp;
         private int _coreMaxHp;
-        private bool _hoveringSlot;
-        private bool _maxHpVisible;
-        private Color _maxHpBaseColor = Color.white;
-        private bool _hasMaxHpBaseColor;
         private Vector3 _bloodBarBasePos;
         private Vector3 _bloodBarBaseScale = Vector3.one;
         private bool _hasBloodBarBasePose;
@@ -135,7 +125,6 @@ namespace NineGrid.Flow
         private Tween _hpTextColorTween;
         private Tween _barShakeTween;
         private Coroutine _maxHpPulseRoutine;
-        private Sequence _maxHpRevealSeq;
 
         public static PlayerInfoHudPresenter Instance
         {
@@ -186,7 +175,6 @@ namespace NineGrid.Flow
             _instance = this;
             EnsureBindings();
             CaptureVesselBaseIfNeeded();
-            SetMaxHpVisible(false, instant: true);
         }
 
         private void OnDestroy()
@@ -204,11 +192,6 @@ namespace NineGrid.Flow
             {
                 _instance = null;
             }
-        }
-
-        private void Update()
-        {
-            UpdateBloodSlotHover();
         }
 
         /// <summary>
@@ -441,30 +424,37 @@ namespace NineGrid.Flow
             }
 
             GoldHudDomainHost.Install(playerInfoRoot, goldIcon);
-
-            // 悬停碰撞盒：优先用血条根上已配置的（场景布局大热区，绝不覆写尺寸）；
-            // 没有才运行时在血槽上补一个并随槽宽同步。
-            if (bloodSlotCollider == null && bloodBarRoot != null)
-            {
-                bloodSlotCollider = bloodBarRoot.GetComponent<Collider2D>();
-            }
-
-            if (bloodSlotCollider == null && bloodSlot != null)
-            {
-                var box = bloodSlot.gameObject.AddComponent<BoxCollider2D>();
-                box.isTrigger = true;
-                SyncColliderToSlot(box);
-                bloodSlotCollider = box;
-                _autoHoverCollider = true;
-            }
-
-            if (maxHpText != null && !_hasMaxHpBaseColor)
-            {
-                _maxHpBaseColor = maxHpText.color;
-                _hasMaxHpBaseColor = true;
-            }
-
+            EnsureAllHpHudVisible();
             CaptureBloodBarBasePoseIfNeeded();
+        }
+
+        private void EnsureAllHpHudVisible()
+        {
+            if (currentHpText != null)
+            {
+                currentHpText.enabled = true;
+            }
+
+            if (currentHpIcon != null)
+            {
+                currentHpIcon.enabled = true;
+            }
+
+            if (maxHpText != null)
+            {
+                maxHpText.enabled = true;
+                var color = maxHpText.color;
+                if (color.a < 0.99f)
+                {
+                    color.a = 1f;
+                    maxHpText.color = color;
+                }
+            }
+
+            if (maxHpIcon != null)
+            {
+                maxHpIcon.enabled = true;
+            }
         }
 
         /// <summary>
@@ -680,12 +670,6 @@ namespace NineGrid.Flow
             var size = bloodSlot.size;
             size.x = width;
             bloodSlot.size = size;
-
-            // 只同步自建碰撞盒；场景里配置的悬停碰撞盒保持布局原样。
-            if (_autoHoverCollider)
-            {
-                SyncColliderToSlot(bloodSlotCollider as BoxCollider2D);
-            }
         }
 
         private void ApplyFillWidth(float width)
@@ -702,20 +686,6 @@ namespace NineGrid.Flow
             var lp = bloodFill.transform.localPosition;
             lp.x = _fillLocalX;
             bloodFill.transform.localPosition = lp;
-        }
-
-        private void SyncColliderToSlot(BoxCollider2D box)
-        {
-            if (box == null || bloodSlot == null)
-            {
-                return;
-            }
-
-            // 左 pivot：碰撞盒中心在宽度一半处。
-            var w = bloodSlot.size.x;
-            var h = Mathf.Max(0.2f, bloodSlot.size.y);
-            box.size = new Vector2(w, h);
-            box.offset = new Vector2(w * 0.5f, 0f);
         }
 
         private void FlashFill(Color flash)
@@ -803,97 +773,6 @@ namespace NineGrid.Flow
 
             currentHpText.color = settle;
             _maxHpPulseRoutine = null;
-        }
-
-        private void UpdateBloodSlotHover()
-        {
-            if (bloodSlotCollider == null || maxHpText == null)
-            {
-                return;
-            }
-
-            var cam = Camera.main;
-            if (cam == null)
-            {
-                return;
-            }
-
-            var hovering = WorldPointerUtility.TryOverlapColliderOnPlane(cam, bloodSlotCollider);
-            if (hovering == _hoveringSlot)
-            {
-                return;
-            }
-
-            _hoveringSlot = hovering;
-            SetMaxHpVisible(hovering, instant: false);
-        }
-
-        /// <summary>
-        /// 血量显示双模切换：默认当前血量（图标+数值）；悬停血条时切换为血量上限（图标+数值）。
-        /// </summary>
-        private void SetMaxHpVisible(bool visible, bool instant)
-        {
-            if (maxHpText == null)
-            {
-                return;
-            }
-
-            _maxHpRevealSeq?.Kill();
-            _maxHpVisible = visible;
-
-            if (!_hasMaxHpBaseColor)
-            {
-                _maxHpBaseColor = maxHpText.color;
-                _hasMaxHpBaseColor = true;
-            }
-
-            var target = _maxHpBaseColor;
-            if (!visible)
-            {
-                target.a = 0f;
-            }
-
-            if (currentHpIcon != null)
-            {
-                currentHpIcon.enabled = !visible;
-            }
-
-            if (maxHpIcon != null)
-            {
-                maxHpIcon.enabled = visible;
-            }
-
-            if (currentHpText != null)
-            {
-                currentHpText.enabled = !visible;
-            }
-
-            if (instant)
-            {
-                maxHpText.color = target;
-                maxHpText.enabled = visible || target.a > 0.01f;
-                if (!visible)
-                {
-                    maxHpText.enabled = false;
-                }
-
-                return;
-            }
-
-            maxHpText.enabled = true;
-            _maxHpRevealSeq = DOTween.Sequence().SetUpdate(true).SetLink(maxHpText.gameObject, LinkBehaviour.KillOnDestroy);
-            _maxHpRevealSeq.Append(
-                DOTween.To(() => maxHpText.color, c => maxHpText.color = c, target, 0.12f));
-            if (!visible)
-            {
-                _maxHpRevealSeq.OnComplete(() =>
-                {
-                    if (!_maxHpVisible)
-                    {
-                        maxHpText.enabled = false;
-                    }
-                });
-            }
         }
 
         private void ApplyGold(int gold, bool animate)
