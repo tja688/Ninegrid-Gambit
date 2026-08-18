@@ -480,8 +480,7 @@ namespace NineGrid.Core
             SlotId.Board(9),
             SlotId.Board(8),
             SlotId.Board(7),
-            SlotId.Board(4),
-            SlotId.Board(5)
+            SlotId.Board(4)
         };
 
         private static readonly TriggerPoint[] sPostTriggers =
@@ -515,7 +514,7 @@ namespace NineGrid.Core
             var filled = 0;
             IReadOnlyList<SlotId> fillOrder = sFillOrder;
 
-            if (PrioritySlot.IsBoardSlot)
+            if (PrioritySlot.IsBoardSlot && !PrioritySlot.IsCenter)
             {
                 var list = new List<SlotId>(sFillOrder.Length + 1) { PrioritySlot };
                 for (var i = 0; i < sFillOrder.Length; i++)
@@ -553,7 +552,7 @@ namespace NineGrid.Core
                 for (var i = 0; i < fillOrder.Count; i++)
                 {
                     var slot = fillOrder[i];
-                    if (slot == board.AvatarSlot.Value || !board.IsEmpty(slot))
+                    if (slot.IsCenter || slot == board.AvatarSlot.Value || !board.IsEmpty(slot))
                     {
                         continue;
                     }

@@ -35,7 +35,7 @@ namespace NineGrid.Core.Systems
             {
                 if (IsRefillSuspended)
                 {
-                    if (PriorityRefillSlot.IsBoardSlot)
+                    if (PriorityRefillSlot.IsBoardSlot && !PriorityRefillSlot.IsCenter)
                     {
                         var boardModel = this.GetModel<BoardModel>();
                         var deckModel = this.GetModel<DeckModel>();
@@ -83,7 +83,7 @@ namespace NineGrid.Core.Systems
                 for (var i = 0; i < order.Count; i++)
                 {
                     var slot = order[i];
-                    if (slot != board.AvatarSlot.Value && board.IsEmpty(slot))
+                    if (!slot.IsCenter && slot != board.AvatarSlot.Value && board.IsEmpty(slot))
                     {
                         empty++;
                     }

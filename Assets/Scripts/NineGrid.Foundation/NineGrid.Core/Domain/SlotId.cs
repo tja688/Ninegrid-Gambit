@@ -8,6 +8,7 @@ namespace NineGrid.Core
         public const int AvatarIndex = 0;
         public const int MinBoardIndex = 1;
         public const int MaxBoardIndex = 9;
+        public const int CenterIndex = 5;
 
         private readonly int mIndex;
 
@@ -36,6 +37,11 @@ namespace NineGrid.Core
             get { return mIndex >= MinBoardIndex && mIndex <= MaxBoardIndex; }
         }
 
+        public bool IsCenter
+        {
+            get { return mIndex == CenterIndex; }
+        }
+
         public int Row
         {
             get
@@ -62,6 +68,11 @@ namespace NineGrid.Core
         public static SlotId Avatar
         {
             get { return new SlotId(AvatarIndex); }
+        }
+
+        public static SlotId Center
+        {
+            get { return new SlotId(CenterIndex); }
         }
 
         public static SlotId Board(int index)

@@ -10,7 +10,8 @@ namespace NineGrid.Cards
     {
         public const int MinSlot = 1;
         public const int MaxSlot = 9;
-        public const int AvatarReservedSlot = 5;
+        public const int CenterSlot = 5;
+        public const int AvatarReservedSlot = CenterSlot;
 
         public static readonly IReadOnlyList<int> ClockwiseRing = new[] { 1, 2, 3, 6, 9, 8, 7, 4 };
 
@@ -28,6 +29,11 @@ namespace NineGrid.Cards
                 DiagMask[slot] = BuildNeighborMask(slot, IsDiagonalNeighbor);
             }
 
+            for (var i = 0; i < ClockwiseRingIndex.Length; i++)
+            {
+                ClockwiseRingIndex[i] = -1;
+            }
+
             for (var i = 0; i < ClockwiseRing.Count; i++)
             {
                 ClockwiseRingIndex[ClockwiseRing[i]] = i;
@@ -39,6 +45,11 @@ namespace NineGrid.Cards
             return slot >= MinSlot && slot <= MaxSlot;
         }
 
+        public static bool IsCenter(int slot)
+        {
+            return slot == CenterSlot;
+        }
+
         public static bool IsCorner(int slot)
         {
             return slot is 1 or 3 or 7 or 9;
@@ -46,7 +57,7 @@ namespace NineGrid.Cards
 
         public static bool IsOuterRing(int slot)
         {
-            return ClockwiseRingIndex[slot] >= 0;
+            return IsValidSlot(slot) && ClockwiseRingIndex[slot] >= 0;
         }
 
         public static bool IsAvatarReserved(int slot)

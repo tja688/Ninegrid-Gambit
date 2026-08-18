@@ -69,7 +69,7 @@ namespace NineGrid.Cards
         public bool IsPlaceable(int slot)
         {
             return IsValidSlot(slot)
-                   && !GroundSlotTopology.IsAvatarReserved(slot)
+                   && !GroundSlotTopology.IsCenter(slot)
                    && _uidBySlot[slot] == 0;
         }
 

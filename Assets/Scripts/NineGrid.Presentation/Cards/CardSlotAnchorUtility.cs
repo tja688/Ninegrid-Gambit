@@ -75,9 +75,14 @@ namespace NineGrid.Cards
         }
 
         /// <summary>
+        /// 拓扑中心 Ground 槽位（1-based 编号，5）。
+        /// </summary>
+        public const int CenterGroundSlotNumber = GroundSlotTopology.CenterSlot;
+
+        /// <summary>
         /// 禁止发牌的目标 Ground 槽位（1-based 编号，如 slot5 = 5）。
         /// </summary>
-        public const int ForbiddenGroundDealSlotNumber = GroundSlotTopology.AvatarReservedSlot;
+        public const int ForbiddenGroundDealSlotNumber = GroundSlotTopology.CenterSlot;
 
         /// <summary>
         /// 1-based 格位编号转为 GroundAnchors 列表索引（0-based）。
@@ -88,12 +93,12 @@ namespace NineGrid.Cards
         }
 
         /// <summary>
-        /// 格位是否允许放置卡牌（1-based；格 5 为 Avatar 保留位）。
+        /// 格位是否允许放置卡牌（1-based；中心格 5 拓扑禁发牌）。
         /// </summary>
         public static bool IsPlaceableGroundSlot(int slotNumber)
         {
             return GroundSlotTopology.IsValidSlot(slotNumber)
-                   && !GroundSlotTopology.IsAvatarReserved(slotNumber);
+                   && !GroundSlotTopology.IsCenter(slotNumber);
         }
 
         /// <summary>
