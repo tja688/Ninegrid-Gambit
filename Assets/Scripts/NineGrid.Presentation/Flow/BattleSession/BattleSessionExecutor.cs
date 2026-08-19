@@ -29,6 +29,8 @@ namespace NineGrid.Flow
         private bool _isBusy;
         private bool _settlementRaised;
         private bool _battleEndRaised;
+        private bool _avatarDefeatEndArmed;
+        private bool _avatarDefeatEndFlushing;
         private bool _drainInFlight;
         private CancellationTokenSource _presentationCts;
         private int _nodeEventLogStart;
@@ -275,6 +277,8 @@ namespace NineGrid.Flow
                 OnAttackIntentRejected);
             _pipelineFaultUnRegister = architecture.RegisterEvent<Evt_PipelineFaultContained>(
                 OnPipelineFaultContained);
+            AvatarDefeatEndHook.NotifyMainlineBecameIdle = () =>
+                TryFlushArmedAvatarDefeatEnd();
         }
 
         public void UnregisterPresentationIntentHandlers()
@@ -296,6 +300,8 @@ namespace NineGrid.Flow
                 _pipelineFaultUnRegister.UnRegister();
                 _pipelineFaultUnRegister = null;
             }
+
+            AvatarDefeatEndHook.Reset();
         }
 
         public InitialGameSnapshot BootstrapRun(
@@ -340,6 +346,8 @@ namespace NineGrid.Flow
             PlayerInfoHudPresenter.TryGetInstance()?.SyncFromCore(animate: false);
             _settlementRaised = false;
             _battleEndRaised = false;
+            _avatarDefeatEndArmed = false;
+            _avatarDefeatEndFlushing = false;
             _nodeEventLogStart = 0;
             try
             {
@@ -553,6 +561,8 @@ namespace NineGrid.Flow
             ResetPresentationSurface();
             _settlementRaised = false;
             _battleEndRaised = false;
+            _avatarDefeatEndArmed = false;
+            _avatarDefeatEndFlushing = false;
             _isBusy = false;
         }
 
@@ -565,6 +575,8 @@ namespace NineGrid.Flow
             ResetCardPresentationSurface();
             _settlementRaised = false;
             _battleEndRaised = false;
+            _avatarDefeatEndArmed = false;
+            _avatarDefeatEndFlushing = false;
             _isBusy = false;
         }
 
@@ -643,7 +655,8 @@ namespace NineGrid.Flow
         }
 
         /// <summary>
-        /// Core 已 Defeat 时收口战败：Present 早退/取消/空盘面批不得漏 Raise。
+        /// Core 已 Defeat 时武装战败收口：导演链仍在演（机关位移 / 打击 / 血条）时不得 Raise。
+        /// Present 早退/取消/空盘面批在主线空闲后仍会 Flush，不得漏 Raise。
         /// ADR-0039：兼读 Core phase / Avatar HP，避免投影旗标滞后于 0 血僵尸局。
         /// </summary>
         public void EnsureBattleEndedIfAvatarDefeated(
@@ -655,8 +668,86 @@ namespace NineGrid.Flow
                 return;
             }
 
-            ResolveBattlePresentation()?.TryBeginAvatarDefeatPresentation(cancellationToken);
-            RaiseBattleEnded(victory: false);
+            _avatarDefeatEndArmed = true;
+            TryFlushArmedAvatarDefeatEnd(cancellationToken);
+        }
+
+        internal void TryFlushArmedAvatarDefeatEnd(CancellationToken cancellationToken = default)
+        {
+            if (!_avatarDefeatEndArmed || _battleEndRaised || _avatarDefeatEndFlushing)
+            {
+                return;
+            }
+
+            if (AvatarDefeatEndPolicy.ShouldDeferRaise(_drainInFlight, IsPresentationMainlineBusy()))
+            {
+                return;
+            }
+
+            var hud = PlayerInfoHudPresenter.TryGetInstance();
+            var battle = ResolveBattlePresentation();
+            var needsPresentationWait = (hud != null && hud.IsHpVesselAnimating)
+                || (battle != null && battle.IsBound);
+            if (!needsPresentationWait)
+            {
+                battle?.TryBeginAvatarDefeatPresentation(cancellationToken);
+                RaiseBattleEnded(victory: false);
+                _avatarDefeatEndArmed = false;
+                return;
+            }
+
+            FlushArmedAvatarDefeatEndAsync(cancellationToken).Forget();
+        }
+
+        private async UniTaskVoid FlushArmedAvatarDefeatEndAsync(CancellationToken cancellationToken)
+        {
+            _avatarDefeatEndFlushing = true;
+            try
+            {
+                var token = cancellationToken.CanBeCanceled
+                    ? cancellationToken
+                    : EnsurePresentationToken();
+
+                while (AvatarDefeatEndPolicy.ShouldDeferRaise(_drainInFlight, IsPresentationMainlineBusy())
+                    && !token.IsCancellationRequested)
+                {
+                    await UniTask.Yield(PlayerLoopTiming.Update, token);
+                }
+
+                if (_battleEndRaised)
+                {
+                    return;
+                }
+
+                var hud = PlayerInfoHudPresenter.TryGetInstance();
+                if (hud != null)
+                {
+                    await hud.WaitUntilHpVesselSettledAsync(token);
+                }
+
+                var battle = ResolveBattlePresentation();
+                if (battle != null)
+                {
+                    await battle.PlayAvatarDefeatPresentationAsync(token);
+                }
+
+                if (!_battleEndRaised)
+                {
+                    RaiseBattleEnded(victory: false);
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                if (!_battleEndRaised)
+                {
+                    RaiseBattleEnded(victory: false);
+                }
+            }
+            finally
+            {
+                _avatarDefeatEndFlushing = false;
+                _avatarDefeatEndArmed = false;
+            }
         }
 
         private static bool ShouldRaiseBattleEndedForAvatarDefeat(PostKillBoardPresentationResult result)

@@ -1049,17 +1049,45 @@ namespace NineGrid.Cards
                 return false;
             }
 
-            return TryBeginLethalVictimPresentation(avatar, cancellationToken);
+            PlayAvatarDefeatPresentationAsync(cancellationToken).Forget();
+            return true;
+        }
+
+        public async UniTask PlayAvatarDefeatPresentationAsync(CancellationToken cancellationToken = default)
+        {
+            var geometry = ResolveGeometry();
+            if (geometry == null
+                || !TryResolveAvatarCard(geometry, out var avatar)
+                || avatar == null
+                || avatar.IsFieldDead)
+            {
+                return;
+            }
+
+            await PlayLethalVictimPresentationAsync(avatar, cancellationToken);
         }
 
         public bool TryBeginLethalVictimPresentation(
             ManagedCard victim,
             CancellationToken cancellationToken = default)
         {
+            if (victim == null || ResolveGeometry() == null)
+            {
+                return false;
+            }
+
+            PlayLethalVictimPresentationAsync(victim, cancellationToken).Forget();
+            return true;
+        }
+
+        private async UniTask PlayLethalVictimPresentationAsync(
+            ManagedCard victim,
+            CancellationToken cancellationToken)
+        {
             var geometry = ResolveGeometry();
             if (victim == null || geometry == null)
             {
-                return false;
+                return;
             }
 
             var hadSlot = geometry.TryGetSlotOf(victim.Uid, out var victimSlot);
@@ -1081,13 +1109,12 @@ namespace NineGrid.Cards
             // 旧的 !IsPlaying 守卫会在受击特效未结束时整段跳过退场 FX。
             if (victim.TryGetEffectManager(out var effectManager))
             {
-                effectManager.PlayDeathAsync(
+                await effectManager.PlayDeathAsync(
                     hadSlot ? victimSlot : 0,
-                    cancellationToken: cancellationToken).Forget();
+                    cancellationToken: cancellationToken);
             }
 
-            FinalizeLethalVictimAsync(victim, cancellationToken).Forget();
-            return true;
+            await FinalizeLethalVictimAsync(victim, cancellationToken);
         }
 
         public async UniTask PresentRemovedFieldCardAsync(

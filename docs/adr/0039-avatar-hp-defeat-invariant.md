@@ -15,6 +15,7 @@ status: accepted
 4. **合法指令**：`RefreshLegalCommands` 在 `InteractionLoop` 下若 `IsAvatarDefeated()`（读一手 HP），不得加入 `Attack` / `PickupItem` / `ClickEmpty` / `RevealFace` / `UseItem` 等战场交互指令。
 
 5. **表现投影**：`AvatarDefeated` 投影旗标仍以 `phase == Defeat` 为准；`EnsureBattleEndedIfAvatarDefeated` 可兼读 Core phase / Avatar HP 作兜底，**不得**把战败权威上移到 HUD。
+   **表演缓释（2026-08-19 补遗）**：Core 进入 `Defeat` / HP≤0 仍是即时规则事实。`EnsureBattleEndedIfAvatarDefeated` 只**武装**收口；`RaiseBattleEnded`（`HardClearIntents` + 死亡面板）必须等当前导演主线跑空，并先等到血条归零缓动与 Avatar 死亡退场。提前 Raise 会清掉后续 Present（机关位移、效果打击、飘字），观感就是「还没被打到就弹出死亡面板」。主线已空或 Present 被跳过时仍立即 Flush，避免 0 血僵尸局。
 
 6. **判死谓词唯一（2026-08-11 补遗）**：合法指令裁决（`PhaseSystem.IsAvatarDefeated`）与战败收束（`DefeatIfAvatarDeadAction`）必须共用同一谓词——`AvatarDefeatFollowUp.IsAvatarDefeated`：`AvatarUid≤0` ∨ 注册表查无 ∨ 一手 HP≤0。**不看 Zone**。任何令合法指令收缩为「仅回收/丢弃」僵尸集的状态，都必须能被 `DefeatIfAvatarDeadAction` 收束成 `Defeat`，禁止出现「裁决判死、收束不认」的永久软锁。
 

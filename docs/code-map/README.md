@@ -45,7 +45,7 @@
 | [ADR-0036](../adr/0036-audio-cue-binding-and-music-ownership.md) | 声音提示与绑定真源；Resources 音频根；MMSoundManager 播放 Adapter；**#170/#179 已落地**唯一期望音乐状态、BGM JSON、Music 轨切歌代数/收口、PerfTrace 排期/取消链路与 EditMode 结构护栏 |
 | [ADR-0037](../adr/0037-inspect-detail-is-glossary-rows.md) | 右键详述效果区改词条行：按卡种常驻列表（怪物技能 + 范围/计数；道具/遗物/机关首条 + `[code]`）；告别 `design_text` 与 Inspect hover 槽 |
 | [ADR-0038](../adr/0038-card-rhythm-dual-channel.md) | 卡级节奏：行动/移动双通道 + 节奏源/周期 + 共享倒计时；攻击模式仅几何；技能同步触发同拍；图标矩阵（**#184 Core/内容/卡面接线已落地**：`CardRhythmRules` / `OnCardRhythmFire` / 怪物 JSON `rhythmSource`+`rhythmPeriod`；机关全量改配另票） |
-| [ADR-0039](../adr/0039-avatar-hp-defeat-invariant.md) | Avatar HP≤0 必须 Defeat；终端相位粘性；`RefreshLegalCommands` 尊重存活；投影 `AvatarDefeated` 仍以 phase 为准，表现 `EnsureBattleEnded` 可兼读 HP 兜底 |
+| [ADR-0039](../adr/0039-avatar-hp-defeat-invariant.md) | Avatar HP≤0 必须 Defeat；终端相位粘性；`RefreshLegalCommands` 尊重存活；投影 `AvatarDefeated` 仍以 phase 为准，表现 `EnsureBattleEnded` 可兼读 HP 兜底；**表演缓释**：主线未空闲不得 Raise / HardClear，先血条归零与死亡退场再出死亡面板 |
 | [ADR-0040](../adr/0040-vfx-cue-binding-persistent-state-workbench.md) | VFX Cue/State 与 Binding 单一播放决策真源；Attached/Independent 空间所有权；Persistent Slot；程序化播放器自治；三模式工作台；金币迁移（**#193–#204 已落地**；**#200 已落地**结构护栏、跨系统契约与终验记录 `Assets/Notes/Logs/VfxAudit/vfx-e2e-verification-200.md`） |
 | [ADR-0041](../adr/0041-run-save-battle-start-checkpoint.md) | 跑图存档：战斗开始检查点（BuildNodeDeckOptions 前捕获 + RNG 状态恢复 = 发牌复现）；自动存档每战斗刷新、终局清除；`RunSaveSnapshot`/`RunSaveGame` 在 Core，落盘经 `IRunSaveStore` → ES3 桥（`NineGrid.SaveBridge`，Assembly-CSharp 装配缝）；局内功能菜单存档/读档模块接线 |
 | [ADR-0042](../adr/0042-tutorial-level-module.md) | 教学关卡模块（**生产入口已断开，2026-08-18**：首次开局不再自动进教学关；主菜单「教学」按钮退役。玩家教学改走局内知识库书本）。历史：独立开局模式、`PreserveDealOrder`、`TutorialBattleDirector` 五阶段；完成标记槽 `tutorial_profile` |
