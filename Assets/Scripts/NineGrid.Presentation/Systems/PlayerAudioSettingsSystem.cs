@@ -227,12 +227,15 @@ namespace NineGrid.Presentation.Systems
             }
         }
 
+        public static readonly PlayerAudioSettingsSnapshot FactoryDefaults =
+            new PlayerAudioSettingsSnapshot(1f, false, 0.5f, false, 0.75f, false);
+
         private static PlayerAudioSettingsSnapshot ReadAuthorDefaults()
         {
             var settings = Resources.Load<MMSoundManagerSettingsSO>("MMSoundManagerSettings");
             var source = settings?.Settings;
             return source == null
-                ? new PlayerAudioSettingsSnapshot(1f, false, 1f, false, 1f, false)
+                ? FactoryDefaults
                 : new PlayerAudioSettingsSnapshot(
                     source.MasterVolume,
                     !source.MasterOn,

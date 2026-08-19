@@ -212,6 +212,9 @@ namespace NineGrid.Content.CardPresentation
             if (relative.EndsWith(".png", StringComparison.OrdinalIgnoreCase)
                 || relative.EndsWith(".jpg", StringComparison.OrdinalIgnoreCase)
                 || relative.EndsWith(".jpeg", StringComparison.OrdinalIgnoreCase)
+                || relative.EndsWith(".aseprite", StringComparison.OrdinalIgnoreCase)
+                || relative.EndsWith(".ase", StringComparison.OrdinalIgnoreCase)
+                || relative.EndsWith(".tga", StringComparison.OrdinalIgnoreCase)
                 || relative.EndsWith(".asset", StringComparison.OrdinalIgnoreCase))
             {
                 relative = relative.Substring(0, relative.LastIndexOf('.'));
@@ -239,7 +242,31 @@ namespace NineGrid.Content.CardPresentation
             }
 
             sprite = Resources.Load<Sprite>(relative);
-            return sprite != null;
+            if (sprite != null)
+            {
+                return true;
+            }
+
+            // Multiple 或内嵌 Sprite 子资产兜底（与 Editor 行径对齐）。
+            var subAssets = Resources.LoadAll<Sprite>(relative);
+            if (subAssets != null && subAssets.Length > 0)
+            {
+                var texName = System.IO.Path.GetFileName(relative);
+                for (var i = 0; i < subAssets.Length; i++)
+                {
+                    if (subAssets[i] != null
+                        && string.Equals(subAssets[i].name, texName, StringComparison.Ordinal))
+                    {
+                        sprite = subAssets[i];
+                        return true;
+                    }
+                }
+
+                sprite = subAssets[0];
+                return sprite != null;
+            }
+
+            return false;
         }
     }
 }

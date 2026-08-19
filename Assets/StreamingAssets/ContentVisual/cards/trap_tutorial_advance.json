@@ -8,7 +8,9 @@
     "designSlotName": "",
     "description": "左键点击场地上交互范围内的卡牌即可进行攻击",
     "faceIntro": "鼠标hover玩家卡牌自身可以看到攻击范围",
-    "extraGlossaryTerms": [],
+    "extraGlossaryTerms": [
+        "机关"
+    ],
     "attackPattern": "无",
     "rhythmSource": "",
     "rhythmPeriod": 0,

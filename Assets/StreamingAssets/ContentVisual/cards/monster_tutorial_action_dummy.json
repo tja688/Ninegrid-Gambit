@@ -8,7 +8,9 @@
     "designSlotName": "",
     "description": "[[行动计数]]归零后自毁",
     "faceIntro": "教学用",
-    "extraGlossaryTerms": [],
+    "extraGlossaryTerms": [
+        "机关"
+    ],
     "attackPattern": "无",
     "rhythmSource": "行动计数",
     "rhythmPeriod": 5,

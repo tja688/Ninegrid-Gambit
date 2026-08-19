@@ -27,6 +27,7 @@ namespace NineGrid.Presentation.Tests
             Assert.IsTrue(_catalog.TryAddOrUpdate("MHP", _icon, "血量上限", out _));
             Assert.IsTrue(_catalog.TryAddOrUpdate("attack", _icon, "攻击", out _));
             Assert.IsTrue(_catalog.TryAddOrUpdate("ortho_attack", _icon, "正交攻击", out _));
+            Assert.IsTrue(_catalog.TryAddOrUpdate("diag_attack", _icon, "斜向攻击", out _));
             Assert.IsTrue(_catalog.TryAddOrUpdate("omni_attack", _icon, "全向攻击", out _));
             Assert.IsTrue(_catalog.TryAddOrUpdate("action", _icon, "行动计数", out _));
         }
@@ -112,6 +113,48 @@ namespace NineGrid.Presentation.Tests
 
             AssertNames(terms, "全向攻击");
             Assert.AreEqual("omni_attack", terms[0].InlineCode);
+        }
+
+        [Test]
+        public void Monster_DiagonalAttackAlias_DedupesToCanonicalName()
+        {
+            var snapshot = new CardPresentationSnapshot
+            {
+                Kind = CardPresentationKind.Monster,
+                BasicDescription = "[[斜角近战]]",
+                AttackPattern = AttackPattern.DiagonalMelee,
+                HasActiveRhythm = false,
+            };
+
+            var terms = CardInspectGlossaryAssembler.Assemble(
+                CardPresentationKind.Monster,
+                snapshot,
+                extraNames: null,
+                _catalog);
+
+            AssertNames(terms, "斜向攻击");
+            Assert.AreEqual("diag_attack", terms[0].InlineCode);
+        }
+
+        [Test]
+        public void Monster_OrthogonalAliasInDescription_DedupesToCanonicalName()
+        {
+            var snapshot = new CardPresentationSnapshot
+            {
+                Kind = CardPresentationKind.Monster,
+                BasicDescription = "[[普通近战]]",
+                AttackPattern = AttackPattern.OrthogonalMelee,
+                HasActiveRhythm = false,
+            };
+
+            var terms = CardInspectGlossaryAssembler.Assemble(
+                CardPresentationKind.Monster,
+                snapshot,
+                extraNames: null,
+                _catalog);
+
+            AssertNames(terms, "正交攻击");
+            Assert.AreEqual("ortho_attack", terms[0].InlineCode);
         }
 
         [Test]
@@ -206,6 +249,35 @@ namespace NineGrid.Presentation.Tests
             Assert.GreaterOrEqual(terms.Count, 2);
             Assert.AreEqual("滚石", terms[0].DisplayName);
             Assert.AreEqual("行动计数", terms[1].DisplayName);
+        }
+
+        [Test]
+        public void Trap_ExtraGlossaryTerm_AppendsMechanismTerm()
+        {
+            var entry = _catalog.AddBlankEntry();
+            entry.displayNameZh = "机关";
+            entry.explanation = "中立单位，可以被攻击，可以被部分道具卡选作目标，可破坏";
+
+            var snapshot = new CardPresentationSnapshot
+            {
+                Kind = CardPresentationKind.Trap,
+                DefId = "trap.spike",
+                DisplayName = "刺藤",
+                BasicDescription = "对正交相邻造成伤害",
+                ShowActionCount = false,
+                HasActiveRhythm = false,
+            };
+
+            var terms = CardInspectGlossaryAssembler.Assemble(
+                CardPresentationKind.Trap,
+                snapshot,
+                extraNames: new[] { "机关" },
+                _catalog);
+
+            Assert.AreEqual(2, terms.Count);
+            Assert.AreEqual("刺藤", terms[0].DisplayName);
+            Assert.AreEqual("机关", terms[1].DisplayName);
+            Assert.AreEqual("中立单位，可以被攻击，可以被部分道具卡选作目标，可破坏", terms[1].Explanation);
         }
 
         [Test]

@@ -61,7 +61,10 @@ namespace NineGrid.Cards.Vfx
             }
 
             var go = new GameObject("[RelicImpactBadgeManager]");
-            UnityEngine.Object.DontDestroyOnLoad(go);
+            if (Application.isPlaying)
+            {
+                UnityEngine.Object.DontDestroyOnLoad(go);
+            }
             sInstance = go.AddComponent<RelicImpactBadgeManager>();
             return sInstance;
         }

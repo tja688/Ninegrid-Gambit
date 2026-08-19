@@ -8,6 +8,9 @@
     "designSlotName": "",
     "description": "每移动{trap.recovery_totem.heal_on_move.every}次，[adjacent]的怪物和玩家各恢复{trap.recovery_totem.heal_on_move.amount}点[HP]",
     "faceIntro": "医者仁心",
+    "extraGlossaryTerms": [
+        "机关"
+    ],
     "attackPattern": "无",
     "rhythmSource": "",
     "rhythmPeriod": 0,

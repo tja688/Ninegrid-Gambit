@@ -62,6 +62,18 @@
       "displayName": "Diagonal Melee",
       "intro": "Attacks diagonally adjacent targets."
     },
+    "正交攻击": {
+      "displayName": "Orthogonal Attack",
+      "intro": "[Field] Every X player interactions: deals damage equal to this card's Attack if orthogonally adjacent to the player."
+    },
+    "斜向攻击": {
+      "displayName": "Diagonal Attack",
+      "intro": "[Field] Every X player interactions: deals damage equal to this card's Attack if diagonally adjacent to the player."
+    },
+    "全向攻击": {
+      "displayName": "Omni Attack",
+      "intro": "[Field] Every X player interactions: deals damage equal to this card's Attack to the player."
+    },
     "链接近战": {
       "displayName": "Link Melee",
       "intro": "Melee attack shared by linked monsters."
@@ -285,6 +297,10 @@
     "木质套装": {
       "displayName": "Wood Set",
       "intro": "Equipping the Wood Shield, Wood Sword and Wood Armor together activates all three set bonuses (bonus Armor, Attack and Max HP)."
+    },
+    "机关": {
+      "displayName": "Contraption",
+      "intro": "Neutral unit, can be attacked, can be targeted by some item cards, destructible."
     },
     "机关卡": {
       "displayName": "Trap Card",

@@ -8,7 +8,9 @@
     "designSlotName": "",
     "description": "当场地出现空缺时，如果卡组有牌会用顶层卡牌进行补充",
     "faceIntro": "可以根据下一张牌来合理规划自己的战术",
-    "extraGlossaryTerms": [],
+    "extraGlossaryTerms": [
+        "机关"
+    ],
     "attackPattern": "无",
     "rhythmSource": "",
     "rhythmPeriod": 0,

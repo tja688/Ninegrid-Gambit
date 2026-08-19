@@ -15,8 +15,8 @@ namespace NineGrid.Cards.Presentation
         public const string DiagonalAttackTermName = "斜向攻击";
         public const string OmniAttackTermName = "全向攻击";
 
-        private static readonly string[] OrthogonalAliases = { "普通近战", OrthogonalAttackTermName };
-        private static readonly string[] DiagonalAliases = { "斜角近战", DiagonalAttackTermName };
+        private static readonly string[] OrthogonalAliases = { "普通近战", "普通攻击", OrthogonalAttackTermName };
+        private static readonly string[] DiagonalAliases = { "斜角近战", "斜角攻击", DiagonalAttackTermName };
         private static readonly string[] OmniAliases = { "全向近战", OmniAttackTermName };
 
         public static List<CardGlossaryTerms.ResolvedTerm> Assemble(
@@ -334,7 +334,7 @@ namespace NineGrid.Cards.Presentation
             }
         }
 
-        private static string CanonicalAttackRangeName(string lookupName)
+        public static string CanonicalAttackRangeName(string lookupName)
         {
             if (string.IsNullOrWhiteSpace(lookupName))
             {
@@ -344,24 +344,31 @@ namespace NineGrid.Cards.Presentation
             switch (lookupName.Trim())
             {
                 case "普通近战":
+                case "普通攻击":
+                case OrthogonalAttackTermName:
                     return OrthogonalAttackTermName;
                 case "斜角近战":
+                case "斜角攻击":
+                case DiagonalAttackTermName:
                     return DiagonalAttackTermName;
                 case "全向近战":
+                case OmniAttackTermName:
                     return OmniAttackTermName;
                 default:
                     return lookupName.Trim();
             }
         }
 
-        private static string[] AliasesFor(string name)
+        public static string[] AliasesFor(string name)
         {
             switch (name)
             {
                 case "普通近战":
+                case "普通攻击":
                 case OrthogonalAttackTermName:
                     return OrthogonalAliases;
                 case "斜角近战":
+                case "斜角攻击":
                 case DiagonalAttackTermName:
                     return DiagonalAliases;
                 case "全向近战":

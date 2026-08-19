@@ -168,6 +168,7 @@ namespace NineGrid.Presentation.Editor
                 return "{\"status\":\"busy\",\"success\":false,\"message\":\"A NineGrid ReleasePlayerBuild is already queued or in progress.\"}";
             }
 
+            PlayerAudioBuildPreprocessor.EnforceFactoryAudioSettings();
             EditorUserBuildSettings.development = false;
 
             var scenes = EditorBuildSettings.scenes

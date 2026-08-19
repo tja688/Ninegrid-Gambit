@@ -8,6 +8,9 @@
     "designSlotName": "AI拓展·机关4",
     "description": "每{trap.hourglass.tick.every}次互动，全场怪物[attack]+{trap.hourglass.tick.delta}",
     "faceIntro": "沙漏不空，怪物不停变强",
+    "extraGlossaryTerms": [
+        "机关"
+    ],
     "attackPattern": "无",
     "rhythmSource": "",
     "rhythmPeriod": 0,

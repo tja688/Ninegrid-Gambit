@@ -58,6 +58,23 @@ namespace NineGrid.Presentation.Tests
             Assert.IsEmpty(critical, "声音提示声明卫生失败：\n" + string.Join("\n", critical.Take(40)));
         }
 
+        [Test]
+        public void MMSoundManagerSettings_MatchesFactoryPresetContract()
+        {
+            var settings = Resources.Load<MoreMountains.Tools.MMSoundManagerSettingsSO>("MMSoundManagerSettings");
+            Assert.IsNotNull(settings, "缺少正式 Resources/MMSoundManagerSettings");
+            Assert.IsNotNull(settings.Settings, "MMSoundManagerSettings 缺失 Settings 对象");
+
+            Assert.AreEqual(1f, settings.Settings.MasterVolume, 0.001f, "MasterVolume 出厂预设必须为 100% (1.0)");
+            Assert.IsTrue(settings.Settings.MasterOn, "MasterOn 出厂预设必须开启");
+            Assert.AreEqual(0.5f, settings.Settings.MusicVolume, 0.001f, "MusicVolume (BGM) 出厂预设必须为 50% (0.5)");
+            Assert.IsTrue(settings.Settings.MusicOn, "MusicOn 出厂预设必须开启");
+            Assert.AreEqual(0.75f, settings.Settings.SfxVolume, 0.001f, "SfxVolume (音效) 出厂预设必须为 75% (0.75)");
+            Assert.IsTrue(settings.Settings.SfxOn, "SfxOn 出厂预设必须开启");
+            Assert.IsFalse(settings.Settings.AutoLoad, "AutoLoad 必须关闭，防止外部历史配置覆盖包体出厂预设");
+            Assert.IsFalse(settings.Settings.AutoSave, "AutoSave 必须关闭，防止运行期静默污染作者资产");
+        }
+
         private static bool IsCritical(string category)
         {
             switch (category)

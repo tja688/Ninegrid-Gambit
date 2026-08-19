@@ -7,7 +7,11 @@
     "displayName": "捕熊陷阱",
     "designSlotName": "",
     "description": "对下张[adjacent]的怪物/道具造成{trap.bear_trap.fill.amount}点伤害/移除，触发后[death]",
-    "faceIntro": "唯独捕不到熊",    "attackPattern": "无",
+    "faceIntro": "唯独捕不到熊",
+    "extraGlossaryTerms": [
+        "机关"
+    ],
+    "attackPattern": "无",
     "rhythmSource": "",
     "rhythmPeriod": 0,
     "gold": 0,

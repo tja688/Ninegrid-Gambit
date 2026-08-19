@@ -70,10 +70,38 @@ namespace NineGrid.Presentation.Tests
         }
 
         [Test]
+        public void FactoryDefaults_MatchesContract_Bgm50_Sfx75_Master100()
+        {
+            var factory = PlayerAudioSettingsSystem.FactoryDefaults;
+            Assert.AreEqual(1f, factory.MasterVolume, 0.001f);
+            Assert.IsFalse(factory.MasterMuted);
+            Assert.AreEqual(0.5f, factory.BgmVolume, 0.001f);
+            Assert.IsFalse(factory.BgmMuted);
+            Assert.AreEqual(0.75f, factory.SfxVolume, 0.001f);
+            Assert.IsFalse(factory.SfxMuted);
+        }
+
+        [Test]
+        public void AuthorDefaults_FromResources_YieldsBgm50_Sfx75()
+        {
+            var settings = UnityEngine.Resources.Load<MoreMountains.Tools.MMSoundManagerSettingsSO>("MMSoundManagerSettings");
+            Assert.IsNotNull(settings, "Resources/MMSoundManagerSettings must exist.");
+            Assert.IsNotNull(settings.Settings);
+            Assert.AreEqual(1f, settings.Settings.MasterVolume, 0.001f);
+            Assert.IsTrue(settings.Settings.MasterOn);
+            Assert.AreEqual(0.5f, settings.Settings.MusicVolume, 0.001f);
+            Assert.IsTrue(settings.Settings.MusicOn);
+            Assert.AreEqual(0.75f, settings.Settings.SfxVolume, 0.001f);
+            Assert.IsTrue(settings.Settings.SfxOn);
+            Assert.IsFalse(settings.Settings.AutoLoad);
+            Assert.IsFalse(settings.Settings.AutoSave);
+        }
+
+        [Test]
         public void Changed_NotifiesStableSnapshotForUiBinding()
         {
             var system = new PlayerAudioSettingsSystem(
-                new PlayerAudioSettingsSnapshot(1f, false, 1f, false, 1f, false),
+                PlayerAudioSettingsSystem.FactoryDefaults,
                 new FakeStore(),
                 new FakeApplier());
             var observed = new List<PlayerAudioSettingsSnapshot>();

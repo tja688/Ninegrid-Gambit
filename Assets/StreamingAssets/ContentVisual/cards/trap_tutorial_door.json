@@ -8,7 +8,9 @@
     "designSlotName": "",
     "description": "使用道具卡、出售道具卡为快速动作，不触发行动计数[action]",
     "faceIntro": "毕业出口",
-    "extraGlossaryTerms": [],
+    "extraGlossaryTerms": [
+        "机关"
+    ],
     "attackPattern": "无",
     "rhythmSource": "",
     "rhythmPeriod": 0,

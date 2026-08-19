@@ -8,7 +8,9 @@
     "designSlotName": "",
     "description": "道具卡使用不受攻击范围影响，并且可以随时被回收",
     "faceIntro": "可以被拖动到场地中或者指向目标使用",
-    "extraGlossaryTerms": [],
+    "extraGlossaryTerms": [
+        "机关"
+    ],
     "attackPattern": "无",
     "rhythmSource": "",
     "rhythmPeriod": 0,

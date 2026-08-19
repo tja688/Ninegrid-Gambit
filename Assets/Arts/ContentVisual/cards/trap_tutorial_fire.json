@@ -8,7 +8,9 @@
     "designSlotName": "",
     "description": "[action]会根据玩家动作+移动减少计数，归零时触发效果和攻击",
     "faceIntro": "如果条件不满足则触发失败，要观察怪物的攻击范围",
-    "extraGlossaryTerms": [],
+    "extraGlossaryTerms": [
+        "机关"
+    ],
     "attackPattern": "无",
     "rhythmSource": "",
     "rhythmPeriod": 0,

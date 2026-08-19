@@ -8,6 +8,9 @@
     "designSlotName": "",
     "description": "每移动{trap.armor_totem.armor_on_move.every}次，[adjacent]的怪物和玩家各获得{trap.armor_totem.armor_on_move.amount}点[armor]",
     "faceIntro": "层层加固",
+    "extraGlossaryTerms": [
+        "机关"
+    ],
     "attackPattern": "无",
     "rhythmSource": "",
     "rhythmPeriod": 0,

@@ -8,6 +8,9 @@
     "designSlotName": "AI拓展·机关5",
     "description": "与本卡交战后，随机怪物受到{trap.offering_altar.battle.amount}点伤害",
     "faceIntro": "供品由祭坛自己挑",
+    "extraGlossaryTerms": [
+        "机关"
+    ],
     "attackPattern": "无",
     "rhythmSource": "",
     "rhythmPeriod": 0,

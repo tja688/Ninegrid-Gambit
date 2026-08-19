@@ -8,7 +8,9 @@
     "designSlotName": "",
     "description": "玩家的拾取、攻击、移动动作为标准动作，触发行动计数[action]",
     "faceIntro": "行动计数是许多怪物攻击与能力触发的倒计时",
-    "extraGlossaryTerms": [],
+    "extraGlossaryTerms": [
+        "机关"
+    ],
     "attackPattern": "无",
     "rhythmSource": "",
     "rhythmPeriod": 0,

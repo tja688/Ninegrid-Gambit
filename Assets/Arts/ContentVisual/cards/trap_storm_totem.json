@@ -8,6 +8,9 @@
     "designSlotName": "AI拓展·机关3",
     "description": "每{trap.storm_totem.pulse.every}次互动，电击[adjacent]所有卡牌{trap.storm_totem.pulse.amount}点",
     "faceIntro": "靠近它的都得挨一下",
+    "extraGlossaryTerms": [
+        "机关"
+    ],
     "attackPattern": "无",
     "rhythmSource": "",
     "rhythmPeriod": 0,

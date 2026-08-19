@@ -8,7 +8,9 @@
     "designSlotName": "",
     "description": "鼠标指向卡牌时，会显示其有效交互范围，超出范围无法交互",
     "faceIntro": "指向敌人也可以显示范围",
-    "extraGlossaryTerms": [],
+    "extraGlossaryTerms": [
+        "机关"
+    ],
     "attackPattern": "无",
     "rhythmSource": "",
     "rhythmPeriod": 0,

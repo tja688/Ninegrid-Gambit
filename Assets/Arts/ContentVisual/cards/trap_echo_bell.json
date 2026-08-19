@@ -8,6 +8,9 @@
     "designSlotName": "AI拓展·机关1",
     "description": "与本卡交战后，盘面旋转{trap.echo_bell.battle.count}格",
     "faceIntro": "敲一下，世界就转一圈",
+    "extraGlossaryTerms": [
+        "机关"
+    ],
     "attackPattern": "无",
     "rhythmSource": "",
     "rhythmPeriod": 0,

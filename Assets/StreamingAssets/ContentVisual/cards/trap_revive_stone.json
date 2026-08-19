@@ -7,7 +7,11 @@
     "displayName": "复活石",
     "designSlotName": "",
     "description": "[action]{trap.revive_stone.interact.every}次后[death]，将{trap.revive_stone.remove.count}张巨剑骷髅打出到同格",
-    "faceIntro": "花费75阳光铲除它",    "attackPattern": "无",
+    "faceIntro": "花费75阳光铲除它",
+    "extraGlossaryTerms": [
+        "机关"
+    ],
+    "attackPattern": "无",
     "rhythmSource": "",
     "rhythmPeriod": 0,
     "gold": 5,

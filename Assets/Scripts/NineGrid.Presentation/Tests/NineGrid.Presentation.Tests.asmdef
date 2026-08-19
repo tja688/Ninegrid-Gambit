@@ -10,6 +10,7 @@
         "QFramework",
         "UniTask",
         "Unity.TextMeshPro",
+        "MoreMountains.Tools",
         "UnityEngine.TestRunner",
         "UnityEditor.TestRunner"
     ],

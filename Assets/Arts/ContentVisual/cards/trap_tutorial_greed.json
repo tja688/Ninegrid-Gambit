@@ -8,7 +8,9 @@
     "designSlotName": "",
     "description": "[move]是弱化版的行动计数，只有移动事件才会减少其数值",
     "faceIntro": "富贵险中求",
-    "extraGlossaryTerms": [],
+    "extraGlossaryTerms": [
+        "机关"
+    ],
     "attackPattern": "无",
     "rhythmSource": "",
     "rhythmPeriod": 0,

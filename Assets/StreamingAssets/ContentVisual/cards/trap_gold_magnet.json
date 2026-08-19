@@ -8,6 +8,9 @@
     "designSlotName": "AI拓展·机关2",
     "description": "每{trap.gold_magnet.drain.every}次互动吸走{trap.gold_magnet.drain.amount}[money]，移除时返还{trap.gold_magnet.refund.delta}[money]",
     "faceIntro": "吸走的钱总会吐出来的",
+    "extraGlossaryTerms": [
+        "机关"
+    ],
     "attackPattern": "无",
     "rhythmSource": "",
     "rhythmPeriod": 0,

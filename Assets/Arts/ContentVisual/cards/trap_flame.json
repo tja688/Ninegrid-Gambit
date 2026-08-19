@@ -7,7 +7,11 @@
     "displayName": "烈焰",
     "designSlotName": "",
     "description": "每移动{trap.flame.move.every}次，对[adjacent]的玩家造成{trap.flame.move.amount}点伤害，{trap.flame.remove.every}次后[death]",
-    "faceIntro": "除草一流",    "attackPattern": "无",
+    "faceIntro": "除草一流",
+    "extraGlossaryTerms": [
+        "机关"
+    ],
+    "attackPattern": "无",
     "rhythmSource": "",
     "rhythmPeriod": 0,
     "gold": 0,

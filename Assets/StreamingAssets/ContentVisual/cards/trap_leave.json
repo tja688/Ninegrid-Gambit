@@ -8,7 +8,9 @@
     "designSlotName": "",
     "description": "魔免；只可被交战击破，[death]后离开房间",
     "faceIntro": "放我出去！！！！！",
-    "extraGlossaryTerms": [],
+    "extraGlossaryTerms": [
+        "机关"
+    ],
     "attackPattern": "无",
     "rhythmSource": "",
     "rhythmPeriod": 0,
@@ -21,7 +23,7 @@
         "recovery": 0
     },
     "sprites": {
-        "mainIcon": "Assets/Resources/ContentArt/Png/Other/门.aseprite",
+        "mainIcon": "Assets/Resources/ContentArt/Png/Other/门.png",
         "faceBackground": "",
         "cardFrame": "",
         "banner": "",

@@ -8,7 +8,9 @@
     "designSlotName": "",
     "description": "",
     "faceIntro": "标准的M",
-    "extraGlossaryTerms": [],
+    "extraGlossaryTerms": [
+        "机关"
+    ],
     "attackPattern": "无",
     "rhythmSource": "",
     "rhythmPeriod": 0,

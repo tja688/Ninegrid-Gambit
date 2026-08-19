@@ -8,7 +8,9 @@
     "designSlotName": "",
     "description": "右键单击卡牌可以检查其详细情况",
     "faceIntro": "这里是卡牌介绍",
-    "extraGlossaryTerms": [],
+    "extraGlossaryTerms": [
+        "机关"
+    ],
     "attackPattern": "无",
     "rhythmSource": "",
     "rhythmPeriod": 0,

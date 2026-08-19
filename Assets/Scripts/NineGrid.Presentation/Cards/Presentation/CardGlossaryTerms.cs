@@ -200,25 +200,52 @@ namespace NineGrid.Cards.Presentation
             CardFaceDescriptionIconCatalogSO catalog,
             out ResolvedTerm resolved)
         {
-            if (catalog != null && catalog.TryGetByDisplayName(name, out var entry) && entry != null)
+            if (catalog != null)
             {
-                // 行标题与解释按当前语言取 glossary 表（键 = zh 名），缺翻译回中文（ADR-0046）。
-                var zhName = string.IsNullOrWhiteSpace(entry.displayNameZh)
-                    ? name
-                    : entry.displayNameZh.Trim();
-                var title = NineGrid.Core.Localization.LocalizationCatalog
-                    .ResolveGlossaryDisplayName(zhName);
-                var explanation = NineGrid.Core.Localization.LocalizationCatalog
-                    .ResolveGlossaryIntro(zhName, entry.explanation ?? string.Empty);
-                resolved = new ResolvedTerm(
-                    title,
-                    explanation,
-                    matched: true,
-                    hasColor: entry.HasColorOverride,
-                    color: entry.color,
-                    lookupName: zhName,
-                    inlineCode: entry.HasInlineIcon ? entry.code.Trim() : string.Empty);
-                return;
+                if (catalog.TryGetByDisplayName(name, out var entry) && entry != null)
+                {
+                    // 行标题与解释按当前语言取 glossary 表（键 = zh 名），缺翻译回中文（ADR-0046）。
+                    var zhName = string.IsNullOrWhiteSpace(entry.displayNameZh)
+                        ? name
+                        : entry.displayNameZh.Trim();
+                    var title = NineGrid.Core.Localization.LocalizationCatalog
+                        .ResolveGlossaryDisplayName(zhName);
+                    var explanation = NineGrid.Core.Localization.LocalizationCatalog
+                        .ResolveGlossaryIntro(zhName, entry.explanation ?? string.Empty);
+                    resolved = new ResolvedTerm(
+                        title,
+                        explanation,
+                        matched: true,
+                        hasColor: entry.HasColorOverride,
+                        color: entry.color,
+                        lookupName: zhName,
+                        inlineCode: entry.HasInlineIcon ? entry.code.Trim() : string.Empty);
+                    return;
+                }
+
+                var canonical = CardInspectGlossaryAssembler.CanonicalAttackRangeName(name);
+                if (!string.IsNullOrEmpty(canonical)
+                    && !string.Equals(canonical, name, StringComparison.Ordinal)
+                    && catalog.TryGetByDisplayName(canonical, out var canonicalEntry)
+                    && canonicalEntry != null)
+                {
+                    var zhName = string.IsNullOrWhiteSpace(canonicalEntry.displayNameZh)
+                        ? canonical
+                        : canonicalEntry.displayNameZh.Trim();
+                    var title = NineGrid.Core.Localization.LocalizationCatalog
+                        .ResolveGlossaryDisplayName(zhName);
+                    var explanation = NineGrid.Core.Localization.LocalizationCatalog
+                        .ResolveGlossaryIntro(zhName, canonicalEntry.explanation ?? string.Empty);
+                    resolved = new ResolvedTerm(
+                        title,
+                        explanation,
+                        matched: true,
+                        hasColor: canonicalEntry.HasColorOverride,
+                        color: canonicalEntry.color,
+                        lookupName: zhName,
+                        inlineCode: canonicalEntry.HasInlineIcon ? canonicalEntry.code.Trim() : string.Empty);
+                    return;
+                }
             }
 
             resolved = new ResolvedTerm(

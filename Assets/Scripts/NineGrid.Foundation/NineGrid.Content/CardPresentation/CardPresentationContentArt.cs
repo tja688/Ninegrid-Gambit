@@ -36,6 +36,9 @@ namespace NineGrid.Content.CardPresentation
             if (relative.EndsWith(".png", StringComparison.OrdinalIgnoreCase)
                 || relative.EndsWith(".jpg", StringComparison.OrdinalIgnoreCase)
                 || relative.EndsWith(".jpeg", StringComparison.OrdinalIgnoreCase)
+                || relative.EndsWith(".aseprite", StringComparison.OrdinalIgnoreCase)
+                || relative.EndsWith(".ase", StringComparison.OrdinalIgnoreCase)
+                || relative.EndsWith(".tga", StringComparison.OrdinalIgnoreCase)
                 || relative.EndsWith(".asset", StringComparison.OrdinalIgnoreCase))
             {
                 var dot = relative.LastIndexOf('.');

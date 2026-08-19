@@ -8,6 +8,9 @@
     "designSlotName": "",
     "description": "每移动{trap.healing_spring.heal_on_move.every}次，若玩家在[adjacent]则恢复{trap.healing_spring.heal_on_move.amount}点[HP]",
     "faceIntro": "遮阳伞有害",
+    "extraGlossaryTerms": [
+        "机关"
+    ],
     "attackPattern": "无",
     "rhythmSource": "",
     "rhythmPeriod": 0,
