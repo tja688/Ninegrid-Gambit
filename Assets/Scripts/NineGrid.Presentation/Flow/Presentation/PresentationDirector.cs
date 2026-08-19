@@ -118,27 +118,37 @@ namespace NineGrid.Flow.Presentation
         /// <summary>
         /// 外部薄适配挂主线租约：未持有时一律入队 Hold step（主线已有其它 Step 时接在后面），
         /// 保证 Apply/Present step 结束后表演窗口仍保持 <see cref="IsMainlineBusy"/>。
-        /// 已持有时拒绝重入（嵌套由 <see cref="PresentationMainlineHold"/> 在已有 Hold 上跳过 Begin）。
+        /// 已持有时嵌套计数 +1（不重复入队 Hold step）：同一把租约可被多个薄适配共用，
+        /// 最后一次 <see cref="EndExternalHold"/> 才真正释放。
         /// </summary>
         public bool TryBeginExternalHold(string reason = null)
         {
             if (!mExternalHoldReleased)
             {
-                return false;
+                mExternalHoldNestDepth++;
+                PublishBusy();
+                return true;
             }
 
             mExternalHoldReleased = false;
+            mExternalHoldNestDepth = 1;
             mMainline.Enqueue(new ExternalMainlineHoldStep(() => mExternalHoldReleased));
             PublishBusy();
             return true;
         }
 
-        /// <summary>释放 <see cref="TryBeginExternalHold"/> 租约。</summary>
+        /// <summary>释放一层 <see cref="TryBeginExternalHold"/> 租约；嵌套计数归零才真正释放。</summary>
         public void EndExternalHold(string reason = null)
         {
             if (mExternalHoldNestDepth > 0)
             {
                 mExternalHoldNestDepth--;
+                if (mExternalHoldNestDepth == 0)
+                {
+                    mExternalHoldReleased = true;
+                }
+
+                PublishBusy();
                 return;
             }
 

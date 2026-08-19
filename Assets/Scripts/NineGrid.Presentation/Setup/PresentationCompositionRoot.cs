@@ -91,6 +91,9 @@ namespace NineGrid.Presentation.Setup
             var useItemBoardPresentChannel = new QueuedBoardPresentChannel(
                 (result, token) => session.DrainPostKillBoardAsync(result, token),
                 session.EnsurePresentationToken);
+            var pickupBoardPresentChannel = new QueuedBoardPresentChannel(
+                (result, token) => session.DrainPostKillBoardAsync(result, token),
+                session.EnsurePresentationToken);
             var useItemPresentChannel = new UseItemPresentChannel(
                 session.PlayDirectorUseItemPresentAsync,
                 session.EnsurePresentationToken);
@@ -101,7 +104,8 @@ namespace NineGrid.Presentation.Setup
                 attackCounterPresentChannel,
                 attackBoardPresentChannel,
                 useItemPresentChannel,
-                useItemBoardPresentChannel);
+                useItemBoardPresentChannel,
+                pickupBoardPresentChannel);
 
             var exploreFactory = new ExploreIntentScriptFactory(
                 architecture,
@@ -143,7 +147,14 @@ namespace NineGrid.Presentation.Setup
                 attackFactory,
                 useItemFactory,
                 new NonCombatUseItemIntentScriptFactory(architecture),
-                new PickupIntentScriptFactory(architecture),
+                new PickupIntentScriptFactory(
+                    architecture,
+                    dispatcher,
+                    pickupBoardPresentChannel,
+                    session.OnPickupBoardBatchProjected,
+                    onItemPickedUp: slot => NineGrid.Flow.Tutorial.TutorialCoach.NotifyItemPickedUp(slot),
+                    counterPresentChannel: attackCounterPresentChannel,
+                    onCounterBatchProjected: session.OnAttackCounterBatchProjected),
                 new RecycleItemIntentScriptFactory(architecture),
                 new BoardWalkIntentScriptFactory(architecture));
 

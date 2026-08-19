@@ -197,11 +197,6 @@ namespace NineGrid.Flow
                 cancellationToken);
         }
 
-        public static void PresentPickupPostApplyEffects(int startIndex, int pickedUid)
-        {
-            PresentationOutputProjector.PresentPickupPostApplyEffects(startIndex, pickedUid);
-        }
-
         private void SubscribeFieldSignal()
         {
             if (_fieldSignalSubscribed || fieldManager == null)

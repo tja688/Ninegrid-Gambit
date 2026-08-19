@@ -33,7 +33,8 @@ namespace NineGrid.Presentation.Systems
             CombatCounterPresentChannel attackCounter,
             QueuedBoardPresentChannel attackBoard,
             UseItemPresentChannel useItem,
-            QueuedBoardPresentChannel useItemBoard);
+            QueuedBoardPresentChannel useItemBoard,
+            QueuedBoardPresentChannel pickupBoard);
 
         void ClearPresentChannels();
 
@@ -106,6 +107,11 @@ namespace NineGrid.Presentation.Systems
             PostKillBoardPresentationResult result);
 
         void OnUseItemBoardBatchProjected(
+            int startIndex,
+            int boardSlot,
+            PostKillBoardPresentationResult result);
+
+        void OnPickupBoardBatchProjected(
             int startIndex,
             int boardSlot,
             PostKillBoardPresentationResult result);

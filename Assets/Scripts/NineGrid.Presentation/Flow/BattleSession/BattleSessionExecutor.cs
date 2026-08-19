@@ -40,6 +40,7 @@ namespace NineGrid.Flow
         private QueuedBoardPresentChannel _attackBoardPresentChannel;
         private UseItemPresentChannel _useItemPresentChannel;
         private QueuedBoardPresentChannel _useItemBoardPresentChannel;
+        private QueuedBoardPresentChannel _pickupBoardPresentChannel;
 
         private Func<bool> _ensurePresentationRuntime;
         private Action<IntentClearReason> _shutdownPresentationRuntime;
@@ -109,10 +110,11 @@ namespace NineGrid.Flow
         public CombatCounterPresentChannel AttackCounterPresentChannel => _attackCounterPresentChannel;
 
         public QueuedBoardPresentChannel AttackBoardPresentChannel => _attackBoardPresentChannel;
-
         public UseItemPresentChannel UseItemPresentChannel => _useItemPresentChannel;
 
         public QueuedBoardPresentChannel UseItemBoardPresentChannel => _useItemBoardPresentChannel;
+
+        public QueuedBoardPresentChannel PickupBoardPresentChannel => _pickupBoardPresentChannel;
 
         public void Bind(IBattleSessionView view)
         {
@@ -155,14 +157,14 @@ namespace NineGrid.Flow
             _ensurePresentationRuntime = null;
             _shutdownPresentationRuntime = null;
         }
-
         public void BindPresentChannels(
             QueuedBoardPresentChannel explore,
             CombatAttackPresentChannel attackHit,
             CombatCounterPresentChannel attackCounter,
             QueuedBoardPresentChannel attackBoard,
             UseItemPresentChannel useItem,
-            QueuedBoardPresentChannel useItemBoard)
+            QueuedBoardPresentChannel useItemBoard,
+            QueuedBoardPresentChannel pickupBoard)
         {
             _explorePresentChannel = explore;
             _attackHitPresentChannel = attackHit;
@@ -170,6 +172,7 @@ namespace NineGrid.Flow
             _attackBoardPresentChannel = attackBoard;
             _useItemPresentChannel = useItem;
             _useItemBoardPresentChannel = useItemBoard;
+            _pickupBoardPresentChannel = pickupBoard;
         }
 
         public void ClearPresentChannels()
@@ -180,6 +183,7 @@ namespace NineGrid.Flow
             _attackBoardPresentChannel = null;
             _useItemPresentChannel = null;
             _useItemBoardPresentChannel = null;
+            _pickupBoardPresentChannel = null;
             _pendingUseItemPresent = default;
             BoardPlayer.ClearShuffleSink();
         }
@@ -782,6 +786,14 @@ namespace NineGrid.Flow
         {
             Coordinator.OnAttackBoardBatchProjected(startIndex, boardSlot, result);
         }
+        public void OnPickupBoardBatchProjected(
+            int startIndex,
+            int boardSlot,
+            PostKillBoardPresentationResult result)
+        {
+            Coordinator.OnPickupBoardBatchProjected(startIndex, boardSlot, result);
+        }
+
 
         public void OnAttackCounterBatchProjected(
             int startIndex,

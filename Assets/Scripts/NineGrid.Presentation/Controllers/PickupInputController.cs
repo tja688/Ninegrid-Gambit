@@ -33,8 +33,8 @@ namespace NineGrid.Presentation.Controllers
 
         /// <summary>
         /// 场地格拾取入口（Hook 与 EditMode 直驱共用）。
-        /// idle：IntentIntake Allow → ExternalHold → Core Apply（不得先改 Core 再抢锁）；
-        /// busy：Reject，不缓冲。
+        /// idle：IntentIntake 交导演锁步剧本（拾卡分拍 + 互动链按批表演，ADR-0001/0012）；
+        /// busy：Reject（strict-drop，不缓冲）。
         /// </summary>
         public PickupItemPresentationResult HandlePickupRequested(int groundSlot)
         {
@@ -51,29 +51,13 @@ namespace NineGrid.Presentation.Controllers
                 return default;
             }
 
-            // Allow 之后、Apply 之前取租约：失败则 Core 未改。
-            if (!PresentationInputGates.TryBeginExternalHold("Pickup"))
+            // 导演已接纳：Core Apply 与入手动画由剧本 / flush hook 承接，本路径不再持锁直写。
+            return new PickupItemPresentationResult
             {
-                Debug.LogWarning(
-                    "[PickupInputController] Pickup ExternalHold 失败，中止 Apply slot=" + groundSlot);
-                return new PickupItemPresentationResult
-                {
-                    Accepted = false,
-                    Reason = "lockFail",
-                };
-            }
-
-            var summary = this.SendCommand(new ApplyPickupItemCommand(groundSlot));
-            if (!summary.Accepted)
-            {
-                PresentationInputGates.EndExternalHold("Pickup-apply-reject");
-            }
-            else
-            {
-                NineGrid.Flow.Tutorial.TutorialCoach.NotifyItemPickedUp(groundSlot);
-            }
-
-            return summary;
+                Accepted = true,
+                Reason = "director",
+                RoutedToDirector = true,
+            };
         }
 
         private void InstallSubmitHandler()

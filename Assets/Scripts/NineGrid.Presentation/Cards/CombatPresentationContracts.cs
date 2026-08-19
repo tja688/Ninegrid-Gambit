@@ -166,6 +166,12 @@ namespace NineGrid.Cards
         /// </summary>
         public int EventLogStartIndex;
 
+
+        /// <summary>
+        /// 本拾取已交 PresentationDirector 锁步剧本（拾卡分拍 + 互动链按批表演）；
+        /// 手牌侧不再自行 Apply / 冲刷切片，只等导演 flush 后做入手动画。
+        /// </summary>
+        public bool RoutedToDirector;
         public readonly bool HasOrderedSteps => Steps != null && Steps.Length > 0;
     }
 

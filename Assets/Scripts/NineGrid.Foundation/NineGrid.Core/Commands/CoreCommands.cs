@@ -146,6 +146,24 @@ namespace NineGrid.Core.Commands
         }
     }
 
+    /// <summary>
+    /// 表现可信拾取分拍：只拾卡（计数/补牌/旋转/敌方行动由导演剧本逐批推进）。
+    /// </summary>
+    public sealed class ApplyPickupCardCommand : AbstractCommand<CoreCommandResult>
+    {
+        private readonly SlotId mTargetSlot;
+
+        public ApplyPickupCardCommand(SlotId targetSlot)
+        {
+            mTargetSlot = targetSlot;
+        }
+
+        protected override CoreCommandResult OnExecute()
+        {
+            return this.GetSystem<IPhaseSystem>().ApplyPickupCard(mTargetSlot);
+        }
+    }
+
     public sealed class ClickEmptyCommand : AbstractCommand<CoreCommandResult>
     {
         private readonly SlotId mTargetSlot;

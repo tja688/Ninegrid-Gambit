@@ -616,8 +616,15 @@ namespace NineGrid.Cards
                 return false;
             }
 
-            // IntentIntake→Hold→Apply 在 Controller；busy 时 Reason=buffered（勿先持锁）。
+            // IntentIntake→Director 在 Controller；idle 时导演接纳（锁步剧本），
+            // 入手动画经 PickupIntentFlushHook 承接；busy 时 strict-drop（Reason=buffered 遗留分支保留）。
             var pickup = PickupInputHook.TryApplyPickup(groundSlot);
+            if (pickup.RoutedToDirector)
+            {
+                FlowFieldTraceSink.PickupGate?.Invoke(card.Uid, "ok", true, null);
+                return true;
+            }
+
             if (string.Equals(pickup.Reason, "buffered", StringComparison.Ordinal))
             {
                 FlowFieldTraceSink.PickupGate?.Invoke(card.Uid, "Buffered", true, null);
@@ -642,12 +649,13 @@ namespace NineGrid.Cards
                 return false;
             }
 
-            // Controller 已在 Apply 前取得 ExternalHold；此处不得无租约继续，也不得再抢锁。
-            return BeginPresentAcceptedPickup(card, pickup, field);
+            return false;
         }
 
         /// <summary>
-        /// Director flush Pickup 后：Core 已在主线 Apply；取表现租约后接手牌/清场表演。
+        /// Director flush Pickup 后：Core 已在主线锁步 Apply（拾卡分拍批次已由 PresentStep
+        /// 消费盘面 delta 与节拍，含效果打击编排）；此处只承接入手动画（经主线租约排在
+        /// Present 之后、互动链之前）。RemovedWithoutHand（拾取即消耗）由盘面 drain 播移除。
         /// </summary>
         private void OnPickupIntentFlushed(int groundSlot, PickupItemPresentationResult pickup)
         {
@@ -656,15 +664,19 @@ namespace NineGrid.Cards
                 return;
             }
 
+            if (pickup.RemovedWithoutHand)
+            {
+                FlowFieldTraceSink.PickupSuccess?.Invoke(pickup.CardUid, -1);
+                return;
+            }
+
             if (!PresentationInputGates.TryBeginExternalHold("PickupFlush"))
             {
                 Debug.LogWarning(
-                    "[CardHandManager] PickupFlush ExternalHold 失败，跳过表现 slot="
+                    "[CardHandManager] PickupFlush ExternalHold 失败，跳过入手动画 slot="
                     + groundSlot
                     + " uid="
                     + pickup.CardUid);
-                // 表现跳过也必须消费本次拾取切片的节拍（金币/血甲/飘字不丢失）。
-                PresentPickupSliceFallback(pickup.EventLogStartIndex);
                 return;
             }
 
@@ -692,133 +704,33 @@ namespace NineGrid.Cards
                 }
             }
 
-            BeginPresentAcceptedPickup(card, pickup, field);
-        }
-
-        /// <summary>
-        /// 已在有效 ExternalHold 下承接 Pickup 表现。失败时由调用方或本方法释放租约。
-        /// </summary>
-        private bool BeginPresentAcceptedPickup(
-            ManagedCard card,
-            PickupItemPresentationResult pickup,
-            GroundFieldView field)
-        {
-            if (pickup.RemovedWithoutHand)
-            {
-                if (field != null && pickup.CardUid > 0)
-                {
-                    field.RequestRemoveFromField(
-                        pickup.CardUid,
-                        animate: true,
-                        skipBusyGuard: true,
-                        startExplore: false);
-                }
-
-                RunPickupDrainAsync(
-                    new PostKillBoardPresentationResult
-                    {
-                        Accepted = true,
-                        Steps = pickup.Steps,
-                        Moves = pickup.Moves,
-                        Deals = pickup.Deals,
-                        NodeClearedOrRewardPhase = pickup.NodeClearedOrRewardPhase,
-                    },
-                    pickup.EventLogStartIndex).Forget();
-                FlowFieldTraceSink.PickupSuccess?.Invoke(pickup.CardUid, -1);
-                return true;
-            }
-
-            if (!pickup.AcquiredToHand)
-            {
-                Debug.LogWarning($"[CardHandManager] Pickup 已接受但未入手 uid={pickup.CardUid}");
-                PresentPickupSliceFallback(pickup.EventLogStartIndex);
-                PresentationInputGates.EndExternalHold("Pickup-no-hand");
-                FlowFieldTraceSink.PickupGate?.Invoke(pickup.CardUid, "NoAcquire", false, null);
-                return false;
-            }
-
             if (card == null || field == null)
             {
-                PresentPickupSliceFallback(pickup.EventLogStartIndex);
                 PresentationInputGates.EndExternalHold("Pickup-missing-view");
                 FlowFieldTraceSink.PickupGate?.Invoke(pickup.CardUid, "MissingView", false, null);
-                return false;
+                return;
             }
 
             if (!field.TryTakeCardFromField(card.Uid, out var taken, startExplore: false, skipBusyGuard: true)
                 || taken != card)
             {
-                PresentPickupSliceFallback(pickup.EventLogStartIndex);
                 PresentationInputGates.EndExternalHold("Pickup-take-failed");
                 FlowFieldTraceSink.PickupGate?.Invoke(card.Uid, "TakeFail", false, null);
-                return false;
+                return;
             }
 
             var driver = card.View?.GetComponent<CardVisualDriver>();
             driver?.SetTarget(CardVisualTarget.Base);
 
-            RunPickupFromGroundAsync(card, pickup).Forget();
+            RunPickupFromGroundAsync(card).Forget();
             FlowFieldTraceSink.PickupGate?.Invoke(card.Uid, "ok", true, null);
-            return true;
         }
-
-        private async UniTaskVoid RunPickupDrainAsync(PostKillBoardPresentationResult postKill, int eventLogStartIndex)
-        {
-            try
-            {
-                // ADR-0050 补记「先开批后 Drain」：打击计划必须在盘面 Drain 之前构建，
-                // 滚石等纯移除打击才能在受击卡退场呈现前被消费（否则静默降级为直接破坏）。
-                await PresentPickupSliceWithStrikesAsync(
-                    eventLogStartIndex,
-                    _ => BattleSessionSystem.EnsureRegistered().DrainPostKillBoardAsync(postKill));
-            }
-            catch (OperationCanceledException)
-            {
-                // 切片已由编排收批（FlushBeats 兜底放行），节拍不丢失；不得旁路重放同一切片。
-            }
-            finally
-            {
-                PresentationInputGates.EndExternalHold("Pickup-drain");
-            }
-        }
-
         /// <summary>
-        /// 拾取切片节拍统一收口（ADR-0050）：先开批（打击计划构建/暂扣）→ 盘面 Drain（含移除打击）→
-        /// 触发脉冲 → 剩余打击 → 其余 Impact/Settled。
+        /// 入手动画：取卡后飞入手牌；切片节拍（金币/血甲/飘字/效果打击）已由导演
+        /// 拾卡批 PresentStep 消费，本路径不再冲刷，只释放主线租约。
         /// </summary>
-        private static async UniTask PresentPickupSliceWithStrikesAsync(
-            int startIndex,
-            Func<System.Threading.CancellationToken, UniTask> presentBoardDrainAsync)
+        private async UniTaskVoid RunPickupFromGroundAsync(ManagedCard card)
         {
-            await BattleBeatFlush.PresentEventLogSliceWithStrikesAsync(
-                NineGridArchitecture.Interface ?? NineGridArchitecture.Current,
-                startIndex,
-                presentBoardDrainAsync);
-        }
-
-        /// <summary>
-        /// 拾取失败 / 无 Drain / Drain 取消路径兜底：按旧旁路立即冲刷，节拍（金币/血甲/飘字）不丢失。
-        /// 只允许在切片尚未消费的路径调用（重复调用会重放同一切片指令）。
-        /// </summary>
-        private static void PresentPickupSliceFallback(int startIndex)
-        {
-            try
-            {
-                BattleBeatFlush.PresentEventLogSlice(
-                    NineGridArchitecture.Interface ?? NineGridArchitecture.Current,
-                    startIndex);
-            }
-            catch (Exception ex)
-            {
-                Debug.LogWarning("[CardHandManager] Pickup 切片兜底冲刷失败: " + ex.Message);
-            }
-        }
-
-        private async UniTaskVoid RunPickupFromGroundAsync(
-            ManagedCard card,
-            PickupItemPresentationResult pickup)
-        {
-            var sliceConsumed = false;
             try
             {
                 var success = await PullFromGroundAsync(card);
@@ -845,28 +757,10 @@ namespace NineGrid.Cards
                         cm.Release(card, "Hand.PickupFail");
                     }
 
-                    PresentPickupSliceFallback(pickup.EventLogStartIndex);
-                    sliceConsumed = true;
                     return;
                 }
 
                 FlowFieldTraceSink.PickupSuccess?.Invoke(card.Uid, ResolveHandSlotForTrace(card));
-                var pickupDelta = new PostKillBoardPresentationResult
-                {
-                    Accepted = true,
-                    Steps = pickup.Steps,
-                    Moves = pickup.Moves,
-                    Deals = pickup.Deals,
-                    RemovedUids = pickup.RemovedUids,
-                    NodeClearedOrRewardPhase = pickup.NodeClearedOrRewardPhase,
-                };
-
-                // ADR-0050 补记「先开批后 Drain」：打击计划先于盘面 Drain 构建，
-                // Drain 中的移除呈现才找得到打击组（滚石纯移除打击不再静默降级）。
-                sliceConsumed = true;
-                await PresentPickupSliceWithStrikesAsync(
-                    pickup.EventLogStartIndex,
-                    _ => BattleSessionSystem.EnsureRegistered().DrainPostKillBoardAsync(pickupDelta));
 
                 // #10 / V3：占格权威在 Core；冲突只记诊断，禁止 force-sync heal。
                 var field = GroundFieldGeometryHook.FieldOrNull();
@@ -880,13 +774,6 @@ namespace NineGrid.Cards
                 if (card != null && ContainsUid(card.Uid))
                 {
                     EnsureHandLayout(card);
-                }
-            }
-            catch (OperationCanceledException)
-            {
-                if (!sliceConsumed)
-                {
-                    PresentPickupSliceFallback(pickup.EventLogStartIndex);
                 }
             }
             finally

@@ -137,12 +137,9 @@ namespace NineGrid.Presentation.Systems
                 return IntentDisposition.Reject;
             }
 
-            // Pickup：idle 时 Allow，由调用方 ExternalHold→Apply。
-            if (string.Equals(intent.Kind, InputIntentKinds.Pickup, StringComparison.Ordinal))
-            {
-                return IntentDisposition.Allow;
-            }
-
+            // Pickup：idle 时交导演锁步剧本（拾卡分拍 + 互动链按批表演，ADR-0001/0012）。
+            // 旧「直接 Allow 由 Controller 持锁 Apply」会让 Core 在命令内同步跑完整个
+            // 互动链（含敌方齐射），伤害无表演批次 = 瞬间出伤。主线忙时仍 strict-drop。
             var runtime = this.GetSystem<IPresentationRuntimeSystem>();
             if (runtime == null || !runtime.IsStarted)
             {

@@ -253,7 +253,7 @@ flowchart TD
 | `Presentation/AvatarWalkRunner.cs` | Avatar 连跳执行器 + IAvatarWalkSystem | 04 |
 | `Presentation/AttackIntentRejectedEvent.cs` | 攻击被拒广播 struct | 04 |
 | `Presentation/ExploreIntentRejectedEvent.cs` | 探索被拒广播 struct | 04 |
-| `Presentation/PickupItemRejectedEvent.cs` | 拾取被拒广播 struct | 04 |
+| ~~`Presentation/PickupItemRejectedEvent.cs`~~（#234 已删：拾取改导演锁步） | — | 04 |
 | `Presentation/UseItemIntentRejectedEvent.cs` | 用牌被拒广播 struct | 04 |
 | `Presentation/BattleBeatScheduler.cs` | 结算指令唯一分发点（pending/报点/隔离区） | 05 |
 | `Presentation/BattleBeatHook.cs` | 报点静态桥（编排 → Scheduler） | 05 |

@@ -18,7 +18,7 @@
 | `AttackInputController` | `AttackInputController.cs` | `AttackInputHook.TrySubmitAttack` | 怪物格点击 → 先查目标是否背面卡（是则 `SubmitRevealFaceIntentCommand` 主动翻开，ADR-0016），否则 `SubmitAttackIntentCommand` |
 | `ExploreInputController` | `ExploreInputController.cs` | `ExploreInputHook.TrySubmitExplore` | 空槽点击 → `SubmitExploreIntentCommand` |
 | `BoardWalkInputController` | `BoardWalkInputController.cs` | `BoardWalkInputHook.TrySubmitBoardWalk` + `IsEnabled`（读 `IAvatarWalkSystem.IsEnabled`） | 非战斗跳格 → `SubmitBoardWalkIntentCommand`（ADR-0019） |
-| `PickupInputController` | `PickupInputController.cs` | `PickupInputHook.TryApplyPickup` | 拾取三段式：Intake Allow → `PresentationInputGates.TryBeginExternalHold("Pickup")` → `ApplyPickupItemCommand`；Apply 被拒立即 EndExternalHold |
+| `PickupInputController` | `PickupInputController.cs` | `PickupInputHook.TryApplyPickup` | 拾取（#234）：Intake 两轴裁决 → idle 交导演锁步剧本（返回 `RoutedToDirector` 摘要）；busy strict-drop；不再持锁直写 Core |
 | `UseItemInputController` | `UseItemInputController.cs` | `UseItemInputHook.TrySubmitUseItem` | 手牌拖放/多选提交 → `SubmitUseItemIntentCommand` |
 | `RecycleItemInputController` | `RecycleItemInputController.cs` | `RecycleItemInputHook.TrySubmitRecycleItem` | 拖入回收区 → `SubmitRecycleItemIntentCommand` |
 | `RoomChoiceInputController` | `RoomChoiceInputController.cs` | `RoomChoiceCoreHook.SelectRoom/EnterRoom` | 选房/进房：`TryIntakeModal`（固定 targetSurface=ChoiceOverlay）→ `SubmitSelectRoomCommand` / `SubmitEnterRoomCommand` |

@@ -38,22 +38,6 @@ namespace NineGrid.Flow
             return popups.Count > 0 ? popups.ToArray() : Array.Empty<CombatDamagePopup>();
         }
 
-        /// <summary>
-        /// Pickup Command 写 Core 后的旁路演出：只承接洗牌；节拍冲刷（金币/HUD/伤害）延迟到
-        /// 手牌侧盘面 Drain 落地后统一消费（触发脉冲 → 效果打击 → 其余 Impact/Settled，
-        /// ADR-0050 拾取补丁——此前在此立即 FlushBeats，倒刺等机关的打击组永远没人播）。
-        /// </summary>
-        public static void PresentPickupPostApplyEffects(int startIndex, int pickedUid)
-        {
-            _ = pickedUid;
-            var arch = NineGridArchitecture.Interface ?? NineGridArchitecture.Current;
-            arch?.GetSystem<IBattleSessionSystem>()?.PresentShuffleIntoDeckFromEventLog(startIndex);
-        }
-
-        /// <summary>
-        /// 视觉对账（保留已提交数值，不从 Core 覆写攻防血）。
-        /// Avatar 血甲 HUD 由 <see cref="PlayerInfoHudBeatHandler"/> 在 Impact 用指令刷新。
-        /// </summary>
         public static void SyncManagedCardPresentation(ManagedCard card)
         {
             CoreCardPresentationMapper.ApplyVisualsPreservingCommittedStats(card);

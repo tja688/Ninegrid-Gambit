@@ -62,9 +62,16 @@ namespace NineGrid.Core.Systems
             IReadOnlyList<int> PendingEnemyActionUids { get; }
             CoreCommandResult PickupItem(SlotId targetSlot);
             /// <summary>
-            /// 表现层可信拾取：无相邻门禁；InteractionLoop 下仍会旋转补牌。
+            /// 表现层可信拾取（整拍兼容入口）：拾卡 + 计数 + 补牌 + 旋转 + 敌方行动。
+            /// 导演分拍请用 <see cref="ApplyPickupCard"/> + AdvanceInteractionCount /
+            /// ResolveBoardStabilization / ResolvePostKillRotate / RegisterEnemyActionPhase 系列。
             /// </summary>
             CoreCommandResult ApplyPickupItem(SlotId targetSlot);
+            /// <summary>
+            /// 表现层可信拾取（只拾卡，不做互动链）：无相位门禁（仍校验邻接/种类/满格）；
+            /// 互动计数/补牌/旋转/敌方行动由表演导演按批锁步推进（ADR-0001 / ADR-0012）。
+            /// </summary>
+            CoreCommandResult ApplyPickupCard(SlotId targetSlot);
             /// <summary>
             /// 表现层可信使用道具：无相位门禁（仍校验 ItemSlots / 种类）。
             /// </summary>
@@ -587,7 +594,8 @@ namespace NineGrid.Core.Systems
             return ExecutePickupItem(targetSlot, requireInteractionLoopRotate: true);
         }
 
-        // 表现可信拾取入口：邻接规则与 PickupItem 一致（见上互动范围备注）。
+        // 表现可信拾取（整拍兼容）：拾卡 + 计数 + 补牌 + 旋转 + 敌方行动。
+        // 导演分拍请用 ApplyPickupCard（只拾卡），互动链由表现剧本逐批锁步推进。
         public CoreCommandResult ApplyPickupItem(SlotId targetSlot)
         {
             var board = this.GetModel<BoardModel>();
@@ -602,6 +610,25 @@ namespace NineGrid.Core.Systems
             }
 
             return ExecutePickupItem(targetSlot, requireInteractionLoopRotate: true);
+        }
+
+        // 表现可信拾取（导演分拍）：只拾卡，不做互动链——计数/补牌/旋转/敌方行动
+        // 由 PresentationDirector 按批锁步推进（ADR-0001 / ADR-0012），
+        // 避免旧单体路径在 Core 命令内同步结算齐射伤害（无表演批次 = 瞬间出伤）。
+        public CoreCommandResult ApplyPickupCard(SlotId targetSlot)
+        {
+            var board = this.GetModel<BoardModel>();
+            if (!targetSlot.IsBoardSlot || targetSlot == board.AvatarSlot.Value)
+            {
+                return Reject(GameCommandKind.PickupItem, "Pickup target is not a board card slot.", targetSlot, 0);
+            }
+
+            if (!this.GetSystem<IBoardSystem>().AreAdjacent(board.AvatarSlot.Value, targetSlot))
+            {
+                return Reject(GameCommandKind.PickupItem, "Pickup target is outside interaction range.", targetSlot, 0);
+            }
+
+            return ExecutePickupItem(targetSlot, requireInteractionLoopRotate: false);
         }
 
         public CoreCommandResult ApplyUseItem(int itemUid, IReadOnlyList<int> selectedCardUids, string selectedOption)

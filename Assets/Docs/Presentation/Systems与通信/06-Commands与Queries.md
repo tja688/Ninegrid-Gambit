@@ -29,11 +29,12 @@
 | `SubmitRefreshShopCommand` | `SubmitRefreshShopCommand.cs` | — | `RewardChoiceInputController` | → Core `RefreshShopCommand` |
 | `SubmitDiscardRelicCommand` | `SubmitDiscardRelicCommand.cs` | relicDefId | `RelicHudController`（Intake Allow 后） | → Core `DiscardRelicCommand`；成功后 `RelicHudHook.RequestSync` + `BattleBeatFlush.PresentEventLogSliceOnly(UpdateGold)`（ADR-0027） |
 
-### C. 拾取（特殊三段式：Allow → ExternalHold → Apply）
+### C. 拾取（导演锁步：拾卡 Apply → Present → 互动链）
 
 | Command | 文件 | 参数 | 发起方 | 处理链 |
 |---------|------|------|--------|--------|
-| `ApplyPickupItemCommand` | `ApplyPickupItemCommand.cs` | groundSlot | `PickupInputController`（Intake Allow + ExternalHold 之后） | `IPhaseSystem.ApplyPickupItem` → `BoardPresentationStepProjector.Project`（EventLog 切片投影 Steps/Moves/Deals/Removed）→ 回填 `PickupItemPresentationResult`（AcquiredToHand / RemovedWithoutHand / NodeClearedOrRewardPhase）→ `BattleSessionController.PresentPickupPostApplyEffects`；拒发 `PickupItemRejectedEvent` |
+| `ApplyPickupCardCommand` | `CoreCommands.cs` | `SlotId` | `PickupIntentScriptFactory` 的 `ResolveBatchStep` | `IPhaseSystem.ApplyPickupCard`（只拾卡，不在 Core 内同步旋转/齐射）→ `Pickup` 批 `PresentStep`；后续互动计数/稳定化/旋转/敌方行动均独立批 |
+
 
 ### D. 流程壳类
 
@@ -123,7 +124,7 @@ ADR-0004（意图类全部经收口）、ADR-0019（BoardWalk）、ADR-0020（�
 
 - **A 组意图命令不做门禁判断**，门禁全在 Intake——别在 Command 里再加放行条件。
 - **B 组的门禁在 Controller 层**（`TryIntakeModal`），Command 本体是 Core 转发——直接 SendCommand B 组会绕过 Intake（现无生产调用这样做；新代码禁止）。
-- `ApplyPickupItemCommand` 只能在 **ExternalHold 已取得后**调用（锁失败则 Core 未改，见《02》Pickup 次序纪律）。
+- `ApplyPickupCardCommand` 是生产拾取入口，只能由导演锁步 `ResolveBatchStep` 调用；禁止恢复「Controller 直接 ExternalHold→ApplyPickupItem」单体路径，否则敌方齐射会在 Core 命令内同步落账、没有 Counter 表演。
 - `IntentDisposition.BufferToDirector` 在 strict-drop 修订后实际不再产生，A 组命令仍兼容判断——阅读时勿误以为存在缓冲。
 - 描述三命令为退役残留，禁止新增消费者。
 - Query 全部无副作用；`EstimateWillKillQuery` 是**估算**（不含全部规则分支），只供表演分支选择，不做规则裁决。

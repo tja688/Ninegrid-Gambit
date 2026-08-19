@@ -691,6 +691,23 @@ namespace NineGrid.Flow
             _session.BoardPlayer.PresentShuffleIntoDeckFromEventLog(startIndex);
         }
 
+
+        public void OnPickupBoardBatchProjected(
+            int startIndex,
+            int boardSlot,
+            PostKillBoardPresentationResult result)
+        {
+            var pipeline = NineGridArchitecture.Current.GetSystem<IActionPipelineSystem>();
+            result.DamagePopups = PresentationOutputProjector.CollectDamagePopups(pipeline.EventLog.Entries, startIndex);
+
+            _session.PickupBoardPresentChannel?.Enqueue(result);
+            _session.BoardPlayer.PresentShuffleIntoDeckFromEventLog(startIndex);
+
+            if (result.NodeClearedOrRewardPhase)
+            {
+                ScheduleNodeSettlementAfterBoardPresent();
+            }
+        }
         public void OnUseItemBatchProjected(
             int startIndex,
             int boardSlot,

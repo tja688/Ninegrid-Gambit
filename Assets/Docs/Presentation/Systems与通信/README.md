@@ -242,7 +242,7 @@ MainScene 加载
 | `Commands/SubmitSkipHelpChoiceCommand.cs` | 跳过/出店 → Core SkipHelpChoice | 06 |
 | `Commands/SubmitRefreshShopCommand.cs` | 刷新货架 → Core RefreshShop | 06 |
 | `Commands/SubmitDiscardRelicCommand.cs` | 丢弃遗物 → Core DiscardRelic + HUD 同步 + UpdateGold 冲刷 | 06 |
-| `Commands/ApplyPickupItemCommand.cs` | 拾取 Apply + EventLog 投影摘要 | 06 |
+| `Commands/ApplyPickupItemCommand.cs` | ~~拾取 Apply（#234 退役：改导演锁步 `ApplyPickupCardCommand`，文件已删）~~ | 06 |
 | `Commands/BeginGameFlowRunCommand.cs` | 开局 → Shell.BeginRun | 06 |
 | `Commands/ReturnToMainMenuCommand.cs` | 回主菜单 → Shell.ReturnToMainMenu | 06 |
 | `Commands/SignalGameFlowCommand.cs` | SettlementReady/BattleEnded 信号投递 | 06 |
@@ -281,7 +281,7 @@ MainScene 加载
 | `Controllers/AttackInputController.cs` | 怪物格点击（背面卡分流翻开） | 07 |
 | `Controllers/ExploreInputController.cs` | 空槽探索点击 | 07 |
 | `Controllers/BoardWalkInputController.cs` | 非战斗跳格点击 | 07 |
-| `Controllers/PickupInputController.cs` | 拾取三段式（Allow→Hold→Apply） | 07 |
+| `Controllers/PickupInputController.cs` | 拾取（Intake 裁决 → 导演锁步剧本） | 07 |
 | `Controllers/UseItemInputController.cs` | 用牌提交 | 07 |
 | `Controllers/RecycleItemInputController.cs` | 回收提交 | 07 |
 | `Controllers/RoomChoiceInputController.cs` | 选房/进房（ChoiceOverlay 门禁） | 07 |

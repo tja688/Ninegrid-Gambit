@@ -51,7 +51,8 @@ namespace NineGrid.Presentation.Systems
             CombatCounterPresentChannel attackCounter,
             QueuedBoardPresentChannel attackBoard,
             UseItemPresentChannel useItem,
-            QueuedBoardPresentChannel useItemBoard)
+            QueuedBoardPresentChannel useItemBoard,
+            QueuedBoardPresentChannel pickupBoard)
         {
             mExecutor.BindPresentChannels(
                 explore,
@@ -59,7 +60,8 @@ namespace NineGrid.Presentation.Systems
                 attackCounter,
                 attackBoard,
                 useItem,
-                useItemBoard);
+                useItemBoard,
+                pickupBoard);
         }
 
         public void ClearPresentChannels()
@@ -192,6 +194,14 @@ namespace NineGrid.Presentation.Systems
             PostKillBoardPresentationResult result)
         {
             mExecutor.OnAttackCounterBatchProjected(startIndex, attackerBoardSlot, attackerUid, result);
+        }
+
+        public void OnPickupBoardBatchProjected(
+            int startIndex,
+            int boardSlot,
+            PostKillBoardPresentationResult result)
+        {
+            mExecutor.OnPickupBoardBatchProjected(startIndex, boardSlot, result);
         }
 
         public void OnUseItemBatchProjected(
