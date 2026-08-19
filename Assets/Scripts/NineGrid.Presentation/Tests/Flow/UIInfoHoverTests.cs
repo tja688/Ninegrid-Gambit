@@ -74,6 +74,72 @@ namespace NineGrid.Presentation.Tests.Flow
         }
 
         [Test]
+        public void ShouldSuppressFieldHover_PointerHeldSuppressesTooltip()
+        {
+            Assert.IsFalse(
+                UIInfoHoverRouter.ShouldSuppressFieldHover(false, false, false, mainMenu: false, pointerHeld: false),
+                "鼠标无动作时应允许悬停介绍");
+            Assert.IsTrue(
+                UIInfoHoverRouter.ShouldSuppressFieldHover(false, false, false, mainMenu: false, pointerHeld: true),
+                "按住鼠标（拖动卡牌/遗物）时应抑制悬停介绍");
+            Assert.IsTrue(
+                UIInfoHoverRouter.ShouldSuppressFieldHover(true, false, false, mainMenu: false, pointerHeld: true));
+        }
+
+        [Test]
+        public void DragReleaseLatch_ClickWithoutMove_DoesNotBlockHover()
+        {
+            var latch = new UIInfoHoverRouter.DragReleaseLatch();
+            latch.ObservePointer(pointerHeld: true, new Vector2(10f, 20f));
+            latch.ObservePointer(pointerHeld: false, new Vector2(10f, 20f));
+
+            Assert.IsFalse(latch.AwaitLeave, "原地按下松开不是拖动，松手后应允许介绍");
+            Assert.IsFalse(latch.BlockHover(hasUiInfoHit: true));
+        }
+
+        [Test]
+        public void DragReleaseLatch_ReleaseOverTarget_BlocksUntilPointerLeaves()
+        {
+            var latch = new UIInfoHoverRouter.DragReleaseLatch();
+            latch.ObservePointer(pointerHeld: true, new Vector2(0f, 0f));
+            latch.ObservePointer(pointerHeld: true, new Vector2(24f, 0f));
+            latch.ObservePointer(pointerHeld: false, new Vector2(24f, 0f));
+
+            Assert.IsTrue(latch.AwaitLeave, "拖动后松手应闩住，避免回收区/卡组立刻冒介绍");
+            Assert.IsTrue(
+                latch.BlockHover(hasUiInfoHit: true),
+                "松手后指针仍停在判定框上时不得展示介绍");
+            Assert.IsTrue(
+                latch.BlockHover(hasUiInfoHit: true),
+                "指针未移动离开前持续抑制");
+
+            Assert.IsFalse(
+                latch.BlockHover(hasUiInfoHit: false),
+                "指针移出判定框后解除闩");
+            Assert.IsFalse(latch.AwaitLeave);
+            Assert.IsFalse(
+                latch.BlockHover(hasUiInfoHit: true),
+                "移出后再无动作移入判定框时应允许介绍");
+        }
+
+        [Test]
+        public void DragReleaseLatch_ReleaseOverEmpty_DoesNotBlockLaterHover()
+        {
+            var latch = new UIInfoHoverRouter.DragReleaseLatch();
+            latch.ObservePointer(pointerHeld: true, new Vector2(0f, 0f));
+            latch.ObservePointer(pointerHeld: true, new Vector2(0f, 16f));
+            latch.ObservePointer(pointerHeld: false, new Vector2(0f, 16f));
+
+            Assert.IsTrue(latch.AwaitLeave);
+            Assert.IsFalse(
+                latch.BlockHover(hasUiInfoHit: false),
+                "拖到空白处松手应立刻解除闩");
+            Assert.IsFalse(
+                latch.BlockHover(hasUiInfoHit: true),
+                "随后移入判定框属于正式悬停，应展示介绍");
+        }
+
+        [Test]
         public void CenterOutReveal_BuildOrder_SpreadsFromMiddle()
         {
             CollectionAssert.AreEqual(new[] { 0 }, InfoNoticeCenterOutReveal.BuildOrder(1));
