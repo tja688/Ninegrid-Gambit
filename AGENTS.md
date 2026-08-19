@@ -18,14 +18,12 @@
 
 ## 规则索引
 
-[`.cursor/rules/`](.cursor/rules/) 均 `alwaysApply`。改代码 / Unity / 子代理 / **交付**前先对表：
+[`.cursor/rules/`](.cursor/rules/) 均 `alwaysApply`。改代码 / Unity / **交付**前先对表：
 
 | 主题 | 文件 | 触发 |
 |------|------|------|
 | Unity | [`unity-cli.mdc`](.cursor/rules/unity-cli.mdc) | 开 Editor、MCP/CLI、场景检索 |
 | 文档 | [`code-map-maintenance.mdc`](.cursor/rules/code-map-maintenance.mdc) | 改结构、ADR、验证 |
-| 工作区 | [`no-worktrees.mdc`](.cursor/rules/no-worktrees.mdc) | worktree、旁路目录 |
-| 子代理 | [`subagent-models.mdc`](.cursor/rules/subagent-models.mdc) | Task / 子代理 model |
 | 提交 | [`agent-git-commit.mdc`](.cursor/rules/agent-git-commit.mdc) | 任务完成、准备交付 |
 
 细则：[`docs/agents/`](docs/agents/)（Issue、CLI 回退命令等）。
