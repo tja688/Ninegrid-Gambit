@@ -431,7 +431,12 @@ namespace NineGrid.Presentation.Ui
             hit.Configure(
                 () => SetOpen(true),
                 BattleUiDimmerOverlay.CloseHitSort + 1,
-                PointerHitSurfacePriorities.Overlay);
+                PointerHitSurfacePriorities.Overlay,
+                hoverScale: 1.08f,
+                onHoverEnter: () => InteractionAudioCues.Pulse(
+                    InteractionAudioCues.MainMenuHover,
+                    "PlayerAudioSettingsPanel.MenuButtonHover",
+                    "menu_button.hover"));
         }
 
         private void WireCloseButton(Transform close)
@@ -441,17 +446,22 @@ namespace NineGrid.Presentation.Ui
                 return;
             }
 
-            EnsureCollider(close.gameObject, new Vector2(0.5f, 0.5f));
-            var proxy = close.GetComponent<UiOverlayHitProxy>();
-            if (proxy == null)
+            EnsureCollider(close.gameObject, PreferSpriteSize(close));
+            var hit = close.GetComponent<FunctionMenuHitProxy>();
+            if (hit == null)
             {
-                proxy = close.gameObject.AddComponent<UiOverlayHitProxy>();
+                hit = close.gameObject.AddComponent<FunctionMenuHitProxy>();
             }
 
-            proxy.Configure(
-                UiOverlayHitAction.CloseInRunFunctionMenu,
+            hit.Configure(
+                () => SetOpen(false),
                 BattleUiDimmerOverlay.CloseHitSort,
-                PointerHitSurfacePriorities.Overlay);
+                PointerHitSurfacePriorities.Overlay,
+                hoverScale: 1.08f,
+                onHoverEnter: () => InteractionAudioCues.Pulse(
+                    InteractionAudioCues.MainMenuHover,
+                    "PlayerAudioSettingsPanel.CloseButtonHover",
+                    "player_audio.close.hover"));
         }
 
         private void WireFlowMenuButton(Transform root, Action onClick)
@@ -489,7 +499,15 @@ namespace NineGrid.Presentation.Ui
             }
 
             EnsureCollider(target.gameObject, preferred);
-            BindClick(target.gameObject, onClick, BattleUiDimmerOverlay.CloseHitSort);
+            BindClick(
+                target.gameObject,
+                onClick,
+                BattleUiDimmerOverlay.CloseHitSort,
+                hoverScale: 1.08f,
+                onHoverEnter: () => InteractionAudioCues.Pulse(
+                    InteractionAudioCues.MainMenuHover,
+                    "PlayerAudioSettingsPanel.FlowMenuHover",
+                    "flow_menu.hover"));
         }
 
         private void RequestReturnToMainMenu()
@@ -617,9 +635,9 @@ namespace NineGrid.Presentation.Ui
                 mSettings.SetMuted(bus, !mSettings.Current.IsMuted(bus));
             }
 
-            WireMuteClickTarget(root, Toggle);
-            WireMuteClickTarget(onIndicator, Toggle);
-            WireMuteClickTarget(offIndicator, Toggle);
+            WireMuteClickTarget(root, Toggle, contentId);
+            WireMuteClickTarget(onIndicator, Toggle, contentId);
+            WireMuteClickTarget(offIndicator, Toggle, contentId);
 
             for (var i = 0; i < root.childCount; i++)
             {
@@ -629,11 +647,11 @@ namespace NineGrid.Presentation.Ui
                     continue;
                 }
 
-                WireMuteClickTarget(child, Toggle);
+                WireMuteClickTarget(child, Toggle, contentId);
             }
         }
 
-        private static void WireMuteClickTarget(Transform target, Action onClick)
+        private static void WireMuteClickTarget(Transform target, Action onClick, string contentId)
         {
             if (target == null)
             {
@@ -641,7 +659,15 @@ namespace NineGrid.Presentation.Ui
             }
 
             EnsureCollider(target.gameObject, PreferSpriteSize(target));
-            BindClick(target.gameObject, onClick, BattleUiDimmerOverlay.CloseHitSort);
+            BindClick(
+                target.gameObject,
+                onClick,
+                BattleUiDimmerOverlay.CloseHitSort,
+                hoverScale: 1.08f,
+                onHoverEnter: () => InteractionAudioCues.Pulse(
+                    InteractionAudioCues.MainMenuHover,
+                    "PlayerAudioSettingsPanel.MuteHover",
+                    contentId));
         }
 
         private static bool IsDecoratorNode(Transform node)
@@ -716,7 +742,13 @@ namespace NineGrid.Presentation.Ui
             return binder;
         }
 
-        private static void BindClick(GameObject go, Action onClick, int hitSort)
+        private static void BindClick(
+            GameObject go,
+            Action onClick,
+            int hitSort,
+            float hoverScale = 1f,
+            Action onHoverEnter = null,
+            Action onHoverExit = null)
         {
             var hit = go.GetComponent<FunctionMenuHitProxy>();
             if (hit == null)
@@ -724,7 +756,7 @@ namespace NineGrid.Presentation.Ui
                 hit = go.AddComponent<FunctionMenuHitProxy>();
             }
 
-            hit.Configure(onClick, hitSort, PointerHitSurfacePriorities.Overlay);
+            hit.Configure(onClick, hitSort, PointerHitSurfacePriorities.Overlay, hoverScale, onHoverEnter, onHoverExit);
         }
 
         private static BoxCollider2D EnsureCollider(GameObject go, Vector2 size)
@@ -915,8 +947,13 @@ namespace NineGrid.Presentation.Ui
         {
             private BoxCollider2D mCollider;
             private Action mOnClick;
+            private Action mOnHoverEnter;
+            private Action mOnHoverExit;
             private int mHitSort = BattleUiDimmerOverlay.CloseHitSort;
             private int mTypePriority = PointerHitSurfacePriorities.Overlay;
+            private float mHoverScale = 1f;
+            private Vector3 mBaseScale = Vector3.one;
+            private bool mBaseScaleCaptured;
 
             public Collider2D HitCollider =>
                 mCollider != null ? mCollider : (mCollider = GetComponent<BoxCollider2D>());
@@ -924,11 +961,20 @@ namespace NineGrid.Presentation.Ui
             public int HitSortOrder => mHitSort;
             public int HitTypePriority => mTypePriority;
 
-            public void Configure(Action onClick, int hitSort, int typePriority)
+            public void Configure(
+                Action onClick,
+                int hitSort,
+                int typePriority,
+                float hoverScale = 1f,
+                Action onHoverEnter = null,
+                Action onHoverExit = null)
             {
                 mOnClick = onClick;
                 mHitSort = hitSort;
                 mTypePriority = typePriority;
+                mHoverScale = Mathf.Max(0.5f, hoverScale);
+                mOnHoverEnter = onHoverEnter;
+                mOnHoverExit = onHoverExit;
             }
 
             private void Awake()
@@ -940,19 +986,55 @@ namespace NineGrid.Presentation.Ui
                 }
             }
 
-            private void OnEnable() => PointerHitRegistry.Register(this);
+            private void OnEnable()
+            {
+                CaptureBaseScaleIfNeeded();
+                PointerHitRegistry.Register(this);
+            }
 
-            private void OnDisable() => PointerHitRegistry.Unregister(this);
+            private void OnDisable()
+            {
+                PointerHitRegistry.Unregister(this);
+                RestoreBaseScale();
+            }
 
             public void HandlePointerEnter()
             {
+                CaptureBaseScaleIfNeeded();
+                if (mHoverScale > 1.001f)
+                {
+                    transform.localScale = mBaseScale * mHoverScale;
+                }
+
+                mOnHoverEnter?.Invoke();
             }
 
             public void HandlePointerExit()
             {
+                RestoreBaseScale();
+                mOnHoverExit?.Invoke();
             }
 
             public void HandlePointerDown() => mOnClick?.Invoke();
+
+            private void CaptureBaseScaleIfNeeded()
+            {
+                if (mBaseScaleCaptured)
+                {
+                    return;
+                }
+
+                mBaseScale = transform.localScale;
+                mBaseScaleCaptured = true;
+            }
+
+            private void RestoreBaseScale()
+            {
+                if (mBaseScaleCaptured)
+                {
+                    transform.localScale = mBaseScale;
+                }
+            }
         }
 
         [DisallowMultipleComponent]

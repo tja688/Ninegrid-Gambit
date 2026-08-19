@@ -362,6 +362,14 @@ namespace NineGrid.Presentation.Ui
                     {
                         sprite.color = hovering ? HoverTint : baseColor;
                     }
+
+                    if (hovering)
+                    {
+                        InteractionAudioCues.Pulse(
+                            InteractionAudioCues.MainMenuHover,
+                            "RunSaveLoadPanel.RowHover",
+                            "run_save.row.hover");
+                    }
                 },
                 BattleUiDimmerOverlay.CloseHitSort,
                 PointerHitSurfacePriorities.Overlay);
@@ -448,7 +456,16 @@ namespace NineGrid.Presentation.Ui
 
             proxy.Configure(
                 onClick,
-                null,
+                hovering =>
+                {
+                    if (hovering)
+                    {
+                        InteractionAudioCues.Pulse(
+                            InteractionAudioCues.MainMenuHover,
+                            "RunSaveLoadPanel.ModeButtonHover",
+                            "run_save.mode.hover");
+                    }
+                },
                 BattleUiDimmerOverlay.CloseHitSort,
                 PointerHitSurfacePriorities.Overlay);
         }

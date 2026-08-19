@@ -25,7 +25,7 @@ namespace NineGrid.Presentation.Ui
         public void OnPointerEnter(PointerEventData eventData)
         {
             InteractionAudioCues.Pulse(
-                InteractionAudioCues.UiHover,
+                InteractionAudioCues.MainMenuHover,
                 "UiAudioFeedback.OnPointerEnter",
                 contentId);
         }

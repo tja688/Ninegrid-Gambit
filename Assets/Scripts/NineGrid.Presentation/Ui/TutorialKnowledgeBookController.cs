@@ -551,7 +551,11 @@ namespace NineGrid.Presentation.Ui
                 () => RequestTurn(forward),
                 NavHitSort,
                 PointerHitSurfacePriorities.Overlay,
-                hoverScale: 1.12f);
+                hoverScale: 1.12f,
+                onHoverEnter: () => InteractionAudioCues.Pulse(
+                    InteractionAudioCues.MainMenuHover,
+                    "TutorialKnowledgeBook.NavHover",
+                    forward ? "tutorial_book.next" : "tutorial_book.prev"));
 
             var renderer = button.GetComponent<SpriteRenderer>();
             if (forward)

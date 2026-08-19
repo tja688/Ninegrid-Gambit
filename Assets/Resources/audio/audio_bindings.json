@@ -1462,11 +1462,11 @@
         },
         {
             "cueId": "ui.action.confirm",
-            "note": "通用界面操作确认",
+            "note": "通用界面操作确认/打开（滴答增强，与菜单按钮打开一致）",
             "module": "UI",
             "enabled": true,
-            "clipKey": "audio/SFX/点击确认轻音",
-            "volumeDb": -3,
+            "clipKey": "audio/SFX/滴答增强",
+            "volumeDb": 2,
             "startOffsetSeconds": 0,
             "bindingDelaySeconds": 0,
             "minimumIntervalSeconds": 0.05,
@@ -1476,7 +1476,7 @@
             "selectorRoomId": "",
             "selectorItemDefId": "",
             "selectorContentId": "",
-            "authoringStatus": "aiDraft"
+            "authoringStatus": "humanConfirmed"
         },
         {
             "cueId": "ui.action.confirm",

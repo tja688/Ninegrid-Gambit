@@ -220,6 +220,11 @@ namespace NineGrid.Presentation.Ui
                     {
                         row.Sprite.color = RowHoverTint;
                     }
+
+                    InteractionAudioCues.Pulse(
+                        InteractionAudioCues.MainMenuHover,
+                        "MainMenuLoadPanel.RowHover",
+                        "main_menu.continue.row");
                 },
                 onHoverExit: () =>
                 {

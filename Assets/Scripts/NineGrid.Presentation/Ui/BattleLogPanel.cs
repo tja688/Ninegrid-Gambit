@@ -507,7 +507,11 @@ namespace NineGrid.Presentation.Ui
                 () => SetOpen(false),
                 CloseHitSort,
                 PointerHitSurfacePriorities.Overlay,
-                hoverScale: 1.12f);
+                hoverScale: 1.12f,
+                onHoverEnter: () => InteractionAudioCues.Pulse(
+                    InteractionAudioCues.MainMenuHover,
+                    "BattleLogPanel.CloseButtonHover",
+                    "battle_log.close.hover"));
         }
 
         /// <summary>

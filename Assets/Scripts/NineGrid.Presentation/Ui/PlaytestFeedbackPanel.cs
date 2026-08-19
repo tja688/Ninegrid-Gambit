@@ -388,7 +388,13 @@ namespace NineGrid.Presentation.Ui
                 onClick,
                 hitSort,
                 PointerHitSurfacePriorities.Overlay,
-                hoverScale: onClick != null ? 1.08f : 1f);
+                hoverScale: onClick != null ? 1.08f : 1f,
+                onHoverEnter: onClick != null
+                    ? () => InteractionAudioCues.Pulse(
+                        InteractionAudioCues.MainMenuHover,
+                        "PlaytestFeedbackPanel.ButtonHover",
+                        "playtest_feedback.hover")
+                    : null);
         }
 
         private static GameObject FindForm(Transform logo)
