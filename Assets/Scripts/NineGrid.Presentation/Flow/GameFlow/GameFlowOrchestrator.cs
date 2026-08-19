@@ -1198,6 +1198,11 @@ namespace NineGrid.Flow
             // 教学局不产生检查点，也不得误删玩家早前正式局的自动存档。
             if (!mShell.IsTutorialMode)
             {
+                if (!mShell.IsQuickTestMode)
+                {
+                    TutorialProgressStore.MarkAssassinUnlockedIfWarriorRun(ResolveRunProfessionId());
+                }
+
                 RunSaveService.HandleRunEnded();
                 if (victory)
                 {
@@ -1703,6 +1708,18 @@ namespace NineGrid.Flow
             {
                 Debug.LogWarning("[GameFlow] FlowTrace BootstrapRun: " + ex.Message);
             }
+        }
+
+        private static string ResolveRunProfessionId()
+        {
+            var arch = NineGridArchitecture.Interface ?? NineGridArchitecture.Current;
+            var playerId = arch?.GetModel<PlayerModel>()?.ProfessionId?.Value;
+            if (!string.IsNullOrEmpty(playerId))
+            {
+                return playerId;
+            }
+
+            return NineGrid.Presentation.Ui.RunSetupSelection.ProfessionId;
         }
 
         private static string FormatRelicIds(PlayerModel player)

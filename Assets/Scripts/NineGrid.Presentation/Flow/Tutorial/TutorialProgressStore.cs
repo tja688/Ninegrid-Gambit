@@ -1,13 +1,16 @@
 using System;
+using NineGrid.Core;
 using UnityEngine;
 
 namespace NineGrid.Flow.Tutorial
 {
     /// <summary>
-    /// 教学档案与进度槽（三路标记）：
+    /// 教学档案与进度槽（四路标记）：
     /// 1. 步骤 1–9 完成（<see cref="IsSteps1To9Completed"/> / <see cref="MarkSteps1To9Completed"/>）
     /// 2. 门教学已见（<see cref="IsDoorTutorialSeen"/> / <see cref="MarkDoorTutorialSeen"/>）
     /// 3. 血色难度已解锁（<see cref="IsScarletUnlocked"/> / <see cref="MarkScarletUnlocked"/>）
+    /// 4. 刺客已解锁（<see cref="IsAssassinUnlocked"/> / <see cref="MarkAssassinUnlocked"/>）：
+    ///    正式局以战士走到胜负收口后标记，胜负皆可。
     ///
     /// 经既有存档后端（<see cref="RunSaveStoreHook"/> → ES3 桥）持久化于独立槽位 <c>tutorial_profile</c>，
     /// 绝不与跑图检查点槽混用。后端缺失时所有状态按「未完成/未解锁」处理且不落盘。
@@ -24,6 +27,7 @@ namespace NineGrid.Flow.Tutorial
             public bool steps1To9Completed;
             public bool doorTutorialSeen;
             public bool scarletUnlocked;
+            public bool assassinUnlocked;
         }
 
         private static TutorialProfile ReadProfileOrNull()
@@ -117,6 +121,32 @@ namespace NineGrid.Flow.Tutorial
         public static void MarkScarletUnlocked()
         {
             MutateAndSave(p => p.scarletUnlocked = true, "血色难度解锁标记已写入存档。");
+        }
+
+        /// <summary>刺客是否已解锁（正式局用战士完成一次对局后标记，胜负皆可）。</summary>
+        public static bool IsAssassinUnlocked()
+        {
+            var profile = ReadProfileOrNull();
+            return profile != null && profile.assassinUnlocked;
+        }
+
+        /// <summary>标记刺客已解锁。</summary>
+        public static void MarkAssassinUnlocked()
+        {
+            MutateAndSave(p => p.assassinUnlocked = true, "刺客解锁标记已写入存档。");
+        }
+
+        /// <summary>
+        /// 正式局胜负收口：职业是战士则解锁刺客。其它职业 / 空 id 不写。
+        /// </summary>
+        public static void MarkAssassinUnlockedIfWarriorRun(string professionId)
+        {
+            if (!string.Equals(professionId, ProfessionCatalog.Jester, StringComparison.Ordinal))
+            {
+                return;
+            }
+
+            MarkAssassinUnlocked();
         }
 
         /// <summary>清空所有教学档案进度（Dev/Release 构建清理）。</summary>

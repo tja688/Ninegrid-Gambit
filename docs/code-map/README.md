@@ -57,7 +57,7 @@
 | [ADR-0055](../adr/0055-venue-board-visuals-static-fallback.md) | 场地框/九宫格面暂用 MainScene 场景静态配色；`VenueEnvironmentPresenter.ApplyVenueBoardVisualTheming=false` 断开运行时换图换色；卡面背景等 ADR-0053 虚构配置仍生效；**MainBG 滑动底**见 ADR-0058 |
 | [ADR-0058](../adr/0058-mainbg-scroll-by-dungeon-layer.md) | 局内 MainBG Tiled 滑动贴图+色罩按层切换（密林/岩层/溶洞 + 困难血色）；主菜单保持场景作者底；贴图须 Repeat wrap |
 | [ADR-0056](../adr/0056-center-slot-topology-avatar-occupancy.md) | 中心格是拓扑（不旋转、不补牌），Avatar 不进场上卡占格表；盘面置换须带走 Avatar 占格。已落地（#216/#217） |
-| [ADR-0057](../adr/0057-avatar-swap-off-home.md) | 换位离巢：落地后数 3 次 Avatar 占格变化再归位；空间振荡器只在专属道具结算时引爆；第二职业与选人第三席位已解锁可用（#223） |
+| [ADR-0057](../adr/0057-avatar-swap-off-home.md) | 换位离巢：落地后数 3 次 Avatar 占格变化再归位；空间振荡器只在专属道具结算时引爆；第二职业（刺客）存在，选人第二席位须用战士完成一次正式对局后解锁 |
 | [ADR-0054](../adr/0054-unofficial-content-never-enters-live-pools.md) | 非正式内容（归档 / AI 拓展 / 过渡）不得进入正式局投放：统一门禁 `FormalContentWiring`；随机池排除非正式+Reserve，具名 Spawn/授予排除非正式；`ShuffleRandomContent` 不得再扫出倍增塔 |
 
 > ADR-0011–0013 几何、倒计时数学与敌方行动阶段已落地（#81）；**节奏频率与共用计数**以 ADR-0038 为准（部分 supersede）。旧落地方案见 `Assets/Notes/怪物攻击模式与敌方行动阶段-落地方案-2026-07-29.md`（过程笔记，非权威）。

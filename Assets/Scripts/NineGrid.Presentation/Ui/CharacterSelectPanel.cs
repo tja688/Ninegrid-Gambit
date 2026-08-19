@@ -7,6 +7,7 @@ using NineGrid.Flow.Tutorial;
 using NineGrid.Presentation.Systems;
 using TMPro;
 using UnityEngine;
+using L10n = NineGrid.Core.Localization.L10n;
 
 namespace NineGrid.Presentation.Ui
 {
@@ -14,7 +15,8 @@ namespace NineGrid.Presentation.Ui
     /// 选人界面：主菜单「开始游戏」后弹出，纯黑屏底幕（<see cref="PureBlackScreenOverlay"/>）。
     /// 场景预置 <c>UI面板/选人界面BG</c>（默认失活）：
     /// - 角色1 = 战士（会动的立绘 + 专属遗物图标），点击立绘切换选中；专属遗物右键开详述；
-    /// - 角色2 = 刺客（Icey 会动立绘 + 空间振荡器遗物图标），点击立绘切换选中；专属遗物右键开详述；
+    /// - 角色2 = 刺客（Icey 会动立绘 + 空间振荡器遗物图标）；须用战士完成一次正式对局后解锁（胜负皆可）；
+    ///   锁定时立绘为阴影，介绍为解锁条件，点击拒选；解锁后与战士同等可选，专属遗物右键开详述；
     /// - 角色3 = 未解锁席位（精灵/远程射手 Layla 黑色剪影 + 「尚未实装」，时装未落地）；
     /// - 仅当前选中的解锁角色播放待机序列帧，其余停在第一帧；
     /// - 「开始游戏」在已选解锁角色时正式出发（<see cref="GameFlowController.BeginFormalRun"/>）；
@@ -38,6 +40,7 @@ namespace NineGrid.Presentation.Ui
         private const string AssassinIdleKey = "ContentArt/Png/像素怪物合集/sprites/Icey_idle_01";
         private const string AssassinAvatarDefId = "avatar.layla";
         private const string LockedDescription = "尚未实装，敬请期待";
+        private const string AssassinLockedDescription = "使用战士完成一次对局之后解锁。";
         private const string AssassinSelectIntroFallback = "灵巧的刺客，擅长在操控空间的力量";
 
         // 战士序列帧 96x96 里主体只占中间一小块，帧高给大些才与剪影视觉均衡（Play 实测校准）。
@@ -59,9 +62,11 @@ namespace NineGrid.Presentation.Ui
         private sealed class CharacterSlot
         {
             public Transform Root;
+            public Transform PortraitHost;
             public SpriteRenderer PortraitArt;
             public SpriteRenderer PortraitHighlight;
             public ResourcesSpriteLoop PortraitLoop;
+            public Transform ItemCard;
             public TMP_Text Description;
             public Color DescriptionBaseColor;
             public bool Unlocked;
@@ -186,9 +191,9 @@ namespace NineGrid.Presentation.Ui
                 return;
             }
 
-            WireCharacterSlot(0, "角色1", unlocked: true);
-            WireCharacterSlot(1, "角色2", unlocked: true);
-            WireCharacterSlot(2, "角色3", unlocked: false);
+            WireCharacterSlot(0, "角色1");
+            WireCharacterSlot(1, "角色2");
+            WireCharacterSlot(2, "角色3");
             WireDifficulty(0, "难度选项：普通", NineGrid.Core.Content.RunDifficultyIds.Normal, "旅途");
             WireDifficulty(1, "难度选项：进阶", NineGrid.Core.Content.RunDifficultyIds.Advanced, "冒险");
             WireDifficulty(2, "难度选项：困难", NineGrid.Core.Content.RunDifficultyIds.Hard, "血色");
@@ -253,13 +258,19 @@ namespace NineGrid.Presentation.Ui
             }
         }
 
-        /// <summary>每次打开：装载立绘/图标、难度回默认（中间档：进阶/冒险）、隐藏返回小字。</summary>
+        /// <summary>每次打开：刷新解锁态与立绘/图标、难度回默认（中间档：进阶/冒险）、隐藏返回小字。</summary>
         private void RefreshOpenVisuals()
         {
             for (var i = 0; i < mSlots.Length; i++)
             {
                 var slot = mSlots[i];
-                if (slot?.PortraitArt == null)
+                if (slot == null)
+                {
+                    continue;
+                }
+
+                ApplySlotUnlockVisuals(slot, i, IsSlotUnlocked(i));
+                if (slot.PortraitArt == null)
                 {
                     continue;
                 }
@@ -278,7 +289,20 @@ namespace NineGrid.Presentation.Ui
             SetBackLabelVisible(false);
         }
 
-        private void WireCharacterSlot(int index, string rootName, bool unlocked)
+        private static bool IsSlotUnlocked(int index)
+        {
+            switch (index)
+            {
+                case 0:
+                    return true;
+                case 1:
+                    return TutorialProgressStore.IsAssassinUnlocked();
+                default:
+                    return false;
+            }
+        }
+
+        private void WireCharacterSlot(int index, string rootName)
         {
             var root = FindDirectChild(transform, rootName);
             if (root == null)
@@ -290,19 +314,17 @@ namespace NineGrid.Presentation.Ui
             var slot = new CharacterSlot
             {
                 Root = root,
-                Unlocked = unlocked,
-                ProfessionId = ResolveSlotProfessionId(index),
-                PortraitWorldHeight = ResolvePortraitWorldHeight(index, unlocked)
+                ProfessionId = ResolveSlotProfessionId(index)
             };
 
-            // 立绘：__Art 序列帧（解锁 = 本色；未解锁 = 黑色剪影）。
             var portrait = FindDirectChild(root, PortraitNodeName);
             if (portrait != null)
             {
+                slot.PortraitHost = portrait;
                 slot.PortraitArt = PanelArtUtility.EnsureLoopArt(
                     portrait,
                     ResolvePortraitResourcesKey(index),
-                    unlocked ? Color.white : SilhouetteTint,
+                    Color.white,
                     PortraitSortingOrder);
                 if (slot.PortraitArt != null)
                 {
@@ -310,38 +332,62 @@ namespace NineGrid.Presentation.Ui
                 }
 
                 slot.PortraitHighlight = portrait.Find(HighlightChildName)?.GetComponent<SpriteRenderer>();
-                WirePortraitButton(portrait, slot);
             }
 
-            // 角色描述：解锁文案 / 「尚未实装，敬请期待」。
             slot.Description = FindChildTmpByPrefix(root, "角色描述");
+            slot.ItemCard = FindDirectChildByPrefix(root, "角色专属道具卡");
+            mSlots[index] = slot;
+            ApplySlotUnlockVisuals(slot, index, IsSlotUnlocked(index));
+        }
+
+        private void ApplySlotUnlockVisuals(CharacterSlot slot, int index, bool unlocked)
+        {
+            if (slot == null)
+            {
+                return;
+            }
+
+            slot.Unlocked = unlocked;
+            slot.PortraitWorldHeight = ResolvePortraitWorldHeight(index, unlocked);
+            if (slot.PortraitArt != null)
+            {
+                slot.PortraitArt.color = unlocked ? Color.white : SilhouetteTint;
+            }
+
+            ApplySlotDescription(slot, index);
             if (slot.Description != null)
             {
-                ApplySlotDescription(slot, index);
                 slot.DescriptionBaseColor = slot.Description.color;
             }
 
-            // 角色专属道具卡：解锁角色显示初始遗物图标；未解锁席位留空。
-            var itemCard = FindDirectChildByPrefix(root, "角色专属道具卡");
-            if (itemCard != null)
+            ApplyRelicVisuals(slot, index, unlocked);
+            if (slot.PortraitHost != null)
             {
-                if (unlocked)
-                {
-                    slot.RelicDefId = ResolveSlotRelicDefId(index);
-                    var relicSprite = ResolveRelicSprite(slot.RelicDefId);
-                    var art = PanelArtUtility.SetStaticArt(itemCard, relicSprite, ItemIconSortingOrder);
-                    PanelArtUtility.FitWorldHeight(art, ItemIconWorldHeight);
-                    WireRelicInspect(itemCard, slot.RelicDefId);
-                }
-                else
-                {
-                    slot.RelicDefId = null;
-                    PanelArtUtility.SetStaticArt(itemCard, null, ItemIconSortingOrder);
-                    DisableSlotCollider(itemCard);
-                }
+                WirePortraitButton(slot.PortraitHost, slot);
+            }
+        }
+
+        private static void ApplyRelicVisuals(CharacterSlot slot, int index, bool unlocked)
+        {
+            if (slot?.ItemCard == null)
+            {
+                return;
             }
 
-            mSlots[index] = slot;
+            if (unlocked)
+            {
+                slot.RelicDefId = ResolveSlotRelicDefId(index);
+                var relicSprite = ResolveRelicSprite(slot.RelicDefId);
+                var art = PanelArtUtility.SetStaticArt(slot.ItemCard, relicSprite, ItemIconSortingOrder);
+                PanelArtUtility.FitWorldHeight(art, ItemIconWorldHeight);
+                WireRelicInspect(slot.ItemCard, slot.RelicDefId);
+            }
+            else
+            {
+                slot.RelicDefId = null;
+                PanelArtUtility.SetStaticArt(slot.ItemCard, null, ItemIconSortingOrder);
+                DisableSlotCollider(slot.ItemCard);
+            }
         }
 
         private void WirePortraitButton(Transform portrait, CharacterSlot slot)
@@ -841,7 +887,9 @@ namespace NineGrid.Presentation.Ui
 
             if (!slot.Unlocked)
             {
-                slot.Description.text = LockedDescription;
+                slot.Description.text = index == 1
+                    ? L10n.Tr("charselect.assassin_locked", AssassinLockedDescription)
+                    : LockedDescription;
                 return;
             }
 

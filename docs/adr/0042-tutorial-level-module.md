@@ -8,8 +8,8 @@
 教程与规则书彻底拆为两颗入口：
 1. **主菜单「教程」**：`TutorialRun` 按钮当且仅当步骤 1–9 完成后可见；点击发起单场教程（打完回主菜单，不进 1-2 跑图，不写跑图检查点，不误删玩家正式自动存档），每次均完整包含步骤 1–9 及独立门教学（第 10 步，不走生涯已见抑制）。彻底断开旧五阶段导演 `TutorialBattleDirector`，由 `TutorialCoach` 单一策略缝消费节拍驱动同构教学战斗。
 2. **战斗壳「规则书」**：`TutorialKnowledgeBookController` 挂接场景「规则书」（原「教程按钮」），仅在战斗壳显示并从步骤 9 起放行翻阅（步骤 9 前保持隐藏/禁用），主菜单隐藏。
-3. **教学档三路标记**：`TutorialProgressStore` 独立槽位 `tutorial_profile` 承载 `steps1To9Completed`（步骤 1–9 完成）、`doorTutorialSeen`（门教学已见）、`scarletUnlocked`（血色已解锁），与跑图检查点隔离。自然第一关战败亦标记 1–9 完成；整趟跑图胜利标记血色解锁。
-4. **选人与难度**：选人锁定战士；旅途/冒险可选；血色在整趟跑图胜利前锁定、胜利后解开。旧独立五阶段关卡生产入口保持断开。
+3. **教学档四路标记**：`TutorialProgressStore` 独立槽位 `tutorial_profile` 承载 `steps1To9Completed`（步骤 1–9 完成）、`doorTutorialSeen`（门教学已见）、`scarletUnlocked`（血色已解锁）、`assassinUnlocked`（刺客已解锁），与跑图检查点隔离。自然第一关战败亦标记 1–9 完成；整趟跑图胜利标记血色解锁；正式局以战士走到胜负收口（胜负皆可）标记刺客解锁。
+4. **选人与难度**：选人角色1=战士常开；角色2=刺客须 `assassinUnlocked` 后可选（锁定时阴影立绘 + 「使用战士完成一次对局之后解锁。」）；旅途/冒险可选；血色在整趟跑图胜利前锁定、胜利后解开。旧独立五阶段关卡生产入口保持断开。
 5. **第一关保序开局载荷（#228，2026-08-18 修订）**：`TutorialDeckPlan.BuildOpeningOptions` 提供一套保序、确定性的正式内容开局载荷（16 张正式卡）：怪物**只允许**小小莱姆 `monster.melee_3`；道具只用第一关 White 白装（恢复药水 / 飞刀 / 坚固盾）；**不塞常规机关**；离开机关 `trap.leave` 仍在抽牌堆后半段。教学目标格为玩家正右方 **Slot 6**（开局 Slot 6 小小莱姆；击杀补牌并顺时针旋转后，Slot 3 恢复药水落入 Slot 6）。仅作用于教程第一关。自然首局 / 菜单教程在 Bootstrap 后立刻 `RunModel.TryBindFloorMonsterDeck("deck.dragon")` 钉死本层莱姆卡组，因此 1-2 起 `BuildNodeDeckOptions` 走莱姆正式编组并恢复常规三张机关注入。已完成 1–9 的正式开局不钉，第 1 层仍按种子在莱姆/植物间抽。旅途与冒险难度第一关呈现相同牌面。
 6. **第一关步骤 1–9 教练（#230）**：
    - 步骤 1（Avatar 就位）：顶部第 1 句（欢迎并框 Avatar Slot 5，卡主流程，点推进）；

@@ -58,6 +58,7 @@
     "preview.monster_label": "Monsters:",
     "preview.environment_label": "Environment:",
     "charselect.locked": "Character not yet unlocked",
+    "charselect.assassin_locked": "Complete a run as the Warrior to unlock.",
     "charselect.stats": "HP {0} · Attack {1}",
     "charselect.warrior_name": "Warrior",
     "save.empty_slot": "Empty slot {0}",

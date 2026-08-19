@@ -315,6 +315,15 @@ namespace NineGrid.Flow
 
         public void BeginFormalRun()
         {
+            if (!TutorialProgressStore.IsAssassinUnlocked()
+                && string.Equals(
+                    NineGrid.Presentation.Ui.RunSetupSelection.ProfessionId,
+                    ProfessionCatalog.Assassin,
+                    System.StringComparison.Ordinal))
+            {
+                NineGrid.Presentation.Ui.RunSetupSelection.SetProfession(ProfessionCatalog.Jester);
+            }
+
             TriggerPulseHub.PulseAudio(AudioCueRequest.Simple(
                 MainMenuStartCueId,
                 "GameFlowController.BeginFormalRun"));
