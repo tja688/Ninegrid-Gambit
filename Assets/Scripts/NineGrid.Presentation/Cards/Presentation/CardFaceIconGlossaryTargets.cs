@@ -7,10 +7,9 @@ using UnityEngine;
 namespace NineGrid.Cards.Presentation
 {
     /// <summary>
-    /// 右键详述预览卡面上「可解释机制图标」的靶表与词条路由（ADR-0037）。
-    /// 靶只在检视预览上收集：卡面图标不长命中体，命中由世界 AABB 计算，
-    /// 与棋盘格位命中框、命中路由互不相干。
+    /// 预览卡面上机制图标对应的词条名路由（攻击 / 护甲 / 血量 / 节奏计数 / 攻击模式）。
     /// 词条查询键一律是词条名（<c>displayNameZh</c>）；攻击模式与节奏源直接复用 Core token 常量。
+    /// 右键详情不再用 hover 填槽（ADR-0037）；本表仍给卡面「实际显示了哪些图标」只读辅助。
     /// </summary>
     public static class CardFaceIconGlossaryTargets
     {

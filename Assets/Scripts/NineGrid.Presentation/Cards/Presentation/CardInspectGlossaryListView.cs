@@ -6,8 +6,7 @@ using UnityEngine.UI;
 namespace NineGrid.Cards.Presentation
 {
     /// <summary>
-    /// 右键详情 ScrollView Content：按词条动态装行 + 一条可复用 hover 槽（ADR-0037）。
-    /// hover 槽恒在首行——列表可滚动，落在末尾时词条多了就会滚出视野。
+    /// 右键详情 ScrollView Content：按词条动态装行（ADR-0037）。
     /// 词条行使用 mesh TMP（MeshRenderer），须配 Viewport SpriteMask + 动态 margin 裁切才能裁进装饰框。
     /// </summary>
     [DisallowMultipleComponent]
@@ -16,13 +15,8 @@ namespace NineGrid.Cards.Presentation
         private const string ViewportClipMaskName = "__GlossaryViewportClipMask";
         private const float ViewportInsetCanvasUnits = 10f;
 
-        public static string HoverHintText => NineGrid.Core.Localization.L10n.Tr(
-            "inspect.hover_hint",
-            "将鼠标移到卡面预览中的图标上，可查看其含义。");
-
         [SerializeField] private RectTransform content;
         [SerializeField] private CardInspectGlossaryRowView rowPrefab;
-        [SerializeField] private CardInspectGlossaryRowView hoverRow;
         [SerializeField] private Color defaultBodyColor = new Color(0.816f, 0.816f, 0.816f, 0.875f);
 
         private readonly List<CardInspectGlossaryRowView> _spawned = new List<CardInspectGlossaryRowView>();
@@ -51,7 +45,6 @@ namespace NineGrid.Cards.Presentation
             rowPrefab = prefab;
             EnsureLayout();
             EnsureViewportClipMask();
-            EnsureHoverRow();
         }
 
         public void BindExplicitTerms(IReadOnlyList<CardGlossaryTerms.ResolvedTerm> terms)
@@ -59,7 +52,6 @@ namespace NineGrid.Cards.Presentation
             EnsureLayout();
             EnsureViewportClipMask();
             ClearSpawned();
-            EnsureHoverRow();
 
             if (terms != null && rowPrefab != null && content != null)
             {
@@ -71,53 +63,22 @@ namespace NineGrid.Cards.Presentation
                     row.name = "词条行_" + term.DisplayName;
                     row.EnsureLayoutElement();
                     ApplyDefaultBodyColor(row);
-                    row.Bind(term.DisplayName, term.Explanation, term.HasColor, term.Color);
+                    row.Bind(
+                        term.DisplayName,
+                        term.Explanation,
+                        term.HasColor,
+                        term.Color,
+                        term.InlineCode);
                     row.transform.SetAsLastSibling();
                     ApplyGlossaryRowMaskInteraction(row.gameObject, GetScrollViewport());
                     _spawned.Add(row);
                 }
             }
-
-            ClearHover();
-            if (hoverRow != null)
-            {
-                hoverRow.gameObject.SetActive(true);
-                ApplyDefaultBodyColor(hoverRow);
-                hoverRow.BindHint(HoverHintText);
-                hoverRow.transform.SetAsFirstSibling();
-                ApplyGlossaryRowMaskInteraction(hoverRow.gameObject, GetScrollViewport());
-            }
-        }
-
-        public void ShowHoverTerm(string displayName, string explanation, bool hasColor, Color color)
-        {
-            EnsureHoverRow();
-            if (hoverRow == null)
-            {
-                return;
-            }
-
-            hoverRow.gameObject.SetActive(true);
-            ApplyDefaultBodyColor(hoverRow);
-            hoverRow.Bind(displayName, explanation, hasColor, color);
-            hoverRow.transform.SetAsFirstSibling();
-            ApplyGlossaryRowMaskInteraction(hoverRow.gameObject, GetScrollViewport());
-        }
-
-        public void ClearHover()
-        {
-            if (hoverRow == null)
-            {
-                return;
-            }
-
-            hoverRow.BindHint(HoverHintText);
         }
 
         public void ClearAll()
         {
             ClearSpawned();
-            ClearHover();
         }
 
         private void ClearSpawned()
@@ -132,23 +93,6 @@ namespace NineGrid.Cards.Presentation
             }
 
             _spawned.Clear();
-        }
-
-        private void EnsureHoverRow()
-        {
-            if (hoverRow != null || rowPrefab == null || content == null)
-            {
-                return;
-            }
-
-            hoverRow = Instantiate(rowPrefab, content);
-            hoverRow.gameObject.SetActive(true);
-            hoverRow.name = "词条Hover槽";
-            hoverRow.EnsureLayoutElement();
-            ApplyDefaultBodyColor(hoverRow);
-            hoverRow.BindHint(HoverHintText);
-            hoverRow.transform.SetAsFirstSibling();
-            ApplyGlossaryRowMaskInteraction(hoverRow.gameObject, GetScrollViewport());
         }
 
         private void EnsureLayout()

@@ -16,10 +16,11 @@ namespace NineGrid.Cards.Presentation
         private Color _defaultColor;
         private bool _hasBaseMargin;
         private Vector4 _baseMargin;
+        private TMP_SpriteAsset _spriteAsset;
 
         /// <summary>
         /// 强制本行正文默认色（模板色为白色半透明；浅色底面板行须改黑保证可读）。
-        /// 先于 Bind/BindHint 调用，避免 EnsureBody 捕获模板色覆盖。
+        /// 先于 Bind 调用，避免 EnsureBody 捕获模板色覆盖。
         /// </summary>
         public void SetDefaultBodyColor(Color color)
         {
@@ -27,7 +28,7 @@ namespace NineGrid.Cards.Presentation
             _hasDefaultColor = true;
         }
 
-        public void Bind(string displayName, string explanation, bool hasColor, Color color)
+        public void Bind(string displayName, string explanation, bool hasColor, Color color, string inlineCode = null)
         {
             EnsureBody();
             CacheBaseMargin();
@@ -37,31 +38,24 @@ namespace NineGrid.Cards.Presentation
             }
 
             var title = displayName ?? string.Empty;
+            if (!string.IsNullOrWhiteSpace(inlineCode))
+            {
+                title = "[" + inlineCode.Trim() + "] " + title;
+            }
+
             var detail = explanation ?? string.Empty;
+            string raw;
             if (string.IsNullOrWhiteSpace(detail))
             {
-                body.text = title;
+                raw = title;
             }
             else
             {
-                body.text = title + "\n" + detail.Trim();
+                raw = title + "\n" + detail.Trim();
             }
 
-            // hover 槽跨词条复用：未着色的词条须退回模板默认色，不留上一条的颜色。
+            ApplyComposedText(raw);
             body.color = hasColor ? color : _defaultColor;
-        }
-
-        public void BindHint(string hint)
-        {
-            EnsureBody();
-            CacheBaseMargin();
-            if (body == null)
-            {
-                return;
-            }
-
-            body.text = hint ?? string.Empty;
-            body.color = _defaultColor;
         }
 
         public void Clear()
@@ -159,6 +153,58 @@ namespace NineGrid.Cards.Presentation
                 _defaultColor = body.color;
                 _hasDefaultColor = true;
             }
+        }
+
+        private void ApplyComposedText(string raw)
+        {
+            var catalog = CardFacePresentationBinder.PeekDescriptionIconCatalog();
+            if (catalog == null || string.IsNullOrEmpty(raw))
+            {
+                ReleaseSpriteAsset();
+                body.text = raw ?? string.Empty;
+                return;
+            }
+
+            var composed = CardFaceDescriptionComposer.Compose(
+                raw,
+                assembledIcons: null,
+                registry: CardFacePresentationBinder.GetDefaultRegistry(),
+                catalog: catalog);
+
+            ReleaseSpriteAsset();
+            if (composed.Icons != null && composed.Icons.Count > 0)
+            {
+                _spriteAsset = CardFaceDescriptionSpriteAssetBuilder.Build(
+                    composed.Icons,
+                    CardFacePresentationBinder.GetInlineIconStyle());
+                body.spriteAsset = _spriteAsset;
+            }
+            else
+            {
+                body.spriteAsset = null;
+            }
+
+            body.text = composed.TmpRichText;
+        }
+
+        private void ReleaseSpriteAsset()
+        {
+            if (_spriteAsset == null)
+            {
+                return;
+            }
+
+            CardFaceDescriptionSpriteAssetBuilder.DestroyBuilt(_spriteAsset);
+            _spriteAsset = null;
+            if (body != null)
+            {
+                body.spriteAsset = null;
+            }
+        }
+
+        private void OnDestroy()
+        {
+            ReleaseSpriteAsset();
         }
 
         private void OnValidate()

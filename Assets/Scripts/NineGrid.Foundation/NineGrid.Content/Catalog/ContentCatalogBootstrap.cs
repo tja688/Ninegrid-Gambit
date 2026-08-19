@@ -17,6 +17,7 @@ namespace NineGrid.Content
             DungeonEnvironmentCatalog.Invalidate();
             DerivedCardResolver.Invalidate();
             MonsterDeckTableCatalog.Invalidate();
+            InspectEffectCopyCatalog.Invalidate();
             var catalog = new GameContentCatalog();
             ContentCatalogTableLoader.ApplyToCatalog(catalog);
             ContentJsonCatalogProjector.ApplyToCatalog(catalog);

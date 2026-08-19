@@ -58,7 +58,7 @@ flowchart LR
 ```
 
 - `[[词条]]` 匹配键 = **zh 名 ∪ en 名** 双键（与当前语言无关；`CardFaceDescriptionIconCatalogSO` 构建 lookup 时登记，冲突时中文键权威）。
-- 显示名与右键词条行 / hover 解释按当前语言取表，缺回中文。
+- 显示名与右键词条行解释按当前语言取表，缺回中文。
 
 ### ui.json —— 代码串 + 场景静态标签（扁平键）
 

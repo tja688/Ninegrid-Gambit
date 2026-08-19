@@ -464,8 +464,12 @@ namespace NineGrid.Flow
             SetActiveSafe(regularPanel, !isMonster);
 
             var glossaryCatalog = CardFacePresentationBinder.PeekDescriptionIconCatalog();
-            var terms = CardGlossaryTerms.BuildInspectTerms(
-                snapshot != null ? snapshot.BasicDescription : null,
+            var inspectKind = snapshot != null && snapshot.Kind != CardPresentationKind.Unknown
+                ? snapshot.Kind
+                : (isMonster ? CardPresentationKind.Monster : kindOverride);
+            var terms = CardInspectGlossaryAssembler.Assemble(
+                inspectKind,
+                snapshot,
                 ResolveExtraGlossaryTerms(snapshot != null ? snapshot.DefId : null),
                 glossaryCatalog);
 
@@ -487,7 +491,7 @@ namespace NineGrid.Flow
 
                 SetText(enemyFaceIntro, texts.FaceIntro);
                 SetText(enemyDeckIntro, texts.DeckIntro);
-                BindGlossaryPanel(enemyGlossaryList, terms, _enemyBinder, glossaryCatalog, snapshot);
+                BindGlossaryPanel(enemyGlossaryList, terms);
             }
             else
             {
@@ -503,7 +507,7 @@ namespace NineGrid.Flow
 
                 SetText(regularFaceIntro, texts.FaceIntro);
                 SetText(regularDeckIntro, texts.DeckIntro);
-                BindGlossaryPanel(regularGlossaryList, terms, _regularBinder, glossaryCatalog, snapshot);
+                BindGlossaryPanel(regularGlossaryList, terms);
             }
 
             RefreshDerivedCardText(isMonster, snapshot != null ? snapshot.DefId : string.Empty);
@@ -622,46 +626,12 @@ namespace NineGrid.Flow
 
         private void BindGlossaryPanel(
             CardInspectGlossaryListView list,
-            IReadOnlyList<CardGlossaryTerms.ResolvedTerm> terms,
-            CardFacePresentationBinder binder,
-            CardFaceDescriptionIconCatalogSO glossaryCatalog,
-            CardPresentationSnapshot snapshot)
+            IReadOnlyList<CardGlossaryTerms.ResolvedTerm> terms)
         {
             if (list != null)
             {
                 list.BindExplicitTerms(terms);
             }
-
-            WireIconHover(binder, list, glossaryCatalog, snapshot);
-        }
-
-        /// <summary>
-        /// 预览卡面挂图标 hover 探针：描述内联 <c>[code]</c> 与卡面机制图标共用词条栏首行解释槽。
-        /// 描述槽可缺（遗物等模板），此时只解释卡面图标。
-        /// </summary>
-        private static void WireIconHover(
-            CardFacePresentationBinder binder,
-            CardInspectGlossaryListView list,
-            CardFaceDescriptionIconCatalogSO catalog,
-            CardPresentationSnapshot snapshot)
-        {
-            if (binder == null)
-            {
-                return;
-            }
-
-            CardFaceSlotNodeMap.TryFindText(
-                binder.transform,
-                CardFaceSlotCodes.BasicDescription,
-                out var description);
-
-            var hover = binder.GetComponent<CardInspectIconHover>();
-            if (hover == null)
-            {
-                hover = binder.gameObject.AddComponent<CardInspectIconHover>();
-            }
-
-            hover.Configure(description, list, catalog, Camera.main, snapshot);
         }
 
         private void HideAllImmediate()

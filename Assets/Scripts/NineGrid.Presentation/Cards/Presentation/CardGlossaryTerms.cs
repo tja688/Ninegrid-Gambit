@@ -20,7 +20,8 @@ namespace NineGrid.Cards.Presentation
                 bool matched,
                 bool hasColor,
                 UnityEngine.Color color,
-                string lookupName = null)
+                string lookupName = null,
+                string inlineCode = null)
             {
                 DisplayName = displayName ?? string.Empty;
                 Explanation = explanation ?? string.Empty;
@@ -30,6 +31,7 @@ namespace NineGrid.Cards.Presentation
                 LookupName = string.IsNullOrWhiteSpace(lookupName)
                     ? (displayName ?? string.Empty).Trim()
                     : lookupName.Trim();
+                InlineCode = inlineCode ?? string.Empty;
             }
 
             public string DisplayName { get; }
@@ -39,6 +41,21 @@ namespace NineGrid.Cards.Presentation
             public UnityEngine.Color Color { get; }
             /// <summary>词条库 zh 名（localization 表键）；未命中时等于名字明文。用于跨源去重。</summary>
             public string LookupName { get; }
+
+            /// <summary>有内联图标时为词条表 <c>code</c>；空 = 纯文字行。</summary>
+            public string InlineCode { get; }
+
+            public ResolvedTerm WithInlineCode(string code)
+            {
+                return new ResolvedTerm(
+                    DisplayName,
+                    Explanation,
+                    Matched,
+                    HasColor,
+                    Color,
+                    LookupName,
+                    code);
+            }
         }
 
         /// <summary>
@@ -70,7 +87,7 @@ namespace NineGrid.Cards.Presentation
                 }
 
                 ResolveTerm(name, catalog, out var resolved);
-                result.Add(resolved);
+                result.Add(AttachInlineCode(resolved, catalog));
             }
 
             return result;
@@ -124,6 +141,7 @@ namespace NineGrid.Cards.Presentation
                 }
 
                 ResolveTerm(name, catalog, out var resolved);
+                resolved = AttachInlineCode(resolved, catalog);
                 var key = resolved.LookupName.Length > 0
                     ? resolved.LookupName
                     : name;
@@ -138,7 +156,46 @@ namespace NineGrid.Cards.Presentation
             return result;
         }
 
-        private static void ResolveTerm(
+        /// <summary>
+        /// 从检查描述抽出 <c>[code]</c> 图标词条（去重保序）。先去掉 <c>[[…]]</c>，
+        /// 未命中词条表或无 sprite 的语义前缀（如 <c>[使用时]</c>）丢弃。
+        /// </summary>
+        public static List<ResolvedTerm> ExtractInlineIconTerms(
+            string description,
+            CardFaceDescriptionIconCatalogSO catalog)
+        {
+            var result = new List<ResolvedTerm>();
+            if (string.IsNullOrEmpty(description) || catalog == null)
+            {
+                return result;
+            }
+
+            var stripped = DoubleBracketToken.Replace(description, " ");
+            var seen = new HashSet<string>(StringComparer.Ordinal);
+            var matches = Regex.Matches(stripped, @"\[([^\]]+)\]");
+            for (var i = 0; i < matches.Count; i++)
+            {
+                var code = matches[i].Groups[1].Value.Trim();
+                if (code.Length == 0
+                    || CardFaceDescriptionIconCatalogSO.IsReservedAssemblySlotCode(code)
+                    || !seen.Add(code))
+                {
+                    continue;
+                }
+
+                if (!catalog.TryGetByCode(code, out var entry) || entry == null || !entry.HasInlineIcon)
+                {
+                    continue;
+                }
+
+                ResolveTerm(entry.displayNameZh, catalog, out var resolved);
+                result.Add(AttachInlineCode(resolved, catalog, code));
+            }
+
+            return result;
+        }
+
+        public static void ResolveTerm(
             string name,
             CardFaceDescriptionIconCatalogSO catalog,
             out ResolvedTerm resolved)
@@ -159,7 +216,8 @@ namespace NineGrid.Cards.Presentation
                     matched: true,
                     hasColor: entry.HasColorOverride,
                     color: entry.color,
-                    lookupName: zhName);
+                    lookupName: zhName,
+                    inlineCode: entry.HasInlineIcon ? entry.code.Trim() : string.Empty);
                 return;
             }
 
@@ -170,6 +228,68 @@ namespace NineGrid.Cards.Presentation
                 hasColor: false,
                 color: default,
                 lookupName: name);
+        }
+
+        /// <summary>
+        /// 卡专属首条回退：<c>[[词条]]</c> 去括号留明文；有 sprite 的 <c>[code]</c> 换成展示名；
+        /// <c>[使用时]</c> 等语义前缀原样保留。
+        /// </summary>
+        public static string StripMarkupForReadableFallback(
+            string description,
+            CardFaceDescriptionIconCatalogSO catalog)
+        {
+            if (string.IsNullOrEmpty(description))
+            {
+                return string.Empty;
+            }
+
+            var afterTerms = DoubleBracketToken.Replace(description, "$1");
+            return Regex.Replace(
+                afterTerms,
+                @"\[([^\]]+)\]",
+                match =>
+                {
+                    var code = match.Groups[1].Value.Trim();
+                    if (code.Length == 0
+                        || CardFaceDescriptionIconCatalogSO.IsReservedAssemblySlotCode(code)
+                        || catalog == null
+                        || !catalog.TryGetByCode(code, out var entry)
+                        || entry == null
+                        || !entry.HasInlineIcon)
+                    {
+                        return match.Value;
+                    }
+
+                    return string.IsNullOrWhiteSpace(entry.displayNameZh)
+                        ? code
+                        : entry.displayNameZh.Trim();
+                });
+        }
+
+        public static ResolvedTerm AttachInlineCode(
+            ResolvedTerm term,
+            CardFaceDescriptionIconCatalogSO catalog,
+            string codeOverride = null)
+        {
+            if (!string.IsNullOrWhiteSpace(codeOverride))
+            {
+                return term.WithInlineCode(codeOverride.Trim());
+            }
+
+            if (!string.IsNullOrWhiteSpace(term.InlineCode) || catalog == null)
+            {
+                return term;
+            }
+
+            var key = !string.IsNullOrWhiteSpace(term.LookupName) ? term.LookupName : term.DisplayName;
+            if (catalog.TryGetByDisplayName(key, out var entry)
+                && entry != null
+                && entry.HasInlineIcon)
+            {
+                return term.WithInlineCode(entry.code.Trim());
+            }
+
+            return term;
         }
     }
 }

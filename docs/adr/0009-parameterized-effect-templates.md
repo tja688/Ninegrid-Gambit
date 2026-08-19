@@ -12,7 +12,7 @@ status: accepted
 2. **参数写在装配引用上。** 卡文件里的一条装配引用同时给出模板 id 与实参（`amount` 等）。一张卡的全部信息在一个文件里看得全；全局平衡靠脚本批量改，不引入数值间接层。
 3. **`typeTag` 与 `verb` 这两道纯字符串校验取消。** 模板可装到哪些容器由 [ADR-0010](0010-self-declared-effect-responsibility.md) 的效果责任自陈裁决，不由容器名匹配。
 4. **描述分两级产出。** 卡面基础描述（检查描述）人手写，插 `{装配id.键}` 由装配实参填初始配置值（不随战中剩余跳变）；右键详情效果区从检查描述抽出的 **词条行** 展开（[ADR-0037](0037-inspect-detail-is-glossary-rows.md)），不再拼接效果 `design_text`。战中/实例体感句与倒计时剩余改由**局内描述投影**承担——见 [ADR-0035](0035-dual-description-projection-and-assembly-param-refs.md)。
-5. **词条是项目级共享语汇。** 约百条量级、玩家可读、单一认知分区 + `Others` 兜底；一个词条可被多个模板引用，解释只写一遍。载体为项目级词条表（升格自 `CardFaceDescriptionIconCatalog`）：`[[展示名]]` 显式文字词条（卡面去括号显示，右键详情默认展开介绍）；`[code]` 内联图标（卡面换 sprite，详情默认隐藏，仅 Inspect 预览 hover 解释）。权威见 [ADR-0037](0037-inspect-detail-is-glossary-rows.md)。
+5. **词条是项目级共享语汇。** 约百条量级、玩家可读、单一认知分区 + `Others` 兜底；一个词条可被多个模板引用，解释只写一遍。载体为项目级词条表（升格自 `CardFaceDescriptionIconCatalog`）：`[[展示名]]` 显式文字词条（卡面去括号显示，右键详情可展开介绍）；`[code]` 内联图标（卡面换 sprite，右键详情按卡种把实际用到的图标词条常驻进列表，不再靠 Inspect hover）。权威见 [ADR-0037](0037-inspect-detail-is-glossary-rows.md)。
 6. **分类落为三条正交轴**：`deckId`（卡组，决定卡背；怪物那边兼任遭遇编排单位）、`role`（功能角色粗轴，攻/防/功能，接投放均衡）、`tags`（细轴多值）。连同已有的 `rarity`，全部代号主键、中文只做显示名。  
    **消歧**：`role` 的「防御」（`ContentRole.Defense`）只回答「这张卡在 build 投放里偏防向」，**不是**战斗属性，也不等于护甲 / 伤害减免。战斗减伤与护甲语义见 [ADR-0028](0028-damage-formula-armor-and-reduction.md)。
 
