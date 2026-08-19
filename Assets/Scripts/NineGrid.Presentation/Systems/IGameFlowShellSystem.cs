@@ -18,6 +18,8 @@ namespace NineGrid.Presentation.Systems
 
         bool IsQuickTestMode { get; }
 
+        bool IsTutorialMode { get; }
+
         int Generation { get; }
 
         bool CanAcceptQuickTestEntry { get; }

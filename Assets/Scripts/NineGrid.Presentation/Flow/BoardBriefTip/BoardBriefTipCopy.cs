@@ -240,5 +240,11 @@ namespace NineGrid.Flow.BoardBriefTip
                     return string.Empty;
             }
         }
+
+        /// <summary>教程期间大楼层提示特化显示名。</summary>
+        public static string TutorialFloorLevelHint => L10n.Tr("floor.tutorial_level", "密林_翡翠迷雾");
+
+        /// <summary>教程期间小房间提示特化显示名。</summary>
+        public static string TutorialRoomHint => L10n.Tr("floor.tutorial_room", "教程");
     }
 }

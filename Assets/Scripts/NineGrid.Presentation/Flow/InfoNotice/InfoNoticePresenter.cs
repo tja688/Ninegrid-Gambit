@@ -1,6 +1,8 @@
 using System;
 using System.Threading;
 using Cysharp.Threading.Tasks;
+using Febucci.TextAnimatorForUnity;
+using Febucci.TextAnimatorForUnity.TextMeshPro;
 using NineGrid.Flow.Presentation;
 using TMPro;
 using UnityEngine;
@@ -25,8 +27,9 @@ namespace NineGrid.Flow.InfoNotice
 
     /// <summary>
     /// 通用拒绝/提示消息弹窗驱动：基于场景 <c>Panels/InfoPanel/InfoWindow</c>。
-    /// 浮现显示短时消息提醒或教学句，切片宽度按字数自适应（宽:字 = 2:6），高度与物体缩放不变。
-    /// 支持教学保持（点了才走 / 停两秒），保持期间短时拒绝提示不会替换或打断教学句。
+    /// 浮现显示短时消息提醒、教学句或 UI 悬停介绍。
+    /// 切片底框宽度按字数自适应（宽:字 = 2:6），附带利落迅速的打字机入场（中心向两边延展）与程序化平滑宽度缓动。
+    /// 支持教学保持（点了才走 / 停两秒），保持期间短时拒绝提示与悬停提示不会打断教学句。
     /// 单实例保障：新动作产生时直接刷新文案并重走流程，不产生多实例重叠。
     /// </summary>
     [DisallowMultipleComponent]
@@ -43,6 +46,9 @@ namespace NineGrid.Flow.InfoNotice
         public const float DefaultDisplayDuration = 1.5f;
         public const float DefaultFadeOutDuration = 0.35f;
 
+        public const float DefaultWidthTweenDuration = 0.22f;
+        public const float DefaultTypewriterSpeedMultiplier = 2.5f;
+
         private static InfoNoticePresenter sInstance;
 
         [Tooltip("信息面板根节点（留空自动按 Panels/InfoPanel 查找）。")]
@@ -57,6 +63,12 @@ namespace NineGrid.Flow.InfoNotice
         [Tooltip("提示文本 TextMeshPro。")]
         [SerializeField] private TMP_Text bodyText;
 
+        [Tooltip("Text Animator 组件（留空自动绑定/挂载）。")]
+        [SerializeField] private TextAnimator_TMP textAnimator;
+
+        [Tooltip("打字机组件（留空自动绑定/挂载）。")]
+        [SerializeField] private TypewriterComponent typewriter;
+
         [Tooltip("浮现淡入时间（秒）。")]
         [SerializeField] private float fadeInDuration = DefaultFadeInDuration;
 
@@ -65,6 +77,12 @@ namespace NineGrid.Flow.InfoNotice
 
         [Tooltip("淡出消失时间（秒）。")]
         [SerializeField] private float fadeOutDuration = DefaultFadeOutDuration;
+
+        [Tooltip("底框宽度程序化平滑缓动时间（秒）。")]
+        [SerializeField] private float widthTweenDuration = DefaultWidthTweenDuration;
+
+        [Tooltip("打字机速度倍率（利落迅速）。")]
+        [SerializeField] private float typewriterSpeedMultiplier = DefaultTypewriterSpeedMultiplier;
 
         private Color mOriginalSpriteColor = Color.white;
         private Color mOriginalTextColor = Color.white;
@@ -76,6 +94,9 @@ namespace NineGrid.Flow.InfoNotice
 
         private InfoNoticeHoldMode mCurrentHoldMode = InfoNoticeHoldMode.None;
         private bool mIsHoldingTutorialSentence;
+
+        private bool mIsHoverActive;
+        private string mCurrentHoverText;
 
         public static InfoNoticePresenter InstanceOrNull()
         {
@@ -189,6 +210,24 @@ namespace NineGrid.Flow.InfoNotice
         }
 
         /// <summary>
+        /// 显示 UI 悬停介绍提示（指针离开前持续显示）。
+        /// </summary>
+        public static void ShowHover(string text)
+        {
+            var presenter = EnsureExists();
+            presenter.ShowHoverInfo(text);
+        }
+
+        /// <summary>
+        /// 清退 UI 悬停介绍提示。
+        /// </summary>
+        public static void ClearHover()
+        {
+            var presenter = InstanceOrNull();
+            presenter?.ClearHoverInfo();
+        }
+
+        /// <summary>
         /// 解除当前正在保持的教学句。
         /// </summary>
         public static void DismissHold()
@@ -219,6 +258,8 @@ namespace NineGrid.Flow.InfoNotice
                 sInstance.mAnimationCts?.Dispose();
                 sInstance.mAnimationCts = null;
                 sInstance.mIsHoldingTutorialSentence = false;
+                sInstance.mIsHoverActive = false;
+                sInstance.mCurrentHoverText = null;
                 sInstance.mCurrentHoldMode = InfoNoticeHoldMode.None;
                 sInstance = null;
             }
@@ -227,6 +268,8 @@ namespace NineGrid.Flow.InfoNotice
         public bool IsVisible => windowRoot != null && windowRoot.activeSelf && mCurrentAlpha > 0.001f;
 
         public bool IsHoldingTutorialSentence => mIsHoldingTutorialSentence;
+
+        public bool IsHoverActive => mIsHoverActive;
 
         public InfoNoticeHoldMode CurrentHoldMode => mCurrentHoldMode;
 
@@ -269,6 +312,8 @@ namespace NineGrid.Flow.InfoNotice
             mAnimationCts = new CancellationTokenSource();
 
             var gen = ++mGeneration;
+            mIsHoverActive = false;
+            mCurrentHoverText = null;
 
             if (panelRoot != null && !panelRoot.activeSelf)
             {
@@ -280,19 +325,13 @@ namespace NineGrid.Flow.InfoNotice
                 windowRoot.SetActive(true);
             }
 
-            if (bodyText != null)
-            {
-                bodyText.text = text;
-            }
-
-            ApplySlicedWidth(text);
-
-            // 立即刷新为完全显示状态并走淡出流程
             ApplyAlpha(1f);
 
             var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(
                 mAnimationCts.Token,
                 this != null ? destroyCancellationToken : CancellationToken.None);
+
+            PresentText(text, linkedCts.Token);
 
             RunNoticeLifecycleAsync(gen, durationSeconds, linkedCts.Token).Forget();
             return gen;
@@ -330,6 +369,8 @@ namespace NineGrid.Flow.InfoNotice
             var gen = ++mGeneration;
             mIsHoldingTutorialSentence = true;
             mCurrentHoldMode = mode;
+            mIsHoverActive = false;
+            mCurrentHoverText = null;
 
             if (panelRoot != null && !panelRoot.activeSelf)
             {
@@ -341,24 +382,101 @@ namespace NineGrid.Flow.InfoNotice
                 windowRoot.SetActive(true);
             }
 
-            if (bodyText != null)
-            {
-                bodyText.text = text;
-            }
-
-            ApplySlicedWidth(text);
             ApplyAlpha(1f);
+
+            var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(
+                mAnimationCts.Token,
+                this != null ? destroyCancellationToken : CancellationToken.None);
+
+            PresentText(text, linkedCts.Token);
 
             if (mode == InfoNoticeHoldMode.HoldTwoSeconds)
             {
-                var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(
-                    mAnimationCts.Token,
-                    this != null ? destroyCancellationToken : CancellationToken.None);
-
                 RunTutorialHoldTwoSecondsLifecycleAsync(gen, DefaultHoldTwoSecondsDuration, linkedCts.Token).Forget();
             }
 
             return gen;
+        }
+
+        /// <summary>
+        /// 显示 UI 悬停介绍提示。
+        /// </summary>
+        public void ShowHoverInfo(string text)
+        {
+            EnsureBindings();
+
+            // 教学句正在保持时，悬停提示不打断教学句
+            if (mIsHoldingTutorialSentence)
+            {
+                return;
+            }
+
+            if (string.IsNullOrEmpty(text))
+            {
+                ClearHoverInfo();
+                return;
+            }
+
+            if (mIsHoverActive && string.Equals(mCurrentHoverText, text, StringComparison.Ordinal))
+            {
+                return;
+            }
+
+            mAnimationCts?.Cancel();
+            mAnimationCts?.Dispose();
+            mAnimationCts = new CancellationTokenSource();
+
+            var gen = ++mGeneration;
+            mIsHoverActive = true;
+            mCurrentHoverText = text;
+
+            if (panelRoot != null && !panelRoot.activeSelf)
+            {
+                panelRoot.SetActive(true);
+            }
+
+            if (windowRoot != null && !windowRoot.activeSelf)
+            {
+                windowRoot.SetActive(true);
+            }
+
+            ApplyAlpha(1f);
+
+            var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(
+                mAnimationCts.Token,
+                this != null ? destroyCancellationToken : CancellationToken.None);
+
+            PresentText(text, linkedCts.Token);
+        }
+
+        /// <summary>
+        /// 清退 UI 悬停介绍提示。
+        /// </summary>
+        public void ClearHoverInfo()
+        {
+            if (!mIsHoverActive)
+            {
+                return;
+            }
+
+            mIsHoverActive = false;
+            mCurrentHoverText = null;
+
+            if (mIsHoldingTutorialSentence)
+            {
+                return;
+            }
+
+            mAnimationCts?.Cancel();
+            mAnimationCts?.Dispose();
+            mAnimationCts = new CancellationTokenSource();
+
+            var gen = ++mGeneration;
+            var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(
+                mAnimationCts.Token,
+                this != null ? destroyCancellationToken : CancellationToken.None);
+
+            RunHoverFadeOutAsync(gen, linkedCts.Token).Forget();
         }
 
         /// <summary>
@@ -383,6 +501,8 @@ namespace NineGrid.Flow.InfoNotice
             mAnimationCts = null;
             mGeneration++;
             mIsHoldingTutorialSentence = false;
+            mIsHoverActive = false;
+            mCurrentHoverText = null;
             mCurrentHoldMode = InfoNoticeHoldMode.None;
 
             ApplyAlpha(0f);
@@ -427,6 +547,34 @@ namespace NineGrid.Flow.InfoNotice
                 bodyText = windowRoot.GetComponentInChildren<TMP_Text>(true);
             }
 
+            if (bodyText != null)
+            {
+                bodyText.alignment = TextAlignmentOptions.Center;
+
+                if (textAnimator == null)
+                {
+                    textAnimator = bodyText.GetComponent<TextAnimator_TMP>();
+                    if (textAnimator == null && Application.isPlaying)
+                    {
+                        textAnimator = bodyText.gameObject.AddComponent<TextAnimator_TMP>();
+                    }
+                }
+
+                if (typewriter == null)
+                {
+                    typewriter = bodyText.GetComponent<TypewriterComponent>();
+                    if (typewriter == null && Application.isPlaying)
+                    {
+                        typewriter = bodyText.gameObject.AddComponent<TypewriterComponent>();
+                    }
+                }
+
+                if (typewriter != null)
+                {
+                    typewriter.SetTypewriterSpeed(typewriterSpeedMultiplier);
+                }
+            }
+
             if (windowSpriteRenderer != null)
             {
                 windowSpriteRenderer.drawMode = SpriteDrawMode.Sliced;
@@ -452,17 +600,80 @@ namespace NineGrid.Flow.InfoNotice
             }
         }
 
-        private void ApplySlicedWidth(string text)
+        private void PresentText(string text, CancellationToken ct)
+        {
+            if (string.IsNullOrEmpty(text))
+            {
+                return;
+            }
+
+            var count = text.Length;
+            var targetWidth = Mathf.Max(mOriginalSpriteSize.x, count * CharacterWidthRatio);
+            var startWidth = (windowSpriteRenderer != null && mCurrentAlpha > 0.001f && windowSpriteRenderer.size.x > 0.1f)
+                ? windowSpriteRenderer.size.x
+                : Mathf.Min(mOriginalSpriteSize.x, targetWidth);
+
+            // 无论是否有动画，先写 text 内容作为基础兜底
+            if (bodyText != null)
+            {
+                bodyText.text = text;
+            }
+
+            // 1. 底框宽度程序化平滑缓动（在非 Play 模式或测试模式立即赋目标宽度）
+            if (!Application.isPlaying || widthTweenDuration <= 0.001f)
+            {
+                if (windowSpriteRenderer != null)
+                {
+                    windowSpriteRenderer.drawMode = SpriteDrawMode.Sliced;
+                    windowSpriteRenderer.size = new Vector2(targetWidth, mOriginalSpriteSize.y);
+                }
+            }
+            else
+            {
+                AnimateWidthAsync(startWidth, targetWidth, widthTweenDuration, ct).Forget();
+            }
+
+            // 2. 打字机演出：利落打出，支持展开效果
+            if (typewriter != null && typewriter.enabled && Application.isPlaying)
+            {
+                typewriter.SetTypewriterSpeed(typewriterSpeedMultiplier);
+                typewriter.ShowText("{expand}" + text + "{/expand}");
+            }
+        }
+
+        private async UniTaskVoid AnimateWidthAsync(float fromWidth, float targetWidth, float duration, CancellationToken ct)
         {
             if (windowSpriteRenderer == null)
             {
                 return;
             }
 
-            var count = string.IsNullOrEmpty(text) ? 0 : text.Length;
-            var targetWidth = count * CharacterWidthRatio;
             windowSpriteRenderer.drawMode = SpriteDrawMode.Sliced;
-            windowSpriteRenderer.size = new Vector2(targetWidth, mOriginalSpriteSize.y);
+            if (duration <= 0.001f || Mathf.Abs(fromWidth - targetWidth) < 0.001f)
+            {
+                windowSpriteRenderer.size = new Vector2(targetWidth, mOriginalSpriteSize.y);
+                return;
+            }
+
+            try
+            {
+                var elapsed = 0f;
+                while (elapsed < duration)
+                {
+                    elapsed += Time.unscaledDeltaTime;
+                    var t = Mathf.Clamp01(elapsed / duration);
+                    var eased = 1f - (1f - t) * (1f - t); // EaseOutQuad
+                    var w = Mathf.Lerp(fromWidth, targetWidth, eased);
+                    windowSpriteRenderer.size = new Vector2(w, mOriginalSpriteSize.y);
+                    await UniTask.Yield(PlayerLoopTiming.Update, ct);
+                }
+
+                windowSpriteRenderer.size = new Vector2(targetWidth, mOriginalSpriteSize.y);
+            }
+            catch (OperationCanceledException)
+            {
+                // 打断属正常控制流
+            }
         }
 
         private async UniTaskVoid RunNoticeLifecycleAsync(int gen, float durationSeconds, CancellationToken ct)
@@ -545,6 +756,37 @@ namespace NineGrid.Flow.InfoNotice
             catch (OperationCanceledException)
             {
                 // 被新动作打断或显式解除，属正常控制流
+            }
+        }
+
+        private async UniTaskVoid RunHoverFadeOutAsync(int gen, CancellationToken ct)
+        {
+            try
+            {
+                if (fadeOutDuration > 0.001f)
+                {
+                    var elapsed = 0f;
+                    while (elapsed < fadeOutDuration)
+                    {
+                        elapsed += Time.unscaledDeltaTime;
+                        var t = Mathf.Clamp01(elapsed / fadeOutDuration);
+                        ApplyAlpha(Mathf.Lerp(1f, 0f, t));
+                        await UniTask.Yield(PlayerLoopTiming.Update, ct);
+                    }
+                }
+
+                ApplyAlpha(0f);
+
+                if (gen == mGeneration && !mIsHoverActive && !mIsHoldingTutorialSentence)
+                {
+                    if (windowRoot != null)
+                    {
+                        windowRoot.SetActive(false);
+                    }
+                }
+            }
+            catch (OperationCanceledException)
+            {
             }
         }
 
@@ -640,5 +882,3 @@ namespace NineGrid.Flow.InfoNotice
         }
     }
 }
-
-

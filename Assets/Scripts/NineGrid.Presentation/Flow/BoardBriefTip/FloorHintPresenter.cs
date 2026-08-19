@@ -1,4 +1,6 @@
 using NineGrid.Core;
+using NineGrid.Flow.Tutorial;
+using NineGrid.Presentation.Systems;
 using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -6,7 +8,9 @@ using UnityEngine.SceneManagement;
 namespace NineGrid.Flow.BoardBriefTip
 {
     /// <summary>
-    /// 场景 <c>楼层提示</c>：<c>大楼层提示</c> 显示当前地下城环境名；<c>小房间提示</c> 显示房间类型名。
+    /// 场景 <c>楼层提示</c>：<c>大楼层提示</c> 显示当前地下城环境名（教程期间显示 密林_翡翠迷雾）；
+    /// <c>小房间提示</c> 显示房间类型名（教程期间显示 教程）。
+    /// 仅在教程期间特化显示，常规模式（后续第2、3次对局）恢复常规房间与环境信息。
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class FloorHintPresenter : MonoBehaviour
@@ -14,6 +18,9 @@ namespace NineGrid.Flow.BoardBriefTip
         public const string RootObjectName = "楼层提示";
         public const string FloorLevelHintObjectName = "大楼层提示";
         public const string RoomHintObjectName = "小房间提示";
+
+        public const string TutorialFloorLevelHint = "密林_翡翠迷雾";
+        public const string TutorialRoomHint = "教程";
 
         private static FloorHintPresenter sInstance;
 
@@ -25,6 +32,7 @@ namespace NineGrid.Flow.BoardBriefTip
         private int mLastNodeIndex = int.MinValue;
         private string mLastDifficultyId = null;
         private RoomKind mLastRoom = (RoomKind)(-1);
+        private bool mLastIsTutorial = false;
 
         public static FloorHintPresenter EnsureExists()
         {
@@ -91,6 +99,44 @@ namespace NineGrid.Flow.BoardBriefTip
             }
         }
 
+        public static bool IsTutorialActive(int nodeIndex = 0, RunModel run = null)
+        {
+            var arch = NineGridArchitecture.Interface ?? NineGridArchitecture.Current;
+            var shell = arch?.GetSystem<IGameFlowShellSystem>();
+            if (shell != null && shell.IsTutorialMode)
+            {
+                return true;
+            }
+
+            if (TutorialCoach.IsSteps1To9Active || TutorialCoach.IsDoorTutorialActive)
+            {
+                return true;
+            }
+
+            if (TutorialCoach.EntryKind == TutorialEntryKind.Menu)
+            {
+                return true;
+            }
+
+            if (run == null && arch != null)
+            {
+                run = arch.GetModel<RunModel>();
+            }
+
+            var actualNodeIndex = nodeIndex > 0
+                ? nodeIndex
+                : (run?.NodeIndex != null ? run.NodeIndex.Value : 0);
+
+            if (actualNodeIndex <= 1
+                && (shell == null || !shell.IsQuickTestMode)
+                && !TutorialProgressStore.IsSteps1To9Completed())
+            {
+                return true;
+            }
+
+            return false;
+        }
+
         private void LateUpdate()
         {
             var arch = NineGridArchitecture.Current;
@@ -106,14 +152,18 @@ namespace NineGrid.Flow.BoardBriefTip
                 ? run.DifficultyId.Value
                 : NineGrid.Core.Content.RunDifficultyIds.Default;
             var room = run.Room.Value;
+            var isTutorial = IsTutorialActive(nodeIndex, run);
+
             if (floor == mLastFloor
                 && nodeIndex == mLastNodeIndex
                 && room == mLastRoom
+                && isTutorial == mLastIsTutorial
                 && string.Equals(mLastDifficultyId, difficultyId, System.StringComparison.Ordinal))
             {
                 return;
             }
 
+            mLastIsTutorial = isTutorial;
             Apply(floor, room, nodeIndex, difficultyId);
         }
 
@@ -132,14 +182,20 @@ namespace NineGrid.Flow.BoardBriefTip
             mLastDifficultyId = difficultyId;
             mLastRoom = room;
 
+            var isTutorial = IsTutorialActive(nodeIndex);
+
             if (floorLevelText != null)
             {
-                floorLevelText.text = BoardBriefTipCopy.FormatFloorLevelHint(floor, nodeIndex, difficultyId);
+                floorLevelText.text = isTutorial
+                    ? BoardBriefTipCopy.TutorialFloorLevelHint
+                    : BoardBriefTipCopy.FormatFloorLevelHint(floor, nodeIndex, difficultyId);
             }
 
             if (roomText != null)
             {
-                roomText.text = BoardBriefTipCopy.FormatRoomHint(room);
+                roomText.text = isTutorial
+                    ? BoardBriefTipCopy.TutorialRoomHint
+                    : BoardBriefTipCopy.FormatRoomHint(room);
             }
         }
 

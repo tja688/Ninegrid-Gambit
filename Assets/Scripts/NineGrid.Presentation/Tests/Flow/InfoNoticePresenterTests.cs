@@ -175,6 +175,31 @@ namespace NineGrid.Presentation.Tests.Flow
             Assert.IsFalse(mWindowGo.activeSelf);
         });
 
+        [Test]
+        public void ShowHover_DisplaysTextAndClearHoverHides()
+        {
+            InfoNoticePresenter.ShowHover("这是血条描述");
+            Assert.IsTrue(mPresenter.IsVisible);
+            Assert.IsTrue(mPresenter.IsHoverActive);
+            Assert.AreEqual("这是血条描述", mTmpText.text);
+
+            InfoNoticePresenter.ClearHover();
+            Assert.IsFalse(mPresenter.IsHoverActive);
+        }
+
+        [Test]
+        public void ShowHover_DoesNotOverrideHoldingTutorialSentence()
+        {
+            InfoNoticePresenter.ShowClickToAdvance("教学句");
+            Assert.IsTrue(InfoNoticePresenter.IsHoldingSentence);
+
+            InfoNoticePresenter.ShowHover("尝试悬停");
+            Assert.AreEqual("教学句", mTmpText.text);
+            Assert.IsFalse(mPresenter.IsHoverActive);
+
+            InfoNoticePresenter.DismissHold();
+        }
+
         [UnityTest]
         public IEnumerator ShowHoldTwoSeconds_AutomaticallyFinishesAndClearsHold() => UniTask.ToCoroutine(async () =>
         {

@@ -9,7 +9,9 @@
         "Unity.TextMeshPro",
         "Unity.InputSystem",
         "DamageNumbersPro",
-        "MoreMountains.Tools"
+        "MoreMountains.Tools",
+        "Febucci.TextAnimatorForUnity.Runtime",
+        "Febucci.TextAnimatorForUnity.TMP.Runtime"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
