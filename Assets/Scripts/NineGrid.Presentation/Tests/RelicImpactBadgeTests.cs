@@ -75,7 +75,7 @@ namespace NineGrid.Presentation.Tests
         }
 
         [Test]
-        public void BadgeComponent_PopThenRiseFade_FinishesAroundThreeTenths()
+        public void BadgeComponent_PopHoldThenRiseFade_FinishesAfterTotalDuration()
         {
             var badgeGo = new GameObject("TestBadge");
             var badge = badgeGo.AddComponent<RelicImpactBadge>();
@@ -84,13 +84,10 @@ namespace NineGrid.Presentation.Tests
             badge.Initialize("relic.rotten_cleave_axe", sprite, Vector3.zero, 1, Vector3.zero, "Main", 12);
             Assert.IsFalse(badge.IsFinished);
 
-            badge.Tick(RelicImpactBadge.PopInDuration * 0.5f);
+            badge.Tick(RelicImpactBadge.PopInDuration + RelicImpactBadge.HoldDuration - 0.01f);
             Assert.IsFalse(badge.IsFinished);
 
-            badge.Tick(RelicImpactBadge.PopInDuration);
-            Assert.IsFalse(badge.IsFinished);
-
-            badge.Tick(RelicImpactBadge.FadeOutDuration + 0.01f);
+            badge.Tick(RelicImpactBadge.FadeOutDuration + 0.02f);
             Assert.IsTrue(badge.IsFinished);
 
             UnityEngine.Object.DestroyImmediate(badgeGo);
@@ -128,6 +125,9 @@ namespace NineGrid.Presentation.Tests
             badge.Tick(RelicImpactBadge.PopInDuration);
             var yAfterPop = badge.transform.position.y;
             Assert.AreEqual(0f, yAfterPop, 0.001f);
+
+            badge.Tick(RelicImpactBadge.HoldDuration);
+            Assert.AreEqual(yAfterPop, badge.transform.position.y, 0.001f);
 
             badge.Tick(RelicImpactBadge.FadeOutDuration * 0.5f);
             Assert.Greater(badge.transform.position.y, yAfterPop);

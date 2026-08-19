@@ -4,15 +4,16 @@ namespace NineGrid.Cards.Vfx
 {
     /// <summary>
     /// 遗物影响场地目标时弹出的单个遗物图标徽章。
-    /// 弹出：由小放大并带轻微缩放过冲；浮现后立刻上浮并快速淡出离场。
-    /// 完整生命周期约 0.3 秒。另负责多遗物动态排版时的水平滑动。
+    /// 弹出：由小放大并带轻微缩放过冲；浮现后短暂停留，再上浮并快速淡出离场。
+    /// 完整生命周期约 0.4 秒。另负责多遗物动态排版时的水平滑动。
     /// 纯表现装饰层：不参与 Core 锁步与 Batch-ack（ADR-0001 / ADR-0051）。
     /// </summary>
     public sealed class RelicImpactBadge : MonoBehaviour
     {
         internal const float PopInDuration = 0.12f;
+        internal const float HoldDuration = 0.10f;
         internal const float FadeOutDuration = 0.18f;
-        internal const float TotalDuration = PopInDuration + FadeOutDuration;
+        internal const float TotalDuration = PopInDuration + HoldDuration + FadeOutDuration;
         internal const float RiseDistance = 0.50f;
         internal const float StartScale = 0f;
         internal const float RestScale = 1f;
@@ -109,9 +110,15 @@ namespace NineGrid.Cards.Vfx
                 alpha = Mathf.Clamp01(t / AlphaFillNormalized);
                 _riseY = 0f;
             }
+            else if (_elapsedTime < PopInDuration + HoldDuration)
+            {
+                scale = RestScale;
+                alpha = 1f;
+                _riseY = 0f;
+            }
             else if (_elapsedTime < TotalDuration)
             {
-                var t = Mathf.Clamp01((_elapsedTime - PopInDuration) / FadeOutDuration);
+                var t = Mathf.Clamp01((_elapsedTime - PopInDuration - HoldDuration) / FadeOutDuration);
                 scale = RestScale;
                 alpha = 1f - EaseInQuad(t);
                 _riseY = RiseDistance * EaseOutCubic(t);
