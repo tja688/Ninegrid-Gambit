@@ -20,7 +20,7 @@ namespace NineGrid.Presentation.Tests
 {
     /// <summary>
     /// Issue #223 验收测试：
-    /// 第二职业与选人第三席位（刺客 / Icey / 空间振荡器 / 换位）。
+    /// 第二职业与选人第二席位（刺客 / Icey / 空间振荡器 / 换位）。
     /// </summary>
     [TestFixture]
     public class SecondProfessionSelectionRegressionTests

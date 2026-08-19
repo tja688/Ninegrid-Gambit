@@ -14,8 +14,8 @@ namespace NineGrid.Presentation.Ui
     /// 选人界面：主菜单「开始游戏」后弹出，纯黑屏底幕（<see cref="PureBlackScreenOverlay"/>）。
     /// 场景预置 <c>UI面板/选人界面BG</c>（默认失活）：
     /// - 角色1 = 战士（会动的立绘 + 专属遗物图标），点击立绘切换选中；专属遗物右键开详述；
-    /// - 角色2 = 未解锁席位（精灵/远程射手 Layla 黑色剪影 + 「尚未实装」，时装未落地）；
-    /// - 角色3 = 刺客（Icey 会动立绘 + 空间振荡器遗物图标），点击立绘切换选中；专属遗物右键开详述；
+    /// - 角色2 = 刺客（Icey 会动立绘 + 空间振荡器遗物图标），点击立绘切换选中；专属遗物右键开详述；
+    /// - 角色3 = 未解锁席位（精灵/远程射手 Layla 黑色剪影 + 「尚未实装」，时装未落地）；
     /// - 仅当前选中的解锁角色播放待机序列帧，其余停在第一帧；
     /// - 「开始游戏」在已选解锁角色时正式出发（<see cref="GameFlowController.BeginFormalRun"/>）；
     /// - 难度选项三档均可点选（当前全部路由普通数据，仅记录到 <see cref="RunSetupSelection"/>）；
@@ -187,7 +187,7 @@ namespace NineGrid.Presentation.Ui
             }
 
             WireCharacterSlot(0, "角色1", unlocked: true);
-            WireCharacterSlot(1, "角色2", unlocked: false);
+            WireCharacterSlot(1, "角色2", unlocked: true);
             WireCharacterSlot(2, "角色3", unlocked: false);
             WireDifficulty(0, "难度选项：普通", NineGrid.Core.Content.RunDifficultyIds.Normal, "旅途");
             WireDifficulty(1, "难度选项：进阶", NineGrid.Core.Content.RunDifficultyIds.Advanced, "冒险");
@@ -786,7 +786,7 @@ namespace NineGrid.Presentation.Ui
                     return ProfessionCatalog.Default != null
                         ? ProfessionCatalog.Default.InitialRelicDefId
                         : "relic.rotten_cleave_axe";
-                case 2:
+                case 1:
                     ProfessionDefinition def;
                     return ProfessionCatalog.TryGet(ProfessionCatalog.Assassin, out def) && def != null
                         ? def.InitialRelicDefId
@@ -802,7 +802,7 @@ namespace NineGrid.Presentation.Ui
             {
                 case 0:
                     return ProfessionCatalog.Jester;
-                case 2:
+                case 1:
                     return ProfessionCatalog.Assassin;
                 default:
                     return null;
@@ -814,9 +814,9 @@ namespace NineGrid.Presentation.Ui
             switch (slotIndex)
             {
                 case 1:
-                    return ElfIdleKey;
-                case 2:
                     return AssassinIdleKey;
+                case 2:
+                    return ElfIdleKey;
                 default:
                     return WarriorIdleKey;
             }
@@ -845,7 +845,7 @@ namespace NineGrid.Presentation.Ui
                 return;
             }
 
-            if (index != 2)
+            if (index != 1)
             {
                 return;
             }
