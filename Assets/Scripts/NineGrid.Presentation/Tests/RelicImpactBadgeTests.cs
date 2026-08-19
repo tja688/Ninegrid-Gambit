@@ -75,7 +75,7 @@ namespace NineGrid.Presentation.Tests
         }
 
         [Test]
-        public void BadgeComponent_FadeInHoldFadeOut_FinishesAfterTotalDuration()
+        public void BadgeComponent_PopThenRiseFade_FinishesAroundThreeTenths()
         {
             var badgeGo = new GameObject("TestBadge");
             var badge = badgeGo.AddComponent<RelicImpactBadge>();
@@ -84,16 +84,13 @@ namespace NineGrid.Presentation.Tests
             badge.Initialize("relic.rotten_cleave_axe", sprite, Vector3.zero, 1, Vector3.zero, "Main", 12);
             Assert.IsFalse(badge.IsFinished);
 
-            // Tick past fade in (0.12s)
-            badge.Tick(0.15f);
+            badge.Tick(RelicImpactBadge.PopInDuration * 0.5f);
             Assert.IsFalse(badge.IsFinished);
 
-            // Tick past hold (0.80s)
-            badge.Tick(0.85f);
+            badge.Tick(RelicImpactBadge.PopInDuration);
             Assert.IsFalse(badge.IsFinished);
 
-            // Tick past fade out (0.25s) -> total ~1.17s
-            badge.Tick(0.30f);
+            badge.Tick(RelicImpactBadge.FadeOutDuration + 0.01f);
             Assert.IsTrue(badge.IsFinished);
 
             UnityEngine.Object.DestroyImmediate(badgeGo);
@@ -101,22 +98,61 @@ namespace NineGrid.Presentation.Tests
         }
 
         [Test]
-        public void BadgeComponent_RefreshLifetime_ResetsHoldTimer()
+        public void BadgeComponent_PopIn_OvershootsRestScale()
         {
             var badgeGo = new GameObject("TestBadge");
             var badge = badgeGo.AddComponent<RelicImpactBadge>();
             var sprite = Sprite.Create(Texture2D.whiteTexture, new Rect(0, 0, 4, 4), Vector2.one * 0.5f);
 
             badge.Initialize("relic.rotten_cleave_axe", sprite, Vector3.zero, 1, Vector3.zero, "Main", 12);
-            badge.Tick(0.80f); // well into hold
+
+            // EaseOutBack 过冲峰值约在弹出进度 0.58 处，略高于 1.0
+            badge.Tick(RelicImpactBadge.PopInDuration * 0.58f);
+            Assert.Greater(badge.transform.localScale.x, RelicImpactBadge.RestScale);
+
+            badge.Tick(RelicImpactBadge.PopInDuration * 0.42f);
+            Assert.AreEqual(RelicImpactBadge.RestScale, badge.transform.localScale.x, 0.02f);
+
+            UnityEngine.Object.DestroyImmediate(badgeGo);
+            UnityEngine.Object.DestroyImmediate(sprite);
+        }
+
+        [Test]
+        public void BadgeComponent_FadeOut_RisesUpward()
+        {
+            var badgeGo = new GameObject("TestBadge");
+            var badge = badgeGo.AddComponent<RelicImpactBadge>();
+            var sprite = Sprite.Create(Texture2D.whiteTexture, new Rect(0, 0, 4, 4), Vector2.one * 0.5f);
+
+            badge.Initialize("relic.rotten_cleave_axe", sprite, Vector3.zero, 1, Vector3.zero, "Main", 12);
+            badge.Tick(RelicImpactBadge.PopInDuration);
+            var yAfterPop = badge.transform.position.y;
+            Assert.AreEqual(0f, yAfterPop, 0.001f);
+
+            badge.Tick(RelicImpactBadge.FadeOutDuration * 0.5f);
+            Assert.Greater(badge.transform.position.y, yAfterPop);
+
+            UnityEngine.Object.DestroyImmediate(badgeGo);
+            UnityEngine.Object.DestroyImmediate(sprite);
+        }
+
+        [Test]
+        public void BadgeComponent_RefreshLifetime_RestartsPlayback()
+        {
+            var badgeGo = new GameObject("TestBadge");
+            var badge = badgeGo.AddComponent<RelicImpactBadge>();
+            var sprite = Sprite.Create(Texture2D.whiteTexture, new Rect(0, 0, 4, 4), Vector2.one * 0.5f);
+
+            badge.Initialize("relic.rotten_cleave_axe", sprite, Vector3.zero, 1, Vector3.zero, "Main", 12);
+            badge.Tick(RelicImpactBadge.TotalDuration - 0.04f);
+            Assert.IsFalse(badge.IsFinished);
 
             badge.RefreshLifetime();
 
-            // Should remain alive for another 0.80s hold + 0.25s fade out
-            badge.Tick(0.70f);
+            badge.Tick(RelicImpactBadge.TotalDuration - 0.04f);
             Assert.IsFalse(badge.IsFinished);
 
-            badge.Tick(0.40f);
+            badge.Tick(0.08f);
             Assert.IsTrue(badge.IsFinished);
 
             UnityEngine.Object.DestroyImmediate(badgeGo);
