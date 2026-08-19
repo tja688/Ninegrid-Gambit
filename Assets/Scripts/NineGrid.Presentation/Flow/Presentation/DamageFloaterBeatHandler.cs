@@ -70,6 +70,9 @@ namespace NineGrid.Flow.Presentation
                 // 同缝的物理反馈：抖屏 + 受击卡一颤（装饰，不占主线 ack）。
                 ApplyHitFeedback(gameEvent);
 
+                // 遗物对场地怪物/机关造成伤害时的遗物图标小演出
+                RelicImpactBadgeHook.RequestSpawnForTarget(gameEvent.TargetUid, gameEvent.SourceDefId, gameEvent.Cause);
+
                 if (DisplayMode == DamageFloaterDisplayMode.SplitDamage)
                 {
                     // 拆分：血伤红字 + 净甲伤绿灰字 + 金币盔甲代偿金色字（代偿部分不再报成甲伤）。
@@ -168,6 +171,18 @@ namespace NineGrid.Flow.Presentation
 
                 CombatOutcomeVfx.PulseArmorGain(gameEvent, pos.Value, "DamageFloaterBeatHandler.TryApply");
                 DamageNumberHook.RequestSpawnArmorDamage(pos.Value, gameEvent.Delta);
+                return false;
+            }
+
+            if (instruction.Kind == PresentationInstructionKind.RemoveCard)
+            {
+                // 旁路装饰：遗物直接破坏/移除卡牌（非普通致死击杀），在受影响格位弹出遗物图标
+                var targetCardUid = gameEvent.CardUid > 0 ? gameEvent.CardUid : gameEvent.TargetUid;
+                if (targetCardUid > 0 && !string.Equals(gameEvent.Message, "kill", StringComparison.OrdinalIgnoreCase))
+                {
+                    RelicImpactBadgeHook.RequestSpawnForTarget(targetCardUid, gameEvent.SourceDefId, gameEvent.Cause);
+                }
+
                 return false;
             }
 

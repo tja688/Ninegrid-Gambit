@@ -1079,6 +1079,7 @@ namespace NineGrid.Flow
             Deck?.ResetToStandby();
             Field?.ClearField(force: true);
             Cards?.ReleaseAll("Presentation.ResetCardSurface");
+            NineGrid.Cards.Vfx.RelicImpactBadgeHook.ClearAll();
             _isBusy = false;
         }
 
