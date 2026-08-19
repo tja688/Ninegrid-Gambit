@@ -41,6 +41,13 @@ namespace NineGrid.Cards
         public const string RoomIconLeave = "Assets/Resources/Prefabs/地形图标/离开图标.prefab";
         public const string RoomIconGoUp = "Assets/Resources/Prefabs/地形图标/上楼图标.prefab";
         public const string RoomIconGoDown = "Assets/Resources/Prefabs/地形图标/下楼图标.prefab";
+        public const string RoomIconOssuary = "Assets/Resources/Prefabs/地形图标/通往藏骨堂图标.prefab";
+        public const string RoomIconLostRuins = "Assets/Resources/Prefabs/地形图标/通往失落遗迹图标.prefab";
+        public const string RoomIconMagma = "Assets/Resources/Prefabs/地形图标/通往熔岩之地图标.prefab";
+        public const string RoomIconPaleRoad = "Assets/Resources/Prefabs/地形图标/通往苍白之路图标.prefab";
+        public const string RoomIconTwilightHall = "Assets/Resources/Prefabs/地形图标/通往黄昏礼堂图标.prefab";
+        public const string RoomIconBlood = "Assets/Resources/Prefabs/地形图标/血色图标.prefab";
+        public const string RoomIconAbyssCastle = "Assets/Resources/Prefabs/地形图标/通往深渊城堡图标.prefab";
 
         public const string SlotRegistryAsset = "Assets/Arts/Cards/CardFaceSlotRegistry.asset";
         public const string DescriptionInlineIconStyleAsset =
@@ -162,6 +169,26 @@ namespace NineGrid.Cards
                     return RoomIconGoUp;
                 case "GoDown":
                     return RoomIconGoDown;
+                case "Ossuary":
+                case "ToOssuary":
+                    return RoomIconOssuary;
+                case "LostRuins":
+                case "ToLostRuins":
+                    return RoomIconLostRuins;
+                case "Magma":
+                case "ToMagma":
+                    return RoomIconMagma;
+                case "PaleRoad":
+                case "ToPaleRoad":
+                    return RoomIconPaleRoad;
+                case "TwilightHall":
+                case "ToTwilightHall":
+                    return RoomIconTwilightHall;
+                case "Blood":
+                    return RoomIconBlood;
+                case "AbyssCastle":
+                case "ToAbyssCastle":
+                    return RoomIconAbyssCastle;
                 default:
                     return RoomIconBattle;
             }

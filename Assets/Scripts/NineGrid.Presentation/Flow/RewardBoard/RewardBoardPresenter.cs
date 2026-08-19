@@ -391,14 +391,14 @@ namespace NineGrid.Flow.RewardBoard
                 RewardBoardSlotResolver.LeaveContentId,
                 RoomIconWalkRole.WalkDestination);
 
-            var path = CardChassisPaths.ResolveRoomIconPrefab(RewardBoardSlotResolver.LeaveContentId, null);
+            var path = BoardNavigationIconResolver.ResolveLeaveIconPrefab(mArch);
             var go = TryInstantiate(path, geometry, slot, RewardBoardSlotResolver.LeaveContentId);
             if (go == null)
             {
                 return;
             }
 
-            AttachBriefTipOnly(go, BoardBriefTipCopy.LeaveTip, slot, geometry);
+            AttachBriefTipOnly(go, BoardBriefTipCopy.ForLeave(mArch), slot, geometry);
             mExtras.Add(go);
             mLeaveGo = go;
         }

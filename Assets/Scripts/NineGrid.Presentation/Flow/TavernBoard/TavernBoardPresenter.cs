@@ -806,14 +806,16 @@ namespace NineGrid.Flow.TavernBoard
                 TavernBoardSlotResolver.LeaveContentId,
                 RoomIconWalkRole.WalkDestination);
 
-            var path = CardChassisPaths.ResolveRoomIconPrefab(TavernBoardSlotResolver.LeaveContentId, null);
+            var path = nested
+                ? CardChassisPaths.ResolveRoomIconPrefab(TavernBoardSlotResolver.LeaveContentId, null)
+                : BoardNavigationIconResolver.ResolveLeaveIconPrefab(mArch);
             var go = TryInstantiate(path, geometry, slot, TavernBoardSlotResolver.LeaveContentId);
             if (go == null)
             {
                 return;
             }
 
-            var tip = nested ? CancelNestedTip : BoardBriefTipCopy.LeaveTip;
+            var tip = nested ? CancelNestedTip : BoardBriefTipCopy.ForLeave(mArch);
             AttachBriefTipOnly(go, tip, slot, geometry);
             mExtras.Add(go);
             mLeaveGo = go;

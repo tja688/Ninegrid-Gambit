@@ -114,13 +114,26 @@ namespace NineGrid.Flow.RoomIcons
             {
                 var contentId = contentIds[i];
                 var slot = slots[i];
-                var overridePrefab = string.Empty;
-                if (CardPresentationConfigCatalog.TryGet(contentId, out var dto) && dto != null)
+                string path;
+                if (string.Equals(contentId, "Leave", StringComparison.OrdinalIgnoreCase))
                 {
-                    overridePrefab = dto.iconPrefab;
+                    path = BoardNavigationIconResolver.ResolveLeaveIconPrefab(arch);
+                }
+                else if (string.Equals(contentId, "GoDown", StringComparison.OrdinalIgnoreCase))
+                {
+                    path = BoardNavigationIconResolver.ResolveGoDownIconPrefab(arch);
+                }
+                else
+                {
+                    var overridePrefab = string.Empty;
+                    if (CardPresentationConfigCatalog.TryGet(contentId, out var dto) && dto != null)
+                    {
+                        overridePrefab = dto.iconPrefab;
+                    }
+
+                    path = CardChassisPaths.ResolveRoomIconPrefab(contentId, overridePrefab);
                 }
 
-                var path = CardChassisPaths.ResolveRoomIconPrefab(contentId, overridePrefab);
                 var go = TryInstantiateIcon(path, geometry, slot, contentId);
                 if (go != null)
                 {
@@ -416,7 +429,7 @@ namespace NineGrid.Flow.RoomIcons
                 return;
             }
 
-            var tip = BoardBriefTipCopy.ForContentId(contentId, kind => ResolveRoomDefinition(arch, kind));
+            var tip = BoardBriefTipCopy.ForContentId(contentId, kind => ResolveRoomDefinition(arch, kind), arch);
             var proxy = go.GetComponent<BoardBriefTipHitProxy>();
             if (proxy == null)
             {

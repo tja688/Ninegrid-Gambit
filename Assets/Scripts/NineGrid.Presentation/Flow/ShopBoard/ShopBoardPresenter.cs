@@ -656,14 +656,14 @@ namespace NineGrid.Flow.ShopBoard
                 ShopBoardSlotResolver.LeaveContentId,
                 RoomIconWalkRole.WalkDestination);
 
-            var path = CardChassisPaths.ResolveRoomIconPrefab(ShopBoardSlotResolver.LeaveContentId, null);
+            var path = BoardNavigationIconResolver.ResolveLeaveIconPrefab(mArch);
             var go = TryInstantiate(path, geometry, slot, ShopBoardSlotResolver.LeaveContentId);
             if (go == null)
             {
                 return;
             }
 
-            AttachBriefTipOnly(go, BoardBriefTipCopy.LeaveTip, slot, geometry);
+            AttachBriefTipOnly(go, BoardBriefTipCopy.ForLeave(mArch), slot, geometry);
             mExtras.Add(go);
             mLeaveGo = go;
         }

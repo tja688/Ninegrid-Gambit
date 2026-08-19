@@ -212,14 +212,14 @@ namespace NineGrid.Flow.AttributeBoard
                 AttributeBoardSlotResolver.LeaveContentId,
                 RoomIconWalkRole.WalkDestination);
 
-            var path = CardChassisPaths.ResolveRoomIconPrefab(AttributeBoardSlotResolver.LeaveContentId, null);
+            var path = BoardNavigationIconResolver.ResolveLeaveIconPrefab(mArch);
             var go = TryInstantiate(path, geometry, slot, AttributeBoardSlotResolver.LeaveContentId);
             if (go == null)
             {
                 return;
             }
 
-            AttachBriefTipOnly(go, BoardBriefTipCopy.LeaveTip, slot, geometry);
+            AttachBriefTipOnly(go, BoardBriefTipCopy.ForLeave(mArch), slot, geometry);
             mExtras.Add(go);
         }
 

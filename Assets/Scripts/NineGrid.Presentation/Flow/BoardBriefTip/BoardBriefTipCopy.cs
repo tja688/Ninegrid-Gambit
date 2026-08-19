@@ -6,6 +6,7 @@ using NineGrid.Core;
 using NineGrid.Core.Content;
 using NineGrid.Core.Localization;
 using NineGrid.Core.Systems;
+using QFramework;
 
 namespace NineGrid.Flow.BoardBriefTip
 {
@@ -18,6 +19,75 @@ namespace NineGrid.Flow.BoardBriefTip
         public static string LeaveTip => L10n.Tr("briefTip.leave", "离开本房");
         public static string GoDownTip => L10n.Tr("briefTip.go_down", "前往下一层");
         public static string GoUpTip => L10n.Tr("briefTip.go_up", "返回上一层");
+
+        /// <summary>
+        /// 消费房/奖励房等离开图标悬停文案（前往当前层下半区节点 5）。
+        /// 普通模式：进入密林_失落遗迹 / 进入岩层_熔岩之地 / 进入溶洞_黄昏礼堂；
+        /// 困难模式（血色）：进入血色密林_失落遗迹 / 进入血色岩层_熔岩之地 / 进入血色溶洞_黄昏礼堂。
+        /// </summary>
+        public static string ForLeave(int floor, bool isHard)
+        {
+            var prefix = isHard
+                ? L10n.Tr("briefTip.enter_blood_prefix", "进入血色")
+                : L10n.Tr("briefTip.enter_prefix", "进入");
+            switch (floor)
+            {
+                case 1:
+                    return prefix + L10n.Tr("env.forest_lost_ruins", "密林_失落遗迹");
+                case 2:
+                    return prefix + L10n.Tr("env.rock_magma", "岩层_熔岩之地");
+                case 3:
+                    return prefix + L10n.Tr("env.cave_twilight_hall", "溶洞_黄昏礼堂");
+                default:
+                    return LeaveTip;
+            }
+        }
+
+        public static string ForLeave(int floor, string difficultyId)
+        {
+            return ForLeave(floor, DungeonEnvironmentCatalog.IsHardDifficulty(difficultyId));
+        }
+
+        public static string ForLeave(IArchitecture arch)
+        {
+            var run = arch?.GetModel<RunModel>();
+            var floor = run?.Floor?.Value ?? 1;
+            var difficultyId = run?.DifficultyId?.Value;
+            return ForLeave(floor, difficultyId);
+        }
+
+        /// <summary>
+        /// Boss 战胜后前往下一层的悬停文案。
+        /// 普通模式：进入下一层：岩层 / 进入下一层：溶洞；
+        /// 困难模式（血色）：进入下一层：血色岩层 / 进入下一层：血色溶洞。
+        /// </summary>
+        public static string ForGoDown(int floor, bool isHard)
+        {
+            var prefix = L10n.Tr("briefTip.enter_next_floor_prefix", "进入下一层：");
+            var blood = isHard ? L10n.Tr("briefTip.blood_layer_prefix", "血色") : string.Empty;
+            switch (floor)
+            {
+                case 1:
+                    return prefix + blood + L10n.Tr("layer.rock", "岩层");
+                case 2:
+                    return prefix + blood + L10n.Tr("layer.cave", "溶洞");
+                default:
+                    return GoDownTip;
+            }
+        }
+
+        public static string ForGoDown(int floor, string difficultyId)
+        {
+            return ForGoDown(floor, DungeonEnvironmentCatalog.IsHardDifficulty(difficultyId));
+        }
+
+        public static string ForGoDown(IArchitecture arch)
+        {
+            var run = arch?.GetModel<RunModel>();
+            var floor = run?.Floor?.Value ?? 1;
+            var difficultyId = run?.DifficultyId?.Value;
+            return ForGoDown(floor, difficultyId);
+        }
 
         /// <summary>属性房三选二完成 Notice（#137）：选满两张后经简要解释文字框播报。</summary>
         public static string AttributePickCompleteNotice =>
@@ -63,14 +133,14 @@ namespace NineGrid.Flow.BoardBriefTip
             }
         }
 
-        public static string ForNavigation(NavigationKind kind)
+        public static string ForNavigation(NavigationKind kind, IArchitecture arch = null)
         {
             switch (kind)
             {
                 case NavigationKind.Leave:
-                    return LeaveTip;
+                    return arch != null ? ForLeave(arch) : LeaveTip;
                 case NavigationKind.GoDown:
-                    return GoDownTip;
+                    return arch != null ? ForGoDown(arch) : GoDownTip;
                 default:
                     return string.Empty;
             }
@@ -78,11 +148,12 @@ namespace NineGrid.Flow.BoardBriefTip
 
         /// <summary>
         /// 场地图标 contentId → 悬停文案。房间经 <paramref name="resolveRoom"/> 取 Catalog；
-        /// 导航用固定文案（含本轮未启用的 GoUp）。
+        /// 导航用固定或环境动态文案（含本轮未启用的 GoUp）。
         /// </summary>
         public static string ForContentId(
             string contentId,
-            Func<RoomKind, RoomDefinition> resolveRoom = null)
+            Func<RoomKind, RoomDefinition> resolveRoom = null,
+            IArchitecture arch = null)
         {
             if (string.IsNullOrWhiteSpace(contentId))
             {
@@ -97,7 +168,17 @@ namespace NineGrid.Flow.BoardBriefTip
             if (Enum.TryParse(contentId, ignoreCase: true, out NavigationKind nav)
                 && nav != NavigationKind.None)
             {
-                return ForNavigation(nav);
+                return ForNavigation(nav, arch);
+            }
+
+            if (string.Equals(contentId, "Leave", StringComparison.OrdinalIgnoreCase))
+            {
+                return arch != null ? ForLeave(arch) : LeaveTip;
+            }
+
+            if (string.Equals(contentId, "GoDown", StringComparison.OrdinalIgnoreCase))
+            {
+                return arch != null ? ForGoDown(arch) : GoDownTip;
             }
 
             if (!Enum.TryParse(contentId, ignoreCase: true, out RoomKind room)
