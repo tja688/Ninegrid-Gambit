@@ -110,7 +110,13 @@ namespace NineGrid.Presentation.Systems
 
         private void PublishBusy()
         {
-            mMainlineBusy.Value = mDirector != null && mDirector.IsMainlineBusy;
+            var busy = mDirector != null && mDirector.IsMainlineBusy;
+            var becameIdle = mMainlineBusy.Value && !busy;
+            mMainlineBusy.Value = busy;
+            if (becameIdle)
+            {
+                AvatarDefeatEndHook.RaiseMainlineBecameIdle();
+            }
         }
     }
 }

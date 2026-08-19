@@ -111,6 +111,11 @@ namespace NineGrid.Presentation.Systems
             return mExecutor.TryBeginAvatarDefeatPresentation(cancellationToken);
         }
 
+        public UniTask PlayAvatarDefeatPresentationAsync(CancellationToken cancellationToken = default)
+        {
+            return mExecutor.PlayAvatarDefeatPresentationAsync(cancellationToken);
+        }
+
         public bool TryBeginLethalVictimPresentation(
             ManagedCard victim,
             CancellationToken cancellationToken = default)

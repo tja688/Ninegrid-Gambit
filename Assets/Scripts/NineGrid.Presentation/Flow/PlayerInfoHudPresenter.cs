@@ -1,4 +1,6 @@
 using System.Collections;
+using System.Threading;
+using Cysharp.Threading.Tasks;
 using DG.Tweening;
 using NineGrid.Core;
 using NineGrid.Core.Stats;
@@ -208,6 +210,35 @@ namespace NineGrid.Flow
             ApplyHpVessel(hp, maxHp, shouldAnimate, firstPaint);
             ApplyIntStat(_armor, armorText, armor, armor.ToString(), shouldAnimate);
             ApplyGold(gold, shouldAnimate);
+        }
+
+        /// <summary>血槽 / 数字仍在缓动（战败收口须等归零动画播完）。</summary>
+        public bool IsHpVesselAnimating
+        {
+            get
+            {
+                return IsTweenActive(_fillTween)
+                    || IsTweenActive(_slotTween)
+                    || IsTweenActive(_hpNumberTween);
+            }
+        }
+
+        /// <summary>等到血槽缓动结束，超时则放行以免卡住死亡面板。</summary>
+        public async UniTask WaitUntilHpVesselSettledAsync(
+            CancellationToken cancellationToken = default,
+            float timeoutSeconds = 1.5f)
+        {
+            var deadline = Time.unscaledTime + Mathf.Max(0.05f, timeoutSeconds);
+            while (IsHpVesselAnimating && Time.unscaledTime < deadline)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                await UniTask.Yield(PlayerLoopTiming.Update, cancellationToken);
+            }
+        }
+
+        private static bool IsTweenActive(Tween tween)
+        {
+            return tween != null && tween.IsActive();
         }
 
         /// <summary>指令驱动：写入当前血量（保留已显示的 MaxHp）。</summary>

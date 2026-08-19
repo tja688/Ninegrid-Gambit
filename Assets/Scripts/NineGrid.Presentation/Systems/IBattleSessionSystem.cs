@@ -124,7 +124,10 @@ namespace NineGrid.Presentation.Systems
 
         void RaiseBattleEnded(bool victory);
 
-        /// <summary>投影已 AvatarDefeated 时保证战败收口（幂等）。</summary>
+        /// <summary>
+        /// 投影 / Core 已 AvatarDefeated 时武装战败收口（幂等）。
+        /// 导演链仍在演时只武装，等主线空闲后再 Raise，避免 HardClear 跳过致死表演。
+        /// </summary>
         void EnsureBattleEndedIfAvatarDefeated(
             PostKillBoardPresentationResult result,
             CancellationToken cancellationToken = default);

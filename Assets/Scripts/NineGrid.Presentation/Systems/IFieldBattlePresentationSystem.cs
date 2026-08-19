@@ -47,6 +47,9 @@ namespace NineGrid.Presentation.Systems
 
         bool TryBeginAvatarDefeatPresentation(CancellationToken cancellationToken = default);
 
+        /// <summary>播 Avatar 战败退场并等到死亡 FX / 卸尸完成（死亡面板之前必须等完）。</summary>
+        UniTask PlayAvatarDefeatPresentationAsync(CancellationToken cancellationToken = default);
+
         bool TryBeginLethalVictimPresentation(
             ManagedCard victim,
             CancellationToken cancellationToken = default);
