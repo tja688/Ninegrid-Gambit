@@ -28,6 +28,9 @@ namespace NineGrid.Cards
     [DefaultExecutionOrder(-50)]
     public sealed class CardHandManagerSingleton : MonoBehaviour, IHandoffEndpoint
     {
+        /// <summary>入手动画主线租约 reason；Begin/End 必须同键，否则按持有者集合无法释放。</summary>
+        public const string PickupFlushHoldReason = "PickupFlush";
+
         private sealed class DragSession
         {
             public ManagedCard Card;
@@ -670,7 +673,7 @@ namespace NineGrid.Cards
                 return;
             }
 
-            if (!PresentationInputGates.TryBeginExternalHold("PickupFlush"))
+            if (!PresentationInputGates.TryBeginExternalHold(PickupFlushHoldReason))
             {
                 Debug.LogWarning(
                     "[CardHandManager] PickupFlush ExternalHold 失败，跳过入手动画 slot="
@@ -706,7 +709,7 @@ namespace NineGrid.Cards
 
             if (card == null || field == null)
             {
-                PresentationInputGates.EndExternalHold("Pickup-missing-view");
+                PresentationInputGates.EndExternalHold(PickupFlushHoldReason);
                 FlowFieldTraceSink.PickupGate?.Invoke(pickup.CardUid, "MissingView", false, null);
                 return;
             }
@@ -714,7 +717,7 @@ namespace NineGrid.Cards
             if (!field.TryTakeCardFromField(card.Uid, out var taken, startExplore: false, skipBusyGuard: true)
                 || taken != card)
             {
-                PresentationInputGates.EndExternalHold("Pickup-take-failed");
+                PresentationInputGates.EndExternalHold(PickupFlushHoldReason);
                 FlowFieldTraceSink.PickupGate?.Invoke(card.Uid, "TakeFail", false, null);
                 return;
             }
@@ -778,7 +781,7 @@ namespace NineGrid.Cards
             }
             finally
             {
-                PresentationInputGates.EndExternalHold("Pickup-from-ground");
+                PresentationInputGates.EndExternalHold(PickupFlushHoldReason);
             }
         }
 

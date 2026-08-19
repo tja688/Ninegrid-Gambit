@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using NineGrid.Flow.Diagnostics;
 
 namespace NineGrid.Flow.Presentation
@@ -13,8 +14,8 @@ namespace NineGrid.Flow.Presentation
         private readonly BattleTimeline mBypass;
         private readonly IIntentScriptFactory mScriptFactory;
         private readonly IUiPickPreviewSink mUiPickPreview;
+        private readonly HashSet<string> mExternalHoldReasons = new HashSet<string>(StringComparer.Ordinal);
         private bool mExternalHoldReleased = true;
-        private int mExternalHoldNestDepth;
 
         public PresentationDirector(
             IIntentScriptFactory scriptFactory,
@@ -43,10 +44,10 @@ namespace NineGrid.Flow.Presentation
             get { return mMainline.IsBusy; }
         }
 
-        /// <summary>外部薄适配租约仍持有（含嵌套未清）。</summary>
+        /// <summary>外部薄适配租约仍持有（任一 reason 未 End）。</summary>
         public bool HasExternalHold
         {
-            get { return !mExternalHoldReleased || mExternalHoldNestDepth > 0; }
+            get { return !mExternalHoldReleased || mExternalHoldReasons.Count > 0; }
         }
 
         public bool IsBypassBusy
@@ -90,7 +91,7 @@ namespace NineGrid.Flow.Presentation
             mMainline.Clear();
             mBypass.Clear();
             mExternalHoldReleased = true;
-            mExternalHoldNestDepth = 0;
+            mExternalHoldReasons.Clear();
             TriggerPulseChainDedup.Reset();
             // IntentHardClear 内 ClearChain；此处再 PublishBusy。
             DirectorTrace.IntentHardClear(reason.ToString());
@@ -118,50 +119,46 @@ namespace NineGrid.Flow.Presentation
         /// <summary>
         /// 外部薄适配挂主线租约：未持有时一律入队 Hold step（主线已有其它 Step 时接在后面），
         /// 保证 Apply/Present step 结束后表演窗口仍保持 <see cref="IsMainlineBusy"/>。
-        /// 已持有时嵌套计数 +1（不重复入队 Hold step）：同一把租约可被多个薄适配共用，
-        /// 最后一次 <see cref="EndExternalHold"/> 才真正释放。
+        /// 按 reason 登记持有者：同 reason 重复 Begin 幂等（教程卡点多次 Ensure 不得加层）；
+        /// 不同 reason 必须各自 <see cref="EndExternalHold"/>（教程卡点与拾取动画可并存）。
         /// </summary>
         public bool TryBeginExternalHold(string reason = null)
         {
-            if (!mExternalHoldReleased)
+            var key = NormalizeHoldReason(reason);
+            var added = mExternalHoldReasons.Add(key);
+            if (added && mExternalHoldReasons.Count == 1)
             {
-                mExternalHoldNestDepth++;
-                PublishBusy();
-                return true;
+                mExternalHoldReleased = false;
+                mMainline.Enqueue(new ExternalMainlineHoldStep(() => mExternalHoldReleased));
             }
 
-            mExternalHoldReleased = false;
-            mExternalHoldNestDepth = 1;
-            mMainline.Enqueue(new ExternalMainlineHoldStep(() => mExternalHoldReleased));
             PublishBusy();
             return true;
         }
 
-        /// <summary>释放一层 <see cref="TryBeginExternalHold"/> 租约；嵌套计数归零才真正释放。</summary>
+        /// <summary>释放 <paramref name="reason"/> 对应持有者；集合空了才真正放行主线。</summary>
         public void EndExternalHold(string reason = null)
         {
-            if (mExternalHoldNestDepth > 0)
+            mExternalHoldReasons.Remove(NormalizeHoldReason(reason));
+            if (mExternalHoldReasons.Count == 0)
             {
-                mExternalHoldNestDepth--;
-                if (mExternalHoldNestDepth == 0)
-                {
-                    mExternalHoldReleased = true;
-                }
-
-                PublishBusy();
-                return;
+                mExternalHoldReleased = true;
             }
 
-            mExternalHoldReleased = true;
             PublishBusy();
         }
 
-        /// <summary>清场：强制结束外部租约（含嵌套）。</summary>
+        /// <summary>清场：强制结束全部外部租约持有者。</summary>
         public void ForceEndExternalHold(string reason = null)
         {
             mExternalHoldReleased = true;
-            mExternalHoldNestDepth = 0;
+            mExternalHoldReasons.Clear();
             PublishBusy();
+        }
+
+        private static string NormalizeHoldReason(string reason)
+        {
+            return string.IsNullOrEmpty(reason) ? string.Empty : reason;
         }
 
         /// <summary>旁路装饰道：与主线并行，不占输入互斥。</summary>

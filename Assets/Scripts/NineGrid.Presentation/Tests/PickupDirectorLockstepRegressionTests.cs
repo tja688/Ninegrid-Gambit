@@ -21,7 +21,8 @@ namespace NineGrid.Presentation.Tests
     /// 整个互动链（含敌方齐射 <c>DealDamage</c>），没有任何表演批次 / Counter rig，
     /// 观感就是「瞬间掉血、无攻击表演编排」；教程钉死莱姆卡组 + 强制拾取，必在第 4 次互动触发。
     /// 修复 = 拾取交 PresentationDirector 锁步剧本（<c>ApplyPickupCard</c> 分拍 +
-    /// 互动计数/补牌/旋转/敌方行动逐批表演），并让外部租约可嵌套（教程卡点与拾取动画共用一把锁）。
+    /// 互动链/补牌/旋转/敌方行动逐批表演）；外部租约按 reason 登记持有者
+    /// （同 reason 幂等、不同 reason 必须各自 End，避免教程重复 Begin 把锁加到放不掉）。
     /// </summary>
     public class PickupDirectorLockstepRegressionTests
     {
@@ -118,21 +119,35 @@ namespace NineGrid.Presentation.Tests
         }
 
         [Test]
-        public void ExternalHold_NestsAndReleasesIncrementally()
+        public void ExternalHold_DifferentReasonsNestUntilEachEnds()
         {
             var director = new PresentationDirector(new NoOpIntentScriptFactory());
             Assert.IsFalse(director.HasExternalHold);
 
-            Assert.IsTrue(director.TryBeginExternalHold("outer"), "首次租约应成功");
+            Assert.IsTrue(director.TryBeginExternalHold("TutorialCoachSteps1To9"), "首次租约应成功");
             Assert.IsTrue(director.HasExternalHold);
-            Assert.IsTrue(director.TryBeginExternalHold("inner"), "嵌套租约应成功而非拒绝");
-            Assert.IsTrue(director.HasExternalHold, "嵌套释放前不得放行主线");
+            Assert.IsTrue(director.TryBeginExternalHold("PickupFlush"), "不同 reason 应登记为第二持有者");
+            Assert.IsTrue(director.HasExternalHold, "任一持有者未 End 前不得放行主线");
 
-            director.EndExternalHold("inner");
-            Assert.IsTrue(director.HasExternalHold, "内层释放后外层租约仍应持有");
+            director.EndExternalHold("PickupFlush");
+            Assert.IsTrue(director.HasExternalHold, "拾取释放后教程卡点仍应持有");
 
-            director.EndExternalHold("outer");
-            Assert.IsFalse(director.HasExternalHold, "全部释放后主线才放行");
+            director.EndExternalHold("TutorialCoachSteps1To9");
+            Assert.IsFalse(director.HasExternalHold, "全部持有者释放后主线才放行");
+        }
+
+        [Test]
+        public void ExternalHold_SameReasonBeginIsIdempotent_OneEndReleases()
+        {
+            var director = new PresentationDirector(new NoOpIntentScriptFactory());
+            Assert.IsTrue(director.TryBeginExternalHold("TutorialCoachSteps1To9"));
+            Assert.IsTrue(director.TryBeginExternalHold("TutorialCoachSteps1To9"), "同 reason 重复 Begin 应幂等");
+            Assert.IsTrue(director.HasExternalHold);
+
+            director.EndExternalHold("TutorialCoachSteps1To9");
+            Assert.IsFalse(
+                director.HasExternalHold,
+                "教程 Step1+Step3 同 reason 两次 Begin、推进时一次 End 必须放行，否则场地全点不动");
         }
 
         // ==================== 基建 ====================

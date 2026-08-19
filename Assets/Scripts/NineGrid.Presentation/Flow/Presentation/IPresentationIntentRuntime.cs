@@ -10,7 +10,7 @@ namespace NineGrid.Flow.Presentation
     {
         bool IsStarted { get; }
         IReadonlyBindableProperty<bool> MainlineBusy { get; }
-        /// <summary>导演 external-hold 租约是否仍持有（含嵌套计数归零前）。</summary>
+        /// <summary>导演 external-hold 租约是否仍持有（任一 reason 未 End）。</summary>
         bool HasExternalHold { get; }
         /// <summary>是否有缓存的意图等待主线空闲后提交。</summary>
         bool HasBufferedIntent { get; }

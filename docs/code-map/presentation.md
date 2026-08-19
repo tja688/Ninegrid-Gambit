@@ -68,7 +68,7 @@
 - **绑定表**：`Setup/PresentationSceneBindings`（场景 Host 引用）
 - **显示引导**：`Setup/DisplayModeBootstrap`（Player-only `RuntimeInitializeOnLoadMethod`）：启动即 `FullScreenWindow` + 桌面原生分辨率（`BeforeSceneLoad` / `AfterSceneLoad` 各断言一次，覆盖 Unity 记忆的旧窗口偏好；不每帧 `SetResolution`）。16:9 内容按高度铺满、宽屏左右留黑边由 MainScene 主摄像机 PixelPerfectCamera（960x540 参考分辨率，Crop Frame=StretchFill，Filter Mode=Point，Grid Snapping=None；像素感由 Sprite 材质顶点 snap 承担）处理。PlayerSettings：`fullscreenMode=FullScreenWindow`、`defaultIsNativeResolution=1`、`allowFullscreenSwitch=0`、`resizableWindow=0`
 
-主线 busy 真相：`PresentationDirector.IsMainlineBusy`（经 `IPresentationRuntimeSystem` / InputState 只读投影）。`BattleBusy` / `FieldBusy` 不作独立输入门禁；`OccupancyDesyncLatched` 仅为诊断断言。
+主线 busy 真相：`PresentationDirector.IsMainlineBusy`（经 `IPresentationRuntimeSystem` / InputState 只读投影）。`BattleBusy` / `FieldBusy` 不作独立输入门禁；`OccupancyDesyncLatched` 仅为诊断断言。ExternalHold 按 reason 登记持有者：同 reason 重复 Begin 幂等，不同 reason 必须各自 End（教程卡点与拾取动画可并存；教程 Step1/Step3 重入不得把锁加到一次 End 放不掉）。
 
 ### MainScene 装配卫生（#141）
 
