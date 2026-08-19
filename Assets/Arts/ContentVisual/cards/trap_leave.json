@@ -21,7 +21,7 @@
         "recovery": 0
     },
     "sprites": {
-        "mainIcon": "Assets/Resources/ContentArt/Png/Other/leave.png",
+        "mainIcon": "Assets/Resources/ContentArt/Png/Other/门.aseprite",
         "faceBackground": "",
         "cardFrame": "",
         "banner": "",
