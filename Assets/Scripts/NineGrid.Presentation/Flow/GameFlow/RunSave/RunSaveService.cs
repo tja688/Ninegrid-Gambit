@@ -1,6 +1,8 @@
 using System;
 using Cysharp.Threading.Tasks;
 using NineGrid.Core;
+using NineGrid.Core.Localization;
+using NineGrid.Flow.InfoNotice;
 using NineGrid.Flow.Presentation;
 using NineGrid.Presentation.Systems;
 using UnityEngine;
@@ -162,6 +164,9 @@ namespace NineGrid.Flow
                     if (shell.IsBusy)
                     {
                         Debug.LogError("[RunSave] 读档失败：当前对局未能收口（仍 busy）。");
+                        InfoNoticePresenter.Show(
+                            L10n.Tr("menu.continue_load_failed", "读档失败，已返回主菜单"),
+                            1.6f);
                         return;
                     }
                 }
@@ -176,6 +181,9 @@ namespace NineGrid.Flow
             catch (Exception ex)
             {
                 Debug.LogError("[RunSave] 读档异常：" + ex.Message);
+                InfoNoticePresenter.Show(
+                    L10n.Tr("menu.continue_load_failed", "读档失败，已返回主菜单"),
+                    1.6f);
             }
             finally
             {

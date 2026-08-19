@@ -1,5 +1,7 @@
+using NineGrid.Core;
 using NineGrid.Flow.BattleInfoPreview;
 using NineGrid.Flow.Presentation;
+using NineGrid.Presentation.Systems;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.SceneManagement;
@@ -147,14 +149,16 @@ namespace NineGrid.Flow.InfoNotice
 
         /// <summary>
         /// 覆盖在场地 HUD 之上的面板打开时，禁止 UIInfo 悬停介绍。
-        /// 开战前准备菜单、右键详述、半黑屏叠层均算覆盖面板。
+        /// 开战前准备菜单、右键详述、半黑屏叠层均算覆盖面板；
+        /// 主菜单相位也抑制，避免开始界面冒出血条等局内介绍。
         /// </summary>
         public static bool ShouldSuppressFieldHover()
         {
             return ShouldSuppressFieldHover(
                 NineGrid.Flow.BattleUiDimmerOverlay.IsActive,
                 NineGrid.Flow.CardInspectOverlayPresenter.IsOpen,
-                BattleInfoPreviewPresenter.IsOpen);
+                BattleInfoPreviewPresenter.IsOpen,
+                IsMainMenuShell());
         }
 
         /// <summary>
@@ -162,7 +166,26 @@ namespace NineGrid.Flow.InfoNotice
         /// </summary>
         public static bool ShouldSuppressFieldHover(bool dimmerActive, bool inspectOpen, bool previewOpen)
         {
-            return dimmerActive || inspectOpen || previewOpen;
+            return ShouldSuppressFieldHover(dimmerActive, inspectOpen, previewOpen, mainMenu: false);
+        }
+
+        /// <summary>
+        /// 纯判定：覆盖面板或主菜单相位任一成立即抑制。
+        /// </summary>
+        public static bool ShouldSuppressFieldHover(
+            bool dimmerActive,
+            bool inspectOpen,
+            bool previewOpen,
+            bool mainMenu)
+        {
+            return dimmerActive || inspectOpen || previewOpen || mainMenu;
+        }
+
+        private static bool IsMainMenuShell()
+        {
+            var shell = NineGridArchitecture.Interface?.GetSystem<IGameFlowShellSystem>()
+                        ?? NineGridArchitecture.Current?.GetSystem<IGameFlowShellSystem>();
+            return shell != null && shell.State.Value == GameFlowShellState.MainMenu;
         }
 
         private void ClearHover()

@@ -65,6 +65,15 @@ namespace NineGrid.Presentation.Tests.Flow
         }
 
         [Test]
+        public void ShouldSuppressFieldHover_MainMenu_SuppressesHudTips()
+        {
+            Assert.IsFalse(UIInfoHoverRouter.ShouldSuppressFieldHover(false, false, false, mainMenu: false));
+            Assert.IsTrue(
+                UIInfoHoverRouter.ShouldSuppressFieldHover(false, false, false, mainMenu: true),
+                "主菜单相位应抑制血条等局内 HUD 介绍");
+        }
+
+        [Test]
         public void CenterOutReveal_BuildOrder_SpreadsFromMiddle()
         {
             CollectionAssert.AreEqual(new[] { 0 }, InfoNoticeCenterOutReveal.BuildOrder(1));

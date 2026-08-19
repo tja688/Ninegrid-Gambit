@@ -94,6 +94,7 @@
     "battleLog.stat.range": "Interaction Range",
     "battleLog.stat.recovery": "Recovery",
     "menu.continue_no_save": "No save available",
+    "menu.continue_load_failed": "Could not load save. Returned to the main menu.",
     "save.default_entry": "Default Save {0}",
     "save.default_none": "Default Save (auto-written upon entering battle)",
     "save.none": "No saves yet",

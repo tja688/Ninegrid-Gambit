@@ -10,8 +10,9 @@ using UnityEngine;
 namespace NineGrid.Presentation.Ui
 {
     /// <summary>
-    /// 主菜单「继续游戏」加载弹窗：绑定场景预置 <c>MainPanel/ContinueGame/加载的UI槽位</c>（默认失活），
-    /// 列出已有存档（自动档优先 + 3 手动槽，至多 4 条），点击条目即读档；
+    /// 主菜单「继续游戏」加载弹窗：绑定场景预置 <c>MainPanel/加载的UI槽位</c>（默认失活，
+    /// 与 ContinueGame 按钮解挂、1x 缩放），列出已有存档（自动档优先 + 3 手动槽，至多 4 条），
+    /// 点击条目即读档；打开时 Acquire 半黑屏。
     /// 「关闭面板 (1)」/ Esc 关闭。无任何存档时 <see cref="RequestOpen"/> 返回 false（调用方播拒绝反馈）。
     /// </summary>
     [DisallowMultipleComponent]
@@ -21,6 +22,7 @@ namespace NineGrid.Presentation.Ui
         public const string PanelNodeName = "加载的UI槽位";
         private const string CloseButtonName = "关闭面板 (1)";
         private const string RowNamePrefix = "加载条目模板";
+        private const string DimmerReason = "main-menu-load";
 
         private static readonly Color RowHoverTint = new Color(1f, 0.93f, 0.72f, 1f);
 
@@ -37,6 +39,7 @@ namespace NineGrid.Presentation.Ui
 
         private readonly List<Row> mRows = new List<Row>(4);
         private bool mBound;
+        private bool mDimmerHeld;
 
         public static bool IsOpen =>
             sInstance != null && sInstance.gameObject.activeSelf;
@@ -71,10 +74,7 @@ namespace NineGrid.Presentation.Ui
 
             live.EnsureBound();
             live.Refresh();
-            if (!live.gameObject.activeSelf)
-            {
-                live.gameObject.SetActive(true);
-            }
+            live.SetOpen(true);
 
             InteractionAudioCues.Pulse(
                 InteractionAudioCues.UiConfirm,
@@ -85,9 +85,9 @@ namespace NineGrid.Presentation.Ui
 
         public static void CloseIfOpen()
         {
-            if (sInstance != null && sInstance.gameObject.activeSelf)
+            if (sInstance != null)
             {
-                sInstance.gameObject.SetActive(false);
+                sInstance.SetOpen(false);
             }
         }
 
@@ -106,6 +106,8 @@ namespace NineGrid.Presentation.Ui
             {
                 sInstance = null;
             }
+
+            ReleaseDimmer();
         }
 
         private void Update()
@@ -120,7 +122,7 @@ namespace NineGrid.Presentation.Ui
                         ?? NineGridArchitecture.Current?.GetSystem<IGameFlowShellSystem>();
             if (shell != null && shell.State.Value != GameFlowShellState.MainMenu)
             {
-                gameObject.SetActive(false);
+                SetOpen(false);
                 return;
             }
 
@@ -378,7 +380,7 @@ namespace NineGrid.Presentation.Ui
                 InteractionAudioCues.UiConfirm,
                 "MainMenuLoadPanel.Load",
                 "main_menu.continue.load." + row.SlotId);
-            gameObject.SetActive(false);
+            SetOpen(false);
             RunSaveService.RequestLoadSlot(row.SlotId);
         }
 
@@ -388,7 +390,59 @@ namespace NineGrid.Presentation.Ui
                 InteractionAudioCues.UiCancel,
                 "MainMenuLoadPanel.Close",
                 "main_menu.continue.close");
-            gameObject.SetActive(false);
+            SetOpen(false);
+        }
+
+        private void SetOpen(bool open)
+        {
+            if (open)
+            {
+                if (!gameObject.activeSelf)
+                {
+                    HoldDimmer();
+                    gameObject.SetActive(true);
+                }
+
+                return;
+            }
+
+            if (gameObject.activeSelf)
+            {
+                gameObject.SetActive(false);
+            }
+            else
+            {
+                ReleaseDimmer();
+            }
+        }
+
+        private void OnDisable()
+        {
+            ReleaseDimmer();
+        }
+
+        private void HoldDimmer()
+        {
+            if (mDimmerHeld)
+            {
+                return;
+            }
+
+            if (BattleUiDimmerOverlay.TryAcquire(DimmerReason))
+            {
+                mDimmerHeld = true;
+            }
+        }
+
+        private void ReleaseDimmer()
+        {
+            if (!mDimmerHeld)
+            {
+                return;
+            }
+
+            mDimmerHeld = false;
+            BattleUiDimmerOverlay.Release(DimmerReason);
         }
 
         private static MainMenuLoadPanel FindSceneInstance()

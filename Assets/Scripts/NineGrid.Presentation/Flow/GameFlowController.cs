@@ -2,11 +2,14 @@ using NineGrid.Content.Audio;
 using NineGrid.Core;
 using NineGrid.Core.Localization;
 using NineGrid.Flow.BoardBriefTip;
+using NineGrid.Flow.InfoNotice;
 using NineGrid.Flow.Presentation;
 using NineGrid.Flow.Tutorial;
 using NineGrid.Presentation.Commands;
 using NineGrid.Presentation.Systems;
+using NineGrid.Presentation.Ui;
 using QFramework;
+using TMPro;
 using UnityEngine;
 using L10n = NineGrid.Core.Localization.L10n;
 
@@ -84,9 +87,15 @@ namespace NineGrid.Flow
         public bool CanAcceptQuickTestEntry => ResolveShell()?.CanAcceptQuickTestEntry ?? false;
 
         private const float MenuHoverScale = 1.08f;
+        private static readonly Color ContinueDisabledTint = new Color(0.62f, 0.62f, 0.62f, 0.85f);
 
         private Collider2D hoveredMenuHit;
         private Vector3 hoveredMenuBaseScale = Vector3.one;
+        private SpriteRenderer continueGameSprite;
+        private TMP_Text continueGameLabel;
+        private Color continueGameSpriteBase = Color.white;
+        private Color continueGameLabelBase = Color.white;
+        private bool continueGameVisualCaptured;
 
         private static readonly AudioCueRequest StartHoverRequest = CreateMenuRequest(
             InteractionAudioCues.MainMenuHover,
@@ -179,6 +188,7 @@ namespace NineGrid.Flow
             // 语言系统在 PresentationSceneRoot.OnBind(WireHosts) 注册，晚于本 Awake；
             // Start 再刷一次 label，保证持久化 en 偏好下按钮初始显示 English。
             RefreshLanguageToggleLabel();
+            RefreshContinueGameAffordability();
         }
 
         private void OnDestroy()
@@ -242,20 +252,22 @@ namespace NineGrid.Flow
 
             if (WorldPointerUtility.TryOverlapColliderOnPlane(worldCamera, continueGameHit))
             {
-                if (shell.IsBusy || RunSaveService.IsLoading)
+                if (shell.IsBusy || RunSaveService.IsLoading || !MainMenuLoadPanel.HasAnySave())
                 {
                     PulseMenuRequest(ContinueRejectRequest);
+                    if (!MainMenuLoadPanel.HasAnySave())
+                    {
+                        ShowNotice(L10n.Tr("menu.continue_no_save", "暂无可用存档"));
+                    }
+
                     return;
                 }
 
                 PulseMenuRequest(ContinuePressRequest);
-                if (!NineGrid.Presentation.Ui.MainMenuLoadPanel.RequestOpen())
+                if (!MainMenuLoadPanel.RequestOpen())
                 {
-                    // 无任何存档：拒绝反馈 + 短暂提示。
                     PulseMenuRequest(ContinueRejectRequest);
                     ShowNotice(L10n.Tr("menu.continue_no_save", "暂无可用存档"));
-                    CancelInvoke(nameof(HideNotice));
-                    Invoke(nameof(HideNotice), 1.6f);
                 }
 
                 return;
@@ -446,6 +458,7 @@ namespace NineGrid.Flow
             }
 
             RefreshLanguageToggleLabel();
+            RefreshContinueGameAffordability();
         }
 
         /// <summary>主菜单语言切换（ADR-0046）：zh ↔ en，写偏好 → 重载表 → 主菜单文本即刷。</summary>
@@ -473,15 +486,20 @@ namespace NineGrid.Flow
 
         public void ShowNotice(string message)
         {
-            EnsureViewBindings();
-            var tip = BoardBriefTipPresenter.EnsureExists();
-            tip.ShowNotice(message ?? string.Empty);
+            var text = message ?? string.Empty;
+            if (State == GameFlowShellState.MainMenu)
+            {
+                InfoNoticePresenter.Show(text, 1.6f);
+                return;
+            }
+
+            BoardBriefTipPresenter.EnsureExists().ShowNotice(text);
         }
 
         public void HideNotice()
         {
-            var tip = BoardBriefTipPresenter.InstanceOrNull();
-            tip?.ClearNotice();
+            BoardBriefTipPresenter.InstanceOrNull()?.ClearNotice();
+            InfoNoticePresenter.Hide();
         }
 
         public void RefreshMainMenuTutorialButton()
@@ -507,10 +525,97 @@ namespace NineGrid.Flow
             }
         }
 
+        /// <summary>无可用存档时灰显「继续游戏」，有档恢复原色。</summary>
+        public void RefreshContinueGameAffordability()
+        {
+            if (continueGameHit == null)
+            {
+                return;
+            }
+
+            CaptureContinueGameVisualIfNeeded();
+            var enabled = MainMenuLoadPanel.HasAnySave();
+            if (continueGameSprite != null)
+            {
+                continueGameSprite.color = enabled ? continueGameSpriteBase : ContinueDisabledTint;
+            }
+
+            if (continueGameLabel != null)
+            {
+                continueGameLabel.color = enabled ? continueGameLabelBase : ContinueDisabledTint;
+            }
+        }
+
+        private void CaptureContinueGameVisualIfNeeded()
+        {
+            if (continueGameVisualCaptured || continueGameHit == null)
+            {
+                return;
+            }
+
+            continueGameSprite = continueGameHit.GetComponent<SpriteRenderer>();
+            if (continueGameSprite != null)
+            {
+                continueGameSpriteBase = continueGameSprite.color;
+            }
+
+            continueGameLabel = FindContinueGameLabel(continueGameHit.transform);
+            if (continueGameLabel != null)
+            {
+                continueGameLabelBase = continueGameLabel.color;
+            }
+
+            continueGameVisualCaptured = true;
+        }
+
+        private static TMP_Text FindContinueGameLabel(Transform root)
+        {
+            if (root == null)
+            {
+                return null;
+            }
+
+            var labels = root.GetComponentsInChildren<TMP_Text>(true);
+            for (var i = 0; i < labels.Length; i++)
+            {
+                var label = labels[i];
+                if (label == null)
+                {
+                    continue;
+                }
+
+                if (IsUnderNamedAncestor(label.transform, MainMenuLoadPanel.PanelNodeName))
+                {
+                    continue;
+                }
+
+                return label;
+            }
+
+            return null;
+        }
+
+        private static bool IsUnderNamedAncestor(Transform node, string ancestorName)
+        {
+            var current = node;
+            while (current != null)
+            {
+                if (current.name == ancestorName)
+                {
+                    return true;
+                }
+
+                current = current.parent;
+            }
+
+            return false;
+        }
+
         public void ShowMainMenuPanels()
         {
             EnsureViewBindings();
             RefreshMainMenuTutorialButton();
+            RefreshContinueGameAffordability();
             panelRouter.ShowMainMenu();
         }
 

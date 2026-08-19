@@ -24,7 +24,7 @@
 | `RunSaveService`（静态类） | `GameFlow/RunSave/RunSaveService.cs` | 存档服务：检查点捕获→自动槽、手动槽写入、读档收口重开 |
 | `IRunSaveStore` + `RunSaveStoreHook` | `GameFlow/RunSave/RunSaveStore.cs` | 落盘后端接口 + 装配缝（ES3 桥在 `NineGrid.SaveBridge` 注册） |
 | `RunRecapTracker` | `GameFlow/RunRecapTracker.cs` | 结算统计只读旁路：EventLog 游标累计击杀/损血/道具使用 + 开局计时；`HandleRunStarted` 随 BeginRun 清零，完结结算面板消费 |
-| `GameFlowController` | `GameFlowController.cs` | 主流程场景 View：主菜单按钮（开始/**继续游戏**/教学/设置/退出 + 语言切换）轮询命中 + 悬停缩放 + 菜单音效；「继续游戏」→ `MainMenuLoadPanel.RequestOpen()`（无档拒绝音+短 Notice）；选人界面/纯黑屏/加载弹窗任一激活时按钮轮询让位；语言切换按钮（`MainPanel/LanguageToggle`）经 `LanguageSettingsSystem.Toggle` 切 zh↔en 并自刷 label（ADR-0046）；胜负 Notice 文案经 `L10n.Tr` 包装；实现 `IGameFlowView` |
+| `GameFlowController` | `GameFlowController.cs` | 主流程场景 View：主菜单按钮（开始/**继续游戏**/教学/设置/退出 + 语言切换）轮询命中 + 悬停缩放 + 菜单音效；「继续游戏」无档灰显 + InfoNotice，有档才 `MainMenuLoadPanel.RequestOpen()`；选人界面/纯黑屏/加载弹窗/半黑屏任一激活时按钮轮询让位；主菜单 Notice 走 `InfoNoticePresenter`（局内仍走 BoardBriefTip）；语言切换按钮（`MainPanel/LanguageToggle`）经 `LanguageSettingsSystem.Toggle` 切 zh↔en 并自刷 label（ADR-0046）；胜负 Notice 文案经 `L10n.Tr` 包装；实现 `IGameFlowView` |
 | `GameFlowShellHook`（静态类） | `GameFlowShellHook.cs` | 流程壳 Controller 接线入口；`PublishState` 镜像路径**已停用**（no-op，防旧路径偷写第二份相位） |
 | `GameFlowShellState`（enum） | `Presentation/GameFlowShellState.cs` | 壳相位七态：MainMenu / BattleStub / RewardChoice / RoomChoice / RoomEvent / VictoryNotice / DefeatNotice |
 | `GameFlowShellStateChangedEvent`（struct） | `Presentation/GameFlowShellStateChangedEvent.cs` | 相位变更一次性广播（From/To） |

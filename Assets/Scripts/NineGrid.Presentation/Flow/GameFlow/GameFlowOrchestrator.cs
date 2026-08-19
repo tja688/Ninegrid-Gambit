@@ -140,6 +140,10 @@ namespace NineGrid.Flow
                 {
                     Debug.LogError("[GameFlow] 读档恢复失败，回主菜单。");
                     EnterMainMenuImmediate();
+                    view?.ShowNotice(
+                        NineGrid.Core.Localization.L10n.Tr(
+                            "menu.continue_load_failed",
+                            "读档失败，已返回主菜单"));
                     return;
                 }
             }
