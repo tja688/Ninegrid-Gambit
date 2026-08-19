@@ -475,11 +475,13 @@ namespace NineGrid.Flow
             var restoreCatalog = content != null && content.HasCatalog ? content.Catalog : null;
             player.ReplaceItemSourcePool(NineGrid.Core.Content.HelpCardDecks.FilterRegularSourcePool(
                 restoreCatalog,
-                inventory.ItemSourcePoolDefIds));
-            // 固定卡每关重进卡组，须同为 live 常规档；归档卡/特殊卡在此拦截（ADR-0033 修订）。
+                inventory.ItemSourcePoolDefIds,
+                NineGrid.Core.ProfessionCatalog.ResolveProfessionId(player)));
+            // 固定卡每关重进卡组，须同为 live 常规档；归档卡/特殊卡/他职业专属卡在此拦截。
             player.ReplaceFixedItemCards(NineGrid.Core.Content.HelpCardDecks.FilterRegularSourcePool(
                 restoreCatalog,
-                inventory.FixedItemCardDefIds));
+                inventory.FixedItemCardDefIds,
+                NineGrid.Core.ProfessionCatalog.ResolveProfessionId(player)));
             player.SetItemStatBonus(inventory.ItemStatBonus);
             player.SetTavernUpgradePurchaseCount(inventory.TavernUpgradePurchaseCount);
             player.SetTavernExpandPurchaseCount(inventory.TavernExpandPurchaseCount);
@@ -517,7 +519,8 @@ namespace NineGrid.Flow
             {
                 var liveItemSlots = NineGrid.Core.Content.HelpCardDecks.FilterLiveHelpCards(
                     restoreCatalog,
-                    inventory.ItemSlotDefIds);
+                    inventory.ItemSlotDefIds,
+                    NineGrid.Core.ProfessionCatalog.ResolveProfessionId(player));
                 for (var i = 0; i < liveItemSlots.Count; i++)
                 {
                     var draft = content.CreateDraft(liveItemSlots[i]);

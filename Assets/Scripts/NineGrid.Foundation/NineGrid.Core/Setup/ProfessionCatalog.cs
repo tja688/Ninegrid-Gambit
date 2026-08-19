@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using NineGrid.Core.Content;
 using NineGrid.Core.Systems;
@@ -128,6 +129,79 @@ namespace NineGrid.Core
             }
 
             player.ReplaceItemSourcePool(pool);
+        }
+
+        /// <summary>当前局职业；未写入时回退战士（历史默认职业）。</summary>
+        public static string ResolveProfessionId(PlayerModel player)
+        {
+            if (player == null || string.IsNullOrEmpty(player.ProfessionId.Value))
+            {
+                return Jester;
+            }
+
+            return player.ProfessionId.Value;
+        }
+
+        /// <summary>战士 / 刺客专属道具卡组。通用 <see cref="GenericItemDeckId"/> 不在此列。</summary>
+        public static bool IsProfessionExclusiveItemDeck(string deckId)
+        {
+            return string.Equals(deckId, WarriorItemDeckId, StringComparison.OrdinalIgnoreCase)
+                || string.Equals(deckId, AssassinItemDeckId, StringComparison.OrdinalIgnoreCase);
+        }
+
+        /// <summary>
+        /// 专属道具卡组只对拥有该卡组的职业放行；通用 / 非专属卡组对所有职业放行。
+        /// </summary>
+        public static bool AllowsItemDeckForProfession(string deckId, string professionId)
+        {
+            if (!IsProfessionExclusiveItemDeck(deckId))
+            {
+                return true;
+            }
+
+            var profession = Get(professionId);
+            for (var i = 0; i < profession.ItemSourceDeckIds.Count; i++)
+            {
+                if (string.Equals(profession.ItemSourceDeckIds[i], deckId, StringComparison.OrdinalIgnoreCase))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        public static bool AllowsHelpCardForProfession(CardContentDefinition card, string professionId)
+        {
+            if (card == null || card.Kind != CardKind.HelpCard)
+            {
+                return true;
+            }
+
+            return AllowsItemDeckForProfession(card.DeckId, professionId);
+        }
+
+        /// <summary>
+        /// 具名授予 / 奖池抽取：Catalog 未登记的 defId 放行（测试夹具）；
+        /// 已登记的专属道具卡只对拥有该卡组的职业放行。
+        /// </summary>
+        public static bool AllowsHelpCardGrant(
+            GameContentCatalog catalog,
+            string defId,
+            string professionId)
+        {
+            if (catalog == null || string.IsNullOrEmpty(defId))
+            {
+                return true;
+            }
+
+            CardContentDefinition card;
+            if (!catalog.TryGetCard(defId, out card) || card == null)
+            {
+                return true;
+            }
+
+            return AllowsHelpCardForProfession(card, professionId);
         }
 
         private static void AppendHelpCardsFromDeck(

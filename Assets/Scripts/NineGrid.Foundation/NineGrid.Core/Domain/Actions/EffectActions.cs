@@ -652,7 +652,8 @@ namespace NineGrid.Core
         public override GameActionResult Apply(GameActionContext context)
         {
             var content = context.GetSystem<IContentSystem>();
-            if (FormalContentWiring.IsUnofficialDefId(content != null ? content.Catalog : null, DefId))
+            if (FormalContentWiring.IsUnofficialDefId(content != null ? content.Catalog : null, DefId)
+                || ProfessionExclusiveHelpGrantGate.Blocks(context, DefId, Kind))
             {
                 return GameActionResult.Empty;
             }
@@ -800,7 +801,8 @@ namespace NineGrid.Core
         public override GameActionResult Apply(GameActionContext context)
         {
             var content = context.GetSystem<IContentSystem>();
-            if (FormalContentWiring.IsUnofficialDefId(content != null ? content.Catalog : null, DefId))
+            if (FormalContentWiring.IsUnofficialDefId(content != null ? content.Catalog : null, DefId)
+                || ProfessionExclusiveHelpGrantGate.Blocks(context, DefId, Kind))
             {
                 return GameActionResult.Empty;
             }
@@ -985,6 +987,11 @@ namespace NineGrid.Core
         {
             var content = context.GetSystem<IContentSystem>();
             var candidates = FindCatalogCandidates(content.Catalog, Kind, MinLevel, MaxLevel, ExcludeElite, ExcludeBoss, ExcludeDeckId);
+            if (Kind == CardKind.HelpCard)
+            {
+                ProfessionExclusiveHelpGrantGate.FilterHelpCards(context, candidates);
+            }
+
             if (candidates.Count == 0 || Count <= 0)
             {
                 return GameActionResult.Empty;
@@ -1098,6 +1105,40 @@ namespace NineGrid.Core
             }
 
             return result;
+        }
+    }
+
+    internal static class ProfessionExclusiveHelpGrantGate
+    {
+        public static bool Blocks(GameActionContext context, string defId, CardKind kind)
+        {
+            if (kind != CardKind.HelpCard || context == null)
+            {
+                return false;
+            }
+
+            var content = context.GetSystem<IContentSystem>();
+            var catalog = content != null ? content.Catalog : null;
+            var professionId = ProfessionCatalog.ResolveProfessionId(context.GetModel<PlayerModel>());
+            return !ProfessionCatalog.AllowsHelpCardGrant(catalog, defId, professionId);
+        }
+
+        public static void FilterHelpCards(GameActionContext context, List<CardContentDefinition> candidates)
+        {
+            if (candidates == null || candidates.Count == 0)
+            {
+                return;
+            }
+
+            var professionId = ProfessionCatalog.ResolveProfessionId(
+                context != null ? context.GetModel<PlayerModel>() : null);
+            for (var i = candidates.Count - 1; i >= 0; i--)
+            {
+                if (!ProfessionCatalog.AllowsHelpCardForProfession(candidates[i], professionId))
+                {
+                    candidates.RemoveAt(i);
+                }
+            }
         }
     }
 

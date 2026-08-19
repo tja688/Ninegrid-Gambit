@@ -322,11 +322,13 @@ namespace NineGrid.Core
             var restoreCatalog = content != null && content.HasCatalog ? content.Catalog : null;
             player.ReplaceItemSourcePool(Content.HelpCardDecks.FilterRegularSourcePool(
                 restoreCatalog,
-                snapshot.itemSourcePoolDefIds));
-            // 固定卡每关重进卡组，须同为 live 常规档；旧存档的归档卡/特殊卡在此拦截。
+                snapshot.itemSourcePoolDefIds,
+                ProfessionCatalog.ResolveProfessionId(player)));
+            // 固定卡每关重进卡组，须同为 live 常规档；旧存档的归档卡/特殊卡/他职业专属卡在此拦截。
             player.ReplaceFixedItemCards(Content.HelpCardDecks.FilterRegularSourcePool(
                 restoreCatalog,
-                snapshot.fixedItemCardDefIds));
+                snapshot.fixedItemCardDefIds,
+                ProfessionCatalog.ResolveProfessionId(player)));
             player.SetItemStatBonus(snapshot.itemStatBonus);
             player.SetTavernUpgradePurchaseCount(snapshot.tavernUpgradePurchaseCount);
             player.SetTavernExpandPurchaseCount(snapshot.tavernExpandPurchaseCount);
@@ -387,7 +389,8 @@ namespace NineGrid.Core
             {
                 var liveItemSlots = Content.HelpCardDecks.FilterLiveHelpCards(
                     restoreCatalog,
-                    snapshot.itemSlotDefIds);
+                    snapshot.itemSlotDefIds,
+                    ProfessionCatalog.ResolveProfessionId(player));
                 for (var i = 0; i < liveItemSlots.Count; i++)
                 {
                     var draft = content.CreateDraft(liveItemSlots[i]);

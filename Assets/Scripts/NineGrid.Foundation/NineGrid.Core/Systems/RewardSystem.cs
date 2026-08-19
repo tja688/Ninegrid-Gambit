@@ -88,7 +88,7 @@ namespace NineGrid.Core.Systems
 
             var isRelicPool = IsRelicRewardPool(poolId);
             var applyConsecutivePenalty = isRelicPool && mConsecutiveAppearancePenaltyRelics.Count > 0;
-            var candidates = BuildRollCandidates(pool.Entries, excludeOwnedRelics: true);
+            var candidates = BuildRollCandidates(catalog, pool.Entries, excludeOwnedRelics: true);
             var count = pool.PickCount;
             IReadOnlyList<RewardEntry> rolled;
             if (TryGetRarityWeights(pool, out var white, out var blue, out var gold, out var red))
@@ -661,9 +661,10 @@ namespace NineGrid.Core.Systems
             var randomCount = Math.Max(0, player.ItemDeckCapacity - fixedCount);
 
             // 1) 固定卡占塞卡预算（ItemDeckCapacity）；扩容加总量、固定加可控性，二者互斥权衡。
+            var professionId = ProfessionCatalog.ResolveProfessionId(player);
             for (var i = 0; i < fixedCount; i++)
             {
-                TryAddPlayerCard(catalog, content, options, fixedCards[i]);
+                TryAddPlayerCard(catalog, content, options, fixedCards[i], professionId);
             }
 
             // 2) 剩余预算从来源池随机生成（常规稀有度加权 高60/中30/低10，ADR-0033 修订）
@@ -673,7 +674,7 @@ namespace NineGrid.Core.Systems
                 for (var i = 0; i < randomCount; i++)
                 {
                     var defId = RollRegularItemDefIdWeighted(catalog, pool);
-                    TryAddPlayerCard(catalog, content, options, defId);
+                    TryAddPlayerCard(catalog, content, options, defId, professionId);
                 }
             }
 
@@ -755,9 +756,10 @@ namespace NineGrid.Core.Systems
                 }
 
                 var defIds = RollInjectCardDefIds(inject);
+                var professionId = ProfessionCatalog.ResolveProfessionId(this.GetModel<PlayerModel>());
                 for (var j = 0; j < defIds.Count; j++)
                 {
-                    TryAddPlayerCard(catalog, content, options, defIds[j]);
+                    TryAddPlayerCard(catalog, content, options, defIds[j], professionId);
                 }
             }
         }
@@ -982,14 +984,16 @@ namespace NineGrid.Core.Systems
             GameContentCatalog catalog,
             IContentSystem content,
             NodeDeckOptions options,
-            string defId)
+            string defId,
+            string professionId)
         {
             if (string.IsNullOrEmpty(defId) || catalog == null || !catalog.Cards.ContainsKey(defId))
             {
                 return;
             }
 
-            if (FormalContentWiring.IsUnofficialDefId(catalog, defId))
+            if (FormalContentWiring.IsUnofficialDefId(catalog, defId)
+                || !ProfessionCatalog.AllowsHelpCardGrant(catalog, defId, professionId))
             {
                 return;
             }
@@ -1366,7 +1370,10 @@ namespace NineGrid.Core.Systems
                 && poolId.StartsWith("relic.", System.StringComparison.Ordinal);
         }
 
-        private List<RewardEntry> BuildRollCandidates(IReadOnlyList<RewardEntry> entries, bool excludeOwnedRelics)
+        private List<RewardEntry> BuildRollCandidates(
+            GameContentCatalog catalog,
+            IReadOnlyList<RewardEntry> entries,
+            bool excludeOwnedRelics)
         {
             var candidates = new List<RewardEntry>();
             if (entries == null || entries.Count == 0)
@@ -1380,6 +1387,7 @@ namespace NineGrid.Core.Systems
                 ownedRelics = this.GetModel<PlayerModel>().RelicDefIds;
             }
 
+            var professionId = ProfessionCatalog.ResolveProfessionId(this.GetModel<PlayerModel>());
             for (var i = 0; i < entries.Count; i++)
             {
                 var entry = entries[i];
@@ -1391,6 +1399,12 @@ namespace NineGrid.Core.Systems
                 if (excludeOwnedRelics
                     && entry.Kind == CardKind.Relic
                     && ContainsDefId(ownedRelics, entry.DefId))
+                {
+                    continue;
+                }
+
+                if (entry.Kind == CardKind.HelpCard
+                    && !ProfessionCatalog.AllowsHelpCardGrant(catalog, entry.DefId, professionId))
                 {
                     continue;
                 }

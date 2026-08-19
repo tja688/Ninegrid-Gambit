@@ -573,10 +573,19 @@ namespace NineGrid.Core.Content
 
         /// <summary>
         /// 来源池写回守卫（ADR-0033）：外部快照（跑图存档 / 跨层库存）恢复随机来源池前过滤，
-        /// 只放行 live 卡组常规（White）道具卡。ADR-0033 之前的旧存档来源池可能含宝箱卡等
-        /// 特殊卡，直接写回会让特殊卡回流随机装填。无 catalog 时原样放行（无从裁决）。
+        /// 只放行当前职业允许的 live 常规道具卡。ADR-0033 之前的旧存档来源池可能含宝箱卡等
+        /// 特殊卡，直接写回会让特殊卡回流随机装填；他职业专属卡（如战士局的「换位」）同样拦截。
+        /// 无 catalog 时原样放行（无从裁决）。
         /// </summary>
         public static List<string> FilterRegularSourcePool(GameContentCatalog catalog, IEnumerable<string> defIds)
+        {
+            return FilterRegularSourcePool(catalog, defIds, professionId: null);
+        }
+
+        public static List<string> FilterRegularSourcePool(
+            GameContentCatalog catalog,
+            IEnumerable<string> defIds,
+            string professionId)
         {
             var result = new List<string>();
             if (defIds == null)
@@ -598,7 +607,9 @@ namespace NineGrid.Core.Content
                         || card == null
                         || card.Kind != CardKind.HelpCard
                         || FormalContentWiring.IsUnofficialDeck(card.DeckId)
-                        || !IsRegularRarity(card.Rarity))
+                        || !IsRegularRarity(card.Rarity)
+                        || (!string.IsNullOrEmpty(professionId)
+                            && !ProfessionCatalog.AllowsHelpCardForProfession(card, professionId)))
                     {
                         continue;
                     }
@@ -612,11 +623,19 @@ namespace NineGrid.Core.Content
 
         /// <summary>
         /// 道具卡格 / 固定卡写回守卫（ADR-0033 修订）：外部快照（跑图存档 / 跨层库存）按 defId
-        /// 重造持有道具卡前过滤，只放行 live 卡组道具卡（特殊稀有度允许——宝箱卡等可合法驻留
-        /// 道具卡格）。归档卡（倍增塔/瞭望塔等）仍在 Catalog 中可被 CreateDraft 重造，若不在此
-        /// 拦截，旧存档会把老道具带回正式局。无 catalog 时原样放行（无从裁决）。
+        /// 重造持有道具卡前过滤，只放行当前职业允许的 live 道具卡（特殊稀有度允许——宝箱卡等
+        /// 可合法驻留道具卡格）。归档卡（倍增塔/瞭望塔等）仍在 Catalog 中可被 CreateDraft 重造，
+        /// 若不在此拦截，旧存档会把老道具带回正式局。无 catalog 时原样放行（无从裁决）。
         /// </summary>
         public static List<string> FilterLiveHelpCards(GameContentCatalog catalog, IEnumerable<string> defIds)
+        {
+            return FilterLiveHelpCards(catalog, defIds, professionId: null);
+        }
+
+        public static List<string> FilterLiveHelpCards(
+            GameContentCatalog catalog,
+            IEnumerable<string> defIds,
+            string professionId)
         {
             var result = new List<string>();
             if (defIds == null)
@@ -637,7 +656,9 @@ namespace NineGrid.Core.Content
                     if (!catalog.Cards.TryGetValue(defId, out card)
                         || card == null
                         || card.Kind != CardKind.HelpCard
-                        || FormalContentWiring.IsUnofficialDeck(card.DeckId))
+                        || FormalContentWiring.IsUnofficialDeck(card.DeckId)
+                        || (!string.IsNullOrEmpty(professionId)
+                            && !ProfessionCatalog.AllowsHelpCardForProfession(card, professionId)))
                     {
                         continue;
                     }
