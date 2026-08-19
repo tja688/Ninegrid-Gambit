@@ -53,5 +53,34 @@ namespace NineGrid.Presentation.Tests.Flow
             Object.DestroyImmediate(child);
             Object.DestroyImmediate(parent);
         }
+
+        [Test]
+        public void ShouldSuppressFieldHover_OnlyWhenOverlayIsOpen()
+        {
+            Assert.IsFalse(UIInfoHoverRouter.ShouldSuppressFieldHover(false, false, false));
+            Assert.IsTrue(UIInfoHoverRouter.ShouldSuppressFieldHover(true, false, false), "半黑屏叠层应抑制");
+            Assert.IsTrue(UIInfoHoverRouter.ShouldSuppressFieldHover(false, true, false), "右键详述应抑制");
+            Assert.IsTrue(UIInfoHoverRouter.ShouldSuppressFieldHover(false, false, true), "开战前准备菜单应抑制");
+            Assert.IsTrue(UIInfoHoverRouter.ShouldSuppressFieldHover(true, true, true));
+        }
+
+        [Test]
+        public void CenterOutReveal_BuildOrder_SpreadsFromMiddle()
+        {
+            CollectionAssert.AreEqual(new[] { 0 }, InfoNoticeCenterOutReveal.BuildOrder(1));
+            CollectionAssert.AreEqual(new[] { 0, 1 }, InfoNoticeCenterOutReveal.BuildOrder(2));
+            CollectionAssert.AreEqual(new[] { 1, 0, 2 }, InfoNoticeCenterOutReveal.BuildOrder(3));
+            CollectionAssert.AreEqual(new[] { 2, 1, 3, 0, 4 }, InfoNoticeCenterOutReveal.BuildOrder(5));
+        }
+
+        [Test]
+        public void CenterOutReveal_CountRevealedAt_FinishesWithinTwoTenths()
+        {
+            Assert.AreEqual(0, InfoNoticeCenterOutReveal.CountRevealedAt(0f, 0.2f, 0));
+            Assert.AreEqual(1, InfoNoticeCenterOutReveal.CountRevealedAt(0f, 0.2f, 10));
+            Assert.AreEqual(10, InfoNoticeCenterOutReveal.CountRevealedAt(0.2f, 0.2f, 10));
+            Assert.AreEqual(10, InfoNoticeCenterOutReveal.CountRevealedAt(0.5f, 0.2f, 10));
+            Assert.Less(InfoNoticeCenterOutReveal.CountRevealedAt(0.1f, 0.2f, 10), 10);
+        }
     }
 }

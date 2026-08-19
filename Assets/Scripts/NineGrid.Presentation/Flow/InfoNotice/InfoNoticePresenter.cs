@@ -28,7 +28,7 @@ namespace NineGrid.Flow.InfoNotice
     /// <summary>
     /// 通用拒绝/提示消息弹窗驱动：基于场景 <c>Panels/InfoPanel/InfoWindow</c>。
     /// 浮现显示短时消息提醒、教学句或 UI 悬停介绍。
-    /// 切片底框宽度按字数自适应（宽:字 = 2:6），附带利落迅速的打字机入场（中心向两边延展）与程序化平滑宽度缓动。
+    /// 切片底框宽度按字数自适应（宽:字 = 2:6）。入场是底层规则：质朴打字机从中心一字一字向两边蹦出，约 0.2 秒出完，底框宽度同步程序化缓动。
     /// 支持教学保持（点了才走 / 停两秒），保持期间短时拒绝提示与悬停提示不会打断教学句。
     /// 单实例保障：新动作产生时直接刷新文案并重走流程，不产生多实例重叠。
     /// </summary>
@@ -46,8 +46,8 @@ namespace NineGrid.Flow.InfoNotice
         public const float DefaultDisplayDuration = 1.5f;
         public const float DefaultFadeOutDuration = 0.35f;
 
-        public const float DefaultWidthTweenDuration = 0.22f;
-        public const float DefaultTypewriterSpeedMultiplier = 2.5f;
+        public const float DefaultWidthTweenDuration = InfoNoticeCenterOutReveal.DefaultDurationSeconds;
+        public const float DefaultTypewriterDuration = InfoNoticeCenterOutReveal.DefaultDurationSeconds;
 
         private static InfoNoticePresenter sInstance;
 
@@ -66,7 +66,7 @@ namespace NineGrid.Flow.InfoNotice
         [Tooltip("Text Animator 组件（留空自动绑定/挂载）。")]
         [SerializeField] private TextAnimator_TMP textAnimator;
 
-        [Tooltip("打字机组件（留空自动绑定/挂载）。")]
+        [Tooltip("打字机组件（若场景里残留则强制关掉，改由中心向外逐字揭示驱动）。")]
         [SerializeField] private TypewriterComponent typewriter;
 
         [Tooltip("浮现淡入时间（秒）。")]
@@ -78,11 +78,11 @@ namespace NineGrid.Flow.InfoNotice
         [Tooltip("淡出消失时间（秒）。")]
         [SerializeField] private float fadeOutDuration = DefaultFadeOutDuration;
 
-        [Tooltip("底框宽度程序化平滑缓动时间（秒）。")]
+        [Tooltip("底框宽度程序化平滑缓动时间（秒），与打字机同拍。")]
         [SerializeField] private float widthTweenDuration = DefaultWidthTweenDuration;
 
-        [Tooltip("打字机速度倍率（利落迅速）。")]
-        [SerializeField] private float typewriterSpeedMultiplier = DefaultTypewriterSpeedMultiplier;
+        [Tooltip("打字机整段出完时间（秒）。从中心向两边逐字蹦出。")]
+        [SerializeField] private float typewriterDuration = DefaultTypewriterDuration;
 
         private Color mOriginalSpriteColor = Color.white;
         private Color mOriginalTextColor = Color.white;
@@ -563,15 +563,11 @@ namespace NineGrid.Flow.InfoNotice
                 if (typewriter == null)
                 {
                     typewriter = bodyText.GetComponent<TypewriterComponent>();
-                    if (typewriter == null && Application.isPlaying)
-                    {
-                        typewriter = bodyText.gameObject.AddComponent<TypewriterComponent>();
-                    }
                 }
 
-                if (typewriter != null)
+                if (typewriter != null && typewriter.enabled)
                 {
-                    typewriter.SetTypewriterSpeed(typewriterSpeedMultiplier);
+                    typewriter.enabled = false;
                 }
             }
 
@@ -609,17 +605,10 @@ namespace NineGrid.Flow.InfoNotice
 
             var count = text.Length;
             var targetWidth = Mathf.Max(mOriginalSpriteSize.x, count * CharacterWidthRatio);
-            var startWidth = (windowSpriteRenderer != null && mCurrentAlpha > 0.001f && windowSpriteRenderer.size.x > 0.1f)
-                ? windowSpriteRenderer.size.x
-                : Mathf.Min(mOriginalSpriteSize.x, targetWidth);
+            var compactWidth = Mathf.Max(CharacterWidthRatio, 0.35f);
+            var startWidth = compactWidth;
 
-            // 无论是否有动画，先写 text 内容作为基础兜底
-            if (bodyText != null)
-            {
-                bodyText.text = text;
-            }
-
-            // 1. 底框宽度程序化平滑缓动（在非 Play 模式或测试模式立即赋目标宽度）
+            // 1. 底框宽度程序化平滑缓动（在非 Play 模式立即赋目标宽度）
             if (!Application.isPlaying || widthTweenDuration <= 0.001f)
             {
                 if (windowSpriteRenderer != null)
@@ -633,11 +622,76 @@ namespace NineGrid.Flow.InfoNotice
                 AnimateWidthAsync(startWidth, targetWidth, widthTweenDuration, ct).Forget();
             }
 
-            // 2. 打字机演出：利落打出，支持展开效果
-            if (typewriter != null && typewriter.enabled && Application.isPlaying)
+            // 2. 底层打字机：质朴逐字，从中心向两边蹦出，约 0.2 秒出完
+            // Play 模式交给 Animator 先隐藏再揭示，避免先写 TMP 造成全文闪一帧
+            if (Application.isPlaying && textAnimator != null)
             {
-                typewriter.SetTypewriterSpeed(typewriterSpeedMultiplier);
-                typewriter.ShowText("{expand}" + text + "{/expand}");
+                RevealCenterOutAsync(text, typewriterDuration, ct).Forget();
+            }
+            else if (bodyText != null)
+            {
+                bodyText.text = text;
+                if (textAnimator != null)
+                {
+                    textAnimator.SetText(text, hideText: false);
+                }
+            }
+        }
+
+        private async UniTaskVoid RevealCenterOutAsync(string text, float duration, CancellationToken ct)
+        {
+            if (textAnimator == null)
+            {
+                return;
+            }
+
+            try
+            {
+                textAnimator.SetText(text, hideText: true);
+                textAnimator.FirstVisibleCharacter = 0;
+
+                var charCount = textAnimator.CharactersCount;
+                if (charCount <= 0)
+                {
+                    await UniTask.Yield(PlayerLoopTiming.Update, ct);
+                    charCount = textAnimator.CharactersCount;
+                }
+
+                if (charCount <= 0)
+                {
+                    textAnimator.SetText(text, hideText: false);
+                    return;
+                }
+
+                textAnimator.MaxVisibleCharacters = charCount;
+                textAnimator.SetVisibilityEntireText(false, canPlayEffects: false);
+
+                var order = InfoNoticeCenterOutReveal.BuildOrder(charCount);
+                var revealed = 0;
+                var elapsed = 0f;
+
+                void RevealUpTo(int count)
+                {
+                    var capped = Mathf.Min(count, order.Length);
+                    while (revealed < capped)
+                    {
+                        textAnimator.SetVisibilityChar(order[revealed], isVisible: true, canPlayEffects: false);
+                        revealed++;
+                    }
+                }
+
+                RevealUpTo(InfoNoticeCenterOutReveal.CountRevealedAt(elapsed, duration, order.Length));
+
+                while (revealed < order.Length)
+                {
+                    await UniTask.Yield(PlayerLoopTiming.Update, ct);
+                    elapsed += Time.unscaledDeltaTime;
+                    RevealUpTo(InfoNoticeCenterOutReveal.CountRevealedAt(elapsed, duration, order.Length));
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                // 打断属正常控制流
             }
         }
 

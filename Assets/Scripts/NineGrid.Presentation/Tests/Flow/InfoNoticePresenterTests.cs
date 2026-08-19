@@ -149,6 +149,13 @@ namespace NineGrid.Presentation.Tests.Flow
         }
 
         [Test]
+        public void TypewriterDuration_IsTwoTenthsOfASecond()
+        {
+            Assert.AreEqual(0.2f, InfoNoticePresenter.DefaultTypewriterDuration, 0.0001f);
+            Assert.AreEqual(InfoNoticePresenter.DefaultTypewriterDuration, InfoNoticePresenter.DefaultWidthTweenDuration, 0.0001f);
+        }
+
+        [Test]
         public void Hide_DeactivatesWindowImmediately()
         {
             mPresenter.ShowNotice("短时提示", 1.0f);
