@@ -14,7 +14,7 @@ namespace NineGrid.Flow.RoomIcons
     /// <summary>
     /// 场地图标悬停「特色产物」预览（房间.md / ADR-0020 补充）：hover 房间图标时，
     /// 在场地空格位弹出该房开局注入的候选真卡——属性房 3 张属性道具卡、金币/宝箱/恢复房固定卡、
-    /// 困难房 2 张怪物卡（序列 3/4 代表）、层主房 Boss 卡。
+    /// 困难房 2 张怪物卡（序列 3/4 代表）；层主房不展示 Boss 卡虚影。
     /// 落格复用牌店二级候选的 <see cref="InRoomOfferSlotPlanner"/> 动态避让（避开 Avatar、全部图标格，
     /// 并保留 Avatar→被悬停图标的空路）；半虚化（<see cref="PreviewAlpha"/>）区分预览，无入场动画，
     /// 悬停即现、移开即撤。
@@ -170,7 +170,7 @@ namespace NineGrid.Flow.RoomIcons
         /// <summary>
         /// 解析房间「特色产物」预览 defId（去重保序）：
         /// 玩家侧 FixedCard / WeightedPool 全量候选；困难房只取两张怪物卡（序列 3/4 各一张代表）；
-        /// 层主房取当前楼层怪物卡组序列 5（层主）。真实抽取在进战后由 RewardSystem 随机决定。
+        /// 层主房不预览 Boss 卡虚影。真实抽取在进战后由 RewardSystem 随机决定。
         /// </summary>
         public static List<string> ResolvePreviewDefIds(RoomDefinition room, IArchitecture arch)
         {
@@ -182,7 +182,6 @@ namespace NineGrid.Flow.RoomIcons
 
             if (room.Kind == RoomKind.Boss)
             {
-                AddFirstSequenceMonster(result, arch, 5);
                 return result;
             }
 

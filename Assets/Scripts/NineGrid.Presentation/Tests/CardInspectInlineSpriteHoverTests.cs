@@ -127,7 +127,39 @@ namespace NineGrid.Presentation.Tests
                 row.SetDefaultBodyColor(UnityEngine.Color.black);
                 row.Bind("测试词条", "这是一段词条解释", hasColor: true, UnityEngine.Color.red);
 
-                Assert.AreEqual(UnityEngine.Color.red, tmp.color);
+                Assert.AreEqual(UnityEngine.Color.black, tmp.color);
+                StringAssert.Contains("<color=#FF0000>", tmp.text);
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(go);
+            }
+        }
+
+        [Test]
+        public void GlossaryRow_BindTerms_JoinsAllTermsInOneBox()
+        {
+            var go = new UnityEngine.GameObject("TestRow");
+            try
+            {
+                var tmp = go.AddComponent<TMPro.TextMeshPro>();
+                var row = go.AddComponent<NineGrid.Cards.Presentation.CardInspectGlossaryRowView>();
+                row.SetDefaultBodyColor(UnityEngine.Color.black);
+
+                var terms = new System.Collections.Generic.List<NineGrid.Cards.Presentation.CardGlossaryTerms.ResolvedTerm>
+                {
+                    new NineGrid.Cards.Presentation.CardGlossaryTerms.ResolvedTerm(
+                        "生日蛋糕", "恢复生命", matched: true, hasColor: false, UnityEngine.Color.clear),
+                    new NineGrid.Cards.Presentation.CardGlossaryTerms.ResolvedTerm(
+                        "血量", "当前生命", matched: true, hasColor: false, UnityEngine.Color.clear, inlineCode: "HP"),
+                };
+
+                row.BindTerms(terms);
+
+                StringAssert.Contains("生日蛋糕", tmp.text);
+                StringAssert.Contains("恢复生命", tmp.text);
+                StringAssert.Contains("血量", tmp.text);
+                StringAssert.Contains("HP", tmp.text);
             }
             finally
             {

@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+using System.Text;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -5,7 +7,7 @@ using UnityEngine.UI;
 namespace NineGrid.Cards.Presentation
 {
     /// <summary>
-    /// 右键详情中的单条词条行（名字 + 详细介绍）。
+    /// 右键详情效果区的统一描述框（全部词条写入同一 TMP，避免多行 mesh 重叠）。
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class CardInspectGlossaryRowView : MonoBehaviour
@@ -30,6 +32,21 @@ namespace NineGrid.Cards.Presentation
 
         public void Bind(string displayName, string explanation, bool hasColor, Color color, string inlineCode = null)
         {
+            BindTerms(new[]
+            {
+                new CardGlossaryTerms.ResolvedTerm(
+                    displayName,
+                    explanation,
+                    matched: !string.IsNullOrWhiteSpace(explanation),
+                    hasColor,
+                    color,
+                    inlineCode: inlineCode)
+            });
+        }
+
+        /// <summary>把装配好的全部词条写入同一描述框，词条之间空一行。</summary>
+        public void BindTerms(IReadOnlyList<CardGlossaryTerms.ResolvedTerm> terms)
+        {
             EnsureBody();
             CacheBaseMargin();
             if (body == null)
@@ -37,25 +54,28 @@ namespace NineGrid.Cards.Presentation
                 return;
             }
 
-            var title = displayName ?? string.Empty;
-            if (!string.IsNullOrWhiteSpace(inlineCode))
+            if (terms == null || terms.Count == 0)
             {
-                title = "[" + inlineCode.Trim() + "] " + title;
+                ApplyComposedText(string.Empty);
+                body.color = _defaultColor;
+                RefreshPreferredHeight();
+                return;
             }
 
-            var detail = explanation ?? string.Empty;
-            string raw;
-            if (string.IsNullOrWhiteSpace(detail))
+            var builder = new StringBuilder();
+            for (var i = 0; i < terms.Count; i++)
             {
-                raw = title;
-            }
-            else
-            {
-                raw = title + "\n" + detail.Trim();
+                if (i > 0)
+                {
+                    builder.Append("\n\n");
+                }
+
+                builder.Append(FormatTermBlock(terms[i]));
             }
 
-            ApplyComposedText(raw);
-            body.color = hasColor ? color : _defaultColor;
+            ApplyComposedText(builder.ToString());
+            body.color = _defaultColor;
+            RefreshPreferredHeight();
         }
 
         public void Clear()
@@ -212,7 +232,7 @@ namespace NineGrid.Cards.Presentation
             EnsureBody();
         }
 
-        /// <summary>为布局组准备：优先吃高、宽拉伸。</summary>
+        /// <summary>为布局组准备：宽拉伸，高度跟正文 preferred。</summary>
         public void EnsureLayoutElement()
         {
             var le = GetComponent<LayoutElement>();
@@ -221,10 +241,58 @@ namespace NineGrid.Cards.Presentation
                 le = gameObject.AddComponent<LayoutElement>();
             }
 
-            le.minHeight = 40f;
-            le.preferredHeight = -1f;
+            le.minHeight = 0f;
             le.flexibleWidth = 1f;
             le.flexibleHeight = 0f;
+            if (le.preferredHeight < 0f)
+            {
+                le.preferredHeight = 1f;
+            }
+        }
+
+        /// <summary>按当前 TMP 宽重算 LayoutElement 高度，供 ScrollRect Content 吃满整段描述。</summary>
+        public void RefreshPreferredHeight()
+        {
+            EnsureBody();
+            EnsureLayoutElement();
+            if (body == null)
+            {
+                return;
+            }
+
+            body.ForceMeshUpdate(true, true);
+            var width = body.rectTransform.rect.width;
+            if (width <= 1f)
+            {
+                width = 400f;
+            }
+
+            var preferred = body.GetPreferredValues(width, 0f);
+            var le = GetComponent<LayoutElement>();
+            le.minHeight = 0f;
+            le.preferredHeight = Mathf.Max(1f, preferred.y);
+            le.flexibleHeight = 0f;
+        }
+
+        private static string FormatTermBlock(CardGlossaryTerms.ResolvedTerm term)
+        {
+            var title = term.DisplayName ?? string.Empty;
+            if (!string.IsNullOrWhiteSpace(term.InlineCode))
+            {
+                title = "[" + term.InlineCode.Trim() + "] " + title;
+            }
+
+            var detail = term.Explanation ?? string.Empty;
+            var raw = string.IsNullOrWhiteSpace(detail)
+                ? title
+                : title + "\n" + detail.Trim();
+
+            if (!term.HasColor)
+            {
+                return raw;
+            }
+
+            return "<color=#" + ColorUtility.ToHtmlStringRGB(term.Color) + ">" + raw + "</color>";
         }
     }
 }

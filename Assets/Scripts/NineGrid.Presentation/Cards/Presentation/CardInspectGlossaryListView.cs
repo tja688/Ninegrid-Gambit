@@ -6,8 +6,8 @@ using UnityEngine.UI;
 namespace NineGrid.Cards.Presentation
 {
     /// <summary>
-    /// 右键详情 ScrollView Content：按词条动态装行（ADR-0037）。
-    /// 词条行使用 mesh TMP（MeshRenderer），须配 Viewport SpriteMask + 动态 margin 裁切才能裁进装饰框。
+    /// 右键详情 ScrollView Content：把装配词条写入统一描述框（ADR-0037）。
+    /// mesh TMP 不受 uGUI Mask 裁切，须把 Viewport SpriteMask 缩到视口并配合动态 margin。
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class CardInspectGlossaryListView : MonoBehaviour
@@ -50,30 +50,28 @@ namespace NineGrid.Cards.Presentation
         public void BindExplicitTerms(IReadOnlyList<CardGlossaryTerms.ResolvedTerm> terms)
         {
             EnsureLayout();
+            HideLegacySceneTemplates();
             EnsureViewportClipMask();
             ClearSpawned();
 
-            if (terms != null && rowPrefab != null && content != null)
+            if (terms == null || terms.Count == 0 || rowPrefab == null || content == null)
             {
-                for (var i = 0; i < terms.Count; i++)
-                {
-                    var term = terms[i];
-                    var row = Instantiate(rowPrefab, content);
-                    row.gameObject.SetActive(true);
-                    row.name = "词条行_" + term.DisplayName;
-                    row.EnsureLayoutElement();
-                    ApplyDefaultBodyColor(row);
-                    row.Bind(
-                        term.DisplayName,
-                        term.Explanation,
-                        term.HasColor,
-                        term.Color,
-                        term.InlineCode);
-                    row.transform.SetAsLastSibling();
-                    ApplyGlossaryRowMaskInteraction(row.gameObject, GetScrollViewport());
-                    _spawned.Add(row);
-                }
+                return;
             }
+
+            var box = Instantiate(rowPrefab, content);
+            box.gameObject.SetActive(true);
+            box.name = "词条描述框";
+            StretchBoxWidth(box);
+            box.EnsureLayoutElement();
+            ApplyDefaultBodyColor(box);
+            box.BindTerms(terms);
+            box.transform.SetAsLastSibling();
+            ApplyGlossaryRowMaskInteraction(box.gameObject, GetScrollViewport());
+            _spawned.Add(box);
+            RebuildContentLayout(box);
+            EnsureViewportClipMask();
+            ApplyCurrentClip();
         }
 
         public void ClearAll()
@@ -130,6 +128,78 @@ namespace NineGrid.Cards.Presentation
             fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
         }
 
+        private void HideLegacySceneTemplates()
+        {
+            if (content == null)
+            {
+                return;
+            }
+
+            for (var i = 0; i < content.childCount; i++)
+            {
+                var child = content.GetChild(i);
+                if (child == null || !child.name.Contains("详细效果信息"))
+                {
+                    continue;
+                }
+
+                if (child.gameObject.activeSelf)
+                {
+                    child.gameObject.SetActive(false);
+                }
+
+                var ignore = child.GetComponent<LayoutElement>();
+                if (ignore == null)
+                {
+                    ignore = child.gameObject.AddComponent<LayoutElement>();
+                }
+
+                ignore.ignoreLayout = true;
+            }
+        }
+
+        private static void StretchBoxWidth(CardInspectGlossaryRowView box)
+        {
+            var rt = box != null ? box.transform as RectTransform : null;
+            if (rt == null)
+            {
+                return;
+            }
+
+            rt.anchorMin = new Vector2(0f, 1f);
+            rt.anchorMax = new Vector2(1f, 1f);
+            rt.pivot = new Vector2(0.5f, 1f);
+            rt.offsetMin = new Vector2(0f, rt.offsetMin.y);
+            rt.offsetMax = new Vector2(0f, rt.offsetMax.y);
+        }
+
+        private void RebuildContentLayout(CardInspectGlossaryRowView box)
+        {
+            if (content == null || box == null)
+            {
+                return;
+            }
+
+            Canvas.ForceUpdateCanvases();
+            LayoutRebuilder.ForceRebuildLayoutImmediate(content);
+            box.RefreshPreferredHeight();
+            LayoutRebuilder.ForceRebuildLayoutImmediate(content);
+        }
+
+        private void ApplyCurrentClip()
+        {
+            if (content == null)
+            {
+                return;
+            }
+
+            var scroll = content.GetComponentInParent<ScrollRect>();
+            var clip = scroll != null && scroll.viewport != null
+                ? scroll.viewport.GetComponent<CardInspectGlossaryViewportClip>()
+                : null;
+            clip?.ApplyClip();
+        }
+
         private void EnsureViewportClipMask()
         {
             if (content == null)
@@ -145,6 +215,7 @@ namespace NineGrid.Cards.Presentation
 
             ApplyViewportInsetIfNeeded(scroll.viewport);
             EnsureViewportSpriteMask(scroll.viewport);
+            SyncViewportMaskToRect(scroll.viewport);
             EnsureViewportClipDriver(scroll);
         }
 
@@ -220,6 +291,39 @@ namespace NineGrid.Cards.Presentation
             }
 
             SyncViewportMaskSorting(maskTransform, viewport);
+            SyncViewportMaskToRect(viewport);
+        }
+
+        internal static void SyncViewportMaskToRect(RectTransform viewport)
+        {
+            if (viewport == null)
+            {
+                return;
+            }
+
+            var maskTransform = viewport.Find(ViewportClipMaskName) as RectTransform;
+            if (maskTransform == null)
+            {
+                return;
+            }
+
+            var mask = maskTransform.GetComponent<SpriteMask>();
+            if (mask == null || mask.sprite == null)
+            {
+                return;
+            }
+
+            var spriteSize = mask.sprite.bounds.size;
+            var rect = viewport.rect;
+            maskTransform.anchorMin = new Vector2(0.5f, 0.5f);
+            maskTransform.anchorMax = new Vector2(0.5f, 0.5f);
+            maskTransform.pivot = new Vector2(0.5f, 0.5f);
+            maskTransform.anchoredPosition = Vector2.zero;
+            maskTransform.localRotation = Quaternion.identity;
+            maskTransform.localScale = new Vector3(
+                Mathf.Max(0.0001f, rect.width / Mathf.Max(0.0001f, spriteSize.x)),
+                Mathf.Max(0.0001f, rect.height / Mathf.Max(0.0001f, spriteSize.y)),
+                1f);
         }
 
         private static void SyncViewportMaskSorting(RectTransform maskTransform, RectTransform viewport)
@@ -274,8 +378,7 @@ namespace NineGrid.Cards.Presentation
             var renderers = rowRoot.GetComponentsInChildren<Renderer>(true);
             for (var i = 0; i < renderers.Length; i++)
             {
-                var renderer = renderers[i];
-                if (renderer is SpriteRenderer spriteRenderer)
+                if (renderers[i] is SpriteRenderer spriteRenderer)
                 {
                     spriteRenderer.maskInteraction = SpriteMaskInteraction.VisibleInsideMask;
                 }
@@ -333,6 +436,8 @@ namespace NineGrid.Cards.Presentation
             {
                 return;
             }
+
+            CardInspectGlossaryListView.SyncViewportMaskToRect(viewport);
 
             for (var i = 0; i < content.childCount; i++)
             {

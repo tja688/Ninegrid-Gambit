@@ -32,6 +32,10 @@ status: accepted
 - 内核 `AttackPatternRules.Token*`（普通近战 / 斜角近战 / 全向近战）不改；玩家可见攻击范围词条名为正交攻击 / 斜向攻击 / 全向攻击。
 - 卡专属效果正文不进项目级词条表，避免 `[[暴力]]` 误匹配单卡效果。
 
+## 补记（2026-08-20）
+
+装配规则不变。ScrollView 改为**单一描述框**承载全部词条（不再逐条独立行预制体）：mesh TMP 多行时首条独立、其后重叠，且 uGUI Mask 裁不到 MeshRenderer。统一成一框后按 Viewport 同步 SpriteMask + margin 裁切，保证不越出滚动区。
+
 ## 相关
 
 - [ADR-0009](0009-parameterized-effect-templates.md) — 词条与模板装配
