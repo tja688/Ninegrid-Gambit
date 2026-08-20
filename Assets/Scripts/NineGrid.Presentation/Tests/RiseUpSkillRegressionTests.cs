@@ -93,6 +93,27 @@ namespace NineGrid.Presentation.Tests
                 "两只背面怪中应恰好有一只被「起来」翻为正面（count=1）");
         }
 
+        [Test]
+        public void RiseUp_WhenDealingMultipleDamageInOneHit_StillFlipsOnlyOneMonster()
+        {
+            LoadRealCatalog();
+            var avatar = CreateAvatarOnBoard(SlotId.Board(5));
+            var riseUpMonster = CreateRealCardOnBoard("monster.brainless_orc", SlotId.Board(1));
+            var monsterA = CreateMonsterOnBoard("monster.test_a", SlotId.Board(2));
+            var monsterB = CreateMonsterOnBoard("monster.test_b", SlotId.Board(3));
+            monsterA.FaceUp = false;
+            monsterB.FaceUp = false;
+
+            // 实战黑寡妇一击可打出 5 伤；「一次伤害」只应翻 1 张，不能按伤害点数连翻。
+            Run(new DealDamageAction(riseUpMonster.Uid, avatar.Uid, 5, "test.attack"));
+
+            var faceUpCount = (monsterA.FaceUp ? 1 : 0) + (monsterB.FaceUp ? 1 : 0);
+            Assert.AreEqual(
+                1,
+                faceUpCount,
+                "单次 DamageDealt 即使超过 1 点，起来也只翻一张背面怪");
+        }
+
         // ==================== 基建 ====================
 
         private void LoadRealCatalog()

@@ -973,7 +973,7 @@
   "design_text": "[场上]本卡对玩家造成一次伤害后，随机使一张其他背面怪物卡翻面为正面",
   "requires_json": "[\"HasOwnerEntity\", \"CardZoneTriggerable\"]",
   "conditions_json": "[]",
-  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnSelfDamageDealtToPlayerCumulative\",\"threshold\":1},\"target\":{\"atom\":\"FilteredCards\",\"kind\":\"Monster\",\"zone\":\"Board\",\"exclude\":[\"Self\"],\"random\":true,\"count\":\"{{count}}\",\"faceUp\":false},\"action\":{\"atom\":\"RevealFace\"}}"
+  "body": "{\"kind\":\"Triggered\",\"trigger\":{\"atom\":\"OnSelfDamageDealtToPlayer\"},\"target\":{\"atom\":\"FilteredCards\",\"kind\":\"Monster\",\"zone\":\"Board\",\"exclude\":[\"Self\"],\"random\":true,\"count\":\"{{count}}\",\"faceUp\":false},\"action\":{\"atom\":\"RevealFace\"}}"
  },
  {
   "id": "tpl.skill.purge_followers.move",
