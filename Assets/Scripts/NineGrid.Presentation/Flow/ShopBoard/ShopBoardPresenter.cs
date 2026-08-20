@@ -656,7 +656,7 @@ namespace NineGrid.Flow.ShopBoard
                 ShopBoardSlotResolver.LeaveContentId,
                 RoomIconWalkRole.WalkDestination);
 
-            var path = BoardNavigationIconResolver.ResolveLeaveIconPrefab(mArch);
+            var path = CardChassisPaths.RoomIconLeave;
             var go = TryInstantiate(path, geometry, slot, ShopBoardSlotResolver.LeaveContentId);
             if (go == null)
             {

@@ -391,7 +391,7 @@ namespace NineGrid.Flow.RewardBoard
                 RewardBoardSlotResolver.LeaveContentId,
                 RoomIconWalkRole.WalkDestination);
 
-            var path = BoardNavigationIconResolver.ResolveLeaveIconPrefab(mArch);
+            var path = CardChassisPaths.RoomIconLeave;
             var go = TryInstantiate(path, geometry, slot, RewardBoardSlotResolver.LeaveContentId);
             if (go == null)
             {

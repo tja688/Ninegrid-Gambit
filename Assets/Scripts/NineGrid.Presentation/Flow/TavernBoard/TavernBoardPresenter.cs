@@ -806,9 +806,7 @@ namespace NineGrid.Flow.TavernBoard
                 TavernBoardSlotResolver.LeaveContentId,
                 RoomIconWalkRole.WalkDestination);
 
-            var path = nested
-                ? CardChassisPaths.ResolveRoomIconPrefab(TavernBoardSlotResolver.LeaveContentId, null)
-                : BoardNavigationIconResolver.ResolveLeaveIconPrefab(mArch);
+            var path = CardChassisPaths.RoomIconLeave;
             var go = TryInstantiate(path, geometry, slot, TavernBoardSlotResolver.LeaveContentId);
             if (go == null)
             {

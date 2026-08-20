@@ -38,10 +38,12 @@ namespace NineGrid.Cards
         public const string RoomIconTavernLegacy = "Assets/Resources/Prefabs/地形图标/酒馆图标.prefab";
         public const string RoomIconAttribute = "Assets/Resources/Prefabs/地形图标/属性提升图标.prefab";
         public const string RoomIconItemReward = "Assets/Resources/Prefabs/地形图标/道具奖励图标.prefab";
+        public const string RoomIconRelicReward = "Assets/Resources/Prefabs/地形图标/遗物奖励图标.prefab";
         public const string RoomIconLeave = "Assets/Resources/Prefabs/地形图标/离开图标.prefab";
         public const string RoomIconGoUp = "Assets/Resources/Prefabs/地形图标/上楼图标.prefab";
         public const string RoomIconGoDown = "Assets/Resources/Prefabs/地形图标/下楼图标.prefab";
         public const string RoomIconOssuary = "Assets/Resources/Prefabs/地形图标/通往藏骨堂图标.prefab";
+        public const string RoomIconRockLayer = "Assets/Resources/Prefabs/地形图标/通往岩层图标.prefab";
         public const string RoomIconLostRuins = "Assets/Resources/Prefabs/地形图标/通往失落遗迹图标.prefab";
         public const string RoomIconMagma = "Assets/Resources/Prefabs/地形图标/通往熔岩之地图标.prefab";
         public const string RoomIconPaleRoad = "Assets/Resources/Prefabs/地形图标/通往苍白之路图标.prefab";
@@ -151,8 +153,9 @@ namespace NineGrid.Cards
                 case "Gold":
                     return RoomIconGold;
                 case "Treasure":
-                case "TreasureReward":
                     return RoomIconTreasure;
+                case "TreasureReward":
+                    return RoomIconRelicReward;
                 case "Fountain":
                     return RoomIconFountain;
                 case "Shop":
@@ -172,6 +175,9 @@ namespace NineGrid.Cards
                 case "Ossuary":
                 case "ToOssuary":
                     return RoomIconOssuary;
+                case "RockLayer":
+                case "ToRockLayer":
+                    return RoomIconRockLayer;
                 case "LostRuins":
                 case "ToLostRuins":
                     return RoomIconLostRuins;

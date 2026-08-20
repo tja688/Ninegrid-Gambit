@@ -11,7 +11,8 @@ namespace NineGrid.Flow.BoardBriefTip
     public static class BoardNavigationIconResolver
     {
         /// <summary>
-        /// 解析消费房/奖励房等离开图标预制体路径（前往下半区节点 5）。
+        /// 解析选房离开图标预制体路径（前往下半区节点 5）。
+        /// 商店/牌店/奖励房内离开不走本方法，固定 <see cref="CardChassisPaths.RoomIconLeave"/>。
         /// 1 层（密林）→ 通往失落遗迹图标；
         /// 2 层（岩层）→ 通往熔岩之地图标；
         /// 3 层（溶洞）→ 通往黄昏礼堂图标。
@@ -39,7 +40,7 @@ namespace NineGrid.Flow.BoardBriefTip
 
         /// <summary>
         /// 解析 Boss 战胜后前往下一层的下楼图标预制体路径。
-        /// 1 层 Boss 战胜（前往 2 层岩层）→ 通往藏骨堂图标；
+        /// 1 层 Boss 战胜（前往 2 层岩层）→ 通往岩层图标；
         /// 2 层 Boss 战胜（前往 3 层溶洞）→ 通往苍白之路图标；
         /// 3 层或未命中 → 下楼图标。
         /// </summary>
@@ -48,7 +49,7 @@ namespace NineGrid.Flow.BoardBriefTip
             switch (floor)
             {
                 case 1:
-                    return CardChassisPaths.RoomIconOssuary;
+                    return CardChassisPaths.RoomIconRockLayer;
                 case 2:
                     return CardChassisPaths.RoomIconPaleRoad;
                 default:

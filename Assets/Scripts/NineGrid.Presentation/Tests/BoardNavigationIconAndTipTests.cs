@@ -25,6 +25,8 @@ namespace NineGrid.Presentation.Tests
         public void CardChassisPaths_TerrainIconConstants_PointToCorrectPrefabs()
         {
             Assert.AreEqual("Assets/Resources/Prefabs/地形图标/通往藏骨堂图标.prefab", CardChassisPaths.RoomIconOssuary);
+            Assert.AreEqual("Assets/Resources/Prefabs/地形图标/通往岩层图标.prefab", CardChassisPaths.RoomIconRockLayer);
+            Assert.AreEqual("Assets/Resources/Prefabs/地形图标/遗物奖励图标.prefab", CardChassisPaths.RoomIconRelicReward);
             Assert.AreEqual("Assets/Resources/Prefabs/地形图标/通往失落遗迹图标.prefab", CardChassisPaths.RoomIconLostRuins);
             Assert.AreEqual("Assets/Resources/Prefabs/地形图标/通往熔岩之地图标.prefab", CardChassisPaths.RoomIconMagma);
             Assert.AreEqual("Assets/Resources/Prefabs/地形图标/通往苍白之路图标.prefab", CardChassisPaths.RoomIconPaleRoad);
@@ -39,6 +41,11 @@ namespace NineGrid.Presentation.Tests
             Assert.AreEqual(CardChassisPaths.RoomIconLostRuins, CardChassisPaths.ResolveRoomIconPrefab("ToLostRuins"));
             Assert.AreEqual(CardChassisPaths.RoomIconOssuary, CardChassisPaths.ResolveRoomIconPrefab("Ossuary"));
             Assert.AreEqual(CardChassisPaths.RoomIconOssuary, CardChassisPaths.ResolveRoomIconPrefab("ToOssuary"));
+            Assert.AreEqual(CardChassisPaths.RoomIconRockLayer, CardChassisPaths.ResolveRoomIconPrefab("RockLayer"));
+            Assert.AreEqual(CardChassisPaths.RoomIconRockLayer, CardChassisPaths.ResolveRoomIconPrefab("ToRockLayer"));
+            Assert.AreEqual(CardChassisPaths.RoomIconRelicReward, CardChassisPaths.ResolveRoomIconPrefab("TreasureReward"));
+            Assert.AreEqual(CardChassisPaths.RoomIconTreasure, CardChassisPaths.ResolveRoomIconPrefab("Treasure"));
+            Assert.AreEqual(CardChassisPaths.RoomIconItemReward, CardChassisPaths.ResolveRoomIconPrefab("ItemReward"));
             Assert.AreEqual(CardChassisPaths.RoomIconMagma, CardChassisPaths.ResolveRoomIconPrefab("Magma"));
             Assert.AreEqual(CardChassisPaths.RoomIconMagma, CardChassisPaths.ResolveRoomIconPrefab("ToMagma"));
             Assert.AreEqual(CardChassisPaths.RoomIconPaleRoad, CardChassisPaths.ResolveRoomIconPrefab("PaleRoad"));
@@ -60,7 +67,7 @@ namespace NineGrid.Presentation.Tests
         [Test]
         public void BoardNavigationIconResolver_GoDownPrefabs_MatchFloorTransitions()
         {
-            Assert.AreEqual(CardChassisPaths.RoomIconOssuary, BoardNavigationIconResolver.ResolveGoDownIconPrefab(1));
+            Assert.AreEqual(CardChassisPaths.RoomIconRockLayer, BoardNavigationIconResolver.ResolveGoDownIconPrefab(1));
             Assert.AreEqual(CardChassisPaths.RoomIconPaleRoad, BoardNavigationIconResolver.ResolveGoDownIconPrefab(2));
             Assert.AreEqual(CardChassisPaths.RoomIconGoDown, BoardNavigationIconResolver.ResolveGoDownIconPrefab(3));
             Assert.AreEqual(CardChassisPaths.RoomIconGoDown, BoardNavigationIconResolver.ResolveGoDownIconPrefab(99));
