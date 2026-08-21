@@ -1,0 +1,11 @@
+{
+  "name": "Ninegrid Gambit (Unity 6.3)",
+  "install": "bash .cursor/cloud/install.sh",
+  "start": "bash .cursor/cloud/start.sh",
+  "terminals": [
+    {
+      "name": "unity-editor",
+      "command": "bash .cursor/cloud/editor.sh"
+    }
+  ]
+}
